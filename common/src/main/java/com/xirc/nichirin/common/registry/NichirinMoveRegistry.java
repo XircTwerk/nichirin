@@ -2,7 +2,6 @@ package com.xirc.nichirin.common.registry;
 
 import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
-import com.xirc.nichirin.common.attack.moves.BasicSlashAttack;
 import com.xirc.nichirin.common.attack.moves.thunder.ChainLightningAttack;
 import com.xirc.nichirin.common.attack.moves.thunder.ThunderClapAttack;
 import net.minecraft.resources.ResourceLocation;

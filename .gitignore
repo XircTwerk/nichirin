@@ -1,0 +1,55 @@
+/.gradle/*
+/fabric/run/*
+/fabric/build/*
+/forge/run/*
+/forge/build/*
+/.idea/*
+/common/run/*
+/common/build/*
+/fabric/.gradle/*
+/forge/.gradle/*
+/common/.gradle/*
+/build/*
+
+# gradle
+
+.gradle/
+build/
+out/
+classes/
+
+# eclipse
+
+*.launch
+
+# idea
+*.iml
+*.ipr
+*.iws
+!.idea/icon.png
+!.idea/fileTemplates
+
+# vscode
+
+.settings/
+.vscode/
+bin/
+.classpath
+.project
+
+# macos
+
+*.DS_Store
+
+# fabric
+
+run/
+
+# Datagen
+/common/src/main/generated/.cache/*
+/common/logs/latest.log
+
+/common/src/main/generated/data/*
+/common/src/main/generated/assets/nichirin/*
+
+.architectury-transformer/
