@@ -1,0 +1,16 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" factoryName="Application" name="Minecraft Client (:forge)" type="Application">
+    <option name="MAIN_CLASS_NAME" value="dev.architectury.transformer.TransformerRuntime"/>
+    <module name="nichirin.forge.main"/>
+    <option name="PROGRAM_PARAMETERS" value=""/>
+    <option name="VM_PARAMETERS" value="-Dfabric.dli.config=C:\programming@@0020bs\Breath@@0020Of@@0020Nichirin\forge\.gradle\loom-cache\launch.cfg -Dfabric.dli.env=client -Djava.net.preferIPv6Addresses=system -p C:\temp\gradle-cache\caches\modules-2\files-2.1\cpw.mods\securejarhandler\2.1.10\51e6a22c6c716beb11e244bf5b8be480f51dd6b5\securejarhandler-2.1.10.jar;C:\temp\gradle-cache\caches\modules-2\files-2.1\org.ow2.asm\asm-commons\9.7.1\406c6a2225cfe1819f102a161e54cc16a5c24f75\asm-commons-9.7.1.jar;C:\temp\gradle-cache\caches\modules-2\files-2.1\org.ow2.asm\asm-util\9.7.1\9e23359b598ec6b74b23e53110dd5c577adf2243\asm-util-9.7.1.jar;C:\temp\gradle-cache\caches\modules-2\files-2.1\org.ow2.asm\asm-analysis\9.7.1\f97a3b319f0ed6a8cd944dc79060d3912a28985f\asm-analysis-9.7.1.jar;C:\temp\gradle-cache\caches\modules-2\files-2.1\org.ow2.asm\asm-tree\9.7.1\3a53139787663b139de76b627fca0084ab60d32c\asm-tree-9.7.1.jar;C:\temp\gradle-cache\caches\modules-2\files-2.1\org.ow2.asm\asm\9.7.1\f0ed132a49244b042cd0e15702ab9f2ce3cc8436\asm-9.7.1.jar;C:\temp\gradle-cache\caches\modules-2\files-2.1\net.minecraftforge\JarJarFileSystems\0.3.19\2464eb7d6b9ddb9db36a82cf8a95193e5c6fe020\JarJarFileSystems-0.3.19.jar --add-modules ALL-MODULE-PATH --add-opens java.base/java.util.jar=cpw.mods.securejarhandler --add-opens java.base/java.lang.invoke=cpw.mods.securejarhandler --add-exports java.base/sun.security.util=cpw.mods.securejarhandler --add-exports jdk.naming.dns/com.sun.jndi.dns=java.naming -Dfabric.dli.main=cpw.mods.bootstraplauncher.BootstrapLauncher &quot;-Darchitectury.main.class=C:\programming bs\Breath Of Nichirin\forge\.gradle\architectury\.main_class&quot; &quot;-Darchitectury.runtime.transformer=C:\programming bs\Breath Of Nichirin\forge\.gradle\architectury\.transforms&quot; &quot;-Darchitectury.properties=C:\programming bs\Breath Of Nichirin\forge\.gradle\architectury\.properties&quot; -Djdk.attach.allowAttachSelf=true &quot;-javaagent:C:\programming bs\Breath Of Nichirin\.gradle\architectury\architectury-transformer-agent.jar&quot;"/>
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/forge/run/"/>
+    <method v="2">
+      <option enabled="true" name="Make"/>
+    </method>
+    <envs>
+      <env name="MOD_CLASSES" value="main%%C:\programming bs\Breath Of Nichirin\forge\build\resources\main;main%%C:\programming bs\Breath Of Nichirin\forge\build\classes\java\main"/><env name="MCP_MAPPINGS" value="loom.stub"/>
+    </envs>
+    <shortenClasspath name="ARGS_FILE"/>
+  <classpathModifications/></configuration>
+</component>

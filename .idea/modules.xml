@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/common/nichirin.common.iml" filepath="$PROJECT_DIR$/.idea/modules/common/nichirin.common.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/common/nichirin.common.main.iml" filepath="$PROJECT_DIR$/.idea/modules/common/nichirin.common.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/common/nichirin.common.test.iml" filepath="$PROJECT_DIR$/.idea/modules/common/nichirin.common.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/fabric/nichirin.fabric.main.iml" filepath="$PROJECT_DIR$/.idea/modules/fabric/nichirin.fabric.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/fabric/nichirin.fabric.test.iml" filepath="$PROJECT_DIR$/.idea/modules/fabric/nichirin.fabric.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/forge/nichirin.forge.main.iml" filepath="$PROJECT_DIR$/.idea/modules/forge/nichirin.forge.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/forge/nichirin.forge.test.iml" filepath="$PROJECT_DIR$/.idea/modules/forge/nichirin.forge.test.iml" />
+    </modules>
+  </component>
+</project>
