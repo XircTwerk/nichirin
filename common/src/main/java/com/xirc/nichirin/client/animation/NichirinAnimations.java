@@ -70,10 +70,6 @@ public class NichirinAnimations {
     private static void onPlayerAnimationRegister(AbstractClientPlayer player, dev.kosmx.playerAnim.api.layered.AnimationStack animationStack) {
         System.out.println("DEBUG: Registering animation layer for player: " + player.getName().getString());
 
-        if (player == null || player.getGameProfile() == null) {
-            return; // Skip animation registration if player isn't ready
-        }
-
         // Create a single ModifierLayer for all animations
         ModifierLayer<IAnimation> animationLayer = new ModifierLayer<>();
 
@@ -103,7 +99,7 @@ public class NichirinAnimations {
     public static void playAnimation(AbstractClientPlayer player, ResourceLocation animationId) {
         // CRASH FIX: Exit immediately if player or minecraft instance is null
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft == null || minecraft.player == null) {
+        if (minecraft.player == null) {
             System.out.println("DEBUG: Skipping animation - player or minecraft is null");
             return;
         }
@@ -131,7 +127,6 @@ public class NichirinAnimations {
                 if (altAnim1 != null) {
                     System.out.println("DEBUG: Found animation at: " + altId1);
                     animation = altAnim1;
-                    animationId = altId1;
                 } else {
                     // Try with underscores replaced by dots
                     ResourceLocation altId2 = new ResourceLocation("nichirin", animationId.getPath().replace("_", "."));
@@ -139,7 +134,6 @@ public class NichirinAnimations {
                     if (altAnim2 != null) {
                         System.out.println("DEBUG: Found animation at: " + altId2);
                         animation = altAnim2;
-                        animationId = altId2;
                     }
                 }
 
@@ -184,7 +178,7 @@ public class NichirinAnimations {
     public static void stopAnimation(AbstractClientPlayer player) {
         // CRASH FIX: Exit immediately if player or minecraft instance is null
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft == null || minecraft.player == null) {
+        if (minecraft.player == null) {
             return;
         }
 
