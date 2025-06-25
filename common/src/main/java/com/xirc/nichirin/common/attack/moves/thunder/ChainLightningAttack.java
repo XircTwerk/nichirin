@@ -71,7 +71,7 @@ public class ChainLightningAttack extends AbstractBlitzAttack {
         lastTarget = null;
     }
 
-    @Override
+
     public int getWindupPoint() {
         return 0;
     }

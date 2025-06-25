@@ -26,6 +26,11 @@ public class BasicSlashAttack<A extends IPhysicalAttacker<A, ?>> extends Abstrac
     }
 
     @Override
+    protected boolean canStart(A attacker) {
+        return false;
+    }
+
+    @Override
     protected void onStart(Player user, Level world) {
         // Could add sword swoosh particles here
         createSlashParticles(user, world);
@@ -34,6 +39,11 @@ public class BasicSlashAttack<A extends IPhysicalAttacker<A, ?>> extends Abstrac
     @Override
     protected void onHit(Player user, LivingEntity target) {
         // Could add special hit effects for critical hits, etc
+    }
+
+    @Override
+    public boolean canStart(Player physAttacker) {
+        return false;
     }
 
     /**

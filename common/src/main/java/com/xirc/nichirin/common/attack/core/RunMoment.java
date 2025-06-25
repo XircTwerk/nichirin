@@ -17,7 +17,7 @@ public enum RunMoment {
                              LivingEntity user, int ticksActive, Set<LivingEntity> targets) {
         return switch (this) {
             case AT_INIT -> ticksActive == 0;
-            case ON_STRIKE -> ticksActive == move.getWindupPoint();
+            case ON_STRIKE -> ticksActive == move.getWindup();
             case ON_HIT -> !targets.isEmpty();
             case EVERY_TICK -> true;
             case AT_END -> ticksActive == move.getDuration() - 1;

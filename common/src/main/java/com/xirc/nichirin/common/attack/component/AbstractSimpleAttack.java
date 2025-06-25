@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.attack.component;
 
+import com.xirc.nichirin.common.attack.actions.PlayerAnimationAction;
 import com.xirc.nichirin.common.util.enums.MoveClass;
 import lombok.Getter;
 import lombok.Setter;
@@ -28,7 +29,7 @@ public abstract class AbstractSimpleAttack<T extends AbstractSimpleAttack<T, A>,
 
     // Timing
     private int startup;
-    private int active;
+    private int activeFrames; // Renamed from 'active' to avoid conflict
     private int recovery;
 
     // Combat stats
@@ -60,6 +61,8 @@ public abstract class AbstractSimpleAttack<T extends AbstractSimpleAttack<T, A>,
     @Nullable
     private ResourceLocation animationId;
     private int animationPriority = 0;
+    @Nullable
+    private PlayerAnimationAction startAnimation;
 
     // Behavior
     private boolean canBackstab = true;
@@ -88,13 +91,14 @@ public abstract class AbstractSimpleAttack<T extends AbstractSimpleAttack<T, A>,
     private Set<UUID> hitEntities = new HashSet<>();
     @Setter
     private MoveClass moveClass;
+    private Player Player;
 
     // Builder methods
 
     @SuppressWarnings("unchecked")
-    public T withTiming(int startup, int active, int recovery) {
+    public T withTiming(int startup, int activeFrames, int recovery) {
         this.startup = startup;
-        this.active = active;
+        this.activeFrames = activeFrames;
         this.recovery = recovery;
         return (T) this;
     }
@@ -179,6 +183,12 @@ public abstract class AbstractSimpleAttack<T extends AbstractSimpleAttack<T, A>,
     }
 
     @SuppressWarnings("unchecked")
+    public T withStartAnimation(PlayerAnimationAction animation) {
+        this.startAnimation = animation;
+        return (T) this;
+    }
+
+    @SuppressWarnings("unchecked")
     public T setUnblockable(boolean unblockable) {
         this.unblockable = unblockable;
         return (T) this;
@@ -232,15 +242,15 @@ public abstract class AbstractSimpleAttack<T extends AbstractSimpleAttack<T, A>,
      * Total duration of the attack
      */
     public int getTotalDuration() {
-        return startup + active + recovery;
+        return startup + activeFrames + recovery;
     }
 
     /**
      * Checks if the attack can be initiated
      */
-    public boolean canStart(A attacker) {
-        return attacker.hasStamina(staminaCost);
-    }
+   /* public boolean canStart(Player attacker) {
+        return attacker.hasItemInSlot(staminaCost);
+    } */
 
     /**
      * Starts the attack
@@ -265,6 +275,11 @@ public abstract class AbstractSimpleAttack<T extends AbstractSimpleAttack<T, A>,
             player.addEffect(new MobEffectInstance(effect, data.duration, data.amplifier));
         });
 
+        // Play start animation if configured
+        if (startAnimation != null) {
+            startAnimation.perform(attacker);
+        }
+
         // Reset state
         active = true;
         currentTick = 0;
@@ -274,19 +289,21 @@ public abstract class AbstractSimpleAttack<T extends AbstractSimpleAttack<T, A>,
         onStart(player, world);
     }
 
+    protected abstract boolean canStart(A attacker);
+
     /**
      * Called every tick while the attack is active
      */
-    public void tick(A attacker) {
+    public void tick(Player attacker) {
         if (!active) return;
 
-        Player player = attacker.getPlayer();
+        Player player = Player;
         Level world = player.level();
 
         currentTick++;
 
         // Check if we're in active frames
-        if (currentTick > startup && currentTick <= startup + active) {
+        if (currentTick > startup && currentTick <= startup + activeFrames) {
             // Generate hitbox and check for hits
             performHitCheck(player, world);
         }
@@ -298,7 +315,7 @@ public abstract class AbstractSimpleAttack<T extends AbstractSimpleAttack<T, A>,
 
             // Check for followup input
             if (followup != null && hitConnected) {
-                checkFollowup(attacker);
+                checkFollowup((A) attacker);
             }
         }
 
@@ -419,6 +436,8 @@ public abstract class AbstractSimpleAttack<T extends AbstractSimpleAttack<T, A>,
      * Called when a target is hit
      */
     protected void onHit(Player user, LivingEntity target) {}
+
+    public abstract boolean canStart(Player physAttacker);
 
     /**
      * Helper class for effect data

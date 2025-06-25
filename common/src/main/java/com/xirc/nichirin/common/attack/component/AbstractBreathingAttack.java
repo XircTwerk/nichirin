@@ -251,15 +251,18 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack<
 
     /**
      * Starts the breathing attack
+     *
+     * @return
      */
-    public void start(IBreathingAttacker<?, ?> attacker) {
-        if (active) return;
+    public SimpleAttackBreathingWrapper<A> start(IBreathingAttacker<?, ?> attacker) {
+        if (active) return null;
 
         Player player = attacker.getPlayer();
         Level world = player.level();
 
         active = true;
         onStart(player, world);
+        return null;
     }
 
     /**

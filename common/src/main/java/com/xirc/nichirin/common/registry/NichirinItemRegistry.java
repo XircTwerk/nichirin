@@ -1,7 +1,7 @@
 package com.xirc.nichirin.common.registry;
 
 import com.xirc.nichirin.BreathOfNichirin;
-import com.xirc.nichirin.common.item.sword.SimpleKatana;
+import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.minecraft.core.registries.Registries;
@@ -22,13 +22,12 @@ public interface NichirinItemRegistry {
     DeferredRegister<Item> ITEM_REGISTRY = DeferredRegister.create(BreathOfNichirin.MOD_ID, Registries.ITEM);
     Map<RegistrySupplier<? extends Item>, ResourceLocation> ITEMS = new LinkedHashMap<>();
 
-    // Test with a simple item first
-    RegistrySupplier<Item> TEST_ITEM = register("test_item",
-            () -> new Item(new Item.Properties()));
-
-    // Simple katana for testing
+    // Simple katana
     RegistrySupplier<Item> KATANA = register("katana",
-            () -> new SimpleKatana(Tiers.DIAMOND, 6, -2.4f, settings().rarity(Rarity.EPIC).stacksTo(1)));
+            () -> new SimpleKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
+    //thunder katana
+    RegistrySupplier<Item> THUNDER_KATANA = register("thunder_katana",
+            () -> new SimpleKatana(settings().rarity(Rarity.EPIC).stacksTo(1)));
 
     static <T extends Item> RegistrySupplier<T> register(String id, Supplier<? extends T> supplier) {
         LOGGER.info("Registering item: {}", id);

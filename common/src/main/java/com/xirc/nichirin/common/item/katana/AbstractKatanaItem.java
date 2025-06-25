@@ -1,4 +1,4 @@
-package com.xirc.nichirin.common.item;
+package com.xirc.nichirin.common.item.katana;
 
 import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
 import com.xirc.nichirin.common.attack.component.IBreathingAttacker;
@@ -10,7 +10,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Tier;
-import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,10 +39,6 @@ public abstract class AbstractKatanaItem extends Item {
     // Default animations
     @Nullable
     protected final ResourceLocation idleAnimation;
-    @Nullable
-    protected final ResourceLocation walkAnimation;
-    @Nullable
-    protected final ResourceLocation blockAnimation;
 
     protected AbstractKatanaItem(Properties properties, KatanaBuilder builder) {
         super(properties);
@@ -53,8 +48,6 @@ public abstract class AbstractKatanaItem extends Item {
         this.isEnchantable = builder.isEnchantable;
         this.enchantability = builder.enchantability;
         this.idleAnimation = builder.idleAnimation;
-        this.walkAnimation = builder.walkAnimation;
-        this.blockAnimation = builder.blockAnimation;
 
         // Build and configure all moves
         builder.moveConfigs.forEach((moveClass, config) -> {
@@ -173,9 +166,9 @@ public abstract class AbstractKatanaItem extends Item {
     @Getter
     public static class MoveConfiguration {
         private final Supplier<AbstractBreathingAttack<?, ?>> attackSupplier;
-        private final AbstractBreathingAttack<?, ?> breathingAttack;
-        private final ResourceLocation animationId;
-        private final int animationPriority;
+        public final AbstractBreathingAttack<?, ?> breathingAttack;
+        public final ResourceLocation animationId;
+        public final int animationPriority;
 
         // Combat stats
         private final float damage;
@@ -383,11 +376,9 @@ public abstract class AbstractKatanaItem extends Item {
 
         // Animations
         private ResourceLocation idleAnimation;
-        private ResourceLocation walkAnimation;
-        private ResourceLocation blockAnimation;
 
         // Move configurations
-        private final Map<MoveClass, MoveConfiguration> moveConfigs = new HashMap<>();
+        final Map<MoveClass, MoveConfiguration> moveConfigs = new HashMap<>();
 
         public KatanaBuilder(Tier tier) {
             this.tier = tier;
@@ -418,10 +409,8 @@ public abstract class AbstractKatanaItem extends Item {
         /**
          * Sets default animations for idle/walking/blocking states
          */
-        public KatanaBuilder withDefaultAnimations(ResourceLocation idle, ResourceLocation walk, ResourceLocation block) {
+        public KatanaBuilder withDefaultAnimations(ResourceLocation idle) {
             this.idleAnimation = idle;
-            this.walkAnimation = walk;
-            this.blockAnimation = block;
             return this;
         }
 

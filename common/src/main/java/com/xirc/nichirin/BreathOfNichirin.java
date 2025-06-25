@@ -1,7 +1,12 @@
 package com.xirc.nichirin;
 
+import com.xirc.nichirin.client.animation.NichirinAnimations;
+import com.xirc.nichirin.common.attack.component.BreathingMoveMap;
+import com.xirc.nichirin.common.attack.component.BreathingMoveType;
 import com.xirc.nichirin.common.registry.NichirinCreativeTabRegistry;
 import com.xirc.nichirin.common.registry.NichirinItemRegistry;
+import com.xirc.nichirin.common.registry.NichirinPacketRegistry;
+import com.xirc.nichirin.common.util.KatanaInputHandler;
 import dev.architectury.registry.registries.DeferredRegister;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -24,6 +29,11 @@ public final class BreathOfNichirin {
         // Register the registries themselves
         NichirinItemRegistry.ITEM_REGISTRY.register();
         CREATIVE_TAB_REGISTRY.register();
+        NichirinPacketRegistry.init();
+
+        KatanaInputHandler.register();
+
+        NichirinAnimations.init();
 
         LOGGER.info("=== NICHIRIN COMMON INITIALIZATION COMPLETE ===");
     }

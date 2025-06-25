@@ -16,25 +16,21 @@ public interface NichirinCreativeTabRegistry {
 
         BreathOfNichirin.CREATIVE_TAB_REGISTRY.register("main", () -> {
             LOGGER.info("Creating main creative tab...");
-            return CreativeModeTab.builder()
-                    .title(Component.translatable("itemGroup.nichirin.main"))
+            return CreativeModeTab.builder(CreativeModeTab.Row.TOP , 1 )
+                    .title(Component.translatable("itemgroup.nichirin.main"))
                     .icon(() -> {
                         try {
                             // Try to use katana as icon, fallback to diamond sword
-                            return new ItemStack(ModItemRegistry.KATANA.get());
+                            return new ItemStack(NichirinItemRegistry.KATANA.get());
                         } catch (Exception e) {
                             LOGGER.warn("Failed to use katana as icon, using diamond sword fallback");
                             return new ItemStack(Items.DIAMOND_SWORD);
                         }
                     })
                     .displayItems((displayContext, entries) -> {
-                        LOGGER.info("Adding items to creative tab...");
                         try {
-                            entries.accept(ModItemRegistry.TEST_ITEM.get());
-                            entries.accept(ModItemRegistry.KATANA.get());
-                            LOGGER.info("Successfully added items to creative tab");
+                            entries.accept(NichirinItemRegistry.KATANA.get());
                         } catch (Exception e) {
-                            LOGGER.error("Failed to add items to creative tab: ", e);
                         }
                     })
                     .build();

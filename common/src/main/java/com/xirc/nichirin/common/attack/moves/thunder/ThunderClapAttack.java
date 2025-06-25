@@ -61,7 +61,7 @@ public class ThunderClapAttack extends AbstractBreathingAttack {
         }
     }
 
-    @Override
+
     public int getWindupPoint() {
         return 0;
     }
