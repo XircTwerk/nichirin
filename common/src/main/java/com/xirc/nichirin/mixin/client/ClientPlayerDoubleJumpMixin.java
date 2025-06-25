@@ -1,6 +1,6 @@
 package com.xirc.nichirin.mixin.client;
 
-import com.xirc.nichirin.common.systems.slayerabilities.PlayerDoubleJump;
+import com.xirc.nichirin.common.system.slayerabilities.PlayerDoubleJump;
 import com.xirc.nichirin.common.network.DoubleJumpPacket;
 import com.xirc.nichirin.common.registry.NichirinPacketRegistry;
 import net.minecraft.client.player.LocalPlayer;

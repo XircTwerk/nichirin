@@ -1,6 +1,6 @@
 package com.xirc.nichirin.mixin;
 
-import com.xirc.nichirin.common.systems.slayerabilities.PlayerDoubleJump;
+import com.xirc.nichirin.common.system.slayerabilities.PlayerDoubleJump;
 import net.minecraft.world.entity.player.Player;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

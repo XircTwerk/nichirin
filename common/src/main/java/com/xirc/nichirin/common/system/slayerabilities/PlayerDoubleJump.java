@@ -1,4 +1,4 @@
-package com.xirc.nichirin.common.systems.slayerabilities;
+package com.xirc.nichirin.common.system.slayerabilities;
 
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;

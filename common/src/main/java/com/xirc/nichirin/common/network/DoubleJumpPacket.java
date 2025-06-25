@@ -1,6 +1,6 @@
 package com.xirc.nichirin.common.network;
 
-import com.xirc.nichirin.common.systems.slayerabilities.PlayerDoubleJump;
+import com.xirc.nichirin.common.system.slayerabilities.PlayerDoubleJump;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 

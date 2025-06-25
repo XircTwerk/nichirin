@@ -7,7 +7,6 @@ import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -253,7 +252,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack<
     /**
      * Starts the breathing attack
      */
-    public void start(A attacker) {
+    public void start(IBreathingAttacker<?, ?> attacker) {
         if (active) return;
 
         Player player = attacker.getPlayer();
