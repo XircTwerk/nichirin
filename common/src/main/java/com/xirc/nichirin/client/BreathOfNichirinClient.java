@@ -30,13 +30,42 @@ public class BreathOfNichirinClient {
      * Safe method to check if we can perform client-side operations
      */
     public static boolean isClientReady() {
-        Minecraft mc = Minecraft.getInstance();
-        boolean ready = mc != null && mc.player != null && mc.level != null;
-        if (!ready) {
-            System.out.println("DEBUG: Client not ready - MC: " + (mc != null) +
-                    ", Player: " + (mc != null && mc.player != null) +
-                    ", Level: " + (mc != null && mc.level != null));
+        try {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc == null) {
+                System.out.println("DEBUG: Minecraft instance is null");
+                return false;
+            }
+
+            if (mc.player == null) {
+                System.out.println("DEBUG: Minecraft.player is null - client not fully initialized");
+                return false;
+            }
+
+            if (mc.level == null) {
+                System.out.println("DEBUG: Minecraft.level is null - world not loaded");
+                return false;
+            }
+
+            if (mc.player.isRemoved()) {
+                System.out.println("DEBUG: Player is removed from world");
+                return false;
+            }
+
+            // Additional safety checks
+            if (mc.gameMode == null) {
+                System.out.println("DEBUG: GameMode is null - client not ready");
+                return false;
+            }
+
+            System.out.println("DEBUG: Client is ready - Player: " + mc.player.getName().getString() +
+                    ", Level: " + mc.level.dimension().location());
+            return true;
+
+        } catch (Exception e) {
+            System.out.println("DEBUG: Exception in isClientReady(): " + e.getMessage());
+            e.printStackTrace();
+            return false;
         }
-        return ready;
     }
 }

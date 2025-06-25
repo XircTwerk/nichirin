@@ -116,6 +116,7 @@ public class SimpleKatana extends AbstractKatanaItem {
         if (config.animationId != null) {
             System.out.println("DEBUG: Playing animation: " + config.animationId);
             playAnimation(player, config.animationId, config.animationPriority);
+
         }
 
         // Start the breathing attack
@@ -128,5 +129,6 @@ public class SimpleKatana extends AbstractKatanaItem {
     protected void playAnimation(Player player, ResourceLocation animationId, int priority) {
         System.out.println("DEBUG: playAnimation called - " + animationId + " with priority " + priority);
         AnimationUtils.playAnimation(player, animationId.getPath());
+
     }
 }

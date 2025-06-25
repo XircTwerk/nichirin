@@ -138,6 +138,7 @@ public abstract class AbstractKatanaItem extends Item {
             // Play the animation if configured
             if (config.animationId != null) {
                 playAnimation(player, config.animationId, config.animationPriority);
+
             }
 
             // Start the breathing attack

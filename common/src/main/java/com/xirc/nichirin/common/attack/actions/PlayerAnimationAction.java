@@ -37,7 +37,7 @@ public class PlayerAnimationAction {
     public void perform(IPhysicalAttacker<?, ?> attacker) {
         Player player = attacker.getPlayer();
 
-        if (forcePlay || !AnimationUtils.isAnimationPlaying(player)) {
+        if (forcePlay || !AnimationUtils.isAnimationPlaying(player, animationName)) {
             AnimationUtils.playAnimation(player, animationName);
         }
     }

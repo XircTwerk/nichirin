@@ -1,5 +1,6 @@
 package com.xirc.nichirin;
 
+import com.xirc.nichirin.client.BreathOfNichirinClient;
 import com.xirc.nichirin.client.animation.NichirinAnimations;
 import com.xirc.nichirin.common.attack.component.BreathingMoveMap;
 import com.xirc.nichirin.common.attack.component.BreathingMoveType;
@@ -7,7 +8,9 @@ import com.xirc.nichirin.common.registry.NichirinCreativeTabRegistry;
 import com.xirc.nichirin.common.registry.NichirinItemRegistry;
 import com.xirc.nichirin.common.registry.NichirinPacketRegistry;
 import com.xirc.nichirin.common.util.KatanaInputHandler;
+import dev.architectury.platform.Platform;
 import dev.architectury.registry.registries.DeferredRegister;
+import net.fabricmc.api.EnvType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;
@@ -22,7 +25,7 @@ public final class BreathOfNichirin {
     public static void init() {
         LOGGER.info("=== STARTING NICHIRIN COMMON INITIALIZATION ===");
 
-        // Initialize registries (this creates the deferred register entries)
+        // Initialize common registries first (this creates the deferred register entries)
         NichirinItemRegistry.init();
         NichirinCreativeTabRegistry.init();
 
@@ -31,11 +34,28 @@ public final class BreathOfNichirin {
         CREATIVE_TAB_REGISTRY.register();
         NichirinPacketRegistry.init();
 
+        // Initialize input handler (should be safe for both sides)
         KatanaInputHandler.register();
 
-        NichirinAnimations.init();
-
         LOGGER.info("=== NICHIRIN COMMON INITIALIZATION COMPLETE ===");
+
+        // Client-side initialization - do this BEFORE animations
+        if (Platform.getEnv() == EnvType.CLIENT) {
+            System.out.println("DEBUG: Initializing client side");
+            try {
+                BreathOfNichirinClient.init();
+                System.out.println("DEBUG: Client initialization complete");
+
+                // Only initialize animations AFTER client is ready
+                System.out.println("DEBUG: Initializing animations");
+                NichirinAnimations.init();
+                System.out.println("DEBUG: Animation initialization complete");
+
+            } catch (Exception e) {
+                LOGGER.error("ERROR: Failed to initialize client", e);
+                e.printStackTrace();
+            }
+        }
     }
 
     public static ResourceLocation id(String name) {
