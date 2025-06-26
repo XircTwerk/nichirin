@@ -5,6 +5,7 @@ import com.xirc.nichirin.common.attack.component.BreathingMoveMap;
 import com.xirc.nichirin.common.item.katana.AbstractKatanaItem;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.util.enums.MoveInputType;
+import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.server.level.ServerPlayer;
@@ -104,6 +105,15 @@ public class KatanaInputHandler {
      * Send left click packet to server (CLIENT ONLY)
      */
     private static void sendLeftClickToServer() {
+        // First, handle client-side visual feedback
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player != null) {
+            ItemStack heldItem = minecraft.player.getMainHandItem();
+            if (heldItem.getItem() instanceof SimpleKatana simpleKatana) {
+                simpleKatana.displayClientCooldown(minecraft.player);
+            }
+        }
+
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
         // No data needed, just the packet itself
         NetworkManager.sendToServer(LEFT_CLICK_PACKET, buf);

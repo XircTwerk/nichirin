@@ -84,6 +84,25 @@ public class SimpleKatana extends SwordItem {
     }
 
     /**
+     * Called from client to display cooldown when attacking
+     */
+    public void displayClientCooldown(Player player) {
+        if (!player.level().isClientSide) return;
+
+        PlayerAttackState state = getOrCreatePlayerState(player);
+        long currentTime = player.level().getGameTime();
+        boolean isCombo = (currentTime - state.lastAttackTime) <= COMBO_WINDOW && state.comboCount > 0;
+
+        if (isCombo && state.comboCount == 1) {
+            CooldownHUD.setCooldown("Slash2", 15);
+            AnimationUtils.playAnimation(player, "light_slash2");
+        } else {
+            CooldownHUD.setCooldown("Slash1", 10);
+            AnimationUtils.playAnimation(player, "light_slash1");
+        }
+    }
+
+    /**
      * Called when the player left-clicks with this item (M1)
      */
     public void performAttack(Player player) {
@@ -126,8 +145,11 @@ public class SimpleKatana extends SwordItem {
                 state.comboCount = 2;
                 state.slash2CooldownUntil = currentTime + state.currentSlash.getCooldown();
 
+                // Play animation server-side (will sync to clients)
+                AnimationUtils.playAnimation(player, "light_slash2");
+
                 // Store for client sync
-                state.lastAnimationName = "light_slash_2";
+                state.lastAnimationName = "light_slash2";
                 state.lastCooldownName = "Slash2";
                 state.lastCooldownDuration = state.currentSlash.getCooldown();
             } else {
@@ -137,8 +159,11 @@ public class SimpleKatana extends SwordItem {
                 state.comboCount = 1;
                 state.slash1CooldownUntil = currentTime + state.currentSlash.getCooldown();
 
+                // Play animation server-side (will sync to clients)
+                AnimationUtils.playAnimation(player, "light_slash1");
+
                 // Store for client sync
-                state.lastAnimationName = "light_slash_1";
+                state.lastAnimationName = "light_slash1";
                 state.lastCooldownName = "Slash1";
                 state.lastCooldownDuration = state.currentSlash.getCooldown();
             }
@@ -147,26 +172,6 @@ public class SimpleKatana extends SwordItem {
             state.lastAttackTime = currentTime;
 
             System.out.println("DEBUG: Started slash " + state.comboCount + " of combo on server");
-        }
-
-        // Handle client-side effects
-        if (player.level().isClientSide) {
-            // For now, just set some default values since we don't have proper sync
-            // In a real implementation, you'd sync this from server to client
-            long currentTime = player.level().getGameTime();
-            boolean isCombo = (currentTime - state.lastAttackTime) <= COMBO_WINDOW && state.comboCount > 0;
-
-            if (isCombo && state.comboCount == 1) {
-                AnimationUtils.playAnimation(player, "light_slash_2");
-                CooldownHUD.setCooldown("Slash2", 15);
-                state.comboCount = 2;
-            } else {
-                AnimationUtils.playAnimation(player, "light_slash_1");
-                CooldownHUD.setCooldown("Slash1", 10);
-                state.comboCount = 1;
-            }
-
-            state.lastAttackTime = currentTime;
         }
     }
 
@@ -256,7 +261,7 @@ public class SimpleKatana extends SwordItem {
     /**
      * Gets or creates player state
      */
-    private PlayerAttackState getOrCreatePlayerState(Player player) {
+    public PlayerAttackState getOrCreatePlayerState(Player player) {
         return playerStates.computeIfAbsent(player.getUUID(), uuid -> new PlayerAttackState());
     }
 
@@ -275,7 +280,7 @@ public class SimpleKatana extends SwordItem {
     /**
      * Per-player attack state
      */
-    private static class PlayerAttackState {
+    public static class PlayerAttackState {
         long lastAttackTime = 0;
         int comboCount = 0;
         SimpleSlashAttack currentSlash = null;
