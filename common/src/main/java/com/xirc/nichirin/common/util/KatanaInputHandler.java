@@ -7,11 +7,15 @@ import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.util.enums.MoveInputType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.server.level.ServerPlayer;
 import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.event.events.common.InteractionEvent;
 import dev.architectury.event.events.common.TickEvent;
 import dev.architectury.event.EventResult;
-import dev.architectury.event.CompoundEventResult;
+import dev.architectury.networking.NetworkManager;
+import io.netty.buffer.Unpooled;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,61 +31,110 @@ public class KatanaInputHandler {
     // Store SimpleKatana instances per player for tracking
     private static final Map<UUID, SimpleKatana> PLAYER_SIMPLE_KATANAS = new HashMap<>();
 
+    // Network packet ID for left click
+    private static final ResourceLocation LEFT_CLICK_PACKET = new ResourceLocation("nichirin", "left_click");
+
     public static void register() {
         System.out.println("DEBUG: Registering katana input handlers");
 
-        // For left click in air - this event expects void return (no return statement)
-        InteractionEvent.CLIENT_LEFT_CLICK_AIR.register((player, hand) -> {
-            System.out.println("DEBUG: Client left click air detected");
-            handleLeftClick(player);
-            // Don't return anything - this event expects void
-        });
+        // CLIENT SIDE: Detect left clicks and send to server
+        if (isClientSide()) {
+            // For left click in air (client only)
+            InteractionEvent.CLIENT_LEFT_CLICK_AIR.register((player, hand) -> {
+                System.out.println("DEBUG: Client left click air detected");
+                sendLeftClickToServer();
+            });
+        }
 
-        // For right click item - this event expects CompoundEventResult<ItemStack>
-        InteractionEvent.RIGHT_CLICK_ITEM.register((player, hand) -> {
-            System.out.println("DEBUG: Right click item detected (testing)");
-            ItemStack heldItem = player.getItemInHand(hand);
+        // SERVER SIDE: Handle the packet
+        registerServerPacketHandler();
 
-            if (heldItem.getItem() instanceof AbstractKatanaItem || heldItem.getItem() instanceof SimpleKatana) {
-                handleLeftClick(player);
-                return CompoundEventResult.interruptDefault(heldItem);
-            }
-
-            return CompoundEventResult.pass();
-        });
-
-        // For entity attacks - this event expects EventResult
+        // For entity attacks - this runs on both sides
         PlayerEvent.ATTACK_ENTITY.register((player, level, entity, hand, hitResult) -> {
-            System.out.println("DEBUG: Attack entity detected");
+            System.out.println("DEBUG: Attack entity detected on " + (level.isClientSide ? "CLIENT" : "SERVER"));
             ItemStack heldItem = player.getItemInHand(hand);
 
-            // If it's a katana, handle our custom attack and prevent vanilla attack
+            // If it's a katana, handle our custom attack
             if (heldItem.getItem() instanceof SimpleKatana || heldItem.getItem() instanceof AbstractKatanaItem) {
-                handleLeftClick(player);
+                if (!level.isClientSide) {
+                    // Server side - perform the attack
+                    handleLeftClick(player);
+                } else {
+                    // Client side - send packet to server
+                    sendLeftClickToServer();
+                }
                 return EventResult.interruptFalse(); // Prevent vanilla attack
             }
 
             return EventResult.pass();
         });
 
-        // Register player tick event to update katanas
+        // Register player tick event to update katanas (runs on both sides)
         TickEvent.PLAYER_POST.register(player -> {
-            tickPlayer(player);
+            if (!player.level().isClientSide) {
+                tickPlayer(player);
+            }
         });
 
         // Clean up when player leaves
         PlayerEvent.PLAYER_QUIT.register(player -> {
-            cleanupPlayer(player);
+            if (!player.level().isClientSide) {
+                cleanupPlayer(player);
+            }
+        });
+    }
+
+    /**
+     * Check if we're on client side (careful with side-specific code)
+     */
+    private static boolean isClientSide() {
+        try {
+            // This will only work on client
+            Class.forName("net.minecraft.client.Minecraft");
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Send left click packet to server (CLIENT ONLY)
+     */
+    private static void sendLeftClickToServer() {
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+        // No data needed, just the packet itself
+        NetworkManager.sendToServer(LEFT_CLICK_PACKET, buf);
+    }
+
+    /**
+     * Register server packet handler
+     */
+    private static void registerServerPacketHandler() {
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, LEFT_CLICK_PACKET, (buf, context) -> {
+            ServerPlayer player = (ServerPlayer) context.getPlayer();
+            if (player != null) {
+                // Schedule on main thread
+                context.queue(() -> {
+                    System.out.println("DEBUG: Server received left click packet from " + player.getName().getString());
+                    handleLeftClick(player);
+                });
+            }
         });
     }
 
     private static void handleLeftClick(Player player) {
+        // Make sure we're on server side
+        if (player.level().isClientSide) {
+            System.out.println("DEBUG: handleLeftClick called on client side, ignoring");
+            return;
+        }
+
         ItemStack heldItem = player.getMainHandItem();
-        System.out.println("DEBUG: Held item: " + heldItem.getItem().getClass().getSimpleName());
+        System.out.println("DEBUG: Server handling left click - Held item: " + heldItem.getItem().getClass().getSimpleName());
 
         // Handle SimpleKatana
         if (heldItem.getItem() instanceof SimpleKatana simpleKatana) {
-            System.out.println("DEBUG: Found SimpleKatana in main hand, triggering attack");
+            System.out.println("DEBUG: Found SimpleKatana in main hand, triggering attack on server");
 
             // Get or create instance tracker for this player
             SimpleKatana katanaInstance = getSimpleKatanaForPlayer(player, simpleKatana);
@@ -105,7 +158,7 @@ public class KatanaInputHandler {
     }
 
     /**
-     * Tick all katanas for the player
+     * Tick all katanas for the player (SERVER ONLY)
      */
     private static void tickPlayer(Player player) {
         // Tick breathing attacker if exists

@@ -7,6 +7,7 @@ import com.xirc.nichirin.common.attack.component.BreathingMoveType;
 import com.xirc.nichirin.common.registry.NichirinCreativeTabRegistry;
 import com.xirc.nichirin.common.registry.NichirinItemRegistry;
 import com.xirc.nichirin.common.registry.NichirinPacketRegistry;
+import com.xirc.nichirin.common.registry.NichirinParticleRegistry;
 import com.xirc.nichirin.common.util.KatanaInputHandler;
 import dev.architectury.platform.Platform;
 import dev.architectury.registry.registries.DeferredRegister;
@@ -33,7 +34,7 @@ public final class BreathOfNichirin {
         NichirinItemRegistry.ITEM_REGISTRY.register();
         CREATIVE_TAB_REGISTRY.register();
         NichirinPacketRegistry.init();
-
+        NichirinParticleRegistry.init();
         // Initialize input handler (should be safe for both sides)
         KatanaInputHandler.register();
 

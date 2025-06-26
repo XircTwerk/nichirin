@@ -16,9 +16,9 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Simple slash attack that doesn't depend on the complex attack system
+ * Second attack in the combo - a slicing motion with different particles
  */
-public class SimpleSlashAttack {
+public class SimpleSliceAttack {
 
     // Configuration
     private final int startup;
@@ -40,7 +40,7 @@ public class SimpleSlashAttack {
     private boolean hasHit = false;
     private final Set<LivingEntity> hitEntities = new HashSet<>();
 
-    public SimpleSlashAttack(int startup, int active, int recovery, int cooldown, float damage, float range,
+    public SimpleSliceAttack(int startup, int active, int recovery, int cooldown, float damage, float range,
                              float knockback, float hitboxSize, Vec3 hitboxOffset, int hitStun,
                              SoundEvent startSound, SoundEvent hitSound) {
         this.startup = startup;
@@ -118,14 +118,14 @@ public class SimpleSlashAttack {
             return this;
         }
 
-        public SimpleSlashAttack build() {
-            return new SimpleSlashAttack(startup, active, recovery, cooldown, damage, range, knockback,
+        public SimpleSliceAttack build() {
+            return new SimpleSliceAttack(startup, active, recovery, cooldown, damage, range, knockback,
                     hitboxSize, hitboxOffset, hitStun, startSound, hitSound);
         }
     }
 
     public void start(Player player) {
-        System.out.println("DEBUG: SimpleSlashAttack start called");
+        System.out.println("DEBUG: SimpleSliceAttack start called");
 
         // Only run on server side
         if (player.level().isClientSide()) {
@@ -138,13 +138,13 @@ public class SimpleSlashAttack {
         hitEntities.clear();
         isActive = true;
 
-        // Create slash particles
-        createSlashParticles(player, player.level());
+        // Create slice particles (different from slash)
+        createSliceParticles(player, player.level());
 
         // Play start sound
         if (startSound != null) {
             player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
-                    startSound, SoundSource.PLAYERS, 1.0f, 1.0f);
+                    startSound, SoundSource.PLAYERS, 1.0f, 1.2f); // Slightly higher pitch
         }
     }
 
@@ -173,8 +173,6 @@ public class SimpleSlashAttack {
     }
 
     private void performHitDetection(Player user, Level world) {
-        System.out.println("DEBUG: Performing hit detection");
-
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDir = user.getLookAngle();
         Vec3 hitboxCenter = userPos.add(lookDir.scale(range)).add(hitboxOffset);
@@ -189,15 +187,9 @@ public class SimpleSlashAttack {
                 hitboxCenter.z + hitboxSize
         );
 
-        System.out.println("DEBUG: Hitbox center: " + hitboxCenter);
-        System.out.println("DEBUG: Hitbox size: " + hitboxSize);
-        System.out.println("DEBUG: Hitbox bounds: " + hitbox);
-
         // Find targets
         List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
                 entity -> entity != user && entity.isAlive() && !hitEntities.contains(entity));
-
-        System.out.println("DEBUG: Found " + targets.size() + " potential targets");
 
         if (!targets.isEmpty()) {
             hasHit = true;
@@ -221,53 +213,46 @@ public class SimpleSlashAttack {
                 // Add to hit list
                 hitEntities.add(target);
 
-                // Create hit particles
+                // Create hit particles - ENCHANTED_HIT for slice attack
                 if (world instanceof ServerLevel serverLevel) {
-                    serverLevel.sendParticles(ParticleTypes.CRIT,
+                    serverLevel.sendParticles(ParticleTypes.ENCHANTED_HIT,
                             target.getX(), target.getY() + target.getBbHeight() / 2, target.getZ(),
-                            10, 0.2, 0.2, 0.2, 0.1);
-                    System.out.println("DEBUG: Created hit particles for " + target.getName().getString());
+                            15, 0.3, 0.3, 0.3, 0.2);
                 }
 
                 // Play hit sound
                 if (hitSound != null) {
                     world.playSound(null, target.getX(), target.getY(), target.getZ(),
-                            hitSound, SoundSource.PLAYERS, 1.0f, 1.0f);
+                            hitSound, SoundSource.PLAYERS, 1.0f, 1.2f);
                 }
-
-                System.out.println("DEBUG: Hit " + target.getName().getString() + " for " + damage + " damage");
             }
         }
     }
 
-    private void createSlashParticles(Player user, Level world) {
+    private void createSliceParticles(Player user, Level world) {
         if (!(world instanceof ServerLevel serverLevel)) {
-            System.out.println("DEBUG: Not server level, skipping particles");
             return;
         }
-
-        System.out.println("DEBUG: Creating slash particles");
 
         double radius = range;
         Vec3 userPos = user.position().add(0, user.getBbHeight() * 0.75, 0);
         Vec3 lookDir = user.getLookAngle();
 
-        // Create arc of particles
-        for (int i = -30; i <= 30; i += 10) {
+        // Create horizontal line of particles for slice effect
+        for (int i = -45; i <= 45; i += 5) {
             double angle = Math.toRadians(i);
             Vec3 offset = lookDir.yRot((float)angle).scale(radius);
             Vec3 particlePos = userPos.add(offset);
 
-            serverLevel.sendParticles(ParticleTypes.SWEEP_ATTACK,
+            // Use enchanted hit particles for slice
+            serverLevel.sendParticles(ParticleTypes.ENCHANTED_HIT,
                     particlePos.x, particlePos.y, particlePos.z,
-                    1, 0, 0, 0, 0);
+                    2, 0.1, 0, 0.1, 0.05);
         }
-
-        System.out.println("DEBUG: Created " + (60/10+1) + " sweep particles");
     }
 
     private void end(Player player) {
-        System.out.println("DEBUG: SimpleSlashAttack ended");
+        System.out.println("DEBUG: SimpleSliceAttack ended");
         isActive = false;
         hitEntities.clear();
     }
