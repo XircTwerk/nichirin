@@ -69,6 +69,9 @@ public class KatanaInputHandler {
             return EventResult.pass();
         });
 
+        // Note: Right-click is handled by the item's use() method automatically
+        // We don't need to intercept it here
+
         // Register player tick event to update katanas (runs on both sides)
         TickEvent.PLAYER_POST.register(player -> {
             if (!player.level().isClientSide) {
