@@ -1,17 +1,25 @@
 package com.xirc.nichirin.client;
 
+import com.xirc.nichirin.client.animation.AnimationRegistryHelper;
+import com.xirc.nichirin.common.registry.NichirinParticleRegistry;
 import dev.architectury.event.events.client.ClientTickEvent;
 import dev.architectury.registry.client.keymappings.KeyMappingRegistry;
+import dev.architectury.registry.client.particle.ParticleProviderRegistry;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import com.xirc.nichirin.client.particle.ThunderParticleProvider;
 
 @Environment(EnvType.CLIENT)
 public class BreathOfNichirinClient {
 
     // Add this field to track initialization state
     private static boolean initialized = false;
+
+    private static void registerParticles() {
+        ParticleProviderRegistry.register(NichirinParticleRegistry.THUNDER, ThunderParticleProvider::new);
+    }
 
     public static void init() {
         System.out.println("DEBUG: BreathOfNichirinClient.init() called");
@@ -25,6 +33,14 @@ public class BreathOfNichirinClient {
                         ", Level: " + (minecraft.level != null ? "exists" : "null"));
             }
         });
+
+        // Register client events (HUD rendering)
+        ClientEventHandler.register();
+
+        // Preload animations
+        AnimationRegistryHelper.preloadAnimations();
+
+        registerParticles();
 
         System.out.println("DEBUG: Client initialization complete");
 
