@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.util;
 
 import com.xirc.nichirin.client.BreathOfNichirinClient;
+import com.xirc.nichirin.client.animation.AnimationRegistryHelper;
 import com.xirc.nichirin.client.animation.NichirinAnimations;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -82,14 +83,16 @@ public class AnimationUtils {
             return;
         }
 
-        System.out.println("DEBUG: All checks passed, mapping animation name");
-        ResourceLocation animation = mapAnimationName(animationName);
-        System.out.println("DEBUG: Mapped animation: " + animation);
+        System.out.println("DEBUG: All checks passed, playing animation: " + animationName);
 
-        // FIXED: Actually play the animation using NichirinAnimations
+        // Play the animation using NichirinAnimations
         if (player instanceof AbstractClientPlayer clientPlayer) {
-            System.out.println("DEBUG: Calling NichirinAnimations.playAnimation()");
-            NichirinAnimations.playAnimation(clientPlayer, animation);
+            System.out.println("DEBUG: Player is AbstractClientPlayer, proceeding with animation");
+
+            // First, try to get the animation through the mapped resource location
+            ResourceLocation animLoc = mapAnimationName(animationName);
+            System.out.println("DEBUG: Using resource location: " + animLoc);
+            NichirinAnimations.playAnimation(clientPlayer, animLoc);
         } else {
             System.err.println("DEBUG: Player is not an AbstractClientPlayer, cannot play animation");
         }
