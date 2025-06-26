@@ -1,9 +1,11 @@
 package com.xirc.nichirin.common.util;
 
 import com.xirc.nichirin.client.BreathOfNichirinClient;
+import com.xirc.nichirin.client.animation.NichirinAnimations;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
@@ -84,9 +86,13 @@ public class AnimationUtils {
         ResourceLocation animation = mapAnimationName(animationName);
         System.out.println("DEBUG: Mapped animation: " + animation);
 
-        // Here you would actually trigger your animation system
-        // For now, just log success
-        System.out.println("DEBUG: Animation '" + animationName + "' would be played for player " + player.getName().getString());
+        // FIXED: Actually play the animation using NichirinAnimations
+        if (player instanceof AbstractClientPlayer clientPlayer) {
+            System.out.println("DEBUG: Calling NichirinAnimations.playAnimation()");
+            NichirinAnimations.playAnimation(clientPlayer, animation);
+        } else {
+            System.err.println("DEBUG: Player is not an AbstractClientPlayer, cannot play animation");
+        }
     }
 
     /**
@@ -171,8 +177,11 @@ public class AnimationUtils {
             return;
         }
 
-        // TODO: Implement actual animation stopping
-        System.out.println("DEBUG: Animation '" + animationName + "' would be stopped for player " + player.getName().getString());
+        // FIXED: Actually stop the animation using NichirinAnimations
+        if (player instanceof AbstractClientPlayer clientPlayer) {
+            System.out.println("DEBUG: Calling NichirinAnimations.stopAnimation()");
+            NichirinAnimations.stopAnimation(clientPlayer);
+        }
     }
 
     /**
@@ -242,24 +251,24 @@ public class AnimationUtils {
         switch (animationName.toLowerCase()) {
             case "light_slash_1":
             case "light-slash-1":
-                System.out.println("DEBUG: Mapped to LIGHT_SLASH_1");
-                return new ResourceLocation("nichirin", "attacks.basic.light_slash_1");
+                System.out.println("DEBUG: Mapped to sword.slash");
+                return new ResourceLocation("nichirin", "attacks/basic/sword.slash");
             case "light_slash_2":
             case "light-slash-2":
-                System.out.println("DEBUG: Mapped to LIGHT_SLASH_2");
-                return new ResourceLocation("nichirin", "attacks.basic.light_slash_2");
+                System.out.println("DEBUG: Mapped to sword.slash2");
+                return new ResourceLocation("nichirin", "attacks/basic/sword.slash2");
             case "katana_idle":
                 System.out.println("DEBUG: Mapped to KATANA_IDLE");
                 return new ResourceLocation("nichirin", "katana_idle");
             default:
                 // Try to construct a path for attacks/basic folder
                 if (animationName.startsWith("light_slash") || animationName.contains("slash")) {
-                    ResourceLocation result = new ResourceLocation("nichirin", "attacks.basic." + animationName);
+                    ResourceLocation result = new ResourceLocation("nichirin", "attacks/basic/" + animationName);
                     System.out.println("DEBUG: Mapped slash animation to: " + result);
                     return result;
                 }
                 // Default path
-                ResourceLocation result = new ResourceLocation("nichirin", "attacks.basic." + animationName);
+                ResourceLocation result = new ResourceLocation("nichirin", "attacks/basic/" + animationName);
                 System.out.println("DEBUG: Mapped to default path: " + result);
                 return result;
         }

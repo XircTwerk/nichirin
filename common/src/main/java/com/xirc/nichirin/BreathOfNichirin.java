@@ -37,6 +37,7 @@ public final class BreathOfNichirin {
         // Initialize input handler (should be safe for both sides)
         KatanaInputHandler.register();
 
+
         LOGGER.info("=== NICHIRIN COMMON INITIALIZATION COMPLETE ===");
 
         // Client-side initialization - do this BEFORE animations

@@ -10,6 +10,9 @@ import net.minecraft.client.player.LocalPlayer;
 @Environment(EnvType.CLIENT)
 public class BreathOfNichirinClient {
 
+    // Add this field to track initialization state
+    private static boolean initialized = false;
+
     public static void init() {
         System.out.println("DEBUG: BreathOfNichirinClient.init() called");
 
@@ -24,48 +27,23 @@ public class BreathOfNichirinClient {
         });
 
         System.out.println("DEBUG: Client initialization complete");
+
+        // Mark as initialized after all setup is complete
+        initialized = true;
     }
 
     /**
      * Safe method to check if we can perform client-side operations
      */
     public static boolean isClientReady() {
-        try {
-            Minecraft mc = Minecraft.getInstance();
-            if (mc == null) {
-                System.out.println("DEBUG: Minecraft instance is null");
-                return false;
-            }
-
-            if (mc.player == null) {
-                System.out.println("DEBUG: Minecraft.player is null - client not fully initialized");
-                return false;
-            }
-
-            if (mc.level == null) {
-                System.out.println("DEBUG: Minecraft.level is null - world not loaded");
-                return false;
-            }
-
-            if (mc.player.isRemoved()) {
-                System.out.println("DEBUG: Player is removed from world");
-                return false;
-            }
-
-            // Additional safety checks
-            if (mc.gameMode == null) {
-                System.out.println("DEBUG: GameMode is null - client not ready");
-                return false;
-            }
-
-            System.out.println("DEBUG: Client is ready - Player: " + mc.player.getName().getString() +
-                    ", Level: " + mc.level.dimension().location());
-            return true;
-
-        } catch (Exception e) {
-            System.out.println("DEBUG: Exception in isClientReady(): " + e.getMessage());
-            e.printStackTrace();
+        if (!initialized) {
             return false;
         }
+
+        Minecraft minecraft = Minecraft.getInstance();
+        return minecraft != null &&
+                minecraft.level != null &&
+                minecraft.player != null &&
+                !minecraft.player.isRemoved();
     }
 }

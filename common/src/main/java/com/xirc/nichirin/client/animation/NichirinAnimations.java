@@ -3,6 +3,8 @@ package com.xirc.nichirin.client.animation;
 import dev.kosmx.playerAnim.api.layered.IAnimation;
 import dev.kosmx.playerAnim.api.layered.KeyframeAnimationPlayer;
 import dev.kosmx.playerAnim.api.layered.ModifierLayer;
+import dev.kosmx.playerAnim.api.layered.modifier.AbstractFadeModifier;
+import dev.kosmx.playerAnim.core.util.Ease;
 import dev.kosmx.playerAnim.api.firstPerson.FirstPersonMode;
 import dev.kosmx.playerAnim.minecraftApi.PlayerAnimationAccess;
 import dev.kosmx.playerAnim.minecraftApi.PlayerAnimationRegistry;
@@ -18,9 +20,10 @@ import net.fabricmc.api.Environment;
 @Environment(EnvType.CLIENT)
 public class NichirinAnimations {
 
-    // Animation identifiers - updated to match your folder structure
-    public static final ResourceLocation LIGHT_SLASH_1 = new ResourceLocation("nichirin", "attacks.basic.light_slash_1");
-    public static final ResourceLocation LIGHT_SLASH_2 = new ResourceLocation("nichirin", "attacks.basic.light_slash_2");
+    // Animation identifiers - updated to match actual file names
+    // The format should match: modid:folder/structure/filename (without .json)
+    public static final ResourceLocation LIGHT_SLASH_1 = new ResourceLocation("nichirin", "attacks/basic/sword.slash");
+    public static final ResourceLocation LIGHT_SLASH_2 = new ResourceLocation("nichirin", "attacks/basic/sword.slash2");
     //public static final ResourceLocation KATANA_IDLE = new ResourceLocation("nichirin", "katana_idle");
     //public static final ResourceLocation KATANA_WALK = new ResourceLocation("nichirin", "katana_walk");
     //public static final ResourceLocation KATANA_BLOCK = new ResourceLocation("nichirin", "katana_block");
@@ -39,6 +42,9 @@ public class NichirinAnimations {
         System.out.println("DEBUG: Expected animation paths:");
         System.out.println("  - " + LIGHT_SLASH_1);
         System.out.println("  - " + LIGHT_SLASH_2);
+
+        // Call debug method to test what's actually registered
+        debugAnimationRegistry();
     }
 
     /**
@@ -47,13 +53,14 @@ public class NichirinAnimations {
     public static void debugAnimationRegistry() {
         System.out.println("DEBUG: Testing animation registry...");
 
-        // Test various possible paths
+        // Test various possible paths for attack
         String[] testPaths = {
-                "nichirin:light_slash_2",
-                "nichirin:attacks.basic.light_slash_2",
-                "nichirin:attacks/basic/light_slash_2",
-                "nichirin:basic.light_slash_2",
-                "nichirin:basic/light_slash_2"
+                "nichirin:sword.slash",
+                "nichirin:sword.slash2",
+                "nichirin:attacks/basic/sword.slash",
+                "nichirin:attacks/basic/sword.slash2",
+                "nichirin:basic/sword.slash",
+                "nichirin:basic/sword.slash2"
         };
 
         for (String path : testPaths) {
@@ -68,7 +75,18 @@ public class NichirinAnimations {
      * This is where you set up the animation layer for the player
      */
     private static void onPlayerAnimationRegister(AbstractClientPlayer player, dev.kosmx.playerAnim.api.layered.AnimationStack animationStack) {
-        System.out.println("DEBUG: Registering animation layer for player: " + player.getName().getString());
+        // FIXED: Safer debug logging that handles null cases
+        try {
+            String playerName = "Unknown";
+            if (player != null && player.getGameProfile() != null && player.getGameProfile().getName() != null) {
+                playerName = player.getGameProfile().getName();
+            } else if (player != null) {
+                playerName = "Player-" + player.getId();
+            }
+            System.out.println("DEBUG: Registering animation layer for player: " + playerName);
+        } catch (Exception e) {
+            System.out.println("DEBUG: Registering animation layer for player (name unavailable)");
+        }
 
         // Create a single ModifierLayer for all animations
         ModifierLayer<IAnimation> animationLayer = new ModifierLayer<>();
@@ -99,8 +117,8 @@ public class NichirinAnimations {
     public static void playAnimation(AbstractClientPlayer player, ResourceLocation animationId) {
         // CRASH FIX: Exit immediately if player or minecraft instance is null
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.player == null) {
-            System.out.println("DEBUG: Skipping animation - player or minecraft is null");
+        if (minecraft == null || minecraft.player == null) {
+            System.out.println("DEBUG: Skipping animation - minecraft or player is null");
             return;
         }
 
@@ -121,24 +139,40 @@ public class NichirinAnimations {
                 // Debug: Try to find what animations ARE registered
                 System.out.println("DEBUG: Trying alternative paths...");
 
+                // Extract just the animation name from the path
+                String animName = animationId.getPath();
+                if (animName.contains("/")) {
+                    animName = animName.substring(animName.lastIndexOf("/") + 1);
+                }
+
                 // Try without the folder structure
-                ResourceLocation altId1 = new ResourceLocation("nichirin", "light_slash_2");
+                ResourceLocation altId1 = new ResourceLocation("nichirin", animName);
                 var altAnim1 = PlayerAnimationRegistry.getAnimation(altId1);
                 if (altAnim1 != null) {
                     System.out.println("DEBUG: Found animation at: " + altId1);
                     animation = altAnim1;
                 } else {
-                    // Try with underscores replaced by dots
-                    ResourceLocation altId2 = new ResourceLocation("nichirin", animationId.getPath().replace("_", "."));
-                    var altAnim2 = PlayerAnimationRegistry.getAnimation(altId2);
-                    if (altAnim2 != null) {
-                        System.out.println("DEBUG: Found animation at: " + altId2);
-                        animation = altAnim2;
+                    // Try with different path combinations
+                    String[] pathVariations = {
+                            "attacks/basic/" + animName,
+                            "basic/" + animName,
+                            animName.replace(".", "/"),
+                            animName.replace("_", ".")
+                    };
+
+                    for (String path : pathVariations) {
+                        ResourceLocation testId = new ResourceLocation("nichirin", path);
+                        var testAnim = PlayerAnimationRegistry.getAnimation(testId);
+                        if (testAnim != null) {
+                            System.out.println("DEBUG: Found animation at: " + testId);
+                            animation = testAnim;
+                            break;
+                        }
                     }
                 }
 
                 if (animation == null) {
-                    System.err.println("DEBUG: No alternative animation paths worked");
+                    System.err.println("DEBUG: No alternative animation paths worked for " + animName);
                     return;
                 }
             } else {
@@ -152,12 +186,29 @@ public class NichirinAnimations {
             if (animationLayer != null) {
                 System.out.println("DEBUG: Playing animation on layer");
 
-                // Create animation player
-                var animationPlayer = new KeyframeAnimationPlayer(animation)
-                        .setFirstPersonMode(FirstPersonMode.THIRD_PERSON_MODEL);
+                // Create animation player with proper configuration
+                var animationPlayer = new KeyframeAnimationPlayer(animation);
 
-                // Set the animation on the layer
-                animationLayer.setAnimation(animationPlayer);
+                // Configure the animation player for smooth playback
+                animationPlayer.setFirstPersonMode(FirstPersonMode.THIRD_PERSON_MODEL);
+
+                // Check if there's already an animation playing and use fade transition
+                IAnimation currentAnim = animationLayer.getAnimation();
+                if (currentAnim != null) {
+                    // Use replaceAnimationWithFade for smooth transition
+                    animationLayer.replaceAnimationWithFade(
+                            AbstractFadeModifier.standardFadeIn(5, Ease.INOUTSINE),
+                            animationPlayer
+                    );
+                    System.out.println("DEBUG: Animation set with fade transition");
+                } else {
+                    // First animation, just set it directly
+                    animationLayer.setAnimation(animationPlayer);
+                    System.out.println("DEBUG: Animation set directly");
+                }
+
+                System.out.println("DEBUG: Animation configured successfully");
+
                 System.out.println("DEBUG: Animation set successfully");
             } else {
                 System.err.println("DEBUG: Animation layer not found for player");
@@ -178,7 +229,7 @@ public class NichirinAnimations {
     public static void stopAnimation(AbstractClientPlayer player) {
         // CRASH FIX: Exit immediately if player or minecraft instance is null
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.player == null) {
+        if (minecraft == null || minecraft.player == null) {
             return;
         }
 
