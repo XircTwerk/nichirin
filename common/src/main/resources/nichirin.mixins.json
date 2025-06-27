@@ -7,7 +7,8 @@
     "client.ClientPlayerDoubleJumpMixin"
   ],
   "mixins": [
-    "PlayerDoubleJumpMixin"
+    "PlayerDoubleJumpMixin",
+    "PlayerFallDamageMixin"
   ],
   "injectors": {
     "defaultRequire": 1

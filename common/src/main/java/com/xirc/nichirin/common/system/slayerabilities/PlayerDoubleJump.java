@@ -23,6 +23,7 @@ public class PlayerDoubleJump {
     private static final double DOUBLE_JUMP_VELOCITY = 0.42;
     private static final int PARTICLE_COUNT = 40;
     private static final float PARTICLE_SPREAD = 0.25f;
+    private static final float FALL_DAMAGE_REDUCTION = 4.0f; // Reduces fall damage by 4 blocks worth
 
     /**
      * Call this when a player attempts to jump
@@ -100,14 +101,15 @@ public class PlayerDoubleJump {
 
         // Mark as used FIRST
         state.hasDoubleJumped = true;
-        System.out.println("MARKED as used - hasDoubleJumped = true");
+        state.fallDistanceAtDoubleJump = player.fallDistance; // Record fall distance when double jumping
+        System.out.println("MARKED as used - hasDoubleJumped = true, recorded fall distance: " + state.fallDistanceAtDoubleJump);
 
         // Apply jump velocity - increased for more noticeable effect
         Vec3 velocity = player.getDeltaMovement();
         player.setDeltaMovement(velocity.x, DOUBLE_JUMP_VELOCITY * 1.5, velocity.z);
 
-        // Reset fall distance
-        player.fallDistance = 0;
+        // Don't reset fall distance here - we'll reduce it when they land
+        // player.fallDistance = 0; // REMOVED - we track it instead
 
         // Sync to client if on server
         if (player instanceof ServerPlayer serverPlayer) {
@@ -271,6 +273,7 @@ public class PlayerDoubleJump {
             state.hasDoubleJumped = false;
             state.hasLeftGround = false;
             state.airTicks = 0;
+            state.fallDistanceAtDoubleJump = 0;
 
             System.out.println("Double jump and left ground states reset");
         }
@@ -308,6 +311,7 @@ public class PlayerDoubleJump {
         state.hasDoubleJumped = false;
         state.hasLeftGround = false;
         state.airTicks = 0;
+        state.fallDistanceAtDoubleJump = 0;
         System.out.println("Force reset double jump for: " + player.getName().getString());
     }
 
@@ -319,6 +323,28 @@ public class PlayerDoubleJump {
     }
 
     /**
+     * Calculate the reduced fall damage for a player who double jumped
+     * Call this before fall damage is applied
+     */
+    public static float getReducedFallDistance(Player player) {
+        JumpState state = getOrCreateState(player);
+
+        // If player double jumped, reduce the effective fall distance
+        if (state.hasDoubleJumped && state.fallDistanceAtDoubleJump > 0) {
+            float currentFallDistance = player.fallDistance;
+            float reducedDistance = Math.max(0, currentFallDistance - FALL_DAMAGE_REDUCTION);
+
+            System.out.println("DEBUG: Reducing fall damage - Original: " + currentFallDistance +
+                    ", Reduced: " + reducedDistance +
+                    " (reduction: " + FALL_DAMAGE_REDUCTION + ")");
+
+            return reducedDistance;
+        }
+
+        return player.fallDistance;
+    }
+
+    /**
      * Jump state for each player
      */
     private static class JumpState {
@@ -327,5 +353,6 @@ public class PlayerDoubleJump {
         boolean initialized = false;
         boolean hasLeftGround = false; // Track if player has left ground since last landing
         int airTicks = 0; // Track how many ticks player has been in air
+        float fallDistanceAtDoubleJump = 0; // Track fall distance when double jump was performed
     }
 }

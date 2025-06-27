@@ -2,8 +2,6 @@ package com.xirc.nichirin;
 
 import com.xirc.nichirin.client.BreathOfNichirinClient;
 import com.xirc.nichirin.client.animation.NichirinAnimations;
-import com.xirc.nichirin.common.attack.component.BreathingMoveMap;
-import com.xirc.nichirin.common.attack.component.BreathingMoveType;
 import com.xirc.nichirin.common.registry.NichirinCreativeTabRegistry;
 import com.xirc.nichirin.common.registry.NichirinItemRegistry;
 import com.xirc.nichirin.common.registry.NichirinPacketRegistry;
@@ -37,7 +35,6 @@ public final class BreathOfNichirin {
         NichirinParticleRegistry.init();
         // Initialize input handler (should be safe for both sides)
         KatanaInputHandler.register();
-
 
         LOGGER.info("=== NICHIRIN COMMON INITIALIZATION COMPLETE ===");
 
