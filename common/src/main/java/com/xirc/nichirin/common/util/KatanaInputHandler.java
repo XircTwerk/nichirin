@@ -5,18 +5,20 @@ import com.xirc.nichirin.common.attack.component.BreathingMoveMap;
 import com.xirc.nichirin.common.item.katana.AbstractKatanaItem;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.util.enums.MoveInputType;
-import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.client.Minecraft;
 import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.event.events.common.InteractionEvent;
 import dev.architectury.event.events.common.TickEvent;
 import dev.architectury.event.EventResult;
+import dev.architectury.event.CompoundEventResult;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.InteractionHand;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -32,8 +34,10 @@ public class KatanaInputHandler {
     // Store SimpleKatana instances per player for tracking
     private static final Map<UUID, SimpleKatana> PLAYER_SIMPLE_KATANAS = new HashMap<>();
 
-    // Network packet ID for left click
+    // Network packet IDs
     private static final ResourceLocation LEFT_CLICK_PACKET = new ResourceLocation("nichirin", "left_click");
+    private static final ResourceLocation RIGHT_CLICK_PACKET = new ResourceLocation("nichirin", "right_click");
+    private static final ResourceLocation RIGHT_CLICK_CROUCH_PACKET = new ResourceLocation("nichirin", "right_click_crouch");
 
     public static void register() {
         System.out.println("DEBUG: Registering katana input handlers");
@@ -43,7 +47,19 @@ public class KatanaInputHandler {
             // For left click in air (client only)
             InteractionEvent.CLIENT_LEFT_CLICK_AIR.register((player, hand) -> {
                 System.out.println("DEBUG: Client left click air detected");
-                sendLeftClickToServer();
+                ItemStack heldItem = player.getItemInHand(hand);
+                if (heldItem.getItem() instanceof SimpleKatana || heldItem.getItem() instanceof AbstractKatanaItem) {
+                    sendLeftClickToServer(player);
+                }
+            });
+
+            // For right click with item (client only)
+            InteractionEvent.CLIENT_RIGHT_CLICK_AIR.register((player, hand) -> {
+                System.out.println("DEBUG: Client right click air detected");
+                ItemStack heldItem = player.getItemInHand(hand);
+                if (heldItem.getItem() instanceof SimpleKatana || heldItem.getItem() instanceof AbstractKatanaItem) {
+                    sendRightClickToServer(player);
+                }
             });
         }
 
@@ -62,16 +78,13 @@ public class KatanaInputHandler {
                     handleLeftClick(player);
                 } else {
                     // Client side - send packet to server
-                    sendLeftClickToServer();
+                    sendLeftClickToServer(player);
                 }
                 return EventResult.interruptFalse(); // Prevent vanilla attack
             }
 
             return EventResult.pass();
         });
-
-        // Note: Right-click is handled by the item's use() method automatically
-        // We don't need to intercept it here
 
         // Register player tick event to update katanas (runs on both sides)
         TickEvent.PLAYER_POST.register(player -> {
@@ -104,13 +117,16 @@ public class KatanaInputHandler {
     /**
      * Send left click packet to server (CLIENT ONLY)
      */
-    private static void sendLeftClickToServer() {
-        // First, handle client-side visual feedback
-        Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.player != null) {
-            ItemStack heldItem = minecraft.player.getMainHandItem();
-            if (heldItem.getItem() instanceof SimpleKatana simpleKatana) {
-                simpleKatana.displayClientCooldown(minecraft.player);
+    private static void sendLeftClickToServer(Player player) {
+        // Handle client-side visual feedback
+        if (isClientSide()) {
+            Minecraft minecraft = Minecraft.getInstance();
+            if (minecraft.player != null) {
+                ItemStack heldItem = minecraft.player.getMainHandItem();
+                if (heldItem.getItem() instanceof SimpleKatana simpleKatana) {
+                    // Use existing displayClientCooldown method
+                    simpleKatana.displayClientCooldown(minecraft.player);
+                }
             }
         }
 
@@ -120,9 +136,33 @@ public class KatanaInputHandler {
     }
 
     /**
+     * Send right click packet to server (CLIENT ONLY)
+     */
+    private static void sendRightClickToServer(Player player) {
+        boolean isCrouching = player.isCrouching();
+        ResourceLocation packetId = isCrouching ? RIGHT_CLICK_CROUCH_PACKET : RIGHT_CLICK_PACKET;
+
+        // Handle client-side visual feedback
+        if (isClientSide()) {
+            Minecraft minecraft = Minecraft.getInstance();
+            if (minecraft.player != null) {
+                ItemStack heldItem = minecraft.player.getMainHandItem();
+                if (heldItem.getItem() instanceof SimpleKatana simpleKatana) {
+                    // Use existing displayClientRightClickFeedback method
+                    simpleKatana.displayClientRightClickFeedback(minecraft.player, isCrouching);
+                }
+            }
+        }
+
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+        NetworkManager.sendToServer(packetId, buf);
+    }
+
+    /**
      * Register server packet handler
      */
     private static void registerServerPacketHandler() {
+        // Left click handler
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, LEFT_CLICK_PACKET, (buf, context) -> {
             ServerPlayer player = (ServerPlayer) context.getPlayer();
             if (player != null) {
@@ -130,6 +170,28 @@ public class KatanaInputHandler {
                 context.queue(() -> {
                     System.out.println("DEBUG: Server received left click packet from " + player.getName().getString());
                     handleLeftClick(player);
+                });
+            }
+        });
+
+        // Right click handler (normal)
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, RIGHT_CLICK_PACKET, (buf, context) -> {
+            ServerPlayer player = (ServerPlayer) context.getPlayer();
+            if (player != null) {
+                context.queue(() -> {
+                    System.out.println("DEBUG: Server received right click packet from " + player.getName().getString());
+                    handleRightClick(player, false);
+                });
+            }
+        });
+
+        // Right click handler (crouching)
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, RIGHT_CLICK_CROUCH_PACKET, (buf, context) -> {
+            ServerPlayer player = (ServerPlayer) context.getPlayer();
+            if (player != null) {
+                context.queue(() -> {
+                    System.out.println("DEBUG: Server received crouch right click packet from " + player.getName().getString());
+                    handleRightClick(player, true);
                 });
             }
         });
@@ -151,8 +213,8 @@ public class KatanaInputHandler {
 
             // Get or create instance tracker for this player
             SimpleKatana katanaInstance = getSimpleKatanaForPlayer(player, simpleKatana);
+            // Use existing performAttack method
             katanaInstance.performAttack(player);
-
         }
         // Handle AbstractKatanaItem (breathing system)
         else if (heldItem.getItem() instanceof AbstractKatanaItem katana) {
@@ -166,6 +228,53 @@ public class KatanaInputHandler {
                 katana.performMove(player, MoveInputType.BASIC, attacker);
             } else {
                 System.out.println("DEBUG: No breathing attacker found for player");
+            }
+        }
+    }
+
+    private static void handleRightClick(Player player, boolean isCrouching) {
+        // Make sure we're on server side
+        if (player.level().isClientSide) {
+            System.out.println("DEBUG: handleRightClick called on client side, ignoring");
+            return;
+        }
+
+        ItemStack heldItem = player.getMainHandItem();
+        System.out.println("DEBUG: Server handling right click (crouch: " + isCrouching + ") - Held item: " + heldItem.getItem().getClass().getSimpleName());
+
+        // Handle SimpleKatana
+        if (heldItem.getItem() instanceof SimpleKatana simpleKatana) {
+            System.out.println("DEBUG: Found SimpleKatana, triggering special attack on server");
+
+            // Get or create instance tracker for this player
+            SimpleKatana katanaInstance = getSimpleKatanaForPlayer(player, simpleKatana);
+
+            // Create a fake ItemStack and InteractionHand to simulate the use() call
+            ItemStack itemStack = player.getMainHandItem();
+            InteractionHand hand = InteractionHand.MAIN_HAND;
+
+            // Temporarily set crouch state if needed for the use() method
+            boolean originalCrouchState = player.isShiftKeyDown();
+            if (isCrouching != originalCrouchState) {
+                player.setShiftKeyDown(isCrouching);
+            }
+
+            // Call the existing use() method which handles both double slash and rising slash
+            katanaInstance.use(player.level(), player, hand);
+
+            // Restore original crouch state
+            if (isCrouching != originalCrouchState) {
+                player.setShiftKeyDown(originalCrouchState);
+            }
+        }
+        // Handle AbstractKatanaItem (breathing system) if needed
+        else if (heldItem.getItem() instanceof AbstractKatanaItem katana) {
+            System.out.println("DEBUG: Found AbstractKatanaItem, would handle breathing special attack");
+            // Handle breathing system special attacks here if needed
+            TestBreathingAttacker attacker = getBreathingAttacker(player);
+            if (attacker != null) {
+                MoveInputType inputType = isCrouching ? MoveInputType.BASIC : MoveInputType.BASIC;
+                katana.performMove(player, inputType, attacker);
             }
         }
     }

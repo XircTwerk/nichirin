@@ -3,6 +3,8 @@ package com.xirc.nichirin.common.item.katana;
 import com.xirc.nichirin.client.gui.CooldownHUD;
 import com.xirc.nichirin.common.attack.moves.SimpleSlashAttack;
 import com.xirc.nichirin.common.attack.moves.SimpleSliceAttack;
+import com.xirc.nichirin.common.attack.moves.DoubleSlashAttack;
+import com.xirc.nichirin.common.attack.moves.RisingSlashAttack;
 import com.xirc.nichirin.common.util.AnimationUtils;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
@@ -68,19 +70,52 @@ public class SimpleKatana extends SwordItem {
     }
 
     /**
-     * Creates the slice attack for right click (M2)
+     * Creates the double slash X attack for right click
      */
-    private SimpleSliceAttack createSliceAttack() {
-        return new SimpleSliceAttack.Builder()
-                .withTiming(5, 15, 6)  // Slower but more powerful
-                .withCooldown(20)      // Longer cooldown
-                .withDamage(7.0f)      // Higher damage
-                .withRange(3.0f)       // Slightly longer range
-                .withKnockback(0.8f)
-                .withHitbox(2.0f, new Vec3(0, 0, 1.0))
-                .withHitStun(25)
+    private DoubleSlashAttack createDoubleSlashAttack() {
+        return new DoubleSlashAttack.Builder()
+                .withTiming(4, 16, 6)  // startup, active (for both slashes), recovery
+                .withCooldown(20)
+                .withDamage(3.5f)      // Per hit
+                .withRange(2.8f)
+                .withKnockback(0.4f)
+                .withHitbox(1.6f, new Vec3(0, 0, 1.0))
+                .withHitStun(12)
+                .withSlashDelay(2)     // 2 tick delay between visual slashes
+                .withSounds(SoundEvents.PLAYER_ATTACK_SWEEP, SoundEvents.PLAYER_ATTACK_STRONG)
+                .build();
+    }
+
+    /**
+     * Creates the rising slash attack for crouch + right click
+     */
+    private RisingSlashAttack createRisingSlashAttack() {
+        return new RisingSlashAttack.Builder()
+                .withTiming(5, 10, 8)
+                .withCooldown(25)
+                .withDamage(4.0f)      // Same as basic slash
+                .withRange(2.5f)
+                .withLaunchPower(1.5f) // Launch enemies 1.5 blocks up
+                .withKnockback(0.2f)
+                .withHitbox(1.5f, new Vec3(0, 0.5, 1.0))
+                .withHitStun(20)
                 .withSounds(SoundEvents.PLAYER_ATTACK_SWEEP, SoundEvents.PLAYER_ATTACK_CRIT)
                 .build();
+    }
+
+    /**
+     * Called from client to display feedback for right click attacks
+     */
+    public void displayClientRightClickFeedback(Player player, boolean isCrouching) {
+        if (!player.level().isClientSide) return;
+
+        if (isCrouching) {
+            AnimationUtils.playAnimation(player, "rising_slash");
+            CooldownHUD.setCooldown("Rising Slash", 25);
+        } else {
+            AnimationUtils.playAnimation(player, "double_slash");
+            CooldownHUD.setCooldown("Double Slash", 20);
+        }
     }
 
     /**
@@ -116,7 +151,7 @@ public class SimpleKatana extends SwordItem {
             return;
         }
         if (state.currentSlice != null && state.currentSlice.isActive()) {
-            System.out.println("DEBUG: Attack already active");
+            System.out.println("DEBUG: Slice attack already active");
             return;
         }
 
@@ -176,7 +211,7 @@ public class SimpleKatana extends SwordItem {
     }
 
     /**
-     * Handle right-click (M2) - slice attack
+     * Handle right-click (M2) - double slash or rising slash based on crouch
      */
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
@@ -193,36 +228,74 @@ public class SimpleKatana extends SwordItem {
             System.out.println("DEBUG: Slice attack already active");
             return InteractionResultHolder.fail(player.getItemInHand(hand));
         }
+        if (state.currentDoubleSlash != null && state.currentDoubleSlash.isActive()) {
+            System.out.println("DEBUG: Double slash already active");
+            return InteractionResultHolder.fail(player.getItemInHand(hand));
+        }
+        if (state.currentRisingSlash != null && state.currentRisingSlash.isActive()) {
+            System.out.println("DEBUG: Rising slash already active");
+            return InteractionResultHolder.fail(player.getItemInHand(hand));
+        }
+
+        // Determine which attack based on crouch state
+        boolean isCrouching = player.isCrouching();
 
         // Check server-side cooldown
         if (!level.isClientSide) {
             long currentTime = level.getGameTime();
-            if (currentTime < state.sliceCooldownUntil) {
-                System.out.println("DEBUG: Slice on server cooldown");
-                return InteractionResultHolder.fail(player.getItemInHand(hand));
+
+            if (isCrouching) {
+                // Crouch + Right Click = Rising Slash
+                if (currentTime < state.risingSlashCooldownUntil) {
+                    System.out.println("DEBUG: Rising slash on server cooldown");
+                    return InteractionResultHolder.fail(player.getItemInHand(hand));
+                }
+
+                // Start rising slash attack on server
+                state.currentRisingSlash = createRisingSlashAttack();
+                state.currentRisingSlash.start(player);
+
+                // Set server-side cooldown
+                state.risingSlashCooldownUntil = currentTime + state.currentRisingSlash.getCooldown();
+
+                System.out.println("DEBUG: Started rising slash attack on server");
+            } else {
+                // Normal Right Click = Double Slash (X attack)
+                if (currentTime < state.doubleSlashCooldownUntil) {
+                    System.out.println("DEBUG: Double slash on server cooldown");
+                    return InteractionResultHolder.fail(player.getItemInHand(hand));
+                }
+
+                // Start double slash attack on server
+                state.currentDoubleSlash = createDoubleSlashAttack();
+                state.currentDoubleSlash.start(player);
+
+                // Set server-side cooldown
+                state.doubleSlashCooldownUntil = currentTime + state.currentDoubleSlash.getCooldown();
+
+                System.out.println("DEBUG: Started double slash attack on server");
             }
 
-            // Start slice attack on server
-            state.currentSlice = createSliceAttack();
-            state.currentSlice.start(player);
-
-            // Set server-side cooldown
-            state.sliceCooldownUntil = currentTime + state.currentSlice.getCooldown();
-
-            // Reset combo when using slice
+            // Reset combo when using special attacks
             state.comboCount = 0;
             state.lastAttackTime = 0;
-
-            System.out.println("DEBUG: Started slice attack on server");
         }
 
         // Handle client-side effects
         if (level.isClientSide) {
-            // Play animation on client
-            AnimationUtils.playAnimation(player, "heavy_slice");
+            if (isCrouching) {
+                // Play animation on client for rising slash
+                AnimationUtils.playAnimation(player, "rising_slash");
 
-            // Set cooldown display on client
-            CooldownHUD.setCooldown("Slice", 20); // Use the cooldown value from createSliceAttack
+                // Set cooldown display on client
+                CooldownHUD.setCooldown("Rising Slash", 25);
+            } else {
+                // Play animation on client for double slash
+                AnimationUtils.playAnimation(player, "double_slash");
+
+                // Set cooldown display on client
+                CooldownHUD.setCooldown("Double Slash", 20);
+            }
         }
 
         return InteractionResultHolder.sidedSuccess(player.getItemInHand(hand), level.isClientSide);
@@ -241,6 +314,12 @@ public class SimpleKatana extends SwordItem {
         }
         if (state.currentSlice != null && state.currentSlice.isActive()) {
             state.currentSlice.tick(player);
+        }
+        if (state.currentDoubleSlash != null && state.currentDoubleSlash.isActive()) {
+            state.currentDoubleSlash.tick(player);
+        }
+        if (state.currentRisingSlash != null && state.currentRisingSlash.isActive()) {
+            state.currentRisingSlash.tick(player);
         }
 
         // Reset combo if window expired
@@ -273,7 +352,9 @@ public class SimpleKatana extends SwordItem {
             PlayerAttackState state = entry.getValue();
             boolean slashInactive = state.currentSlash == null || !state.currentSlash.isActive();
             boolean sliceInactive = state.currentSlice == null || !state.currentSlice.isActive();
-            return slashInactive && sliceInactive && state.comboCount == 0;
+            boolean doubleSlashInactive = state.currentDoubleSlash == null || !state.currentDoubleSlash.isActive();
+            boolean risingSlashInactive = state.currentRisingSlash == null || !state.currentRisingSlash.isActive();
+            return slashInactive && sliceInactive && doubleSlashInactive && risingSlashInactive && state.comboCount == 0;
         });
     }
 
@@ -284,12 +365,15 @@ public class SimpleKatana extends SwordItem {
         long lastAttackTime = 0;
         int comboCount = 0;
         SimpleSlashAttack currentSlash = null;
-        SimpleSliceAttack currentSlice = null;
+        SimpleSliceAttack currentSlice = null;  // Added missing field
+        DoubleSlashAttack currentDoubleSlash = null;
+        RisingSlashAttack currentRisingSlash = null;
 
         // Server-side cooldown tracking
         long slash1CooldownUntil = 0;
         long slash2CooldownUntil = 0;
-        long sliceCooldownUntil = 0;
+        long doubleSlashCooldownUntil = 0;
+        long risingSlashCooldownUntil = 0;
 
         // Client synchronization data
         String lastAnimationName = null;
