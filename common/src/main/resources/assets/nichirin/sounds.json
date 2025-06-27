@@ -1,3 +1,14 @@
 {
 
+  "basicslash1": {
+    "sounds": [
+      "nichirin:katana/hit1"
+    ]
+  },
+  "basicslash2": {
+    "sounds": [
+      "nichirin:katana/hit2"
+    ]
+  }
+
 }
