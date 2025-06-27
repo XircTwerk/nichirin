@@ -22,7 +22,7 @@ public class PlayerFallDamageMixin {
 
             // Check if player used double jump
             if (PlayerDoubleJump.hasDoubleJumped(player)) {
-                float reducedDamage = Math.max(0, damage - 4.0f);
+                float reducedDamage = Math.max(0, damage - 6.0f);
 
                 System.out.println("DEBUG: Reducing fall damage from " + damage + " to " + reducedDamage);
 
