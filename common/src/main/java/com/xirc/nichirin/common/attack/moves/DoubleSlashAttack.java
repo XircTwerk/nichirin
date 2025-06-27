@@ -38,6 +38,7 @@ public class DoubleSlashAttack {
     private boolean isActive = false;
     private boolean hasHit = false;
     private final Map<LivingEntity, Integer> hitCooldowns = new HashMap<>(); // Track when entities can be hit again
+    private final Map<LivingEntity, Integer> hitCount = new HashMap<>(); // Track how many times each entity has been hit
     private boolean firstSlashVisual = false;
     private boolean secondSlashVisual = false;
 
@@ -144,6 +145,7 @@ public class DoubleSlashAttack {
         tickCount = 0;
         hasHit = false;
         hitCooldowns.clear();
+        hitCount.clear();
         firstSlashVisual = false;
         secondSlashVisual = false;
         isActive = true;
@@ -228,10 +230,17 @@ public class DoubleSlashAttack {
                 // Deal damage
                 target.hurt(damageSource, damage);
 
-                // Apply knockback - alternating based on which visual phase we're in
-                if (knockback > 0) {
+                // Track hit count for this entity
+                int currentHitCount = hitCount.getOrDefault(target, 0) + 1;
+                hitCount.put(target, currentHitCount);
+
+                // Apply knockback ONLY on second hit (no knockback on first hit)
+                if (knockback > 0 && currentHitCount >= 2) {
                     Vec3 knockVec = target.position().subtract(user.position()).normalize();
                     target.knockback(knockback, -knockVec.x, -knockVec.z);
+                    System.out.println("DEBUG: Applied knockback on hit #" + currentHitCount);
+                } else if (currentHitCount == 1) {
+                    System.out.println("DEBUG: First hit - no knockback applied");
                 }
 
                 // Apply hit stun
@@ -256,7 +265,7 @@ public class DoubleSlashAttack {
                             hitSound, SoundSource.PLAYERS, 1.0f, 1.0f);
                 }
 
-                System.out.println("DEBUG: Double slash hit " + target.getName().getString() + " for " + damage + " damage");
+                System.out.println("DEBUG: Double slash hit #" + currentHitCount + " on " + target.getName().getString() + " for " + damage + " damage");
             }
         }
     }
@@ -270,41 +279,36 @@ public class DoubleSlashAttack {
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() * 0.75, 0);
         Vec3 lookDir = user.getLookAngle();
+        Vec3 rightDir = lookDir.cross(new Vec3(0, 1, 0)).normalize();
 
-        // Position the X in front of the player
-        Vec3 center = userPos.add(lookDir.scale(1.5));
+        // Create diagonal line of particles
+        for (int i = 0; i <= 10; i++) {
+            float progress = i / 10.0f;
 
-        float size = 1.5f; // Size of the X
-
-        if (isFirstDiagonal) {
-            // First diagonal: \ (top-left to bottom-right)
-            // Create particles along the \ line
-            for (int i = 0; i <= 5; i++) {
-                float t = i / 5.0f;
-                Vec3 pos = center.add(
-                        -size/2 + size * t,  // X: left to right
-                        size/2 - size * t,   // Y: top to bottom
-                        0                    // Z: straight ahead
-                );
-
-                serverLevel.sendParticles(ParticleTypes.SWEEP_ATTACK,
-                        pos.x, pos.y, pos.z,
-                        1, 0, 0, 0, 0);
+            Vec3 particlePos;
+            if (isFirstDiagonal) {
+                // Top-left to bottom-right diagonal
+                particlePos = userPos
+                        .add(lookDir.scale(range * 0.5 + range * 0.5 * progress))
+                        .add(rightDir.scale(-0.8 + 1.6 * progress))
+                        .add(0, 0.8 - 1.6 * progress, 0);
+            } else {
+                // Top-right to bottom-left diagonal
+                particlePos = userPos
+                        .add(lookDir.scale(range * 0.5 + range * 0.5 * progress))
+                        .add(rightDir.scale(0.8 - 1.6 * progress))
+                        .add(0, 0.8 - 1.6 * progress, 0);
             }
-        } else {
-            // Second diagonal: / (top-right to bottom-left)
-            // Create particles along the / line
-            for (int i = 0; i <= 5; i++) {
-                float t = i / 5.0f;
-                Vec3 pos = center.add(
-                        size/2 - size * t,   // X: right to left
-                        size/2 - size * t,   // Y: top to bottom
-                        0                    // Z: straight ahead
-                );
 
-                serverLevel.sendParticles(ParticleTypes.SWEEP_ATTACK,
-                        pos.x, pos.y, pos.z,
-                        1, 0, 0, 0, 0);
+            serverLevel.sendParticles(ParticleTypes.SWEEP_ATTACK,
+                    particlePos.x, particlePos.y, particlePos.z,
+                    1, 0, 0, 0, 0);
+
+            // Add some extra particles for the X effect
+            if (i % 3 == 0) {
+                serverLevel.sendParticles(ParticleTypes.ENCHANTED_HIT,
+                        particlePos.x, particlePos.y, particlePos.z,
+                        2, 0.1, 0.1, 0.1, 0.05);
             }
         }
     }
@@ -313,6 +317,7 @@ public class DoubleSlashAttack {
         System.out.println("DEBUG: DoubleSlashAttack ended");
         isActive = false;
         hitCooldowns.clear();
+        hitCount.clear();
     }
 
     public boolean isActive() {
