@@ -33,31 +33,38 @@ public class ClientPlayerDoubleJumpMixin {
             nichirin$jumpCooldown--;
         }
 
+        // Current jump state
+        boolean isJumping = player.input.jumping;
+
         // Detect jump key press (rising edge detection)
-        boolean jumpPressed = player.input.jumping && !nichirin$wasJumping;
+        boolean jumpPressed = isJumping && !nichirin$wasJumping;
 
-        // Only process jump if not on ground and cooldown is ready
-        if (jumpPressed && !player.onGround() && nichirin$jumpCooldown == 0) {
+        // CRITICAL: Only process if NOT on ground, cooldown ready, and jump was pressed
+        if (jumpPressed && nichirin$jumpCooldown == 0) {
+            System.out.println("=== CLIENT JUMP PRESS DETECTED ===");
+            System.out.println("Player on ground: " + player.onGround());
+            System.out.println("Can double jump: " + PlayerDoubleJump.canDoubleJump(player));
 
-            // Only process jump if not on ground and cooldown is ready
-            if (jumpPressed && !player.onGround() && nichirin$jumpCooldown == 0) {
-                // Check if we can double jump
-                if (PlayerDoubleJump.canDoubleJump(player)) {
-                    // Set cooldown
-                    nichirin$jumpCooldown = 5;
+            // STRICT CHECK: Must not be on ground
+            if (player.onGround()) {
+                System.out.println("CLIENT: Jump pressed but player is on ground - ignoring");
+            } else if (PlayerDoubleJump.canDoubleJump(player)) {
+                System.out.println("CLIENT: Attempting double jump");
 
-                    // Perform double jump
-                    PlayerDoubleJump.tryDoubleJump(player);
+                // Set cooldown to prevent spam
+                nichirin$jumpCooldown = 10; // Increased cooldown
 
-                    // Send packet to server
-                    if (player.level().isClientSide) {
-                        NichirinPacketRegistry.sendToServer(new DoubleJumpPacket());
-                    }
-                }
+                // Perform double jump locally for immediate feedback
+                PlayerDoubleJump.tryDoubleJump(player);
+
+                // Send packet to server for sync
+                NichirinPacketRegistry.sendToServer(new DoubleJumpPacket());
+            } else {
+                System.out.println("CLIENT: Cannot double jump - already used or other restriction");
             }
-
-            // Update state tracking
-            nichirin$wasJumping = player.input.jumping;
         }
+
+        // Update state tracking for next tick
+        nichirin$wasJumping = isJumping;
     }
 }
