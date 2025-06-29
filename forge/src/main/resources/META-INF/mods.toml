@@ -1,15 +1,15 @@
 modLoader = "javafml"
 loaderVersion = "[47,)"
 #issueTrackerURL = ""
-license = "Insert License Here"
+license = "All Rights Reserved"
 
 [[mods]]
 modId = "nichirin"
 version = "${version}"
 displayName = "Breath of Nichirin: Demon Slayer"
-authors = "Me!"
+authors = "XircTwerk"
 description = '''
-This is an example description! Tell everyone what your mod is about!
+Vanilla+ styled demon slayer mod.
 '''
 #logoFile = ""
 
