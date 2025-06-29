@@ -1,7 +1,9 @@
 package com.xirc.nichirin.common.attack.moves;
 
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
@@ -211,42 +213,15 @@ public class RisingSlashAttack {
             DamageSource damageSource = user.damageSources().playerAttack(user);
 
             for (LivingEntity target : targets) {
-                // Deal damage
-                target.hurt(damageSource, damage);
-
-                // Launch the target upward
-                Vec3 currentVelocity = target.getDeltaMovement();
-                target.setDeltaMovement(currentVelocity.x, launchPower, currentVelocity.z);
-
-                // Apply slight horizontal knockback
-                if (knockback > 0) {
-                    Vec3 knockVec = target.position().subtract(user.position()).normalize();
-                    target.knockback(knockback, -knockVec.x, -knockVec.z);
-                }
-
-                // Apply hit stun
-                if (hitStun > 0) {
-                    target.invulnerableTime = hitStun;
-                }
+                // Launch the target
+                launchTarget(target, user, damageSource);
 
                 // Add to hit list
                 hitEntities.add(target);
 
                 // Create hit particles - upward stream
                 if (world instanceof ServerLevel serverLevel) {
-                    // Impact particles
-                    serverLevel.sendParticles(ParticleTypes.CRIT,
-                            target.getX(), target.getY() + target.getBbHeight() / 2, target.getZ(),
-                            20, 0.3, 0.3, 0.3, 0.1);
-
-                    // Rising particles
-                    for (int i = 0; i < 5; i++) {
-                        serverLevel.sendParticles(ParticleTypes.END_ROD,
-                                target.getX(), target.getY() + (i * 0.3), target.getZ(),
-                                3, 0.1, 0.1, 0.1, 0.05);
-                    }
-
-                    System.out.println("DEBUG: Created rising hit particles for " + target.getName().getString());
+                    createHitParticles(serverLevel, target);
                 }
 
                 // Play hit sound
@@ -254,10 +229,90 @@ public class RisingSlashAttack {
                     world.playSound(null, target.getX(), target.getY(), target.getZ(),
                             hitSound, SoundSource.PLAYERS, 1.0f, 0.8f);
                 }
-
-                System.out.println("DEBUG: Launched " + target.getName().getString() + " with power " + launchPower);
             }
         }
+    }
+
+    private void launchTarget(LivingEntity target, Player user, DamageSource damageSource) {
+        // Debug current state
+        System.out.println("DEBUG: Target state before launch - onGround: " + target.onGround()
+                + ", inWater: " + target.isInWater()
+                + ", noGravity: " + target.isNoGravity()
+                + ", current Y velocity: " + target.getDeltaMovement().y);
+
+        // Clear any existing velocity
+        target.setDeltaMovement(Vec3.ZERO);
+
+        // Lift slightly off ground to ensure launch works
+        if (target.onGround()) {
+            target.setPos(target.getX(), target.getY() + 0.1, target.getZ());
+            System.out.println("DEBUG: Lifted target off ground");
+        }
+
+        // Calculate launch velocity
+        Vec3 launchVelocity = new Vec3(0, launchPower, 0);
+
+        // Add horizontal knockback if needed
+        if (knockback > 0) {
+            Vec3 knockDirection = target.position().subtract(user.position()).normalize();
+            launchVelocity = launchVelocity.add(
+                    knockDirection.x * knockback,
+                    0,
+                    knockDirection.z * knockback
+            );
+        }
+
+        // Apply the velocity
+        target.setDeltaMovement(launchVelocity);
+        target.hurtMarked = true; // Forces velocity sync
+        target.hasImpulse = true; // Ensures the velocity is applied
+
+        // Force sync for players
+        if (target instanceof ServerPlayer serverPlayer) {
+            serverPlayer.connection.send(new ClientboundSetEntityMotionPacket(target));
+            System.out.println("DEBUG: Forced velocity sync for player");
+        }
+
+        // Apply hit stun BEFORE damage to prevent damage knockback interference
+        if (hitStun > 0) {
+            target.invulnerableTime = hitStun;
+        }
+
+        // Apply damage AFTER velocity
+        target.hurt(damageSource, damage);
+
+        System.out.println("DEBUG: Launched " + target.getName().getString()
+                + " with velocity: " + launchVelocity);
+
+        // Debug check - schedule a delayed velocity check
+        if (user.level() instanceof ServerLevel serverLevel) {
+            serverLevel.getServer().execute(() -> {
+                Vec3 delayedVelocity = target.getDeltaMovement();
+                System.out.println("DEBUG: Velocity 1 tick later - Y: " + delayedVelocity.y
+                        + ", onGround: " + target.onGround());
+            });
+        }
+    }
+
+    private void createHitParticles(ServerLevel serverLevel, LivingEntity target) {
+        // Impact particles
+        serverLevel.sendParticles(ParticleTypes.CRIT,
+                target.getX(), target.getY() + target.getBbHeight() / 2, target.getZ(),
+                20, 0.3, 0.3, 0.3, 0.1);
+
+        // Rising particles
+        for (int i = 0; i < 5; i++) {
+            serverLevel.sendParticles(ParticleTypes.END_ROD,
+                    target.getX(), target.getY() + (i * 0.3), target.getZ(),
+                    3, 0.1, 0.1, 0.1, 0.05);
+        }
+
+        // Add some sweep particles around the target
+        serverLevel.sendParticles(ParticleTypes.SWEEP_ATTACK,
+                target.getX(), target.getY() + 1.0, target.getZ(),
+                1, 0, 0, 0, 0);
+
+        System.out.println("DEBUG: Created rising hit particles for " + target.getName().getString());
     }
 
     private void createRisingParticles(Player user, Level world) {

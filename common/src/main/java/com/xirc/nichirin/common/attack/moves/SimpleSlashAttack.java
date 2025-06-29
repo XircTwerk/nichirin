@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.attack.moves;
 
+import lombok.Getter;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
@@ -36,6 +37,7 @@ public class SimpleSlashAttack {
 
     // State
     private int tickCount = 0;
+    @Getter
     private boolean isActive = false;
     private boolean hasHit = false;
     private final Set<LivingEntity> hitEntities = new HashSet<>();
@@ -270,10 +272,6 @@ public class SimpleSlashAttack {
         System.out.println("DEBUG: SimpleSlashAttack ended");
         isActive = false;
         hitEntities.clear();
-    }
-
-    public boolean isActive() {
-        return isActive;
     }
 
     public int getTotalDuration() {
