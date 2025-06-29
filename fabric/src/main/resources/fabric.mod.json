@@ -20,6 +20,9 @@
     ],
     "client": [
       "com.xirc.nichirin.fabric.client.BreathOfNichirinFabricClient"
+    ],
+    "fabric-datagen": [
+      "com.xirc.nichirin.fabric.data.NichirinDataGeneratorFabric"
     ]
   },
   "mixins": [
