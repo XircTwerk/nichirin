@@ -29,6 +29,11 @@ public interface NichirinItemRegistry {
     RegistrySupplier<Item> THUNDER_KATANA = register("thunder_katana",
             () -> new SimpleKatana(settings().rarity(Rarity.EPIC).stacksTo(1)));
 
+    //Ores and Ingots
+    RegistrySupplier<Item> SCARLET_CRIMSON_IRON_GEM = register("scarlet_crimson_iron_gem", () -> new Item(settings()));
+    RegistrySupplier<Item> SCARLET_GEM = register("scarlet_gem", () -> new Item(settings()));
+
+
     static <T extends Item> RegistrySupplier<T> register(String id, Supplier<? extends T> supplier) {
         LOGGER.info("Registering item: {}", id);
         RegistrySupplier<T> item = ITEM_REGISTRY.register(id, supplier);

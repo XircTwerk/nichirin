@@ -4,10 +4,7 @@ import com.xirc.nichirin.client.BreathOfNichirinClient;
 import com.xirc.nichirin.client.animation.NichirinAnimations;
 import com.xirc.nichirin.client.renderer.StaminaBarRenderer;
 import com.xirc.nichirin.common.event.StaminaEventHandler;
-import com.xirc.nichirin.common.registry.NichirinCreativeTabRegistry;
-import com.xirc.nichirin.common.registry.NichirinItemRegistry;
-import com.xirc.nichirin.common.registry.NichirinPacketRegistry;
-import com.xirc.nichirin.common.registry.NichirinParticleRegistry;
+import com.xirc.nichirin.common.registry.*;
 import com.xirc.nichirin.common.system.StaminaSystem;
 import com.xirc.nichirin.common.util.KatanaInputHandler;
 import com.xirc.nichirin.common.util.StaminaManager;
@@ -31,6 +28,7 @@ public final class BreathOfNichirin {
         // Initialize common registries first (this creates the deferred register entries)
         NichirinItemRegistry.init();
         NichirinCreativeTabRegistry.init();
+        OreRegistry.register();
 
         // Register the registries themselves
         NichirinItemRegistry.ITEM_REGISTRY.register();

@@ -29,8 +29,18 @@ public interface NichirinCreativeTabRegistry {
                     })
                     .displayItems((displayContext, entries) -> {
                         try {
+                            // Add katana
                             entries.accept(NichirinItemRegistry.KATANA.get());
+
+                            // Add ore blocks
+                            entries.accept(OreRegistry.SCARLET_ORE_ITEM.get());
+                            entries.accept(OreRegistry.SCARLET_CRIMSON_IRON_SAND_ITEM.get());
+
+                            //gems/ingots
+                            entries.accept(NichirinItemRegistry.SCARLET_CRIMSON_IRON_GEM.get());
+                            entries.accept(NichirinItemRegistry.SCARLET_GEM.get());
                         } catch (Exception e) {
+                            LOGGER.warn("Failed to add items to creative tab: " + e.getMessage());
                         }
                     })
                     .build();
