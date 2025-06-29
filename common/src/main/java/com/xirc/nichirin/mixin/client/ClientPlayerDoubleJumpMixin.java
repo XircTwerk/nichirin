@@ -26,8 +26,8 @@ public class ClientPlayerDoubleJumpMixin {
     private void onClientTick(CallbackInfo ci) {
         LocalPlayer player = (LocalPlayer) (Object) this;
 
-        // Update player state in the double jump system FIRST
-        PlayerDoubleJump.tickPlayer(player);
+        // DO NOT TICK PLAYER STATE ON CLIENT - Let server handle it
+        // PlayerDoubleJump.tickPlayer(player); // REMOVED!
 
         // Reduce jump cooldown
         if (nichirin$jumpCooldown > 0) {
@@ -46,7 +46,6 @@ public class ClientPlayerDoubleJumpMixin {
             System.out.println("Player on ground: " + player.onGround());
             System.out.println("Current stamina: " + StaminaManager.getStamina(player) + "/" + StaminaManager.getMaxStamina(player));
             System.out.println("Stamina cost: " + PlayerDoubleJump.getStaminaCost());
-            System.out.println("Can double jump: " + PlayerDoubleJump.canDoubleJump(player));
 
             // STRICT CHECK: Must not be on ground
             if (player.onGround()) {
@@ -54,16 +53,17 @@ public class ClientPlayerDoubleJumpMixin {
             } else if (!StaminaManager.hasStamina(player, PlayerDoubleJump.getStaminaCost())) {
                 System.out.println("CLIENT: Not enough stamina for double jump - need " + PlayerDoubleJump.getStaminaCost() + ", have " + StaminaManager.getStamina(player));
             } else if (PlayerDoubleJump.canDoubleJump(player)) {
-                System.out.println("CLIENT: Attempting double jump with stamina cost: " + PlayerDoubleJump.getStaminaCost());
+                System.out.println("CLIENT: Can double jump - sending packet to server");
 
                 // Set cooldown to prevent spam
-                nichirin$jumpCooldown = 10; // Increased cooldown
+                nichirin$jumpCooldown = 10;
 
-                // Perform double jump locally for immediate feedback (BUT DON'T CONSUME STAMINA)
-                PlayerDoubleJump.tryDoubleJump(player);
-
-                // Send packet to server for sync
+                // DO NOT PERFORM DOUBLE JUMP ON CLIENT
+                // Just send packet to server and let server handle everything
                 NichirinPacketRegistry.sendToServer(new DoubleJumpPacket());
+
+                // Optionally: Add immediate visual feedback without modifying state
+                // PlayerDoubleJump.playClientSideEffectsOnly(player);
             } else {
                 System.out.println("CLIENT: Cannot double jump - already used or other restriction");
             }

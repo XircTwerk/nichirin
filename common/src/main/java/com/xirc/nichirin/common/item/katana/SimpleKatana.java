@@ -6,7 +6,9 @@ import com.xirc.nichirin.common.attack.moves.SimpleSliceAttack;
 import com.xirc.nichirin.common.attack.moves.DoubleSlashAttack;
 import com.xirc.nichirin.common.attack.moves.RisingSlashAttack;
 import com.xirc.nichirin.common.util.AnimationUtils;
+import com.xirc.nichirin.common.util.StaminaManager;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
@@ -16,18 +18,23 @@ import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.item.Tiers;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.network.chat.Component;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 /**
- * A simple katana with basic light attacks
+ * A simple katana with basic light attacks that consume stamina
  */
 public class SimpleKatana extends SwordItem {
 
     // Track combo state per player
     private static final int COMBO_WINDOW = 20; // ticks to chain attacks
+
+    // Stamina costs
+    private static final float LIGHT_ATTACK_STAMINA_COST = 5.0f;
+    private static final float SPECIAL_ATTACK_STAMINA_COST = 15.0f;
 
     // Per-player state tracking
     private final Map<UUID, PlayerAttackState> playerStates = new HashMap<>();
@@ -166,6 +173,16 @@ public class SimpleKatana extends SwordItem {
 
         // Only process attack logic on server side
         if (!player.level().isClientSide) {
+            // Check stamina FIRST before any other logic
+            if (!StaminaManager.hasStamina(player, LIGHT_ATTACK_STAMINA_COST)) {
+                // Send feedback to player about insufficient stamina
+                player.displayClientMessage(Component.literal("Not enough stamina!").withStyle(style -> style.withColor(0xFF5555)), true);
+                // Play sound effect for feedback
+                player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
+                        SoundEvents.NOTE_BLOCK_BASS.value(), SoundSource.PLAYERS, 0.5f, 0.5f);
+                return;
+            }
+
             long currentTime = player.level().getGameTime();
 
             // Determine which slash to use based on combo
@@ -176,6 +193,12 @@ public class SimpleKatana extends SwordItem {
                 return;
             }
             if (isCombo && currentTime < state.slash2CooldownUntil) {
+                return;
+            }
+
+            // Consume stamina BEFORE starting the attack
+            if (!StaminaManager.consume(player, LIGHT_ATTACK_STAMINA_COST)) {
+                // This shouldn't happen since we checked above, but just in case
                 return;
             }
 
@@ -250,6 +273,22 @@ public class SimpleKatana extends SwordItem {
 
         // Only proceed with attack logic on server
         if (!level.isClientSide) {
+            // Check stamina BEFORE starting any attack
+            if (!StaminaManager.hasStamina(player, SPECIAL_ATTACK_STAMINA_COST)) {
+                // Send feedback to player about insufficient stamina
+                player.displayClientMessage(Component.literal("Not enough stamina for special attack!").withStyle(style -> style.withColor(0xFF5555)), true);
+                // Play sound effect for feedback
+                player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
+                        SoundEvents.NOTE_BLOCK_BASS.value(), SoundSource.PLAYERS, 0.5f, 0.5f);
+                return InteractionResultHolder.pass(player.getItemInHand(hand));
+            }
+
+            // Consume stamina BEFORE starting the attack
+            if (!StaminaManager.consume(player, SPECIAL_ATTACK_STAMINA_COST)) {
+                // This shouldn't happen since we checked above, but just in case
+                return InteractionResultHolder.pass(player.getItemInHand(hand));
+            }
+
             if (isCrouching) {
                 // Crouch + Right Click = Rising Slash
                 // Start rising slash attack on server
@@ -275,6 +314,12 @@ public class SimpleKatana extends SwordItem {
 
         // Handle client-side effects only if not on cooldown
         if (level.isClientSide) {
+            // Check if player has enough stamina for visual feedback
+            if (!StaminaManager.hasStamina(player, SPECIAL_ATTACK_STAMINA_COST)) {
+                // Don't play animations if no stamina
+                return InteractionResultHolder.pass(player.getItemInHand(hand));
+            }
+
             if (isCrouching) {
                 // Play animation on client for rising slash
                 AnimationUtils.playAnimation(player, "rising_slash");
