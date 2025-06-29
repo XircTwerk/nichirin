@@ -1,6 +1,7 @@
 package com.xirc.nichirin.client;
 
 import com.xirc.nichirin.client.animation.AnimationRegistryHelper;
+import com.xirc.nichirin.client.renderer.StaminaBarRenderer;
 import com.xirc.nichirin.common.registry.NichirinParticleRegistry;
 import dev.architectury.event.events.client.ClientTickEvent;
 import dev.architectury.registry.client.keymappings.KeyMappingRegistry;
@@ -41,6 +42,8 @@ public class BreathOfNichirinClient {
         AnimationRegistryHelper.preloadAnimations();
 
         registerParticles();
+        // In your client mod initializer
+        StaminaBarRenderer.register();
 
         System.out.println("DEBUG: Client initialization complete");
 

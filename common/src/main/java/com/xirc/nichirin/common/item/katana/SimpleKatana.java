@@ -9,6 +9,7 @@ import com.xirc.nichirin.common.util.AnimationUtils;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.SwordItem;
@@ -34,7 +35,6 @@ public class SimpleKatana extends SwordItem {
     public SimpleKatana(Properties properties) {
         // Use Iron tier as base, 6 attack damage (3 + 3 from iron tier), -2.4 attack speed
         super(Tiers.IRON, 3, -2.4f, properties);
-        System.out.println("DEBUG: SimpleKatana created");
     }
 
     /**
@@ -42,8 +42,8 @@ public class SimpleKatana extends SwordItem {
      */
     private SimpleSlashAttack createLightSlash1() {
         return new SimpleSlashAttack.Builder()
-                .withTiming(3, 13, 4)  // startup, active, recovery
-                .withCooldown(10)      // 10 tick cooldown
+                .withTiming(3, 7, 2)   // startup, active, recovery (total: 12 ticks)
+                .withCooldown(0)       // No cooldown
                 .withDamage(4.0f)
                 .withRange(2.5f)
                 .withKnockback(0.3f)
@@ -58,8 +58,8 @@ public class SimpleKatana extends SwordItem {
      */
     private SimpleSlashAttack createLightSlash2() {
         return new SimpleSlashAttack.Builder()
-                .withTiming(2, 14, 4)  // Faster startup
-                .withCooldown(15)      // Slightly longer cooldown
+                .withTiming(2, 10, 3)  // Faster startup, shorter overall
+                .withCooldown(0)       // No cooldown
                 .withDamage(5.0f)      // Slightly more damage
                 .withRange(2.5f)
                 .withKnockback(0.5f)
@@ -104,6 +104,19 @@ public class SimpleKatana extends SwordItem {
     }
 
     /**
+     * Called every tick while the item is in a player's inventory
+     */
+    @Override
+    public void inventoryTick(ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {
+        super.inventoryTick(stack, level, entity, slotId, isSelected);
+
+        // Only tick for players holding the katana
+        if (entity instanceof Player player && isSelected) {
+            tick(player);
+        }
+    }
+
+    /**
      * Called from client to display feedback for right click attacks
      */
     public void displayClientRightClickFeedback(Player player, boolean isCrouching) {
@@ -129,10 +142,10 @@ public class SimpleKatana extends SwordItem {
         boolean isCombo = (currentTime - state.lastAttackTime) <= COMBO_WINDOW && state.comboCount > 0;
 
         if (isCombo && state.comboCount == 1) {
-            CooldownHUD.setCooldown("Slash2", 15);
+            CooldownHUD.setCooldown("Slash2", 0);
             AnimationUtils.playAnimation(player, "light_slash2");
         } else {
-            CooldownHUD.setCooldown("Slash1", 10);
+            CooldownHUD.setCooldown("Slash1", 0);
             AnimationUtils.playAnimation(player, "light_slash1");
         }
     }
@@ -141,17 +154,13 @@ public class SimpleKatana extends SwordItem {
      * Called when the player left-clicks with this item (M1)
      */
     public void performAttack(Player player) {
-        System.out.println("DEBUG: performAttack (M1) called on " + (player.level().isClientSide ? "CLIENT" : "SERVER") + " for player: " + player.getName().getString());
-
         PlayerAttackState state = getOrCreatePlayerState(player);
 
         // Check if any attack is currently active
         if (state.currentSlash != null && state.currentSlash.isActive()) {
-            System.out.println("DEBUG: Attack already active");
             return;
         }
         if (state.currentSlice != null && state.currentSlice.isActive()) {
-            System.out.println("DEBUG: Slice attack already active");
             return;
         }
 
@@ -164,11 +173,9 @@ public class SimpleKatana extends SwordItem {
 
             // Check server-side cooldowns
             if (!isCombo && currentTime < state.slash1CooldownUntil) {
-                System.out.println("DEBUG: Slash1 on server cooldown");
                 return;
             }
             if (isCombo && currentTime < state.slash2CooldownUntil) {
-                System.out.println("DEBUG: Slash2 on server cooldown");
                 return;
             }
 
@@ -205,8 +212,6 @@ public class SimpleKatana extends SwordItem {
 
             // Update timing
             state.lastAttackTime = currentTime;
-
-            System.out.println("DEBUG: Started slash " + state.comboCount + " of combo on server");
         }
     }
 
@@ -215,65 +220,52 @@ public class SimpleKatana extends SwordItem {
      */
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-        System.out.println("DEBUG: use (M2) called on " + (level.isClientSide ? "CLIENT" : "SERVER") + " for player: " + player.getName().getString());
-
         PlayerAttackState state = getOrCreatePlayerState(player);
 
         // Check if any attack is currently active
         if (state.currentSlash != null && state.currentSlash.isActive()) {
-            System.out.println("DEBUG: Slash attack already active");
-            return InteractionResultHolder.fail(player.getItemInHand(hand));
+            return InteractionResultHolder.pass(player.getItemInHand(hand));
         }
         if (state.currentSlice != null && state.currentSlice.isActive()) {
-            System.out.println("DEBUG: Slice attack already active");
-            return InteractionResultHolder.fail(player.getItemInHand(hand));
+            return InteractionResultHolder.pass(player.getItemInHand(hand));
         }
         if (state.currentDoubleSlash != null && state.currentDoubleSlash.isActive()) {
-            System.out.println("DEBUG: Double slash already active");
-            return InteractionResultHolder.fail(player.getItemInHand(hand));
+            return InteractionResultHolder.pass(player.getItemInHand(hand));
         }
         if (state.currentRisingSlash != null && state.currentRisingSlash.isActive()) {
-            System.out.println("DEBUG: Rising slash already active");
-            return InteractionResultHolder.fail(player.getItemInHand(hand));
+            return InteractionResultHolder.pass(player.getItemInHand(hand));
         }
 
         // Determine which attack based on crouch state
         boolean isCrouching = player.isCrouching();
+        long currentTime = level.getGameTime();
 
-        // Check server-side cooldown
+        // Check cooldowns FIRST on both client and server to prevent any action
+        if (isCrouching && currentTime < state.risingSlashCooldownUntil) {
+            return InteractionResultHolder.pass(player.getItemInHand(hand));
+        }
+        if (!isCrouching && currentTime < state.doubleSlashCooldownUntil) {
+            return InteractionResultHolder.pass(player.getItemInHand(hand));
+        }
+
+        // Only proceed with attack logic on server
         if (!level.isClientSide) {
-            long currentTime = level.getGameTime();
-
             if (isCrouching) {
                 // Crouch + Right Click = Rising Slash
-                if (currentTime < state.risingSlashCooldownUntil) {
-                    System.out.println("DEBUG: Rising slash on server cooldown");
-                    return InteractionResultHolder.fail(player.getItemInHand(hand));
-                }
-
                 // Start rising slash attack on server
                 state.currentRisingSlash = createRisingSlashAttack();
                 state.currentRisingSlash.start(player);
 
                 // Set server-side cooldown
                 state.risingSlashCooldownUntil = currentTime + state.currentRisingSlash.getCooldown();
-
-                System.out.println("DEBUG: Started rising slash attack on server");
             } else {
                 // Normal Right Click = Double Slash (X attack)
-                if (currentTime < state.doubleSlashCooldownUntil) {
-                    System.out.println("DEBUG: Double slash on server cooldown");
-                    return InteractionResultHolder.fail(player.getItemInHand(hand));
-                }
-
                 // Start double slash attack on server
                 state.currentDoubleSlash = createDoubleSlashAttack();
                 state.currentDoubleSlash.start(player);
 
                 // Set server-side cooldown
                 state.doubleSlashCooldownUntil = currentTime + state.currentDoubleSlash.getCooldown();
-
-                System.out.println("DEBUG: Started double slash attack on server");
             }
 
             // Reset combo when using special attacks
@@ -281,7 +273,7 @@ public class SimpleKatana extends SwordItem {
             state.lastAttackTime = 0;
         }
 
-        // Handle client-side effects
+        // Handle client-side effects only if not on cooldown
         if (level.isClientSide) {
             if (isCrouching) {
                 // Play animation on client for rising slash
@@ -298,7 +290,7 @@ public class SimpleKatana extends SwordItem {
             }
         }
 
-        return InteractionResultHolder.sidedSuccess(player.getItemInHand(hand), level.isClientSide);
+        return InteractionResultHolder.success(player.getItemInHand(hand));
     }
 
     /**
@@ -326,7 +318,6 @@ public class SimpleKatana extends SwordItem {
         long currentTime = player.level().getGameTime();
         if (currentTime - state.lastAttackTime > COMBO_WINDOW) {
             if (state.comboCount > 0) {
-                System.out.println("DEBUG: Combo window expired, resetting");
                 state.comboCount = 0;
             }
         }

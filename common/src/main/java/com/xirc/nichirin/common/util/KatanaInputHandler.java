@@ -104,7 +104,7 @@ public class KatanaInputHandler {
     /**
      * Check if we're on client side (careful with side-specific code)
      */
-    private static boolean isClientSide() {
+    public static boolean isClientSide() {
         try {
             // This will only work on client
             Class.forName("net.minecraft.client.Minecraft");

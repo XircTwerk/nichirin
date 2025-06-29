@@ -2,11 +2,15 @@ package com.xirc.nichirin;
 
 import com.xirc.nichirin.client.BreathOfNichirinClient;
 import com.xirc.nichirin.client.animation.NichirinAnimations;
+import com.xirc.nichirin.client.renderer.StaminaBarRenderer;
+import com.xirc.nichirin.common.event.StaminaEventHandler;
 import com.xirc.nichirin.common.registry.NichirinCreativeTabRegistry;
 import com.xirc.nichirin.common.registry.NichirinItemRegistry;
 import com.xirc.nichirin.common.registry.NichirinPacketRegistry;
 import com.xirc.nichirin.common.registry.NichirinParticleRegistry;
+import com.xirc.nichirin.common.system.StaminaSystem;
 import com.xirc.nichirin.common.util.KatanaInputHandler;
+import com.xirc.nichirin.common.util.StaminaManager;
 import dev.architectury.platform.Platform;
 import dev.architectury.registry.registries.DeferredRegister;
 import net.fabricmc.api.EnvType;
@@ -35,6 +39,8 @@ public final class BreathOfNichirin {
         NichirinParticleRegistry.init();
         // Initialize input handler (should be safe for both sides)
         KatanaInputHandler.register();
+        StaminaEventHandler.register();
+
 
         LOGGER.info("=== NICHIRIN COMMON INITIALIZATION COMPLETE ===");
 
@@ -56,7 +62,10 @@ public final class BreathOfNichirin {
             }
         }
     }
-
+    public static void initClient() {
+        // Register client-side renderer
+        StaminaBarRenderer.register();
+    }
     public static ResourceLocation id(String name) {
         return new ResourceLocation(MOD_ID, name);
     }

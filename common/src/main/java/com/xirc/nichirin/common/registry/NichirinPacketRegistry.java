@@ -2,19 +2,18 @@ package com.xirc.nichirin.common.registry;
 
 import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.common.network.*;
+import dev.architectury.networking.NetworkManager;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.MinecraftServer;
+import io.netty.buffer.Unpooled;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-/**
- * Simple packet registry that works across platforms
- * This is a basic implementation that you can extend with platform-specific networking
- */
 public class NichirinPacketRegistry {
 
     // Packet registry maps
@@ -28,6 +27,7 @@ public class NichirinPacketRegistry {
     public static final ResourceLocation BREATHING_MOVE_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "breathing_move");
     public static final ResourceLocation BREATHING_EFFECT_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "breathing_effect");
     public static final ResourceLocation SYNC_BREATH_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "sync_breath");
+    public static final ResourceLocation SYNC_STAMINA_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "sync_stamina");
 
     // Initialize packet registry
     public static void init() {
@@ -41,13 +41,56 @@ public class NichirinPacketRegistry {
         // Register Server to Client packets
         registerS2C(BREATHING_EFFECT_ID, BreathingEffectPacket.class, BreathingEffectPacket::new,
                 () -> {
-                    // Handle on client side - you'll need to implement this based on your packet structure
+                    // Handle on client side
                 });
 
         registerS2C(SYNC_BREATH_ID, SyncBreathPacket.class, SyncBreathPacket::new,
                 () -> {
-                    // Handle on client side - you'll need to implement this based on your packet structure
+                    // Handle on client side
                 });
+
+        // Register Stamina Sync packet
+        registerS2C(SYNC_STAMINA_ID, StaminaSyncPacket.class, StaminaSyncPacket::new,
+                () -> {
+                    // Handled in the packet's handleClient method
+                });
+
+        // Register with Architectury NetworkManager
+        registerArchitecturyNetworking();
+    }
+
+    // Register all packets with Architectury's NetworkManager
+    private static void registerArchitecturyNetworking() {
+        // Register C2S packets
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, DOUBLE_JUMP_ID, (buf, context) -> {
+            DoubleJumpPacket packet = new DoubleJumpPacket(buf);
+            if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
+                context.queue(() -> packet.handle(serverPlayer));
+            }
+        });
+
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, BREATHING_MOVE_ID, (buf, context) -> {
+            BreathingMovePacket packet = new BreathingMovePacket(buf);
+            if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
+                context.queue(() -> packet.handle(serverPlayer));
+            }
+        });
+
+        // Register S2C packets
+        NetworkManager.registerReceiver(NetworkManager.Side.S2C, BREATHING_EFFECT_ID, (buf, context) -> {
+            BreathingEffectPacket packet = new BreathingEffectPacket(buf);
+            context.queue(() -> packet.handleClient());
+        });
+
+        NetworkManager.registerReceiver(NetworkManager.Side.S2C, SYNC_BREATH_ID, (buf, context) -> {
+            SyncBreathPacket packet = new SyncBreathPacket(buf);
+            context.queue(() -> packet.handleClient());
+        });
+
+        NetworkManager.registerReceiver(NetworkManager.Side.S2C, SYNC_STAMINA_ID, (buf, context) -> {
+            StaminaSyncPacket packet = new StaminaSyncPacket(buf);
+            context.queue(() -> packet.handleClient());
+        });
     }
 
     // Register Client to Server packet
@@ -84,40 +127,51 @@ public class NichirinPacketRegistry {
         Function<FriendlyByteBuf, Object> decoder = PACKET_DECODERS.get(id);
         Runnable handler = CLIENT_HANDLERS.get(id);
 
-        if (decoder != null && handler != null) {
-            decoder.apply(buf); // Decode the packet
-            handler.run(); // Handle it
+        if (decoder != null) {
+            Object packet = decoder.apply(buf); // Decode the packet
+
+            // Handle special packets with their own client handlers
+            if (packet instanceof StaminaSyncPacket staminaPacket) {
+                staminaPacket.handleClient();
+            } else if (packet instanceof SyncBreathPacket breathPacket) {
+                breathPacket.handleClient();
+            } else if (packet instanceof BreathingEffectPacket effectPacket) {
+                effectPacket.handleClient();
+            } else if (handler != null) {
+                handler.run(); // Use the registered handler
+            }
         }
     }
 
-    // Utility methods for packet sending (to be implemented with platform-specific code)
+    // Utility methods for packet sending - NOW IMPLEMENTED WITH ARCHITECTURY
     public static void sendToPlayer(Object packet, ServerPlayer player) {
         ResourceLocation id = PACKET_IDS.get(packet.getClass());
         if (id != null) {
-            // TODO: Implement platform-specific packet sending
-            BreathOfNichirin.LOGGER.info("Sending packet {} to player {}", id, player.getName().getString());
+            FriendlyByteBuf buf = encodePacket(packet);
+            NetworkManager.sendToPlayer(player, id, buf);
         }
     }
 
     public static void sendToServer(Object packet) {
         ResourceLocation id = PACKET_IDS.get(packet.getClass());
         if (id != null) {
-            // TODO: Implement platform-specific packet sending
-            BreathOfNichirin.LOGGER.info("Sending packet {} to server", id);
+            FriendlyByteBuf buf = encodePacket(packet);
+            NetworkManager.sendToServer(id, buf);
         }
     }
 
-    public static void sendToAll(Object packet) {
+    public static void sendToAll(Object packet, MinecraftServer server) {
         ResourceLocation id = PACKET_IDS.get(packet.getClass());
-        if (id != null) {
-            // TODO: Implement platform-specific packet sending
-            BreathOfNichirin.LOGGER.info("Broadcasting packet {}", id);
+        if (id != null && server != null) {
+            for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+                sendToPlayer(packet, player);
+            }
         }
     }
 
     // Encode packet to buffer
     public static FriendlyByteBuf encodePacket(Object packet) {
-        FriendlyByteBuf buf = new FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
 
         if (packet instanceof DoubleJumpPacket p) {
             p.toBytes(buf);
@@ -126,6 +180,8 @@ public class NichirinPacketRegistry {
         } else if (packet instanceof BreathingEffectPacket p) {
             p.toBytes(buf);
         } else if (packet instanceof SyncBreathPacket p) {
+            p.toBytes(buf);
+        } else if (packet instanceof StaminaSyncPacket p) {
             p.toBytes(buf);
         }
 

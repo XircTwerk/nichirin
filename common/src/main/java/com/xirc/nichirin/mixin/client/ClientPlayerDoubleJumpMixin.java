@@ -1,6 +1,7 @@
 package com.xirc.nichirin.mixin.client;
 
 import com.xirc.nichirin.common.system.slayerabilities.PlayerDoubleJump;
+import com.xirc.nichirin.common.util.StaminaManager;
 import com.xirc.nichirin.common.network.DoubleJumpPacket;
 import com.xirc.nichirin.common.registry.NichirinPacketRegistry;
 import net.minecraft.client.player.LocalPlayer;
@@ -43,18 +44,22 @@ public class ClientPlayerDoubleJumpMixin {
         if (jumpPressed && nichirin$jumpCooldown == 0) {
             System.out.println("=== CLIENT JUMP PRESS DETECTED ===");
             System.out.println("Player on ground: " + player.onGround());
+            System.out.println("Current stamina: " + StaminaManager.getStamina(player) + "/" + StaminaManager.getMaxStamina(player));
+            System.out.println("Stamina cost: " + PlayerDoubleJump.getStaminaCost());
             System.out.println("Can double jump: " + PlayerDoubleJump.canDoubleJump(player));
 
             // STRICT CHECK: Must not be on ground
             if (player.onGround()) {
                 System.out.println("CLIENT: Jump pressed but player is on ground - ignoring");
+            } else if (!StaminaManager.hasStamina(player, PlayerDoubleJump.getStaminaCost())) {
+                System.out.println("CLIENT: Not enough stamina for double jump - need " + PlayerDoubleJump.getStaminaCost() + ", have " + StaminaManager.getStamina(player));
             } else if (PlayerDoubleJump.canDoubleJump(player)) {
-                System.out.println("CLIENT: Attempting double jump");
+                System.out.println("CLIENT: Attempting double jump with stamina cost: " + PlayerDoubleJump.getStaminaCost());
 
                 // Set cooldown to prevent spam
                 nichirin$jumpCooldown = 10; // Increased cooldown
 
-                // Perform double jump locally for immediate feedback
+                // Perform double jump locally for immediate feedback (BUT DON'T CONSUME STAMINA)
                 PlayerDoubleJump.tryDoubleJump(player);
 
                 // Send packet to server for sync

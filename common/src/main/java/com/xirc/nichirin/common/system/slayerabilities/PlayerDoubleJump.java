@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.system.slayerabilities;
 
+import com.xirc.nichirin.common.util.StaminaManager;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerLevel;
@@ -24,6 +25,7 @@ public class PlayerDoubleJump {
     private static final int PARTICLE_COUNT = 40;
     private static final float PARTICLE_SPREAD = 0.25f;
     private static final float FALL_DAMAGE_REDUCTION = 4.0f; // Reduces fall damage by 4 blocks worth
+    private static final float STAMINA_COST = 10.0f; // Stamina required for double jump
 
     /**
      * Call this when a player attempts to jump
@@ -57,23 +59,32 @@ public class PlayerDoubleJump {
             return false;
         }
 
+        // Check stamina requirement
+        if (!StaminaManager.hasStamina(player, STAMINA_COST)) {
+            System.out.println("DEBUG: Cannot double jump - insufficient stamina (need " + STAMINA_COST + ", have " + StaminaManager.getStamina(player) + ")");
+            return false;
+        }
+
         JumpState state = getOrCreateState(player);
 
         // Can only double jump if:
         // 1. Player has left the ground at least once (hasLeftGround = true)
         // 2. Haven't used double jump yet (hasDoubleJumped = false)
         // 3. Player has been in air for at least 5 ticks (prevents immediate double jump)
+        // 4. Has enough stamina (checked above)
         boolean canJump = state.hasLeftGround && !state.hasDoubleJumped && state.airTicks >= 5;
 
-        System.out.println("DEBUG: Can double jump = " + canJump + " (hasLeftGround = " + state.hasLeftGround + ", hasDoubleJumped = " + state.hasDoubleJumped + ", airTicks = " + state.airTicks + ")");
+        System.out.println("DEBUG: Can double jump = " + canJump + " (hasLeftGround = " + state.hasLeftGround + ", hasDoubleJumped = " + state.hasDoubleJumped + ", airTicks = " + state.airTicks + ", stamina = " + StaminaManager.getStamina(player) + "/" + StaminaManager.getMaxStamina(player) + ")");
         return canJump;
     }
 
+    // Add this method to PlayerDoubleJump.java after the existing performDoubleJump method:
+
     /**
-     * Perform the double jump
+     * Perform the double jump WITHOUT consuming stamina (for server-side use after stamina is already consumed)
      */
-    private static void performDoubleJump(Player player) {
-        System.out.println("=== PERFORMING DOUBLE JUMP ===");
+    public static void performDoubleJumpWithoutStamina(Player player) {
+        System.out.println("=== PERFORMING DOUBLE JUMP (NO STAMINA CHECK) ===");
 
         // Safety check - never double jump on ground
         if (player.onGround()) {
@@ -99,7 +110,78 @@ public class PlayerDoubleJump {
             return;
         }
 
-        // Mark as used FIRST
+        // Mark as used
+        state.hasDoubleJumped = true;
+        state.fallDistanceAtDoubleJump = player.fallDistance;
+        System.out.println("MARKED as used - hasDoubleJumped = true, recorded fall distance: " + state.fallDistanceAtDoubleJump);
+
+        // Apply jump velocity
+        Vec3 velocity = player.getDeltaMovement();
+        player.setDeltaMovement(velocity.x, DOUBLE_JUMP_VELOCITY * 1.5, velocity.z);
+
+        // Sync to client if on server
+        if (player instanceof ServerPlayer serverPlayer) {
+            serverPlayer.connection.send(new ClientboundSetEntityMotionPacket(player));
+        }
+
+        // Effects
+        playDoubleJumpEffects(player);
+
+        System.out.println("SUCCESS - Double jump completed! Velocity set to: " + (DOUBLE_JUMP_VELOCITY * 1.5));
+    }
+
+    /**
+     * Perform the double jump (CLIENT SIDE ONLY - for immediate feedback)
+     */
+    /**
+     * Perform the double jump
+     */
+    private static void performDoubleJump(Player player) {
+        System.out.println("=== PERFORMING DOUBLE JUMP ===");
+
+        // Safety check - never double jump on ground
+        if (player.onGround()) {
+            System.out.println("ABORTED - Player on ground!");
+            return;
+        }
+
+        // Check stamina again before consuming
+        if (!StaminaManager.hasStamina(player, STAMINA_COST)) {
+            System.out.println("ABORTED - Insufficient stamina!");
+            return;
+        }
+
+        JumpState state = getOrCreateState(player);
+
+        // Double check we can still double jump
+        if (state.hasDoubleJumped) {
+            System.out.println("ABORTED - Already used double jump!");
+            return;
+        }
+
+        if (!state.hasLeftGround) {
+            System.out.println("ABORTED - Player hasn't left ground yet!");
+            return;
+        }
+
+        if (state.airTicks < 5) {
+            System.out.println("ABORTED - Player hasn't been in air long enough! (airTicks = " + state.airTicks + ")");
+            return;
+        }
+
+        // ONLY CONSUME STAMINA ON SERVER
+        if (!player.level().isClientSide) {
+            // Consume stamina ONLY on server
+            if (!StaminaManager.consume(player, STAMINA_COST)) {
+                System.out.println("ABORTED - Failed to consume stamina!");
+                return;
+            }
+            System.out.println("SUCCESS - Consumed " + STAMINA_COST + " stamina. Remaining: " + StaminaManager.getStamina(player));
+        } else {
+            System.out.println("CLIENT - Skipping stamina consumption (will be handled by server)");
+        }
+
+        // Mark as used
         state.hasDoubleJumped = true;
         state.fallDistanceAtDoubleJump = player.fallDistance; // Record fall distance when double jumping
         System.out.println("MARKED as used - hasDoubleJumped = true, recorded fall distance: " + state.fallDistanceAtDoubleJump);
@@ -258,7 +340,7 @@ public class PlayerDoubleJump {
             System.out.println("Player: " + player.getName().getString());
             System.out.println("Side: " + (player.level().isClientSide() ? "CLIENT" : "SERVER"));
             state.hasLeftGround = true;
-            System.out.println("hasLeftGround set to true - double jump now available");
+            System.out.println("hasLeftGround set to true - double jump now available (if stamina sufficient)");
         }
 
         // Reset everything when player lands (transitions from air to ground)
@@ -342,6 +424,13 @@ public class PlayerDoubleJump {
         }
 
         return player.fallDistance;
+    }
+
+    /**
+     * Gets the stamina cost for double jumping
+     */
+    public static float getStaminaCost() {
+        return STAMINA_COST;
     }
 
     /**
