@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "nichirin:item/scarlet_crimson_iron_gem"
+  }
+}
