@@ -14,14 +14,14 @@ public class OreRegistry {
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create("nichirin", Registries.ITEM);
 
     // Block Registration
-    public static final RegistrySupplier<Block> SCARLET_CRIMSON_IRON_SAND = BLOCKS.register("scarlet_crimson_iron_sand",
+    public static final RegistrySupplier<Block> SCARLET_CRIMSON_IRON_SAND = BLOCKS.register("scarlet_crimson_iron_sand.json",
             ScarletCrimsonIronSandBlock::new);
 
     public static final RegistrySupplier<Block> SCARLET_ORE = BLOCKS.register("scarlet_ore",
             ScarletOreBlock::new);
 
     // Block Item Registration
-    public static final RegistrySupplier<Item> SCARLET_CRIMSON_IRON_SAND_ITEM = ITEMS.register("scarlet_crimson_iron_sand",
+    public static final RegistrySupplier<Item> SCARLET_CRIMSON_IRON_SAND_ITEM = ITEMS.register("scarlet_crimson_iron_sand.json",
             () -> new BlockItem(SCARLET_CRIMSON_IRON_SAND.get(), new Item.Properties()));
 
     public static final RegistrySupplier<Item> SCARLET_ORE_ITEM = ITEMS.register("scarlet_ore",
