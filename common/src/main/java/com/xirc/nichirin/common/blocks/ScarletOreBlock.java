@@ -1,10 +1,8 @@
 package com.xirc.nichirin.common.blocks;
 
-import com.xirc.nichirin.common.registry.NichirinItemRegistry;
 import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.DropExperienceBlock;
-import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.MapColor;
@@ -21,13 +19,13 @@ public class ScarletOreBlock extends DropExperienceBlock {
         super(BlockBehaviour.Properties.of()
                         .mapColor(MapColor.COLOR_RED)
                         .strength(3.0f, 3.0f)
-                        .requiresCorrectToolForDrops()
-                        .sound(SoundType.STONE),
+                        .requiresCorrectToolForDrops(),
                 UniformInt.of(3, 7));
     }
 
     @Override
     public List<ItemStack> getDrops(BlockState state, LootParams.Builder builder) {
+        // Get the tool used
         ItemStack tool = builder.getParameter(LootContextParams.TOOL);
 
         // Check for Silk Touch
@@ -35,7 +33,11 @@ public class ScarletOreBlock extends DropExperienceBlock {
             return List.of(new ItemStack(this));
         }
 
-        return List.of(new ItemStack(NichirinItemRegistry.SCARLET_GEM.get()));
+        // Drop scarlet gem
+        // You'll need to replace this with your actual gem item
+        // return List.of(new ItemStack(YourItems.SCARLET_GEM));
 
+        // Temporary return - replace with your gem item
+        return super.getDrops(state, builder);
     }
 }

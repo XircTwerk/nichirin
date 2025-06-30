@@ -22,8 +22,9 @@ subprojects {
         archivesName = rootProject.archives_name
     }
 
-    // Remove the datagen configuration from here!
-    // It will be added to platform-specific build.gradle files
+    loom {
+        silentMojangMappingsLicense()
+    }
 
     repositories {
         mavenCentral()

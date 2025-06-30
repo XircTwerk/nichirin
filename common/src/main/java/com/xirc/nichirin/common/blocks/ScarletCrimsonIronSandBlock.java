@@ -1,10 +1,8 @@
 package com.xirc.nichirin.common.blocks;
 
-import com.xirc.nichirin.common.registry.NichirinItemRegistry;
 import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.DropExperienceBlock;
-import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.MapColor;
@@ -20,14 +18,14 @@ public class ScarletCrimsonIronSandBlock extends DropExperienceBlock {
     public ScarletCrimsonIronSandBlock() {
         super(BlockBehaviour.Properties.of()
                         .mapColor(MapColor.COLOR_RED)
-                        .strength(0.5f)
-                        .requiresCorrectToolForDrops()
-                        .sound(SoundType.SAND),
+                        .strength(2.0f, 3.0f)
+                        .requiresCorrectToolForDrops(),
                 UniformInt.of(2, 5));
     }
 
     @Override
     public List<ItemStack> getDrops(BlockState state, LootParams.Builder builder) {
+        // Get the tool used
         ItemStack tool = builder.getParameter(LootContextParams.TOOL);
 
         // Check for Silk Touch
@@ -35,6 +33,11 @@ public class ScarletCrimsonIronSandBlock extends DropExperienceBlock {
             return List.of(new ItemStack(this));
         }
 
-        return List.of(new ItemStack(NichirinItemRegistry.SCARLET_CRIMSON_IRON_GEM.get()));
+        // Drop scarlet crimson iron gem
+        // You'll need to replace this with your actual gem item
+        // return List.of(new ItemStack(YourItems.SCARLET_CRIMSON_IRON_GEM));
+
+        // Temporary return - replace with your gem item
+        return super.getDrops(state, builder);
     }
 }
