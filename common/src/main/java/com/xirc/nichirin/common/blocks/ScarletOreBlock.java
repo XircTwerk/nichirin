@@ -1,7 +1,9 @@
 package com.xirc.nichirin.common.blocks;
 
+import com.xirc.nichirin.common.registry.NichirinItemRegistry;
 import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.DropExperienceBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
@@ -33,11 +35,6 @@ public class ScarletOreBlock extends DropExperienceBlock {
             return List.of(new ItemStack(this));
         }
 
-        // Drop scarlet gem
-        // You'll need to replace this with your actual gem item
-        // return List.of(new ItemStack(YourItems.SCARLET_GEM));
-
-        // Temporary return - replace with your gem item
-        return super.getDrops(state, builder);
+        return List.of(new ItemStack((ItemLike) NichirinItemRegistry.SCARLET_GEM));
     }
 }

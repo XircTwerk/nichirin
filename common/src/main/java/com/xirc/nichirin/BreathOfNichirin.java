@@ -5,10 +5,7 @@ import com.xirc.nichirin.client.animation.NichirinAnimations;
 import com.xirc.nichirin.client.renderer.StaminaBarRenderer;
 import com.xirc.nichirin.common.event.StaminaEventHandler;
 import com.xirc.nichirin.common.registry.*;
-import com.xirc.nichirin.common.system.StaminaSystem;
 import com.xirc.nichirin.common.util.KatanaInputHandler;
-import com.xirc.nichirin.common.util.StaminaManager;
-import com.xirc.nichirin.common.world.OreGeneration;
 import dev.architectury.platform.Platform;
 import dev.architectury.registry.registries.DeferredRegister;
 import net.fabricmc.api.EnvType;
@@ -39,7 +36,6 @@ public final class BreathOfNichirin {
         // Initialize input handler (should be safe for both sides)
         KatanaInputHandler.register();
         StaminaEventHandler.register();
-        OreGeneration.registerOreGeneration();
 
         LOGGER.info("=== NICHIRIN COMMON INITIALIZATION COMPLETE ===");
 
