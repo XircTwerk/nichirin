@@ -6,6 +6,7 @@ import com.xirc.nichirin.client.renderer.StaminaBarRenderer;
 import com.xirc.nichirin.common.event.StaminaEventHandler;
 import com.xirc.nichirin.common.registry.*;
 import com.xirc.nichirin.common.util.KatanaInputHandler;
+import com.xirc.nichirin.common.world.NichirinBiomeModifications;
 import dev.architectury.platform.Platform;
 import dev.architectury.registry.registries.DeferredRegister;
 import net.fabricmc.api.EnvType;
@@ -28,11 +29,15 @@ public final class BreathOfNichirin {
         NichirinCreativeTabRegistry.init();
         OreRegistry.register();
 
+        // Add worldgen initialization here
+        NichirinBiomeModifications.addOres(); // Add the biome modifications
+
         // Register the registries themselves
         NichirinItemRegistry.ITEM_REGISTRY.register();
         CREATIVE_TAB_REGISTRY.register();
         NichirinPacketRegistry.init();
         NichirinParticleRegistry.init();
+
         // Initialize input handler (should be safe for both sides)
         KatanaInputHandler.register();
         StaminaEventHandler.register();
