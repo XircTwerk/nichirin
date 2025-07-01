@@ -21,6 +21,7 @@ public final class BreathOfNichirin {
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
     public static final DeferredRegister<CreativeModeTab> CREATIVE_TAB_REGISTRY = DeferredRegister.create(MOD_ID, Registries.CREATIVE_MODE_TAB);
 
+    @SuppressWarnings("CallToPrintStackTrace")
     public static void init() {
         LOGGER.info("=== STARTING NICHIRIN COMMON INITIALIZATION ===");
 

@@ -9,6 +9,7 @@ import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.levelgen.GenerationStep;
 
 public class NichirinBiomeModifications {
+    @SuppressWarnings("UnstableApiUsage")
     public static void addOres() {
         // Add Scarlet Crimson Iron Sand to beaches and rivers
         BiomeModifications.addProperties(biomeContext -> {
@@ -19,13 +20,11 @@ public class NichirinBiomeModifications {
                     biomeKey.equals(Biomes.RIVER) ||
                     biomeKey.equals(Biomes.FROZEN_RIVER) ||
                     biomeKey.equals(Biomes.DESERT);
-        }, (biomeContext, mutable) -> {
-            mutable.getGenerationProperties().addFeature(
-                    GenerationStep.Decoration.UNDERGROUND_ORES,
-                    ResourceKey.create(Registries.PLACED_FEATURE,
-                            new ResourceLocation(BreathOfNichirin.MOD_ID, "scarlet_crimson_iron_sand"))
-            );
-        });
+        }, (biomeContext, mutable) -> mutable.getGenerationProperties().addFeature(
+                GenerationStep.Decoration.UNDERGROUND_ORES,
+                ResourceKey.create(Registries.PLACED_FEATURE,
+                        new ResourceLocation(BreathOfNichirin.MOD_ID, "scarlet_crimson_iron_sand"))
+        ));
 
         // Add Scarlet Ore to mountain biomes
         BiomeModifications.addProperties(biomeContext -> {
@@ -38,12 +37,10 @@ public class NichirinBiomeModifications {
                     biomeKey.equals(Biomes.JAGGED_PEAKS) ||
                     biomeKey.equals(Biomes.STONY_PEAKS) ||
                     biomeKey.equals(Biomes.SNOWY_SLOPES);
-        }, (biomeContext, mutable) -> {
-            mutable.getGenerationProperties().addFeature(
-                    GenerationStep.Decoration.UNDERGROUND_ORES,
-                    ResourceKey.create(Registries.PLACED_FEATURE,
-                            new ResourceLocation(BreathOfNichirin.MOD_ID, "scarlet_ore"))
-            );
-        });
+        }, (biomeContext, mutable) -> mutable.getGenerationProperties().addFeature(
+                GenerationStep.Decoration.UNDERGROUND_ORES,
+                ResourceKey.create(Registries.PLACED_FEATURE,
+                        new ResourceLocation(BreathOfNichirin.MOD_ID, "scarlet_ore"))
+        ));
     }
 }
