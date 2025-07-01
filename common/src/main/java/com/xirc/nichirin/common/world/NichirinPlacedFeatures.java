@@ -52,5 +52,6 @@ public class NichirinPlacedFeatures {
                         BiomeFilter.biome()
                 )
         ));
+        System.out.println("DEBUG: PlacedFeatures bootstrap called!");
     }
 }

@@ -7,11 +7,14 @@ import net.fabricmc.fabric.api.datagen.v1.provider.FabricDynamicRegistryProvider
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.RegistrySetBuilder;
 import net.minecraft.core.registries.Registries;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.CompletableFuture;
 
 public class NichirinWorldProvider extends FabricDynamicRegistryProvider {
+    public static final RegistrySetBuilder BUILDER = new RegistrySetBuilder()
+            .add(Registries.CONFIGURED_FEATURE, NichirinConfiguredFeatures::bootstrap)
+            .add(Registries.PLACED_FEATURE, NichirinPlacedFeatures::bootstrap);
+
     public NichirinWorldProvider(FabricDataOutput output, CompletableFuture<HolderLookup.Provider> registriesFuture) {
         super(output, registriesFuture);
     }
@@ -22,13 +25,8 @@ public class NichirinWorldProvider extends FabricDynamicRegistryProvider {
         entries.addAll(registries.lookupOrThrow(Registries.PLACED_FEATURE));
     }
 
-    protected void buildRegistry(RegistrySetBuilder registryBuilder) {
-        registryBuilder.add(Registries.CONFIGURED_FEATURE, NichirinConfiguredFeatures::bootstrap);
-        registryBuilder.add(Registries.PLACED_FEATURE, NichirinPlacedFeatures::bootstrap);
-    }
-
     @Override
-    public @NotNull String getName() {
-        return "World Gen";
+    public String getName() {
+        return "Nichirin World Gen";
     }
 }

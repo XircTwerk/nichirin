@@ -49,5 +49,6 @@ public class NichirinConfiguredFeatures {
                         6 // vein size
                 )
         ));
+        System.out.println("DEBUG: ConfiguredFeatures bootstrap called!");
     }
 }
