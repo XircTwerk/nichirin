@@ -22,7 +22,7 @@ public class StaminaBarHUD {
     private static BarPosition position = BarPosition.ABOVE_HOTBAR_RIGHT;
     private static final int STAMINA_COLOR = 0xFFFFD700; // Gold
     private static final int BACKGROUND_COLOR = 0x80000000; // Semi-transparent black
-    private static final int BORDER_COLOR = 0xFFFFFFF; // Dark gray
+    private static final int BORDER_COLOR = 0x000000;
 
     // Bar dimensions
     private static final int BAR_WIDTH = 40;

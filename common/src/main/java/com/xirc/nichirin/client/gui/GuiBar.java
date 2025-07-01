@@ -11,7 +11,7 @@ public abstract class GuiBar {
     private static final int BAR_HEIGHT = 6;
 
     // Colors
-    private static final int BLACK_OUTLINE = 0xFF000000;
+    private static final int BLACK_OUTLINE = 0x000000;
     private static final int GRAY_BACKGROUND = 0xFF404040;
 
     /**
