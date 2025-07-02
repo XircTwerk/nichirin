@@ -1,7 +1,5 @@
 package com.xirc.nichirin.fabric.datagen;
 
-import com.xirc.nichirin.common.world.NichirinConfiguredFeatures;
-import com.xirc.nichirin.common.world.NichirinPlacedFeatures;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricDynamicRegistryProvider;
 import net.minecraft.core.HolderLookup;
@@ -11,9 +9,7 @@ import net.minecraft.core.registries.Registries;
 import java.util.concurrent.CompletableFuture;
 
 public class NichirinWorldProvider extends FabricDynamicRegistryProvider {
-    public static final RegistrySetBuilder BUILDER = new RegistrySetBuilder()
-            .add(Registries.CONFIGURED_FEATURE, NichirinConfiguredFeatures::bootstrap)
-            .add(Registries.PLACED_FEATURE, NichirinPlacedFeatures::bootstrap);
+    public static final RegistrySetBuilder BUILDER = new RegistrySetBuilder();
 
     public NichirinWorldProvider(FabricDataOutput output, CompletableFuture<HolderLookup.Provider> registriesFuture) {
         super(output, registriesFuture);

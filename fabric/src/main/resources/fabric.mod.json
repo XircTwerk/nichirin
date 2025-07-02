@@ -23,6 +23,9 @@
     ],
     "fabric-datagen": [
       "com.xirc.nichirin.fabric.datagen.NichirinDataGen"
+    ],
+    "terrablender": [
+      "com.xirc.nichirin.fabric.common.terrablender.NichirinTerraFabric"
     ]
   },
   "mixins": [

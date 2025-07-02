@@ -41,6 +41,7 @@ dependencies {
 
     modApi("me.shedaniel.cloth:cloth-config-forge:11.1.118"){ transitive = false }
 
+    // Terrablender
     modImplementation("com.github.glitchfiend:TerraBlender-forge:${minecraft_version}-${terrablender_version}")
 
     modImplementation("dev.kosmx.player-anim:player-animation-lib-forge:${player_anim_version}")
