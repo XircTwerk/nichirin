@@ -1,7 +1,7 @@
 package com.xirc.nichirin.fabric.common.terrablender;
 
 import com.xirc.nichirin.BreathOfNichirin;
-import net.minecraft.core.registries.BuiltInRegistries;
+import com.xirc.nichirin.fabric.common.world.NichirinBiomeModifications;
 import terrablender.api.Regions;
 import terrablender.api.SurfaceRuleManager;
 import terrablender.api.TerraBlenderApi;
@@ -12,8 +12,12 @@ public class NichirinTerraFabric implements TerraBlenderApi {
 
     @Override
     public void onTerraBlenderInitialized() {
-        System.out.println("[Nichirin] onTerraBlenderInitialized called, modInitialized=" + modInitialized);
+        System.out.println("[Nichirin] TerraBlender initialized!");
         Regions.register(new OverworldRegionFabric(BreathOfNichirin.id("overworld"), 4));
+
+        // Add ore features to biomes
+        NichirinBiomeModifications.addOres();
+
         initialized = true;
         if (modInitialized) {
             registerSurfaceRules();
@@ -21,12 +25,19 @@ public class NichirinTerraFabric implements TerraBlenderApi {
     }
 
     public static void onModInitialized() {
+        System.out.println("[Nichirin] Mod initialized for TerraBlender");
         modInitialized = true;
-        if (initialized)
+        if (initialized) {
             registerSurfaceRules();
+        }
     }
 
     private static void registerSurfaceRules() {
-        SurfaceRuleManager.addSurfaceRules(SurfaceRuleManager.RuleCategory.OVERWORLD, BreathOfNichirin.MOD_ID, MaterialRulesFabric.makeRules());
+        // We still register surface rules but they're minimal since we use features for ores
+        SurfaceRuleManager.addSurfaceRules(
+                SurfaceRuleManager.RuleCategory.OVERWORLD,
+                BreathOfNichirin.MOD_ID,
+                MaterialRulesFabric.makeRules()
+        );
     }
 }

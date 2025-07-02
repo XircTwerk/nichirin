@@ -1,10 +1,10 @@
-package com.xirc.nichirin.fabric.common.terrablender;
+package com.xirc.nichirin.forge.common.terrablender;
 
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.SurfaceRules;
 import net.minecraft.world.level.levelgen.VerticalAnchor;
 
-public class MaterialRulesFabric {
+public class MaterialRulesForge {
 
     public static SurfaceRules.RuleSource makeRules() {
         // Return a minimal rule that never actually triggers

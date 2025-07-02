@@ -36,7 +36,6 @@ public final class BreathOfNichirin {
         CREATIVE_TAB_REGISTRY.register();
         NichirinPacketRegistry.init();
         NichirinParticleRegistry.init();
-
         // Initialize input handler (should be safe for both sides)
         KatanaInputHandler.register();
         StaminaEventHandler.register();
