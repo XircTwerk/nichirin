@@ -42,18 +42,11 @@ public class ClientPlayerDoubleJumpMixin {
 
         // CRITICAL: Only process if NOT on ground, cooldown ready, and jump was pressed
         if (jumpPressed && nichirin$jumpCooldown == 0) {
-            System.out.println("=== CLIENT JUMP PRESS DETECTED ===");
-            System.out.println("Player on ground: " + player.onGround());
-            System.out.println("Current stamina: " + StaminaManager.getStamina(player) + "/" + StaminaManager.getMaxStamina(player));
-            System.out.println("Stamina cost: " + PlayerDoubleJump.getStaminaCost());
 
             // STRICT CHECK: Must not be on ground
             if (player.onGround()) {
-                System.out.println("CLIENT: Jump pressed but player is on ground - ignoring");
             } else if (!StaminaManager.hasStamina(player, PlayerDoubleJump.getStaminaCost())) {
-                System.out.println("CLIENT: Not enough stamina for double jump - need " + PlayerDoubleJump.getStaminaCost() + ", have " + StaminaManager.getStamina(player));
             } else if (PlayerDoubleJump.canDoubleJump(player)) {
-                System.out.println("CLIENT: Can double jump - sending packet to server");
 
                 // Set cooldown to prevent spam
                 nichirin$jumpCooldown = 10;
@@ -64,8 +57,6 @@ public class ClientPlayerDoubleJumpMixin {
 
                 // Optionally: Add immediate visual feedback without modifying state
                 // PlayerDoubleJump.playClientSideEffectsOnly(player);
-            } else {
-                System.out.println("CLIENT: Cannot double jump - already used or other restriction");
             }
         }
 
