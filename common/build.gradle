@@ -30,8 +30,6 @@ dependencies {
     modImplementation "dev.kosmx.player-anim:player-animation-lib:${rootProject.player_anim_version}"
     modImplementation "dev.kosmx.player-anim:anim-core:${rootProject.player_anim_version}"
 
-
-
     // Cloth Config (common)
     modApi "me.shedaniel.cloth:cloth-config:11.1.118"
 }

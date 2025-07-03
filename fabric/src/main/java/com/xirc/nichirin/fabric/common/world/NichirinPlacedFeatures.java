@@ -34,10 +34,10 @@ public class NichirinPlacedFeatures {
         context.register(SCARLET_CRIMSON_IRON_SAND, new PlacedFeature(
                 scarletCrimsonIronSandConfigured,
                 List.of(
-                        CountPlacement.of(6), // Reduced from 16 to 6
+                        CountPlacement.of(3), // Reduced from 6 to 3
                         InSquarePlacement.spread(),
-                        HeightRangePlacement.uniform(VerticalAnchor.absolute(60), VerticalAnchor.absolute(256)), // Reduced range
-                        RarityFilter.onAverageOnceEvery(8) // Increased rarity from 2 to 8
+                        HeightRangePlacement.uniform(VerticalAnchor.absolute(60), VerticalAnchor.absolute(256)),
+                        RarityFilter.onAverageOnceEvery(16) // Increased rarity from 8 to 16
                 )
         ));
 

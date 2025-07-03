@@ -1,0 +1,9 @@
+{
+  "type": "forge:add_features",
+  "biomes": "#minecraft:is_overworld",
+  "features": [
+    "nichirin:scarlet_ore",
+    "nichirin:scarlet_crimson_iron_sand"
+  ],
+  "step": "vegetal_decoration"
+}

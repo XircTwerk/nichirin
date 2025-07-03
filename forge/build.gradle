@@ -61,10 +61,16 @@ processResources {
 }
 
 shadowJar {
+    // Add these excludes
+    exclude "fabric.mod.json"
+    exclude "architectury.common.json"
+
     configurations = [project.configurations.shadowBundle]
     archiveClassifier = 'dev-shadow'
 }
 
+
 remapJar {
-    inputFile.set shadowJar.archiveFile
+    input.set shadowJar.archiveFile
+    dependsOn shadowJar
 }
