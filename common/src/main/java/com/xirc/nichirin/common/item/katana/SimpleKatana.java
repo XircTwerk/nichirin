@@ -7,6 +7,7 @@ import com.xirc.nichirin.common.attack.moves.DoubleSlashAttack;
 import com.xirc.nichirin.common.attack.moves.RisingSlashAttack;
 import com.xirc.nichirin.common.util.AnimationUtils;
 import com.xirc.nichirin.common.util.StaminaManager;
+import com.xirc.nichirin.registry.NicirinSoundRegistry;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;

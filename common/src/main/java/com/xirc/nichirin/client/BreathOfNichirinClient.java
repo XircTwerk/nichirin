@@ -2,9 +2,8 @@ package com.xirc.nichirin.client;
 
 import com.xirc.nichirin.client.animation.AnimationRegistryHelper;
 import com.xirc.nichirin.client.renderer.StaminaBarRenderer;
-import com.xirc.nichirin.common.registry.NichirinParticleRegistry;
+import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import dev.architectury.event.events.client.ClientTickEvent;
-import dev.architectury.registry.client.keymappings.KeyMappingRegistry;
 import dev.architectury.registry.client.particle.ParticleProviderRegistry;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;

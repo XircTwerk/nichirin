@@ -1,4 +1,4 @@
-package com.xirc.nichirin.common.registry;
+package com.xirc.nichirin.registry;
 
 import com.xirc.nichirin.common.blocks.ScarletCrimsonIronSandBlock;
 import com.xirc.nichirin.common.blocks.ScarletOreBlock;

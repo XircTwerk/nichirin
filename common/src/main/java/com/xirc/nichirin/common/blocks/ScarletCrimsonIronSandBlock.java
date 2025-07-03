@@ -1,6 +1,6 @@
 package com.xirc.nichirin.common.blocks;
 
-import com.xirc.nichirin.common.registry.NichirinItemRegistry;
+import com.xirc.nichirin.registry.NichirinItemRegistry;
 import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;

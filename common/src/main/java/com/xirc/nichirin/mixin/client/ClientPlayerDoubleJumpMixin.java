@@ -3,7 +3,7 @@ package com.xirc.nichirin.mixin.client;
 import com.xirc.nichirin.common.system.slayerabilities.PlayerDoubleJump;
 import com.xirc.nichirin.common.util.StaminaManager;
 import com.xirc.nichirin.common.network.DoubleJumpPacket;
-import com.xirc.nichirin.common.registry.NichirinPacketRegistry;
+import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.client.player.LocalPlayer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
