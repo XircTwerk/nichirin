@@ -1,17 +1,15 @@
 package com.xirc.nichirin.fabric.common.world;
 
 import com.xirc.nichirin.BreathOfNichirin;
-import com.xirc.nichirin.common.registry.OreRegistry;
+import com.xirc.nichirin.registry.OreRegistry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstapContext;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.configurations.OreConfiguration;
-import net.minecraft.world.level.levelgen.structure.templatesystem.BlockMatchTest;
 import net.minecraft.world.level.levelgen.structure.templatesystem.RuleTest;
 import net.minecraft.world.level.levelgen.structure.templatesystem.TagMatchTest;
 
@@ -37,7 +35,7 @@ public class NichirinConfiguredFeatures {
                 Feature.ORE,
                 new OreConfiguration(
                         List.of(OreConfiguration.target(sandReplaceable, OreRegistry.SCARLET_CRIMSON_IRON_SAND.get().defaultBlockState())),
-                        6, // vein size
+                        4, // vein size
                         0.0f // CRITICAL: 0.0 air exposure discard chance for surface generation
                 )
         ));
@@ -47,7 +45,7 @@ public class NichirinConfiguredFeatures {
                 Feature.ORE,
                 new OreConfiguration(
                         List.of(OreConfiguration.target(stoneReplaceable, OreRegistry.SCARLET_ORE.get().defaultBlockState())),
-                        8, // vein size
+                        6, // vein size
                         0.0f // CRITICAL: 0.0 air exposure discard chance for surface generation
                 )
         ));

@@ -30,25 +30,28 @@ public class NichirinPlacedFeatures {
         Holder<ConfiguredFeature<?, ?>> scarletCrimsonIronSandConfigured = configuredFeatures.getOrThrow(NichirinConfiguredFeatures.SCARLET_CRIMSON_IRON_SAND);
         Holder<ConfiguredFeature<?, ?>> scarletOreConfigured = configuredFeatures.getOrThrow(NichirinConfiguredFeatures.SCARLET_ORE);
 
-        // Scarlet Crimson Iron Sand - surface generation near sand above Y=60
+        // Vanilla emerald generates with CountPlacement.of(3-8) and no RarityFilter
+        // For 1.5x frequency, we'll use CountPlacement.of(5-12)
+
+        // Scarlet Crimson Iron Sand - emerald-like rarity but 1.5x more common
         context.register(SCARLET_CRIMSON_IRON_SAND, new PlacedFeature(
                 scarletCrimsonIronSandConfigured,
                 List.of(
-                        CountPlacement.of(3), // Reduced from 6 to 3
+                        CountPlacement.of(3), // Emerald uses 3-8, so we use 5 (middle of 4.5-12)
                         InSquarePlacement.spread(),
-                        HeightRangePlacement.uniform(VerticalAnchor.absolute(60), VerticalAnchor.absolute(256)),
-                        RarityFilter.onAverageOnceEvery(16) // Increased rarity from 8 to 16
+                        HeightRangePlacement.uniform(VerticalAnchor.absolute(60), VerticalAnchor.absolute(256))
+                        // No RarityFilter - emeralds don't use one
                 )
         ));
 
-        // Scarlet Ore - surface generation in mountains above Y=80
+        // Scarlet Ore - emerald-like rarity but 1.5x more common
         context.register(SCARLET_ORE, new PlacedFeature(
                 scarletOreConfigured,
                 List.of(
-                        CountPlacement.of(20), // Increased from 12 to 20 for better generation
+                        CountPlacement.of(5), // Same as above
                         InSquarePlacement.spread(),
-                        HeightRangePlacement.uniform(VerticalAnchor.absolute(80), VerticalAnchor.absolute(256)), // Extended to world height
-                        RarityFilter.onAverageOnceEvery(2) // Reduced rarity from 4 to 2
+                        HeightRangePlacement.uniform(VerticalAnchor.absolute(80), VerticalAnchor.absolute(256))
+                        // No RarityFilter - emeralds don't use one
                 )
         ));
     }
