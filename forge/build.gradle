@@ -13,6 +13,15 @@ architectury {
     forge()
 }
 
+// Add generated resources to source sets
+sourceSets {
+    main {
+        resources {
+            srcDirs += ["src/generated/resources"]
+        }
+    }
+}
+
 configurations {
     common {
         canBeResolved = true
@@ -67,4 +76,22 @@ shadowJar {
 
 remapJar {
     inputFile.set shadowJar.archiveFile
+}
+
+// Copy datagen from Fabric since Architectury Loom doesn't support Forge datagen well
+task copyDatagenFromFabric(type: Copy) {
+    dependsOn ':fabric:runDatagen'
+
+    from("${project(':fabric').projectDir}/src/generated/resources") {
+        include '**/*.json'
+    }
+    into("${projectDir}/src/generated/resources")
+
+    doFirst {
+        println "Copying datagen files from Fabric to Forge..."
+    }
+
+    doLast {
+        println "Datagen files copied successfully!"
+    }
 }
