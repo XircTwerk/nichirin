@@ -29,8 +29,6 @@ public final class BreathOfNichirin {
         NichirinCreativeTabRegistry.init();
         OreRegistry.register();
 
-        // Add worldgen initialization here
-
         // Register the registries themselves
         NichirinItemRegistry.ITEM_REGISTRY.register();
         CREATIVE_TAB_REGISTRY.register();
