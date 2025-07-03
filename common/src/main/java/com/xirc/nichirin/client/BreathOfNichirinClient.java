@@ -30,8 +30,6 @@ public class BreathOfNichirinClient {
             // Only log occasionally to avoid spam
             if (minecraft.level != null && minecraft.level.getGameTime() % 100 == 0) {
                 LocalPlayer player = minecraft.player;
-                System.out.println("DEBUG: Client tick - Player: " + (player != null ? "exists" : "null") +
-                        ", Level: " + (minecraft.level != null ? "exists" : "null"));
             }
         });
 

@@ -68,7 +68,6 @@ public class KatanaInputHandler {
 
         // For entity attacks - this runs on both sides
         PlayerEvent.ATTACK_ENTITY.register((player, level, entity, hand, hitResult) -> {
-            System.out.println("DEBUG: Attack entity detected on " + (level.isClientSide ? "CLIENT" : "SERVER"));
             ItemStack heldItem = player.getItemInHand(hand);
 
             // If it's a katana, handle our custom attack
