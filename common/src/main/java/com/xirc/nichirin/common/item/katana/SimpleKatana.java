@@ -46,6 +46,29 @@ public class SimpleKatana extends SwordItem {
     }
 
     /**
+     * Makes the katana unbreakable - it will never take damage
+     */
+    public boolean isDamageable(ItemStack stack) {
+        return false;
+    }
+
+    /**
+     * Prevents the durability bar from being displayed
+     */
+    @Override
+    public boolean isBarVisible(ItemStack stack) {
+        return false;
+    }
+
+    /**
+     * Additional safety - prevents any damage from being applied
+     */
+
+    public void setDamage(ItemStack stack, int damage) {
+        // Do nothing - prevent any damage from being set
+    }
+
+    /**
      * Creates the first light slash attack (M1)
      */
     private SimpleSlashAttack createLightSlash1() {
