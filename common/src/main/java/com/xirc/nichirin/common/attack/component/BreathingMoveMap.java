@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.attack.component;
 
+import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.util.enums.MoveClass;
 
 import java.util.HashMap;
@@ -23,7 +24,7 @@ public class BreathingMoveMap<A extends IBreathingAttacker<A, S>, S extends Enum
     }
 
     public void tick(A attacker) {
-        moves.values().forEach(move -> move.tick(attacker));
+        moves.values().forEach(move -> move.tick((SimpleKatana) attacker));
     }
 
     /**

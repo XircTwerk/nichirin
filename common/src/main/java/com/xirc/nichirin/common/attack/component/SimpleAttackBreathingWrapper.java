@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.attack.component;
 
 import com.xirc.nichirin.common.attack.moves.BasicSlashAttack;
+import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.util.enums.MoveClass;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -40,7 +41,7 @@ public class SimpleAttackBreathingWrapper<A extends IBreathingAttacker<A, ?>> ex
         return this;
     }
 
-    public void tick(A attacker) {
+    public void tick(SimpleKatana attacker) {
         if (!isActive) return;
 
         Player player = attacker.getPlayer();

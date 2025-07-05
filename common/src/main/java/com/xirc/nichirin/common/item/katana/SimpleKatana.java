@@ -5,8 +5,11 @@ import com.xirc.nichirin.common.attack.moves.SimpleSlashAttack;
 import com.xirc.nichirin.common.attack.moves.SimpleSliceAttack;
 import com.xirc.nichirin.common.attack.moves.DoubleSlashAttack;
 import com.xirc.nichirin.common.attack.moves.RisingSlashAttack;
+import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
+import com.xirc.nichirin.common.data.BreathingStyleHelper;
 import com.xirc.nichirin.common.util.AnimationUtils;
 import com.xirc.nichirin.common.util.StaminaManager;
+import com.xirc.nichirin.common.util.enums.MoveInputType;
 import com.xirc.nichirin.registry.NicirinSoundRegistry;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -197,6 +200,19 @@ public class SimpleKatana extends SwordItem {
 
         // Only process attack logic on server side
         if (!player.level().isClientSide) {
+            // NEW: Check for moveset first
+            AbstractMoveset moveset = BreathingStyleHelper.getMoveset(player);
+
+            if (moveset != null && moveset.hasMove(MoveInputType.BASIC)) {
+                // For now, just show that we detected the moveset
+                player.displayClientMessage(
+                        Component.literal("Using " + moveset.getDisplayName() + " (Coming Soon!)").withStyle(style -> style.withColor(0x55FFFF)),
+                        true
+                );
+                // Continue with default attack for now
+            }
+
+            // Original attack logic
             // Check stamina FIRST before any other logic
             if (!StaminaManager.hasStamina(player, LIGHT_ATTACK_STAMINA_COST)) {
                 // Send feedback to player about insufficient stamina
@@ -297,6 +313,20 @@ public class SimpleKatana extends SwordItem {
 
         // Only proceed with attack logic on server
         if (!level.isClientSide) {
+            // NEW: Check for moveset
+            AbstractMoveset moveset = BreathingStyleHelper.getMoveset(player);
+
+            if (moveset != null) {
+                MoveInputType inputType = isCrouching ? MoveInputType.SPECIAL2 : MoveInputType.SPECIAL1;
+                if (moveset.hasMove(inputType)) {
+                    player.displayClientMessage(
+                            Component.literal("Using " + moveset.getDisplayName() + " - " + inputType.name() + " (Coming Soon!)").withStyle(style -> style.withColor(0x55FFFF)),
+                            true
+                    );
+                }
+            }
+
+            // Original special attack logic
             // Check stamina BEFORE starting any attack
             if (!StaminaManager.hasStamina(player, SPECIAL_ATTACK_STAMINA_COST)) {
                 // Send feedback to player about insufficient stamina

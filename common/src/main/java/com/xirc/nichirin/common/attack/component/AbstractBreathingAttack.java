@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.attack.component;
 
+import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.util.enums.MoveClass;
 import lombok.Getter;
 import lombok.Setter;
@@ -237,7 +238,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack<
     /**
      * Called every tick by the move map
      */
-    public void tick(A attacker) {
+    public void tick(SimpleKatana attacker) {
         if (active) {
             Player player = attacker.getPlayer();
             Level world = player.level();
