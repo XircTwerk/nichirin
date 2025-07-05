@@ -131,8 +131,8 @@ public abstract class AbstractMoveset {
     public void performMove(Player player, MoveInputType inputType, IBreathingAttacker<?, ?> attacker) {
         MoveConfiguration config = getMoveConfig(inputType);
         if (config != null && config.breathingAttack != null && !config.breathingAttack.isActive()) {
-            // Start the breathing attack
-            config.breathingAttack.start(attacker);
+            // Start the breathing attack with the player
+            config.breathingAttack.start(player);
         }
     }
 

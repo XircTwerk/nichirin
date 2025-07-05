@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.attack.component;
 
 import com.xirc.nichirin.common.attack.actions.PlayerAnimationAction;
+import com.xirc.nichirin.common.util.StaminaManager;
 import com.xirc.nichirin.common.util.enums.MoveClass;
 import lombok.Getter;
 import lombok.Setter;
@@ -256,37 +257,23 @@ public abstract class AbstractSimpleAttack<T extends AbstractSimpleAttack<T, A>,
      * Starts the attack
      */
     public void start(A attacker) {
-        if (!canStart(attacker)) return;
+        if (active) return;
 
         Player player = attacker.getPlayer();
         Level world = player.level();
 
         // Consume stamina
-        attacker.consumeStamina(staminaCost);
-
-        // Play start sound
-        if (startSound != null) {
-            world.playSound(null, player.getX(), player.getY(), player.getZ(),
-                    startSound, player.getSoundSource(), soundVolume, soundPitch);
+        if (!StaminaManager.consume(player, staminaCost)) {
+            return;
         }
 
-        // Apply user effects
-        userEffects.forEach((effect, data) -> {
-            player.addEffect(new MobEffectInstance(effect, data.duration, data.amplifier));
-        });
+        active = true;
+        onStart(player, world);
 
         // Play start animation if configured
         if (startAnimation != null) {
             startAnimation.perform(attacker);
         }
-
-        // Reset state
-        active = true;
-        currentTick = 0;
-        hitConnected = false;
-        hitEntities.clear();
-
-        onStart(player, world);
     }
 
     protected abstract boolean canStart(A attacker);

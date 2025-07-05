@@ -1,6 +1,5 @@
 package com.xirc.nichirin.common.attack.component;
 
-import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.util.enums.MoveClass;
 import lombok.Getter;
 import lombok.Setter;
@@ -90,7 +89,12 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack<
     @Setter
     private MoveClass moveClass;
 
-    // Builder methods for easy customization
+    // Store the current player performing the attack
+    @Setter
+    @Nullable
+    private Player currentUser;
+
+    // Builder methods remain the same...
 
     @SuppressWarnings("unchecked")
     public T withTiming(int cooldown, int windup, int duration) {
@@ -236,47 +240,51 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack<
     }
 
     /**
-     * Called every tick by the move map
+     * Called every tick by the player performing the attack
      */
-    public void tick(SimpleKatana attacker) {
-        if (active) {
-            Player player = attacker.getPlayer();
+    public void tick(Player player) {
+        if (active && currentUser != null) {
             Level world = player.level();
 
-            if (!onTick(player, world)) {
-                onEnd(player, world);
+            if (!onTick(currentUser, world)) {
+                onEnd(currentUser, world);
                 active = false;
+                currentUser = null;
             }
         }
     }
 
     /**
      * Starts the breathing attack
-     *
-     * @return
      */
-    public SimpleAttackBreathingWrapper<A> start(IBreathingAttacker<?, ?> attacker) {
-        if (active) return null;
+    public void start(Player player) {
+        if (active) return;
 
-        Player player = attacker.getPlayer();
         Level world = player.level();
 
+        currentUser = player;
         active = true;
         onStart(player, world);
-        return null;
+    }
+
+    /**
+     * Starts the breathing attack with an attacker interface
+     */
+    public void start(A attacker) {
+        Player player = attacker.getPlayer();
+        start(player);
     }
 
     /**
      * Stops the breathing attack
      */
-    public void stop(A attacker) {
-        if (!active) return;
+    public void stop() {
+        if (!active || currentUser == null) return;
 
-        Player player = attacker.getPlayer();
-        Level world = player.level();
-
-        onEnd(player, world);
+        Level world = currentUser.level();
+        onEnd(currentUser, world);
         active = false;
+        currentUser = null;
     }
 
     /**

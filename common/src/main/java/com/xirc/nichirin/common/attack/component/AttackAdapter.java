@@ -2,6 +2,8 @@ package com.xirc.nichirin.common.attack.component;
 
 import com.xirc.nichirin.common.util.enums.AttackType;
 import com.xirc.nichirin.common.util.enums.MoveClass;
+import lombok.Getter;
+import lombok.NonNull;
 import net.minecraft.world.entity.player.Player;
 
 /**
@@ -16,6 +18,7 @@ public class AttackAdapter {
             implements IKatanaAttack {
 
         private final AbstractSimpleAttack<T, A> attack;
+        @Getter
         private final A attackerInstance;
 
         public SimpleAttackAdapter(AbstractSimpleAttack<T, A> attack, A attackerInstance) {
@@ -31,10 +34,11 @@ public class AttackAdapter {
         @Override
         public void start(Player player, Object attacker) {
             if (attacker instanceof IPhysicalAttacker) {
-                attack.start((A) attacker);
+                @SuppressWarnings("unchecked")
+                A typedAttacker = (A) attacker;
+                attack.start(typedAttacker);
             }
         }
-
         @Override
         public void tick(Player player, Object attacker) {
             if (attacker instanceof IPhysicalAttacker) {
@@ -75,14 +79,16 @@ public class AttackAdapter {
             return attack.getKnockback();
         }
 
-        public AbstractSimpleAttack<T, A> getAttack() {
+        public @NonNull AbstractSimpleAttack <T, A> getAttack() {
             return attack;
         }
+
     }
 
     /**
      * Adapter for AbstractBreathingAttack
      */
+    @Getter
     public static class BreathingAttackAdapter<T extends AbstractBreathingAttack<T, A>, A extends IBreathingAttacker<A, ?>>
             implements IKatanaAttack {
 
@@ -107,15 +113,11 @@ public class AttackAdapter {
         @Override
         public void tick(Player player, Object attacker) {
             if (attacker instanceof IBreathingAttacker) {
-                // Assuming tick method exists in AbstractBreathingAttack
-                // If not, you'll need to implement the tick logic here
             }
         }
 
         @Override
         public boolean isActive() {
-            // Assuming isActive method exists in AbstractBreathingAttack
-            // If not, you'll need to track this state
             return false;
         }
 
@@ -148,8 +150,5 @@ public class AttackAdapter {
             return 0f;
         }
 
-        public AbstractBreathingAttack<T, A> getAttack() {
-            return attack;
-        }
     }
 }

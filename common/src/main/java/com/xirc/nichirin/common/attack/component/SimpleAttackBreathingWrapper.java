@@ -1,7 +1,6 @@
 package com.xirc.nichirin.common.attack.component;
 
 import com.xirc.nichirin.common.attack.moves.BasicSlashAttack;
-import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.util.enums.MoveClass;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -12,12 +11,10 @@ import net.minecraft.world.level.Level;
 public class SimpleAttackBreathingWrapper<A extends IBreathingAttacker<A, ?>> extends AbstractBreathingAttack<SimpleAttackBreathingWrapper<A>, A> {
 
     private final AbstractSimpleAttack<?, ?> simpleAttack;
-    private final PlayerPhysicalAttacker physicalAttacker;
-    private boolean isActive = false;
+    private Player currentPlayer;
 
     public SimpleAttackBreathingWrapper(AbstractSimpleAttack<?, ?> simpleAttack) {
         this.simpleAttack = simpleAttack;
-        this.physicalAttacker = null; // Will be created when needed
     }
 
     @Override
@@ -28,34 +25,58 @@ public class SimpleAttackBreathingWrapper<A extends IBreathingAttacker<A, ?>> ex
         }
     }
 
+    @Override
+    public void start(Player player) {
+        this.currentPlayer = player;
 
-    public SimpleAttackBreathingWrapper<A> start(IBreathingAttacker<?, ?> attacker) {
-        Player player = attacker.getPlayer();
-        Player physAttacker = PlayerPhysicalAttacker.create(player);
+        // The simple attack expects an IPhysicalAttacker, not a Player directly
+        // We need to create or get the appropriate attacker instance
 
-        if (simpleAttack.canStart(physAttacker)) {
-            simpleAttack.canStart(physAttacker);
-            isActive = true;
-        }
+        // Since we can't call start without the proper type, we'll just mark as active
+        // and handle the attack logic in perform()
+        setActive(true);
+        setCurrentUser(player);
 
-        return this;
-    }
-
-    public void tick(SimpleKatana attacker) {
-        if (!isActive) return;
-
-        Player player = attacker.getPlayer();
-        Player physAttacker = PlayerPhysicalAttacker.create(player);
-
-        simpleAttack.tick(physAttacker);
-
-        if (!simpleAttack.isActive()) {
-            isActive = false;
+        // Initialize the simple attack's state if possible
+        if (simpleAttack instanceof BasicSlashAttack) {
+            // For now, we'll handle the attack logic directly in perform()
+            ((BasicSlashAttack<?>) simpleAttack).setActive(true);
+            ((BasicSlashAttack<?>) simpleAttack).setCurrentTick(0);
         }
     }
 
-    public boolean isActive() {
-        return isActive;
+    @Override
+    public void start(A attacker) {
+        Player player = attacker.getPlayer();
+        start(player);
+    }
+
+    @Override
+    public void tick(Player player) {
+        if (!isActive() || currentPlayer == null) return;
+
+        // Since we can't call tick() directly on the simple attack without the proper attacker type,
+        // we'll handle the ticking manually
+        if (simpleAttack instanceof BasicSlashAttack) {
+            BasicSlashAttack<?> basicAttack = (BasicSlashAttack<?>) simpleAttack;
+
+            // Update tick count
+            int currentTick = basicAttack.getCurrentTick();
+            basicAttack.setCurrentTick(currentTick + 1);
+
+            // Check if attack should end based on total duration
+            if (currentTick >= basicAttack.getTotalDuration()) {
+                basicAttack.setActive(false);
+                setActive(false);
+                setCurrentUser(null);
+                currentPlayer = null;
+            }
+        } else {
+            // For other attack types, just deactivate after a default duration
+            setActive(false);
+            setCurrentUser(null);
+            currentPlayer = null;
+        }
     }
 
     @Override
