@@ -19,7 +19,6 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Command for managing player breathing styles
  * Usage: /breathing set <player> <style>
- *        /breathing remove <player>
  */
 public class BreathingCommand {
 
@@ -27,8 +26,8 @@ public class BreathingCommand {
         dispatcher.register(Commands.literal("breathing")
                 .requires(source -> source.hasPermission(2)) // Requires op level 2
 
-                // /breathing set <player> <style>
-                .then(Commands.literal("set")
+                // /breathing add <player> <style>
+                .then(Commands.literal("add")
                         .then(Commands.argument("player", EntityArgument.player())
                                 .then(Commands.argument("style", StringArgumentType.string())
                                         .suggests(BreathingCommand::suggestStyles)
@@ -38,16 +37,6 @@ public class BreathingCommand {
                                                 StringArgumentType.getString(context, "style")
                                         ))
                                 )
-                        )
-                )
-
-                // /breathing remove <player>
-                .then(Commands.literal("remove")
-                        .then(Commands.argument("player", EntityArgument.player())
-                                .executes(context -> removeBreathingStyle(
-                                        context,
-                                        EntityArgument.getPlayer(context, "player")
-                                ))
                         )
                 )
 
@@ -87,29 +76,6 @@ public class BreathingCommand {
         player.displayClientMessage(
                 Component.literal("Your breathing style has been set to " + formatStyleName(style))
                         .withStyle(style1 -> style1.withColor(0x55FFFF)),
-                false
-        );
-
-        return 1;
-    }
-
-    /**
-     * Removes a player's breathing style
-     */
-    private static int removeBreathingStyle(CommandContext<CommandSourceStack> context, ServerPlayer player) {
-        CommandSourceStack source = context.getSource();
-
-        // Remove the breathing style
-        PlayerDataProvider.updateAndSync(player, null);
-
-        // Send success message
-        source.sendSuccess(() -> Component.literal("Removed " + player.getName().getString() + "'s breathing style")
-                .withStyle(style -> style.withColor(0xFFAA00)), true);
-
-        // Notify the player
-        player.displayClientMessage(
-                Component.literal("Your breathing style has been removed")
-                        .withStyle(style -> style.withColor(0xFF5555)),
                 false
         );
 
