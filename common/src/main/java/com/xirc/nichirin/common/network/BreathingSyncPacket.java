@@ -11,18 +11,18 @@ import net.minecraft.world.entity.player.Player;
 /**
  * Syncs breathing power level to clients
  */
-public class SyncBreathPacket {
+public class BreathingSyncPacket {
     private final int playerId;
     private final float currentBreath;
     private final float maxBreath;
 
-    public SyncBreathPacket(int playerId, float currentBreath, float maxBreath) {
+    public BreathingSyncPacket(int playerId, float currentBreath, float maxBreath) {
         this.playerId = playerId;
         this.currentBreath = currentBreath;
         this.maxBreath = maxBreath;
     }
 
-    public SyncBreathPacket(FriendlyByteBuf buf) {
+    public BreathingSyncPacket(FriendlyByteBuf buf) {
         this.playerId = buf.readInt();
         this.currentBreath = buf.readFloat();
         this.maxBreath = buf.readFloat();

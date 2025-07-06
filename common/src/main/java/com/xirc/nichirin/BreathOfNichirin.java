@@ -5,11 +5,13 @@ import com.xirc.nichirin.client.animation.NichirinAnimations;
 import com.xirc.nichirin.client.handler.AttackWheelHandler;
 import com.xirc.nichirin.client.handler.BigGuiKeyHandler;
 import com.xirc.nichirin.client.registry.NichirinKeybindRegistry;
+import com.xirc.nichirin.client.renderer.BreathingBarRenderer;
 import com.xirc.nichirin.client.renderer.StaminaBarRenderer;
 import com.xirc.nichirin.common.advancement.NichirinCriteriaTriggers;
 import com.xirc.nichirin.common.data.MovesetRegistry;
 import com.xirc.nichirin.common.data.BreathingStyleSyncPacket;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
+import com.xirc.nichirin.common.event.BreathingEventHandler;
 import com.xirc.nichirin.common.event.StaminaEventHandler;
 import com.xirc.nichirin.common.event.ThunderBreathingUnlockHandler;
 import com.xirc.nichirin.common.util.KatanaInputHandler;
@@ -56,6 +58,7 @@ public final class BreathOfNichirin {
 
         // Initialize input handler (should be safe for both sides)
         KatanaInputHandler.register();
+        BreathingEventHandler.register();
         StaminaEventHandler.register();
 
         LOGGER.info("=== NICHIRIN COMMON INITIALIZATION COMPLETE ===");
@@ -79,6 +82,7 @@ public final class BreathOfNichirin {
     }
     public static void initClient() {
         // Register client-side renderer
+        BreathingBarRenderer.register();
         StaminaBarRenderer.register();
     }
     public static ResourceLocation id(String name) {
