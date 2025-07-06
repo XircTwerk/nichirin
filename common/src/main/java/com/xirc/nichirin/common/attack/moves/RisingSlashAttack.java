@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.attack.moves;
 
+import lombok.Getter;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerLevel;
@@ -26,6 +27,7 @@ public class RisingSlashAttack {
     private final int startup;
     private final int active;
     private final int recovery;
+    @Getter
     private final int cooldown;
     private final float damage;
     private final float range;
@@ -33,12 +35,14 @@ public class RisingSlashAttack {
     private final float hitboxSize;
     private final Vec3 hitboxOffset;
     private final int hitStun;
+    @Getter
     private final float launchPower; // How high to launch enemies
     private final SoundEvent startSound;
     private final SoundEvent hitSound;
 
     // State
     private int tickCount = 0;
+    @Getter
     private boolean isActive = false;
     private boolean hasHit = false;
     private final Set<LivingEntity> hitEntities = new HashSet<>();
@@ -377,19 +381,8 @@ public class RisingSlashAttack {
         hitEntities.clear();
     }
 
-    public boolean isActive() {
-        return isActive;
-    }
-
     public int getTotalDuration() {
         return startup + active + recovery;
     }
 
-    public int getCooldown() {
-        return cooldown;
-    }
-
-    public float getLaunchPower() {
-        return launchPower;
-    }
 }
