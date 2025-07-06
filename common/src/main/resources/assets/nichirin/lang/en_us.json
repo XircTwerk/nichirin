@@ -7,5 +7,9 @@
   "block.nichirin.scarlet_ore": "Scarlet Ore",
   "block.nichirin.scarlet_crimson_iron_sand": "Scarlet Crimson Iron Sand",
 
-  "itemgroup.nichirin.main": "Nichirin"
+  "itemgroup.nichirin.main": "Nichirin",
+
+  "key.nichirin.attack_wheel": "Open Attack Wheel",
+  "key.nichirin.open_gui": "Open Gui",
+  "key.categories.nichirin": "Breath of Nichirin"
 }
