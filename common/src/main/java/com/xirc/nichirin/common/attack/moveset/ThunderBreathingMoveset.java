@@ -12,6 +12,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
 
     private static MovesetBuilder createBuilder() {
         return new MovesetBuilder()
+                .withIdleAnimation("nichirin:thunder_idle") // Placeholder animation
                 .withSpeedMultiplier(1.3f); // Emphasizes speed
 
         // No moves added yet - will be implemented later

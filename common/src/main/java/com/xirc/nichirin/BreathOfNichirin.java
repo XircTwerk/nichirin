@@ -2,6 +2,9 @@ package com.xirc.nichirin;
 
 import com.xirc.nichirin.client.BreathOfNichirinClient;
 import com.xirc.nichirin.client.animation.NichirinAnimations;
+import com.xirc.nichirin.client.handler.AttackWheelHandler;
+import com.xirc.nichirin.client.handler.BigGuiKeyHandler;
+import com.xirc.nichirin.client.registry.NichirinKeybindRegistry;
 import com.xirc.nichirin.client.renderer.StaminaBarRenderer;
 import com.xirc.nichirin.common.advancement.NichirinCriteriaTriggers;
 import com.xirc.nichirin.common.data.MovesetRegistry;
@@ -63,11 +66,10 @@ public final class BreathOfNichirin {
             try {
                 BreathOfNichirinClient.init();
                 System.out.println("DEBUG: Client initialization complete");
-
-                // Only initialize animations AFTER client is ready
-                System.out.println("DEBUG: Initializing animations");
+                NichirinKeybindRegistry.init();
                 NichirinAnimations.init();
-                System.out.println("DEBUG: Animation initialization complete");
+                BigGuiKeyHandler.register();
+                AttackWheelHandler.register();
 
             } catch (Exception e) {
                 LOGGER.error("ERROR: Failed to initialize client", e);

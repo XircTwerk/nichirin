@@ -1,6 +1,7 @@
 package com.xirc.nichirin.client;
 
 import com.xirc.nichirin.client.animation.AnimationRegistryHelper;
+import com.xirc.nichirin.client.handler.AttackWheelHandler;
 import com.xirc.nichirin.client.handler.BigGuiKeyHandler;
 import com.xirc.nichirin.client.renderer.StaminaBarRenderer;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
@@ -35,7 +36,8 @@ public class BreathOfNichirinClient {
 
         // Register client events (HUD rendering)
         ClientEventHandler.register();
-
+        BigGuiKeyHandler.register();
+        AttackWheelHandler.register();
         // Preload animations
         AnimationRegistryHelper.preloadAnimations();
 
