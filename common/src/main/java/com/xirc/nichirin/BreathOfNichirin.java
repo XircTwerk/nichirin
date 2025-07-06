@@ -3,10 +3,12 @@ package com.xirc.nichirin;
 import com.xirc.nichirin.client.BreathOfNichirinClient;
 import com.xirc.nichirin.client.animation.NichirinAnimations;
 import com.xirc.nichirin.client.renderer.StaminaBarRenderer;
+import com.xirc.nichirin.common.advancement.NichirinCriteriaTriggers;
 import com.xirc.nichirin.common.data.MovesetRegistry;
 import com.xirc.nichirin.common.data.BreathingStyleSyncPacket;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.event.StaminaEventHandler;
+import com.xirc.nichirin.common.event.ThunderBreathingUnlockHandler;
 import com.xirc.nichirin.common.util.KatanaInputHandler;
 import com.xirc.nichirin.registry.*;
 import dev.architectury.platform.Platform;
@@ -38,9 +40,16 @@ public final class BreathOfNichirin {
         NichirinPacketRegistry.init();
         NichirinParticleRegistry.init();
         NicirinSoundRegistry.init();
+        ThunderBreathingUnlockHandler.register();
+
+        // Register commands
+        NichirinCommandRegistry.init();
+
         PlayerDataProvider.register();
         BreathingStyleSyncPacket.register();
         MovesetRegistry.init();
+        NichirinCriteriaTriggers.init();
+
         // Initialize input handler (should be safe for both sides)
         KatanaInputHandler.register();
         StaminaEventHandler.register();

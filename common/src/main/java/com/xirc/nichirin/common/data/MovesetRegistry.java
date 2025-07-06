@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.data;
 
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
+import com.xirc.nichirin.common.attack.moveset.ThunderBreathingMoveset;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -114,11 +115,11 @@ public class MovesetRegistry {
      * Call this during mod initialization
      */
     public static void init() {
-        // This will be where you register your movesets
-        // For now, it's empty - you'll add movesets as you create them
-        // Example:
+        // Register Thunder Breathing moveset
+        registerMoveset("thunder_breathing", ThunderBreathingMoveset::new);
+
+        // Future movesets can be added here:
         // registerMoveset("water_breathing", WaterBreathingMoveset::new);
-        // registerMoveset("thunder_breathing", ThunderBreathingMoveset::new);
         // registerMoveset("flame_breathing", FlameBreathingMoveset::new);
     }
 }
