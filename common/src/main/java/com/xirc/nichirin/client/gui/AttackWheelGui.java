@@ -151,8 +151,8 @@ public class AttackWheelGui extends Screen {
         int centerX = width / 2;
         int centerY = height / 2;
 
-        // Draw dark background overlay
-        guiGraphics.fill(0, 0, width, height, 0x40000000); // Semi-transparent black
+        // Don't draw dark background over entire screen - removed this line
+        // guiGraphics.fill(0, 0, width, height, 0x40000000);
 
         // Enable blending for transparency
         RenderSystem.enableBlend();
@@ -218,11 +218,11 @@ public class AttackWheelGui extends Screen {
         // First, draw the filled segment
         bufferBuilder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
 
-        // Dark gray color scheme - much more visible when hovered
-        float r = isHovered ? 0.6f : 0.25f;
-        float g = isHovered ? 0.6f : 0.25f;
-        float b = isHovered ? 0.7f : 0.25f; // Slight blue tint when hovered
-        float a = 0.9f; // More opaque
+        // Dark gray color scheme - more visible and less transparent
+        float r = isHovered ? 0.7f : 0.4f;
+        float g = isHovered ? 0.7f : 0.4f;
+        float b = isHovered ? 0.8f : 0.4f; // Slight blue tint when hovered
+        float a = 1.0f; // Fully opaque
 
         for (int i = 0; i < segments; i++) {
             float angle1 = (float) Math.toRadians(startAngle + i * angleStep);
@@ -253,8 +253,8 @@ public class AttackWheelGui extends Screen {
 
         tesselator.end();
 
-        // Draw thicker outlines
-        RenderSystem.lineWidth(3.0f);
+        // Draw MUCH thicker outlines
+        RenderSystem.lineWidth(12.0f); // 4x thickness
 
         // Draw the segment divider lines
         bufferBuilder.begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION_COLOR);
@@ -357,18 +357,20 @@ public class AttackWheelGui extends Screen {
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        // Don't consume movement keys
-        if (keyCode == 87 || keyCode == 65 || keyCode == 83 || keyCode == 68 || // WASD
-                keyCode == 32 || keyCode == 340) { // Space, Shift
-            return false; // Let the game handle movement
+        // ESC key closes the GUI
+        if (keyCode == 256) { // ESC key code
+            this.onClose();
+            return true;
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        // Don't consume any other keys - let all keys pass through to the game
+        // This allows WASD movement to work while the wheel is open
+        return false;
     }
 
     @Override
     protected void init() {
         super.init();
-        // Release mouse when opening the wheel
+        // Release mouse when opening the wheel to allow cursor movement
         minecraft.mouseHandler.releaseMouse();
         rebuildWheel();
     }

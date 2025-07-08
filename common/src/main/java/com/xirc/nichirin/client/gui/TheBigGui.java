@@ -142,7 +142,7 @@ public class TheBigGui extends Screen {
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        // Close on ESC or the keybind key
+        // Close on ESC
         if (keyCode == 256) { // ESC key
             this.onClose();
             return true;
