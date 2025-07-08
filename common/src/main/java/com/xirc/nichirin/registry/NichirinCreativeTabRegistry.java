@@ -31,6 +31,7 @@ public interface NichirinCreativeTabRegistry {
                         try {
                             // Add katana
                             entries.accept(NichirinItemRegistry.KATANA.get());
+                            entries.accept(NichirinItemRegistry.THUNDER_KATANA.get());
 
                             // Add ore blocks
                             entries.accept(OreRegistry.SCARLET_ORE_ITEM.get());
