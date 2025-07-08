@@ -24,7 +24,7 @@ public class PlayerDataProvider {
      * Gets or creates breathing style data for a player
      */
     public static BreathingStyleData getData(Player player) {
-        return PLAYER_DATA.computeIfAbsent(player.getUUID(), uuid -> new BreathingStyleData());
+        return PLAYER_DATA.computeIfAbsent(player.getUUID(), k -> new BreathingStyleData());
     }
 
     /**
@@ -94,6 +94,14 @@ public class PlayerDataProvider {
     private static void savePlayerData(ServerPlayer player) {
         // Use custom storage system
         PlayerDataStorage.savePlayerData(player);
+    }
+
+    public static void clearData(Player player) {
+        PLAYER_DATA.remove(player.getUUID());
+    }
+
+    public static void clearAll() {
+        PLAYER_DATA.clear();
     }
 
     /**

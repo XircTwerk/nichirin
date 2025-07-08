@@ -1,10 +1,6 @@
 package com.xirc.nichirin.common.util;
 
-import com.xirc.nichirin.common.attack.component.IBreathingAttacker;
-import com.xirc.nichirin.common.attack.component.BreathingMoveMap;
-import com.xirc.nichirin.common.item.katana.AbstractKatanaItem;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
-import com.xirc.nichirin.common.util.enums.MoveInputType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.server.level.ServerPlayer;
@@ -13,7 +9,6 @@ import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.event.events.common.InteractionEvent;
 import dev.architectury.event.events.common.TickEvent;
 import dev.architectury.event.EventResult;
-import dev.architectury.event.CompoundEventResult;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
@@ -29,8 +24,6 @@ import java.util.UUID;
  */
 public class KatanaInputHandler {
 
-    // Store temporary attackers for players
-    private static final Map<UUID, TestBreathingAttacker> PLAYER_ATTACKERS = new HashMap<>();
     // Store SimpleKatana instances per player for tracking
     private static final Map<UUID, SimpleKatana> PLAYER_SIMPLE_KATANAS = new HashMap<>();
 
@@ -48,7 +41,7 @@ public class KatanaInputHandler {
             InteractionEvent.CLIENT_LEFT_CLICK_AIR.register((player, hand) -> {
                 System.out.println("DEBUG: Client left click air detected");
                 ItemStack heldItem = player.getItemInHand(hand);
-                if (heldItem.getItem() instanceof SimpleKatana || heldItem.getItem() instanceof AbstractKatanaItem) {
+                if (heldItem.getItem() instanceof SimpleKatana) {
                     sendLeftClickToServer(player);
                 }
             });
@@ -57,7 +50,7 @@ public class KatanaInputHandler {
             InteractionEvent.CLIENT_RIGHT_CLICK_AIR.register((player, hand) -> {
                 System.out.println("DEBUG: Client right click air detected");
                 ItemStack heldItem = player.getItemInHand(hand);
-                if (heldItem.getItem() instanceof SimpleKatana || heldItem.getItem() instanceof AbstractKatanaItem) {
+                if (heldItem.getItem() instanceof SimpleKatana) {
                     sendRightClickToServer(player);
                 }
             });
@@ -71,7 +64,7 @@ public class KatanaInputHandler {
             ItemStack heldItem = player.getItemInHand(hand);
 
             // If it's a katana, handle our custom attack
-            if (heldItem.getItem() instanceof SimpleKatana || heldItem.getItem() instanceof AbstractKatanaItem) {
+            if (heldItem.getItem() instanceof SimpleKatana) {
                 if (!level.isClientSide) {
                     // Server side - perform the attack
                     handleLeftClick(player);
@@ -215,20 +208,6 @@ public class KatanaInputHandler {
             // Use existing performAttack method
             katanaInstance.performAttack(player);
         }
-        // Handle AbstractKatanaItem (breathing system)
-        else if (heldItem.getItem() instanceof AbstractKatanaItem katana) {
-            System.out.println("DEBUG: Found AbstractKatanaItem in main hand, triggering breathing attack");
-
-            // Create or get breathing attacker for this player
-            TestBreathingAttacker attacker = getBreathingAttacker(player);
-
-            if (attacker != null) {
-                System.out.println("DEBUG: Got breathing attacker, performing move");
-                katana.performMove(player, MoveInputType.BASIC, attacker);
-            } else {
-                System.out.println("DEBUG: No breathing attacker found for player");
-            }
-        }
     }
 
     private static void handleRightClick(Player player, boolean isCrouching) {
@@ -266,28 +245,12 @@ public class KatanaInputHandler {
                 player.setShiftKeyDown(originalCrouchState);
             }
         }
-        // Handle AbstractKatanaItem (breathing system) if needed
-        else if (heldItem.getItem() instanceof AbstractKatanaItem katana) {
-            System.out.println("DEBUG: Found AbstractKatanaItem, would handle breathing special attack");
-            // Handle breathing system special attacks here if needed
-            TestBreathingAttacker attacker = getBreathingAttacker(player);
-            if (attacker != null) {
-                MoveInputType inputType = isCrouching ? MoveInputType.BASIC : MoveInputType.BASIC;
-                katana.performMove(player, inputType, attacker);
-            }
-        }
     }
 
     /**
      * Tick all katanas for the player (SERVER ONLY)
      */
     private static void tickPlayer(Player player) {
-        // Tick breathing attacker if exists
-        TestBreathingAttacker attacker = PLAYER_ATTACKERS.get(player.getUUID());
-        if (attacker != null) {
-            attacker.tick();
-        }
-
         // Tick SimpleKatana if player has one
         SimpleKatana katana = PLAYER_SIMPLE_KATANAS.get(player.getUUID());
         if (katana != null) {
@@ -300,24 +263,6 @@ public class KatanaInputHandler {
                 PLAYER_SIMPLE_KATANAS.remove(player.getUUID());
             }
         }
-    }
-
-    /**
-     * Gets or creates a breathing attacker for the given player
-     */
-    private static TestBreathingAttacker getBreathingAttacker(Player player) {
-        System.out.println("DEBUG: Getting breathing attacker for player");
-
-        UUID playerId = player.getUUID();
-        TestBreathingAttacker attacker = PLAYER_ATTACKERS.get(playerId);
-
-        if (attacker == null) {
-            System.out.println("DEBUG: Creating new breathing attacker for player");
-            attacker = new TestBreathingAttacker(player);
-            PLAYER_ATTACKERS.put(playerId, attacker);
-        }
-
-        return attacker;
     }
 
     /**
@@ -337,86 +282,9 @@ public class KatanaInputHandler {
     }
 
     /**
-     * Cleans up attacker when player leaves
+     * Cleans up when player leaves
      */
     public static void cleanupPlayer(Player player) {
-        PLAYER_ATTACKERS.remove(player.getUUID());
         PLAYER_SIMPLE_KATANAS.remove(player.getUUID());
-    }
-
-    /**
-     * Simple test state enum
-     */
-    public enum SimpleState {
-        IDLE,
-        ATTACKING,
-        COOLDOWN
-    }
-
-    /**
-     * Concrete implementation of IBreathingAttacker for testing
-     * Note: The generic parameters are self-referential: TestBreathingAttacker extends IBreathingAttacker<TestBreathingAttacker, SimpleState>
-     */
-    public static class TestBreathingAttacker implements IBreathingAttacker<TestBreathingAttacker, SimpleState> {
-        private final Player player;
-        private SimpleState state = SimpleState.IDLE;
-        private float breathLevel = 100.0f;
-        private final BreathingMoveMap<TestBreathingAttacker, SimpleState> moveMap;
-
-        public TestBreathingAttacker(Player player) {
-            this.player = player;
-            this.moveMap = new BreathingMoveMap<>();
-        }
-
-        @Override
-        public Player getPlayer() {
-            return player;
-        }
-
-        @Override
-        public SimpleState getState() {
-            return state;
-        }
-
-        @Override
-        public void setState(SimpleState newState) {
-            System.out.println("DEBUG: Changing state from " + this.state + " to " + newState);
-            this.state = newState;
-        }
-
-        @Override
-        public BreathingMoveMap<TestBreathingAttacker, SimpleState> getMoveMap() {
-            return moveMap;
-        }
-
-        @Override
-        public boolean canUseBreathing() {
-            return player != null && player.isAlive() && breathLevel > 0 && state != SimpleState.COOLDOWN;
-        }
-
-        @Override
-        public float getBreathLevel() {
-            return breathLevel;
-        }
-
-        @Override
-        public boolean consumeBreath(float amount) {
-            if (breathLevel >= amount) {
-                breathLevel -= amount;
-                System.out.println("DEBUG: Consumed " + amount + " breath, remaining: " + breathLevel);
-                return true;
-            }
-            System.out.println("DEBUG: Not enough breath to consume " + amount + ", current: " + breathLevel);
-            return false;
-        }
-
-        /**
-         * Regenerates breath over time
-         */
-        public void tick() {
-            if (breathLevel < 100.0f) {
-                breathLevel = Math.min(100.0f, breathLevel + 0.5f); // Regenerate 0.5 per tick
-            }
-        }
     }
 }

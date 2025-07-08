@@ -26,8 +26,10 @@ public class BreathingStyleSyncPacket {
 
             context.queue(() -> {
                 Player player = context.getPlayer();
-                BreathingStyleData data = PlayerDataProvider.getData(player);
-                data.setMovesetId(movesetId);
+                if (player != null) { // Add null check here
+                    BreathingStyleData data = PlayerDataProvider.getData(player);
+                    data.setMovesetId(movesetId);
+                }
             });
         });
 

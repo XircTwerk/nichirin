@@ -275,6 +275,45 @@ public class TheBigGui extends Screen {
         }
     }
 
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        // Handle breathing style selection clicks
+        if (currentSection == GuiSection.BREATHING_STYLES) {
+            String currentStyle = BreathingStyleHelper.getMovesetId(player);
+
+            // Calculate click area for Thunder Breathing box
+            int centerX = (this.width - BUTTON_WIDTH - RIGHT_MARGIN - 20) / 2;
+            int boxWidth = 150;
+            int boxHeight = 80;
+            int x = centerX - boxWidth / 2;
+            int y = TOP_MARGIN + 10 + 30 + 25 + 20 + 10; // Based on renderBreathingStylesContent positioning
+
+            // Check if click is within Thunder Breathing box
+            if (mouseX >= x && mouseX <= x + boxWidth && mouseY >= y && mouseY <= y + boxHeight) {
+                String styleName = "thunder_breathing";
+
+                // Only set if not already selected
+                if (!styleName.equals(currentStyle)) {
+                    // Set the breathing style for the player
+                    BreathingStyleHelper.setMovesetId(player, styleName);
+
+                    // Play a click sound
+                    Minecraft.getInstance().getSoundManager().play(
+                            net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
+                                    net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK, 1.0F
+                            )
+                    );
+
+                    // Refresh the screen
+                    this.init();
+                }
+                return true;
+            }
+        }
+
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
     /**
      * Renders the 3D player model
      */

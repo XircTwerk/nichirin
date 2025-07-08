@@ -1,71 +1,147 @@
 package com.xirc.nichirin.registry;
 
 import com.xirc.nichirin.BreathOfNichirin;
-import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
-import com.xirc.nichirin.common.attack.moves.thunder.ChainLightningAttack;
-import com.xirc.nichirin.common.attack.moves.thunder.ThunderClapAttack;
+import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Supplier;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Registry interface for breathing technique moves
- * Simple implementation using a HashMap for cross-platform compatibility
+ * Global registry for all moves across all movesets
+ * Flexible system that doesn't care about attack types
  */
-public interface NichirinMoveRegistry {
+public class NichirinMoveRegistry {
 
-    // Simple registry using HashMap for cross-platform compatibility
-    Map<ResourceLocation, Supplier<AbstractBreathingAttack>> MOVE_SUPPLIERS = new HashMap<>();
-    Map<ResourceLocation, AbstractBreathingAttack> MOVE_INSTANCES = new HashMap<>();
+    // Map of all registered moves by their full ID (moveset:move)
+    private static final Map<ResourceLocation, MoveInfo> GLOBAL_MOVES = new HashMap<>();
 
-    // Register individual moves
-    static void registerMoves() {
-        register("thunder_clap", ThunderClapAttack::new);
-        register("chain_lightning", ChainLightningAttack::new);
+    // Map of all registered movesets
+    private static final Map<String, AbstractMoveset> MOVESETS = new HashMap<>();
+
+    /**
+     * Register a moveset and all its moves
+     */
+    public static void registerMoveset(AbstractMoveset moveset) {
+        MOVESETS.put(moveset.getMovesetId(), moveset);
+
+        // Register each move globally
+        for (int i = 0; i < moveset.getMoveCount(); i++) {
+            AbstractMoveset.MoveConfiguration config = moveset.getMove(i);
+            if (config != null) {
+                ResourceLocation moveId = new ResourceLocation(BreathOfNichirin.MOD_ID,
+                        moveset.getMovesetId() + "/" + config.getMoveId());
+
+                MoveInfo info = new MoveInfo(
+                        moveset.getMovesetId(),
+                        config.getMoveId(),
+                        config.getDisplayName(),
+                        i,
+                        moveset
+                );
+
+                GLOBAL_MOVES.put(moveId, info);
+            }
+        }
+
+        BreathOfNichirin.LOGGER.info("Registered moveset '{}' with {} moves",
+                moveset.getDisplayName(), moveset.getMoveCount());
     }
 
-    // Registration helper
-    static void register(String name, Supplier<AbstractBreathingAttack> supplier) {
-        ResourceLocation id = new ResourceLocation(BreathOfNichirin.MOD_ID, name);
-        MOVE_SUPPLIERS.put(id, supplier);
-        MOVE_INSTANCES.put(id, supplier.get());
+    /**
+     * Get a specific move by its full ID
+     */
+    public static MoveInfo getMove(ResourceLocation id) {
+        return GLOBAL_MOVES.get(id);
     }
 
-    // Helper methods
-    static AbstractBreathingAttack getMove(ResourceLocation id) {
-        return MOVE_INSTANCES.get(id);
+    /**
+     * Get a specific move by moveset and move name
+     */
+    public static MoveInfo getMove(String movesetId, String moveId) {
+        return getMove(new ResourceLocation(BreathOfNichirin.MOD_ID, movesetId + "/" + moveId));
     }
 
-    static AbstractBreathingAttack getMove(String name) {
-        return getMove(new ResourceLocation(BreathOfNichirin.MOD_ID, name));
+    /**
+     * Get all moves for a specific moveset
+     */
+    public static List<MoveInfo> getMovesForMoveset(String movesetId) {
+        List<MoveInfo> moves = new ArrayList<>();
+        for (MoveInfo info : GLOBAL_MOVES.values()) {
+            if (info.movesetId.equals(movesetId)) {
+                moves.add(info);
+            }
+        }
+        return moves;
     }
 
-    static ResourceLocation getKey(AbstractBreathingAttack move) {
-        return MOVE_INSTANCES.entrySet().stream()
-                .filter(entry -> entry.getValue().getClass().equals(move.getClass()))
-                .map(Map.Entry::getKey)
-                .findFirst()
-                .orElse(null);
+    /**
+     * Get a moveset by ID
+     */
+    public static AbstractMoveset getMoveset(String movesetId) {
+        return MOVESETS.get(movesetId);
     }
 
-    // Get all registered moves
-    static Map<ResourceLocation, AbstractBreathingAttack> getAllMoves() {
-        return new HashMap<>(MOVE_INSTANCES);
+    /**
+     * Get all registered movesets
+     */
+    public static Map<String, AbstractMoveset> getAllMovesets() {
+        return new HashMap<>(MOVESETS);
     }
 
-    // Initialize method to be called in your main mod class
-    static void init() {
-        registerMoves();
+    /**
+     * Get all registered moves globally
+     */
+    public static Map<ResourceLocation, MoveInfo> getAllMoves() {
+        return new HashMap<>(GLOBAL_MOVES);
     }
 
-    // Convenience getters for specific moves
-    static AbstractBreathingAttack getThunderClap() {
-        return getMove("thunder_clap");
+    /**
+     * Get total number of moves across all movesets
+     */
+    public static int getTotalMoveCount() {
+        return GLOBAL_MOVES.size();
     }
 
-    static AbstractBreathingAttack getChainLightning() {
-        return getMove("chain_lightning");
+    /**
+     * Initialize the registry (call this in your main mod init)
+     */
+    public static void init() {
+        GLOBAL_MOVES.clear();
+        MOVESETS.clear();
+        BreathOfNichirin.LOGGER.info("Global move registry initialized");
+    }
+
+    /**
+     * Information about a registered move
+     */
+    public static class MoveInfo {
+        public final String movesetId;
+        public final String moveId;
+        public final String displayName;
+        public final int index;
+        public final AbstractMoveset moveset;
+
+        MoveInfo(String movesetId, String moveId, String displayName, int index, AbstractMoveset moveset) {
+            this.movesetId = movesetId;
+            this.moveId = moveId;
+            this.displayName = displayName;
+            this.index = index;
+            this.moveset = moveset;
+        }
+
+        /**
+         * Execute this move for a player
+         */
+        public void execute(net.minecraft.world.entity.player.Player player) {
+            moveset.performMove(player, index);
+        }
+
+        @Override
+        public String toString() {
+            return movesetId + ":" + moveId + " (" + displayName + ")";
+        }
     }
 }

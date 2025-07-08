@@ -13,7 +13,7 @@ public interface IBreathingAttacker<A extends IBreathingAttacker<A, S>, S extend
     Player getPlayer();
 
     /**
-     * Gets the current state of the attacker
+     * Gets the current state of  the attacker
      */
     S getState();
 

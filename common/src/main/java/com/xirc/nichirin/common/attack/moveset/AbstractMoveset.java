@@ -1,23 +1,18 @@
 package com.xirc.nichirin.common.attack.moveset;
 
 import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
-import com.xirc.nichirin.common.attack.component.IBreathingAttacker;
-import com.xirc.nichirin.common.item.katana.AbstractKatanaItem;
-import com.xirc.nichirin.common.util.enums.MoveClass;
-import com.xirc.nichirin.common.util.enums.MoveInputType;
 import lombok.Getter;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Supplier;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
 
 /**
- * Base class for all movesets that can be used by katanas.
- * Separates move definitions from katana items for better reusability.
+ * AbstractMoveset that works with any attack type
+ * Flexible system supporting any number of moves
  */
 @Getter
 public abstract class AbstractMoveset {
@@ -25,8 +20,8 @@ public abstract class AbstractMoveset {
     private final String movesetId;
     private final String displayName;
 
-    // Moves mapped by their class
-    protected final Map<MoveClass, MoveConfiguration> moves = new HashMap<>();
+    // List of moves - flexible for any count
+    protected final List<MoveConfiguration> moves = new ArrayList<>();
 
     // Optional moveset-wide properties
     @Nullable
@@ -41,123 +36,19 @@ public abstract class AbstractMoveset {
         this.damageMultiplier = builder.damageMultiplier;
         this.speedMultiplier = builder.speedMultiplier;
 
-        // Build and configure all moves
-        builder.moveConfigs.forEach((moveClass, config) -> {
-            AbstractBreathingAttack<?, ?> attack = config.attackSupplier.get();
-
-            // Apply configuration to the breathing attack
-            attack.withDamage(config.damage * damageMultiplier)
-                    .withRange(config.range)
-                    .withKnockback(config.knockback)
-                    .withTiming(
-                            (int)(config.cooldown / speedMultiplier),
-                            (int)(config.windup / speedMultiplier),
-                            (int)(config.duration / speedMultiplier)
-                    )
-                    .withHitStun(config.hitStun);
-
-            if (config.hitboxSize > 0) {
-                attack.setAreaOfEffect(true, config.maxTargets);
-            }
-
-            if (config.userVelocity != null) {
-                attack.withUserVelocity(config.userVelocity);
-            }
-
-            if (config.lockMovement) {
-                attack.lockMovement(true);
-            }
-
-            attack.setHoldable(config.holdable);
-            attack.setPiercing(config.piercing);
-
-            // Register the configured move
-            attack.onRegister(moveClass);
-            moves.put(moveClass, config);
-        });
+        // Add all configured moves
+        moves.addAll(builder.moveConfigs);
     }
 
     /**
-     * Gets the move configuration for a specific input type
+     * Gets move by index (0-based)
      */
     @Nullable
-    public MoveConfiguration getMoveConfig(MoveInputType inputType) {
-        return moves.get(inputType.getMoveClass());
-    }
-
-    /**
-     * Gets the move configuration for a specific move class
-     */
-    @Nullable
-    public MoveConfiguration getMoveConfig(MoveClass moveClass) {
-        return moves.get(moveClass);
-    }
-
-    /**
-     * Gets the breathing attack for a specific input type
-     */
-    @Nullable
-    public AbstractBreathingAttack<?, ?> getMove(MoveInputType inputType) {
-        MoveConfiguration config = getMoveConfig(inputType);
-        return config != null ? config.breathingAttack : null;
-    }
-
-    /**
-     * Gets the breathing attack for a specific move class
-     */
-    @Nullable
-    public AbstractBreathingAttack<?, ?> getMove(MoveClass moveClass) {
-        MoveConfiguration config = getMoveConfig(moveClass);
-        return config != null ? config.breathingAttack : null;
-    }
-
-    /**
-     * Checks if this moveset has a move for the given input
-     */
-    public boolean hasMove(MoveInputType inputType) {
-        return moves.containsKey(inputType.getMoveClass());
-    }
-
-    /**
-     * Checks if this moveset has a move for the given class
-     */
-    public boolean hasMove(MoveClass moveClass) {
-        return moves.containsKey(moveClass);
-    }
-
-    /**
-     * Called when a move is triggered - to be called by the katana
-     */
-    public void performMove(Player player, MoveInputType inputType, IBreathingAttacker<?, ?> attacker) {
-        MoveConfiguration config = getMoveConfig(inputType);
-        if (config != null && config.breathingAttack != null && !config.breathingAttack.isActive()) {
-            // Start the breathing attack with the player
-            config.breathingAttack.start(player);
+    public MoveConfiguration getMove(int index) {
+        if (index >= 0 && index < moves.size()) {
+            return moves.get(index);
         }
-    }
-
-    /**
-     * Gets the animation for a specific move
-     */
-    @Nullable
-    public ResourceLocation getMoveAnimation(MoveClass moveClass) {
-        MoveConfiguration config = getMoveConfig(moveClass);
-        return config != null ? config.animationId : null;
-    }
-
-    /**
-     * Gets the animation priority for a specific move
-     */
-    public int getMoveAnimationPriority(MoveClass moveClass) {
-        MoveConfiguration config = getMoveConfig(moveClass);
-        return config != null ? config.animationPriority : 0;
-    }
-
-    /**
-     * Gets all available moves in this moveset
-     */
-    public Map<MoveClass, MoveConfiguration> getAllMoves() {
-        return new HashMap<>(moves);
+        return null;
     }
 
     /**
@@ -168,209 +59,87 @@ public abstract class AbstractMoveset {
     }
 
     /**
-     * Complete configuration for a moveset move
-     * Reusing the same structure from AbstractKatanaItem for compatibility
+     * Performs a move by index
      */
-    @Getter
-    public static class MoveConfiguration {
-        private final Supplier<AbstractBreathingAttack<?, ?>> attackSupplier;
-        public final AbstractBreathingAttack<?, ?> breathingAttack;
-        public final ResourceLocation animationId;
-        public final int animationPriority;
-
-        // Combat stats
-        private final float damage;
-        private final float hitboxSize;
-        private final Vec3 hitboxOffset;
-        private final float range;
-        private final int maxTargets;
-
-        // Timing
-        private final int cooldown;
-        private final int windup;
-        private final int duration;
-        private final int hitStun;
-
-        // Physics
-        private final float knockback;
-        private final Vec3 userVelocity;
-        private final boolean lockMovement;
-
-        // Behavior
-        private final boolean holdable;
-        private final boolean piercing;
-        private final boolean blockBreak;
-
-        // Icon for UI display
-        private final ResourceLocation iconLocation;
-
-        private MoveConfiguration(MoveBuilder builder) {
-            this.attackSupplier = builder.attackSupplier;
-            this.breathingAttack = builder.attackSupplier.get();
-            this.animationId = builder.animationId;
-            this.animationPriority = builder.animationPriority;
-            this.damage = builder.damage;
-            this.hitboxSize = builder.hitboxSize;
-            this.hitboxOffset = builder.hitboxOffset;
-            this.range = builder.range;
-            this.maxTargets = builder.maxTargets;
-            this.cooldown = builder.cooldown;
-            this.windup = builder.windup;
-            this.duration = builder.duration;
-            this.hitStun = builder.hitStun;
-            this.knockback = builder.knockback;
-            this.userVelocity = builder.userVelocity;
-            this.lockMovement = builder.lockMovement;
-            this.holdable = builder.holdable;
-            this.piercing = builder.piercing;
-            this.blockBreak = builder.blockBreak;
-            this.iconLocation = builder.iconLocation;
+    public void performMove(Player player, int moveIndex) {
+        MoveConfiguration config = getMove(moveIndex);
+        if (config != null && config.startAction != null) {
+            config.startAction.accept(player);
         }
     }
 
     /**
-     * Builder for individual moveset moves
-     * Extended from AbstractKatanaItem.MoveBuilder for compatibility
+     * Complete configuration for a moveset move
+     */
+    @Getter
+    public static class MoveConfiguration {
+        public final String moveId;
+        public final String displayName;
+        public final ResourceLocation iconLocation;
+
+        // The action to perform when this move is selected
+        public final Consumer<Player> startAction;
+
+        // Additional properties
+        public final ResourceLocation animationId;
+        public final int animationPriority;
+        public final float damage;
+        public final float range;
+        public final int cooldown;
+
+        private MoveConfiguration(MoveBuilder builder) {
+            this.moveId = builder.moveId;
+            this.displayName = builder.displayName;
+            this.iconLocation = builder.iconLocation;
+            this.startAction = builder.startAction;
+            this.animationId = builder.animationId;
+            this.animationPriority = builder.animationPriority;
+            this.damage = builder.damage;
+            this.range = builder.range;
+            this.cooldown = builder.cooldown;
+        }
+    }
+
+    /**
+     * Builder for individual moves
      */
     public static class MoveBuilder {
-        private final Supplier<AbstractBreathingAttack<?, ?>> attackSupplier;
+        private final String moveId;
+        private final String displayName;
+
+        private Consumer<Player> startAction;
+        private ResourceLocation iconLocation;
         private ResourceLocation animationId;
         private int animationPriority = 0;
-        private ResourceLocation iconLocation;
+        private float damage = 10.0f;
+        private float range = 5.0f;
+        private int cooldown = 40;
 
-        // Combat stats with defaults
-        private float damage = 5.0f;
-        private float hitboxSize = 1.5f;
-        private Vec3 hitboxOffset = new Vec3(0, 0, 1.5);
-        private float range = 3.0f;
-        private int maxTargets = 1;
-
-        // Timing defaults
-        private int cooldown = 20;
-        private int windup = 5;
-        private int duration = 20;
-        private int hitStun = 20;
-
-        // Physics defaults
-        private float knockback = 0.4f;
-        private Vec3 userVelocity = null;
-        private boolean lockMovement = false;
-
-        // Behavior defaults
-        private boolean holdable = false;
-        private boolean piercing = false;
-        private boolean blockBreak = false;
-
-        public MoveBuilder(Supplier<AbstractBreathingAttack<?, ?>> attackSupplier) {
-            this.attackSupplier = attackSupplier;
+        public MoveBuilder(String moveId, String displayName) {
+            this.moveId = moveId;
+            this.displayName = displayName;
         }
 
-        public MoveBuilder withAnimation(ResourceLocation animationId, int priority) {
-            this.animationId = animationId;
-            this.animationPriority = priority;
-            return this;
-        }
-
-        public MoveBuilder withAnimation(String animationId, int priority) {
-            return withAnimation(new ResourceLocation(animationId), priority);
-        }
-
-        public MoveBuilder withAnimation(String animationId) {
-            return withAnimation(animationId, 0);
-        }
-
-        public MoveBuilder withIcon(ResourceLocation iconLocation) {
-            this.iconLocation = iconLocation;
+        public MoveBuilder withAction(Consumer<Player> action) {
+            this.startAction = action;
             return this;
         }
 
         public MoveBuilder withIcon(String iconPath) {
-            return withIcon(new ResourceLocation(iconPath));
+            this.iconLocation = new ResourceLocation(iconPath);
+            return this;
         }
 
-        public MoveBuilder withDamage(float damage) {
+        public MoveBuilder withAnimation(String animationId, int priority) {
+            this.animationId = new ResourceLocation(animationId);
+            this.animationPriority = priority;
+            return this;
+        }
+
+        public MoveBuilder withStats(float damage, float range, int cooldown) {
             this.damage = damage;
-            return this;
-        }
-
-        public MoveBuilder withHitbox(float size, Vec3 offset) {
-            this.hitboxSize = size;
-            this.hitboxOffset = offset;
-            return this;
-        }
-
-        public MoveBuilder withHitbox(float size, double offsetX, double offsetY, double offsetZ) {
-            return withHitbox(size, new Vec3(offsetX, offsetY, offsetZ));
-        }
-
-        public MoveBuilder withRange(float range) {
             this.range = range;
-            return this;
-        }
-
-        public MoveBuilder withMaxTargets(int maxTargets) {
-            this.maxTargets = maxTargets;
-            return this;
-        }
-
-        public MoveBuilder withTiming(int cooldown, int windup, int duration) {
             this.cooldown = cooldown;
-            this.windup = windup;
-            this.duration = duration;
-            return this;
-        }
-
-        public MoveBuilder withCooldown(int cooldown) {
-            this.cooldown = cooldown;
-            return this;
-        }
-
-        public MoveBuilder withWindup(int windup) {
-            this.windup = windup;
-            return this;
-        }
-
-        public MoveBuilder withDuration(int duration) {
-            this.duration = duration;
-            return this;
-        }
-
-        public MoveBuilder withHitStun(int hitStun) {
-            this.hitStun = hitStun;
-            return this;
-        }
-
-        public MoveBuilder withKnockback(float knockback) {
-            this.knockback = knockback;
-            return this;
-        }
-
-        public MoveBuilder withUserVelocity(Vec3 velocity) {
-            this.userVelocity = velocity;
-            return this;
-        }
-
-        public MoveBuilder withUserVelocity(double x, double y, double z) {
-            return withUserVelocity(new Vec3(x, y, z));
-        }
-
-        public MoveBuilder lockMovement(boolean lock) {
-            this.lockMovement = lock;
-            return this;
-        }
-
-        public MoveBuilder setHoldable(boolean holdable) {
-            this.holdable = holdable;
-            return this;
-        }
-
-        public MoveBuilder setPiercing(boolean piercing) {
-            this.piercing = piercing;
-            return this;
-        }
-
-        public MoveBuilder setBlockBreak(boolean blockBreak) {
-            this.blockBreak = blockBreak;
             return this;
         }
 
@@ -383,23 +152,15 @@ public abstract class AbstractMoveset {
      * Builder for creating movesets
      */
     public static class MovesetBuilder {
-        // Optional parameters with defaults
         private ResourceLocation idleAnimation;
         private float damageMultiplier = 1.0f;
         private float speedMultiplier = 1.0f;
 
-        // Move configurations
-        final Map<MoveClass, MoveConfiguration> moveConfigs = new HashMap<>();
-
-        public MovesetBuilder() {}
-
-        public MovesetBuilder withIdleAnimation(ResourceLocation idleAnimation) {
-            this.idleAnimation = idleAnimation;
-            return this;
-        }
+        final List<MoveConfiguration> moveConfigs = new ArrayList<>();
 
         public MovesetBuilder withIdleAnimation(String idleAnimation) {
-            return withIdleAnimation(new ResourceLocation(idleAnimation));
+            this.idleAnimation = new ResourceLocation(idleAnimation);
+            return this;
         }
 
         public MovesetBuilder withDamageMultiplier(float multiplier) {
@@ -413,40 +174,10 @@ public abstract class AbstractMoveset {
         }
 
         /**
-         * Adds a move configuration to a specific input type
+         * Adds a move to the moveset
          */
-        public MovesetBuilder withMove(MoveInputType inputType, MoveBuilder moveBuilder) {
-            return withMove(inputType.getMoveClass(), moveBuilder.build());
-        }
-
-        /**
-         * Adds a move configuration to a specific move class
-         */
-        public MovesetBuilder withMove(MoveClass moveClass, MoveBuilder moveBuilder) {
-            return withMove(moveClass, moveBuilder.build());
-        }
-
-        /**
-         * Adds a pre-built move configuration
-         */
-        public MovesetBuilder withMove(MoveClass moveClass, MoveConfiguration config) {
-            this.moveConfigs.put(moveClass, config);
-            return this;
-        }
-
-        /**
-         * Removes a move configuration
-         */
-        public MovesetBuilder removeMove(MoveClass moveClass) {
-            this.moveConfigs.remove(moveClass);
-            return this;
-        }
-
-        /**
-         * Clears all move configurations
-         */
-        public MovesetBuilder clearMoves() {
-            this.moveConfigs.clear();
+        public MovesetBuilder withMove(MoveBuilder moveBuilder) {
+            this.moveConfigs.add(moveBuilder.build());
             return this;
         }
     }

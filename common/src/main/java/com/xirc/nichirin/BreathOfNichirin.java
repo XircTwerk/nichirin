@@ -51,9 +51,11 @@ public final class BreathOfNichirin {
         // Register commands
         NichirinCommandRegistry.init();
 
+
+
+        MovesetRegistry.init();
         PlayerDataProvider.register();
         BreathingStyleSyncPacket.register();
-        MovesetRegistry.init();
         NichirinCriteriaTriggers.init();
 
         // Initialize input handler (should be safe for both sides)

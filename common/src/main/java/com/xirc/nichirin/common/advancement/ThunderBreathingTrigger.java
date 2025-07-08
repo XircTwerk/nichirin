@@ -5,6 +5,7 @@ import com.xirc.nichirin.BreathOfNichirin;
 import net.minecraft.advancements.critereon.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Custom trigger for unlocking Thunder Breathing
@@ -14,12 +15,12 @@ public class ThunderBreathingTrigger extends SimpleCriterionTrigger<ThunderBreat
     private static final ResourceLocation ID = BreathOfNichirin.id("thunder_breathing_unlock");
 
     @Override
-    public ResourceLocation getId() {
+    public @NotNull ResourceLocation getId() {
         return ID;
     }
 
     @Override
-    protected TriggerInstance createInstance(JsonObject json, ContextAwarePredicate predicate, DeserializationContext context) {
+    protected @NotNull TriggerInstance createInstance(JsonObject json, ContextAwarePredicate predicate, DeserializationContext context) {
         return new TriggerInstance(predicate);
     }
 
@@ -38,7 +39,7 @@ public class ThunderBreathingTrigger extends SimpleCriterionTrigger<ThunderBreat
         }
 
         @Override
-        public JsonObject serializeToJson(SerializationContext context) {
+        public @NotNull JsonObject serializeToJson(SerializationContext context) {
             return super.serializeToJson(context);
         }
     }

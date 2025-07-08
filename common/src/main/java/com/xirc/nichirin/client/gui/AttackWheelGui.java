@@ -3,11 +3,8 @@ package com.xirc.nichirin.client.gui;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
-import com.xirc.nichirin.common.attack.moveset.AbstractMoveset.MoveConfiguration;
 import com.xirc.nichirin.common.data.BreathingStyleHelper;
 import com.xirc.nichirin.common.data.MovesetRegistry;
-import com.xirc.nichirin.common.util.enums.MoveClass;
-import com.xirc.nichirin.common.util.enums.MoveInputType;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.GameRenderer;
@@ -16,7 +13,6 @@ import net.minecraft.world.entity.player.Player;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Circular attack wheel GUI for selecting breathing technique moves
@@ -34,20 +30,19 @@ public class AttackWheelGui extends Screen {
         super(Component.literal("Attack Wheel"));
     }
 
-    @Override
-    protected void init() {
-        super.init();
-        rebuildWheel();
-    }
-
     /**
      * Rebuilds the wheel based on current moveset
      */
     private void rebuildWheel() {
         segments.clear();
 
+        // Check if minecraft is initialized
+        if (minecraft == null || minecraft.player == null) {
+            System.out.println("DEBUG: Attack Wheel - Minecraft not initialized yet");
+            return;
+        }
+
         Player player = minecraft.player;
-        if (player == null) return;
 
         // Get player's current breathing style
         String movesetId = BreathingStyleHelper.getMovesetId(player);
@@ -81,18 +76,13 @@ public class AttackWheelGui extends Screen {
             return;
         }
 
-        // Get all moves from the moveset
-        Map<MoveClass, MoveConfiguration> moves = moveset.getAllMoves();
-
-        if (moves.isEmpty()) {
-            System.out.println("DEBUG: Built wheel with 0 segments (no moves)");
-            return;
-        }
-
         // Create segments for each move
-        for (Map.Entry<MoveClass, MoveConfiguration> entry : moves.entrySet()) {
-            MoveSegment segment = new MoveSegment(entry.getKey(), entry.getValue());
-            segments.add(segment);
+        for (int i = 0; i < moveset.getMoveCount(); i++) {
+            AbstractMoveset.MoveConfiguration config = moveset.getMove(i);
+            if (config != null) {
+                MoveSegment segment = new MoveSegment(i, config);
+                segments.add(segment);
+            }
         }
 
         System.out.println("DEBUG: Built wheel with " + segments.size() + " segments");
@@ -119,13 +109,14 @@ public class AttackWheelGui extends Screen {
      */
     public void activate() {
         isActive = true;
-        rebuildWheel();
+        // Don't rebuild here since minecraft might not be initialized yet
+        // The init() method will call rebuildWheel() when the screen is properly set up
     }
 
     /**
      * Deactivates the wheel and returns selected move
      */
-    public MoveClass deactivate() {
+    public int deactivate() {
         isActive = false;
         return getSelectedMove();
     }
@@ -133,8 +124,8 @@ public class AttackWheelGui extends Screen {
     /**
      * Gets the currently selected move based on mouse position
      */
-    public MoveClass getSelectedMove() {
-        if (segments.isEmpty()) return null;
+    public int getSelectedMove() {
+        if (segments.isEmpty() || minecraft == null) return -1;
 
         int mouseX = (int)(minecraft.mouseHandler.xpos() * minecraft.getWindow().getGuiScaledWidth() / minecraft.getWindow().getScreenWidth());
         int mouseY = (int)(minecraft.mouseHandler.ypos() * minecraft.getWindow().getGuiScaledHeight() / minecraft.getWindow().getScreenHeight());
@@ -147,10 +138,10 @@ public class AttackWheelGui extends Screen {
 
         int segmentIndex = (int)(angle / segmentAngle);
         if (segmentIndex >= 0 && segmentIndex < segments.size()) {
-            return segments.get(segmentIndex).moveClass;
+            return segments.get(segmentIndex).index;
         }
 
-        return null;
+        return -1;
     }
 
     @Override
@@ -160,6 +151,9 @@ public class AttackWheelGui extends Screen {
         int centerX = width / 2;
         int centerY = height / 2;
 
+        // Draw dark background overlay
+        guiGraphics.fill(0, 0, width, height, 0x40000000); // Semi-transparent black
+
         // Enable blending for transparency
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
@@ -167,8 +161,6 @@ public class AttackWheelGui extends Screen {
         // Draw the wheel even if there are no moves
         if (segments.isEmpty()) {
             // Draw empty wheel with 8 placeholder segments
-            RenderSystem.setShaderColor(0.3f, 0.3f, 0.3f, 0.6f);
-
             for (int i = 0; i < 8; i++) {
                 float startAngle = i * 45f;
                 float endAngle = (i + 1) * 45f;
@@ -183,9 +175,10 @@ public class AttackWheelGui extends Screen {
             if (angle < 0) angle += 360;
 
             int hoveredSegment = -1;
-            if (getDistanceFromCenter(mouseX, mouseY, centerX, centerY) <= OUTER_RADIUS &&
-                    getDistanceFromCenter(mouseX, mouseY, centerX, centerY) >= INNER_RADIUS) {
+            float distance = getDistanceFromCenter(mouseX, mouseY, centerX, centerY);
+            if (distance <= OUTER_RADIUS && distance >= INNER_RADIUS) {
                 hoveredSegment = (int)(angle / segmentAngle);
+                if (hoveredSegment >= segments.size()) hoveredSegment = segments.size() - 1;
             }
 
             // Draw segments with moves
@@ -201,8 +194,10 @@ public class AttackWheelGui extends Screen {
                 int textX = centerX + (int)((INNER_RADIUS + OUTER_RADIUS) / 2 * Math.cos(Math.toRadians(midAngle)));
                 int textY = centerY + (int)((INNER_RADIUS + OUTER_RADIUS) / 2 * Math.sin(Math.toRadians(midAngle)));
 
-                String moveName = formatMoveName(segments.get(i).moveClass);
-                guiGraphics.drawCenteredString(font, moveName, textX, textY - 4, 0xFFFFFF);
+                String moveName = segments.get(i).config.getDisplayName();
+                // Make hovered text brighter
+                int textColor = isHovered ? 0xFFFFFF : 0xCCCCCC;
+                guiGraphics.drawCenteredString(font, moveName, textX, textY - 4, textColor);
             }
         }
 
@@ -220,13 +215,14 @@ public class AttackWheelGui extends Screen {
         Tesselator tesselator = Tesselator.getInstance();
         BufferBuilder bufferBuilder = tesselator.getBuilder();
 
+        // First, draw the filled segment
         bufferBuilder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
 
-        // Dark gray color scheme
-        float r = isHovered ? 0.4f : 0.2f;
-        float g = isHovered ? 0.4f : 0.2f;
-        float b = isHovered ? 0.4f : 0.2f;
-        float a = 0.6f; // Semi-transparent
+        // Dark gray color scheme - much more visible when hovered
+        float r = isHovered ? 0.6f : 0.25f;
+        float g = isHovered ? 0.6f : 0.25f;
+        float b = isHovered ? 0.7f : 0.25f; // Slight blue tint when hovered
+        float a = 0.9f; // More opaque
 
         for (int i = 0; i < segments; i++) {
             float angle1 = (float) Math.toRadians(startAngle + i * angleStep);
@@ -257,19 +253,55 @@ public class AttackWheelGui extends Screen {
 
         tesselator.end();
 
-        // Draw separator lines
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        // Draw thicker outlines
+        RenderSystem.lineWidth(3.0f);
+
+        // Draw the segment divider lines
         bufferBuilder.begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION_COLOR);
 
-        // Draw line at start angle
-        float angleRad = (float) Math.toRadians(startAngle);
-        float xInner = centerX + INNER_RADIUS * (float) Math.cos(angleRad);
-        float yInner = centerY + INNER_RADIUS * (float) Math.sin(angleRad);
-        float xOuter = centerX + OUTER_RADIUS * (float) Math.cos(angleRad);
-        float yOuter = centerY + OUTER_RADIUS * (float) Math.sin(angleRad);
+        float startRad = (float) Math.toRadians(startAngle);
 
-        bufferBuilder.vertex(xInner, yInner, 0).color(0.5f, 0.5f, 0.5f, 0.8f).endVertex();
-        bufferBuilder.vertex(xOuter, yOuter, 0).color(0.5f, 0.5f, 0.5f, 0.8f).endVertex();
+        // Only draw the start line (the end line will be drawn by the next segment)
+        float xInnerStart = centerX + INNER_RADIUS * (float) Math.cos(startRad);
+        float yInnerStart = centerY + INNER_RADIUS * (float) Math.sin(startRad);
+        float xOuterStart = centerX + OUTER_RADIUS * (float) Math.cos(startRad);
+        float yOuterStart = centerY + OUTER_RADIUS * (float) Math.sin(startRad);
+
+        bufferBuilder.vertex(xInnerStart, yInnerStart, 0).color(0.1f, 0.1f, 0.1f, 1.0f).endVertex();
+        bufferBuilder.vertex(xOuterStart, yOuterStart, 0).color(0.1f, 0.1f, 0.1f, 1.0f).endVertex();
+
+        tesselator.end();
+
+        // Draw the circular outlines (only once, not for each segment)
+        if (startAngle == 0) { // Only draw circles for the first segment
+            // Inner circle
+            drawCircle(guiGraphics, centerX, centerY, INNER_RADIUS, 0.1f, 0.1f, 0.1f, 1.0f);
+            // Outer circle
+            drawCircle(guiGraphics, centerX, centerY, OUTER_RADIUS, 0.1f, 0.1f, 0.1f, 1.0f);
+        }
+
+        RenderSystem.lineWidth(1.0f);
+    }
+
+    /**
+     * Draws a complete circle outline
+     */
+    private void drawCircle(GuiGraphics guiGraphics, int centerX, int centerY, int radius, float r, float g, float b, float a) {
+        int segments = 64;
+        float angleStep = 360f / segments;
+
+        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        Tesselator tesselator = Tesselator.getInstance();
+        BufferBuilder bufferBuilder = tesselator.getBuilder();
+
+        bufferBuilder.begin(VertexFormat.Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR);
+
+        for (int i = 0; i <= segments; i++) {
+            float angle = (float) Math.toRadians(i * angleStep);
+            float x = centerX + radius * (float) Math.cos(angle);
+            float y = centerY + radius * (float) Math.sin(angle);
+            bufferBuilder.vertex(x, y, 0).color(r, g, b, a).endVertex();
+        }
 
         tesselator.end();
     }
@@ -283,38 +315,73 @@ public class AttackWheelGui extends Screen {
         return (float) Math.sqrt(dx * dx + dy * dy);
     }
 
-    /**
-     * Formats move name for display
-     */
-    private String formatMoveName(MoveClass moveClass) {
-        String name = moveClass.name();
-        // Convert SPECIAL1 -> Form 1, BASIC -> Basic, etc.
-        if (name.startsWith("SPECIAL")) {
-            return "Form " + name.substring(7);
-        }
-        // Capitalize first letter, lowercase rest
-        return name.charAt(0) + name.substring(1).toLowerCase();
-    }
-
     @Override
     public boolean isPauseScreen() {
-        return false;
+        return false; // Allow game to continue
     }
 
     @Override
     public boolean shouldCloseOnEsc() {
+        return true; // Allow ESC to close
+    }
+
+    @Override
+    public void onClose() {
+        super.onClose();
+        // Notify the handler that the wheel was closed
+        if (com.xirc.nichirin.client.handler.AttackWheelHandler.isWheelOpen()) {
+            com.xirc.nichirin.client.handler.AttackWheelHandler.forceCloseWheel();
+        }
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (button == 0) { // Left click
+            // Check if click is on a segment
+            int centerX = width / 2;
+            int centerY = height / 2;
+
+            float distance = getDistanceFromCenter((int)mouseX, (int)mouseY, centerX, centerY);
+            if (distance >= INNER_RADIUS && distance <= OUTER_RADIUS) {
+                // Click is within the wheel, execute the move
+                int selectedMove = getSelectedMove();
+                if (selectedMove != -1) {
+                    // Execute through the handler
+                    com.xirc.nichirin.client.handler.AttackWheelHandler.executeAndCloseWheel();
+                    return true;
+                }
+            }
+        }
         return false;
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        // Don't consume movement keys
+        if (keyCode == 87 || keyCode == 65 || keyCode == 83 || keyCode == 68 || // WASD
+                keyCode == 32 || keyCode == 340) { // Space, Shift
+            return false; // Let the game handle movement
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    @Override
+    protected void init() {
+        super.init();
+        // Release mouse when opening the wheel
+        minecraft.mouseHandler.releaseMouse();
+        rebuildWheel();
     }
 
     /**
      * Represents a segment in the wheel
      */
     private static class MoveSegment {
-        final MoveClass moveClass;
-        final MoveConfiguration config;
+        final int index;
+        final AbstractMoveset.MoveConfiguration config;
 
-        MoveSegment(MoveClass moveClass, MoveConfiguration config) {
-            this.moveClass = moveClass;
+        MoveSegment(int index, AbstractMoveset.MoveConfiguration config) {
+            this.index = index;
             this.config = config;
         }
     }
