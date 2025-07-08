@@ -90,7 +90,7 @@ public class MoveExecutor {
     }
 
     /**
-     * Clear all attacks for a player (on death, disconnect, etc)
+g     * Clear all attacks for a player (on death, disconnect, etc.)
      */
     public static void clearAttacks(Player player) {
         activeAttacks.remove(player);
