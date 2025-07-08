@@ -66,7 +66,7 @@ public class SimpleKatana extends SwordItem {
         // Do nothing - prevent any damage from being set
     }
 
-    // [All the create attack methods stay the same...]
+    // Create attack methods
     private SimpleSlashAttack createLightSlash1() {
         return new SimpleSlashAttack.Builder()
                 .withTiming(3, 7, 2)
@@ -149,17 +149,13 @@ public class SimpleKatana extends SwordItem {
 
         // Only process attack logic on server side
         if (!player.level().isClientSide) {
-            // Check for breathing moveset
+            // Check if moveset wants to override left-click
             AbstractMoveset moveset = BreathingStyleHelper.getMoveset(player);
-
-            // If player has a moveset, try to use the basic move (index 0)
-            if (moveset != null && moveset.getMoveCount() > 0) {
-                // Execute the first move (typically the basic attack)
-                moveset.performMove(player, 0);
-                return; // Don't do the regular attack
+            if (moveset != null && moveset.handleLeftClick(player)) {
+                return; // Moveset handled it
             }
 
-            // No moveset - use default attacks
+            // Default left-click behavior
             if (!StaminaManager.hasStamina(player, LIGHT_ATTACK_STAMINA_COST)) {
                 player.displayClientMessage(Component.literal("Not enough stamina!").withStyle(style -> style.withColor(0xFF5555)), true);
                 player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
@@ -233,22 +229,13 @@ public class SimpleKatana extends SwordItem {
 
         AbstractMoveset moveset = null;
         if (!level.isClientSide) {
-            // Check for breathing moveset
+            // Check if moveset wants to override right-click
             moveset = BreathingStyleHelper.getMoveset(player);
-
-            if (moveset != null && moveset.getMoveCount() > 1) {
-                // Map right-click to different move indices based on context
-                int moveIndex = isCrouching ?
-                        Math.min(2, moveset.getMoveCount() - 1) : // Crouch = 3rd move if available
-                        1; // Normal = 2nd move
-
-                if (moveIndex < moveset.getMoveCount()) {
-                    moveset.performMove(player, moveIndex);
-                    return InteractionResultHolder.success(player.getItemInHand(hand));
-                }
+            if (moveset != null && moveset.handleRightClick(player, isCrouching)) {
+                return InteractionResultHolder.success(player.getItemInHand(hand));
             }
 
-            // No moveset or not enough moves - use default special attacks
+            // No moveset or didn't override - use default special attacks
             if (!StaminaManager.hasStamina(player, SPECIAL_ATTACK_STAMINA_COST)) {
                 player.displayClientMessage(Component.literal("Not enough stamina for special attack!").withStyle(style -> style.withColor(0xFF5555)), true);
                 player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
@@ -291,8 +278,6 @@ public class SimpleKatana extends SwordItem {
 
         return InteractionResultHolder.success(player.getItemInHand(hand));
     }
-
-    // [Rest of the methods remain the same...]
 
     public void displayClientRightClickFeedback(Player player, boolean isCrouching) {
         if (!player.level().isClientSide) return;

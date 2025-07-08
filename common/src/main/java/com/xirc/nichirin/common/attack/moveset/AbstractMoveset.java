@@ -41,6 +41,37 @@ public abstract class AbstractMoveset {
     }
 
     /**
+     * Override the left-click (M1) behavior for SimpleKatana
+     * Return true to override default behavior, false to use default
+     */
+    public boolean handleLeftClick(Player player) {
+        // Default: don't override - use SimpleKatana's default combo system
+        return false;
+    }
+
+    /**
+     * Override the right-click (M2) behavior for SimpleKatana
+     * Return true to override default behavior, false to use default
+     */
+    public boolean handleRightClick(Player player, boolean isCrouching) {
+        // Default: don't override - use SimpleKatana's default special attacks
+        return false;
+    }
+    /**
+     * Get the move index to use for right-click
+     * Default is move 0 (first move)
+     */
+    public int getRightClickMoveIndex(boolean isCrouching) {
+        return 0; // First move by default
+    }
+    /**
+     * Called after a move is performed to allow post-move actions
+     */
+    public void onMovePerformed(Player player, int moveIndex, boolean isCrouching) {
+        // Override in subclasses for special behavior
+    }
+
+    /**
      * Gets move by index (0-based)
      */
     @Nullable
