@@ -80,13 +80,14 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
     }
     @Override
     public boolean handleRightClick(Player player, boolean isCrouching) {
+        // Set the crouch dash flag if needed
+        ThunderClapFlashAttack.setCrouchDash(player, isCrouching);
+
         // Perform Thunderclap and Flash (index 0)
         performMove(player, 0);
 
-        // If crouching, we'll handle the turn in the onMovePerformed callback
         return true; // We handled it
     }
-
     @Override
     public void onMovePerformed(Player player, int moveIndex, boolean isCrouching) {
         // If this was Thunderclap and Flash (index 0) while crouching, turn around
