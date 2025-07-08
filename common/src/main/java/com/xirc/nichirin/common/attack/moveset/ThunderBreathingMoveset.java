@@ -2,6 +2,9 @@ package com.xirc.nichirin.common.attack.moveset;
 
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.thunder.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 
 /**
  * Thunder Breathing moveset implementation
@@ -73,5 +76,27 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withStats(50.0f, 30.0f, 300)
                         .withAction(player -> MoveExecutor.executeThunderAttack(player, new HonoikazuchiNoKamiAttack()))
                 );
+
+    }
+    @Override
+    public boolean handleRightClick(Player player, boolean isCrouching) {
+        // Perform Thunderclap and Flash (index 0)
+        performMove(player, 0);
+
+        // If crouching, we'll handle the turn in the onMovePerformed callback
+        return true; // We handled it
+    }
+
+    @Override
+    public void onMovePerformed(Player player, int moveIndex, boolean isCrouching) {
+        // If this was Thunderclap and Flash (index 0) while crouching, turn around
+        if (moveIndex == 0 && isCrouching) {
+            // Store this in the move itself or use a delayed task system
+            // For now, we'll add it to the ThunderClapFlashAttack
+        }
+    }
+    @Override
+    public int getRightClickMoveIndex(boolean isCrouching) {
+        return 0; // Always Thunderclap and Flash for right-click
     }
 }
