@@ -5,8 +5,8 @@
 		32
 	],
 	"textures": {
-		"0": "thunder_katana",
-		"particle": "thunder_katana"
+		"0": "nichirin:item/thunder_katana",
+		"particle": "nichirin:item/thunder_katana"
 	},
 	"elements": [
 		{
