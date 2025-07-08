@@ -104,6 +104,65 @@ public class TeleportUtil {
     }
 
     /**
+     * Checks if the path between two points is clear of blocks (but can go through entities)
+     */
+    private static boolean isPathClear(Level level, Vec3 start, Vec3 end) {
+        // Check multiple points along the path
+        double distance = start.distanceTo(end);
+        int steps = (int) Math.ceil(distance * 2); // Check every 0.5 blocks
+
+        for (int i = 0; i <= steps; i++) {
+            double progress = i / (double) steps;
+            Vec3 checkPos = start.lerp(end, progress);
+
+            // Check if there's a solid block at this position
+            BlockPos blockPos = new BlockPos((int)checkPos.x, (int)checkPos.y, (int)checkPos.z);
+            BlockState blockState = level.getBlockState(blockPos);
+
+            // Also check the block above (for player height)
+            BlockPos blockPosAbove = blockPos.above();
+            BlockState blockStateAbove = level.getBlockState(blockPosAbove);
+
+            // If either block is solid and not passable, path is blocked
+            if (!blockState.isAir() && blockState.isSolidRender(level, blockPos)) {
+                return false;
+            }
+            if (!blockStateAbove.isAir() && blockStateAbove.isSolidRender(level, blockPosAbove)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Finds the furthest clear position along a path before hitting a block
+     */
+    private static Vec3 findFurthestClearPosition(Level level, Vec3 start, Vec3 direction, double maxDistance) {
+        Vec3 end = start.add(direction.scale(maxDistance));
+
+        // Binary search for the furthest clear position
+        double low = 0;
+        double high = maxDistance;
+        double bestDistance = 0;
+
+        while (high - low > 0.1) { // 0.1 block precision
+            double mid = (low + high) / 2;
+            Vec3 testPos = start.add(direction.scale(mid));
+
+            if (isPathClear(level, start, testPos)) {
+                bestDistance = mid;
+                low = mid;
+            } else {
+                high = mid;
+            }
+        }
+
+        // Return position slightly before the obstruction
+        return start.add(direction.scale(Math.max(0, bestDistance - 0.5)));
+    }
+
+    /**
      * Teleport with default options
      */
     public static boolean teleport(LivingEntity entity, Vec3 targetPos) {
@@ -114,8 +173,26 @@ public class TeleportUtil {
      * Teleport in look direction
      */
     public static boolean teleportInDirection(LivingEntity entity, float distance, TeleportOptions options) {
-        Vec3 direction = entity.getLookAngle();
-        Vec3 targetPos = entity.position().add(direction.scale(distance));
+        Level level = entity.level();
+        Vec3 startPos = entity.position();
+        Vec3 lookVec = entity.getLookAngle();
+
+        // Find the actual teleport destination (accounting for blocks)
+        Vec3 targetPos;
+        if (options.requireSafe) { // Check blocks if safety is required
+            targetPos = findFurthestClearPosition(level, startPos, lookVec, distance);
+            double actualDistance = startPos.distanceTo(targetPos);
+
+            // If we couldn't teleport at least 1 block, don't teleport at all
+            if (actualDistance < 1.0) {
+                return false;
+            }
+        } else {
+            // Unsafe mode - teleport through blocks
+            targetPos = startPos.add(lookVec.scale(distance));
+        }
+
+        // Use the existing teleport method with the calculated position
         return teleport(entity, targetPos, options);
     }
 
