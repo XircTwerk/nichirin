@@ -8,7 +8,6 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
-import net.minecraft.world.item.Tiers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
