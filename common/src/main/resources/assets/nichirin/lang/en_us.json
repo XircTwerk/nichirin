@@ -11,5 +11,7 @@
 
   "key.nichirin.attack_wheel": "Open Attack Wheel",
   "key.nichirin.open_gui": "Open Gui",
-  "key.categories.nichirin": "Breath of Nichirin"
+  "key.categories.nichirin": "Breath of Nichirin",
+
+  "effect.nichirin.shocked": "Shocked"
 }
