@@ -27,7 +27,7 @@ public interface NichirinItemRegistry {
             () -> new SimpleKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
     //thunder katana
     RegistrySupplier<Item> THUNDER_KATANA = register("thunder_katana",
-            () -> new SimpleKatana(settings().rarity(Rarity.EPIC).stacksTo(1)));
+            () -> new SimpleKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
 
     //Ores and Ingots
     RegistrySupplier<Item> SCARLET_CRIMSON_IRON_GEM = register("scarlet_crimson_iron_gem", () -> new Item(settings()));
