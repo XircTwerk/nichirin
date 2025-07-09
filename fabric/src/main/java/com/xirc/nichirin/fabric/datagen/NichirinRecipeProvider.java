@@ -7,6 +7,7 @@ import net.minecraft.advancements.critereon.InventoryChangeTrigger;
 import net.minecraft.data.recipes.FinishedRecipe;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
+import net.minecraft.data.recipes.ShapelessRecipeBuilder;
 import net.minecraft.world.item.Items;
 
 import java.util.function.Consumer;
@@ -30,6 +31,12 @@ public class NichirinRecipeProvider extends FabricRecipeProvider {
                 .unlockedBy("has_iron_sword", InventoryChangeTrigger.TriggerInstance.hasItems(Items.IRON_SWORD))
                 .unlockedBy("has_scarlet_gem", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinItemRegistry.SCARLET_GEM.get()))
                 .unlockedBy("has_scarlet_crimson_iron_gem", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinItemRegistry.SCARLET_CRIMSON_IRON_GEM.get()))
+                .save(exporter);
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.COMBAT, NichirinItemRegistry.THUNDER_KATANA.get())
+                .requires(NichirinItemRegistry.KATANA.get())
+                .requires(Items.YELLOW_DYE)
+                .unlockedBy("has_katana", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinItemRegistry.KATANA.get()))
+                .unlockedBy("has_yellow_dye", InventoryChangeTrigger.TriggerInstance.hasItems(Items.YELLOW_DYE))
                 .save(exporter);
     }
 }
