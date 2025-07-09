@@ -9,6 +9,10 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 /**
  * Seventh Form: Honoikazuchi no Kami (Flaming Thunder God)
  * Zenitsu's personal ultimate technique - massive damage teleport dash
@@ -16,6 +20,7 @@ import net.minecraft.world.phys.Vec3;
 public class HonoikazuchiNoKamiAttack extends ThunderBreathingAttackBase {
 
     private boolean hasExecuted = false;
+    private Set<LivingEntity> hitEntities = new HashSet<>(); // Track hit entities to avoid double hits
 
     public HonoikazuchiNoKamiAttack() {
         withTiming(300, 20, 60) // 15 second cooldown, longer windup and duration
@@ -30,12 +35,13 @@ public class HonoikazuchiNoKamiAttack extends ThunderBreathingAttackBase {
     @Override
     protected void onStart() {
         hasExecuted = false;
+        hitEntities.clear();
 
         // Epic charge-up effects
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, 2.0f, 0.5f);
 
-        // Give user a brief invulnerability during windup
+        // Give user invulnerability during entire windup
         user.setInvulnerable(true);
     }
 
@@ -43,13 +49,27 @@ public class HonoikazuchiNoKamiAttack extends ThunderBreathingAttackBase {
     protected void perform() {
         if (world.isClientSide) return;
 
-        // Execute the ultimate dash once
+        // Keep invulnerability during windup
+        if (tickCount <= windup) {
+            // Still in windup phase, maintain invulnerability
+            if (!user.isInvulnerable()) {
+                user.setInvulnerable(true);
+            }
+            return;
+        }
+
+        // Execute the ultimate dash once after windup completes
         if (!hasExecuted && tickCount == windup + 1) {
+            // Remove invulnerability now that windup is complete
+            user.setInvulnerable(false);
+
             executeUltimateDash();
             hasExecuted = true;
+        }
 
-            // Remove invulnerability after dash
-            user.setInvulnerable(false);
+        // Check for hits in the area around the user during the entire duration
+        if (hasExecuted && tickCount > windup && tickCount < windup + duration) {
+            checkAreaDamage();
         }
 
         // Apply speed boost after dash completes
@@ -59,16 +79,22 @@ public class HonoikazuchiNoKamiAttack extends ThunderBreathingAttackBase {
     }
 
     private void executeUltimateDash() {
+        // Store initial position for hit detection
+        Vec3 startPos = user.position();
+
         // Configure ultimate teleport with massive effects
         TeleportUtil.TeleportOptions options = new TeleportUtil.TeleportOptions()
                 .withParticles(ParticleTypes.ELECTRIC_SPARK, ParticleTypes.EXPLOSION)
                 .withTrail(ParticleTypes.ELECTRIC_SPARK, 16.0f) // Very dense trail
                 .withSounds(SoundEvents.LIGHTNING_BOLT_THUNDER, SoundEvents.GENERIC_EXPLODE)
                 .withDamageCallback(target -> {
-                    // Apply massive damage with special effects
-                    hitTargetUltimate(target);
-                })
-                .unsafe(); // Allow teleporting through obstacles
+                    // Hit targets along the path
+                    if (!hitEntities.contains(target)) {
+                        hitTargetUltimate(target);
+                        hitEntities.add(target);
+                    }
+                });
+        // REMOVED .unsafe() - now respects blocks like Thunder Clap and Flash
 
         // Custom sound properties
         options.soundVolume = 2.0f;
@@ -81,13 +107,39 @@ public class HonoikazuchiNoKamiAttack extends ThunderBreathingAttackBase {
             createLightningDragonEffect();
         };
 
-        // Post-teleport: Explosion effect
+        // Post-teleport: Explosion effect and area damage
         options.postTeleport = entity -> {
             createExplosionEffect();
+            // Hit all enemies in the large hitbox at destination
+            checkAreaDamageAtPosition(entity.position());
         };
 
         // Perform the ultimate dash
-        TeleportUtil.teleportInDirection(user, range, options);
+        boolean success = TeleportUtil.teleportInDirection(user, range, options);
+
+        // If teleport was blocked, still do damage in current area
+        if (!success) {
+            checkAreaDamageAtPosition(startPos);
+            createExplosionEffect();
+        }
+    }
+
+    private void checkAreaDamage() {
+        // Check for enemies in the hitbox around current position
+        checkAreaDamageAtPosition(user.position());
+    }
+
+    private void checkAreaDamageAtPosition(Vec3 position) {
+        // Get all targets in the large hitbox
+        List<LivingEntity> targets = getTargetsInHitbox(position);
+
+        for (LivingEntity target : targets) {
+            // Only hit each entity once
+            if (!hitEntities.contains(target)) {
+                hitTargetUltimate(target);
+                hitEntities.add(target);
+            }
+        }
     }
 
     private void hitTargetUltimate(LivingEntity target) {
@@ -186,5 +238,8 @@ public class HonoikazuchiNoKamiAttack extends ThunderBreathingAttackBase {
     protected void onStop() {
         // Ensure invulnerability is removed
         user.setInvulnerable(false);
+
+        // Clear hit entities set
+        hitEntities.clear();
     }
 }
