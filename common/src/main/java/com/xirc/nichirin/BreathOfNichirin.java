@@ -47,7 +47,7 @@ public final class BreathOfNichirin {
         NichirinParticleRegistry.init();
         NicirinSoundRegistry.init();
         ThunderBreathingUnlockHandler.register();
-
+        NichirinEffectRegistry.init();
         // Register commands
         NichirinCommandRegistry.init();
 

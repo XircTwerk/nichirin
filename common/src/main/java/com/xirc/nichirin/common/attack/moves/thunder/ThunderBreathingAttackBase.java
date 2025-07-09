@@ -1,12 +1,10 @@
 package com.xirc.nichirin.common.attack.moves.thunder;
 
 import com.xirc.nichirin.common.util.BreathingManager;
-import net.minecraft.core.particles.ParticleTypes;
+import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -100,16 +98,14 @@ public abstract class ThunderBreathingAttackBase {
         DamageSource source = user.damageSources().playerAttack(user);
         target.hurt(source, damage);
 
-        // Apply shocked effect (immobilize)
-        target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, hitStun, 255, false, false));
-        target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, hitStun, 255, false, false));
-
-        // Thunder particles around shocked enemy
-        if (world instanceof ServerLevel serverLevel) {
-            serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK,
-                    target.getX(), target.getY() + target.getBbHeight() / 2, target.getZ(),
-                    10, 0.3, 0.3, 0.3, 0.1);
-        }
+        // Apply shocked effect using our custom effect
+        target.addEffect(new MobEffectInstance(
+                NichirinEffectRegistry.SHOCKED.get(), // Use our custom shocked effect
+                hitStun,
+                0, // Amplifier 0 (effect only has 1 level)
+                false, // Ambient
+                true   // Show particles
+        ));
 
         // Apply knockback
         if (knockback > 0) {

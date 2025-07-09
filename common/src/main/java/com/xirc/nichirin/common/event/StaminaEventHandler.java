@@ -29,25 +29,19 @@ public class StaminaEventHandler {
         // Initial sync when player joins
         PlayerEvent.PLAYER_JOIN.register(player -> {
             if (!player.level().isClientSide) {
-                System.out.println("=== PLAYER JOIN - INITIALIZING STAMINA ===");
-                System.out.println("Player: " + player.getName().getString());
 
                 // Force initialize stamina if needed
                 float currentStamina = StaminaManager.getStamina(player);
                 float maxStamina = StaminaManager.getMaxStamina(player);
 
-                System.out.println("Initial stamina: " + currentStamina + "/" + maxStamina);
-
                 // If stamina is 0, restore it to full
                 if (currentStamina <= 0) {
-                    System.out.println("Stamina was 0, restoring to full");
                     StaminaManager.restoreFull(player);
                 }
 
                 // Force sync
                 StaminaManager.forceSyncToClient(player);
 
-                System.out.println("After init - stamina: " + StaminaManager.getStamina(player) + "/" + StaminaManager.getMaxStamina(player));
             }
         });
 
@@ -59,7 +53,6 @@ public class StaminaEventHandler {
         // Restore full stamina on respawn
         PlayerEvent.PLAYER_RESPAWN.register((newPlayer, conqueredEnd) -> {
             if (!conqueredEnd) {
-                System.out.println("=== PLAYER RESPAWN - RESTORING STAMINA ===");
                 StaminaManager.restoreFull(newPlayer);
                 PlayerDoubleJump.resetDoubleJump(newPlayer);
 
