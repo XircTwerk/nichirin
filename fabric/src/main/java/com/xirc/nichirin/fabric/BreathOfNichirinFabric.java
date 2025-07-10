@@ -11,8 +11,6 @@ public final class BreathOfNichirinFabric implements ModInitializer {
         BreathOfNichirin.LOGGER.info("Initializing Nichirin for Fabric");
         BreathOfNichirin.init();
         FabricPacketHandler.registerServerPackets();
-        // Add a debug message here to confirm it's being called
-        System.out.println("[Nichirin] About to call NichirinTerraFabric.onModInitialized()");
         NichirinTerraFabric.onModInitialized();
     }
 }

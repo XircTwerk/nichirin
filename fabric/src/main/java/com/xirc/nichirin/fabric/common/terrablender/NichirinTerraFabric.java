@@ -12,7 +12,6 @@ public class NichirinTerraFabric implements TerraBlenderApi {
 
     @Override
     public void onTerraBlenderInitialized() {
-        System.out.println("[Nichirin] TerraBlender initialized!");
         Regions.register(new OverworldRegionFabric(BreathOfNichirin.id("overworld"), 4));
 
         // Add ore features to biomes
@@ -25,7 +24,6 @@ public class NichirinTerraFabric implements TerraBlenderApi {
     }
 
     public static void onModInitialized() {
-        System.out.println("[Nichirin] Mod initialized for TerraBlender");
         modInitialized = true;
         if (initialized) {
             registerSurfaceRules();
