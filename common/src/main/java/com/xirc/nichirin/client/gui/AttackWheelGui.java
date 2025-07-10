@@ -39,7 +39,6 @@ public class AttackWheelGui extends Screen {
 
         // Check if minecraft is initialized
         if (minecraft == null || minecraft.player == null) {
-            System.out.println("DEBUG: Attack Wheel - Minecraft not initialized yet");
             return;
         }
 
@@ -47,19 +46,15 @@ public class AttackWheelGui extends Screen {
 
         // Get player's current breathing style
         String movesetId = BreathingStyleHelper.getMovesetId(player);
-        System.out.println("DEBUG: Attack Wheel - Moveset ID: " + movesetId);
 
         if (movesetId == null || movesetId.isEmpty()) {
-            System.out.println("DEBUG: Attack Wheel - No moveset ID found");
             return;
         }
 
         // Get the moveset
         AbstractMoveset moveset = MovesetRegistry.getMoveset(movesetId);
-        System.out.println("DEBUG: Attack Wheel - Moveset object: " + moveset);
 
         if (moveset == null) {
-            System.out.println("DEBUG: Attack Wheel - Moveset not found in registry");
             return;
         }
 
@@ -73,7 +68,6 @@ public class AttackWheelGui extends Screen {
         segments.clear();
 
         if (moveset == null) {
-            System.out.println("DEBUG: Built wheel with 0 segments (null moveset)");
             return;
         }
 
@@ -85,8 +79,6 @@ public class AttackWheelGui extends Screen {
                 segments.add(segment);
             }
         }
-
-        System.out.println("DEBUG: Built wheel with " + segments.size() + " segments");
 
         if (!segments.isEmpty()) {
             segmentAngle = 360f / segments.size();

@@ -139,8 +139,6 @@ public class RisingSlashAttack {
     }
 
     public void start(Player player) {
-        System.out.println("DEBUG: RisingSlashAttack start called");
-
         // Only run on server side
         if (player.level().isClientSide()) {
             return;
@@ -187,8 +185,6 @@ public class RisingSlashAttack {
     }
 
     private void performHitDetection(Player user, Level world) {
-        System.out.println("DEBUG: Performing rising slash hit detection");
-
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDir = user.getLookAngle();
         Vec3 hitboxCenter = userPos.add(lookDir.scale(range)).add(hitboxOffset);
@@ -203,14 +199,9 @@ public class RisingSlashAttack {
                 hitboxCenter.z + hitboxSize
         );
 
-        System.out.println("DEBUG: Hitbox center: " + hitboxCenter);
-        System.out.println("DEBUG: Launch power: " + launchPower);
-
         // Find targets
         List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
                 entity -> entity != user && entity.isAlive() && !hitEntities.contains(entity));
-
-        System.out.println("DEBUG: Found " + targets.size() + " potential targets");
 
         if (!targets.isEmpty()) {
             hasHit = true;
@@ -238,19 +229,12 @@ public class RisingSlashAttack {
     }
 
     private void launchTarget(LivingEntity target, Player user, DamageSource damageSource) {
-        // Debug current state
-        System.out.println("DEBUG: Target state before launch - onGround: " + target.onGround()
-                + ", inWater: " + target.isInWater()
-                + ", noGravity: " + target.isNoGravity()
-                + ", current Y velocity: " + target.getDeltaMovement().y);
-
         // Clear any existing velocity
         target.setDeltaMovement(Vec3.ZERO);
 
         // Lift slightly off ground to ensure launch works
         if (target.onGround()) {
             target.setPos(target.getX(), target.getY() + 0.1, target.getZ());
-            System.out.println("DEBUG: Lifted target off ground");
         }
 
         // Calculate launch velocity
@@ -274,7 +258,6 @@ public class RisingSlashAttack {
         // Force sync for players
         if (target instanceof ServerPlayer serverPlayer) {
             serverPlayer.connection.send(new ClientboundSetEntityMotionPacket(target));
-            System.out.println("DEBUG: Forced velocity sync for player");
         }
 
         // Apply hit stun BEFORE damage to prevent damage knockback interference
@@ -284,18 +267,6 @@ public class RisingSlashAttack {
 
         // Apply damage AFTER velocity
         target.hurt(damageSource, damage);
-
-        System.out.println("DEBUG: Launched " + target.getName().getString()
-                + " with velocity: " + launchVelocity);
-
-        // Debug check - schedule a delayed velocity check
-        if (user.level() instanceof ServerLevel serverLevel) {
-            serverLevel.getServer().execute(() -> {
-                Vec3 delayedVelocity = target.getDeltaMovement();
-                System.out.println("DEBUG: Velocity 1 tick later - Y: " + delayedVelocity.y
-                        + ", onGround: " + target.onGround());
-            });
-        }
     }
 
     private void createHitParticles(ServerLevel serverLevel, LivingEntity target) {
@@ -315,17 +286,12 @@ public class RisingSlashAttack {
         serverLevel.sendParticles(ParticleTypes.SWEEP_ATTACK,
                 target.getX(), target.getY() + 1.0, target.getZ(),
                 1, 0, 0, 0, 0);
-
-        System.out.println("DEBUG: Created rising hit particles for " + target.getName().getString());
     }
 
     private void createRisingParticles(Player user, Level world) {
         if (!(world instanceof ServerLevel serverLevel)) {
-            System.out.println("DEBUG: Not server level, skipping particles");
             return;
         }
-
-        System.out.println("DEBUG: Creating rising slash particles");
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDir = user.getLookAngle();
@@ -371,12 +337,9 @@ public class RisingSlashAttack {
                         2, 0.1, 0.1, 0.1, 0.01);
             }
         }
-
-        System.out.println("DEBUG: Created rising slash particle line going straight up");
     }
 
     private void end(Player player) {
-        System.out.println("DEBUG: RisingSlashAttack ended");
         isActive = false;
         hitEntities.clear();
     }
@@ -384,5 +347,4 @@ public class RisingSlashAttack {
     public int getTotalDuration() {
         return startup + active + recovery;
     }
-
 }
