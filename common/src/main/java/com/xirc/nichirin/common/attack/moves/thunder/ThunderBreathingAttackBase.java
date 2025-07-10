@@ -2,6 +2,7 @@ package com.xirc.nichirin.common.attack.moves.thunder;
 
 import com.xirc.nichirin.common.util.BreathingManager;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
+import lombok.Getter;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -28,11 +29,14 @@ public abstract class ThunderBreathingAttackBase {
     protected float hitboxSize = 2.0f; // Size 2 hitbox as specified
 
     // Timing
+    @Getter
     protected int cooldown = 40;
     protected int windup = 5;
     protected int duration = 20;
 
+    // Getters
     // State
+    @Getter
     protected boolean isActive = false;
     protected int tickCount = 0;
     protected Player user;
@@ -45,19 +49,20 @@ public abstract class ThunderBreathingAttackBase {
         this.user = user;
         this.world = world;
         this.tickCount = 0;
-        this.isActive = true;
 
-        // Check breath cost
+        // Check breath cost BEFORE marking as active
         if (!BreathingManager.consume(user, breathCost)) {
             user.displayClientMessage(
                     Component.literal("Not enough breath!")
                             .withStyle(style -> style.withColor(0xFF5555)),
                     true
             );
-            stop();
+            // DON'T set isActive = true if we don't have enough breath
             return;
         }
 
+        // Only mark as active if we successfully consumed breath
+        this.isActive = true;
         onStart();
     }
 
@@ -105,6 +110,40 @@ public abstract class ThunderBreathingAttackBase {
                 0, // Amplifier 0 (effect only has 1 level)
                 false, // Ambient
                 true   // Show particles
+        ));
+
+        // Apply knockback
+        if (knockback > 0) {
+            Vec3 knockbackDir = target.position().subtract(user.position()).normalize();
+            target.push(knockbackDir.x * knockback, 0.1, knockbackDir.z * knockback);
+        }
+    }
+
+    /**
+     * Special hit method that removes immunity frames - for ThunderClapFlash
+     */
+    protected void hitTargetNoImmunity(LivingEntity target) {
+        if (world.isClientSide) return;
+
+        // Store current invulnerability time
+        int oldInvulTime = target.invulnerableTime;
+
+        // Reset invulnerability to allow immediate damage
+        target.invulnerableTime = 0;
+
+        // Apply damage
+        DamageSource source = user.damageSources().playerAttack(user);
+        target.hurt(source, damage);
+
+        // Don't restore old invulnerability - let it start fresh from this hit
+
+        // Apply shocked effect using our custom effect
+        target.addEffect(new MobEffectInstance(
+                NichirinEffectRegistry.SHOCKED.get(),
+                hitStun,
+                0,
+                false,
+                true
         ));
 
         // Apply knockback
@@ -182,8 +221,5 @@ public abstract class ThunderBreathingAttackBase {
         return this;
     }
 
-    // Getters
-    public boolean isActive() { return isActive; }
-    public int getCooldown() { return cooldown; }
     public int getTotalDuration() { return windup + duration; }
 }

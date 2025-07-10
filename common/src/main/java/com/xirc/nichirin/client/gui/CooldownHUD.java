@@ -20,17 +20,18 @@ public class CooldownHUD {
     private static final int DISPLAY_X = 10; // From right edge
     private static final int DISPLAY_Y = 10; // From top edge
     private static final int ENTRY_HEIGHT = 20;
-    private static final int ENTRY_WIDTH = 100;
+    private static final int MIN_ENTRY_WIDTH = 80;
+    private static final int PADDING = 6; // Padding on each side
+    private static final int TIME_SPACING = 10; // Space between name and time
 
     /**
      * Renders the cooldown display
      */
     public static void render(GuiGraphics graphics, float partialTicks) {
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.player == null) return;
+        if (minecraft.player == null || minecraft.font == null) return;
 
         int screenWidth = minecraft.getWindow().getGuiScaledWidth();
-        int x = screenWidth - ENTRY_WIDTH - DISPLAY_X;
         int y = DISPLAY_Y;
 
         List<Map.Entry<String, CooldownEntry>> activeCooldowns = new ArrayList<>();
@@ -49,38 +50,70 @@ public class CooldownHUD {
         // Sort by remaining time
         activeCooldowns.sort((a, b) -> Long.compare(a.getValue().endTime, b.getValue().endTime));
 
-        // Render each cooldown
+        // Render each cooldown with dynamic width
         for (Map.Entry<String, CooldownEntry> entry : activeCooldowns) {
-            renderCooldownEntry(graphics, x, y, entry.getKey(), entry.getValue(), currentTime);
+            // Calculate the width needed for this entry
+            String name = entry.getKey();
+            CooldownEntry cooldown = entry.getValue();
+            long remaining = cooldown.endTime - currentTime;
+            String timeText = String.format("%.1fs", remaining / 1000.0);
+
+            // Calculate required width
+            int nameWidth = minecraft.font.width(name);
+            int timeWidth = minecraft.font.width(timeText);
+            int totalWidth = PADDING + nameWidth + TIME_SPACING + timeWidth + PADDING;
+            int entryWidth = Math.max(totalWidth, MIN_ENTRY_WIDTH);
+
+            // Position from right edge
+            int x = screenWidth - entryWidth - DISPLAY_X;
+
+            renderCooldownEntry(graphics, x, y, entryWidth, entry.getKey(), entry.getValue(), currentTime);
             y += ENTRY_HEIGHT + 2;
         }
     }
 
-    private static void renderCooldownEntry(GuiGraphics graphics, int x, int y, String name, CooldownEntry cooldown, long currentTime) {
+    private static void renderCooldownEntry(GuiGraphics graphics, int x, int y, int width, String name, CooldownEntry cooldown, long currentTime) {
         long remaining = cooldown.endTime - currentTime;
         float progress = 1.0f - (float)remaining / (float)cooldown.duration;
         progress = Mth.clamp(progress, 0.0f, 1.0f);
 
         // Background
-        graphics.fill(x, y, x + ENTRY_WIDTH, y + ENTRY_HEIGHT, 0x80000000);
+        graphics.fill(x, y, x + width, y + ENTRY_HEIGHT, 0x80000000);
 
         // Progress bar
-        int progressWidth = (int)(ENTRY_WIDTH * progress);
+        int progressWidth = (int)(width * progress);
         int color = interpolateColor(0xFF0000, 0x00FF00, progress); // Red to green
         graphics.fill(x, y, x + progressWidth, y + ENTRY_HEIGHT, color | 0x80000000);
 
         // Border
-        graphics.renderOutline(x, y, ENTRY_WIDTH, ENTRY_HEIGHT, 0xFFFFFFFF);
+        graphics.renderOutline(x, y, width, ENTRY_HEIGHT, 0xFFFFFFFF);
 
-        // Text
+        // Text - translated down by 2 pixels from the original y + 2
         String timeText = String.format("%.1fs", remaining / 1000.0);
-        Component nameComponent = Component.literal(name);
-        Component timeComponent = Component.literal(timeText);
 
-        graphics.drawString(Minecraft.getInstance().font, nameComponent, x + 3, y + 2, 0xFFFFFFFF, true);
-        graphics.drawString(Minecraft.getInstance().font, timeComponent,
-                x + ENTRY_WIDTH - Minecraft.getInstance().font.width(timeText) - 3,
-                y + 2, 0xFFFFFFFF, true);
+        // Save the current matrix state
+        graphics.pose().pushPose();
+
+        // Scale down the text to 85% size (slightly larger than before)
+        float scale = 0.85f;
+        graphics.pose().scale(scale, scale, 1.0f);
+
+        // Calculate scaled positions
+        float scaledX = (x + PADDING) / scale;
+        float scaledY = (y + 7) / scale; // Moved down from y + 6 to y + 7
+
+        // Draw move name
+        graphics.drawString(Minecraft.getInstance().font, name,
+                (int)scaledX, (int)scaledY, 0xFFFFFFFF, true);
+
+        // Draw time (right-aligned)
+        int timeWidth = Minecraft.getInstance().font.width(timeText);
+        float scaledRightX = (x + width - PADDING) / scale;
+        graphics.drawString(Minecraft.getInstance().font, timeText,
+                (int)(scaledRightX - timeWidth), (int)scaledY, 0xFFFFFFFF, true);
+
+        // Restore the matrix state
+        graphics.pose().popPose();
     }
 
     private static int interpolateColor(int startColor, int endColor, float progress) {
@@ -100,9 +133,15 @@ public class CooldownHUD {
     }
 
     /**
-     * Adds or updates a cooldown
+     * Adds or updates a cooldown - prevents duplicate entries
      */
     public static void setCooldown(String name, int durationTicks) {
+        // Don't set cooldown if duration is 0 or negative
+        if (durationTicks <= 0) {
+            cooldowns.remove(name); // Remove any existing cooldown
+            return;
+        }
+
         long durationMillis = durationTicks * 50L; // Convert ticks to milliseconds
         cooldowns.put(name, new CooldownEntry(System.currentTimeMillis() + durationMillis, durationMillis));
     }

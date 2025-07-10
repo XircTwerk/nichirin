@@ -127,7 +127,6 @@ public class SimpleSlashAttack {
     }
 
     public void start(Player player) {
-        System.out.println("DEBUG: SimpleSlashAttack start called");
 
         // Only run on server side
         if (player.level().isClientSide()) {
@@ -175,7 +174,6 @@ public class SimpleSlashAttack {
     }
 
     private void performHitDetection(Player user, Level world) {
-        System.out.println("DEBUG: Performing hit detection");
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDir = user.getLookAngle();
@@ -191,15 +189,9 @@ public class SimpleSlashAttack {
                 hitboxCenter.z + hitboxSize
         );
 
-        System.out.println("DEBUG: Hitbox center: " + hitboxCenter);
-        System.out.println("DEBUG: Hitbox size: " + hitboxSize);
-        System.out.println("DEBUG: Hitbox bounds: " + hitbox);
-
         // Find targets
         List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
                 entity -> entity != user && entity.isAlive() && !hitEntities.contains(entity));
-
-        System.out.println("DEBUG: Found " + targets.size() + " potential targets");
 
         if (!targets.isEmpty()) {
             hasHit = true;
@@ -228,7 +220,6 @@ public class SimpleSlashAttack {
                     serverLevel.sendParticles(ParticleTypes.CRIT,
                             target.getX(), target.getY() + target.getBbHeight() / 2, target.getZ(),
                             10, 0.2, 0.2, 0.2, 0.1);
-                    System.out.println("DEBUG: Created hit particles for " + target.getName().getString());
                 }
 
                 // Play hit sound
@@ -237,18 +228,14 @@ public class SimpleSlashAttack {
                             hitSound, SoundSource.PLAYERS, 1.0f, 1.0f);
                 }
 
-                System.out.println("DEBUG: Hit " + target.getName().getString() + " for " + damage + " damage");
             }
         }
     }
 
     private void createSlashParticles(Player user, Level world) {
         if (!(world instanceof ServerLevel serverLevel)) {
-            System.out.println("DEBUG: Not server level, skipping particles");
             return;
         }
-
-        System.out.println("DEBUG: Creating slash particles");
 
         double radius = range;
         Vec3 userPos = user.position().add(0, user.getBbHeight() * 0.75, 0);
@@ -264,12 +251,9 @@ public class SimpleSlashAttack {
                     particlePos.x, particlePos.y, particlePos.z,
                     1, 0, 0, 0, 0);
         }
-
-        System.out.println("DEBUG: Created " + (60/10+1) + " sweep particles");
     }
 
     private void end(Player player) {
-        System.out.println("DEBUG: SimpleSlashAttack ended");
         isActive = false;
         hitEntities.clear();
     }

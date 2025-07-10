@@ -46,7 +46,6 @@ public class BasicSlashAttack<A extends IPhysicalAttacker<A, ?>> extends Abstrac
 
     @Override
     protected void onStart(Player user, Level world) {
-        System.out.println("DEBUG: BasicSlashAttack onStart called");
 
         // Reset state
         tickCount = 0;
@@ -83,7 +82,6 @@ public class BasicSlashAttack<A extends IPhysicalAttacker<A, ?>> extends Abstrac
     }
 
     private void performHitDetection(Player user, Level world) {
-        System.out.println("DEBUG: Performing hit detection");
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDir = user.getLookAngle();
@@ -146,13 +144,11 @@ public class BasicSlashAttack<A extends IPhysicalAttacker<A, ?>> extends Abstrac
 
     @Override
     protected void onHit(Player user, LivingEntity target) {
-        System.out.println("DEBUG: Hit " + target.getName().getString());
         // Target effects are handled internally by AbstractSimpleAttack
     }
 
     @Override
     protected void onEnd(Player user, Level world) {
-        System.out.println("DEBUG: BasicSlashAttack ended");
         // Cleanup
         hitEntities.clear();
     }

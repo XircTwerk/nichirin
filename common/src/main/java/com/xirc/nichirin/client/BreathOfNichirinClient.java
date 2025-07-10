@@ -6,6 +6,7 @@ import com.xirc.nichirin.client.handler.BigGuiKeyHandler;
 import com.xirc.nichirin.client.registry.NichirinKeybindRegistry;
 import com.xirc.nichirin.client.renderer.BreathingBarRenderer;
 import com.xirc.nichirin.client.renderer.StaminaBarRenderer;
+import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import dev.architectury.event.events.client.ClientTickEvent;
 import dev.architectury.registry.client.particle.ParticleProviderRegistry;
@@ -42,9 +43,8 @@ public class BreathOfNichirinClient {
         AttackWheelHandler.register();
         NichirinKeybindRegistry.init();
         AnimationRegistryHelper.preloadAnimations();
-
+        MoveExecutor.registerClientHandler();
         registerParticles();
-        BigGuiKeyHandler.register();
         // In your client mod initializer
         BreathingBarRenderer.register();
         StaminaBarRenderer.register();

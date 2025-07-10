@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.attack.moves.thunder;
 
+import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerLevel;
@@ -7,14 +8,17 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -24,7 +28,8 @@ import java.util.Set;
 public class HeatLightningAttack extends ThunderBreathingAttackBase {
 
     private final Set<LivingEntity> hitEntities = new HashSet<>();
-    private final Set<LivingEntity> launchedEntities = new HashSet<>();
+    private final Map<LivingEntity, Integer> launchedEntities = new HashMap<>(); // Track with tick count
+    private final Set<LivingEntity> struckByLightning = new HashSet<>();
     private float launchPower = 1.5f;
 
     public HeatLightningAttack() {
@@ -33,13 +38,14 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
                 .withRange(12.0f)
                 .withKnockback(0.0f) // No horizontal knockback, just launch
                 .withBreathCost(25.0f)
-                .withHitStun(20);
+                .withHitStun(30); // Longer stun for lightning strike
     }
 
     @Override
     protected void onStart() {
         hitEntities.clear();
         launchedEntities.clear();
+        struckByLightning.clear();
 
         // Rising slash sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
@@ -55,10 +61,8 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
             performRisingSlash();
         }
 
-        // Check for airborne targets to strike with lightning
-        if (tickCount % 5 == 0) {
-            strikeAirborneTargets();
-        }
+        // Check for airborne targets continuously
+        checkAndStrikeAirborneTargets();
     }
 
     private void performRisingSlash() {
@@ -107,17 +111,16 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
 
         for (LivingEntity target : targets) {
             // Create armor-bypassing damage source
-            DamageSource armorPiercingSource = createArmorBypassingDamage(user.damageSources().playerAttack(user));
+            DamageSource armorPiercingSource = user.damageSources().magic();
             target.hurt(armorPiercingSource, damage);
 
-            // Apply shocked effect
-            hitTarget(target);
+            // DON'T apply shocked effect yet - wait for lightning strike
 
             // Launch the target
             launchTarget(target);
 
             hitEntities.add(target);
-            launchedEntities.add(target);
+            launchedEntities.put(target, tickCount);
         }
     }
 
@@ -142,55 +145,82 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
         }
     }
 
-    private void strikeAirborneTargets() {
-        ServerLevel serverLevel = (ServerLevel) world;
+    private void checkAndStrikeAirborneTargets() {
+        if (!(world instanceof ServerLevel serverLevel)) return;
 
-        for (LivingEntity target : launchedEntities) {
-            if (target.isAlive() && !target.onGround() && target.getY() > target.yo) {
-                // Create lightning bolt at target
-                LightningBolt lightning = EntityType.LIGHTNING_BOLT.create(world);
-                if (lightning != null) {
-                    lightning.moveTo(target.position());
-                    lightning.setVisualOnly(true);
-                    serverLevel.addFreshEntity(lightning);
-                }
+        // Check all launched entities
+        Set<LivingEntity> toRemove = new HashSet<>();
 
-                // Extra damage while airborne
-                DamageSource source = createArmorBypassingDamage(user.damageSources().playerAttack(user));
-                target.hurt(source, damage * 0.5f);
+        for (Map.Entry<LivingEntity, Integer> entry : launchedEntities.entrySet()) {
+            LivingEntity target = entry.getKey();
+            int launchTick = entry.getValue();
 
-                // Lightning particles
-                serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK,
-                        target.getX(), target.getY(), target.getZ(),
-                        30, 0.5, 0.5, 0.5, 0.2);
+            // Wait at least 5 ticks after launch to ensure they're airborne
+            if (tickCount - launchTick < 5) continue;
 
-                // Thunder sound
-                world.playSound(null, target.getX(), target.getY(), target.getZ(),
-                        SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.PLAYERS, 0.6f, 1.5f);
-
-                // Remove from launched list after striking
-                launchedEntities.remove(target);
+            if (!target.isAlive()) {
+                toRemove.add(target);
+                continue;
             }
+
+            // Check if target is airborne and hasn't been struck yet
+            boolean isAirborne = !target.onGround() || target.getDeltaMovement().y > 0.1;
+
+            if (isAirborne && !struckByLightning.contains(target)) {
+                // Strike with lightning
+                strikeWithLightning(serverLevel, target);
+                struckByLightning.add(target);
+                toRemove.add(target);
+            }
+
+            // Remove if they've been in the air too long without being struck (safety)
+            if (tickCount - launchTick > 40) {
+                toRemove.add(target);
+            }
+        }
+
+        // Clean up struck targets
+        for (LivingEntity entity : toRemove) {
+            launchedEntities.remove(entity);
         }
     }
 
-    /**
-     * Creates a damage source that bypasses armor by using reflection or alternative methods
-     * Since bypassArmor() doesn't exist, we'll create a custom approach
-     */
-    private DamageSource createArmorBypassingDamage(DamageSource originalSource) {
-        // Option 1: Try to use magic damage (typically bypasses armor)
-        try {
-            return user.damageSources().magic();
-        } catch (Exception e) {
-            // Option 2: Use the original source and apply extra damage to compensate
-            return originalSource;
+    private void strikeWithLightning(ServerLevel serverLevel, LivingEntity target) {
+        // Create lightning bolt at target
+        LightningBolt lightning = EntityType.LIGHTNING_BOLT.create(world);
+        if (lightning != null) {
+            lightning.moveTo(target.position());
+            lightning.setVisualOnly(true);
+            serverLevel.addFreshEntity(lightning);
         }
+
+        // Extra damage while airborne (magic damage to bypass armor)
+        DamageSource source = user.damageSources().magic();
+        target.hurt(source, damage * 0.5f);
+
+        // NOW apply the shocked effect after lightning hits
+        target.addEffect(new MobEffectInstance(
+                NichirinEffectRegistry.SHOCKED.get(),
+                hitStun,
+                0,
+                false,
+                true
+        ));
+
+        // Lightning particles
+        serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK,
+                target.getX(), target.getY(), target.getZ(),
+                30, 0.5, 0.5, 0.5, 0.2);
+
+        // Thunder sound
+        world.playSound(null, target.getX(), target.getY(), target.getZ(),
+                SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.PLAYERS, 0.6f, 1.5f);
     }
 
     @Override
     protected void onStop() {
         hitEntities.clear();
         launchedEntities.clear();
+        struckByLightning.clear();
     }
 }

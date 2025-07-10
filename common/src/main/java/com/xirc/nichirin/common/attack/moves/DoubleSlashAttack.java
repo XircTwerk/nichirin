@@ -134,7 +134,6 @@ public class DoubleSlashAttack {
     }
 
     public void start(Player player) {
-        System.out.println("DEBUG: DoubleSlashAttack start called");
 
         // Only run on server side
         if (player.level().isClientSide()) {
@@ -238,9 +237,7 @@ public class DoubleSlashAttack {
                 if (knockback > 0 && currentHitCount >= 2) {
                     Vec3 knockVec = target.position().subtract(user.position()).normalize();
                     target.knockback(knockback, -knockVec.x, -knockVec.z);
-                    System.out.println("DEBUG: Applied knockback on hit #" + currentHitCount);
                 } else if (currentHitCount == 1) {
-                    System.out.println("DEBUG: First hit - no knockback applied");
                 }
 
                 // Apply hit stun
@@ -264,8 +261,6 @@ public class DoubleSlashAttack {
                     world.playSound(null, target.getX(), target.getY(), target.getZ(),
                             hitSound, SoundSource.PLAYERS, 1.0f, 1.0f);
                 }
-
-                System.out.println("DEBUG: Double slash hit #" + currentHitCount + " on " + target.getName().getString() + " for " + damage + " damage");
             }
         }
     }
@@ -274,8 +269,6 @@ public class DoubleSlashAttack {
         if (!(world instanceof ServerLevel serverLevel)) {
             return;
         }
-
-        System.out.println("DEBUG: Creating " + (isFirstDiagonal ? "first" : "second") + " diagonal slash particles");
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() * 0.75, 0);
         Vec3 lookDir = user.getLookAngle();
@@ -314,7 +307,6 @@ public class DoubleSlashAttack {
     }
 
     private void end(Player player) {
-        System.out.println("DEBUG: DoubleSlashAttack ended");
         isActive = false;
         hitCooldowns.clear();
         hitCount.clear();

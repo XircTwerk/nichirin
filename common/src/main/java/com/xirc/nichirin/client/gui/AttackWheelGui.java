@@ -2,6 +2,7 @@ package com.xirc.nichirin.client.gui;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
+import com.xirc.nichirin.client.registry.NichirinKeybindRegistry;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.data.BreathingStyleHelper;
 import com.xirc.nichirin.common.data.MovesetRegistry;
@@ -150,9 +151,6 @@ public class AttackWheelGui extends Screen {
 
         int centerX = width / 2;
         int centerY = height / 2;
-
-        // Don't draw dark background over entire screen - removed this line
-        // guiGraphics.fill(0, 0, width, height, 0x40000000);
 
         // Enable blending for transparency
         RenderSystem.enableBlend();
@@ -317,7 +315,7 @@ public class AttackWheelGui extends Screen {
 
     @Override
     public boolean isPauseScreen() {
-        return false; // Allow game to continue
+        return false; // Allow game to continue and player to move
     }
 
     @Override
@@ -357,22 +355,43 @@ public class AttackWheelGui extends Screen {
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        // Don't handle the attack wheel key here - let the handler manage it
+        // This prevents the double-toggle issue
+
         // ESC key closes the GUI
         if (keyCode == 256) { // ESC key code
             this.onClose();
             return true;
         }
-        // Don't consume any other keys - let all keys pass through to the game
-        // This allows WASD movement to work while the wheel is open
+
+        // Don't consume any other keys - allow all input to pass through
         return false;
+    }
+
+    @Override
+    public boolean charTyped(char codePoint, int modifiers) {
+        return false; // Don't consume character input
+    }
+
+    @Override
+    public boolean keyReleased(int keyCode, int scanCode, int modifiers) {
+        return false; // Don't consume key releases
+    }
+
+    @Override
+    public boolean isMouseOver(double mouseX, double mouseY) {
+        // Only capture mouse when actually over the wheel
+        int centerX = width / 2;
+        int centerY = height / 2;
+        float distance = getDistanceFromCenter((int)mouseX, (int)mouseY, centerX, centerY);
+        return distance >= INNER_RADIUS && distance <= OUTER_RADIUS;
     }
 
     @Override
     protected void init() {
         super.init();
-        // Release mouse when opening the wheel to allow cursor movement
-        minecraft.mouseHandler.releaseMouse();
         rebuildWheel();
+        // Don't grab or release mouse - let the game handle it normally
     }
 
     /**

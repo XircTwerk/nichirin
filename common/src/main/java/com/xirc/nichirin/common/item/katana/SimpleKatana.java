@@ -228,9 +228,13 @@ public class SimpleKatana extends SwordItem {
         }
 
         AbstractMoveset moveset = null;
+        boolean hasBreathingStyle = false;
+
         if (!level.isClientSide) {
             // Check if moveset wants to override right-click
             moveset = BreathingStyleHelper.getMoveset(player);
+            hasBreathingStyle = (moveset != null);
+
             if (moveset != null && moveset.handleRightClick(player, isCrouching)) {
                 return InteractionResultHolder.success(player.getItemInHand(hand));
             }
@@ -261,18 +265,25 @@ public class SimpleKatana extends SwordItem {
             state.lastAttackTime = 0;
         }
 
-        // Client-side effects for default attacks
-        if (level.isClientSide && moveset == null) {
-            if (!StaminaManager.hasStamina(player, SPECIAL_ATTACK_STAMINA_COST)) {
-                return InteractionResultHolder.pass(player.getItemInHand(hand));
-            }
+        // Client-side effects for default attacks - ONLY if no breathing style
+        if (level.isClientSide) {
+            // Check breathing style on client side too
+            moveset = BreathingStyleHelper.getMoveset(player);
+            hasBreathingStyle = (moveset != null);
 
-            if (isCrouching) {
-                AnimationUtils.playAnimation(player, "rising_slash");
-                CooldownHUD.setCooldown("Rising Slash", 25);
-            } else {
-                AnimationUtils.playAnimation(player, "double_slash");
-                CooldownHUD.setCooldown("Double Slash", 20);
+            // Only show default cooldowns if NO breathing style
+            if (!hasBreathingStyle) {
+                if (!StaminaManager.hasStamina(player, SPECIAL_ATTACK_STAMINA_COST)) {
+                    return InteractionResultHolder.pass(player.getItemInHand(hand));
+                }
+
+                if (isCrouching) {
+                    AnimationUtils.playAnimation(player, "rising_slash");
+                    CooldownHUD.setCooldown("Rising Slash", 25);
+                } else {
+                    AnimationUtils.playAnimation(player, "double_slash");
+                    CooldownHUD.setCooldown("Double Slash", 20);
+                }
             }
         }
 
@@ -282,6 +293,14 @@ public class SimpleKatana extends SwordItem {
     public void displayClientRightClickFeedback(Player player, boolean isCrouching) {
         if (!player.level().isClientSide) return;
 
+        // Check if player has a breathing style that will handle this
+        AbstractMoveset moveset = BreathingStyleHelper.getMoveset(player);
+        if (moveset != null) {
+            // Don't display default cooldowns - let the breathing system handle it
+            return;
+        }
+
+        // Only show default cooldowns if no breathing style
         if (isCrouching) {
             AnimationUtils.playAnimation(player, "rising_slash");
             CooldownHUD.setCooldown("Rising Slash", 25);

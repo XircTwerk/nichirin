@@ -1,6 +1,10 @@
 package com.xirc.nichirin.common.util;
 
+import com.xirc.nichirin.client.gui.CooldownHUD;
+import com.xirc.nichirin.common.attack.moves.thunder.ThunderClapFlashAttack;
+import com.xirc.nichirin.common.data.BreathingStyleHelper;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.common.util.AnimationUtils;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.server.level.ServerPlayer;
@@ -33,13 +37,11 @@ public class KatanaInputHandler {
     private static final ResourceLocation RIGHT_CLICK_CROUCH_PACKET = new ResourceLocation("nichirin", "right_click_crouch");
 
     public static void register() {
-        System.out.println("DEBUG: Registering katana input handlers");
 
         // CLIENT SIDE: Detect left clicks and send to server
         if (isClientSide()) {
             // For left click in air (client only)
             InteractionEvent.CLIENT_LEFT_CLICK_AIR.register((player, hand) -> {
-                System.out.println("DEBUG: Client left click air detected");
                 ItemStack heldItem = player.getItemInHand(hand);
                 if (heldItem.getItem() instanceof SimpleKatana) {
                     sendLeftClickToServer(player);
@@ -48,7 +50,6 @@ public class KatanaInputHandler {
 
             // For right click with item (client only)
             InteractionEvent.CLIENT_RIGHT_CLICK_AIR.register((player, hand) -> {
-                System.out.println("DEBUG: Client right click air detected");
                 ItemStack heldItem = player.getItemInHand(hand);
                 if (heldItem.getItem() instanceof SimpleKatana) {
                     sendRightClickToServer(player);
@@ -134,17 +135,7 @@ public class KatanaInputHandler {
         boolean isCrouching = player.isCrouching();
         ResourceLocation packetId = isCrouching ? RIGHT_CLICK_CROUCH_PACKET : RIGHT_CLICK_PACKET;
 
-        // Handle client-side visual feedback
-        if (isClientSide()) {
-            Minecraft minecraft = Minecraft.getInstance();
-            if (minecraft.player != null) {
-                ItemStack heldItem = minecraft.player.getMainHandItem();
-                if (heldItem.getItem() instanceof SimpleKatana simpleKatana) {
-                    // Use existing displayClientRightClickFeedback method
-                    simpleKatana.displayClientRightClickFeedback(minecraft.player, isCrouching);
-                }
-            }
-        }
+        // DON'T display any client feedback here - let the server decide what happens
 
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
         NetworkManager.sendToServer(packetId, buf);
@@ -160,7 +151,6 @@ public class KatanaInputHandler {
             if (player != null) {
                 // Schedule on main thread
                 context.queue(() -> {
-                    System.out.println("DEBUG: Server received left click packet from " + player.getName().getString());
                     handleLeftClick(player);
                 });
             }
@@ -171,7 +161,6 @@ public class KatanaInputHandler {
             ServerPlayer player = (ServerPlayer) context.getPlayer();
             if (player != null) {
                 context.queue(() -> {
-                    System.out.println("DEBUG: Server received right click packet from " + player.getName().getString());
                     handleRightClick(player, false);
                 });
             }
@@ -182,7 +171,6 @@ public class KatanaInputHandler {
             ServerPlayer player = (ServerPlayer) context.getPlayer();
             if (player != null) {
                 context.queue(() -> {
-                    System.out.println("DEBUG: Server received crouch right click packet from " + player.getName().getString());
                     handleRightClick(player, true);
                 });
             }
@@ -192,16 +180,13 @@ public class KatanaInputHandler {
     private static void handleLeftClick(Player player) {
         // Make sure we're on server side
         if (player.level().isClientSide) {
-            System.out.println("DEBUG: handleLeftClick called on client side, ignoring");
             return;
         }
 
         ItemStack heldItem = player.getMainHandItem();
-        System.out.println("DEBUG: Server handling left click - Held item: " + heldItem.getItem().getClass().getSimpleName());
 
         // Handle SimpleKatana
         if (heldItem.getItem() instanceof SimpleKatana simpleKatana) {
-            System.out.println("DEBUG: Found SimpleKatana in main hand, triggering attack on server");
 
             // Get or create instance tracker for this player
             SimpleKatana katanaInstance = getSimpleKatanaForPlayer(player, simpleKatana);
@@ -213,16 +198,13 @@ public class KatanaInputHandler {
     private static void handleRightClick(Player player, boolean isCrouching) {
         // Make sure we're on server side
         if (player.level().isClientSide) {
-            System.out.println("DEBUG: handleRightClick called on client side, ignoring");
             return;
         }
 
         ItemStack heldItem = player.getMainHandItem();
-        System.out.println("DEBUG: Server handling right click (crouch: " + isCrouching + ") - Held item: " + heldItem.getItem().getClass().getSimpleName());
 
         // Handle SimpleKatana
         if (heldItem.getItem() instanceof SimpleKatana simpleKatana) {
-            System.out.println("DEBUG: Found SimpleKatana, triggering special attack on server");
 
             // Get or create instance tracker for this player
             SimpleKatana katanaInstance = getSimpleKatanaForPlayer(player, simpleKatana);
@@ -237,13 +219,97 @@ public class KatanaInputHandler {
                 player.setShiftKeyDown(isCrouching);
             }
 
-            // Call the existing use() method which handles both double slash and rising slash
+            // First check if the player has a breathing style that will handle this
+            String moveUsed = null;
+            var moveset = BreathingStyleHelper.getMoveset(player);
+            if (moveset != null) {
+                // Store which move will be used before calling use()
+                if (isCrouching) {
+                    moveUsed = moveset.getCrouchRightClickMoveName();
+                } else {
+                    moveUsed = moveset.getRightClickMoveName();
+                }
+            }
+
+            // Call the existing use() method which handles both breathing moves and default moves
             katanaInstance.use(player.level(), player, hand);
+
+            // Send feedback to client about which move was used
+            if (player instanceof ServerPlayer serverPlayer) {
+                sendMoveUsedFeedback(serverPlayer, moveUsed, isCrouching);
+            }
 
             // Restore original crouch state
             if (isCrouching != originalCrouchState) {
                 player.setShiftKeyDown(originalCrouchState);
             }
+        }
+    }
+
+    /**
+     * Send feedback to client about which move was actually used
+     */
+    private static void sendMoveUsedFeedback(ServerPlayer player, String moveName, boolean isCrouching) {
+        // Create a packet to tell the client which move was used
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+        buf.writeBoolean(moveName != null); // Has breathing style move
+        if (moveName != null) {
+            buf.writeUtf(moveName);
+
+            // Get cooldown from the move if it's Thunder Breathing
+            int cooldown = 30; // Default cooldown
+            if (moveName.contains("Thunder Clap")) {
+                cooldown = 30; // Thunder Clap and Flash cooldown
+            } else if (moveName.contains("Heat Lightning")) {
+                cooldown = 40; // Heat Lightning cooldown
+            }
+            // Add more moves as needed
+
+            buf.writeInt(cooldown);
+        } else {
+            buf.writeBoolean(isCrouching); // For default moves
+        }
+
+        NetworkManager.sendToPlayer(player, new ResourceLocation("nichirin", "move_feedback"), buf);
+    }
+
+    /**
+     * Register client-side feedback handler
+     */
+    static {
+        if (isClientSide()) {
+            NetworkManager.registerReceiver(NetworkManager.Side.S2C, new ResourceLocation("nichirin", "move_feedback"), (buf, context) -> {
+                boolean hasBreathingMove = buf.readBoolean();
+
+                context.queue(() -> {
+                    if (hasBreathingMove) {
+                        String moveName = buf.readUtf();
+                        int cooldown = buf.readInt();
+
+                        // Display the actual move that was used
+                        CooldownHUD.setCooldown(moveName, cooldown);
+
+                        // Also play appropriate animation if needed
+                        if (moveName.contains("Thunder Clap")) {
+                            AnimationUtils.playAnimation(Minecraft.getInstance().player, "thunder_clap_flash");
+                        } else if (moveName.contains("Heat Lightning")) {
+                            AnimationUtils.playAnimation(Minecraft.getInstance().player, "heat_lightning");
+                        }
+                        // Add more animation mappings as needed
+                    } else {
+                        boolean wasCrouching = buf.readBoolean();
+
+                        // Default moves
+                        if (wasCrouching) {
+                            AnimationUtils.playAnimation(Minecraft.getInstance().player, "rising_slash");
+                            CooldownHUD.setCooldown("Rising Slash", 25);
+                        } else {
+                            AnimationUtils.playAnimation(Minecraft.getInstance().player, "double_slash");
+                            CooldownHUD.setCooldown("Double Slash", 20);
+                        }
+                    }
+                });
+            });
         }
     }
 

@@ -57,6 +57,7 @@ public abstract class AbstractMoveset {
         // Default: don't override - use SimpleKatana's default special attacks
         return false;
     }
+
     /**
      * Get the move index to use for right-click
      * Default is move 0 (first move)
@@ -64,6 +65,7 @@ public abstract class AbstractMoveset {
     public int getRightClickMoveIndex(boolean isCrouching) {
         return 0; // First move by default
     }
+
     /**
      * Called after a move is performed to allow post-move actions
      */
@@ -117,6 +119,7 @@ public abstract class AbstractMoveset {
         public final float damage;
         public final float range;
         public final int cooldown;
+        public final float breathCost;  // NEW: Breath cost is now part of the configuration
 
         private MoveConfiguration(MoveBuilder builder) {
             this.moveId = builder.moveId;
@@ -128,6 +131,7 @@ public abstract class AbstractMoveset {
             this.damage = builder.damage;
             this.range = builder.range;
             this.cooldown = builder.cooldown;
+            this.breathCost = builder.breathCost;
         }
     }
 
@@ -145,6 +149,7 @@ public abstract class AbstractMoveset {
         private float damage = 10.0f;
         private float range = 5.0f;
         private int cooldown = 40;
+        private float breathCost = 20.0f;  // NEW: Default breath cost
 
         public MoveBuilder(String moveId, String displayName) {
             this.moveId = moveId;
@@ -171,6 +176,11 @@ public abstract class AbstractMoveset {
             this.damage = damage;
             this.range = range;
             this.cooldown = cooldown;
+            return this;
+        }
+
+        public MoveBuilder withBreathCost(float breathCost) {
+            this.breathCost = breathCost;
             return this;
         }
 
@@ -211,5 +221,21 @@ public abstract class AbstractMoveset {
             this.moveConfigs.add(moveBuilder.build());
             return this;
         }
+    }
+
+    /**
+     * Get the name of the right-click move for cooldown display
+     */
+    public String getRightClickMoveName() {
+        // Override in each breathing style moveset
+        return "Special Move";
+    }
+
+    /**
+     * Get the name of the crouch right-click move for cooldown display
+     */
+    public String getCrouchRightClickMoveName() {
+        // Override in each breathing style moveset
+        return "Crouch Special Move";
     }
 }

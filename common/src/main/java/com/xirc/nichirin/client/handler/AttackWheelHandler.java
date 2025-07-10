@@ -9,6 +9,7 @@ import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.event.events.client.ClientTickEvent;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
+import lombok.Getter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
@@ -21,6 +22,11 @@ public class AttackWheelHandler {
 
     private static boolean wasKeyDown = false;
     private static AttackWheelGui currentWheel = null;
+    /**
+     * -- GETTER --
+     *  Checks if the wheel is currently open
+     */
+    @Getter
     private static boolean wheelOpen = false;
 
     public static void register() {
@@ -30,15 +36,15 @@ public class AttackWheelHandler {
 
             boolean isKeyDown = NichirinKeybindRegistry.ATTACK_WHEEL_KEY.isDown();
 
-            // Key just pressed
+            // Key just pressed (not held)
             if (isKeyDown && !wasKeyDown) {
                 System.out.println("DEBUG: Attack wheel key pressed. Wheel open: " + wheelOpen);
                 if (!wheelOpen) {
                     // First press - open wheel
                     openWheel();
                 } else {
-                    // Second press - execute and close
-                    executeAndCloseWheel();
+                    // Second press - close wheel WITHOUT executing
+                    forceCloseWheel();
                 }
             }
 
@@ -93,8 +99,6 @@ public class AttackWheelHandler {
         // Close the GUI
         Minecraft mc = Minecraft.getInstance();
         mc.setScreen(null);
-        // Grab mouse again for looking around
-        mc.mouseHandler.grabMouse();
         wheelOpen = false;
 
         // Execute the move if one was selected
@@ -114,14 +118,13 @@ public class AttackWheelHandler {
             currentWheel.deactivate();
             currentWheel = null;
         }
-        wheelOpen = false;
-    }
 
-    /**
-     * Checks if the wheel is currently open
-     */
-    public static boolean isWheelOpen() {
-        return wheelOpen;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.screen == currentWheel) {
+            mc.setScreen(null);
+        }
+
+        wheelOpen = false;
     }
 
     /**

@@ -38,15 +38,12 @@ public class PlayerAnimationAction {
         Player player = attacker.getPlayer();
 
         if (player == null) {
-            System.out.println("DEBUG: PlayerAnimationAction - player is null, skipping animation");
             return;
         }
 
         if (forcePlay || !AnimationUtils.isAnimationPlaying(player, animationName)) {
-            System.out.println("DEBUG: PlayerAnimationAction - triggering animation: " + animationName);
             AnimationUtils.playAnimation(player, animationName);
         } else {
-            System.out.println("DEBUG: PlayerAnimationAction - animation already playing: " + animationName);
         }
     }
 

@@ -8,6 +8,7 @@ import com.xirc.nichirin.client.registry.NichirinKeybindRegistry;
 import com.xirc.nichirin.client.renderer.BreathingBarRenderer;
 import com.xirc.nichirin.client.renderer.StaminaBarRenderer;
 import com.xirc.nichirin.common.advancement.NichirinCriteriaTriggers;
+import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.data.MovesetRegistry;
 import com.xirc.nichirin.common.data.BreathingStyleSyncPacket;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
@@ -43,6 +44,7 @@ public final class BreathOfNichirin {
         // Register the registries themselves
         NichirinItemRegistry.ITEM_REGISTRY.register();
         CREATIVE_TAB_REGISTRY.register();
+        NichirinMoveRegistry.init();
         NichirinPacketRegistry.init();
         NichirinParticleRegistry.init();
         NicirinSoundRegistry.init();
@@ -73,8 +75,8 @@ public final class BreathOfNichirin {
                 System.out.println("DEBUG: Client initialization complete");
                 NichirinKeybindRegistry.init();
                 NichirinAnimations.init();
-                BigGuiKeyHandler.register();
                 AttackWheelHandler.register();
+                BigGuiKeyHandler.register();
 
             } catch (Exception e) {
                 LOGGER.error("ERROR: Failed to initialize client", e);

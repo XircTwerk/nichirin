@@ -1,7 +1,7 @@
 package com.xirc.nichirin.registry;
 
 import com.xirc.nichirin.BreathOfNichirin;
-import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
+import com.xirc.nichirin.common.attack.moveset.*;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.HashMap;
@@ -48,6 +48,33 @@ public class NichirinMoveRegistry {
 
         BreathOfNichirin.LOGGER.info("Registered moveset '{}' with {} moves",
                 moveset.getDisplayName(), moveset.getMoveCount());
+    }
+
+    /**
+     * Auto-register all breathing style movesets
+     */
+    private static void registerAllMovesets() {
+        BreathOfNichirin.LOGGER.info("Auto-registering breathing style movesets...");
+
+        // Register all movesets here
+        registerMoveset(new ThunderBreathingMoveset());
+
+        // Add new movesets as you create them:
+        // registerMoveset(new WaterBreathingMoveset());
+        // registerMoveset(new FlameBreathingMoveset());
+        // registerMoveset(new WindBreathingMoveset());
+        // registerMoveset(new StoneBreathingMoveset());
+        // registerMoveset(new MistBreathingMoveset());
+        // registerMoveset(new SerpentBreathingMoveset());
+        // registerMoveset(new SoundBreathingMoveset());
+        // registerMoveset(new LoveBreathingMoveset());
+        // registerMoveset(new InsectBreathingMoveset());
+        // registerMoveset(new BeastBreathingMoveset());
+        // registerMoveset(new MoonBreathingMoveset());
+        // registerMoveset(new SunBreathingMoveset());
+
+        BreathOfNichirin.LOGGER.info("Auto-registered {} movesets with {} total moves",
+                MOVESETS.size(), GLOBAL_MOVES.size());
     }
 
     /**
@@ -106,12 +133,15 @@ public class NichirinMoveRegistry {
     }
 
     /**
-     * Initialize the registry (call this in your main mod init)
+     * Initialize the registry and auto-register all movesets
      */
     public static void init() {
         GLOBAL_MOVES.clear();
         MOVESETS.clear();
         BreathOfNichirin.LOGGER.info("Global move registry initialized");
+
+        // Auto-register all movesets
+        registerAllMovesets();
     }
 
     /**

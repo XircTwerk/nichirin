@@ -3,8 +3,11 @@ package com.xirc.nichirin.common.network;
 import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.data.BreathingStyleHelper;
+import dev.architectury.networking.NetworkManager;
+import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
@@ -55,14 +58,11 @@ public class BreathingMovePacket {
         if (pressed) {
             AbstractMoveset.MoveConfiguration config = moveset.getMove(moveIndex);
             if (config != null) {
+                // Let the moveset handle cooldown checking
                 moveset.performMove(player, moveIndex);
 
-                // Visual feedback
-                player.displayClientMessage(
-                        Component.literal("Executing: " + config.getDisplayName())
-                                .withStyle(style -> style.withColor(0x55FFFF)),
-                        true
-                );
+                // Only send cooldown packet if move was actually executed
+                // The moveset will handle the visual feedback now
             }
         }
     }

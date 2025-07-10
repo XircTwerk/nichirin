@@ -36,7 +36,6 @@ public class AnimationRegistryHelper {
         if (cached != null) {
             KeyframeAnimation anim = PlayerAnimationRegistry.getAnimation(cached);
             if (anim != null) {
-                System.out.println("DEBUG: Found cached animation: " + cached);
                 return anim;
             }
         }
@@ -54,17 +53,13 @@ public class AnimationRegistryHelper {
             ResourceLocation loc = new ResourceLocation("nichirin", path);
             KeyframeAnimation anim = PlayerAnimationRegistry.getAnimation(loc);
             if (anim != null) {
-                System.out.println("DEBUG: Found animation at: " + loc);
                 // Cache for next time
                 ANIMATION_CACHE.put(animationName, loc);
                 return anim;
             }
         }
 
-        System.err.println("ERROR: Could not find animation: " + animationName);
-        System.err.println("Tried paths: ");
         for (String path : pathVariations) {
-            System.err.println("  - nichirin:" + path);
         }
 
         return null;
@@ -74,7 +69,6 @@ public class AnimationRegistryHelper {
      * Pre-loads all animations to ensure they're available
      */
     public static void preloadAnimations() {
-        System.out.println("DEBUG: Preloading animations...");
 
         // List all expected animations
         String[] expectedAnimations = {
@@ -87,9 +81,7 @@ public class AnimationRegistryHelper {
         for (String animName : expectedAnimations) {
             KeyframeAnimation anim = getAnimation(animName);
             if (anim != null) {
-                System.out.println("DEBUG: Successfully preloaded: " + animName);
             } else {
-                System.err.println("ERROR: Failed to preload: " + animName);
             }
         }
     }

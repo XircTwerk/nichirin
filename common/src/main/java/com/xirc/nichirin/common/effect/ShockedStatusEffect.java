@@ -77,7 +77,7 @@ public class ShockedStatusEffect extends MobEffect {
             double entityWidth = entity.getBbWidth();
 
             // Spawn 3-5 particles at random positions around the entity
-            int particleCount = 3 + level.random.nextInt(3);
+            int particleCount = 1 + level.random.nextInt(3);
 
             for (int i = 0; i < particleCount; i++) {
                 // Random position around the entity
@@ -105,11 +105,11 @@ public class ShockedStatusEffect extends MobEffect {
                         entity.getX(),
                         entity.getY() + entityHeight / 2,
                         entity.getZ(),
-                        10, // count
+                        1, // count
                         entityWidth * 0.5, // xOffset
                         entityHeight * 0.5, // yOffset
                         entityWidth * 0.5, // zOffset
-                        0.05 // speed
+                        0.001 // speed
                 );
             }
         }
@@ -126,11 +126,11 @@ public class ShockedStatusEffect extends MobEffect {
                     entity.getX(),
                     entity.getY() + entity.getBbHeight() / 2,
                     entity.getZ(),
-                    20,
+                    5,
                     0.3,
                     0.3,
                     0.3,
-                    0.1
+                    0.01
             );
         }
     }

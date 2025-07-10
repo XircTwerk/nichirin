@@ -5,32 +5,32 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.HashSet;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
 
 /**
  * Second Form: Rice Spirit
- * 5 slashes with random directions around the player
+ * 5 slashes focused on a single target - locks onto closest enemy
  */
 public class RiceSpiritAttack extends ThunderBreathingAttackBase {
 
     private int slashCount = 0;
     private int slashTimer = 0;
-    private final Set<LivingEntity> hitEntities = new HashSet<>();
-    private final Set<LivingEntity> lockedTargets = new HashSet<>();
+    private LivingEntity lockedTarget = null;
     private final Random random = new Random();
 
     public RiceSpiritAttack() {
         withTiming(40, 5, 30) // cooldown, windup, duration
                 .withDamage(8.0f) // Lower damage per slash
-                .withRange(2.0f) // Distance from player for slashes
+                .withRange(5.0f) // Range to find enemies
                 .withKnockback(0.3f)
                 .withBreathCost(15.0f)
-                .withHitStun(20);
+                .withHitStun(20)
+                .withHitboxSize(2.0f); // Hitbox around the target
     }
 
     @Override
@@ -38,8 +38,16 @@ public class RiceSpiritAttack extends ThunderBreathingAttackBase {
         // Reset counters
         slashCount = 0;
         slashTimer = 0;
-        hitEntities.clear();
-        lockedTargets.clear();
+        lockedTarget = null;
+
+        // Find closest enemy within range
+        lockedTarget = findClosestEnemy();
+
+        if (lockedTarget == null) {
+            // No target in range - cancel the attack
+            stop();
+            return;
+        }
 
         // Thunder sound on start
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
@@ -49,6 +57,12 @@ public class RiceSpiritAttack extends ThunderBreathingAttackBase {
     @Override
     protected void perform() {
         if (world.isClientSide) return;
+
+        // Check if we still have a valid target
+        if (lockedTarget == null || !lockedTarget.isAlive() || lockedTarget.isRemoved()) {
+            stop();
+            return;
+        }
 
         // Execute slashes with 0.2 second intervals (4 ticks)
         slashTimer++;
@@ -60,16 +74,20 @@ public class RiceSpiritAttack extends ThunderBreathingAttackBase {
     }
 
     private void performSlash() {
-        // Random angle for this slash
-        float angle = random.nextFloat() * 360f;
-        float radian = (float) Math.toRadians(angle);
+        if (lockedTarget == null) return;
 
-        // Calculate slash position (1-2 blocks away)
-        float distance = 1.0f + random.nextFloat();
-        Vec3 slashPos = user.position().add(
-                Math.cos(radian) * distance,
-                1.0, // Height offset
-                Math.sin(radian) * distance
+        // Get target's current position
+        Vec3 targetPos = lockedTarget.position();
+
+        // Add some variation to slash positions around the target
+        float angleOffset = (slashCount * 72f) + random.nextFloat() * 30f; // Distribute around target
+        float radian = (float) Math.toRadians(angleOffset);
+        float offsetDistance = 0.5f + random.nextFloat() * 0.5f;
+
+        Vec3 slashPos = targetPos.add(
+                Math.cos(radian) * offsetDistance,
+                1.0 + random.nextFloat() * 0.5f, // Vary height slightly
+                Math.sin(radian) * offsetDistance
         );
 
         // Create slash visual
@@ -82,7 +100,18 @@ public class RiceSpiritAttack extends ThunderBreathingAttackBase {
             // Electric particles
             serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK,
                     slashPos.x, slashPos.y, slashPos.z,
-                    10, 0.3, 0.3, 0.3, 0.1);
+                    15, 0.3, 0.3, 0.3, 0.1);
+
+            // Trail from player to target
+            Vec3 playerPos = user.position().add(0, 1, 0);
+            int particleCount = 10;
+            for (int i = 0; i < particleCount; i++) {
+                double t = i / (double) particleCount;
+                Vec3 particlePos = playerPos.lerp(slashPos, t);
+                serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK,
+                        particlePos.x, particlePos.y, particlePos.z,
+                        1, 0, 0, 0, 0);
+            }
         }
 
         // Play slash sound
@@ -90,27 +119,41 @@ public class RiceSpiritAttack extends ThunderBreathingAttackBase {
                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS,
                 0.8f, 1.5f + random.nextFloat() * 0.2f);
 
-        // Get targets in hitbox
-        List<LivingEntity> targets = getTargetsInHitbox(slashPos);
+        // Damage the locked target
+        hitTarget(lockedTarget);
 
-        for (LivingEntity target : targets) {
-            // First hit locks the target for guaranteed combo
-            if (slashCount == 0 && !hitEntities.contains(target)) {
-                lockedTargets.add(target);
-            }
-
-            // If target is locked or this is the first hit
-            if (lockedTargets.contains(target) || !hitEntities.contains(target)) {
-                // Use base hit method
-                hitTarget(target);
-                hitEntities.add(target);
-            }
+        // Visual feedback on the target
+        if (world instanceof ServerLevel serverLevel) {
+            serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK,
+                    lockedTarget.getX(), lockedTarget.getY() + 1, lockedTarget.getZ(),
+                    20, 0.5, 0.5, 0.5, 0.1);
         }
+    }
+
+    /**
+     * Find the closest enemy within range
+     */
+    private LivingEntity findClosestEnemy() {
+        AABB searchBox = new AABB(
+                user.getX() - range, user.getY() - range, user.getZ() - range,
+                user.getX() + range, user.getY() + range, user.getZ() + range
+        );
+
+        List<LivingEntity> entities = world.getEntitiesOfClass(LivingEntity.class, searchBox,
+                entity -> entity != user && entity.isAlive() && !entity.isSpectator());
+
+        if (entities.isEmpty()) {
+            return null;
+        }
+
+        // Sort by distance and return closest
+        return entities.stream()
+                .min(Comparator.comparingDouble(entity -> entity.distanceToSqr(user)))
+                .orElse(null);
     }
 
     @Override
     protected void onStop() {
-        hitEntities.clear();
-        lockedTargets.clear();
+        lockedTarget = null;
     }
 }

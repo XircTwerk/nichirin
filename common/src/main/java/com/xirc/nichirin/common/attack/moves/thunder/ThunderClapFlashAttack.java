@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.attack.moves.thunder;
 
+import com.xirc.nichirin.common.network.CooldownDisplayPacket;
 import com.xirc.nichirin.common.util.TeleportUtil;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.particles.ParticleTypes;
@@ -93,8 +94,8 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
                 .withSounds(SoundEvents.LIGHTNING_BOLT_THUNDER, null)
                 .withDamage(damage)
                 .withDamageCallback(target -> {
-                    // Use our custom hit method that applies shocked effect
-                    hitTarget(target);
+                    // Use our custom hit method that removes immunity frames
+                    hitTargetNoImmunity(target);
                 });
 
         // Set custom sound properties
