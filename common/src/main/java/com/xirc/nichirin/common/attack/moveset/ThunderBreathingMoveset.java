@@ -40,7 +40,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("thunderclap_flash", "Thunderclap and Flash")
                         .withIcon("nichirin:textures/gui/moves/thunder_first_form.png")
                         .withAnimation("nichirin:thunderclap_flash", 10)
-                        .withStats(15.0f, 15.0f, 30) // 30 tick cooldown (1.5 seconds)
+                        .withStats(8.0f, 15.0f, 30) // 30 tick cooldown (1.5 seconds)
                         .withBreathCost(20.0f)
                         .withAction(player -> {
                             ThunderClapFlashAttack attack = new ThunderClapFlashAttack();
@@ -76,7 +76,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("distant_thunder", "Distant Thunder")
                         .withIcon("nichirin:textures/gui/moves/thunder_fourth_form.png")
                         .withAnimation("nichirin:distant_thunder", 7)
-                        .withStats(12.0f, 20.0f, 80)
+                        .withStats(8.0f, 20.0f, 80)
                         .withBreathCost(25.0f)
                         .withAction(player -> {
                             DistantThunderAttack attack = new DistantThunderAttack();
@@ -88,7 +88,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("heat_lightning", "Heat Lightning")
                         .withIcon("nichirin:textures/gui/moves/thunder_fifth_form.png")
                         .withAnimation("nichirin:heat_lightning", 9)
-                        .withStats(18.0f, 12.0f, 60)
+                        .withStats(14.0f, 12.0f, 60)
                         .withBreathCost(25.0f)
                         .withAction(player -> {
                             HeatLightningAttack attack = new HeatLightningAttack();
@@ -100,7 +100,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("rumble_flash", "Rumble and Flash")
                         .withIcon("nichirin:textures/gui/moves/thunder_sixth_form.png")
                         .withAnimation("nichirin:rumble_flash", 8)
-                        .withStats(20.0f, 25.0f, 70)
+                        .withStats(16.0f, 25.0f, 70)
                         .withBreathCost(35.0f)
                         .withAction(player -> {
                             RumbleFlashAttack attack = new RumbleFlashAttack();
