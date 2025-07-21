@@ -15,6 +15,9 @@ import java.util.Random;
 /**
  * Second Form: Rice Spirit
  * 5 slashes focused on a single target - locks onto closest enemy
+ *
+ * All configuration now comes from the moveset builder.
+ * This class handles only the behavior and visual/audio effects.
  */
 public class RiceSpiritAttack extends ThunderBreathingAttackBase {
 
@@ -24,13 +27,8 @@ public class RiceSpiritAttack extends ThunderBreathingAttackBase {
     private final Random random = new Random();
 
     public RiceSpiritAttack() {
-        withTiming(40, 5, 30) // cooldown, windup, duration
-                .withDamage(8.0f) // Lower damage per slash
-                .withRange(5.0f) // Range to find enemies
-                .withKnockback(0.3f)
-                .withBreathCost(15.0f)
-                .withHitStun(20)
-                .withHitboxSize(2.0f); // Hitbox around the target
+        // No configuration here - everything comes from moveset
+        // All values will be set via configure() method
     }
 
     @Override
@@ -40,7 +38,7 @@ public class RiceSpiritAttack extends ThunderBreathingAttackBase {
         slashTimer = 0;
         lockedTarget = null;
 
-        // Find closest enemy within range
+        // Find closest enemy within range (using configured range)
         lockedTarget = findClosestEnemy();
 
         if (lockedTarget == null) {
@@ -119,7 +117,7 @@ public class RiceSpiritAttack extends ThunderBreathingAttackBase {
                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS,
                 0.8f, 1.5f + random.nextFloat() * 0.2f);
 
-        // Damage the locked target
+        // Damage the locked target (using configured damage)
         hitTarget(lockedTarget);
 
         // Visual feedback on the target
@@ -131,7 +129,7 @@ public class RiceSpiritAttack extends ThunderBreathingAttackBase {
     }
 
     /**
-     * Find the closest enemy within range
+     * Find the closest enemy within range (using configured range)
      */
     private LivingEntity findClosestEnemy() {
         AABB searchBox = new AABB(

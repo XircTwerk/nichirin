@@ -2,6 +2,8 @@ package com.xirc.nichirin.common.attack;
 
 import com.xirc.nichirin.client.gui.CooldownHUD;
 import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
+import com.xirc.nichirin.common.attack.moves.thunder.ThunderBreathingAttackBase;
+import com.xirc.nichirin.common.attack.moveset.ThunderBreathingMoveset;
 import com.xirc.nichirin.registry.NichirinMoveRegistry;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
@@ -16,7 +18,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Generic attack executor - knows nothing about specific breathing styles
+ * Generic attack executor - handles all types of attacks with automatic configuration
  */
 public class MoveExecutor {
 
@@ -27,9 +29,25 @@ public class MoveExecutor {
     private static final ResourceLocation COOLDOWN_PACKET_ID = new ResourceLocation("nichirin", "cooldown_display");
 
     /**
-     * Execute any attack with metadata lookup
+     * Execute any attack with metadata lookup and automatic configuration
      */
     public static void executeAttack(Player player, Object attack, String movesetId, String moveId) {
+        // Handle Thunder Breathing attacks with automatic configuration
+        if (attack instanceof ThunderBreathingAttackBase thunderAttack) {
+            // Configuration should already be set by the moveset, but ensure it's done
+            ThunderBreathingMoveset currentMoveset = ThunderBreathingMoveset.getCurrentMoveset();
+            if (currentMoveset != null) {
+                // Find the move index for this moveId
+                int moveIndex = findMoveIndex(currentMoveset, moveId);
+                if (moveIndex >= 0) {
+                    var config = currentMoveset.getMove(moveIndex);
+                    if (config != null) {
+                        thunderAttack.configure(config);
+                    }
+                }
+            }
+        }
+
         // Get move info from registry for the display name
         NichirinMoveRegistry.MoveInfo moveInfo = NichirinMoveRegistry.getMove(movesetId, moveId);
         String displayName = moveInfo != null ? moveInfo.displayName : attack.getClass().getSimpleName();
@@ -64,6 +82,19 @@ public class MoveExecutor {
     }
 
     /**
+     * Find the move index for a given moveId in a moveset
+     */
+    private static int findMoveIndex(ThunderBreathingMoveset moveset, String moveId) {
+        for (int i = 0; i < moveset.getMoveCount(); i++) {
+            var config = moveset.getMove(i);
+            if (config != null && config.getMoveId().equals(moveId)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /**
      * Generic method to check if attack is active
      */
     private static boolean isAttackActive(Object attack) {
@@ -85,11 +116,17 @@ public class MoveExecutor {
                 var startMethod = attack.getClass().getMethod("start", Player.class, Level.class);
                 startMethod.invoke(attack, player, player.level());
             } catch (NoSuchMethodException e1) {
-                var startMethod = attack.getClass().getMethod("start", Player.class);
-                startMethod.invoke(attack, player);
+                try {
+                    var startMethod = attack.getClass().getMethod("start", Player.class);
+                    startMethod.invoke(attack, player);
+                } catch (NoSuchMethodException e2) {
+                    // Try parameterless start
+                    var startMethod = attack.getClass().getMethod("start");
+                    startMethod.invoke(attack);
+                }
             }
         } catch (Exception e) {
-            System.err.println("Could not start attack: " + attack.getClass().getName());
+            System.err.println("Could not start attack: " + attack.getClass().getName() + " - " + e.getMessage());
         }
     }
 
@@ -183,19 +220,39 @@ public class MoveExecutor {
      * Tick an attack and return whether it's still active
      */
     private static boolean tickAndCheckActive(Player player, Object attack) throws Exception {
-        // Try to tick the attack
-        if (attack instanceof AbstractBreathingAttack<?, ?> breathing) {
+        // Handle Thunder Breathing attacks
+        if (attack instanceof ThunderBreathingAttackBase thunderAttack) {
+            thunderAttack.tick();
+            return thunderAttack.isActive();
+        }
+        // Handle other breathing attacks
+        else if (attack instanceof AbstractBreathingAttack<?, ?> breathing) {
             breathing.tick(player);
             return breathing.isActive();
-        } else {
-            // Try reflection for other types
+        }
+        // Generic reflection-based handling
+        else {
             try {
                 var tickMethod = attack.getClass().getMethod("tick");
                 tickMethod.invoke(attack);
             } catch (NoSuchMethodException e) {
-                // Try with player parameter
-                var tickMethod = attack.getClass().getMethod("tick", Player.class);
-                tickMethod.invoke(attack, player);
+                try {
+                    // Try with player parameter
+                    var tickMethod = attack.getClass().getMethod("tick", Player.class);
+                    tickMethod.invoke(attack, player);
+                } catch (NoSuchMethodException e2) {
+                    // Try with no parameters but set user field if it exists
+                    try {
+                        var userField = attack.getClass().getDeclaredField("user");
+                        userField.setAccessible(true);
+                        userField.set(attack, player);
+
+                        var tickMethod = attack.getClass().getMethod("tick");
+                        tickMethod.invoke(attack);
+                    } catch (Exception e3) {
+                        throw new Exception("Could not tick attack: " + attack.getClass().getName());
+                    }
+                }
             }
 
             var isActiveMethod = attack.getClass().getMethod("isActive");
@@ -214,7 +271,27 @@ public class MoveExecutor {
      * Clear all attacks for a player (on death, disconnect, etc.)
      */
     public static void clearAttacks(Player player) {
-        activeAttacks.remove(player);
+        var attacks = activeAttacks.remove(player);
+        if (attacks != null) {
+            // Stop all attacks gracefully
+            for (Object attack : attacks) {
+                try {
+                    if (attack instanceof ThunderBreathingAttackBase thunderAttack) {
+                        thunderAttack.stop();
+                    } else {
+                        // Try to call stop method via reflection
+                        try {
+                            var stopMethod = attack.getClass().getMethod("stop");
+                            stopMethod.invoke(attack);
+                        } catch (Exception e) {
+                            // Ignore if no stop method
+                        }
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error stopping attack on clear: " + e.getMessage());
+                }
+            }
+        }
     }
 
     /**
@@ -231,5 +308,70 @@ public class MoveExecutor {
     public static int getActiveAttackCount(Player player) {
         var attacks = activeAttacks.get(player);
         return attacks != null ? attacks.size() : 0;
+    }
+
+    /**
+     * Get all active attacks for a player (defensive copy)
+     */
+    public static List<Object> getActiveAttacks(Player player) {
+        var attacks = activeAttacks.get(player);
+        return attacks != null ? new ArrayList<>(attacks) : new ArrayList<>();
+    }
+
+    /**
+     * Force stop a specific attack for a player
+     */
+    public static boolean stopAttack(Player player, Object attack) {
+        var attacks = activeAttacks.get(player);
+        if (attacks != null && attacks.contains(attack)) {
+            try {
+                if (attack instanceof ThunderBreathingAttackBase thunderAttack) {
+                    thunderAttack.stop();
+                } else {
+                    // Try to call stop method via reflection
+                    var stopMethod = attack.getClass().getMethod("stop");
+                    stopMethod.invoke(attack);
+                }
+                attacks.remove(attack);
+
+                // Clean up empty lists
+                if (attacks.isEmpty()) {
+                    activeAttacks.remove(player);
+                }
+                return true;
+            } catch (Exception e) {
+                System.err.println("Error force stopping attack: " + e.getMessage());
+                // Remove it anyway
+                attacks.remove(attack);
+                return false;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Stop all attacks of a specific type for a player
+     */
+    public static int stopAttacksOfType(Player player, Class<?> attackType) {
+        var attacks = activeAttacks.get(player);
+        if (attacks == null) {
+            return 0;
+        }
+
+        List<Object> toStop = new ArrayList<>();
+        for (Object attack : attacks) {
+            if (attackType.isInstance(attack)) {
+                toStop.add(attack);
+            }
+        }
+
+        int stopped = 0;
+        for (Object attack : toStop) {
+            if (stopAttack(player, attack)) {
+                stopped++;
+            }
+        }
+
+        return stopped;
     }
 }

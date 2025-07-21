@@ -24,6 +24,9 @@ import java.util.Set;
 /**
  * Fifth Form: Heat Lightning
  * Upward slash that ignores armor and summons lightning on airborne targets
+ *
+ * All configuration now comes from the moveset builder.
+ * This class handles only the behavior and visual/audio effects.
  */
 public class HeatLightningAttack extends ThunderBreathingAttackBase {
 
@@ -33,12 +36,8 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
     private float launchPower = 1.5f;
 
     public HeatLightningAttack() {
-        withTiming(60, 8, 20) // cooldown, windup, duration
-                .withDamage(18.0f)
-                .withRange(12.0f)
-                .withKnockback(0.0f) // No horizontal knockback, just launch
-                .withBreathCost(25.0f)
-                .withHitStun(30); // Longer stun for lightning strike
+        // No configuration here - everything comes from moveset
+        // All values will be set via configure() method
     }
 
     @Override
@@ -95,7 +94,7 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, 0.4f, 2.5f);
 
-        // Create hitbox for the upward slash
+        // Create hitbox for the upward slash (using configured hitboxSize)
         Vec3 hitboxCenter = userPos.add(lookDir.scale(range / 2));
         AABB hitbox = new AABB(
                 hitboxCenter.x - hitboxSize,
@@ -110,7 +109,7 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
                 entity -> entity != user && entity.isAlive() && !hitEntities.contains(entity));
 
         for (LivingEntity target : targets) {
-            // Create armor-bypassing damage source
+            // Create armor-bypassing damage source (using configured damage)
             DamageSource armorPiercingSource = user.damageSources().magic();
             target.hurt(armorPiercingSource, damage);
 
@@ -194,11 +193,11 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
             serverLevel.addFreshEntity(lightning);
         }
 
-        // Extra damage while airborne (magic damage to bypass armor)
+        // Extra damage while airborne (magic damage to bypass armor - using configured damage)
         DamageSource source = user.damageSources().magic();
         target.hurt(source, damage * 0.5f);
 
-        // NOW apply the shocked effect after lightning hits
+        // NOW apply the shocked effect after lightning hits (using configured hitStun)
         target.addEffect(new MobEffectInstance(
                 NichirinEffectRegistry.SHOCKED.get(),
                 hitStun,

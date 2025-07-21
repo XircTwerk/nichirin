@@ -16,6 +16,9 @@ import java.util.UUID;
 /**
  * First Form: Thunderclap and Flash
  * Instant teleport dash that hits all enemies in path
+ *
+ * All configuration now comes from the moveset builder.
+ * This class handles only the behavior and visual/audio effects.
  */
 public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
 
@@ -26,13 +29,8 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
     private static final Map<UUID, Boolean> CROUCH_DASH_MAP = new HashMap<>();
 
     public ThunderClapFlashAttack() {
-        // Configure the attack
-        withTiming(30, 1, 15) // cooldown, windup, duration
-                .withDamage(15.0f)
-                .withRange(15.0f) // 15 block dash
-                .withKnockback(0.1f)
-                .withBreathCost(20.0f)
-                .withHitStun(20); // 1 second stun
+        // No configuration here - everything comes from moveset
+        // All values will be set via configure() method
     }
 
     /**
@@ -87,12 +85,15 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
     }
 
     private void executeTeleportDash() {
+        // Use teleportDistance from configuration (set by moveset)
+        float dashDistance = teleportDistance != null ? teleportDistance : range;
+
         // Configure teleport with thunder effects
         TeleportUtil.TeleportOptions options = new TeleportUtil.TeleportOptions()
                 .withParticles(ParticleTypes.ELECTRIC_SPARK, ParticleTypes.ELECTRIC_SPARK)
                 .withTrail(ParticleTypes.ELECTRIC_SPARK, 8.0f) // Dense lightning trail
                 .withSounds(SoundEvents.LIGHTNING_BOLT_THUNDER, null)
-                .withDamage(damage)
+                .withDamage(damage) // Use damage from configuration
                 .withDamageCallback(target -> {
                     // Use our custom hit method that removes immunity frames
                     hitTargetNoImmunity(target);
@@ -103,7 +104,7 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
         options.soundPitch = 2.0f;
 
         // Perform the teleport dash
-        TeleportUtil.teleportInDirection(user, range, options);
+        TeleportUtil.teleportInDirection(user, dashDistance, options);
     }
 
     @Override

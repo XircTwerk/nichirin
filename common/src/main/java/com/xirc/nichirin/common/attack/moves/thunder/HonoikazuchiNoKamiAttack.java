@@ -16,6 +16,9 @@ import java.util.Set;
 /**
  * Seventh Form: Honoikazuchi no Kami (Flaming Thunder God)
  * Zenitsu's personal ultimate technique - massive damage teleport dash
+ *
+ * All configuration now comes from the moveset builder.
+ * This class handles only the behavior and visual/audio effects.
  */
 public class HonoikazuchiNoKamiAttack extends ThunderBreathingAttackBase {
 
@@ -23,13 +26,8 @@ public class HonoikazuchiNoKamiAttack extends ThunderBreathingAttackBase {
     private Set<LivingEntity> hitEntities = new HashSet<>(); // Track hit entities to avoid double hits
 
     public HonoikazuchiNoKamiAttack() {
-        withTiming(300, 20, 60) // 15 second cooldown, longer windup and duration
-                .withDamage(50.0f) // Massive damage
-                .withRange(30.0f) // Very long dash
-                .withKnockback(2.0f) // High knockback
-                .withBreathCost(50.0f) // Half breath cost
-                .withHitStun(40) // 2 second stun
-                .withHitboxSize(4.0f); // Larger hitbox for ultimate
+        // No configuration here - everything comes from moveset
+        // All values will be set via configure() method
     }
 
     @Override
@@ -82,6 +80,9 @@ public class HonoikazuchiNoKamiAttack extends ThunderBreathingAttackBase {
         // Store initial position for hit detection
         Vec3 startPos = user.position();
 
+        // Use teleportDistance from configuration (set by moveset)
+        float dashDistance = teleportDistance != null ? teleportDistance : range;
+
         // Configure ultimate teleport with massive effects
         TeleportUtil.TeleportOptions options = new TeleportUtil.TeleportOptions()
                 .withParticles(ParticleTypes.ELECTRIC_SPARK, ParticleTypes.EXPLOSION)
@@ -115,7 +116,7 @@ public class HonoikazuchiNoKamiAttack extends ThunderBreathingAttackBase {
         };
 
         // Perform the ultimate dash
-        boolean success = TeleportUtil.teleportInDirection(user, range, options);
+        boolean success = TeleportUtil.teleportInDirection(user, dashDistance, options);
 
         // If teleport was blocked, still do damage in current area
         if (!success) {
@@ -130,7 +131,7 @@ public class HonoikazuchiNoKamiAttack extends ThunderBreathingAttackBase {
     }
 
     private void checkAreaDamageAtPosition(Vec3 position) {
-        // Get all targets in the large hitbox
+        // Get all targets in the large hitbox (using configured hitboxSize)
         List<LivingEntity> targets = getTargetsInHitbox(position);
 
         for (LivingEntity target : targets) {
@@ -143,14 +144,14 @@ public class HonoikazuchiNoKamiAttack extends ThunderBreathingAttackBase {
     }
 
     private void hitTargetUltimate(LivingEntity target) {
-        // Use base hit method for damage and shock
+        // Use base hit method for damage and shock (using configured damage, hitStun)
         hitTarget(target);
 
         // Additional effects for ultimate
         target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 60, 0, false, false));
         target.addEffect(new MobEffectInstance(MobEffects.LEVITATION, 20, 2, false, false));
 
-        // Massive knockback
+        // Massive knockback (using configured knockback)
         Vec3 knockbackDir = target.position().subtract(user.position()).normalize();
         target.push(knockbackDir.x * knockback, 0.5, knockbackDir.z * knockback);
 
@@ -171,13 +172,14 @@ public class HonoikazuchiNoKamiAttack extends ThunderBreathingAttackBase {
 
         Vec3 userPos = user.position();
         Vec3 lookDir = user.getLookAngle();
+        float effectRange = teleportDistance != null ? teleportDistance : range;
 
         // Create dragon-shaped particle trail
         for (int i = 0; i < 50; i++) {
             double progress = i / 50.0;
             double wave = Math.sin(progress * Math.PI * 4) * 2; // Serpentine motion
 
-            Vec3 basePos = userPos.add(lookDir.scale(progress * range));
+            Vec3 basePos = userPos.add(lookDir.scale(progress * effectRange));
             Vec3 offset = lookDir.cross(new Vec3(0, 1, 0)).normalize().scale(wave);
             Vec3 particlePos = basePos.add(offset).add(0, 1 + progress * 2, 0);
 

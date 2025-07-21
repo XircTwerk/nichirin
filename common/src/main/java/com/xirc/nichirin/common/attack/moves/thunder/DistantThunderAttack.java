@@ -18,6 +18,9 @@ import java.util.Set;
 /**
  * Fourth Form: Distant Thunder
  * Summons lightning on all enemies in a radius over 8 seconds (4 strikes)
+ *
+ * All configuration now comes from the moveset builder.
+ * This class handles only the behavior and visual/audio effects.
  */
 public class DistantThunderAttack extends ThunderBreathingAttackBase {
 
@@ -26,12 +29,8 @@ public class DistantThunderAttack extends ThunderBreathingAttackBase {
     private final Set<LivingEntity> trackedTargets = new HashSet<>();
 
     public DistantThunderAttack() {
-        withTiming(80, 15, 160) // cooldown, windup, 8 seconds duration
-                .withDamage(12.0f)
-                .withRange(20.0f) // Large AOE radius
-                .withKnockback(0.1f)
-                .withBreathCost(30.0f)
-                .withHitStun(20); // 1 second stun per strike
+        // No configuration here - everything comes from moveset
+        // All values will be set via configure() method
     }
 
     @Override
@@ -41,7 +40,7 @@ public class DistantThunderAttack extends ThunderBreathingAttackBase {
         strikeTimer = 0;
         trackedTargets.clear();
 
-        // Find all targets in range at start
+        // Find all targets in range at start (using configured range)
         Vec3 center = user.position();
         AABB searchArea = new AABB(
                 center.x - range, center.y - range, center.z - range,
@@ -110,7 +109,7 @@ public class DistantThunderAttack extends ThunderBreathingAttackBase {
                     serverLevel.addFreshEntity(lightning);
                 }
 
-                // Apply our custom damage and effects
+                // Apply our custom damage and effects (using configured damage and hitStun)
                 hitTarget(target);
 
                 // Extra effects at strike location

@@ -15,6 +15,9 @@ import java.util.Set;
 /**
  * Third Form: Thunder Swarm
  * 6 large-scale slashes in random positions around a wide area
+ *
+ * All configuration now comes from the moveset builder.
+ * This class handles only the behavior and visual/audio effects.
  */
 public class ThunderSwarmAttack extends ThunderBreathingAttackBase {
 
@@ -24,13 +27,8 @@ public class ThunderSwarmAttack extends ThunderBreathingAttackBase {
     private final Random random = new Random();
 
     public ThunderSwarmAttack() {
-        withTiming(50, 10, 40) // cooldown, windup, duration
-                .withDamage(10.0f)
-                .withRange(8.0f) // Large area around player
-                .withKnockback(0.2f)
-                .withBreathCost(25.0f)
-                .withHitStun(20)
-                .withHitboxSize(3.0f); // Size 3 hitbox as specified
+        // No configuration here - everything comes from moveset
+        // All values will be set via configure() method
     }
 
     @Override
@@ -60,7 +58,7 @@ public class ThunderSwarmAttack extends ThunderBreathingAttackBase {
     }
 
     private void performLargeSlash() {
-        // Random position within range
+        // Random position within range (using configured range)
         float angle = random.nextFloat() * 360f;
         float distance = 2.0f + random.nextFloat() * (range - 2.0f);
         float radian = (float) Math.toRadians(angle);
@@ -103,12 +101,12 @@ public class ThunderSwarmAttack extends ThunderBreathingAttackBase {
                 SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.PLAYERS,
                 0.6f, 1.8f + random.nextFloat() * 0.4f);
 
-        // Damage entities in large hitbox
+        // Damage entities in large hitbox (using configured hitboxSize)
         List<LivingEntity> targets = getTargetsInHitbox(slashCenter);
 
         for (LivingEntity target : targets) {
             if (!hitEntities.contains(target)) {
-                hitTarget(target);
+                hitTarget(target); // Uses configured damage, knockback, hitStun
                 hitEntities.add(target);
 
                 // Extra particles on hit

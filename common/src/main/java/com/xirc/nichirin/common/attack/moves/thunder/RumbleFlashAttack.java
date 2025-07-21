@@ -17,18 +17,17 @@ import java.util.Set;
 /**
  * Sixth Form: Rumble and Flash
  * Summons lightning around enemies at long range
+ *
+ * All configuration now comes from the moveset builder.
+ * This class handles only the behavior and visual/audio effects.
  */
 public class RumbleFlashAttack extends ThunderBreathingAttackBase {
 
     private final Set<LivingEntity> struckTargets = new HashSet<>();
 
     public RumbleFlashAttack() {
-        withTiming(70, 10, 30) // cooldown, windup, duration
-                .withDamage(20.0f)
-                .withRange(25.0f) // Very long range
-                .withKnockback(0.5f)
-                .withBreathCost(30.0f)
-                .withHitStun(40); // 2 second stun
+        // No configuration here - everything comes from moveset
+        // All values will be set via configure() method
     }
 
     @Override
@@ -54,7 +53,7 @@ public class RumbleFlashAttack extends ThunderBreathingAttackBase {
         ServerLevel serverLevel = (ServerLevel) world;
         Vec3 userPos = user.position();
 
-        // Find all targets in range
+        // Find all targets in range (using configured range)
         AABB searchArea = new AABB(
                 userPos.x - range, userPos.y - range, userPos.z - range,
                 userPos.x + range, userPos.y + range, userPos.z + range
@@ -85,10 +84,10 @@ public class RumbleFlashAttack extends ThunderBreathingAttackBase {
                     }
                 }
 
-                // Apply damage with extended stun
+                // Apply damage with extended stun (using configured damage, knockback, hitStun)
                 hitTarget(target);
 
-                // Extra knockback for this form
+                // Extra knockback for this form (using configured knockback)
                 Vec3 knockbackDir = target.position().subtract(userPos).normalize();
                 target.push(knockbackDir.x * knockback, 0.3, knockbackDir.z * knockback);
 
