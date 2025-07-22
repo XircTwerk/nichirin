@@ -32,31 +32,65 @@ import java.util.List;
  */
 public abstract class ThunderBreathingAttackBase {
 
+    // Getters for combat stats (useful for debugging)
     // Configuration from moveset - NO DEFAULT VALUES
     // These are set via configure() method called by the moveset
+    @Getter
     protected float damage;
+    @Getter
     protected float range;
+    @Getter
     protected float knockback;
+    @Getter
     protected float breathCost;
+    @Getter
     protected int hitStun;
+    @Getter
     protected float hitboxSize;
+    /**
+     * -- GETTER --
+     *  Get cooldown value for MoveExecutor
+     */
+    @Getter
     protected int cooldown;
+    @Getter
     protected int windup;
+    @Getter
     protected int duration;
 
+    // Nullable getters for movement properties
     // Movement properties (nullable - not all attacks use these)
+    @Getter
     protected Float teleportDistance; // For teleport-based attacks like Thunderclap Flash
+    @Getter
     protected Float dashSpeed; // For dash-based attacks like Rumble Flash
+    @Getter
     protected Integer teleportWindup; // Special windup time for teleport attacks
 
+    /**
+     * -- GETTER --
+     *  Check if attack is currently active (for MoveExecutor reflection)
+     */
     // Runtime state
     @Getter
     protected boolean isActive = false;
+    /**
+     * -- GETTER --
+     *  Get current tick count
+     */
+    @Getter
     protected int tickCount = 0;
+    @Getter
     protected Player user;
+    @Getter
     protected Level world;
 
+    /**
+     * -- GETTER --
+     *  Check if attack was properly configured
+     */
     // Configuration flag to prevent double-configuration
+    @Getter
     private boolean configured = false;
 
     /**
@@ -337,31 +371,10 @@ public abstract class ThunderBreathingAttackBase {
     // Getters for configured values and MoveExecutor compatibility
 
     /**
-     * Get cooldown value for MoveExecutor
-     */
-    public int getCooldown() {
-        return cooldown;
-    }
-
-    /**
      * Get total attack duration (windup + active duration)
      */
     public int getTotalDuration() {
         return windup + duration;
-    }
-
-    /**
-     * Check if attack is currently active (for MoveExecutor reflection)
-     */
-    public boolean isActive() {
-        return isActive;
-    }
-
-    /**
-     * Get current tick count
-     */
-    public int getTickCount() {
-        return tickCount;
     }
 
     /**
@@ -378,32 +391,9 @@ public abstract class ThunderBreathingAttackBase {
         return isActive && tickCount > windup && tickCount < windup + duration;
     }
 
-    /**
-     * Check if attack was properly configured
-     */
-    public boolean isConfigured() {
-        return configured;
-    }
-
-    // Nullable getters for movement properties
-    public Float getTeleportDistance() { return teleportDistance; }
-    public Float getDashSpeed() { return dashSpeed; }
-    public Integer getTeleportWindup() { return teleportWindup; }
-
     // Helper methods to check if movement properties are configured
     public boolean hasTeleport() { return teleportDistance != null && teleportDistance > 0; }
     public boolean hasDash() { return dashSpeed != null && dashSpeed > 0; }
     public boolean hasTeleportWindup() { return teleportWindup != null; }
 
-    // Getters for combat stats (useful for debugging)
-    public float getDamage() { return damage; }
-    public float getRange() { return range; }
-    public float getKnockback() { return knockback; }
-    public float getBreathCost() { return breathCost; }
-    public int getHitStun() { return hitStun; }
-    public float getHitboxSize() { return hitboxSize; }
-    public int getWindup() { return windup; }
-    public int getDuration() { return duration; }
-    public Player getUser() { return user; }
-    public Level getWorld() { return world; }
 }

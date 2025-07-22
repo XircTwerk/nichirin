@@ -4,12 +4,14 @@ import com.xirc.nichirin.BreathOfNichirin;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 
 /**
  * Packet for syncing breathing style data between client and server
+ * Now includes unlock validation
  */
 public class BreathingStyleSyncPacket {
 
@@ -26,8 +28,8 @@ public class BreathingStyleSyncPacket {
 
             context.queue(() -> {
                 Player player = context.getPlayer();
-                if (player != null) { // Add null check here
-                    BreathingStyleData data = PlayerDataProvider.getData(player);
+                if (player != null) {
+                    BreathingStyleData data = PlayerDataProvider.getBreathingStyleData(player);
                     data.setMovesetId(movesetId);
                 }
             });
@@ -41,13 +43,56 @@ public class BreathingStyleSyncPacket {
                 Player player = context.getPlayer();
                 if (player instanceof ServerPlayer) {
                     ServerPlayer serverPlayer = (ServerPlayer) player;
+
                     // Validate the moveset exists
-                    if (movesetId == null || MovesetRegistry.isRegistered(movesetId)) {
-                        PlayerDataProvider.updateAndSync(serverPlayer, movesetId);
+                    if (movesetId != null && !MovesetRegistry.isRegistered(movesetId)) {
+                        // Invalid moveset ID
+                        serverPlayer.sendSystemMessage(Component.literal(
+                                "§cInvalid breathing style: " + movesetId
+                        ));
+                        return;
+                    }
+
+                    // Check if the player has unlocked this breathing style
+                    if (movesetId != null && !ProgressionHelper.isStyleUnlocked(serverPlayer, movesetId)) {
+                        // Player hasn't unlocked this style
+                        String requirement = ProgressionHelper.getUnlockRequirement(movesetId);
+                        serverPlayer.sendSystemMessage(Component.literal(
+                                "§cYou haven't unlocked this breathing style! §fRequirement: §e" + requirement
+                        ));
+                        return;
+                    }
+
+                    // All checks passed - update the moveset
+                    PlayerDataProvider.updateAndSync(serverPlayer, movesetId);
+
+                    // Send confirmation message
+                    if (movesetId != null) {
+                        String styleName = formatStyleName(movesetId);
+                        serverPlayer.sendSystemMessage(Component.literal(
+                                "§aSwitched to " + styleName + " breathing style!"
+                        ));
+                    } else {
+                        serverPlayer.sendSystemMessage(Component.literal(
+                                "§7Cleared breathing style."
+                        ));
                     }
                 }
             });
         });
+    }
+
+    /**
+     * Formats a breathing style ID for display
+     */
+    private static String formatStyleName(String styleId) {
+        String[] parts = styleId.split("_");
+        StringBuilder formatted = new StringBuilder();
+        for (String part : parts) {
+            if (formatted.length() > 0) formatted.append(" ");
+            formatted.append(part.substring(0, 1).toUpperCase()).append(part.substring(1));
+        }
+        return formatted.toString();
     }
 
     /**

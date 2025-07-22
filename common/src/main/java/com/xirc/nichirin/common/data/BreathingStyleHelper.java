@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Helper class for easy access to breathing style data
+ * No changes needed - this works through PlayerDataProvider which now uses PlayerData internally
  */
 public class BreathingStyleHelper {
 
@@ -14,7 +15,7 @@ public class BreathingStyleHelper {
      */
     @Nullable
     public static AbstractMoveset getMoveset(Player player) {
-        return PlayerDataProvider.getData(player).getMoveset();
+        return PlayerDataProvider.getBreathingStyleData(player).getMoveset();
     }
 
     /**
@@ -26,7 +27,7 @@ public class BreathingStyleHelper {
             BreathingStyleSyncPacket.requestStyleChange(moveset != null ? moveset.getMovesetId() : null);
         } else {
             // Direct server-side update
-            PlayerDataProvider.getData(player).setMoveset(moveset);
+            PlayerDataProvider.getBreathingStyleData(player).setMoveset(moveset);
         }
     }
 
@@ -39,7 +40,7 @@ public class BreathingStyleHelper {
             BreathingStyleSyncPacket.requestStyleChange(movesetId);
         } else {
             // Direct server-side update
-            PlayerDataProvider.getData(player).setMovesetId(movesetId);
+            PlayerDataProvider.getBreathingStyleData(player).setMovesetId(movesetId);
         }
     }
 
@@ -47,7 +48,7 @@ public class BreathingStyleHelper {
      * Checks if a player has a moveset selected
      */
     public static boolean hasMoveset(Player player) {
-        return PlayerDataProvider.getData(player).hasMoveset();
+        return PlayerDataProvider.getBreathingStyleData(player).hasMoveset();
     }
 
     /**
@@ -59,7 +60,7 @@ public class BreathingStyleHelper {
             BreathingStyleSyncPacket.requestStyleChange(null);
         } else {
             // Direct server-side update
-            PlayerDataProvider.getData(player).clearMoveset();
+            PlayerDataProvider.getBreathingStyleData(player).clearMoveset();
         }
     }
 
@@ -68,6 +69,6 @@ public class BreathingStyleHelper {
      */
     @Nullable
     public static String getMovesetId(Player player) {
-        return PlayerDataProvider.getData(player).getMovesetId();
+        return PlayerDataProvider.getBreathingStyleData(player).getMovesetId();
     }
 }

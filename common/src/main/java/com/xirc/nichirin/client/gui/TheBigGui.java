@@ -3,6 +3,8 @@ package com.xirc.nichirin.client.gui;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.math.Axis;
 import com.xirc.nichirin.common.data.BreathingStyleHelper;
+import com.xirc.nichirin.common.data.BreathingStyleProgression;
+import com.xirc.nichirin.common.data.ProgressionHelper;
 import lombok.Getter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -21,7 +23,7 @@ import java.util.function.Consumer;
 
 /**
  * THE BIG GUI - Main menu system for all mod features
- * Full-screen interface with vanilla+ styling
+ * Full-screen interface with vanilla+ styling, unlock system, and translatable text
  */
 public class TheBigGui extends Screen {
 
@@ -49,7 +51,7 @@ public class TheBigGui extends Screen {
     private Consumer<GuiGraphics> currentContentRenderer;
 
     public TheBigGui(Player player) {
-        super(Component.literal("Nichirin Menu"));
+        super(Component.translatable("gui.nichirin.main.title"));
         this.player = player;
     }
 
@@ -71,7 +73,7 @@ public class TheBigGui extends Screen {
                     buttonY,
                     BUTTON_WIDTH,
                     BUTTON_HEIGHT,
-                    Component.literal(section.getDisplayName()),
+                    Component.translatable(section.getTranslationKey()),
                     section,
                     btn -> switchToSection(section)
             );
@@ -118,7 +120,7 @@ public class TheBigGui extends Screen {
         graphics.fill(0, 0, this.width, this.height, BACKGROUND_COLOR);
 
         // Draw section title
-        Component title = Component.literal(currentSection.getDisplayName());
+        Component title = Component.translatable(currentSection.getTranslationKey());
         int titleX = (this.width - this.font.width(title)) / 2;
         graphics.drawString(this.font, title, titleX, 10, 0xFFFFFF);
 
@@ -150,6 +152,88 @@ public class TheBigGui extends Screen {
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        // Handle breathing style selection clicks
+        if (currentSection == GuiSection.BREATHING_STYLES) {
+            String currentStyle = BreathingStyleHelper.getMovesetId(player);
+
+            // Calculate click area for Thunder Breathing box
+            int centerX = (this.width - BUTTON_WIDTH - RIGHT_MARGIN - 20) / 2;
+            int boxWidth = 150;
+            int boxHeight = 80;
+            int x = centerX - boxWidth / 2;
+            int y = TOP_MARGIN + 10 + 30 + 25 + 20 + 10;
+
+            // Check if click is within Thunder Breathing box
+            if (mouseX >= x && mouseX <= x + boxWidth && mouseY >= y && mouseY <= y + boxHeight) {
+                String styleName = "thunder_breathing";
+
+                // Check if the style is unlocked
+                if (!ProgressionHelper.isStyleUnlocked(player, styleName)) {
+                    // Style is locked - just play error sound, no message
+                    Minecraft.getInstance().getSoundManager().play(
+                            net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
+                                    net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 0.5F, 0.8F
+                            )
+                    );
+                    return true;
+                }
+
+                // Style is unlocked - only set if not already selected
+                if (!styleName.equals(currentStyle)) {
+                    // Set the breathing style for the player
+                    BreathingStyleHelper.setMovesetId(player, styleName);
+
+                    // Play success sound
+                    Minecraft.getInstance().getSoundManager().play(
+                            net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
+                                    net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 1.0F
+                            )
+                    );
+
+                    // Don't call this.init() - just update the current section to refresh the display
+                    switchToSection(GuiSection.BREATHING_STYLES);
+                }
+                return true;
+            }
+
+            // Check for "None" button click
+            int noneButtonX = centerX - 75;
+            int noneButtonY = y + boxHeight + 30;
+            int noneButtonWidth = 150;
+            int noneButtonHeight = 20;
+
+            if (mouseX >= noneButtonX && mouseX <= noneButtonX + noneButtonWidth &&
+                    mouseY >= noneButtonY && mouseY <= noneButtonY + noneButtonHeight) {
+
+                // Toggle between None and current style
+                if (currentStyle != null) {
+                    // Clear breathing style (but preserve unlock)
+                    BreathingStyleHelper.setMovesetId(player, null);
+                } else {
+                    // Find any unlocked style and set it
+                    if (ProgressionHelper.isStyleUnlocked(player, "thunder_breathing")) {
+                        BreathingStyleHelper.setMovesetId(player, "thunder_breathing");
+                    }
+                }
+
+                // Play click sound
+                Minecraft.getInstance().getSoundManager().play(
+                        net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
+                                net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 1.0F
+                        )
+                );
+
+                // Don't call this.init() - just update the current section to refresh the display
+                switchToSection(GuiSection.BREATHING_STYLES);
+                return true;
+            }
+        }
+
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
     // Content rendering methods
 
     private void renderHomeContent(GuiGraphics graphics) {
@@ -158,7 +242,6 @@ public class TheBigGui extends Screen {
         int centerX = (this.width - BUTTON_WIDTH - RIGHT_MARGIN - 20) / 2;
 
         // === 3D Player Model ===
-        // Calculate position for player model (upper center)
         int modelX = centerX;
         int modelY = contentY + 60;
         int modelSize = 60;
@@ -175,26 +258,27 @@ public class TheBigGui extends Screen {
         // === Player Stats Section ===
         int statsY = modelY + modelSize + 20;
         int statLineHeight = 16;
+        BreathingStyleProgression progression = ProgressionHelper.getProgression(player);
 
         // Title
-        Component statsTitle = Component.literal("PLAYER STATS").withStyle(style -> style.withBold(true));
+        Component statsTitle = Component.translatable("gui.nichirin.home.player_stats").withStyle(style -> style.withBold(true));
         graphics.drawString(this.font, statsTitle,
                 centerX - this.font.width(statsTitle) / 2, statsY, 0xFFFFFF);
         statsY += 25;
 
-        // Player name with decorative line
-        drawStatLine(graphics, contentX, statsY, "Name", player.getName().getString(), 0xFFD700);
+        // Player name
+        drawStatLine(graphics, contentX, statsY, Component.translatable("gui.nichirin.home.name"), player.getName().getString(), 0xFFD700);
         statsY += statLineHeight;
 
         // Slayer rank
-        String slayerRank = "Coming Soon"; // Not implemented yet
-        drawStatLine(graphics, contentX, statsY, "Slayer Rank", slayerRank, 0x5555FF);
+        String slayerRank = progression.getSlayerRankName() + " (Rank " + progression.getSlayerRank() + ")";
+        drawStatLine(graphics, contentX, statsY, Component.translatable("gui.nichirin.home.slayer_rank"), slayerRank, 0x5555FF);
         statsY += statLineHeight;
 
         // Breathing style
         String breathingStyle = BreathingStyleHelper.getMovesetId(player);
-        if (breathingStyle == null) breathingStyle = "None";
-        drawStatLine(graphics, contentX, statsY, "Breathing Style", formatBreathingStyle(breathingStyle), 0x55FFFF);
+        String breathingStyleDisplay = breathingStyle != null ? Component.translatable("breathing_style." + breathingStyle).getString() : Component.translatable("gui.nichirin.home.none").getString();
+        drawStatLine(graphics, contentX, statsY, Component.translatable("gui.nichirin.home.breathing_style"), breathingStyleDisplay, 0x55FFFF);
         statsY += statLineHeight;
 
         // Combat stats separator
@@ -203,63 +287,186 @@ public class TheBigGui extends Screen {
         statsY += 15;
 
         // Demon kill count
-        String demonKills = "Coming Soon"; // Not implemented yet
-        drawStatLine(graphics, contentX, statsY, "Demons Slain", demonKills, 0xFF5555);
+        String demonKills = String.valueOf(progression.getDemonsSlain());
+        drawStatLine(graphics, contentX, statsY, Component.translatable("gui.nichirin.home.demons_slain"), demonKills, 0xFF5555);
         statsY += statLineHeight;
 
-        // Best combo
-        String bestCombo = "Coming Soon"; // Not implemented yet
-        drawStatLine(graphics, contentX, statsY, "Best Combo", bestCombo, 0xFFAA00);
+        // Total damage dealt
+        String totalDamage = String.valueOf(progression.getTotalDamageDealt());
+        drawStatLine(graphics, contentX, statsY, Component.translatable("gui.nichirin.home.total_damage"), totalDamage, 0xFFAA00);
+        statsY += statLineHeight;
+
+        // Breathing experience
+        String breathExp = String.valueOf(progression.getBreathingExperience());
+        drawStatLine(graphics, contentX, statsY, Component.translatable("gui.nichirin.home.breathing_exp"), breathExp, 0x55FF55);
         statsY += statLineHeight;
 
         // Total playtime
-        long playtime = player.level().getGameTime() / 20; // Convert ticks to seconds
+        long playtime = player.level().getGameTime() / 20;
         String playtimeStr = formatPlaytime(playtime);
-        drawStatLine(graphics, contentX, statsY, "Playtime", playtimeStr, 0xAAAAAA);
+        drawStatLine(graphics, contentX, statsY, Component.translatable("gui.nichirin.home.playtime"), playtimeStr, 0xAAAAAA);
         statsY += statLineHeight;
 
         // Level/Experience
         int level = player.experienceLevel;
-        drawStatLine(graphics, contentX, statsY, "Level", String.valueOf(level), 0x55FF55);
+        drawStatLine(graphics, contentX, statsY, Component.translatable("gui.nichirin.home.level"), String.valueOf(level), 0x55FF55);
 
         // Instructions at bottom
         int bottomY = this.height - 30;
-        Component instructions = Component.literal("Press ESC to close • Click sections on the right to navigate")
+        Component instructions = Component.translatable("gui.nichirin.home.instructions")
                 .withStyle(style -> style.withColor(0x777777).withItalic(true));
         graphics.drawString(this.font, instructions,
                 (this.width - BUTTON_WIDTH - RIGHT_MARGIN - this.font.width(instructions)) / 2,
                 bottomY, 0x777777);
     }
 
+    private void renderBreathingStylesContent(GuiGraphics graphics) {
+        int contentX = 20;
+        int contentY = TOP_MARGIN + 10;
+        int centerX = (this.width - BUTTON_WIDTH - RIGHT_MARGIN - 20) / 2;
+
+        // Title
+        Component title = Component.translatable("gui.nichirin.breathing_styles.title").withStyle(style -> style.withBold(true));
+        graphics.drawString(this.font, title,
+                centerX - this.font.width(title) / 2, contentY, 0xFFFFFF);
+        contentY += 30;
+
+        // Current style
+        String currentStyle = BreathingStyleHelper.getMovesetId(player);
+        if (currentStyle != null) {
+            Component current = Component.translatable("gui.nichirin.breathing_styles.current",
+                            Component.translatable("breathing_style." + currentStyle))
+                    .withStyle(style -> style.withColor(0x55FFFF));
+            graphics.drawString(this.font, current, contentX, contentY, 0x55FFFF);
+            contentY += 25;
+        }
+
+        // Instructions
+        Component instructions = Component.translatable("gui.nichirin.breathing_styles.instructions");
+        graphics.drawString(this.font, instructions, contentX, contentY, 0xAAAAAA);
+        contentY += 20;
+
+        // Style grid - Only Thunder Breathing for now
+        int gridY = contentY + 10;
+        int boxWidth = 150;
+        int boxHeight = 80;
+
+        // Thunder Breathing
+        String styleName = "thunder_breathing";
+        boolean isUnlocked = ProgressionHelper.isStyleUnlocked(player, styleName);
+        boolean isSelected = styleName.equals(currentStyle);
+
+        // Center the single box
+        int x = centerX - boxWidth / 2;
+        int y = gridY;
+
+        // Draw box with different colors based on unlock status
+        int bgColor;
+        int borderColor;
+
+        if (!isUnlocked) {
+            bgColor = 0xFF1A1A1A; // Darker for locked
+            borderColor = 0xFF666666; // Gray border for locked
+        } else if (isSelected) {
+            bgColor = 0xFF3A3A3A;
+            borderColor = 0xFF55FFFF; // Cyan for selected
+        } else {
+            bgColor = 0xFF2A2A2A;
+            borderColor = 0xFF4A4A4A; // Normal border
+        }
+
+        // Border
+        graphics.fill(x - 1, y - 1, x + boxWidth + 1, y + boxHeight + 1, borderColor);
+        // Background
+        graphics.fill(x, y, x + boxWidth, y + boxHeight, bgColor);
+
+        // Style name
+        Component displayName = Component.translatable("breathing_style.thunder_breathing");
+        int nameColor = isUnlocked ? 0xFFFFFF : 0x888888;
+        graphics.drawString(this.font, displayName,
+                x + (boxWidth - this.font.width(displayName)) / 2,
+                y + 10, nameColor);
+
+        // Status
+        if (!isUnlocked) {
+            Component locked = Component.translatable("gui.nichirin.breathing_styles.locked_status").withStyle(style -> style.withColor(0xFF5555));
+            graphics.drawString(this.font, locked,
+                    x + (boxWidth - this.font.width(locked)) / 2,
+                    y + 30, 0xFF5555);
+        } else if (isSelected) {
+            Component equipped = Component.translatable("gui.nichirin.breathing_styles.equipped").withStyle(style -> style.withColor(0x55FFFF));
+            graphics.drawString(this.font, equipped,
+                    x + (boxWidth - this.font.width(equipped)) / 2,
+                    y + 30, 0x55FFFF);
+        } else {
+            Component clickToSelect = Component.translatable("gui.nichirin.breathing_styles.click_to_select").withStyle(style -> style.withColor(0xAAAAAA));
+            graphics.drawString(this.font, clickToSelect,
+                    x + (boxWidth - this.font.width(clickToSelect)) / 2,
+                    y + 30, 0xAAAAAA);
+        }
+
+        // Icon placeholder (thunder icon)
+        int iconColor = isUnlocked ? 0xFF3A3A3A : 0xFF2A2A2A;
+        graphics.fill(x + boxWidth/2 - 16, y + 50, x + boxWidth/2 + 16, y + 75, iconColor);
+
+        // Show unlock requirements if locked
+        if (!isUnlocked) {
+            int reqY = y + boxHeight + 15;
+            Component reqTitle = Component.translatable("gui.nichirin.breathing_styles.unlock_requirements").withStyle(style -> style.withBold(true));
+            graphics.drawString(this.font, reqTitle,
+                    centerX - this.font.width(reqTitle) / 2, reqY, 0xFFFFFF);
+            reqY += 15;
+
+            String requirement = ProgressionHelper.getUnlockRequirement(styleName);
+            graphics.drawString(this.font, requirement,
+                    centerX - this.font.width(requirement) / 2, reqY, 0xFFAA00);
+            reqY += 20;
+        }
+
+        // "None" button
+        int noneButtonY = y + boxHeight + (isUnlocked ? 15 : 55);
+        int noneButtonX = centerX - 75;
+        int noneButtonWidth = 150;
+        int noneButtonHeight = 20;
+
+        // None button background
+        int noneButtonBg = (currentStyle == null) ? 0xFF3A3A3A : 0xFF2A2A2A;
+        int noneButtonBorder = (currentStyle == null) ? 0xFF55FFFF : 0xFF4A4A4A;
+
+        graphics.fill(noneButtonX - 1, noneButtonY - 1,
+                noneButtonX + noneButtonWidth + 1, noneButtonY + noneButtonHeight + 1, noneButtonBorder);
+        graphics.fill(noneButtonX, noneButtonY,
+                noneButtonX + noneButtonWidth, noneButtonY + noneButtonHeight, noneButtonBg);
+
+        Component noneText = Component.translatable("gui.nichirin.breathing_styles.none");
+        int noneTextColor = (currentStyle == null) ? 0x55FFFF : 0xAAAAAA;
+        graphics.drawString(this.font, noneText,
+                noneButtonX + (noneButtonWidth - this.font.width(noneText)) / 2,
+                noneButtonY + 6, noneTextColor);
+
+        // Coming soon text
+        Component comingSoon = Component.translatable("gui.nichirin.breathing_styles.coming_soon")
+                .withStyle(style -> style.withColor(0x777777).withItalic(true));
+        graphics.drawString(this.font, comingSoon,
+                centerX - this.font.width(comingSoon) / 2,
+                this.height - 60, 0x777777);
+    }
+
     /**
      * Renders a stat line with label and value
      */
-    private void drawStatLine(GuiGraphics graphics, int x, int y, String label, String value, int valueColor) {
+    private void drawStatLine(GuiGraphics graphics, int x, int y, Component label, String value, int valueColor) {
         // Draw label
-        graphics.drawString(this.font, label + ":", x, y, 0xAAAAAA);
+        String labelText = label.getString() + ":";
+        graphics.drawString(this.font, labelText, x, y, 0xAAAAAA);
 
         // Draw value (right-aligned within content area)
         int valueX = this.width - BUTTON_WIDTH - RIGHT_MARGIN - 30 - this.font.width(value);
         graphics.drawString(this.font, value, valueX, y, valueColor);
 
         // Draw connecting dots
-        String dots = ".".repeat(Math.max(1, (valueX - x - this.font.width(label + ": ") - 5) / 4));
-        graphics.drawString(this.font, dots, x + this.font.width(label + ": "), y, 0x444444);
-    }
-
-    /**
-     * Formats breathing style name
-     */
-    private String formatBreathingStyle(String style) {
-        if (style.equals("None")) return style;
-        // Convert snake_case to Title Case
-        String[] parts = style.split("_");
-        StringBuilder formatted = new StringBuilder();
-        for (String part : parts) {
-            if (formatted.length() > 0) formatted.append(" ");
-            formatted.append(part.substring(0, 1).toUpperCase()).append(part.substring(1));
-        }
-        return formatted.toString();
+        String dots = ".".repeat(Math.max(1, (valueX - x - this.font.width(labelText) - 5) / 4));
+        graphics.drawString(this.font, dots, x + this.font.width(labelText), y, 0x444444);
     }
 
     /**
@@ -275,75 +482,31 @@ public class TheBigGui extends Screen {
         }
     }
 
-    @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        // Handle breathing style selection clicks
-        if (currentSection == GuiSection.BREATHING_STYLES) {
-            String currentStyle = BreathingStyleHelper.getMovesetId(player);
-
-            // Calculate click area for Thunder Breathing box
-            int centerX = (this.width - BUTTON_WIDTH - RIGHT_MARGIN - 20) / 2;
-            int boxWidth = 150;
-            int boxHeight = 80;
-            int x = centerX - boxWidth / 2;
-            int y = TOP_MARGIN + 10 + 30 + 25 + 20 + 10; // Based on renderBreathingStylesContent positioning
-
-            // Check if click is within Thunder Breathing box
-            if (mouseX >= x && mouseX <= x + boxWidth && mouseY >= y && mouseY <= y + boxHeight) {
-                String styleName = "thunder_breathing";
-
-                // Only set if not already selected
-                if (!styleName.equals(currentStyle)) {
-                    // Set the breathing style for the player
-                    BreathingStyleHelper.setMovesetId(player, styleName);
-
-                    // Play a click sound
-                    Minecraft.getInstance().getSoundManager().play(
-                            net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
-                                    net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK, 1.0F
-                            )
-                    );
-
-                    // Refresh the screen
-                    this.init();
-                }
-                return true;
-            }
-        }
-
-        return super.mouseClicked(mouseX, mouseY, button);
-    }
-
     /**
      * Renders the 3D player model
      */
     private void renderPlayerModel(GuiGraphics graphics, int x, int y, int size, Player player) {
         // Calculate rotation based on time
-        float rotation = (System.currentTimeMillis() / 50L % 360L) * 0.017453292F; // Convert to radians
+        float rotation = (System.currentTimeMillis() / 50L % 360L) * 0.017453292F;
 
-        // Render player using the inventory render method
         graphics.pose().pushPose();
-        graphics.pose().translate(x, y + 55, 50.0F); // Added +55 to move player down
+        graphics.pose().translate(x, y + 55, 50.0F);
         graphics.pose().scale((float)size, (float)size, (float)size);
 
-        // Apply rotation
         Quaternionf quaternion = Axis.ZP.rotationDegrees(180.0F);
         Quaternionf quaternion2 = Axis.XP.rotationDegrees(-20.0F);
-        Quaternionf quaternion3 = Axis.YP.rotation(rotation); // Rotation animation
+        Quaternionf quaternion3 = Axis.YP.rotation(rotation);
 
         quaternion.mul(quaternion2);
         quaternion.mul(quaternion3);
 
         graphics.pose().mulPose(quaternion);
 
-        // Set up lighting
         Lighting.setupForEntityInInventory();
 
-        // Prepare entity for rendering
         EntityRenderDispatcher entityrenderdispatcher = Minecraft.getInstance().getEntityRenderDispatcher();
         entityrenderdispatcher.setRenderShadow(false);
 
-        // Render the player
         MultiBufferSource.BufferSource bufferSource = graphics.bufferSource();
         RenderSystem.runAsFancy(() -> {
             entityrenderdispatcher.render(player, 0.0D, 0.0D, 0.0D, 0.0F, 1.0F,
@@ -357,154 +520,63 @@ public class TheBigGui extends Screen {
         Lighting.setupFor3DItems();
     }
 
-    private void renderBreathingStylesContent(GuiGraphics graphics) {
-        int contentX = 20;
-        int contentY = TOP_MARGIN + 10;
-        int centerX = (this.width - BUTTON_WIDTH - RIGHT_MARGIN - 20) / 2;
-
-        // Title
-        Component title = Component.literal("BREATHING STYLES").withStyle(style -> style.withBold(true));
-        graphics.drawString(this.font, title,
-                centerX - this.font.width(title) / 2, contentY, 0xFFFFFF);
-        contentY += 30;
-
-        // Current style
-        String currentStyle = BreathingStyleHelper.getMovesetId(player);
-        if (currentStyle != null) {
-            Component current = Component.literal("Current: " + formatBreathingStyle(currentStyle))
-                    .withStyle(style -> style.withColor(0x55FFFF));
-            graphics.drawString(this.font, current, contentX, contentY, 0x55FFFF);
-            contentY += 25;
-        }
-
-        // Instructions
-        graphics.drawString(this.font, "Click to select a breathing style:", contentX, contentY, 0xAAAAAA);
-        contentY += 20;
-
-        // Style grid - Only Thunder Breathing for now
-        int gridX = contentX + 10;
-        int gridY = contentY + 10;
-        int boxWidth = 150;
-        int boxHeight = 80;
-
-        // Only Thunder Breathing
-        String styleName = "thunder_breathing";
-        boolean isUnlocked = true;
-        boolean isSelected = styleName.equals(currentStyle);
-
-        // Center the single box
-        int x = centerX - boxWidth / 2;
-        int y = gridY;
-
-        // Draw box
-        int bgColor = isSelected ? 0xFF3A3A3A : 0xFF2A2A2A;
-        int borderColor = isSelected ? 0xFF55FFFF : 0xFF4A4A4A;
-
-        // Border
-        graphics.fill(x - 1, y - 1, x + boxWidth + 1, y + boxHeight + 1, borderColor);
-        // Background
-        graphics.fill(x, y, x + boxWidth, y + boxHeight, bgColor);
-
-        // Style name
-        String displayName = "Thunder Breathing";
-        graphics.drawString(this.font, displayName,
-                x + (boxWidth - this.font.width(displayName)) / 2,
-                y + 10, 0xFFFFFF);
-
-        // Status
-        if (isSelected) {
-            Component equipped = Component.literal("EQUIPPED").withStyle(style -> style.withColor(0x55FFFF));
-            graphics.drawString(this.font, equipped,
-                    x + (boxWidth - this.font.width(equipped)) / 2,
-                    y + 30, 0x55FFFF);
-        } else {
-            Component clickToSelect = Component.literal("Click to Select").withStyle(style -> style.withColor(0xAAAAAA));
-            graphics.drawString(this.font, clickToSelect,
-                    x + (boxWidth - this.font.width(clickToSelect)) / 2,
-                    y + 30, 0xAAAAAA);
-        }
-
-        // Icon placeholder (thunder icon)
-        graphics.fill(x + boxWidth/2 - 16, y + 45, x + boxWidth/2 + 16, y + 77, 0xFF3A3A3A);
-
-        // Coming soon text for other styles
-        Component comingSoon = Component.literal("More breathing styles coming soon!")
-                .withStyle(style -> style.withColor(0x777777).withItalic(true));
-        graphics.drawString(this.font, comingSoon,
-                centerX - this.font.width(comingSoon) / 2,
-                y + boxHeight + 20, 0x777777);
-    }
-
     private void renderSkillsContent(GuiGraphics graphics) {
-        graphics.drawString(this.font,
-                Component.literal("Skills - Coming Soon"),
-                20, TOP_MARGIN + 10, 0xFFFFFF);
+        Component comingSoon = Component.translatable("gui.nichirin.coming_soon");
+        graphics.drawString(this.font, comingSoon, 20, TOP_MARGIN + 10, 0xFFFFFF);
     }
 
     private void renderBestiaryContent(GuiGraphics graphics) {
-        graphics.drawString(this.font,
-                Component.literal("Bestiary - Coming Soon"),
-                20, TOP_MARGIN + 10, 0xFFFFFF);
+        Component comingSoon = Component.translatable("gui.nichirin.coming_soon");
+        graphics.drawString(this.font, comingSoon, 20, TOP_MARGIN + 10, 0xFFFFFF);
     }
 
     private void renderPerksContent(GuiGraphics graphics) {
-        graphics.drawString(this.font,
-                Component.literal("Perks - Coming Soon"),
-                20, TOP_MARGIN + 10, 0xFFFFFF);
+        Component comingSoon = Component.translatable("gui.nichirin.coming_soon");
+        graphics.drawString(this.font, comingSoon, 20, TOP_MARGIN + 10, 0xFFFFFF);
     }
 
     private void renderQuestsContent(GuiGraphics graphics) {
-        graphics.drawString(this.font,
-                Component.literal("Quests - Coming Soon"),
-                20, TOP_MARGIN + 10, 0xFFFFFF);
+        Component comingSoon = Component.translatable("gui.nichirin.coming_soon");
+        graphics.drawString(this.font, comingSoon, 20, TOP_MARGIN + 10, 0xFFFFFF);
     }
 
     private void renderReputationContent(GuiGraphics graphics) {
-        int contentX = 20;
-        int contentY = TOP_MARGIN + 10;
-
-        graphics.drawString(this.font,
-                Component.literal("Reputation System"),
-                contentX, contentY, 0xFFFFFF);
-        contentY += 20;
-
-        // Slayer reputation
-        graphics.drawString(this.font,
-                Component.literal("Slayer Reputation: 0"),
-                contentX, contentY, 0x5555FF);
-        contentY += 15;
-
-        // Demon reputation
-        graphics.drawString(this.font,
-                Component.literal("Demon Reputation: 0"),
-                contentX, contentY, 0xFF5555);
+        Component comingSoon = Component.translatable("gui.nichirin.coming_soon");
+        graphics.drawString(this.font, comingSoon, 20, TOP_MARGIN + 10, 0xFFFFFF);
     }
 
     private void renderCosmeticsContent(GuiGraphics graphics) {
-        graphics.drawString(this.font,
-                Component.literal("Cosmetics - Coming Soon"),
-                20, TOP_MARGIN + 10, 0xFFFFFF);
+        Component comingSoon = Component.translatable("gui.nichirin.coming_soon");
+        graphics.drawString(this.font, comingSoon, 20, TOP_MARGIN + 10, 0xFFFFFF);
     }
 
     private void renderMovesetContent(GuiGraphics graphics) {
         int contentX = 20;
         int contentY = TOP_MARGIN + 10;
 
-        graphics.drawString(this.font,
-                Component.literal("Current Moveset"),
-                contentX, contentY, 0xFFFFFF);
+        Component title = Component.translatable("gui.nichirin.moveset.title");
+        graphics.drawString(this.font, title, contentX, contentY, 0xFFFFFF);
         contentY += 20;
 
-        // TODO: Display current moveset with frame data
-        graphics.drawString(this.font,
-                Component.literal("Select a breathing style to view moves"),
-                contentX, contentY, 0xAAAAAA);
+        // Show current breathing style moveset
+        String currentStyle = BreathingStyleHelper.getMovesetId(player);
+        if (currentStyle != null) {
+            Component styleLabel = Component.translatable("gui.nichirin.moveset.current_style",
+                    Component.translatable("breathing_style." + currentStyle));
+            graphics.drawString(this.font, styleLabel, contentX, contentY, 0x55FFFF);
+            contentY += 15;
+
+            Component moveDetails = Component.translatable("gui.nichirin.moveset.move_details_coming_soon");
+            graphics.drawString(this.font, moveDetails, contentX, contentY, 0xAAAAAA);
+        } else {
+            Component selectStyle = Component.translatable("gui.nichirin.moveset.select_style");
+            graphics.drawString(this.font, selectStyle, contentX, contentY, 0xAAAAAA);
+        }
     }
 
     private void renderConfigContent(GuiGraphics graphics) {
-        graphics.drawString(this.font,
-                Component.literal("Configuration - Coming Soon"),
-                20, TOP_MARGIN + 10, 0xFFFFFF);
+        Component comingSoon = Component.translatable("gui.nichirin.coming_soon");
+        graphics.drawString(this.font, comingSoon, 20, TOP_MARGIN + 10, 0xFFFFFF);
     }
 
     /**
@@ -537,22 +609,21 @@ public class TheBigGui extends Screen {
      */
     @Getter
     public enum GuiSection {
-        HOME("Home"),
-        BREATHING_STYLES("Breathing Styles"),
-        SKILLS("Skills"),
-        BESTIARY("Bestiary"),
-        PERKS("Perks"),
-        QUESTS("Quests"),
-        REPUTATION("Reputation"),
-        COSMETICS("Cosmetics"),
-        MOVESET("Moveset"),
-        CONFIG("Config");
+        HOME("gui.nichirin.section.home"),
+        BREATHING_STYLES("gui.nichirin.section.breathing_styles"),
+        SKILLS("gui.nichirin.section.skills"),
+        BESTIARY("gui.nichirin.section.bestiary"),
+        PERKS("gui.nichirin.section.perks"),
+        QUESTS("gui.nichirin.section.quests"),
+        REPUTATION("gui.nichirin.section.reputation"),
+        COSMETICS("gui.nichirin.section.cosmetics"),
+        MOVESET("gui.nichirin.section.moveset"),
+        CONFIG("gui.nichirin.section.config");
 
-        private final String displayName;
+        private final String translationKey;
 
-        GuiSection(String displayName) {
-            this.displayName = displayName;
+        GuiSection(String translationKey) {
+            this.translationKey = translationKey;
         }
-
     }
 }

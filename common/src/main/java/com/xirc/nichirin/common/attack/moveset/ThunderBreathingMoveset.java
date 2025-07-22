@@ -178,7 +178,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                             HonoikazuchiNoKamiAttack attack = new HonoikazuchiNoKamiAttack();
                             ThunderBreathingMoveset moveset = getCurrentMoveset();
                             if (moveset != null) {
-                                attack.configure(moveset.getMove(6));
+                                attack.configure(moveset.getMove(6  ));
                             }
                             MoveExecutor.executeAttack(player, attack, "thunder_breathing", "honoikazuchi_no_kami");
                         })

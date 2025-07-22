@@ -4,6 +4,7 @@ import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.common.advancement.NichirinCriteriaTriggers;
 import com.xirc.nichirin.common.data.BreathingStyleHelper;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
+import com.xirc.nichirin.common.data.ProgressionHelper;
 import dev.architectury.event.events.common.EntityEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -47,10 +48,9 @@ public class ThunderBreathingUnlockHandler {
      * Checks if player should unlock Thunder Breathing
      */
     private static void checkThunderBreathingUnlock(ServerPlayer player) {
-        // Check if player already has Thunder Breathing
-        String currentStyle = BreathingStyleHelper.getMovesetId(player);
-        if ("thunder_breathing".equals(currentStyle)) {
-            return; // Already has it
+        // Check if player already has Thunder Breathing unlocked
+        if (ProgressionHelper.isStyleUnlocked(player, "thunder_breathing")) {
+            return; // Already unlocked
         }
 
         // Check if player is wearing no armor (double check)
@@ -76,6 +76,9 @@ public class ThunderBreathingUnlockHandler {
      * Unlocks Thunder Breathing for the player
      */
     private static void unlockThunderBreathing(ServerPlayer player) {
+        // Record the unlock in progression system
+        ProgressionHelper.unlockStyle(player, "thunder_breathing");
+
         // Set Thunder Breathing as the player's style
         PlayerDataProvider.updateAndSync(player, "thunder_breathing");
 

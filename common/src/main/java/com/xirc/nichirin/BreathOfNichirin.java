@@ -8,6 +8,7 @@ import com.xirc.nichirin.client.registry.NichirinKeybindRegistry;
 import com.xirc.nichirin.client.renderer.BreathingBarRenderer;
 import com.xirc.nichirin.client.renderer.StaminaBarRenderer;
 import com.xirc.nichirin.common.advancement.NichirinCriteriaTriggers;
+import com.xirc.nichirin.common.advancement.ThunderBreathingTrigger;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.data.MovesetRegistry;
 import com.xirc.nichirin.common.data.BreathingStyleSyncPacket;

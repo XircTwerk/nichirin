@@ -12,19 +12,26 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Provides and manages breathing style data for players
+ * Provides and manages player data including breathing styles and progression
  * Uses Architectury events for cross-platform compatibility
  */
 public class PlayerDataProvider {
 
-    private static final Map<UUID, BreathingStyleData> PLAYER_DATA = new HashMap<>();
-    private static final String PERSISTENT_TAG_KEY = "NichirinBreathingStyle";
+    private static final Map<UUID, PlayerData> PLAYER_DATA = new HashMap<>();
+    private static final String PERSISTENT_TAG_KEY = "NichirinPlayerData";
 
     /**
-     * Gets or creates breathing style data for a player
+     * Gets or creates player data for a player
      */
-    public static BreathingStyleData getData(Player player) {
-        return PLAYER_DATA.computeIfAbsent(player.getUUID(), k -> new BreathingStyleData());
+    public static PlayerData getData(Player player) {
+        return PLAYER_DATA.computeIfAbsent(player.getUUID(), k -> new PlayerData());
+    }
+
+    /**
+     * Gets breathing style data for a player (for backwards compatibility)
+     */
+    public static BreathingStyleData getBreathingStyleData(Player player) {
+        return getData(player).getBreathingStyleData();
     }
 
     /**
@@ -66,8 +73,8 @@ public class PlayerDataProvider {
         PlayerEvent.PLAYER_CLONE.register((oldPlayer, newPlayer, wasDeath) -> {
             if (wasDeath) {
                 // Copy data from old player to new player
-                BreathingStyleData oldData = getData(oldPlayer);
-                BreathingStyleData newData = getData(newPlayer);
+                PlayerData oldData = getData(oldPlayer);
+                PlayerData newData = getData(newPlayer);
                 newData.copyFrom(oldData);
 
                 // Save to persistent data
@@ -108,17 +115,17 @@ public class PlayerDataProvider {
      * Syncs breathing style data to client
      */
     private static void syncToClient(ServerPlayer player) {
-        BreathingStyleData data = getData(player);
-        // Send sync packet
-        BreathingStyleSyncPacket.sendToPlayer(player, data.getMovesetId());
+        PlayerData data = getData(player);
+        // Send sync packet (only breathing style data for now, progression is server-side)
+        BreathingStyleSyncPacket.sendToPlayer(player, data.getBreathingStyleData().getMovesetId());
     }
 
     /**
-     * Updates player data and syncs to client
+     * Updates player breathing style data and syncs to client
      */
     public static void updateAndSync(ServerPlayer player, String movesetId) {
-        BreathingStyleData data = getData(player);
-        data.setMovesetId(movesetId);
+        PlayerData data = getData(player);
+        data.getBreathingStyleData().setMovesetId(movesetId);
         savePlayerData(player);
         syncToClient(player);
     }

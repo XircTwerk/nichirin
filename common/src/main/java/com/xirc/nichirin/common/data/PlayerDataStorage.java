@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 /**
- * Handles persistent storage of player breathing style data
+ * Handles persistent storage of player data including breathing styles and progression
  */
 public class PlayerDataStorage {
 
@@ -20,7 +20,7 @@ public class PlayerDataStorage {
     private static final String FILE_SUFFIX = ".dat";
 
     /**
-     * Saves player breathing style data to disk
+     * Saves player data to disk
      */
     public static void savePlayerData(ServerPlayer player) {
         try {
@@ -32,9 +32,15 @@ public class PlayerDataStorage {
             File playerFile = new File(dataDir, player.getUUID().toString() + FILE_SUFFIX);
             CompoundTag tag = new CompoundTag();
 
-            // Get the breathing style data
-            BreathingStyleData data = PlayerDataProvider.getData(player);
-            tag.put("BreathingStyle", data.save());
+            // Get the complete player data
+            PlayerData data = PlayerDataProvider.getData(player);
+
+            // Save all data using the PlayerData save method
+            CompoundTag playerDataTag = data.save();
+            tag.put("PlayerData", playerDataTag);
+
+            // Also save legacy breathing style data for backwards compatibility
+            tag.put("BreathingStyle", data.getBreathingStyleData().save());
 
             // Write to file
             NbtIo.writeCompressed(tag, playerFile);
@@ -45,7 +51,7 @@ public class PlayerDataStorage {
     }
 
     /**
-     * Loads player breathing style data from disk
+     * Loads player data from disk
      */
     public static void loadPlayerData(ServerPlayer player) {
         try {
@@ -54,10 +60,17 @@ public class PlayerDataStorage {
 
             if (playerFile.exists()) {
                 CompoundTag tag = NbtIo.readCompressed(playerFile);
+                PlayerData data = PlayerDataProvider.getData(player);
 
-                if (tag.contains("BreathingStyle")) {
-                    BreathingStyleData data = PlayerDataProvider.getData(player);
-                    data.load(tag.getCompound("BreathingStyle"));
+                // Try to load new format first
+                if (tag.contains("PlayerData")) {
+                    data.load(tag.getCompound("PlayerData"));
+                }
+                // Fall back to legacy format for backwards compatibility
+                else if (tag.contains("BreathingStyle")) {
+                    data.getBreathingStyleData().load(tag.getCompound("BreathingStyle"));
+                    // Initialize progression with default values
+                    // (progression data will be empty for existing players)
                 }
             }
 

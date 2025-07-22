@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ThunderBreathingTrigger extends SimpleCriterionTrigger<ThunderBreathingTrigger.TriggerInstance> {
 
+    public static final ThunderBreathingTrigger INSTANCE = new ThunderBreathingTrigger();
     private static final ResourceLocation ID = BreathOfNichirin.id("thunder_breathing_unlock");
 
     @Override

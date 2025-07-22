@@ -11,14 +11,16 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
+import com.xirc.nichirin.common.data.ProgressionHelper;
+
 import net.minecraft.server.level.ServerPlayer;
 
-import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
 /**
  * Command for managing player breathing styles
- * Usage: /breathing set <player> <style>
+ * Usage: /breathing add <player> <style>
+ *        /breathing get <player>
  */
 public class BreathingCommand {
 
@@ -31,7 +33,7 @@ public class BreathingCommand {
                         .then(Commands.argument("player", EntityArgument.player())
                                 .then(Commands.argument("style", StringArgumentType.string())
                                         .suggests(BreathingCommand::suggestStyles)
-                                        .executes(context -> setBreathingStyle(
+                                        .executes(context -> addBreathingStyle(
                                                 context,
                                                 EntityArgument.getPlayer(context, "player"),
                                                 StringArgumentType.getString(context, "style")
@@ -53,28 +55,33 @@ public class BreathingCommand {
     }
 
     /**
-     * Sets a breathing style for a player
+     * Adds a breathing style to a player
      */
-    private static int setBreathingStyle(CommandContext<CommandSourceStack> context, ServerPlayer player, String style) {
+    private static int addBreathingStyle(CommandContext<CommandSourceStack> context, ServerPlayer player, String style) {
         CommandSourceStack source = context.getSource();
 
         // Check if the style exists
         if (!MovesetRegistry.isRegistered(style)) {
-            source.sendFailure(Component.literal("Unknown breathing style: " + style)
+            source.sendFailure(Component.translatable("command.nichirin.breathing.unknown", style)
                     .withStyle(style1 -> style1.withColor(0xFF5555)));
             return 0;
         }
 
-        // Set the breathing style
+        // First unlock the style (this will trigger advancement if it's thunder_breathing)
+        ProgressionHelper.unlockStyle(player, style);
+
+        // Then set it as active
         PlayerDataProvider.updateAndSync(player, style);
 
         // Send success message
-        source.sendSuccess(() -> Component.literal("Set " + player.getName().getString() + "'s breathing style to " + formatStyleName(style))
+        source.sendSuccess(() -> Component.translatable("command.nichirin.breathing.add.success",
+                        player.getName(), Component.translatable("breathing_style." + style))
                 .withStyle(style1 -> style1.withColor(0x55FF55)), true);
 
         // Notify the player
         player.displayClientMessage(
-                Component.literal("Your breathing style has been set to " + formatStyleName(style))
+                Component.translatable("command.nichirin.breathing.player.add.success",
+                                Component.translatable("breathing_style." + style))
                         .withStyle(style1 -> style1.withColor(0x55FFFF)),
                 false
         );
@@ -88,13 +95,14 @@ public class BreathingCommand {
     private static int getBreathingStyle(CommandContext<CommandSourceStack> context, ServerPlayer player) {
         CommandSourceStack source = context.getSource();
 
-        String currentStyle = PlayerDataProvider.getData(player).getMovesetId();
+        String currentStyle = PlayerDataProvider.getData(player).getBreathingStyleData().getMovesetId();
 
         if (currentStyle != null) {
-            source.sendSuccess(() -> Component.literal(player.getName().getString() + " has " + formatStyleName(currentStyle))
+            source.sendSuccess(() -> Component.translatable("command.nichirin.breathing.get.has",
+                            player.getName(), Component.translatable("breathing_style." + currentStyle))
                     .withStyle(style -> style.withColor(0x55FFFF)), false);
         } else {
-            source.sendSuccess(() -> Component.literal(player.getName().getString() + " has no breathing style")
+            source.sendSuccess(() -> Component.translatable("command.nichirin.breathing.get.none", player.getName())
                     .withStyle(style -> style.withColor(0xAAAAAA)), false);
         }
 
@@ -107,6 +115,7 @@ public class BreathingCommand {
     private static CompletableFuture<Suggestions> suggestStyles(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
         String input = builder.getRemaining().toLowerCase();
 
+        // Add all registered breathing styles
         for (String style : MovesetRegistry.getAllMovesetIds()) {
             if (style.toLowerCase().startsWith(input)) {
                 builder.suggest(style);
@@ -114,19 +123,5 @@ public class BreathingCommand {
         }
 
         return builder.buildFuture();
-    }
-
-    /**
-     * Formats a style name for display
-     */
-    private static String formatStyleName(String style) {
-        // Convert snake_case to Title Case
-        String[] parts = style.split("_");
-        StringBuilder formatted = new StringBuilder();
-        for (String part : parts) {
-            if (formatted.length() > 0) formatted.append(" ");
-            formatted.append(part.substring(0, 1).toUpperCase()).append(part.substring(1));
-        }
-        return formatted.toString();
     }
 }

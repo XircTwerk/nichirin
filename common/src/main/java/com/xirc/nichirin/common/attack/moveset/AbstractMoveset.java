@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.attack.moveset;
 
+import com.xirc.nichirin.client.gui.MoveIcon;
 import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
 import lombok.Getter;
 import net.minecraft.resources.ResourceLocation;
@@ -359,6 +360,23 @@ public abstract class AbstractMoveset {
 
         public MoveConfiguration build() {
             return new MoveConfiguration(this);
+        }
+
+        /**
+         * Automatically sets the icon based on breathing style and move name
+         * Uses the MoveIcon system to load from: textures/icons/{breathingStyle}/{moveName}.png
+         */
+        public MoveBuilder withAutoIcon(String breathingStyle) {
+            this.iconLocation = MoveIcon.getIcon(breathingStyle, this.moveId);
+            return this;
+        }
+
+        /**
+         * Sets icon using formatted move name (converts display name to file-safe format)
+         */
+        public MoveBuilder withFormattedIcon(String breathingStyle) {
+            this.iconLocation = MoveIcon.getIconFormatted(breathingStyle, this.displayName);
+            return this;
         }
     }
 
