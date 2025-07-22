@@ -1,11 +1,21 @@
 {
+  "block.nichirin.scarlet_ore": "Scarlet Ore",
+  "block.nichirin.scarlet_crimson_iron_sand": "Scarlet Crimson Iron Sand",
+
+  "breathing_style.thunder_breathing": "Thunder Breathing",
+
+  "command.nichirin.breathing.add.success": "Gave %s the breathing style %s",
+  "command.nichirin.breathing.player.add.success": "You have been given the breathing style %s",
+  "command.nichirin.breathing.get.has": "%s has %s",
+  "command.nichirin.breathing.get.none": "%s has no breathing style",
+  "command.nichirin.breathing.unknown": "Unknown breathing style: %s",
+
+  "effect.nichirin.shocked": "Shocked",
+
   "item.nichirin.katana": "Katana",
   "item.nichirin.thunder_katana": "Thunder Katana",
   "item.nichirin.scarlet_crimson_iron_gem": "Scarlet Crimson Iron Sand",
   "item.nichirin.scarlet_gem": "Scarlet Gem",
-
-  "block.nichirin.scarlet_ore": "Scarlet Ore",
-  "block.nichirin.scarlet_crimson_iron_sand": "Scarlet Crimson Iron Sand",
 
   "itemgroup.nichirin.main": "Nichirin",
 
@@ -13,5 +23,41 @@
   "key.nichirin.open_gui": "Open Gui",
   "key.categories.nichirin": "Breath of Nichirin",
 
-  "effect.nichirin.shocked": "Shocked"
+  "gui.nichirin.main.title": "Nichirin Menu",
+  "gui.nichirin.coming_soon": "Coming Soon",
+  "gui.nichirin.section.home": "Home",
+  "gui.nichirin.section.breathing_styles": "Breathing Styles",
+  "gui.nichirin.section.skills": "Skills",
+  "gui.nichirin.section.bestiary": "Bestiary",
+  "gui.nichirin.section.perks": "Perks",
+  "gui.nichirin.section.quests": "Quests",
+  "gui.nichirin.section.reputation": "Reputation",
+  "gui.nichirin.section.cosmetics": "Cosmetics",
+  "gui.nichirin.section.moveset": "Moveset",
+  "gui.nichirin.section.config": "Config",
+  "gui.nichirin.home.player_stats": "PLAYER STATS",
+  "gui.nichirin.home.name": "Name",
+  "gui.nichirin.home.slayer_rank": "Slayer Rank",
+  "gui.nichirin.home.breathing_style": "Breathing Style",
+  "gui.nichirin.home.demons_slain": "Demons Slain",
+  "gui.nichirin.home.total_damage": "Total Damage",
+  "gui.nichirin.home.breathing_exp": "Breathing EXP",
+  "gui.nichirin.home.playtime": "Playtime",
+  "gui.nichirin.home.level": "Level",
+  "gui.nichirin.home.none": "None",
+  "gui.nichirin.home.instructions": "Press ESC to close • Click sections on the right to navigate",
+  "gui.nichirin.breathing_styles.title": "BREATHING STYLES",
+  "gui.nichirin.breathing_styles.current": "Current: %s",
+  "gui.nichirin.breathing_styles.instructions": "Click to select a breathing style:",
+  "gui.nichirin.breathing_styles.locked_status": "LOCKED",
+  "gui.nichirin.breathing_styles.equipped": "EQUIPPED",
+  "gui.nichirin.breathing_styles.click_to_select": "Click to Select",
+  "gui.nichirin.breathing_styles.unlock_requirements": "Unlock Requirements:",
+  "gui.nichirin.breathing_styles.locked": "%s is locked! Requirement: %s",
+  "gui.nichirin.breathing_styles.none": "None",
+  "gui.nichirin.breathing_styles.coming_soon": "More breathing styles coming soon!",
+  "gui.nichirin.moveset.title": "Current Moveset",
+  "gui.nichirin.moveset.current_style": "Style: %s",
+  "gui.nichirin.moveset.move_details_coming_soon": "Move details coming soon...",
+  "gui.nichirin.moveset.select_style": "Select a breathing style to view moves"
 }
