@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.item.katana;
 
 import com.xirc.nichirin.client.gui.CooldownHUD;
+import com.xirc.nichirin.client.handler.AttackWheelHandler;
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
@@ -137,6 +138,19 @@ public class SimpleKatana extends SwordItem {
      * Called when the player left-clicks with this item (M1)
      */
     public void performAttack(Player player) {
+        // CRITICAL FIX: Check if wheel is open FIRST before doing ANYTHING
+        try {
+            if (AttackWheelHandler.shouldBlockKatanaAttacks()) {
+                System.out.println("DEBUG: SimpleKatana.performAttack() BLOCKED - wheel is open");
+                return; // COMPLETE BLOCK - don't do anything
+            }
+        } catch (Exception e) {
+            // If there's any issue checking wheel state, assume it's closed and continue
+            System.out.println("DEBUG: Could not check wheel state, assuming closed: " + e.getMessage());
+        }
+
+        System.out.println("DEBUG: SimpleKatana.performAttack() EXECUTING - wheel is closed");
+
         PlayerAttackState state = getOrCreatePlayerState(player);
 
         // Check if any attack is currently active
@@ -184,12 +198,14 @@ public class SimpleKatana extends SwordItem {
                 state.comboCount = 2;
                 state.slash2CooldownUntil = currentTime + state.currentSlash.getCooldown();
                 AnimationUtils.playAnimation(player, "light_slash2");
+                System.out.println("DEBUG: Executed light slash 2");
             } else {
                 state.currentSlash = createLightSlash1();
                 state.currentSlash.start(player);
                 state.comboCount = 1;
                 state.slash1CooldownUntil = currentTime + state.currentSlash.getCooldown();
                 AnimationUtils.playAnimation(player, "light_slash1");
+                System.out.println("DEBUG: Executed light slash 1");
             }
 
             state.lastAttackTime = currentTime;
@@ -201,6 +217,19 @@ public class SimpleKatana extends SwordItem {
      */
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        // CRITICAL FIX: Check if wheel is open FIRST
+        try {
+            if (AttackWheelHandler.shouldBlockKatanaAttacks()) {
+                System.out.println("DEBUG: SimpleKatana.use() BLOCKED - wheel is open");
+                return InteractionResultHolder.pass(player.getItemInHand(hand));
+            }
+        } catch (Exception e) {
+            // If there's any issue checking wheel state, assume it's closed and continue
+            System.out.println("DEBUG: Could not check wheel state in use(), assuming closed: " + e.getMessage());
+        }
+
+        System.out.println("DEBUG: SimpleKatana.use() EXECUTING - wheel is closed");
+
         PlayerAttackState state = getOrCreatePlayerState(player);
 
         // Check if any attack is currently active
@@ -255,10 +284,12 @@ public class SimpleKatana extends SwordItem {
                 state.currentRisingSlash = createRisingSlashAttack();
                 state.currentRisingSlash.start(player);
                 state.risingSlashCooldownUntil = currentTime + state.currentRisingSlash.getCooldown();
+                System.out.println("DEBUG: Executed rising slash");
             } else {
                 state.currentDoubleSlash = createDoubleSlashAttack();
                 state.currentDoubleSlash.start(player);
                 state.doubleSlashCooldownUntil = currentTime + state.currentDoubleSlash.getCooldown();
+                System.out.println("DEBUG: Executed double slash");
             }
 
             state.comboCount = 0;
