@@ -1,12 +1,13 @@
 package com.xirc.nichirin.client.handler;
 
-import com.xirc.nichirin.client.gui.AttackWheelGui;
+import com.xirc.nichirin.client.gui.AttackWheelOverlay;
 import com.xirc.nichirin.client.registry.NichirinKeybindRegistry;
 import com.xirc.nichirin.common.network.BreathingMovePacket;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.data.BreathingStyleHelper;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.event.events.client.ClientTickEvent;
+import dev.architectury.event.events.client.ClientGuiEvent;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
 import lombok.Getter;
@@ -15,21 +16,21 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * Handles the attack wheel input and display
- * Toggle system: Press once to open, press again to execute and close
+ * Handles the attack wheel input and display using HUD overlay
  */
 public class AttackWheelHandler {
 
     private static boolean wasKeyDown = false;
-    private static AttackWheelGui currentWheel = null;
-    /**
-     * -- GETTER --
-     *  Checks if the wheel is currently open
-     */
+    private static AttackWheelOverlay currentWheel = null;
     @Getter
     private static boolean wheelOpen = false;
 
     public static void register() {
+        System.out.println("DEBUG: AttackWheelHandler.register() called!");
+
+        // Create the overlay instance
+        currentWheel = new AttackWheelOverlay();
+
         // Register tick handler
         ClientTickEvent.CLIENT_POST.register(client -> {
             if (client.player == null) return;
@@ -40,103 +41,93 @@ public class AttackWheelHandler {
             if (isKeyDown && !wasKeyDown) {
                 System.out.println("DEBUG: Attack wheel key pressed. Wheel open: " + wheelOpen);
                 if (!wheelOpen) {
-                    // First press - open wheel
                     openWheel();
                 } else {
-                    // Second press - close wheel WITHOUT executing
                     forceCloseWheel();
                 }
             }
 
             wasKeyDown = isKeyDown;
         });
+
+        // Register HUD render event
+        ClientGuiEvent.RENDER_HUD.register((guiGraphics, partialTick) -> {
+            if (currentWheel != null && currentWheel.isActive()) {
+                currentWheel.render(guiGraphics);
+            }
+        });
+
+        // Register mouse click handler
+        ClientTickEvent.CLIENT_POST.register(client -> {
+            if (wheelOpen && client.options.keyAttack.isDown()) {
+                // Left click while wheel is open
+                if (currentWheel != null && currentWheel.isMouseOverWheel()) {
+                    executeAndCloseWheel();
+                }
+            }
+        });
     }
 
-    /**
-     * Opens the attack wheel
-     */
     private static void openWheel() {
+        System.out.println("DEBUG: openWheel() called!");
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null) return;
+        if (mc.player == null) {
+            System.out.println("DEBUG: Player is null");
+            return;
+        }
 
         // Check if player is holding a SimpleKatana
         ItemStack mainHand = mc.player.getMainHandItem();
         if (!(mainHand.getItem() instanceof SimpleKatana)) {
-            // Player must be holding a katana to use breathing techniques
-            System.out.println("DEBUG: Not holding SimpleKatana");
+            System.out.println("DEBUG: Not holding SimpleKatana - item: " + mainHand.getItem().getClass().getSimpleName());
             return;
         }
 
         // Check if player has a breathing style selected
         if (!BreathingStyleHelper.hasMoveset(mc.player)) {
-            // Could show a message here that they need to select a breathing style
             System.out.println("DEBUG: No breathing style selected");
             return;
         }
 
-        // Don't open if another screen is already open
+        // Don't open if a screen is open (like inventory)
         if (mc.screen != null) {
-            System.out.println("DEBUG: Another screen is already open");
+            System.out.println("DEBUG: Another screen is already open: " + mc.screen.getClass().getSimpleName());
             return;
         }
 
-        System.out.println("DEBUG: Opening attack wheel");
-        currentWheel = new AttackWheelGui();
-        currentWheel.activate();
-        mc.setScreen(currentWheel);
-        wheelOpen = true;
+        System.out.println("DEBUG: Activating wheel...");
+        if (currentWheel != null) {
+            currentWheel.activate();
+            wheelOpen = true;
+            System.out.println("DEBUG: Wheel activated successfully!");
+        } else {
+            System.out.println("DEBUG: currentWheel is null!");
+        }
     }
 
-    /**
-     * Executes the selected move and closes the wheel
-     */
     public static void executeAndCloseWheel() {
         if (currentWheel == null || !wheelOpen) return;
 
-        // Get selected move before closing
         int selectedMove = currentWheel.deactivate();
-
-        // Close the GUI
-        Minecraft mc = Minecraft.getInstance();
-        mc.setScreen(null);
         wheelOpen = false;
 
-        // Execute the move if one was selected
         if (selectedMove != -1) {
             executeMove(selectedMove);
         }
-
-        // Clear the wheel reference
-        currentWheel = null;
     }
 
-    /**
-     * Force closes the wheel (e.g., when ESC is pressed)
-     */
     public static void forceCloseWheel() {
+        System.out.println("DEBUG: forceCloseWheel() called");
         if (currentWheel != null) {
             currentWheel.deactivate();
-            currentWheel = null;
         }
-
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.screen == currentWheel) {
-            mc.setScreen(null);
-        }
-
         wheelOpen = false;
     }
 
-    /**
-     * Sends packet to server to execute the selected move
-     */
     private static void executeMove(int moveIndex) {
-        // Create and send the breathing move packet
-        BreathingMovePacket packet = new BreathingMovePacket(moveIndex, true); // true = pressed/execute
-
+        BreathingMovePacket packet = new BreathingMovePacket(moveIndex, true);
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
         packet.toBytes(buf);
-
         NetworkManager.sendToServer(NichirinPacketRegistry.BREATHING_MOVE_ID, buf);
     }
 }
