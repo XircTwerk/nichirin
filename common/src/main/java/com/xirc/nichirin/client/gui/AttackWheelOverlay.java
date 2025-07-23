@@ -21,14 +21,15 @@ import java.util.List;
  */
 public class AttackWheelOverlay {
 
-    private static final int OUTER_RADIUS = 120;
-    private static final int INNER_RADIUS = 40;
-    private static final int ICON_SIZE = 32;
+    private static final int OUTER_RADIUS = 150; // 120 * 1.25 = 150
+    private static final int INNER_RADIUS = 50;  // 40 * 1.25 = 50
+    private static final int ICON_SIZE = 40;     // 32 * 1.25 = 40
 
     private final List<MoveSegment> segments = new ArrayList<>();
     private float segmentAngle;
     private boolean isActive = false;
     private final Minecraft minecraft;
+    private int currentlyHoveredMove = -1; // Store the currently hovered move
 
     public AttackWheelOverlay() {
         this.minecraft = Minecraft.getInstance();
@@ -41,11 +42,17 @@ public class AttackWheelOverlay {
 
     public int deactivate() {
         isActive = false;
-        return getSelectedMove();
+        int moveToReturn = currentlyHoveredMove;
+        currentlyHoveredMove = -1; // Reset after storing
+        return moveToReturn;
     }
 
     public boolean isActive() {
         return isActive;
+    }
+
+    public int getCurrentlyHoveredMove() {
+        return currentlyHoveredMove;
     }
 
     private void rebuildWheel() {
@@ -93,16 +100,60 @@ public class AttackWheelOverlay {
     public int getSelectedMove() {
         if (segments.isEmpty() || minecraft == null) return -1;
 
-        double mouseX = minecraft.mouseHandler.xpos() * minecraft.getWindow().getGuiScaledWidth() / minecraft.getWindow().getScreenWidth();
-        double mouseY = minecraft.mouseHandler.ypos() * minecraft.getWindow().getGuiScaledHeight() / minecraft.getWindow().getScreenHeight();
+        // Get CURRENT mouse handler state
+        System.out.println("DEBUG: Mouse handler grabbed state: " + minecraft.mouseHandler.isMouseGrabbed());
+
+        // Get mouse position - try multiple methods
+        double rawMouseX = minecraft.mouseHandler.xpos();
+        double rawMouseY = minecraft.mouseHandler.ypos();
+
+        // Convert to GUI coordinates
+        double mouseX = rawMouseX * minecraft.getWindow().getGuiScaledWidth() / minecraft.getWindow().getScreenWidth();
+        double mouseY = rawMouseY * minecraft.getWindow().getGuiScaledHeight() / minecraft.getWindow().getScreenHeight();
 
         int centerX = minecraft.getWindow().getGuiScaledWidth() / 2;
         int centerY = minecraft.getWindow().getGuiScaledHeight() / 2;
 
-        float angle = (float) Math.toDegrees(Math.atan2(mouseY - centerY, mouseX - centerX));
-        if (angle < 0) angle += 360;
+        // Calculate angle from mouse position - FLIP X coordinate to fix left-right inversion
+        double deltaX = -(mouseX - centerX); // Negative to flip horizontally
+        double deltaY = mouseY - centerY;
 
-        int segmentIndex = (int)(angle / segmentAngle);
+        System.out.println("DEBUG: Raw mouse: (" + rawMouseX + ", " + rawMouseY + ")");
+        System.out.println("DEBUG: Scaled mouse: (" + mouseX + ", " + mouseY + ")");
+        System.out.println("DEBUG: Delta from center: (" + deltaX + ", " + deltaY + ")");
+
+        // Convert to angle in degrees (0-360)
+        float rawAngle = (float) Math.toDegrees(Math.atan2(deltaY, deltaX));
+        System.out.println("DEBUG: Raw angle from atan2: " + rawAngle);
+
+        // Normalize angle to 0-360 range
+        float normalizedAngle = rawAngle;
+        if (normalizedAngle < 0) {
+            normalizedAngle += 360;
+        }
+        System.out.println("DEBUG: Normalized angle (0-360): " + normalizedAngle);
+
+        // Convert to wheel coordinates that match rendering
+        // Rendering starts at 90° (bottom) and goes clockwise
+        // Mouse angle: 0° = right, increases counter-clockwise
+        // We need to flip horizontally: wheel_angle = (90 - mouse_angle + 360) % 360
+        float wheelAngle = (90 - normalizedAngle + 360) % 360;
+        System.out.println("DEBUG: Wheel angle: " + wheelAngle);
+
+        // Calculate which segment this angle falls into
+        int rawSegmentIndex = (int) (wheelAngle / segmentAngle);
+
+        // Ensure we don't go out of bounds
+        if (rawSegmentIndex >= segments.size()) {
+            rawSegmentIndex = segments.size() - 1;
+        }
+
+        // Use raw segment index - no flipping needed if we fix the visual rendering
+        int segmentIndex = rawSegmentIndex;
+
+        System.out.println("DEBUG: Raw segment index: " + rawSegmentIndex + " -> Segment index: " + segmentIndex + " out of " + segments.size());
+        System.out.println("DEBUG: Final move index: " + (segmentIndex >= 0 && segmentIndex < segments.size() ? segments.get(segmentIndex).index : "INVALID"));
+
         if (segmentIndex >= 0 && segmentIndex < segments.size()) {
             return segments.get(segmentIndex).index;
         }
@@ -122,9 +173,9 @@ public class AttackWheelOverlay {
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
 
-        // Use your existing working methods but with better colors
-        drawFilledCircle(guiGraphics, centerX, centerY, OUTER_RADIUS, 0.3f, 0.3f, 0.3f, 0.5f); // Dark gray background
-        drawFilledCircle(guiGraphics, centerX, centerY, INNER_RADIUS, 0.2f, 0.2f, 0.2f, 0.7f);   // Darker center
+        // Dark gray background
+        drawFilledCircle(guiGraphics, centerX, centerY, OUTER_RADIUS, 0.3f, 0.3f, 0.3f, 0.5f);
+        drawFilledCircle(guiGraphics, centerX, centerY, INNER_RADIUS, 0.2f, 0.2f, 0.2f, 0.7f);
 
         if (segments.isEmpty()) {
             for (int i = 0; i < 4; i++) {
@@ -135,36 +186,52 @@ public class AttackWheelOverlay {
             Font font = minecraft.font;
             guiGraphics.drawCenteredString(font, "No moves available", centerX, centerY - 4, 0xFFFFFF);
 
-            // Draw circles at the end
-            drawCircle(guiGraphics, centerX, centerY, INNER_RADIUS, 0.0f, 0.0f, 0.0f, 1.0f);
-            drawCircle(guiGraphics, centerX, centerY, OUTER_RADIUS, 0.0f, 0.0f, 0.0f, 1.0f);
+            drawCircle(guiGraphics, centerX, centerY, INNER_RADIUS, 0.1f, 0.1f, 0.1f, 1.0f);
+            drawCircle(guiGraphics, centerX, centerY, OUTER_RADIUS, 0.1f, 0.1f, 0.1f, 1.0f);
         } else {
-            // Calculate hovered segment
-            float angle = (float) Math.toDegrees(Math.atan2(mouseY - centerY, mouseX - centerX));
+            // Calculate hovered segment using same logic as getSelectedMove()
+            double deltaX = -(mouseX - centerX); // Negative to flip horizontally
+            double deltaY = mouseY - centerY;
+            float angle = (float) Math.toDegrees(Math.atan2(deltaY, deltaX));
             if (angle < 0) angle += 360;
+            angle = (90 - angle + 360) % 360; // Convert to wheel coordinates
 
             int hoveredSegment = -1;
             float distance = getDistanceFromCenter((int)mouseX, (int)mouseY, centerX, centerY);
             if (distance <= OUTER_RADIUS && distance >= INNER_RADIUS) {
-                hoveredSegment = (int)(angle / segmentAngle);
-                if (hoveredSegment >= segments.size()) hoveredSegment = segments.size() - 1;
+                int rawHoveredSegment = (int) (angle / segmentAngle);
+                if (rawHoveredSegment >= segments.size()) rawHoveredSegment = segments.size() - 1;
 
-                drawCircle(guiGraphics, centerX, centerY, INNER_RADIUS, 0.0f, 0.0f, 0.0f, 1.0f);
-                drawCircle(guiGraphics, centerX, centerY, OUTER_RADIUS, 0.0f, 0.0f, 0.0f, 1.0f);
+                // Use raw hovered segment - no flipping
+                hoveredSegment = rawHoveredSegment;
 
+                // Update the currently hovered move
+                if (hoveredSegment >= 0 && hoveredSegment < segments.size()) {
+                    currentlyHoveredMove = segments.get(hoveredSegment).index;
+                } else {
+                    currentlyHoveredMove = -1;
+                }
+
+                // Debug the current selection every few frames
+                if (minecraft.level != null && minecraft.level.getGameTime() % 20 == 0) { // Every second
+                    System.out.println("DEBUG: RENDER - Mouse at (" + mouseX + ", " + mouseY + "), angle: " + angle + ", raw segment: " + rawHoveredSegment + ", segment: " + hoveredSegment + ", move: " + currentlyHoveredMove);
+                    System.out.println("DEBUG: RENDER - Should match getSelectedMove() result: " + getSelectedMove());
+                }
+            } else {
+                currentlyHoveredMove = -1;
             }
 
-            // Draw segments
+            // Draw segments - start from 90 degrees (bottom) instead of -90 (top) to flip visually
             for (int i = 0; i < segments.size(); i++) {
-                float startAngle = i * segmentAngle;
-                float endAngle = (i + 1) * segmentAngle;
+                float startAngle = 90f + (i * segmentAngle);
+                float endAngle = 90f + ((i + 1) * segmentAngle);
                 boolean isHovered = (i == hoveredSegment);
                 drawSegment(guiGraphics, centerX, centerY, startAngle, endAngle, isHovered);
             }
 
             // Draw move names
             for (int i = 0; i < segments.size(); i++) {
-                float startAngle = i * segmentAngle;
+                float startAngle = 90f + (i * segmentAngle);
                 boolean isHovered = (i == hoveredSegment);
 
                 float midAngle = startAngle + segmentAngle / 2;
@@ -172,16 +239,20 @@ public class AttackWheelOverlay {
                 int textY = centerY + (int)((INNER_RADIUS + OUTER_RADIUS) / 2 * Math.sin(Math.toRadians(midAngle)));
 
                 String moveName = segments.get(i).config.getDisplayName();
-                int textColor = isHovered ? 0x55FF55 : 0xFFFFFF; // GREEN when hovered
+                int textColor = isHovered ? 0x55FF55 : 0xFFFFFF;
                 Font font = minecraft.font;
                 guiGraphics.drawCenteredString(font, moveName, textX, textY - 4, textColor);
             }
 
             // Draw center icon
             if (hoveredSegment >= 0 && hoveredSegment < segments.size()) {
+                // hoveredSegment is already the correct index - don't flip it again!
                 MoveSegment selectedSegment = segments.get(hoveredSegment);
                 drawCenterIcon(guiGraphics, centerX, centerY, selectedSegment);
             }
+
+            drawCircle(guiGraphics, centerX, centerY, INNER_RADIUS, 0.1f, 0.1f, 0.1f, 1.0f);
+            drawCircle(guiGraphics, centerX, centerY, OUTER_RADIUS, 0.1f, 0.1f, 0.1f, 1.0f);
         }
 
         RenderSystem.disableBlend();
@@ -238,9 +309,9 @@ public class AttackWheelOverlay {
 
         bufferBuilder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
 
-        float r = 0.3f;
-        float g = 0.3f;
-        float b = 0.3f;
+        float r = isHovered ? 0.4f : 0.3f;
+        float g = isHovered ? 0.4f : 0.3f;
+        float b = isHovered ? 0.4f : 0.3f;
         float a = 0.6f;
 
         for (int i = 0; i < segments; i++) {
@@ -268,62 +339,50 @@ public class AttackWheelOverlay {
 
         tesselator.end();
 
-        // Draw thicker outlines
-        RenderSystem.lineWidth(72.0f);
-
-        bufferBuilder.begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION_COLOR);
-
-        float startRad = (float) Math.toRadians(startAngle);
-        float xInnerStart = centerX + INNER_RADIUS * (float) Math.cos(startRad);
-        float yInnerStart = centerY + INNER_RADIUS * (float) Math.sin(startRad);
-        float xOuterStart = centerX + OUTER_RADIUS * (float) Math.cos(startRad);
-        float yOuterStart = centerY + OUTER_RADIUS * (float) Math.sin(startRad);
-
-        bufferBuilder.vertex(xInnerStart, yInnerStart, 0).color(0.0f, 0.0f, 0.0f, 1.0f).endVertex(); // Pure black
-        bufferBuilder.vertex(xOuterStart, yOuterStart, 0).color(0.0f, 0.0f, 0.0f, 1.0f).endVertex(); // Pure black
-
-        tesselator.end();
-
-        RenderSystem.lineWidth(1.0f);
+        // Draw thin divider line
+        drawDividerLine(guiGraphics, centerX, centerY, startAngle);
     }
 
-    private void drawCircle(GuiGraphics guiGraphics, int centerX, int centerY, int radius, float r, float g, float b, float a) {
-        int segments = 64;
-        int thickness = 15; // Thick ring
-
+    private void drawDividerLine(GuiGraphics guiGraphics, int centerX, int centerY, float angle) {
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
         Tesselator tesselator = Tesselator.getInstance();
         BufferBuilder bufferBuilder = tesselator.getBuilder();
-
         bufferBuilder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
 
-        for (int i = 0; i < segments; i++) {
-            float angle1 = (float) Math.toRadians(i * (360.0f / segments));
-            float angle2 = (float) Math.toRadians((i + 1) * (360.0f / segments));
+        float angleRad = (float) Math.toRadians(angle);
+        float perpX = -(float) Math.sin(angleRad) * 0.5f;
+        float perpY = (float) Math.cos(angleRad) * 0.5f;
 
-            // Inner ring
-            float x1Inner = centerX + (radius - thickness) * (float) Math.cos(angle1);
-            float y1Inner = centerY + (radius - thickness) * (float) Math.sin(angle1);
-            float x2Inner = centerX + (radius - thickness) * (float) Math.cos(angle2);
-            float y2Inner = centerY + (radius - thickness) * (float) Math.sin(angle2);
+        float xInner = centerX + INNER_RADIUS * (float) Math.cos(angleRad);
+        float yInner = centerY + INNER_RADIUS * (float) Math.sin(angleRad);
+        float xOuter = centerX + OUTER_RADIUS * (float) Math.cos(angleRad);
+        float yOuter = centerY + OUTER_RADIUS * (float) Math.sin(angleRad);
 
-            // Outer ring
-            float x1Outer = centerX + (radius + thickness) * (float) Math.cos(angle1);
-            float y1Outer = centerY + (radius + thickness) * (float) Math.sin(angle1);
-            float x2Outer = centerX + (radius + thickness) * (float) Math.cos(angle2);
-            float y2Outer = centerY + (radius + thickness) * (float) Math.sin(angle2);
+        bufferBuilder.vertex(xInner - perpX, yInner - perpY, 0).color(0.1f, 0.1f, 0.1f, 1.0f).endVertex();
+        bufferBuilder.vertex(xInner + perpX, yInner + perpY, 0).color(0.1f, 0.1f, 0.1f, 1.0f).endVertex();
+        bufferBuilder.vertex(xOuter + perpX, yOuter + perpY, 0).color(0.1f, 0.1f, 0.1f, 1.0f).endVertex();
 
-            // Two triangles to form the thick ring segment
-            bufferBuilder.vertex(x1Inner, y1Inner, 0).color(r, g, b, a).endVertex();
-            bufferBuilder.vertex(x1Outer, y1Outer, 0).color(r, g, b, a).endVertex();
-            bufferBuilder.vertex(x2Outer, y2Outer, 0).color(r, g, b, a).endVertex();
-
-            bufferBuilder.vertex(x1Inner, y1Inner, 0).color(r, g, b, a).endVertex();
-            bufferBuilder.vertex(x2Outer, y2Outer, 0).color(r, g, b, a).endVertex();
-            bufferBuilder.vertex(x2Inner, y2Inner, 0).color(r, g, b, a).endVertex();
-        }
+        bufferBuilder.vertex(xInner - perpX, yInner - perpY, 0).color(0.1f, 0.1f, 0.1f, 1.0f).endVertex();
+        bufferBuilder.vertex(xOuter + perpX, yOuter + perpY, 0).color(0.1f, 0.1f, 0.1f, 1.0f).endVertex();
+        bufferBuilder.vertex(xOuter - perpX, yOuter - perpY, 0).color(0.1f, 0.1f, 0.1f, 1.0f).endVertex();
 
         tesselator.end();
+    }
+
+    private void drawCircle(GuiGraphics guiGraphics, int centerX, int centerY, int radius, float r, float g, float b, float a) {
+        int segments = 2048;
+        int red = (int)(r * 255);
+        int green = (int)(g * 255);
+        int blue = (int)(b * 255);
+        int alpha = (int)(a * 255);
+        int color = (alpha << 24) | (red << 16) | (green << 8) | blue;
+
+        for (int i = 0; i < segments; i++) {
+            float angle = (float) Math.toRadians(i * (360.0f / segments));
+            int x = centerX + (int)(radius * Math.cos(angle));
+            int y = centerY + (int)(radius * Math.sin(angle));
+            guiGraphics.fill(x, y, x + 1, y + 1, color);
+        }
     }
 
     private float getDistanceFromCenter(int x, int y, int centerX, int centerY) {
