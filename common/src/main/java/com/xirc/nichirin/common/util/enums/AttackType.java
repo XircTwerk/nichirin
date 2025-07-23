@@ -5,8 +5,7 @@ package com.xirc.nichirin.common.util.enums;
  */
 public enum AttackType {
     SIMPLE_ATTACK("Simple Attack", "Basic physical attacks using stamina"),
-    BREATHING_ATTACK("Breathing Attack", "Attacks that consume breath"),
-    BLITZ_ATTACK("Blitz Attack", "Multi-hit attacks with multiple hitboxes");
+    BREATHING_ATTACK("Breathing Attack", "Attacks that consume breath");
 
     private final String displayName;
     private final String description;

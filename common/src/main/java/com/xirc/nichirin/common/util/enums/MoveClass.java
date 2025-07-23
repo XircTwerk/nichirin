@@ -5,10 +5,7 @@ import lombok.Getter;
 @Getter
 public enum MoveClass {
     BASIC(),
-    SPECIAL1(),
-    SPECIAL2(),
-    SPECIAL3(),
-    SPECIAL4(),
+    SPECIAL(),
     ULTIMATE();
 
     private final String name;
