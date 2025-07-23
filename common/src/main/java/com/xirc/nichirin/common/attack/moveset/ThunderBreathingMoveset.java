@@ -16,8 +16,8 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Thunder Breathing moveset implementation
- * All 7 forms of Thunder Breathing with full configuration in builder
+ * Balanced Thunder Breathing moveset implementation
+ * Thunder Clap Flash is right-click only, remaining 6 forms for attack wheel
  */
 public class ThunderBreathingMoveset extends AbstractMoveset {
 
@@ -37,148 +37,129 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
     private static MovesetBuilder createBuilder() {
         return new MovesetBuilder()
                 .withIdleAnimation("nichirin:thunder_idle")
-                .withSpeedMultiplier(1.3f) // Thunder Breathing emphasizes speed
+                .withSpeedMultiplier(1.2f) // Slight speed boost for Thunder Breathing
 
-                // First Form: Thunderclap and Flash - Instant teleport dash (NO COOLDOWN)
-                .withMove(new MoveBuilder("thunderclap_flash", "Thunderclap and Flash")
-                        .withIcon("nichirin:textures/gui/moves/thunder_first_form.png")
-                        .withAnimation("nichirin:thunderclap_flash", 10)
-                        .withTiming(0, 1, 15) // NO COOLDOWN, windup, duration
-                        .withDamage(12.0f) // Moderate damage - spammable
-                        .withTeleportDistance(15.0f) // 15 block teleport dash
-                        .withKnockback(0f)
-                        .withBreathCost(15.0f) // Lower breath cost since no cooldown
-                        .withHitStun(15) // Short stun since spammable
-                        .withHitboxSize(2.0f)
-                        .withAction(player -> {
-                            ThunderClapFlashAttack attack = new ThunderClapFlashAttack();
-                            ThunderBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) {
-                                attack.configure(moveset.getMove(0));
-                            }
-                            MoveExecutor.executeAttack(player, attack, "thunder_breathing", "thunderclap_flash");
-                        })
-                )
+                // SKIP INDEX 0 - Thunder Clap Flash is right-click only, not in attack wheel
 
-                // Second Form: Rice Spirit - 5 slashes on locked target
+                // Second Form: Rice Spirit - 5 quick slashes (INDEX 0 in wheel)
                 .withMove(new MoveBuilder("rice_spirit", "Rice Spirit")
                         .withIcon("nichirin:textures/gui/moves/thunder_second_form.png")
                         .withAnimation("nichirin:rice_spirit", 8)
-                        .withTiming(60, 5, 30) // 3 second cooldown, windup, duration
-                        .withDamage(8.0f) // Lower per slash but 5 total = 40 damage
-                        .withRange(6.0f) // Range to find enemies
-                        .withKnockback(0.3f)
-                        .withBreathCost(20.0f)
-                        .withHitStun(20)
-                        .withHitboxSize(2.0f)
+                        .withTiming(100, 8, 25) // 5 second cooldown, quick windup, duration
+                        .withDamage(6.0f) // 5 slashes = 30 total damage
+                        .withRange(5.0f) // Medium range
+                        .withKnockback(0.2f)
+                        .withBreathCost(25.0f)
+                        .withHitStun(15)
+                        .withHitboxSize(1.8f)
                         .withAction(player -> {
                             RiceSpiritAttack attack = new RiceSpiritAttack();
                             ThunderBreathingMoveset moveset = getCurrentMoveset();
                             if (moveset != null) {
-                                attack.configure(moveset.getMove(1));
+                                attack.configure(moveset.getMove(0));
                             }
                             MoveExecutor.executeAttack(player, attack, "thunder_breathing", "rice_spirit");
                         })
                 )
 
-                // Third Form: Thunder Swarm - 6 large slashes in wide area
+                // Third Form: Thunder Swarm - AOE slashes (INDEX 1 in wheel)
                 .withMove(new MoveBuilder("thunder_swarm", "Thunder Swarm")
                         .withIcon("nichirin:textures/gui/moves/thunder_third_form.png")
                         .withAnimation("nichirin:thunder_swarm", 9)
-                        .withTiming(80, 10, 40) // 4 second cooldown, windup, duration
-                        .withDamage(7.0f) // 6 slashes = 42 damage total
-                        .withRange(8.0f) // Large area around player
-                        .withKnockback(0.3f)
-                        .withBreathCost(25.0f)
-                        .withHitStun(25)
-                        .withHitboxSize(3.0f) // Large hitbox for AOE
+                        .withTiming(140, 12, 35) // 7 second cooldown, windup, duration
+                        .withDamage(8.0f) // 4 slashes = 32 damage total, good AOE
+                        .withRange(7.0f) // Large area around player
+                        .withKnockback(0.4f)
+                        .withBreathCost(35.0f) // Higher cost for AOE
+                        .withHitStun(20)
+                        .withHitboxSize(2.5f) // Large hitbox for AOE
                         .withAction(player -> {
                             ThunderSwarmAttack attack = new ThunderSwarmAttack();
                             ThunderBreathingMoveset moveset = getCurrentMoveset();
                             if (moveset != null) {
-                                attack.configure(moveset.getMove(2));
+                                attack.configure(moveset.getMove(1));
                             }
                             MoveExecutor.executeAttack(player, attack, "thunder_breathing", "thunder_swarm");
                         })
                 )
 
-                // Fourth Form: Distant Thunder - Lightning strikes over 8 seconds
+                // Fourth Form: Distant Thunder - Lightning over time (INDEX 2 in wheel)
                 .withMove(new MoveBuilder("distant_thunder", "Distant Thunder")
                         .withIcon("nichirin:textures/gui/moves/thunder_fourth_form.png")
                         .withAnimation("nichirin:distant_thunder", 7)
-                        .withTiming(120, 15, 160) // 6 second cooldown, windup, 8 seconds duration
-                        .withDamage(15.0f) // 4 strikes = 60 damage over time
-                        .withRange(20.0f) // Very large AOE radius
-                        .withKnockback(0.4f)
-                        .withBreathCost(35.0f)
-                        .withHitStun(30) // Longer stun for lightning
+                        .withTiming(200, 20, 120) // 10 second cooldown, long windup, 6 second duration
+                        .withDamage(12.0f) // 3 strikes = 36 damage over time
+                        .withRange(15.0f) // Large AOE radius
+                        .withKnockback(0.3f)
+                        .withBreathCost(45.0f) // High cost for area denial
+                        .withHitStun(25)
                         .withAction(player -> {
                             DistantThunderAttack attack = new DistantThunderAttack();
                             ThunderBreathingMoveset moveset = getCurrentMoveset();
                             if (moveset != null) {
-                                attack.configure(moveset.getMove(3));
+                                attack.configure(moveset.getMove(2));
                             }
                             MoveExecutor.executeAttack(player, attack, "thunder_breathing", "distant_thunder");
                         })
                 )
 
-                // Fifth Form: Heat Lightning - Upward slash with lightning on airborne targets
+                // Fifth Form: Heat Lightning - Anti-air combo (INDEX 3 in wheel)
                 .withMove(new MoveBuilder("heat_lightning", "Heat Lightning")
                         .withIcon("nichirin:textures/gui/moves/thunder_fifth_form.png")
                         .withAnimation("nichirin:heat_lightning", 9)
-                        .withTiming(100, 8, 20) // 5 second cooldown, windup, duration
-                        .withDamage(25.0f) // High damage for armor-piercing + lightning combo
-                        .withRange(12.0f)
-                        .withKnockback(0.0f) // No horizontal knockback, just launch
+                        .withTiming(160, 10, 20) // 8 second cooldown, windup, duration
+                        .withDamage(18.0f) // High single hit + lightning follow-up potential
+                        .withRange(8.0f)
+                        .withKnockback(0.1f) // Minimal horizontal, focuses on launch
                         .withBreathCost(30.0f)
-                        .withHitStun(40) // Long stun for combo potential
-                        .withHitboxSize(2.5f)
+                        .withHitStun(30) // Good combo potential
+                        .withHitboxSize(2.0f)
                         .withAction(player -> {
                             HeatLightningAttack attack = new HeatLightningAttack();
                             ThunderBreathingMoveset moveset = getCurrentMoveset();
                             if (moveset != null) {
-                                attack.configure(moveset.getMove(4));
+                                attack.configure(moveset.getMove(3));
                             }
                             MoveExecutor.executeAttack(player, attack, "thunder_breathing", "heat_lightning");
                         })
                 )
 
-                // Sixth Form: Rumble and Flash - Lightning barrage at long range
+                // Sixth Form: Rumble and Flash - Long range precision (INDEX 4 in wheel)
                 .withMove(new MoveBuilder("rumble_flash", "Rumble and Flash")
                         .withIcon("nichirin:textures/gui/moves/thunder_sixth_form.png")
                         .withAnimation("nichirin:rumble_flash", 8)
-                        .withTiming(140, 10, 30) // 7 second cooldown, windup, duration
-                        .withDamage(18.0f) // Multiple strikes possible
-                        .withRange(25.0f) // Very long range
+                        .withTiming(180, 15, 25) // 9 second cooldown, aim time, duration
+                        .withDamage(22.0f) // High damage for long range precision
+                        .withRange(20.0f) // Very long range
                         .withKnockback(0.6f)
-                        .withBreathCost(40.0f)
-                        .withHitStun(50) // 2.5 second stun
+                        .withBreathCost(40.0f) // High cost for range and damage
+                        .withHitStun(35) // Good stun for follow-up
                         .withAction(player -> {
                             RumbleFlashAttack attack = new RumbleFlashAttack();
                             ThunderBreathingMoveset moveset = getCurrentMoveset();
                             if (moveset != null) {
-                                attack.configure(moveset.getMove(5));
+                                attack.configure(moveset.getMove(4));
                             }
                             MoveExecutor.executeAttack(player, attack, "thunder_breathing", "rumble_flash");
                         })
                 )
 
-                // Seventh Form: Honoikazuchi no Kami - Ultimate technique (INSTAKILL)
+                // Seventh Form: Honoikazuchi no Kami - Ultimate finisher (INDEX 5 in wheel)
                 .withMove(new MoveBuilder("honoikazuchi_no_kami", "Honoikazuchi no Kami")
                         .withIcon("nichirin:textures/gui/moves/thunder_seventh_form.png")
                         .withAnimation("nichirin:honoikazuchi_no_kami", 15)
-                        .withTiming(600, 40, 60) // 30 second cooldown, long windup, duration
-                        .withDamage(9999.0f) // INSTAKILL damage
-                        .withTeleportDistance(30.0f) // Very long dash
-                        .withKnockback(3.0f) // Massive knockback
-                        .withBreathCost(60.0f) // Expensive
-                        .withHitStun(100) // 5 second stun
-                        .withHitboxSize(5.0f) // Huge hitbox for ultimate
+                        .withTiming(600, 60, 40) // 30 second cooldown, long windup, execution
+                        .withDamage(80.0f) // Very high damage but not instakill
+                        .withTeleportDistance(20.0f) // Long dash
+                        .withKnockback(2.0f) // High knockback
+                        .withBreathCost(70.0f) // Very expensive ultimate
+                        .withHitStun(60) // 3 second stun
+                        .withHitboxSize(3.0f) // Large hitbox for ultimate
                         .withAction(player -> {
                             HonoikazuchiNoKamiAttack attack = new HonoikazuchiNoKamiAttack();
                             ThunderBreathingMoveset moveset = getCurrentMoveset();
                             if (moveset != null) {
-                                attack.configure(moveset.getMove(6  ));
+                                attack.configure(moveset.getMove(5));
                             }
                             MoveExecutor.executeAttack(player, attack, "thunder_breathing", "honoikazuchi_no_kami");
                         })
@@ -186,13 +167,48 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
     }
 
     @Override
+    public int getMoveCount() {
+        return 6; // Only 6 moves in attack wheel (excluding Thunder Clap Flash)
+    }
+
+    @Override
     public boolean handleRightClick(Player player, boolean isCrouching) {
-        // Always Thunder Clap and Flash - just store the crouch state
+        // Thunder Clap Flash - right-click exclusive move
         ThunderClapFlashAttack.setCrouchDash(player, isCrouching);
 
-        // Execute Thunder Clap and Flash (index 0)
-        performMove(player, 0);
-        onMovePerformed(player, 0, isCrouching);
+        // Check breath cost for Thunder Clap Flash
+        float breathCost = 15.0f; // Moderate cost since it's spammable
+        if (!BreathingManager.hasBreath(player, breathCost)) {
+            player.displayClientMessage(
+                    Component.literal("Not enough breath for Thunderclap and Flash!")
+                            .withStyle(style -> style.withColor(0xFF5555)),
+                    true
+            );
+            return true; // Still handled, just blocked
+        }
+
+        // Consume breath for Thunder Clap Flash
+        if (BreathingManager.consume(player, breathCost)) {
+            // Execute Thunder Clap Flash attack directly
+            ThunderClapFlashAttack attack = new ThunderClapFlashAttack();
+
+            // Create temporary config for Thunder Clap Flash
+            MoveConfiguration tempConfig = new MoveBuilder("thunderclap_flash", "Thunderclap and Flash")
+                    .withAnimation("nichirin:thunderclap_flash", 10)
+                    .withTiming(0, 1, 15) // No cooldown
+                    .withDamage(14.0f) // Moderate damage for mobility move
+                    .withTeleportDistance(12.0f) // Good mobility
+                    .withKnockback(0.2f)
+                    .withBreathCost(breathCost)
+                    .withHitStun(10)
+                    .withHitboxSize(1.5f)
+                    .build();
+
+            attack.configure(tempConfig);
+            MoveExecutor.executeAttack(player, attack, "thunder_breathing", "thunderclap_flash");
+
+            onMovePerformed(player, -1, isCrouching); // Use -1 to indicate right-click move
+        }
 
         return true;
     }
@@ -259,9 +275,8 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
             setMoveCooldown(player, moveIndex);
 
             // Send cooldown display packet if on server and has cooldown
-            // Skip cooldown display for Thunder Clap Flash (index 0)
             if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer
-                    && config.getCooldownOrDefault(0) > 0 && moveIndex != 0) {
+                    && config.getCooldownOrDefault(0) > 0) {
                 FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
                 buf.writeUtf(config.getDisplayName());
                 buf.writeInt(config.getCooldownOrDefault(0));
@@ -317,23 +332,23 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
 
     @Override
     public int getRightClickMoveIndex(boolean isCrouching) {
-        return 0; // Always Thunder Clap and Flash
+        return -1; // Not in attack wheel, handled separately
     }
 
     @Override
     public String getRightClickMoveName() {
-        return "Thunder Clap and Flash";
+        return "Thunderclap and Flash";
     }
 
     @Override
     public String getCrouchRightClickMoveName() {
-        return "Thunder Clap and Flash"; // Same move, just with backwards turn
+        return "Thunderclap and Flash (Backwards)";
     }
 
     @Override
     public void onMovePerformed(Player player, int moveIndex, boolean isCrouching) {
         // Special handling for Thunder Clap and Flash when used while initially crouching
-        if (moveIndex == 0 && isCrouching) {
+        if (moveIndex == -1 && isCrouching) {
             // The crouch state is already stored in ThunderClapFlashAttack via setCrouchDash
         }
     }
