@@ -9,9 +9,11 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -46,7 +48,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withIcon("nichirin:textures/gui/moves/thunder_second_form.png")
                         .withAnimation("nichirin:rice_spirit", 8)
                         .withTiming(100, 8, 25) // 5 second cooldown, quick windup, duration
-                        .withDamage(6.0f) // 5 slashes = 30 total damage
+                        .withDamage(4.5f) // 5 slashes = 22.5 total damage (was 6.0f = 30 total)
                         .withRange(5.0f) // Medium range
                         .withKnockback(0.2f)
                         .withBreathCost(25.0f)
@@ -67,7 +69,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withIcon("nichirin:textures/gui/moves/thunder_third_form.png")
                         .withAnimation("nichirin:thunder_swarm", 9)
                         .withTiming(140, 12, 35) // 7 second cooldown, windup, duration
-                        .withDamage(8.0f) // 4 slashes = 32 damage total, good AOE
+                        .withDamage(6.0f) // 4 slashes = 24 damage total (was 8.0f = 32 total)
                         .withRange(7.0f) // Large area around player
                         .withKnockback(0.4f)
                         .withBreathCost(35.0f) // Higher cost for AOE
@@ -88,7 +90,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withIcon("nichirin:textures/gui/moves/thunder_fourth_form.png")
                         .withAnimation("nichirin:distant_thunder", 7)
                         .withTiming(200, 20, 120) // 10 second cooldown, long windup, 6 second duration
-                        .withDamage(12.0f) // 3 strikes = 36 damage over time
+                        .withDamage(9.0f) // 3 strikes = 27 damage over time (was 12.0f = 36 total)
                         .withRange(15.0f) // Large AOE radius
                         .withKnockback(0.3f)
                         .withBreathCost(45.0f) // High cost for area denial
@@ -108,7 +110,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withIcon("nichirin:textures/gui/moves/thunder_fifth_form.png")
                         .withAnimation("nichirin:heat_lightning", 9)
                         .withTiming(160, 10, 20) // 8 second cooldown, windup, duration
-                        .withDamage(18.0f) // High single hit + lightning follow-up potential
+                        .withDamage(13.5f) // Single hit + lightning follow-up (was 18.0f)
                         .withRange(8.0f)
                         .withKnockback(0.1f) // Minimal horizontal, focuses on launch
                         .withBreathCost(30.0f)
@@ -129,7 +131,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withIcon("nichirin:textures/gui/moves/thunder_sixth_form.png")
                         .withAnimation("nichirin:rumble_flash", 8)
                         .withTiming(180, 15, 25) // 9 second cooldown, aim time, duration
-                        .withDamage(22.0f) // High damage for long range precision
+                        .withDamage(16.5f) // High damage for long range precision (was 22.0f)
                         .withRange(20.0f) // Very long range
                         .withKnockback(0.6f)
                         .withBreathCost(40.0f) // High cost for range and damage
@@ -149,7 +151,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withIcon("nichirin:textures/gui/moves/thunder_seventh_form.png")
                         .withAnimation("nichirin:honoikazuchi_no_kami", 15)
                         .withTiming(600, 60, 40) // 30 second cooldown, long windup, execution
-                        .withDamage(80.0f) // Very high damage but not instakill
+                        .withDamage(60.0f) // Very high damage ultimate (was 80.0f)
                         .withTeleportDistance(20.0f) // Long dash
                         .withKnockback(2.0f) // High knockback
                         .withBreathCost(70.0f) // Very expensive ultimate
@@ -196,7 +198,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
             MoveConfiguration tempConfig = new MoveBuilder("thunderclap_flash", "Thunderclap and Flash")
                     .withAnimation("nichirin:thunderclap_flash", 10)
                     .withTiming(0, 1, 15) // No cooldown
-                    .withDamage(14.0f) // Moderate damage for mobility move
+                    .withDamage(10.5f) // Moderate damage for mobility move (was 14.0f)
                     .withTeleportDistance(12.0f) // Good mobility
                     .withKnockback(0.2f)
                     .withBreathCost(breathCost)
@@ -252,6 +254,19 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
             }
         }
 
+        // SPECIAL CHECK FOR RICE SPIRIT - Don't execute if no targets in range
+        if (moveIndex == 0) { // Rice Spirit is index 0 in the wheel
+            if (!hasTargetsInRange(player, config.getRangeOrDefault(5.0f))) {
+                player.displayClientMessage(
+                        Component.literal("Rice Spirit: No enemies in range!")
+                                .withStyle(style -> style.withColor(0xFFAA00)),
+                        true
+                );
+                System.out.println("DEBUG: Rice Spirit blocked at moveset level - no targets in range");
+                return; // Don't execute at all - no breath consumed, no cooldown
+            }
+        }
+
         // Mark that we're executing a move
         executingMove.put(player.getUUID(), true);
 
@@ -284,6 +299,22 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 NetworkManager.sendToPlayer(serverPlayer, new ResourceLocation("nichirin", "cooldown_display"), buf);
             }
         }
+    }
+
+    /**
+     * Check if there are valid targets within range for Rice Spirit
+     */
+    private boolean hasTargetsInRange(Player player, float range) {
+        net.minecraft.world.phys.AABB searchBox = new net.minecraft.world.phys.AABB(
+                player.getX() - range, player.getY() - range, player.getZ() - range,
+                player.getX() + range, player.getY() + range, player.getZ() + range
+        );
+
+        List<LivingEntity> entities = player.level().getEntitiesOfClass(LivingEntity.class, searchBox,
+                entity -> entity != player && entity.isAlive() && !entity.isSpectator());
+
+        System.out.println("DEBUG: Rice Spirit range check - Found " + entities.size() + " targets in range " + range);
+        return !entities.isEmpty();
     }
 
     /**

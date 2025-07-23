@@ -4,6 +4,7 @@ import com.xirc.nichirin.common.network.CooldownDisplayPacket;
 import com.xirc.nichirin.common.util.TeleportUtil;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.player.Player;
@@ -15,7 +16,7 @@ import java.util.UUID;
 
 /**
  * First Form: Thunderclap and Flash
- * Instant teleport dash that hits all enemies in path
+ * Instant teleport dash that hits all enemies in path with slight upward knockback
  *
  * All configuration now comes from the moveset builder.
  * This class handles only the behavior and visual/audio effects.
@@ -97,6 +98,24 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
                 .withDamageCallback(target -> {
                     // Use our custom hit method that removes immunity frames
                     hitTargetNoImmunity(target);
+
+                    // Add slight upward knockback
+                    Vec3 currentVelocity = target.getDeltaMovement();
+                    Vec3 upwardKnockback = new Vec3(
+                            currentVelocity.x * 0.5, // Reduce horizontal momentum slightly
+                            0.4, // Slight upward boost (about 1 block high)
+                            currentVelocity.z * 0.5  // Reduce horizontal momentum slightly
+                    );
+                    target.setDeltaMovement(upwardKnockback);
+                    target.hurtMarked = true;
+                    target.hasImpulse = true;
+
+                    // Sync velocity for players
+                    if (target instanceof ServerPlayer serverPlayer) {
+                        serverPlayer.connection.send(new ClientboundSetEntityMotionPacket(target));
+                    }
+
+                    System.out.println("DEBUG: ThunderClap Flash - Knocked up " + target.getName().getString() + " with velocity " + upwardKnockback);
                 });
 
         // Set custom sound properties

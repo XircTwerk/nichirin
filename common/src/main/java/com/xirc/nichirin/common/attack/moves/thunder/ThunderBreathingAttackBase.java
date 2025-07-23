@@ -22,17 +22,9 @@ import java.util.List;
  * IMPORTANT: All visual effects (particles, sounds) and audio should be handled
  * in the individual attack classes, NOT in the builder configuration.
  * The builder only handles combat stats, timing, and resources.
- *
- * HITBOX SYSTEM: Uses AABB (Axis-Aligned Bounding Box) collision detection.
- * - No entities are created - pure math-based collision detection
- * - Creates invisible cubes in 3D space at specified positions
- * - Queries for LivingEntity objects within the cube
- * - Applies damage/effects to found entities
- * - Very lightweight with no entity spawn/despawn overhead
  */
 public abstract class ThunderBreathingAttackBase {
 
-    // Getters for combat stats (useful for debugging)
     // Configuration from moveset - NO DEFAULT VALUES
     // These are set via configure() method called by the moveset
     @Getter
@@ -47,10 +39,6 @@ public abstract class ThunderBreathingAttackBase {
     protected int hitStun;
     @Getter
     protected float hitboxSize;
-    /**
-     * -- GETTER --
-     *  Get cooldown value for MoveExecutor
-     */
     @Getter
     protected int cooldown;
     @Getter
@@ -58,7 +46,6 @@ public abstract class ThunderBreathingAttackBase {
     @Getter
     protected int duration;
 
-    // Nullable getters for movement properties
     // Movement properties (nullable - not all attacks use these)
     @Getter
     protected Float teleportDistance; // For teleport-based attacks like Thunderclap Flash
@@ -67,17 +54,9 @@ public abstract class ThunderBreathingAttackBase {
     @Getter
     protected Integer teleportWindup; // Special windup time for teleport attacks
 
-    /**
-     * -- GETTER --
-     *  Check if attack is currently active (for MoveExecutor reflection)
-     */
     // Runtime state
     @Getter
     protected boolean isActive = false;
-    /**
-     * -- GETTER --
-     *  Get current tick count
-     */
     @Getter
     protected int tickCount = 0;
     @Getter
@@ -85,13 +64,10 @@ public abstract class ThunderBreathingAttackBase {
     @Getter
     protected Level world;
 
-    /**
-     * -- GETTER --
-     *  Check if attack was properly configured
-     */
-    // Configuration flag to prevent double-configuration
+    // Configuration and breath consumption tracking
     @Getter
     private boolean configured = false;
+    private boolean breathConsumed = false; // Track if breath was actually consumed
 
     /**
      * Configure this attack with values from the moveset
@@ -139,9 +115,10 @@ public abstract class ThunderBreathingAttackBase {
         this.user = user;
         this.world = world;
         this.tickCount = 0;
+        this.breathConsumed = false;
 
         // Check breath cost BEFORE marking as active
-        if (breathCost > 0 && !BreathingManager.consume(user, breathCost)) {
+        if (breathCost > 0 && !BreathingManager.hasBreath(user, breathCost)) {
             user.displayClientMessage(
                     Component.literal("Not enough breath!")
                             .withStyle(style -> style.withColor(0xFF5555)),
@@ -151,9 +128,34 @@ public abstract class ThunderBreathingAttackBase {
             return;
         }
 
-        // Only mark as active if we successfully consumed breath
+        // Consume breath BEFORE calling onStart()
+        if (breathCost > 0) {
+            if (BreathingManager.consume(user, breathCost)) {
+                breathConsumed = true;
+                System.out.println("DEBUG: " + this.getClass().getSimpleName() + " - Consumed " + breathCost + " breath");
+            } else {
+                user.displayClientMessage(
+                        Component.literal("Failed to consume breath!")
+                                .withStyle(style -> style.withColor(0xFF5555)),
+                        true
+                );
+                return;
+            }
+        }
+
+        // Mark as active AFTER breath consumption
         this.isActive = true;
+
+        // Call onStart() - if this calls stop(), the attack will be cancelled
         onStart();
+
+        // If onStart() called stop(), we need to refund the breath
+        if (!isActive && breathConsumed) {
+            System.out.println("DEBUG: " + this.getClass().getSimpleName() + " - Attack cancelled in onStart(), refunding breath");
+            // Refund the breath since the attack was cancelled
+            BreathingManager.restore(user, breathCost);
+            breathConsumed = false;
+        }
     }
 
     /**
@@ -184,6 +186,7 @@ public abstract class ThunderBreathingAttackBase {
         if (isActive) {
             isActive = false;
             onStop();
+            System.out.println("DEBUG: " + this.getClass().getSimpleName() + " - Attack stopped");
         }
     }
 
@@ -196,7 +199,9 @@ public abstract class ThunderBreathingAttackBase {
 
         // Apply damage using configured values
         DamageSource source = user.damageSources().playerAttack(user);
-        target.hurt(source, damage);
+        boolean damaged = target.hurt(source, damage);
+
+        System.out.println("DEBUG: hitTarget - Damaged " + target.getName().getString() + " for " + damage + " (success: " + damaged + ")");
 
         // Apply shocked effect if hitStun is configured
         if (hitStun > 0) {
@@ -218,17 +223,22 @@ public abstract class ThunderBreathingAttackBase {
 
     /**
      * Special hit method that removes immunity frames
-     * Used for attacks like ThunderClap Flash that should always hit
+     * Used for attacks like Rice Spirit that should always hit with rapid strikes
      */
     protected void hitTargetNoImmunity(LivingEntity target) {
         if (world.isClientSide) return;
 
-        // Reset invulnerability to allow immediate damage
+        // FIXED: Reset invulnerability to allow immediate damage
         target.invulnerableTime = 0;
+        target.hurtTime = 0; // Also reset hurt animation timer
+
+        System.out.println("DEBUG: hitTargetNoImmunity - Reset immunity frames for " + target.getName().getString());
 
         // Apply damage
         DamageSource source = user.damageSources().playerAttack(user);
-        target.hurt(source, damage);
+        boolean damaged = target.hurt(source, damage);
+
+        System.out.println("DEBUG: hitTargetNoImmunity - Damaged " + target.getName().getString() + " for " + damage + " (success: " + damaged + ")");
 
         // Apply shocked effect
         if (hitStun > 0) {
@@ -250,29 +260,19 @@ public abstract class ThunderBreathingAttackBase {
 
     /**
      * Get entities in a hitbox centered at the given position
-     *
-     * HITBOX SYSTEM EXPLANATION:
-     * - Creates an AABB (cube) of size 'hitboxSize' centered at 'center'
-     * - Uses Minecraft's built-in entity query system
-     * - No entities are spawned - pure collision detection
-     * - Returns list of LivingEntity objects within the cube
-     * - Filters out the user and dead entities
      */
     protected List<LivingEntity> getTargetsInHitbox(Vec3 center) {
-        // Create cube hitbox: center ± hitboxSize/2 in all directions
         AABB hitbox = new AABB(
                 center.x - hitboxSize/2, center.y - hitboxSize/2, center.z - hitboxSize/2,
                 center.x + hitboxSize/2, center.y + hitboxSize/2, center.z + hitboxSize/2
         );
 
-        // Query for living entities within the hitbox
         return world.getEntitiesOfClass(LivingEntity.class, hitbox,
                 entity -> entity != user && entity.isAlive());
     }
 
     /**
      * Get entities in a custom hitbox with specified dimensions
-     * Useful for attacks that need non-cubic hitboxes
      */
     protected List<LivingEntity> getTargetsInCustomHitbox(Vec3 center, double width, double height, double depth) {
         AABB hitbox = new AABB(
@@ -286,10 +286,8 @@ public abstract class ThunderBreathingAttackBase {
 
     /**
      * Get entities in a line between two points
-     * Useful for sweep attacks or projectile-like abilities
      */
     protected List<LivingEntity> getTargetsInLine(Vec3 start, Vec3 end, double thickness) {
-        // Create bounding box that encompasses the entire line
         AABB lineBounds = new AABB(
                 Math.min(start.x, end.x) - thickness,
                 Math.min(start.y, end.y) - thickness,
@@ -304,7 +302,6 @@ public abstract class ThunderBreathingAttackBase {
                 return false;
             }
 
-            // Check if entity is actually close to the line
             Vec3 entityPos = entity.position().add(0, entity.getBbHeight()/2, 0);
             double distanceToLine = distancePointToLine(entityPos, start, end);
             return distanceToLine <= thickness;
@@ -351,6 +348,7 @@ public abstract class ThunderBreathingAttackBase {
     /**
      * Called when attack starts (after breath consumption)
      * Implement visual/audio startup effects here
+     * If you call stop() in this method, breath will be refunded
      */
     protected abstract void onStart();
 
@@ -396,4 +394,10 @@ public abstract class ThunderBreathingAttackBase {
     public boolean hasDash() { return dashSpeed != null && dashSpeed > 0; }
     public boolean hasTeleportWindup() { return teleportWindup != null; }
 
+    /**
+     * Check if breath was consumed (for debugging)
+     */
+    public boolean wasBreathConsumed() {
+        return breathConsumed;
+    }
 }
