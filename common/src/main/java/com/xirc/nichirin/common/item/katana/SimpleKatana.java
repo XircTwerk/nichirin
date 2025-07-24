@@ -138,18 +138,21 @@ public class SimpleKatana extends SwordItem {
      * Called when the player left-clicks with this item (M1)
      */
     public void performAttack(Player player) {
-        // CRITICAL FIX: Check if wheel is open FIRST before doing ANYTHING
-        try {
-            if (AttackWheelHandler.shouldBlockKatanaAttacks()) {
-                System.out.println("DEBUG: SimpleKatana.performAttack() BLOCKED - wheel is open");
-                return; // COMPLETE BLOCK - don't do anything
-            }
-        } catch (Exception e) {
-            // If there's any issue checking wheel state, assume it's closed and continue
-            System.out.println("DEBUG: Could not check wheel state, assuming closed: " + e.getMessage());
+        // FIXED: Universal blocking system that works on both client and server
+        if (com.xirc.nichirin.common.util.GlobalInputBlocker.isPlayerBlocked(player.getUUID())) {
+            System.out.println("DEBUG: SimpleKatana.performAttack() BLOCKED - player globally blocked");
+            return; // COMPLETE BLOCK
         }
 
-        System.out.println("DEBUG: SimpleKatana.performAttack() EXECUTING - wheel is closed");
+        // Additional client-side check for extra safety
+        if (player.level().isClientSide) {
+            if (AttackWheelHandler.shouldBlockKatanaAttacks()) {
+                System.out.println("DEBUG: SimpleKatana.performAttack() BLOCKED - wheel is open (client check)");
+                return; // COMPLETE BLOCK
+            }
+        }
+
+        System.out.println("DEBUG: SimpleKatana.performAttack() EXECUTING - all checks passed");
 
         PlayerAttackState state = getOrCreatePlayerState(player);
 
@@ -217,15 +220,10 @@ public class SimpleKatana extends SwordItem {
      */
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-        // CRITICAL FIX: Check if wheel is open FIRST
-        try {
-            if (AttackWheelHandler.shouldBlockKatanaAttacks()) {
-                System.out.println("DEBUG: SimpleKatana.use() BLOCKED - wheel is open");
-                return InteractionResultHolder.pass(player.getItemInHand(hand));
-            }
-        } catch (Exception e) {
-            // If there's any issue checking wheel state, assume it's closed and continue
-            System.out.println("DEBUG: Could not check wheel state in use(), assuming closed: " + e.getMessage());
+        // FIXED: Use the proper wheel blocking method
+        if (AttackWheelHandler.shouldBlockKatanaAttacks()) {
+            System.out.println("DEBUG: SimpleKatana.use() BLOCKED - wheel is open");
+            return InteractionResultHolder.pass(player.getItemInHand(hand));
         }
 
         System.out.println("DEBUG: SimpleKatana.use() EXECUTING - wheel is closed");

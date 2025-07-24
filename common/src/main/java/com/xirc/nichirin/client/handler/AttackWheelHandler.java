@@ -17,6 +17,7 @@ import lombok.Getter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.entity.player.Player;
 
 /**
  * Handles the attack wheel input and display using HUD overlay
@@ -31,19 +32,24 @@ public class AttackWheelHandler {
     private static long wheelClosedTime = 0; // Track when wheel was closed
     private static final int ATTACK_BLOCK_DELAY = 5; // Ticks to block attacks after wheel closes
 
-    // SIMPLE SOLUTION: Static flag that KatanaInputHandler can check directly
+    // FIXED: More aggressive blocking with timing
     public static boolean shouldBlockKatanaAttacks() {
+        // Check if wheel is currently open
         if (wheelOpen) {
-            return true; // Always block when wheel is open
+            return true;
         }
 
-        // Also block for a few ticks after wheel closes to prevent lingering clicks
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.level != null && wheelClosedTime > 0) {
-            long currentTime = mc.level.getGameTime();
-            if (currentTime - wheelClosedTime <= ATTACK_BLOCK_DELAY) {
-                return true; // Still blocking attacks for a brief period
+        // EXTENDED: Block for longer after wheel closes to prevent race conditions
+        try {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc != null && mc.level != null && wheelClosedTime > 0) {
+                long currentTime = mc.level.getGameTime();
+                if (currentTime - wheelClosedTime <= ATTACK_BLOCK_DELAY * 2) { // Double the delay
+                    return true; // Still blocking for extended period
+                }
             }
+        } catch (Exception e) {
+            // We're on server side - can't check game time, so default to not blocking
         }
 
         return false; // Allow attacks
@@ -88,7 +94,7 @@ public class AttackWheelHandler {
             }
         });
 
-        // SIMPLE MOUSE HANDLING: Just check for clicks when wheel is open
+        // AGGRESSIVE MOUSE HANDLING: Block ALL input while wheel is open
         ClientTickEvent.CLIENT_POST.register(client -> {
             if (wheelOpen && client.player != null) {
                 boolean isAttackDown = client.options.keyAttack.isDown();
@@ -102,6 +108,11 @@ public class AttackWheelHandler {
                     System.out.println("DEBUG: Consumed " + clicksConsumed + " clicks while wheel open");
                 }
 
+                // ALSO consume any other click events
+                while (client.options.keyUse.consumeClick()) {
+                    // Eat right clicks too
+                }
+
                 // Detect click edge for wheel execution
                 if (isAttackDown && !wasAttackDown) {
                     System.out.println("DEBUG: Click detected while wheel open - executing");
@@ -113,6 +124,14 @@ public class AttackWheelHandler {
                     while (client.options.keyHotbarSlots[i].consumeClick()) {
                         // Eat hotbar changes
                     }
+                }
+
+                // Block other keys that might interfere
+                while (client.options.keyDrop.consumeClick()) {
+                    // Eat drop key
+                }
+                while (client.options.keyInventory.consumeClick()) {
+                    // Eat inventory key
                 }
 
                 wasAttackDown = isAttackDown;
@@ -140,6 +159,18 @@ public class AttackWheelHandler {
             mc.mouseHandler.releaseMouse();
             currentWheel.activate();
             wheelOpen = true; // SET THIS FIRST - CRITICAL FOR BLOCKING
+
+            // GLOBAL BLOCK: Block player in the universal system
+            com.xirc.nichirin.common.util.GlobalInputBlocker.blockPlayer(mc.player.getUUID());
+
+            // Update server-side state for multiplayer (if MultiplayerFixUtil exists)
+            try {
+                com.xirc.nichirin.common.util.MultiplayerFixUtil.setAttackWheelOpen(mc.player, true);
+            } catch (Exception e) {
+                // MultiplayerFixUtil might not exist - that's okay
+                System.out.println("DEBUG: Could not update server wheel state (this is normal if MultiplayerFixUtil doesn't exist)");
+            }
+
             wasAttackDown = false;
             System.out.println("DEBUG: Wheel opened - katana attacks should now be blocked");
         }
@@ -156,7 +187,20 @@ public class AttackWheelHandler {
         // Close the wheel FIRST
         currentWheel.deactivate();
         wheelOpen = false; // CLEAR THIS IMMEDIATELY
-        wheelClosedTime = mc.level != null ? mc.level.getGameTime() : 0; // Record when we closed
+        wheelClosedTime = mc.level != null ? mc.level.getGameTime() : 0; // Set block timer
+
+        // GLOBAL UNBLOCK: Unblock player with delay in the universal system
+        if (mc.player != null) {
+            com.xirc.nichirin.common.util.GlobalInputBlocker.unblockPlayerDelayed(mc.player.getUUID());
+        }
+
+        // Update server-side state
+        try {
+            com.xirc.nichirin.common.util.MultiplayerFixUtil.setAttackWheelOpen(mc.player, false);
+        } catch (Exception e) {
+            // MultiplayerFixUtil might not exist - that's okay
+        }
+
         wasAttackDown = false;
 
         // Recapture mouse
@@ -164,7 +208,7 @@ public class AttackWheelHandler {
             mc.mouseHandler.grabMouse();
         }
 
-        System.out.println("DEBUG: Wheel closed - katana attacks blocked for " + ATTACK_BLOCK_DELAY + " ticks");
+        System.out.println("DEBUG: Wheel closed - katana attacks blocked globally for extended period");
 
         // Execute the move if one was selected
         if (selectedMove != -1) {
@@ -179,7 +223,17 @@ public class AttackWheelHandler {
             currentWheel.deactivate();
         }
         wheelOpen = false; // CLEAR THIS IMMEDIATELY
-        wheelClosedTime = mc.level != null ? mc.level.getGameTime() : 0; // Record when we closed
+        wheelClosedTime = mc.level != null ? mc.level.getGameTime() : 0; // Set block timer
+
+        // Update server-side state
+        try {
+            if (mc.player != null) {
+                com.xirc.nichirin.common.util.MultiplayerFixUtil.setAttackWheelOpen(mc.player, false);
+            }
+        } catch (Exception e) {
+            // MultiplayerFixUtil might not exist - that's okay
+        }
+
         wasAttackDown = false;
 
         if (mc.screen == null) {
