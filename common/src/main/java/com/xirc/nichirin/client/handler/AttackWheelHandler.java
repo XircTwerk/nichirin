@@ -30,8 +30,6 @@ public class AttackWheelHandler {
     private static boolean wasAttackDown = false;
 
     public static void register() {
-        System.out.println("DEBUG: AttackWheelHandler.register() - Using MultiplayerInputHandler");
-
         // Create the overlay instance
         currentWheel = new AttackWheelOverlay();
 
@@ -86,13 +84,8 @@ public class AttackWheelHandler {
                 clicksConsumed++;
             }
 
-            if (clicksConsumed > 0) {
-                System.out.println("DEBUG: AttackWheelHandler - CONSUMED " + clicksConsumed + " clicks while wheel open");
-            }
-
             // IMMEDIATE EXECUTION: Execute and close on first click detection
             if (isAttackDown && !wasAttackDown) {
-                System.out.println("DEBUG: AttackWheelHandler - Click detected, executing and closing IMMEDIATELY");
                 executeWheelMove(); // This closes the wheel immediately
             }
 
@@ -139,7 +132,6 @@ public class AttackWheelHandler {
             MultiplayerInputHandler.setAttackWheelOpen(true, mc.player);
 
             wasAttackDown = false;
-            System.out.println("DEBUG: AttackWheelHandler - Wheel opened");
         }
     }
 
@@ -165,8 +157,6 @@ public class AttackWheelHandler {
         if (mc.screen == null) {
             mc.mouseHandler.grabMouse();
         }
-
-        System.out.println("DEBUG: AttackWheelHandler - Wheel closed");
     }
 
     /**
@@ -177,35 +167,29 @@ public class AttackWheelHandler {
         if (mc.player == null || currentWheel == null) return;
 
         int selectedMove = currentWheel.getCurrentlyHoveredMove();
-        System.out.println("DEBUG: executeWheelMove - selectedMove: " + selectedMove);
 
         if (selectedMove == -1) {
-            System.out.println("DEBUG: executeWheelMove - No move selected, closing wheel");
             closeWheel();
             return;
         }
 
         var moveset = BreathingStyleHelper.getMoveset(mc.player);
         if (moveset == null) {
-            System.out.println("DEBUG: executeWheelMove - No moveset, closing wheel");
             closeWheel();
             return;
         }
 
         var moveConfig = moveset.getMove(selectedMove);
         if (moveConfig == null) {
-            System.out.println("DEBUG: executeWheelMove - No move config, closing wheel");
             closeWheel();
             return;
         }
 
         // Check requirements client-side (for immediate feedback)
         String moveName = moveConfig.getDisplayName();
-        System.out.println("DEBUG: executeWheelMove - Attempting to execute: " + moveName);
 
         if (CooldownHUD.isOnCooldown(moveName)) {
             int remaining = CooldownHUD.getRemainingCooldown(moveName);
-            System.out.println("DEBUG: executeWheelMove - Move on cooldown, closing wheel");
             mc.player.displayClientMessage(
                     Component.literal("Move on cooldown! " + (remaining / 20.0f) + "s remaining")
                             .withStyle(style -> style.withColor(0xFF5555)),
@@ -216,7 +200,6 @@ public class AttackWheelHandler {
         }
 
         if (moveConfig.hasStaminaCost() && !StaminaManager.hasStamina(mc.player, moveConfig.getStaminaCost())) {
-            System.out.println("DEBUG: executeWheelMove - Not enough stamina, closing wheel");
             mc.player.displayClientMessage(
                     Component.literal("Not enough stamina!")
                             .withStyle(style -> style.withColor(0xFF5555)),
@@ -227,7 +210,6 @@ public class AttackWheelHandler {
         }
 
         if (moveConfig.hasBreathCost() && !BreathingManager.hasBreath(mc.player, moveConfig.getBreathCost())) {
-            System.out.println("DEBUG: executeWheelMove - Not enough breath, closing wheel");
             mc.player.displayClientMessage(
                     Component.literal("Not enough breath!")
                             .withStyle(style -> style.withColor(0xFF5555)),
@@ -237,15 +219,11 @@ public class AttackWheelHandler {
             return;
         }
 
-        System.out.println("DEBUG: executeWheelMove - All checks passed, sending breathing move");
-
         // Send breathing move to server FIRST (while wheel is still considered open)
         MultiplayerInputHandler.sendBreathingMove(selectedMove, mc.player);
 
         // THEN close wheel (this maintains input blocking until move is sent)
         closeWheel();
-
-        System.out.println("DEBUG: AttackWheelHandler - Executed move " + selectedMove + " (" + moveName + ")");
     }
 
     /**

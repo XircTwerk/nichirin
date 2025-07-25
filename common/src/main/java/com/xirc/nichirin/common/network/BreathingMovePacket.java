@@ -68,8 +68,6 @@ public class BreathingMovePacket {
 
                 // Also block katana inputs (redundant but safe)
                 KatanaInputHandler.blockAfterBreathingMove(player);
-
-                System.out.println("DEBUG: BreathingMovePacket - Executed move " + moveIndex + " and blocked ALL inputs for " + player.getName().getString());
             }
         }
     }

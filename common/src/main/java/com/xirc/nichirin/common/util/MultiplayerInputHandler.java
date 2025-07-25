@@ -73,8 +73,6 @@ public class MultiplayerInputHandler {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             buf.writeBoolean(open);
             NetworkManager.sendToServer(ATTACK_WHEEL_STATE_PACKET, buf);
-
-            System.out.println("DEBUG: UnifiedInput CLIENT - Wheel " + (open ? "OPENED" : "CLOSED"));
         }
     }
 
@@ -84,7 +82,6 @@ public class MultiplayerInputHandler {
     public static boolean shouldBlockInputsClient() {
         // Simple rule: Block ALL inputs when wheel is open, period.
         if (clientWheelOpen) {
-            System.out.println("DEBUG: MultiplayerInputHandler - BLOCKING: Wheel is open");
             return true;
         }
 
@@ -92,7 +89,6 @@ public class MultiplayerInputHandler {
         if (clientWheelCloseTime > 0) {
             long elapsed = System.currentTimeMillis() - clientWheelCloseTime;
             if (elapsed < 500) { // Reduced to 500ms
-                System.out.println("DEBUG: MultiplayerInputHandler - BLOCKING: Grace period after wheel close, " + (500 - elapsed) + "ms remaining");
                 return true;
             }
         }
@@ -107,7 +103,6 @@ public class MultiplayerInputHandler {
         if (player.level().isClientSide) {
             // Check client-side block first (immediate feedback)
             if (shouldBlockInputsClient()) {
-                System.out.println("DEBUG: UnifiedInput CLIENT - Input blocked (wheel open)");
                 return;
             }
 
@@ -115,8 +110,6 @@ public class MultiplayerInputHandler {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             buf.writeEnum(inputType);
             NetworkManager.sendToServer(KATANA_INPUT_PACKET, buf);
-
-            System.out.println("DEBUG: UnifiedInput CLIENT - Sent " + inputType + " to server");
         }
     }
 
@@ -128,8 +121,6 @@ public class MultiplayerInputHandler {
             // Use the existing BreathingMovePacket system that already works
             var packet = new com.xirc.nichirin.common.network.BreathingMovePacket(moveIndex, true);
             com.xirc.nichirin.registry.NichirinPacketRegistry.sendToServer(packet);
-
-            System.out.println("DEBUG: MultiplayerInputHandler CLIENT - Sent breathing move " + moveIndex);
         }
     }
 
@@ -154,7 +145,6 @@ public class MultiplayerInputHandler {
             PlayerInputState state = getOrCreatePlayerState(player);
             state.inputBlocked = true;
             state.blockUntilTime = player.level().getGameTime() + 40; // 2 seconds (40 ticks)
-            System.out.println("DEBUG: MultiplayerInputHandler SERVER - Blocked inputs after breathing move for " + player.getName().getString() + " until tick " + state.blockUntilTime);
         }
     }
 
@@ -184,9 +174,6 @@ public class MultiplayerInputHandler {
                     state.inputBlocked = true;
                     state.blockUntilTime = player.level().getGameTime() + 10; // 0.5 second block
                 }
-
-                System.out.println("DEBUG: UnifiedInput SERVER - Player " + player.getName().getString() +
-                        " wheel " + (wheelOpen ? "OPENED" : "CLOSED"));
             });
         });
 
@@ -198,15 +185,11 @@ public class MultiplayerInputHandler {
             context.queue(() -> {
                 // AUTHORITATIVE CHECK: Block if needed
                 if (shouldBlockInputsServer(player)) {
-                    System.out.println("DEBUG: UnifiedInput SERVER - BLOCKED " + inputType + " for " +
-                            player.getName().getString() + " (wheel open)");
                     return;
                 }
 
                 // Execute the katana input
                 executeKatanaInput(player, inputType);
-                System.out.println("DEBUG: UnifiedInput SERVER - EXECUTED " + inputType + " for " +
-                        player.getName().getString());
             });
         });
 
@@ -245,7 +228,6 @@ public class MultiplayerInputHandler {
      */
     public static void cleanupPlayer(Player player) {
         serverPlayerStates.remove(player.getUUID());
-        System.out.println("DEBUG: UnifiedInput - Cleaned up player " + player.getName().getString());
     }
 
     /**
