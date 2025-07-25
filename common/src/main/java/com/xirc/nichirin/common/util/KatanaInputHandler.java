@@ -1,267 +1,262 @@
 package com.xirc.nichirin.common.util;
 
 import com.xirc.nichirin.client.gui.CooldownHUD;
-import com.xirc.nichirin.client.handler.AttackWheelHandler;
 import com.xirc.nichirin.common.attack.moves.thunder.ThunderClapFlashAttack;
 import com.xirc.nichirin.common.data.BreathingStyleHelper;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.util.AnimationUtils;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.client.Minecraft;
-import dev.architectury.event.events.common.PlayerEvent;
-import dev.architectury.event.events.common.InteractionEvent;
-import dev.architectury.event.events.common.TickEvent;
 import dev.architectury.event.EventResult;
+import dev.architectury.event.events.common.InteractionEvent;
+import dev.architectury.event.events.common.PlayerEvent;
+import dev.architectury.event.events.common.TickEvent;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 /**
- * Handles input for katana attacks
+ * Simple katana input handler focused on blocking wheel interference
  */
 public class KatanaInputHandler {
 
-    // Store SimpleKatana instances per player for tracking
-    private static final Map<UUID, SimpleKatana> PLAYER_SIMPLE_KATANAS = new HashMap<>();
+    // Server-side katana instances
+    private static final Map<UUID, SimpleKatana> PLAYER_KATANAS = new HashMap<>();
 
-    // Network packet IDs
-    private static final ResourceLocation LEFT_CLICK_PACKET = new ResourceLocation("nichirin", "left_click");
-    private static final ResourceLocation RIGHT_CLICK_PACKET = new ResourceLocation("nichirin", "right_click");
-    private static final ResourceLocation RIGHT_CLICK_CROUCH_PACKET = new ResourceLocation("nichirin", "right_click_crouch");
+    // Server-side blocking system
+    private static final Map<UUID, Long> BLOCKED_UNTIL = new HashMap<>();
+    private static final long BLOCK_TICKS = 25; // 1.25 seconds
+
+    // Packet IDs
+    private static final ResourceLocation LEFT_CLICK_ID = new ResourceLocation("nichirin", "katana_left");
+    private static final ResourceLocation RIGHT_CLICK_ID = new ResourceLocation("nichirin", "katana_right");
+    private static final ResourceLocation RIGHT_CROUCH_ID = new ResourceLocation("nichirin", "katana_right_crouch");
+    private static final ResourceLocation FEEDBACK_ID = new ResourceLocation("nichirin", "katana_feedback");
 
     public static void register() {
+        System.out.println("DEBUG: KatanaInputHandler - Simple system starting");
 
-        // CLIENT SIDE: Detect left clicks and send to server
         if (isClientSide()) {
-            // SIMPLE BLOCKING: Check AttackWheelHandler directly
-            InteractionEvent.CLIENT_LEFT_CLICK_AIR.register((player, hand) -> {
-                ItemStack heldItem = player.getItemInHand(hand);
-                if (heldItem.getItem() instanceof SimpleKatana) {
-                    // DIRECT CHECK - NO COMPLEX SYSTEMS
-                    if (AttackWheelHandler.shouldBlockKatanaAttacks()) {
-                        System.out.println("DEBUG: BLOCKED CLIENT_LEFT_CLICK_AIR - wheel is open");
-                        return; // COMPLETE BLOCK
-                    }
-                    System.out.println("DEBUG: ALLOWING CLIENT_LEFT_CLICK_AIR - wheel is closed");
-                    sendLeftClickToServer(player);
-                }
-            });
-
-            InteractionEvent.CLIENT_RIGHT_CLICK_AIR.register((player, hand) -> {
-                ItemStack heldItem = player.getItemInHand(hand);
-                if (heldItem.getItem() instanceof SimpleKatana) {
-                    if (AttackWheelHandler.shouldBlockKatanaAttacks()) {
-                        System.out.println("DEBUG: BLOCKED CLIENT_RIGHT_CLICK_AIR - wheel is open");
-                        return;
-                    }
-                    sendRightClickToServer(player);
-                }
-            });
+            registerClientEvents();
+            registerClientPackets();
         }
 
-        // SERVER SIDE: Handle the packet
-        registerServerPacketHandler();
+        registerServerPackets();
+        registerSharedEvents();
+    }
 
-        // For entity attacks - BLOCK ON BOTH SIDES
-        PlayerEvent.ATTACK_ENTITY.register((player, level, entity, hand, hitResult) -> {
-            ItemStack heldItem = player.getItemInHand(hand);
+    private static void registerClientEvents() {
+        // Left click air
+        InteractionEvent.CLIENT_LEFT_CLICK_AIR.register((player, hand) -> {
+            ItemStack item = player.getItemInHand(hand);
+            if (!(item.getItem() instanceof SimpleKatana)) return;
 
-            if (heldItem.getItem() instanceof SimpleKatana) {
-                // DIRECT CHECK ON BOTH CLIENT AND SERVER
-                if (AttackWheelHandler.shouldBlockKatanaAttacks()) {
-                    System.out.println("DEBUG: BLOCKED ATTACK_ENTITY - wheel is open - Side: " + (level.isClientSide ? "CLIENT" : "SERVER"));
-                    return EventResult.interruptFalse(); // COMPLETE BLOCK
-                }
-
-                System.out.println("DEBUG: ALLOWING ATTACK_ENTITY - wheel is closed - Side: " + (level.isClientSide ? "CLIENT" : "SERVER"));
-                if (!level.isClientSide) {
-                    handleLeftClick(player);
-                } else {
-                    sendLeftClickToServer(player);
-                }
-                return EventResult.interruptFalse(); // Always prevent vanilla attack
+            if (isWheelBlocking()) {
+                System.out.println("DEBUG: KatanaInputHandler CLIENT - BLOCKED left click (wheel)");
+                return;
             }
 
-            return EventResult.pass();
+            sendLeftClick(player);
         });
 
-        // Register player tick event to update katanas (runs on both sides)
-        TickEvent.PLAYER_POST.register(player -> {
-            if (!player.level().isClientSide) {
-                tickPlayer(player);
-            }
-        });
+        // Right click air
+        InteractionEvent.CLIENT_RIGHT_CLICK_AIR.register((player, hand) -> {
+            ItemStack item = player.getItemInHand(hand);
+            if (!(item.getItem() instanceof SimpleKatana)) return;
 
-        // Clean up when player leaves
-        PlayerEvent.PLAYER_QUIT.register(player -> {
-            if (!player.level().isClientSide) {
-                cleanupPlayer(player);
+            if (isWheelBlocking()) {
+                System.out.println("DEBUG: KatanaInputHandler CLIENT - BLOCKED right click (wheel)");
+                return;
             }
+
+            sendRightClick(player);
         });
     }
 
-    /**
-     * Check if we're on client side (careful with side-specific code)
-     */
-    public static boolean isClientSide() {
+    private static boolean isWheelBlocking() {
+        // Check client wheel state
         try {
-            // This will only work on client
-            Class.forName("net.minecraft.client.Minecraft");
-            return true;
-        } catch (ClassNotFoundException e) {
-            return false;
+            if (com.xirc.nichirin.client.handler.AttackWheelHandler.isWheelOpen()) {
+                return true;
+            }
+        } catch (Exception e) {
+            // Wheel handler not available, check backup
         }
+
+        // Check client input blocking
+        try {
+            if (MultiplayerInputHandler.shouldBlockInputsClient()) {
+                return true;
+            }
+        } catch (Exception e) {
+            // Backup check failed
+        }
+
+        return false;
     }
 
-    /**
-     * Send left click packet to server (CLIENT ONLY)
-     */
-    private static void sendLeftClickToServer(Player player) {
-        // Handle client-side visual feedback
-        if (isClientSide()) {
-            Minecraft minecraft = Minecraft.getInstance();
-            if (minecraft.player != null) {
-                ItemStack heldItem = minecraft.player.getMainHandItem();
-                if (heldItem.getItem() instanceof SimpleKatana simpleKatana) {
-                    simpleKatana.displayClientCooldown(minecraft.player);
+    private static void sendLeftClick(Player player) {
+        // Client feedback
+        if (player.getMainHandItem().getItem() instanceof SimpleKatana katana) {
+            katana.displayClientCooldown(player);
+        }
+
+        // Send to server
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+        NetworkManager.sendToServer(LEFT_CLICK_ID, buf);
+        System.out.println("DEBUG: KatanaInputHandler CLIENT - Sent left click");
+    }
+
+    private static void sendRightClick(Player player) {
+        boolean crouch = player.isCrouching();
+        ResourceLocation id = crouch ? RIGHT_CROUCH_ID : RIGHT_CLICK_ID;
+
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+        NetworkManager.sendToServer(id, buf);
+        System.out.println("DEBUG: KatanaInputHandler CLIENT - Sent right click (" + (crouch ? "crouch" : "normal") + ")");
+    }
+
+    private static void registerServerPackets() {
+        // Left click
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, LEFT_CLICK_ID, (buf, context) -> {
+            ServerPlayer player = (ServerPlayer) context.getPlayer();
+            if (player != null) {
+                context.queue(() -> handleServerLeftClick(player));
+            }
+        });
+
+        // Right click
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, RIGHT_CLICK_ID, (buf, context) -> {
+            ServerPlayer player = (ServerPlayer) context.getPlayer();
+            if (player != null) {
+                context.queue(() -> handleServerRightClick(player, false));
+            }
+        });
+
+        // Right click crouch
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, RIGHT_CROUCH_ID, (buf, context) -> {
+            ServerPlayer player = (ServerPlayer) context.getPlayer();
+            if (player != null) {
+                context.queue(() -> handleServerRightClick(player, true));
+            }
+        });
+    }
+
+    private static void registerClientPackets() {
+        NetworkManager.registerReceiver(NetworkManager.Side.S2C, FEEDBACK_ID, (buf, context) -> {
+            boolean hasBreathingMove = buf.readBoolean();
+
+            context.queue(() -> {
+                if (hasBreathingMove) {
+                    String moveName = buf.readUtf();
+                    int cooldown = buf.readInt();
+
+                    CooldownHUD.setCooldown(moveName, cooldown);
+
+                    if (moveName.contains("Thunder Clap")) {
+                        AnimationUtils.playAnimation(Minecraft.getInstance().player, "thunder_clap_flash");
+                    } else if (moveName.contains("Heat Lightning")) {
+                        AnimationUtils.playAnimation(Minecraft.getInstance().player, "heat_lightning");
+                    }
+                } else {
+                    boolean wasCrouching = buf.readBoolean();
+
+                    if (wasCrouching) {
+                        AnimationUtils.playAnimation(Minecraft.getInstance().player, "rising_slash");
+                        CooldownHUD.setCooldown("Rising Slash", 25);
+                    } else {
+                        AnimationUtils.playAnimation(Minecraft.getInstance().player, "double_slash");
+                        CooldownHUD.setCooldown("Double Slash", 20);
+                    }
                 }
-            }
-        }
-
-        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-        NetworkManager.sendToServer(LEFT_CLICK_PACKET, buf);
-        System.out.println("DEBUG: Left click packet SENT to server");
-    }
-
-    /**
-     * Send right click packet to server (CLIENT ONLY)
-     */
-    private static void sendRightClickToServer(Player player) {
-        boolean isCrouching = player.isCrouching();
-        ResourceLocation packetId = isCrouching ? RIGHT_CLICK_CROUCH_PACKET : RIGHT_CLICK_PACKET;
-
-        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-        NetworkManager.sendToServer(packetId, buf);
-    }
-
-    /**
-     * Register server packet handler
-     */
-    private static void registerServerPacketHandler() {
-        // Left click handler - CHECK WHEEL STATE ON SERVER TOO
-        NetworkManager.registerReceiver(NetworkManager.Side.C2S, LEFT_CLICK_PACKET, (buf, context) -> {
-            ServerPlayer player = (ServerPlayer) context.getPlayer();
-            if (player != null) {
-                context.queue(() -> {
-                    // DOUBLE CHECK ON SERVER SIDE TOO
-                    if (AttackWheelHandler.shouldBlockKatanaAttacks()) {
-                        System.out.println("DEBUG: BLOCKED server left click packet - wheel is open");
-                        return;
-                    }
-                    System.out.println("DEBUG: PROCESSING server left click packet - wheel is closed");
-                    handleLeftClick(player);
-                });
-            }
-        });
-
-        NetworkManager.registerReceiver(NetworkManager.Side.C2S, RIGHT_CLICK_PACKET, (buf, context) -> {
-            ServerPlayer player = (ServerPlayer) context.getPlayer();
-            if (player != null) {
-                context.queue(() -> {
-                    if (AttackWheelHandler.shouldBlockKatanaAttacks()) {
-                        System.out.println("DEBUG: BLOCKED server right click packet - wheel is open");
-                        return;
-                    }
-                    handleRightClick(player, false);
-                });
-            }
-        });
-
-        NetworkManager.registerReceiver(NetworkManager.Side.C2S, RIGHT_CLICK_CROUCH_PACKET, (buf, context) -> {
-            ServerPlayer player = (ServerPlayer) context.getPlayer();
-            if (player != null) {
-                context.queue(() -> {
-                    if (AttackWheelHandler.shouldBlockKatanaAttacks()) {
-                        System.out.println("DEBUG: BLOCKED server right click crouch packet - wheel is open");
-                        return;
-                    }
-                    handleRightClick(player, true);
-                });
-            }
+            });
         });
     }
 
-    private static void handleLeftClick(Player player) {
-        // TRIPLE CHECK - Even in the handle method itself
-        if (AttackWheelHandler.shouldBlockKatanaAttacks()) {
-            System.out.println("DEBUG: BLOCKED handleLeftClick - wheel is open");
+    private static void handleServerLeftClick(ServerPlayer player) {
+        if (isServerBlocked(player)) {
+            System.out.println("DEBUG: KatanaInputHandler SERVER - BLOCKED left click for " + player.getName().getString());
             return;
         }
 
-        // Make sure we're on server side
-        if (player.level().isClientSide) {
-            return;
-        }
-
-        ItemStack heldItem = player.getMainHandItem();
-        if (heldItem.getItem() instanceof SimpleKatana simpleKatana) {
-            SimpleKatana katanaInstance = getSimpleKatanaForPlayer(player, simpleKatana);
-            katanaInstance.performAttack(player);
-            System.out.println("DEBUG: Katana attack EXECUTED on server");
+        ItemStack item = player.getMainHandItem();
+        if (item.getItem() instanceof SimpleKatana katana) {
+            SimpleKatana instance = getKatanaInstance(player, katana);
+            instance.performAttack(player);
+            System.out.println("DEBUG: KatanaInputHandler SERVER - Executed left click for " + player.getName().getString());
         }
     }
 
-    private static void handleRightClick(Player player, boolean isCrouching) {
-        // Make sure we're on server side
-        if (player.level().isClientSide) {
+    private static void handleServerRightClick(ServerPlayer player, boolean crouch) {
+        if (isServerBlocked(player)) {
+            System.out.println("DEBUG: KatanaInputHandler SERVER - BLOCKED right click for " + player.getName().getString());
             return;
         }
 
-        ItemStack heldItem = player.getMainHandItem();
+        ItemStack item = player.getMainHandItem();
+        if (item.getItem() instanceof SimpleKatana katana) {
+            SimpleKatana instance = getKatanaInstance(player, katana);
 
-        if (heldItem.getItem() instanceof SimpleKatana simpleKatana) {
-            SimpleKatana katanaInstance = getSimpleKatanaForPlayer(player, simpleKatana);
-            ItemStack itemStack = player.getMainHandItem();
-            InteractionHand hand = InteractionHand.MAIN_HAND;
-
-            boolean originalCrouchState = player.isShiftKeyDown();
-            if (isCrouching != originalCrouchState) {
-                player.setShiftKeyDown(isCrouching);
+            // Set crouch state temporarily
+            boolean originalCrouch = player.isShiftKeyDown();
+            if (crouch != originalCrouch) {
+                player.setShiftKeyDown(crouch);
             }
 
-            String moveUsed = null;
+            // Get move name for feedback
+            String moveName = null;
             var moveset = BreathingStyleHelper.getMoveset(player);
             if (moveset != null) {
-                if (isCrouching) {
-                    moveUsed = moveset.getCrouchRightClickMoveName();
+                if (crouch) {
+                    moveName = moveset.getCrouchRightClickMoveName();
+                    if (moveName != null && moveName.contains("Thunder Clap")) {
+                        ThunderClapFlashAttack.setCrouchDash(player, true);
+                    }
                 } else {
-                    moveUsed = moveset.getRightClickMoveName();
+                    moveName = moveset.getRightClickMoveName();
                 }
             }
 
-            katanaInstance.use(player.level(), player, hand);
+            // Execute
+            instance.use(player.level(), player, InteractionHand.MAIN_HAND);
 
-            if (player instanceof ServerPlayer serverPlayer) {
-                sendMoveUsedFeedback(serverPlayer, moveUsed, isCrouching);
+            // Send feedback
+            sendFeedback(player, moveName, crouch);
+
+            // Restore crouch state
+            if (crouch != originalCrouch) {
+                player.setShiftKeyDown(originalCrouch);
             }
 
-            if (isCrouching != originalCrouchState) {
-                player.setShiftKeyDown(originalCrouchState);
-            }
+            System.out.println("DEBUG: KatanaInputHandler SERVER - Executed right click (" + (crouch ? "crouch" : "normal") + ") for " + player.getName().getString());
         }
     }
 
-    private static void sendMoveUsedFeedback(ServerPlayer player, String moveName, boolean isCrouching) {
+    private static boolean isServerBlocked(Player player) {
+        Long blockedUntil = BLOCKED_UNTIL.get(player.getUUID());
+        if (blockedUntil != null) {
+            long currentTime = player.level().getGameTime();
+            if (currentTime < blockedUntil) {
+                return true;
+            } else {
+                BLOCKED_UNTIL.remove(player.getUUID());
+            }
+        }
+        return false;
+    }
+
+    private static void sendFeedback(ServerPlayer player, String moveName, boolean crouch) {
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
         buf.writeBoolean(moveName != null);
+
         if (moveName != null) {
             buf.writeUtf(moveName);
 
@@ -271,73 +266,97 @@ public class KatanaInputHandler {
             } else if (moveName.contains("Heat Lightning")) {
                 cooldown = 40;
             }
-
             buf.writeInt(cooldown);
         } else {
-            buf.writeBoolean(isCrouching);
+            buf.writeBoolean(crouch);
         }
 
-        NetworkManager.sendToPlayer(player, new ResourceLocation("nichirin", "move_feedback"), buf);
+        NetworkManager.sendToPlayer(player, FEEDBACK_ID, buf);
     }
 
-    static {
-        if (isClientSide()) {
-            NetworkManager.registerReceiver(NetworkManager.Side.S2C, new ResourceLocation("nichirin", "move_feedback"), (buf, context) -> {
-                boolean hasBreathingMove = buf.readBoolean();
+    private static void registerSharedEvents() {
+        // Entity attack blocking
+        PlayerEvent.ATTACK_ENTITY.register((player, level, entity, hand, hitResult) -> {
+            ItemStack item = player.getItemInHand(hand);
+            if (!(item.getItem() instanceof SimpleKatana)) {
+                return EventResult.pass();
+            }
 
-                context.queue(() -> {
-                    if (hasBreathingMove) {
-                        String moveName = buf.readUtf();
-                        int cooldown = buf.readInt();
+            if (level.isClientSide) {
+                if (isWheelBlocking()) {
+                    System.out.println("DEBUG: KatanaInputHandler CLIENT - BLOCKED entity attack (wheel)");
+                    return EventResult.interruptFalse();
+                }
+                sendLeftClick(player);
+            }
 
-                        CooldownHUD.setCooldown(moveName, cooldown);
+            return EventResult.interruptFalse();
+        });
 
-                        if (moveName.contains("Thunder Clap")) {
-                            AnimationUtils.playAnimation(Minecraft.getInstance().player, "thunder_clap_flash");
-                        } else if (moveName.contains("Heat Lightning")) {
-                            AnimationUtils.playAnimation(Minecraft.getInstance().player, "heat_lightning");
-                        }
-                    } else {
-                        boolean wasCrouching = buf.readBoolean();
+        // Player ticking
+        TickEvent.PLAYER_POST.register(player -> {
+            if (!player.level().isClientSide) {
+                tickPlayer(player);
+            }
+        });
 
-                        if (wasCrouching) {
-                            AnimationUtils.playAnimation(Minecraft.getInstance().player, "rising_slash");
-                            CooldownHUD.setCooldown("Rising Slash", 25);
-                        } else {
-                            AnimationUtils.playAnimation(Minecraft.getInstance().player, "double_slash");
-                            CooldownHUD.setCooldown("Double Slash", 20);
-                        }
-                    }
-                });
-            });
-        }
+        // Cleanup
+        PlayerEvent.PLAYER_QUIT.register(player -> {
+            if (!player.level().isClientSide) {
+                cleanupPlayer(player);
+            }
+        });
     }
 
     private static void tickPlayer(Player player) {
-        SimpleKatana katana = PLAYER_SIMPLE_KATANAS.get(player.getUUID());
+        SimpleKatana katana = PLAYER_KATANAS.get(player.getUUID());
         if (katana != null) {
             ItemStack mainHand = player.getMainHandItem();
             if (mainHand.getItem() instanceof SimpleKatana) {
                 katana.tick(player);
             } else {
-                PLAYER_SIMPLE_KATANAS.remove(player.getUUID());
+                PLAYER_KATANAS.remove(player.getUUID());
             }
         }
     }
 
-    private static SimpleKatana getSimpleKatanaForPlayer(Player player, SimpleKatana itemKatana) {
-        UUID playerId = player.getUUID();
-        SimpleKatana katana = PLAYER_SIMPLE_KATANAS.get(playerId);
+    private static SimpleKatana getKatanaInstance(Player player, SimpleKatana item) {
+        UUID id = player.getUUID();
+        SimpleKatana existing = PLAYER_KATANAS.get(id);
 
-        if (katana == null || katana != itemKatana) {
-            PLAYER_SIMPLE_KATANAS.put(playerId, itemKatana);
-            return itemKatana;
+        if (existing == null || existing != item) {
+            PLAYER_KATANAS.put(id, item);
+            return item;
         }
 
-        return katana;
+        return existing;
     }
 
     public static void cleanupPlayer(Player player) {
-        PLAYER_SIMPLE_KATANAS.remove(player.getUUID());
+        UUID id = player.getUUID();
+        PLAYER_KATANAS.remove(id);
+        BLOCKED_UNTIL.remove(id);
+        System.out.println("DEBUG: KatanaInputHandler - Cleaned up " + player.getName().getString());
+    }
+
+    /**
+     * Block katana inputs after breathing move execution
+     */
+    public static void blockAfterBreathingMove(Player player) {
+        if (!player.level().isClientSide) {
+            long blockUntil = player.level().getGameTime() + BLOCK_TICKS;
+            BLOCKED_UNTIL.put(player.getUUID(), blockUntil);
+            System.out.println("DEBUG: KatanaInputHandler - Blocked " + player.getName().getString() +
+                    " until tick " + blockUntil + " (breathing move executed)");
+        }
+    }
+
+    private static boolean isClientSide() {
+        try {
+            Class.forName("net.minecraft.client.Minecraft");
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
     }
 }

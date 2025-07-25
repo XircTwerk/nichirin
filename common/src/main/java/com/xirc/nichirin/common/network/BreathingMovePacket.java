@@ -3,6 +3,8 @@ package com.xirc.nichirin.common.network;
 import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.data.BreathingStyleHelper;
+import com.xirc.nichirin.common.util.KatanaInputHandler;
+import com.xirc.nichirin.common.util.MultiplayerInputHandler;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
@@ -58,11 +60,16 @@ public class BreathingMovePacket {
         if (pressed) {
             AbstractMoveset.MoveConfiguration config = moveset.getMove(moveIndex);
             if (config != null) {
-                // Let the moveset handle cooldown checking
+                // FIRST: Block inputs in MultiplayerInputHandler to prevent race conditions
+                MultiplayerInputHandler.blockInputsAfterBreathingMove(player);
+
+                // THEN: Execute the breathing move
                 moveset.performMove(player, moveIndex);
 
-                // Only send cooldown packet if move was actually executed
-                // The moveset will handle the visual feedback now
+                // Also block katana inputs (redundant but safe)
+                KatanaInputHandler.blockAfterBreathingMove(player);
+
+                System.out.println("DEBUG: BreathingMovePacket - Executed move " + moveIndex + " and blocked ALL inputs for " + player.getName().getString());
             }
         }
     }
