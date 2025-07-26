@@ -11,6 +11,7 @@ import com.xirc.nichirin.common.event.BreathingEventHandler;
 import com.xirc.nichirin.common.event.StaminaEventHandler;
 import com.xirc.nichirin.common.event.ThunderBreathingUnlockHandler;
 import com.xirc.nichirin.common.util.KatanaInputHandler;
+import com.xirc.nichirin.common.util.PlayerStats;
 import com.xirc.nichirin.registry.*;
 import dev.architectury.platform.Platform;
 import dev.architectury.registry.registries.DeferredRegister;
@@ -46,6 +47,7 @@ public final class BreathOfNichirin {
         NichirinEffectRegistry.init();
         NichirinCommandRegistry.init();
 
+        PlayerStats.initialize();
         MovesetRegistry.init();
         PlayerDataProvider.register();
         BreathingStyleSyncPacket.register();
