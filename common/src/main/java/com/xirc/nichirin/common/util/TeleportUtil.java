@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.util;
 
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
@@ -35,7 +36,6 @@ public class TeleportUtil {
 
         // CRITICAL: Only execute teleportation on server side
         if (world.isClientSide) {
-            System.out.println("DEBUG: TeleportUtil - Blocked client-side teleport attempt");
             return false;
         }
 
@@ -46,14 +46,10 @@ public class TeleportUtil {
             // Try to find nearby safe position with more relaxed criteria
             targetPos = findReasonablePosition(world, targetPos, entity, options.maxSafeSearchRadius);
             if (targetPos == null) {
-                System.out.println("DEBUG: TeleportUtil - Could not find reasonable position, teleporting anyway");
                 // Don't fail - just teleport to original position
                 targetPos = entity.position().add(entity.getLookAngle().scale(1.0)); // Minimal teleport
             }
         }
-
-        System.out.println("DEBUG: TeleportUtil - Server teleporting " + entity.getName().getString() +
-                " from " + startPos + " to " + targetPos);
 
         // Pre-teleport callback
         if (options.preTeleport != null) {
@@ -84,8 +80,6 @@ public class TeleportUtil {
             // Reset velocity and sync
             entity.setDeltaMovement(Vec3.ZERO);
             serverPlayer.connection.send(new ClientboundSetEntityMotionPacket(entity));
-
-            System.out.println("DEBUG: TeleportUtil - Forced sync for player " + serverPlayer.getName().getString());
         } else {
             // For other entities: Standard teleport
             entity.teleportTo(targetPos.x, targetPos.y, targetPos.z);
@@ -143,7 +137,6 @@ public class TeleportUtil {
 
         // Only fail if BOTH head and feet are in solid blocks (certain suffocation)
         if (feetSolid && headSolid) {
-            System.out.println("DEBUG: TeleportUtil - Position rejected: both head and feet in solid blocks");
             return false;
         }
 
@@ -165,7 +158,6 @@ public class TeleportUtil {
         for (Vec3 offset : offsets) {
             Vec3 testPos = pos.add(offset.scale(1.5)); // 1.5 blocks away
             if (isPositionReasonable(world, testPos, entity)) {
-                System.out.println("DEBUG: TeleportUtil - Found reasonable position at " + testPos);
                 return testPos;
             }
         }
@@ -176,12 +168,11 @@ public class TeleportUtil {
             return upPos;
         }
 
-        System.out.println("DEBUG: TeleportUtil - No reasonable position found, using original");
         return pos; // Just use original position
     }
 
     /**
-     * FIXED: Always successful direction teleport with minimal safety checking
+     * FIXED: Direction teleport with block collision check
      */
     public static boolean teleportInDirection(LivingEntity entity, float distance, TeleportOptions options) {
         Level level = entity.level();
@@ -195,46 +186,31 @@ public class TeleportUtil {
         Vec3 lookVec = entity.getLookAngle();
         Vec3 targetPos = startPos.add(lookVec.scale(distance));
 
-        System.out.println("DEBUG: TeleportUtil - Direction teleport for " + entity.getName().getString() +
-                " distance: " + distance + " to: " + targetPos);
+        // NEW: Check for blocks in the way and adjust distance
+        Vec3 finalPos = checkForBlocksInPath(level, startPos, lookVec, distance);
 
-        // FIXED: Much less strict checking - only check if we REALLY need to
-        if (options.requireSafe) {
-            // Only do minimal collision checking for Thunder Breathing moves
-            Vec3 adjustedPos = findSafeDirectionalPosition(level, startPos, lookVec, distance);
-            if (adjustedPos != null) {
-                targetPos = adjustedPos;
-            }
-            // Don't fail if we can't find safe position - just use original target
-        }
-
-        // Always attempt the teleport
-        return teleport(entity, targetPos, options);
+        return teleport(entity, finalPos, options);
     }
 
     /**
-     * FIXED: Simplified directional safety check - finds furthest reasonable position
+     * NEW: Check for solid blocks in teleport path and stop before them
      */
-    private static Vec3 findSafeDirectionalPosition(Level level, Vec3 start, Vec3 direction, double maxDistance) {
-        // Check in larger steps (0.5 blocks) for better performance
-        double stepSize = 0.5;
-        Vec3 lastGoodPosition = start;
+    private static Vec3 checkForBlocksInPath(Level level, Vec3 start, Vec3 direction, double maxDistance) {
+        double stepSize = 0.1; // Check every 0.1 blocks
 
-        for (double dist = stepSize; dist <= maxDistance; dist += stepSize) {
-            Vec3 testPos = start.add(direction.scale(dist));
+        for (double distance = stepSize; distance <= maxDistance; distance += stepSize) {
+            Vec3 checkPos = start.add(direction.scale(distance));
+            BlockPos blockPos = new BlockPos((int)Math.floor(checkPos.x), (int)Math.floor(checkPos.y), (int)Math.floor(checkPos.z));
+            BlockState blockState = level.getBlockState(blockPos);
 
-            // Only check if position is reasonable (not deadly)
-            if (isPositionReasonable(level, testPos, null)) {
-                lastGoodPosition = testPos;
-            } else {
-                // Hit a problematic area, return last good position
-                double actualDistance = start.distanceTo(lastGoodPosition);
-                System.out.println("DEBUG: TeleportUtil - Stopped at distance " + actualDistance + "/" + maxDistance);
-                return lastGoodPosition;
+            // If we hit a solid block, stop just before it
+            if (!blockState.isAir() && blockState.isSolidRender(level, blockPos)) {
+                double stopDistance = Math.max(0, distance - stepSize);
+                return start.add(direction.scale(stopDistance));
             }
         }
 
-        // Made it the full distance
+        // No blocks in the way, return full distance
         return start.add(direction.scale(maxDistance));
     }
 
@@ -305,8 +281,6 @@ public class TeleportUtil {
                 } else {
                     target.hurt(attacker.damageSources().playerAttack((Player)attacker), options.pathDamage);
                 }
-
-                System.out.println("DEBUG: TeleportUtil - Hit " + target.getName().getString() + " during teleport");
             }
         }
     }
