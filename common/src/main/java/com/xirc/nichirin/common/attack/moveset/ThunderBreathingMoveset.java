@@ -179,7 +179,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
         ThunderClapFlashAttack.setCrouchDash(player, isCrouching);
 
         // Check breath cost for Thunder Clap Flash
-        float breathCost = 15.0f; // Moderate cost since it's spammable
+        float breathCost = 7.5f; // for some reason it's double the amount. 7.5 would be 15 breath cost.
         if (!BreathingManager.hasBreath(player, breathCost)) {
             player.displayClientMessage(
                     Component.literal("Not enough breath for Thunderclap and Flash!")
