@@ -10,6 +10,8 @@ import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.event.BreathingEventHandler;
 import com.xirc.nichirin.common.event.StaminaEventHandler;
 import com.xirc.nichirin.common.event.ThunderBreathingUnlockHandler;
+import com.xirc.nichirin.common.handler.FallDamageHandler;
+import com.xirc.nichirin.common.handler.PlayerTickHandler;
 import com.xirc.nichirin.common.util.KatanaInputHandler;
 import com.xirc.nichirin.common.util.PlayerStats;
 import com.xirc.nichirin.registry.*;
@@ -35,10 +37,6 @@ public final class BreathOfNichirin {
         NichirinItemRegistry.init();
         NichirinCreativeTabRegistry.init();
         OreRegistry.register();
-
-        // Register the registries themselves
-        NichirinItemRegistry.ITEM_REGISTRY.register();
-        CREATIVE_TAB_REGISTRY.register();
         NichirinMoveRegistry.init();
         NichirinEntityRegistry.init();
         NichirinPacketRegistry.init();
@@ -48,15 +46,24 @@ public final class BreathOfNichirin {
         NichirinEffectRegistry.init();
         NichirinCommandRegistry.init();
 
+        // Register the registries themselves
+        NichirinItemRegistry.ITEM_REGISTRY.register();
+        CREATIVE_TAB_REGISTRY.register();
+
+        //handlers
+        PlayerTickHandler.register();
+        FallDamageHandler.register();
+        KatanaInputHandler.register();
+        BreathingEventHandler.register();
+        StaminaEventHandler.register();
+
+        //data
         PlayerStats.initialize();
         MovesetRegistry.init();
         PlayerDataProvider.register();
         BreathingStyleSyncPacket.register();
         NichirinCriteriaTriggers.init();
 
-        KatanaInputHandler.register();
-        BreathingEventHandler.register();
-        StaminaEventHandler.register();
 
         LOGGER.info("=== NICHIRIN COMMON INITIALIZATION COMPLETE ===");
 

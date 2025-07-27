@@ -4,11 +4,8 @@
   "compatibilityLevel": "JAVA_17",
   "minVersion": "0.8",
   "client": [
-    "client.ClientPlayerDoubleJumpMixin"
   ],
   "mixins": [
-    "PlayerDoubleJumpMixin",
-    "PlayerFallDamageMixin"
   ],
   "injectors": {
     "defaultRequire": 1
