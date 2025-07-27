@@ -12,10 +12,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.HashMap;
@@ -35,9 +32,8 @@ import java.util.Set;
 public class HeatLightningAttack extends ThunderBreathingAttackBase {
 
     private final Set<LivingEntity> hitEntities = new HashSet<>();
-    private final Map<LivingEntity, Integer> launchedEntities = new HashMap<>(); // Track with tick count
-    private final Set<LivingEntity> struckByLightning = new HashSet<>();
-    private float launchPower = 1.5f;
+    private float launchPower = 1.125f; // 75% of original 1.5f
+    private boolean lightningStruck = false; // Track if lightning has been summoned
 
     public HeatLightningAttack() {
         // No configuration here - everything comes from moveset
@@ -47,8 +43,7 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
     @Override
     protected void onStart() {
         hitEntities.clear();
-        launchedEntities.clear();
-        struckByLightning.clear();
+        lightningStruck = false;
 
         // Rising slash sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
@@ -64,8 +59,24 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
             performRisingSlash();
         }
 
-        // Check for airborne targets continuously
-        checkAndStrikeAirborneTargets();
+        // ✅ FIXED: Use range instead of exact tick to account for thread timing differences
+        if (tickCount >= windup + 20 && tickCount <= windup + 30 && !lightningStruck && !hitEntities.isEmpty()) {
+            System.out.println("DEBUG: About to strike lightning - Tick: " + tickCount + ", hitEntities: " + hitEntities.size());
+            strikeAllTargetsWithLightning();
+            lightningStruck = true;
+            System.out.println("DEBUG: Lightning struck all targets at tick " + tickCount);
+        }
+
+        // Add debug info to see what's happening
+        if (tickCount % 5 == 0) {
+            System.out.println("DEBUG: Tick " + tickCount + ", hitEntities size: " + hitEntities.size() + ", lightningStruck: " + lightningStruck);
+        }
+
+        // Stop attack after lightning has struck or if no targets were hit
+        if ((lightningStruck && tickCount > windup + 30) || (hitEntities.isEmpty() && tickCount > windup + 30)) {
+            System.out.println("DEBUG: HeatLightningAttack - Stopping attack (lightningStruck: " + lightningStruck + ", hitEntities: " + hitEntities.size() + ", tickCount: " + tickCount + ")");
+            stop();
+        }
     }
 
     private void performRisingSlash() {
@@ -130,7 +141,6 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
                 launchTarget(target);
 
                 hitEntities.add(target);
-                launchedEntities.put(target, tickCount);
 
                 System.out.println("DEBUG: Heat Lightning - Hit and launched " + target.getName().getString());
             }
@@ -160,84 +170,72 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
         System.out.println("DEBUG: Heat Lightning - Launched " + target.getName().getString() + " with velocity " + launchVelocity);
     }
 
-    private void checkAndStrikeAirborneTargets() {
+    /**
+     * ✅ NEW METHOD: Strike all hit targets with lightning at once
+     */
+    private void strikeAllTargetsWithLightning() {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
-        // Check all launched entities
-        Set<LivingEntity> toRemove = new HashSet<>();
+        for (LivingEntity target : hitEntities) {
+            // Get target position (even if dead, we can still get last known position)
+            Vec3 targetPos = target.position();
 
-        for (Map.Entry<LivingEntity, Integer> entry : launchedEntities.entrySet()) {
-            LivingEntity target = entry.getKey();
-            int launchTick = entry.getValue();
+            // Create real lightning bolt at target position
+            LightningBolt lightning = EntityType.LIGHTNING_BOLT.create(world);
+            if (lightning != null) {
+                lightning.moveTo(targetPos);
+                lightning.setCause((ServerPlayer) user);
 
-            // Wait at least 5 ticks after launch to ensure they're airborne
-            if (tickCount - launchTick < 5) continue;
+                // ✅ FIXED: Don't set visual only - let it be a real lightning bolt
+                // lightning.setVisualOnly(true);  // ← REMOVED THIS LINE
 
-            if (!target.isAlive()) {
-                toRemove.add(target);
-                continue;
+                serverLevel.addFreshEntity(lightning);
+                System.out.println("DEBUG: Lightning bolt created at " + targetPos + " for " + target.getName().getString());
             }
 
-            // Check if target is airborne and hasn't been struck yet
-            boolean isAirborne = !target.onGround() || target.getDeltaMovement().y > 0.1;
+            // Apply our own controlled lightning damage (if still alive)
+            if (target.isAlive()) {
+                applyLightningDamage(target);
 
-            if (isAirborne && !struckByLightning.contains(target)) {
-                // Strike with lightning
-                strikeWithLightning(serverLevel, target);
-                struckByLightning.add(target);
-                toRemove.add(target);
+                // Apply the shocked effect after lightning hits
+                target.addEffect(new MobEffectInstance(
+                        NichirinEffectRegistry.SHOCKED.get(),
+                        hitStun,
+                        0,
+                        false,
+                        true
+                ));
+                System.out.println("DEBUG: Applied lightning effects to " + target.getName().getString());
+            } else {
+                System.out.println("DEBUG: Target " + target.getName().getString() + " is dead, lightning strikes visually only");
             }
-
-            // Remove if they've been in the air too long without being struck (safety)
-            if (tickCount - launchTick > 40) {
-                toRemove.add(target);
-            }
-        }
-
-        // Clean up struck targets
-        for (LivingEntity entity : toRemove) {
-            launchedEntities.remove(entity);
         }
     }
 
-    private void strikeWithLightning(ServerLevel serverLevel, LivingEntity target) {
-        // Create lightning bolt at target
-        LightningBolt lightning = EntityType.LIGHTNING_BOLT.create(world);
-        if (lightning != null) {
-            lightning.moveTo(target.position());
-            lightning.setCause((ServerPlayer) user); // Remove setVisualOnly to make it deal damage
-            serverLevel.addFreshEntity(lightning);
+    /**
+     * ✅ NEW METHOD: Applies controlled lightning damage to only the intended target
+     */
+    private void applyLightningDamage(LivingEntity target) {
+        // Lightning damage (magic damage to bypass armor - using configured damage)
+        DamageSource lightningSource = user.damageSources().magic();
+        target.hurt(lightningSource, damage * 0.5f);
+
+        // Additional lightning particles at impact
+        if (world instanceof ServerLevel serverLevel) {
+            serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK,
+                    target.getX(), target.getY() + target.getBbHeight() / 2, target.getZ(),
+                    40, 0.8, 0.8, 0.8, 0.3);
         }
 
-        // Extra damage while airborne (magic damage to bypass armor - using configured damage)
-        DamageSource source = user.damageSources().magic();
-        target.hurt(source, damage * 0.5f);
+        // Set the target on fire briefly (like real lightning)
+        target.setSecondsOnFire(3);
 
-        // NOW apply the shocked effect after lightning hits (using configured hitStun)
-        target.addEffect(new MobEffectInstance(
-                NichirinEffectRegistry.SHOCKED.get(),
-                hitStun,
-                0,
-                false,
-                true
-        ));
-
-        // Lightning particles
-        serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK,
-                target.getX(), target.getY(), target.getZ(),
-                40, 0.8, 0.8, 0.8, 0.3);
-
-        // Thunder sound
-        world.playSound(null, target.getX(), target.getY(), target.getZ(),
-                SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.PLAYERS, 1.0f, 1.0f);
-
-        System.out.println("DEBUG: Heat Lightning - Lightning struck " + target.getName().getString());
+        System.out.println("DEBUG: Applied lightning damage to " + target.getName().getString());
     }
 
     @Override
     protected void onStop() {
         hitEntities.clear();
-        launchedEntities.clear();
-        struckByLightning.clear();
+        lightningStruck = false;
     }
 }
