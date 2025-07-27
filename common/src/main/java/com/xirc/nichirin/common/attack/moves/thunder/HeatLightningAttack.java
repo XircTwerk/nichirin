@@ -18,7 +18,6 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -27,7 +26,7 @@ import java.util.Set;
 
 /**
  * Fifth Form: Heat Lightning
- * Auto-targets the closest entity you're looking at with an upward slash
+ * Performs an upward slash in the direction the user is looking
  * Then strikes airborne targets with lightning
  *
  * All configuration now comes from the moveset builder.
@@ -35,13 +34,10 @@ import java.util.Set;
  */
 public class HeatLightningAttack extends ThunderBreathingAttackBase {
 
-    private static final double MAX_TARGET_RANGE = 15.0; // Fixed range for targeting
-
     private final Set<LivingEntity> hitEntities = new HashSet<>();
     private final Map<LivingEntity, Integer> launchedEntities = new HashMap<>(); // Track with tick count
     private final Set<LivingEntity> struckByLightning = new HashSet<>();
     private float launchPower = 1.5f;
-    private LivingEntity targetedEntity = null;
 
     public HeatLightningAttack() {
         // No configuration here - everything comes from moveset
@@ -53,16 +49,6 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
         hitEntities.clear();
         launchedEntities.clear();
         struckByLightning.clear();
-        targetedEntity = null;
-
-        // Find the closest entity in range
-        targetedEntity = findClosestEntity();
-
-        if (targetedEntity == null) {
-            System.out.println("DEBUG: Heat Lightning - No entity in range, attack will miss");
-        } else {
-            System.out.println("DEBUG: Heat Lightning - Auto-targeted: " + targetedEntity.getName().getString());
-        }
 
         // Rising slash sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
@@ -82,59 +68,19 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
         checkAndStrikeAirborneTargets();
     }
 
-    /**
-     * Find the closest entity within range (no look angle requirement)
-     */
-    private LivingEntity findClosestEntity() {
-        Vec3 playerPos = user.getEyePosition();
-
-        // Search for entities within fixed range
-        AABB searchBox = new AABB(
-                user.getX() - MAX_TARGET_RANGE, user.getY() - MAX_TARGET_RANGE, user.getZ() - MAX_TARGET_RANGE,
-                user.getX() + MAX_TARGET_RANGE, user.getY() + MAX_TARGET_RANGE, user.getZ() + MAX_TARGET_RANGE
-        );
-
-        List<LivingEntity> nearbyEntities = world.getEntitiesOfClass(LivingEntity.class, searchBox,
-                entity -> entity != user && entity.isAlive() && !entity.isSpectator());
-
-        if (nearbyEntities.isEmpty()) {
-            return null;
-        }
-
-        // Find the closest entity (no line of sight or angle requirements)
-        LivingEntity closestEntity = nearbyEntities.stream()
-                .min(Comparator.comparingDouble(entity -> entity.distanceToSqr(user)))
-                .orElse(null);
-
-        if (closestEntity != null) {
-            double distance = Math.sqrt(closestEntity.distanceToSqr(user));
-            System.out.println("DEBUG: Heat Lightning - Closest entity at distance " +
-                    String.format("%.2f", distance) + " blocks");
-        }
-
-        return closestEntity;
-    }
-
     private void performRisingSlash() {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDir = user.getLookAngle();
 
-        // If we have a targeted entity, create slash effect toward them
+        // Create slash effect in the direction the user is looking
         Vec3 slashDirection = lookDir;
-        Vec3 slashBase = userPos.add(lookDir.scale(range * 0.3));
-
-        if (targetedEntity != null) {
-            // Aim the slash toward the targeted entity
-            Vec3 toTarget = targetedEntity.position().subtract(userPos).normalize();
-            slashDirection = toTarget;
-            slashBase = userPos.add(toTarget.scale(2.0)); // Closer to ensure hit
-        }
+        Vec3 slashBase = userPos.add(lookDir.scale(2.0));
 
         // Create visual effect - vertical slash
         if (world instanceof ServerLevel serverLevel) {
             float slashHeight = 4.0f;
 
-            // Vertical line of particles toward target
+            // Vertical line of particles in look direction
             for (int i = 0; i <= 10; i++) {
                 float progress = i / 10.0f;
                 Vec3 particlePos = slashBase.add(0, progress * slashHeight, 0);
@@ -149,44 +95,45 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
                             5, 0.2, 0.2, 0.2, 0.05);
                 }
             }
-
-            // Extra particles connecting to target
-            if (targetedEntity != null) {
-                // Line of particles from player to target
-                Vec3 playerEye = user.getEyePosition();
-                Vec3 targetPos = targetedEntity.getEyePosition();
-                int steps = 10;
-
-                for (int i = 0; i <= steps; i++) {
-                    double t = i / (double) steps;
-                    Vec3 particlePos = playerEye.lerp(targetPos, t);
-
-                    serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK,
-                            particlePos.x, particlePos.y, particlePos.z,
-                            3, 0.15, 0.15, 0.15, 0.05);
-                }
-            }
         }
 
         // Thunder sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, 0.4f, 2.5f);
 
-        // Hit the targeted entity if we have one
-        if (targetedEntity != null && targetedEntity.isAlive()) {
-            // Create armor-bypassing damage source (using configured damage)
-            DamageSource armorPiercingSource = user.damageSources().magic();
-            targetedEntity.hurt(armorPiercingSource, damage);
+        // Hit entities in the attack area
+        hitEntitiesInSlashArea(slashBase, slashDirection);
+    }
 
-            // Launch the target
-            launchTarget(targetedEntity);
+    private void hitEntitiesInSlashArea(Vec3 slashBase, Vec3 slashDirection) {
+        // Define the attack area
+        AABB attackArea = new AABB(
+                slashBase.x - range, slashBase.y, slashBase.z - range,
+                slashBase.x + range, slashBase.y + 4.0, slashBase.z + range
+        );
 
-            hitEntities.add(targetedEntity);
-            launchedEntities.put(targetedEntity, tickCount);
+        List<LivingEntity> entitiesInArea = world.getEntitiesOfClass(LivingEntity.class, attackArea,
+                entity -> entity != user && entity.isAlive() && !entity.isSpectator());
 
-            System.out.println("DEBUG: Heat Lightning - Hit and launched " + targetedEntity.getName().getString());
-        } else {
-            System.out.println("DEBUG: Heat Lightning - No target to hit");
+        for (LivingEntity target : entitiesInArea) {
+            // Check if entity is within the slash area and in front of the user
+            Vec3 toEntity = target.position().subtract(user.position()).normalize();
+            double dot = slashDirection.dot(toEntity);
+
+            // Only hit entities that are reasonably in front of the user
+            if (dot > 0.3) {
+                // Create armor-bypassing damage source (using configured damage)
+                DamageSource armorPiercingSource = user.damageSources().magic();
+                target.hurt(armorPiercingSource, damage);
+
+                // Launch the target
+                launchTarget(target);
+
+                hitEntities.add(target);
+                launchedEntities.put(target, tickCount);
+
+                System.out.println("DEBUG: Heat Lightning - Hit and launched " + target.getName().getString());
+            }
         }
     }
 
@@ -292,6 +239,5 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
         hitEntities.clear();
         launchedEntities.clear();
         struckByLightning.clear();
-        targetedEntity = null;
     }
 }
