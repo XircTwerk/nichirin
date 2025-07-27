@@ -6,9 +6,9 @@ import dev.architectury.event.events.common.CommandRegistrationEvent;
 /**
  * Registry for all Nichirin commands
  */
-public class NichirinCommandRegistry {
+public interface NichirinCommandRegistry {
 
-    public static void init() {
+    static void init() {
         CommandRegistrationEvent.EVENT.register((dispatcher, registryAccess, environment) -> {
             BreathingCommand.register(dispatcher);
         });

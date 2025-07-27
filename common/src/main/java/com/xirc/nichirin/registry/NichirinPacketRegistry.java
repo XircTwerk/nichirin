@@ -15,22 +15,22 @@ import java.util.Map;
 /**
  * FIXED: Remove double registration, keep it simple
  */
-public class NichirinPacketRegistry {
+public interface NichirinPacketRegistry {
 
     // Packet IDs
-    public static final ResourceLocation DOUBLE_JUMP_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "double_jump");
-    public static final ResourceLocation BREATHING_MOVE_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "breathing_move");
-    public static final ResourceLocation BREATHING_EFFECT_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "breathing_effect");
-    public static final ResourceLocation SYNC_BREATH_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "sync_breath");
-    public static final ResourceLocation SYNC_STAMINA_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "sync_stamina");
+    ResourceLocation DOUBLE_JUMP_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "double_jump");
+    ResourceLocation BREATHING_MOVE_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "breathing_move");
+    ResourceLocation BREATHING_EFFECT_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "breathing_effect");
+    ResourceLocation SYNC_BREATH_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "sync_breath");
+    ResourceLocation SYNC_STAMINA_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "sync_stamina");
 
     // Packet class mappings
-    private static final Map<Class<?>, ResourceLocation> PACKET_IDS = new HashMap<>();
+    Map<Class<?>, ResourceLocation> PACKET_IDS = new HashMap<>();
 
     /**
      * FIXED: Single registration point - no double registration
      */
-    public static void init() {
+    static void init() {
         // Map packet classes to IDs
         PACKET_IDS.put(DoubleJumpPacket.class, DOUBLE_JUMP_ID);
         PACKET_IDS.put(BreathingMovePacket.class, BREATHING_MOVE_ID);

@@ -6,14 +6,14 @@ import dev.architectury.registry.registries.RegistrySupplier;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.registries.Registries;
 
-public class NichirinParticleRegistry {
-    public static final DeferredRegister<ParticleType<?>> PARTICLES =
+public interface NichirinParticleRegistry {
+    DeferredRegister<ParticleType<?>> PARTICLES =
             DeferredRegister.create("nichirin", Registries.PARTICLE_TYPE);
 
-    public static final RegistrySupplier<ThunderParticleType> THUNDER =
+    RegistrySupplier<ThunderParticleType> THUNDER =
             PARTICLES.register("thunder", ThunderParticleType::new);
 
-    public static void init() {
+    static void init() {
         PARTICLES.register();
     }
 }

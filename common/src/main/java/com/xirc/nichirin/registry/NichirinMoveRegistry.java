@@ -13,18 +13,18 @@ import java.util.List;
  * Global registry for all moves across all movesets
  * Flexible system that doesn't care about attack types
  */
-public class NichirinMoveRegistry {
+public interface NichirinMoveRegistry {
 
     // Map of all registered moves by their full ID (moveset:move)
-    private static final Map<ResourceLocation, MoveInfo> GLOBAL_MOVES = new HashMap<>();
+    Map<ResourceLocation, MoveInfo> GLOBAL_MOVES = new HashMap<>();
 
     // Map of all registered movesets
-    private static final Map<String, AbstractMoveset> MOVESETS = new HashMap<>();
+    Map<String, AbstractMoveset> MOVESETS = new HashMap<>();
 
     /**
      * Register a moveset and all its moves
      */
-    public static void registerMoveset(AbstractMoveset moveset) {
+    static void registerMoveset(AbstractMoveset moveset) {
         MOVESETS.put(moveset.getMovesetId(), moveset);
 
         // Register each move globally
@@ -80,21 +80,21 @@ public class NichirinMoveRegistry {
     /**
      * Get a specific move by its full ID
      */
-    public static MoveInfo getMove(ResourceLocation id) {
+    static MoveInfo getMove(ResourceLocation id) {
         return GLOBAL_MOVES.get(id);
     }
 
     /**
      * Get a specific move by moveset and move name
      */
-    public static MoveInfo getMove(String movesetId, String moveId) {
+    static MoveInfo getMove(String movesetId, String moveId) {
         return getMove(new ResourceLocation(BreathOfNichirin.MOD_ID, movesetId + "/" + moveId));
     }
 
     /**
      * Get all moves for a specific moveset
      */
-    public static List<MoveInfo> getMovesForMoveset(String movesetId) {
+    static List<MoveInfo> getMovesForMoveset(String movesetId) {
         List<MoveInfo> moves = new ArrayList<>();
         for (MoveInfo info : GLOBAL_MOVES.values()) {
             if (info.movesetId.equals(movesetId)) {
@@ -107,35 +107,35 @@ public class NichirinMoveRegistry {
     /**
      * Get a moveset by ID
      */
-    public static AbstractMoveset getMoveset(String movesetId) {
+    static AbstractMoveset getMoveset(String movesetId) {
         return MOVESETS.get(movesetId);
     }
 
     /**
      * Get all registered movesets
      */
-    public static Map<String, AbstractMoveset> getAllMovesets() {
+    static Map<String, AbstractMoveset> getAllMovesets() {
         return new HashMap<>(MOVESETS);
     }
 
     /**
      * Get all registered moves globally
      */
-    public static Map<ResourceLocation, MoveInfo> getAllMoves() {
+    static Map<ResourceLocation, MoveInfo> getAllMoves() {
         return new HashMap<>(GLOBAL_MOVES);
     }
 
     /**
      * Get total number of moves across all movesets
      */
-    public static int getTotalMoveCount() {
+    static int getTotalMoveCount() {
         return GLOBAL_MOVES.size();
     }
 
     /**
      * Initialize the registry and auto-register all movesets
      */
-    public static void init() {
+    static void init() {
         GLOBAL_MOVES.clear();
         MOVESETS.clear();
         BreathOfNichirin.LOGGER.info("Global move registry initialized");
@@ -147,7 +147,7 @@ public class NichirinMoveRegistry {
     /**
      * Information about a registered move
      */
-    public static class MoveInfo {
+    class MoveInfo {
         public final String movesetId;
         public final String moveId;
         public final String displayName;
