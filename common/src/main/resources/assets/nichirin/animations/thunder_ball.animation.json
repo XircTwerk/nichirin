@@ -1,23 +1,17 @@
 {
 	"format_version": "1.8.0",
 	"animations": {
-		"animation.model.spin": {
+		"spin": {
 			"loop": true,
 			"animation_length": 1,
 			"bones": {
-				"ball": {
+				"bone": {
 					"rotation": {
 						"0.0": {
-							"post": {
-								"vector": [0, 0, 0]
-							},
-							"lerp_mode": "catmullrom"
+							"vector": [0, 0, 0]
 						},
 						"1.0": {
-							"post": {
-								"vector": [360, 360, 360]
-							},
-							"lerp_mode": "catmullrom"
+							"vector": [360, -360, 0]
 						}
 					},
 					"scale": {
@@ -25,13 +19,13 @@
 							"vector": [1, 1, 1]
 						},
 						"0.25": {
-							"vector": [0.8, 0.8, 0.8]
+							"vector": [0.85, 0.85, 0.85]
 						},
 						"0.5": {
 							"vector": [1, 1, 1]
 						},
 						"0.75": {
-							"vector": [0.8, 0.8, 0.8]
+							"vector": [0.85, 0.85, 0.85]
 						},
 						"1.0": {
 							"vector": [1, 1, 1]
