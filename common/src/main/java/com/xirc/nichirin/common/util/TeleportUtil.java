@@ -172,7 +172,7 @@ public class TeleportUtil {
     }
 
     /**
-     * FIXED: Direction teleport with block collision check
+     * FIXED: Direction teleport with LESS STRICT block collision check
      */
     public static boolean teleportInDirection(LivingEntity entity, float distance, TeleportOptions options) {
         Level level = entity.level();
@@ -186,32 +186,79 @@ public class TeleportUtil {
         Vec3 lookVec = entity.getLookAngle();
         Vec3 targetPos = startPos.add(lookVec.scale(distance));
 
-        // NEW: Check for blocks in the way and adjust distance
-        Vec3 finalPos = checkForBlocksInPath(level, startPos, lookVec, distance);
+        // MODIFIED: More lenient block collision check - only stop if we'd hit a major obstacle
+        Vec3 finalPos = checkForMajorObstacles(level, startPos, lookVec, distance, entity);
 
         return teleport(entity, finalPos, options);
     }
 
     /**
-     * NEW: Check for solid blocks in teleport path and stop before them
+     * FIXED: Check path for obstacles, but place on top of blocks at destination
      */
-    private static Vec3 checkForBlocksInPath(Level level, Vec3 start, Vec3 direction, double maxDistance) {
-        double stepSize = 0.1; // Check every 0.1 blocks
+    private static Vec3 checkForMajorObstacles(Level level, Vec3 start, Vec3 direction, double maxDistance, Entity entity) {
+        double stepSize = 0.5;
+        double entityHeight = entity.getBbHeight();
 
+        // Check the path for major obstacles (walls, etc.)
         for (double distance = stepSize; distance <= maxDistance; distance += stepSize) {
             Vec3 checkPos = start.add(direction.scale(distance));
-            BlockPos blockPos = new BlockPos((int)Math.floor(checkPos.x), (int)Math.floor(checkPos.y), (int)Math.floor(checkPos.z));
-            BlockState blockState = level.getBlockState(blockPos);
 
-            // If we hit a solid block, stop just before it
-            if (!blockState.isAir() && blockState.isSolidRender(level, blockPos)) {
-                double stopDistance = Math.max(0, distance - stepSize);
-                return start.add(direction.scale(stopDistance));
+            // Check if this position would be inside a solid block structure
+            BlockPos centerPos = new BlockPos((int)Math.floor(checkPos.x), (int)Math.floor(checkPos.y + 1), (int)Math.floor(checkPos.z));
+            BlockState centerBlock = level.getBlockState(centerPos);
+
+            // If we hit a wall or solid structure at player height, stop before it
+            if (!centerBlock.isAir() && centerBlock.isSolidRender(level, centerPos)) {
+                // Stop just before the obstacle
+                double stopDistance = Math.max(1.0, distance - stepSize);
+                Vec3 stopPos = start.add(direction.scale(stopDistance));
+                return adjustToSafePosition(level, stopPos, entity);
             }
         }
 
-        // No blocks in the way, return full distance
-        return start.add(direction.scale(maxDistance));
+        // No major obstacles in path, go full distance but adjust destination
+        Vec3 targetPos = start.add(direction.scale(maxDistance));
+        return adjustToSafePosition(level, targetPos, entity);
+    }
+
+    /**
+     * Adjust position to place entity safely on top of blocks if needed
+     */
+    private static Vec3 adjustToSafePosition(Level level, Vec3 targetPos, Entity entity) {
+        double entityHeight = entity.getBbHeight();
+
+        // Check the target position
+        BlockPos feetPos = new BlockPos((int)Math.floor(targetPos.x), (int)Math.floor(targetPos.y), (int)Math.floor(targetPos.z));
+        BlockPos headPos = new BlockPos((int)Math.floor(targetPos.x), (int)Math.floor(targetPos.y + entityHeight), (int)Math.floor(targetPos.z));
+
+        BlockState feetBlock = level.getBlockState(feetPos);
+        BlockState headBlock = level.getBlockState(headPos);
+
+        boolean feetSolid = !feetBlock.isAir() && feetBlock.isSolidRender(level, feetPos);
+        boolean headSolid = !headBlock.isAir() && headBlock.isSolidRender(level, headPos);
+
+        // If feet would be in a solid block, place on top of it
+        if (feetSolid) {
+            // Find the top of the solid block and place entity on top
+            double blockTop = feetPos.getY() + 1.0;
+            targetPos = new Vec3(targetPos.x, blockTop, targetPos.z);
+
+            // Recheck head position after adjustment
+            headPos = new BlockPos((int)Math.floor(targetPos.x), (int)Math.floor(targetPos.y + entityHeight), (int)Math.floor(targetPos.z));
+            headBlock = level.getBlockState(headPos);
+            headSolid = !headBlock.isAir() && headBlock.isSolidRender(level, headPos);
+
+            // If head is still in a block after placing on top, move up more
+            if (headSolid) {
+                targetPos = new Vec3(targetPos.x, headPos.getY() + 1.0, targetPos.z);
+            }
+        }
+        // If only head would be in a solid block, move up slightly
+        else if (headSolid) {
+            targetPos = new Vec3(targetPos.x, headPos.getY() + 1.0, targetPos.z);
+        }
+
+        return targetPos;
     }
 
     /**
