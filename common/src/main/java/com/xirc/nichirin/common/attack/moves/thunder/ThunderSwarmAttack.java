@@ -29,7 +29,7 @@ import java.util.Random;
 public class ThunderSwarmAttack extends ThunderBreathingAttackBase {
 
     private static final double SLASH_SPEED = 1.2; // Blocks per tick
-    private static final int MAX_TRAVEL_DISTANCE = 32; // Blocks before expiring
+    private static final int MAX_TRAVEL_DISTANCE = 16; // Blocks before expiring
     private static final int SLASH_LAUNCH_INTERVAL = 3; // Ticks between launching each slash
 
     private final List<ProjectileSlash> activeSlashes = new ArrayList<>();
