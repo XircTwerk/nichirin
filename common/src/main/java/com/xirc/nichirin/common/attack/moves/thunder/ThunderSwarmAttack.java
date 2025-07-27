@@ -17,7 +17,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom; // ✅ Thread-safe alternative
 
 /**
  * Third Form: Thunder Swarm
@@ -35,7 +35,7 @@ public class ThunderSwarmAttack extends ThunderBreathingAttackBase {
     private final List<ProjectileSlash> activeSlashes = new ArrayList<>();
     private int slashesLaunched = 0;
     private int launchTimer = 0;
-    private final Random random = new Random();
+    // ✅ REMOVED: private final Random random = new Random();
 
     public ThunderSwarmAttack() {
         // Configuration comes from moveset
@@ -101,10 +101,10 @@ public class ThunderSwarmAttack extends ThunderBreathingAttackBase {
 
         activeSlashes.add(slash);
 
-        // Launch sound
+        // Launch sound - ✅ FIXED: Use ThreadLocalRandom instead of instance field
         world.playSound(null, startPos.x, startPos.y, startPos.z,
                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS,
-                0.8f, 1.5f + random.nextFloat() * 0.3f);
+                0.8f, 1.5f + ThreadLocalRandom.current().nextFloat() * 0.3f);
 
         System.out.println("DEBUG: Launched slash " + (slashesLaunched + 1) + "/4 at position " + startPos);
     }
