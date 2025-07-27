@@ -155,11 +155,15 @@ public class AttackWheelOverlay {
         double deltaY = mouseY - centerY;
         double distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 
-        // Check if mouse is in the wheel area
-        if (distance < INNER_RADIUS || distance > OUTER_RADIUS) {
+        // ✅ FIXED: Only check if mouse is outside the wheel entirely
+        // Remove the INNER_RADIUS check so clicks work anywhere in the segment
+        if (distance > OUTER_RADIUS) {
             currentlyHoveredMove = -1;
             return;
         }
+
+        // ✅ ALSO: Allow clicks in the center area (inner circle)
+        // This makes the entire pie slice clickable, including the center
 
         // SIMPLIFIED ANGLE CALCULATION
         // Calculate angle from center, starting from top (-90°) going clockwise
