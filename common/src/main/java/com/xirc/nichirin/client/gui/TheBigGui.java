@@ -116,14 +116,9 @@ public class TheBigGui extends Screen {
         // Draw dark background
         graphics.fill(0, 0, this.width, this.height, BACKGROUND_COLOR);
 
-        // Draw section title
-        Component title = Component.translatable(currentSection.getTranslationKey());
-        int titleX = (this.width - this.font.width(title)) / 2;
-        graphics.drawString(this.font, title, titleX, 10, 0xFFFFFF);
-
-        // Draw content area background (slightly lighter)
+        // Draw content area background (slightly lighter) - 20 pixels higher
         int contentRight = this.width - BUTTON_WIDTH - RIGHT_MARGIN - 10;
-        graphics.fill(10, TOP_MARGIN, contentRight, this.height - 10, 0xB0202020);
+        graphics.fill(10, TOP_MARGIN - 20, contentRight, this.height - 10, 0xB0202020);
 
         // Calculate content area dimensions
         int contentWidth = contentRight - 10;
