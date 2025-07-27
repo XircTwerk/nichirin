@@ -1,8 +1,10 @@
 package com.xirc.nichirin.client.gui;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.xirc.nichirin.client.gui.biggui.*;
 import com.xirc.nichirin.common.util.PlayerStats;
 import lombok.Getter;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -15,6 +17,7 @@ import java.util.List;
 /**
  * THE BIG GUI - Main menu system for all mod features
  * Full-screen interface with vanilla+ styling, unlock system, and translatable text
+ * FIXED SCALE: Always renders at GUI scale 2 regardless of user's GUI scale setting
  */
 public class TheBigGui extends Screen {
 
@@ -28,6 +31,9 @@ public class TheBigGui extends Screen {
     // Colors
     private static final int BACKGROUND_COLOR = 0xC0101010; // Dark gray with transparency
     private static final int ACTIVE_BUTTON_COLOR = 0xFF3F3F3F;
+
+    // Fixed scale constants
+    private static final double FIXED_GUI_SCALE = 2.0;
 
     // Current section
     private GuiSection currentSection = GuiSection.HOME;
@@ -50,6 +56,10 @@ public class TheBigGui extends Screen {
     private final MovesetSection movesetSection = new MovesetSection();
     private final ConfigSection configSection = new ConfigSection();
 
+    // Scaled dimensions
+    private int scaledWidth;
+    private int scaledHeight;
+
     public TheBigGui(Player player) {
         super(Component.translatable("gui.nichirin.main.title"));
         this.player = player;
@@ -62,11 +72,14 @@ public class TheBigGui extends Screen {
     protected void init() {
         super.init();
 
+        // Calculate our fixed scale dimensions
+        calculateScaledDimensions();
+
         // Clear previous buttons
         sectionButtons.clear();
 
-        // Calculate button positions
-        int buttonX = this.width - BUTTON_WIDTH - RIGHT_MARGIN;
+        // Calculate button positions using scaled dimensions
+        int buttonX = this.scaledWidth - BUTTON_WIDTH - RIGHT_MARGIN;
         int buttonY = TOP_MARGIN;
 
         // Create section buttons
@@ -95,6 +108,25 @@ public class TheBigGui extends Screen {
     }
 
     /**
+     * Calculate dimensions for fixed GUI scale of 2
+     */
+    private void calculateScaledDimensions() {
+        Minecraft mc = Minecraft.getInstance();
+
+        // Get the window's framebuffer dimensions
+        int framebufferWidth = mc.getWindow().getWidth();
+        int framebufferHeight = mc.getWindow().getHeight();
+
+        // Calculate what the dimensions would be at GUI scale 2
+        this.scaledWidth = (int) (framebufferWidth / FIXED_GUI_SCALE);
+        this.scaledHeight = (int) (framebufferHeight / FIXED_GUI_SCALE);
+
+        // Ensure minimum dimensions
+        this.scaledWidth = Math.max(this.scaledWidth, 320);
+        this.scaledHeight = Math.max(this.scaledHeight, 240);
+    }
+
+    /**
      * Switches to a different section
      */
     private void switchToSection(GuiSection section) {
@@ -113,20 +145,36 @@ public class TheBigGui extends Screen {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        // Get the current GUI scale factor
+        double currentScale = minecraft.getWindow().getGuiScale();
+        double scaleRatio = FIXED_GUI_SCALE / currentScale;
+
+        // Apply our fixed scaling
+        PoseStack poseStack = graphics.pose();
+        poseStack.pushPose();
+        poseStack.scale((float) scaleRatio, (float) scaleRatio, 1.0f);
+
+        // Adjust mouse coordinates for our scaling
+        int adjustedMouseX = (int) (mouseX / scaleRatio);
+        int adjustedMouseY = (int) (mouseY / scaleRatio);
+
+        // Recalculate dimensions in case of window resize
+        calculateScaledDimensions();
+
         // Draw dark background
-        graphics.fill(0, 0, this.width, this.height, BACKGROUND_COLOR);
+        graphics.fill(0, 0, this.scaledWidth, this.scaledHeight, BACKGROUND_COLOR);
 
         // Draw content area background (slightly lighter) - 20 pixels higher
-        int contentRight = this.width - BUTTON_WIDTH - RIGHT_MARGIN - 10;
-        graphics.fill(10, TOP_MARGIN - 20, contentRight, this.height - 10, 0xB0202020);
+        int contentRight = this.scaledWidth - BUTTON_WIDTH - RIGHT_MARGIN - 10;
+        graphics.fill(10, TOP_MARGIN - 20, contentRight, this.scaledHeight - 10, 0xB0202020);
 
         // Calculate content area dimensions
         int contentWidth = contentRight - 10;
-        int contentHeight = this.height - 10;
+        int contentHeight = this.scaledHeight - 10;
 
         // Render current section content
         switch (currentSection) {
-            case HOME -> homeSection.render(graphics, mouseX, mouseY, player, contentWidth, contentHeight, this.font);
+            case HOME -> homeSection.render(graphics, adjustedMouseX, adjustedMouseY, player, contentWidth, contentHeight, this.font);
             case BREATHING_STYLES -> breathingStylesSection.render(graphics, player, contentWidth, contentHeight, this.font);
             case SKILLS -> skillsSection.render(graphics, player, this.font);
             case BESTIARY -> bestiarySection.render(graphics, player, this.font);
@@ -138,8 +186,19 @@ public class TheBigGui extends Screen {
             case CONFIG -> configSection.render(graphics, player, this.font);
         }
 
-        // Render buttons and other widgets
-        super.render(graphics, mouseX, mouseY, partialTick);
+        // Restore pose stack before rendering buttons (they handle their own scaling)
+        poseStack.popPose();
+
+        // Scale the buttons manually using pose stack
+        poseStack.pushPose();
+        poseStack.scale((float) scaleRatio, (float) scaleRatio, 1.0f);
+
+        // Render buttons with scaled coordinates
+        for (SectionButton button : sectionButtons) {
+            button.render(graphics, mouseX, mouseY, partialTick);
+        }
+
+        poseStack.popPose();
     }
 
     @Override
@@ -166,21 +225,28 @@ public class TheBigGui extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        // Adjust mouse coordinates for our fixed scaling
+        double currentScale = minecraft.getWindow().getGuiScale();
+        double scaleRatio = FIXED_GUI_SCALE / currentScale;
+
+        double adjustedMouseX = mouseX / scaleRatio;
+        double adjustedMouseY = mouseY / scaleRatio;
+
         // Handle section-specific clicks
         boolean handled = switch (currentSection) {
             case BREATHING_STYLES -> {
-                int contentWidth = this.width - BUTTON_WIDTH - RIGHT_MARGIN - 20;
-                yield breathingStylesSection.handleClick(mouseX, mouseY, player, contentWidth);
+                int contentWidth = this.scaledWidth - BUTTON_WIDTH - RIGHT_MARGIN - 20;
+                yield breathingStylesSection.handleClick(adjustedMouseX, adjustedMouseY, player, contentWidth);
             }
-            case HOME -> homeSection.handleClick(mouseX, mouseY, player);
-            case SKILLS -> skillsSection.handleClick(mouseX, mouseY, player);
-            case BESTIARY -> bestiarySection.handleClick(mouseX, mouseY, player);
-            case PERKS -> perksSection.handleClick(mouseX, mouseY, player);
-            case QUESTS -> questsSection.handleClick(mouseX, mouseY, player);
-            case REPUTATION -> reputationSection.handleClick(mouseX, mouseY, player);
-            case COSMETICS -> cosmeticsSection.handleClick(mouseX, mouseY, player);
-            case MOVESET -> movesetSection.handleClick(mouseX, mouseY, player);
-            case CONFIG -> configSection.handleClick(mouseX, mouseY, player);
+            case HOME -> homeSection.handleClick(adjustedMouseX, adjustedMouseY, player);
+            case SKILLS -> skillsSection.handleClick(adjustedMouseX, adjustedMouseY, player);
+            case BESTIARY -> bestiarySection.handleClick(adjustedMouseX, adjustedMouseY, player);
+            case PERKS -> perksSection.handleClick(adjustedMouseX, adjustedMouseY, player);
+            case QUESTS -> questsSection.handleClick(adjustedMouseX, adjustedMouseY, player);
+            case REPUTATION -> reputationSection.handleClick(adjustedMouseX, adjustedMouseY, player);
+            case COSMETICS -> cosmeticsSection.handleClick(adjustedMouseX, adjustedMouseY, player);
+            case MOVESET -> movesetSection.handleClick(adjustedMouseX, adjustedMouseY, player);
+            case CONFIG -> configSection.handleClick(adjustedMouseX, adjustedMouseY, player);
         };
 
         if (handled) {
@@ -188,6 +254,20 @@ public class TheBigGui extends Screen {
         }
 
         return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    /**
+     * Get scaled width for use by sections
+     */
+    public int getScaledWidth() {
+        return scaledWidth;
+    }
+
+    /**
+     * Get scaled height for use by sections
+     */
+    public int getScaledHeight() {
+        return scaledHeight;
     }
 
     /**

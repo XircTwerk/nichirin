@@ -17,6 +17,7 @@ import java.util.List;
 
 /**
  * Simplified attack wheel overlay with clean click detection
+ * FIXED SCALE: Always renders at GUI scale 2 regardless of user's GUI scale setting
  */
 public class AttackWheelOverlay {
 
@@ -24,10 +25,19 @@ public class AttackWheelOverlay {
     private static final int INNER_RADIUS = 50;
     private static final int ICON_SIZE = 40;
 
+    // Fixed scale constant
+    private static final double FIXED_GUI_SCALE = 2.0;
+
     private final List<MoveSegment> segments = new ArrayList<>();
     private boolean isActive = false;
     private final Minecraft minecraft;
     private int currentlyHoveredMove = -1;
+
+    // Scaled dimensions
+    private int scaledWidth;
+    private int scaledHeight;
+    private int scaledCenterX;
+    private int scaledCenterY;
 
     public AttackWheelOverlay() {
         this.minecraft = Minecraft.getInstance();
@@ -37,6 +47,7 @@ public class AttackWheelOverlay {
         isActive = true;
         rebuildWheel();
         currentlyHoveredMove = -1;
+        calculateScaledDimensions();
     }
 
     public void deactivate() {
@@ -51,6 +62,23 @@ public class AttackWheelOverlay {
 
     public int getCurrentlyHoveredMove() {
         return currentlyHoveredMove;
+    }
+
+    /**
+     * Calculate dimensions for fixed GUI scale of 2
+     */
+    private void calculateScaledDimensions() {
+        // Get the window's framebuffer dimensions
+        int framebufferWidth = minecraft.getWindow().getWidth();
+        int framebufferHeight = minecraft.getWindow().getHeight();
+
+        // Calculate what the dimensions would be at GUI scale 2
+        this.scaledWidth = (int) (framebufferWidth / FIXED_GUI_SCALE);
+        this.scaledHeight = (int) (framebufferHeight / FIXED_GUI_SCALE);
+
+        // Calculate center points
+        this.scaledCenterX = scaledWidth / 2;
+        this.scaledCenterY = scaledHeight / 2;
     }
 
     private void rebuildWheel() {
@@ -85,23 +113,31 @@ public class AttackWheelOverlay {
     public void render(GuiGraphics guiGraphics) {
         if (!isActive) return;
 
-        int centerX = minecraft.getWindow().getGuiScaledWidth() / 2;
-        int centerY = minecraft.getWindow().getGuiScaledHeight() / 2;
+        // Calculate current scale factor and scaling ratio
+        double currentScale = minecraft.getWindow().getGuiScale();
+        double scaleRatio = FIXED_GUI_SCALE / currentScale;
 
-        // Update hovered move FIRST
-        updateHoveredMove(centerX, centerY);
+        // Apply our fixed scaling
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().scale((float) scaleRatio, (float) scaleRatio, 1.0f);
+
+        // Recalculate scaled dimensions in case of window resize
+        calculateScaledDimensions();
+
+        // Update hovered move FIRST (using scaled coordinates)
+        updateHoveredMove(scaledCenterX, scaledCenterY, scaleRatio);
 
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
 
         // Draw background circles
-        drawFilledCircle(guiGraphics, centerX, centerY, OUTER_RADIUS, 0.3f, 0.3f, 0.3f, 0.5f);
-        drawFilledCircle(guiGraphics, centerX, centerY, INNER_RADIUS, 0.2f, 0.2f, 0.2f, 0.7f);
+        drawFilledCircle(guiGraphics, scaledCenterX, scaledCenterY, OUTER_RADIUS, 0.3f, 0.3f, 0.3f, 0.5f);
+        drawFilledCircle(guiGraphics, scaledCenterX, scaledCenterY, INNER_RADIUS, 0.2f, 0.2f, 0.2f, 0.7f);
 
         if (segments.isEmpty()) {
             // Draw placeholder
             Font font = minecraft.font;
-            guiGraphics.drawCenteredString(font, "No moves available", centerX, centerY - 4, 0xFFFFFF);
+            guiGraphics.drawCenteredString(font, "No moves available", scaledCenterX, scaledCenterY - 4, 0xFFFFFF);
         } else {
             // Draw segments
             float segmentAngle = 360f / segments.size();
@@ -112,13 +148,13 @@ public class AttackWheelOverlay {
                 float endAngle = startAngle + segmentAngle;
                 boolean isHovered = (i == currentlyHoveredMove);
 
-                drawSegment(guiGraphics, centerX, centerY, startAngle, endAngle, isHovered);
+                drawSegment(guiGraphics, scaledCenterX, scaledCenterY, startAngle, endAngle, isHovered);
 
                 // Draw move name
                 float midAngle = startAngle + segmentAngle / 2;
                 int textRadius = (INNER_RADIUS + OUTER_RADIUS) / 2;
-                int textX = centerX + (int)(textRadius * Math.cos(Math.toRadians(midAngle)));
-                int textY = centerY + (int)(textRadius * Math.sin(Math.toRadians(midAngle)));
+                int textX = scaledCenterX + (int)(textRadius * Math.cos(Math.toRadians(midAngle)));
+                int textY = scaledCenterY + (int)(textRadius * Math.sin(Math.toRadians(midAngle)));
 
                 String moveName = segments.get(i).config.getDisplayName();
                 int textColor = isHovered ? 0x55FF55 : 0xFFFFFF;
@@ -129,49 +165,49 @@ public class AttackWheelOverlay {
             // Draw center icon
             if (currentlyHoveredMove >= 0 && currentlyHoveredMove < segments.size()) {
                 MoveSegment selectedSegment = segments.get(currentlyHoveredMove);
-                drawCenterIcon(guiGraphics, centerX, centerY, selectedSegment);
+                drawCenterIcon(guiGraphics, scaledCenterX, scaledCenterY, selectedSegment);
             }
         }
 
         // Draw border circles
-        drawCircle(guiGraphics, centerX, centerY, INNER_RADIUS, 0.1f, 0.1f, 0.1f, 1.0f);
-        drawCircle(guiGraphics, centerX, centerY, OUTER_RADIUS, 0.1f, 0.1f, 0.1f, 1.0f);
+        drawCircle(guiGraphics, scaledCenterX, scaledCenterY, INNER_RADIUS, 0.1f, 0.1f, 0.1f, 1.0f);
+        drawCircle(guiGraphics, scaledCenterX, scaledCenterY, OUTER_RADIUS, 0.1f, 0.1f, 0.1f, 1.0f);
 
         RenderSystem.disableBlend();
+
+        // Restore pose stack
+        guiGraphics.pose().popPose();
     }
 
-    private void updateHoveredMove(int centerX, int centerY) {
+    private void updateHoveredMove(int centerX, int centerY, double scaleRatio) {
         if (segments.isEmpty()) {
             currentlyHoveredMove = -1;
             return;
         }
 
-        // Get mouse position in GUI coordinates
-        double mouseX = minecraft.mouseHandler.xpos() * minecraft.getWindow().getGuiScaledWidth() / minecraft.getWindow().getScreenWidth();
-        double mouseY = minecraft.mouseHandler.ypos() * minecraft.getWindow().getGuiScaledHeight() / minecraft.getWindow().getScreenHeight();
+        // Get raw mouse position and adjust for our scaling
+        double rawMouseX = minecraft.mouseHandler.xpos() * minecraft.getWindow().getGuiScaledWidth() / minecraft.getWindow().getScreenWidth();
+        double rawMouseY = minecraft.mouseHandler.ypos() * minecraft.getWindow().getGuiScaledHeight() / minecraft.getWindow().getScreenHeight();
+
+        // Adjust mouse coordinates for our fixed scaling
+        double mouseX = rawMouseX / scaleRatio;
+        double mouseY = rawMouseY / scaleRatio;
 
         // Calculate distance from center
         double deltaX = mouseX - centerX;
         double deltaY = mouseY - centerY;
         double distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 
-        // ✅ FIXED: Only check if mouse is outside the wheel entirely
-        // Remove the INNER_RADIUS check so clicks work anywhere in the segment
+        // Only check if mouse is outside the wheel entirely
         if (distance > OUTER_RADIUS) {
             currentlyHoveredMove = -1;
             return;
         }
 
-        // ✅ ALSO: Allow clicks in the center area (inner circle)
-        // This makes the entire pie slice clickable, including the center
-
-        // SIMPLIFIED ANGLE CALCULATION
         // Calculate angle from center, starting from top (-90°) going clockwise
         double angle = Math.toDegrees(Math.atan2(deltaY, deltaX));
 
         // Convert to our coordinate system: top = 0°, clockwise = positive
-        // atan2 gives: right = 0°, counter-clockwise = positive
-        // We want: top = 0°, clockwise = positive
         double adjustedAngle = angle + 90; // Shift so top = 0°
         if (adjustedAngle < 0) adjustedAngle += 360; // Normalize to 0-360
         if (adjustedAngle >= 360) adjustedAngle -= 360;
@@ -279,29 +315,27 @@ public class AttackWheelOverlay {
     }
 
     private void drawDividerLine(GuiGraphics guiGraphics, int centerX, int centerY, float angle) {
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
-        Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder bufferBuilder = tesselator.getBuilder();
-        bufferBuilder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
-
         float angleRad = (float) Math.toRadians(angle);
-        float perpX = -(float) Math.sin(angleRad) * 0.5f;
-        float perpY = (float) Math.cos(angleRad) * 0.5f;
 
-        float xInner = centerX + INNER_RADIUS * (float) Math.cos(angleRad);
-        float yInner = centerY + INNER_RADIUS * (float) Math.sin(angleRad);
-        float xOuter = centerX + OUTER_RADIUS * (float) Math.cos(angleRad);
-        float yOuter = centerY + OUTER_RADIUS * (float) Math.sin(angleRad);
+        // Calculate start and end points of the divider line
+        int xInner = centerX + (int)(INNER_RADIUS * Math.cos(angleRad));
+        int yInner = centerY + (int)(INNER_RADIUS * Math.sin(angleRad));
+        int xOuter = centerX + (int)(OUTER_RADIUS * Math.cos(angleRad));
+        int yOuter = centerY + (int)(OUTER_RADIUS * Math.sin(angleRad));
 
-        bufferBuilder.vertex(xInner - perpX, yInner - perpY, 0).color(0.1f, 0.1f, 0.1f, 1.0f).endVertex();
-        bufferBuilder.vertex(xInner + perpX, yInner + perpY, 0).color(0.1f, 0.1f, 0.1f, 1.0f).endVertex();
-        bufferBuilder.vertex(xOuter + perpX, yOuter + perpY, 0).color(0.1f, 0.1f, 0.1f, 1.0f).endVertex();
+        // Draw a thin line using GuiGraphics (which respects our scaling)
+        int dividerColor = 0xFF1A1A1A; // Dark gray
 
-        bufferBuilder.vertex(xInner - perpX, yInner - perpY, 0).color(0.1f, 0.1f, 0.1f, 1.0f).endVertex();
-        bufferBuilder.vertex(xOuter + perpX, yOuter + perpY, 0).color(0.1f, 0.1f, 0.1f, 1.0f).endVertex();
-        bufferBuilder.vertex(xOuter - perpX, yOuter - perpY, 0).color(0.1f, 0.1f, 0.1f, 1.0f).endVertex();
+        // Draw the line by interpolating between inner and outer points
+        int steps = Math.max(OUTER_RADIUS - INNER_RADIUS, 1);
+        for (int i = 0; i <= steps; i++) {
+            float t = (float) i / steps;
+            int x = (int) (xInner + t * (xOuter - xInner));
+            int y = (int) (yInner + t * (yOuter - yInner));
 
-        tesselator.end();
+            // Draw a single pixel for a thin line
+            guiGraphics.fill(x, y, x + 1, y + 1, dividerColor);
+        }
     }
 
     private void drawCircle(GuiGraphics guiGraphics, int centerX, int centerY, int radius, float r, float g, float b, float a) {
