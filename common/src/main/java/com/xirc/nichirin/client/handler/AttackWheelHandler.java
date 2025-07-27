@@ -15,12 +15,12 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * CLEAN ATTACK WHEEL HANDLER
+ * ENHANCED ATTACK WHEEL HANDLER WITH INPUT BLOCKING
  *
- * Simplified to work with UnifiedInputSystem:
- * - No complex state management
- * - No packet handling (handled by UnifiedInputSystem)
- * - Just UI and basic input consumption
+ * Features:
+ * - Blocks left-click attacks when wheel is open
+ * - Blocks left-click attacks for 2 seconds after wheel closes
+ * - Proper state management for multiplayer sync
  */
 public class AttackWheelHandler {
 
@@ -28,6 +28,10 @@ public class AttackWheelHandler {
     private static AttackWheelOverlay currentWheel = null;
     private static boolean wheelOpen = false;
     private static boolean wasAttackDown = false;
+
+    // New blocking system
+    private static long wheelClosedTime = 0;
+    private static final long BLOCK_DURATION_TICKS = 40; // 2 seconds at 20 TPS
 
     public static void register() {
         // Create the overlay instance
@@ -132,11 +136,13 @@ public class AttackWheelHandler {
             MultiplayerInputHandler.setAttackWheelOpen(true, mc.player);
 
             wasAttackDown = false;
+
+            System.out.println("DEBUG: Attack wheel opened - inputs now blocked");
         }
     }
 
     /**
-     * Close the attack wheel
+     * Close the attack wheel and start blocking timer
      */
     private static void closeWheel() {
         Minecraft mc = Minecraft.getInstance();
@@ -145,6 +151,12 @@ public class AttackWheelHandler {
             currentWheel.deactivate();
         }
         wheelOpen = false;
+
+        // START BLOCKING TIMER - Record when wheel was closed
+        if (mc.player != null) {
+            wheelClosedTime = mc.player.level().getGameTime();
+            System.out.println("DEBUG: Attack wheel closed - inputs blocked for 2 seconds");
+        }
 
         // Update state (handles server sync)
         if (mc.player != null) {
@@ -234,11 +246,70 @@ public class AttackWheelHandler {
     }
 
     /**
-     * DEPRECATED: Use UnifiedInputSystem instead
-     * @deprecated Use UnifiedInputSystem.shouldBlockInputsClient()
+     * NEW METHOD: Check if inputs should be blocked due to wheel state
+     * This includes:
+     * 1. When wheel is currently open
+     * 2. For 2 seconds after wheel closes
      */
-    @Deprecated
+    public static boolean shouldBlockAttackInputs() {
+        Minecraft mc = Minecraft.getInstance();
+
+        // Block if wheel is currently open
+        if (wheelOpen) {
+            return true;
+        }
+
+        // Block for 2 seconds after wheel closes
+        if (wheelClosedTime > 0 && mc.player != null) {
+            long currentTime = mc.player.level().getGameTime();
+            long timeSinceClosed = currentTime - wheelClosedTime;
+
+            if (timeSinceClosed < BLOCK_DURATION_TICKS) {
+                // Still within blocking period
+                return true;
+            } else if (timeSinceClosed >= BLOCK_DURATION_TICKS) {
+                // Blocking period over, reset the timer
+                wheelClosedTime = 0;
+                System.out.println("DEBUG: Attack input blocking period ended");
+                return false;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Get remaining block time in ticks (for UI feedback)
+     */
+    public static int getRemainingBlockTicks() {
+        if (wheelOpen) {
+            return -1; // Indefinite while wheel is open
+        }
+
+        if (wheelClosedTime > 0) {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player != null) {
+                long currentTime = mc.player.level().getGameTime();
+                long timeSinceClosed = currentTime - wheelClosedTime;
+                long remaining = BLOCK_DURATION_TICKS - timeSinceClosed;
+                return Math.max(0, (int) remaining);
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * ENHANCED: Use the new blocking system instead of the old method
+     */
     public static boolean shouldBlockKatanaAttacks() {
-        return MultiplayerInputHandler.shouldBlockInputsClient();
+        // Use the new comprehensive blocking system
+        boolean shouldBlock = shouldBlockAttackInputs() || MultiplayerInputHandler.shouldBlockInputsClient();
+
+        if (shouldBlock) {
+            System.out.println("DEBUG: Katana attacks blocked - wheel state or multiplayer input handler");
+        }
+
+        return shouldBlock;
     }
 }

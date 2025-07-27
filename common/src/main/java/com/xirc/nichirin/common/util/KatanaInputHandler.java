@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Simple katana input handler focused on blocking wheel interference
+ * Enhanced katana input handler with proper wheel blocking
  */
 public class KatanaInputHandler {
 
@@ -58,7 +58,9 @@ public class KatanaInputHandler {
             ItemStack item = player.getItemInHand(hand);
             if (!(item.getItem() instanceof SimpleKatana)) return;
 
-            if (isWheelBlocking()) {
+            // ENHANCED BLOCKING CHECK
+            if (isInputBlocked()) {
+                System.out.println("DEBUG: Left click blocked - wheel state or input handler");
                 return;
             }
 
@@ -70,7 +72,9 @@ public class KatanaInputHandler {
             ItemStack item = player.getItemInHand(hand);
             if (!(item.getItem() instanceof SimpleKatana)) return;
 
-            if (isWheelBlocking()) {
+            // ENHANCED BLOCKING CHECK (also block right clicks if needed)
+            if (isInputBlocked()) {
+                System.out.println("DEBUG: Right click blocked - wheel state or input handler");
                 return;
             }
 
@@ -78,26 +82,36 @@ public class KatanaInputHandler {
         });
     }
 
-    private static boolean isWheelBlocking() {
-        // Check client wheel state
+    /**
+     * ENHANCED: Comprehensive input blocking check
+     */
+    private static boolean isInputBlocked() {
+        // Check wheel state first (most important)
         try {
-            if (com.xirc.nichirin.client.handler.AttackWheelHandler.isWheelOpen()) {
+            if (com.xirc.nichirin.client.handler.AttackWheelHandler.shouldBlockAttackInputs()) {
                 return true;
             }
         } catch (Exception e) {
-            // Wheel handler not available, check backup
+            System.out.println("WARNING: Could not check wheel blocking state: " + e.getMessage());
         }
 
-        // Check client input blocking
+        // Check multiplayer input handler
         try {
             if (MultiplayerInputHandler.shouldBlockInputsClient()) {
                 return true;
             }
         } catch (Exception e) {
-            // Backup check failed
+            System.out.println("WARNING: Could not check multiplayer input blocking: " + e.getMessage());
         }
 
         return false;
+    }
+
+    /**
+     * LEGACY METHOD: Keep for backward compatibility but use enhanced blocking
+     */
+    private static boolean isWheelBlocking() {
+        return isInputBlocked();
     }
 
     private static void sendLeftClick(Player player) {
@@ -109,6 +123,8 @@ public class KatanaInputHandler {
         // Send to server
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
         NetworkManager.sendToServer(LEFT_CLICK_ID, buf);
+
+        System.out.println("DEBUG: Sent left click to server");
     }
 
     private static void sendRightClick(Player player) {
@@ -117,6 +133,8 @@ public class KatanaInputHandler {
 
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
         NetworkManager.sendToServer(id, buf);
+
+        System.out.println("DEBUG: Sent right click to server (crouch: " + crouch + ")");
     }
 
     private static void registerServerPackets() {
@@ -178,6 +196,7 @@ public class KatanaInputHandler {
 
     private static void handleServerLeftClick(ServerPlayer player) {
         if (isServerBlocked(player)) {
+            System.out.println("DEBUG: Server left click blocked for player " + player.getName().getString());
             return;
         }
 
@@ -185,11 +204,13 @@ public class KatanaInputHandler {
         if (item.getItem() instanceof SimpleKatana katana) {
             SimpleKatana instance = getKatanaInstance(player, katana);
             instance.performAttack(player);
+            System.out.println("DEBUG: Server executed left click for player " + player.getName().getString());
         }
     }
 
     private static void handleServerRightClick(ServerPlayer player, boolean crouch) {
         if (isServerBlocked(player)) {
+            System.out.println("DEBUG: Server right click blocked for player " + player.getName().getString());
             return;
         }
 
@@ -228,6 +249,7 @@ public class KatanaInputHandler {
                 player.setShiftKeyDown(originalCrouch);
             }
 
+            System.out.println("DEBUG: Server executed right click for player " + player.getName().getString() + " (crouch: " + crouch + ")");
         }
     }
 
@@ -274,7 +296,9 @@ public class KatanaInputHandler {
             }
 
             if (level.isClientSide) {
-                if (isWheelBlocking()) {
+                // ENHANCED BLOCKING CHECK for entity attacks too
+                if (isInputBlocked()) {
+                    System.out.println("DEBUG: Entity attack blocked - wheel state or input handler");
                     return EventResult.interruptFalse();
                 }
                 sendLeftClick(player);
@@ -335,6 +359,7 @@ public class KatanaInputHandler {
         if (!player.level().isClientSide) {
             long blockUntil = player.level().getGameTime() + BLOCK_TICKS;
             BLOCKED_UNTIL.put(player.getUUID(), blockUntil);
+            System.out.println("DEBUG: Blocked inputs for player " + player.getName().getString() + " after breathing move");
         }
     }
 
