@@ -1,32 +1,22 @@
 package com.xirc.nichirin.common.attack.moves.thunder;
 
-import net.minecraft.core.BlockPos;
+import com.xirc.nichirin.common.entity.ThunderBallEntity;
+import com.xirc.nichirin.registry.NichirinEntityRegistry; // You'll need to create this
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LightningBolt;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Fourth Form: Distant Thunder
- * Summons lightning on all enemies in a radius over 8 seconds (4 strikes)
+ * Spawns a thunder ball that travels forward for 6 seconds
+ * The ball continuously damages nearby entities and strikes with lightning
  *
  * All configuration now comes from the moveset builder.
  * This class handles only the behavior and visual/audio effects.
  */
 public class DistantThunderAttack extends ThunderBreathingAttackBase {
-
-    private int strikeCount = 0;
-    private int strikeTimer = 0;
-    private final Set<LivingEntity> trackedTargets = new HashSet<>();
 
     public DistantThunderAttack() {
         // No configuration here - everything comes from moveset
@@ -35,37 +25,30 @@ public class DistantThunderAttack extends ThunderBreathingAttackBase {
 
     @Override
     protected void onStart() {
-        // Reset counters
-        strikeCount = 0;
-        strikeTimer = 0;
-        trackedTargets.clear();
-
-        // Find all targets in range at start (using configured range)
-        Vec3 center = user.position();
-        AABB searchArea = new AABB(
-                center.x - range, center.y - range, center.z - range,
-                center.x + range, center.y + range, center.z + range
-        );
-
-        List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, searchArea,
-                entity -> entity != user && entity.isAlive() &&
-                        entity.position().distanceTo(center) <= range);
-
-        trackedTargets.addAll(targets);
-
         // Ominous thunder sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, 1.0f, 0.5f);
 
-        // Visual indicator - dark clouds effect
+        // Create charging effect particles around the user
         if (world instanceof ServerLevel serverLevel) {
-            for (int i = 0; i < 50; i++) {
-                double offsetX = (world.random.nextDouble() - 0.5) * range * 2;
-                double offsetZ = (world.random.nextDouble() - 0.5) * range * 2;
-                serverLevel.sendParticles(ParticleTypes.LARGE_SMOKE,
-                        center.x + offsetX, center.y + 15, center.z + offsetZ,
-                        1, 0, -0.1, 0, 0.05);
+            Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
+
+            // Swirling electric particles around the user before launching
+            for (int i = 0; i < 30; i++) {
+                double angle = (i / 30.0) * Math.PI * 2;
+                double radius = 2.0;
+                double offsetX = Math.cos(angle) * radius;
+                double offsetZ = Math.sin(angle) * radius;
+
+                serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK,
+                        userPos.x + offsetX, userPos.y, userPos.z + offsetZ,
+                        1, 0.1, 0.1, 0.1, 0.05);
             }
+
+            // Upward sparks
+            serverLevel.sendParticles(ParticleTypes.END_ROD,
+                    userPos.x, userPos.y, userPos.z,
+                    20, 0.5, 1.0, 0.5, 0.2);
         }
     }
 
@@ -73,83 +56,49 @@ public class DistantThunderAttack extends ThunderBreathingAttackBase {
     protected void perform() {
         if (world.isClientSide) return;
 
-        // Strike every 2 seconds (40 ticks)
-        strikeTimer++;
-
-        if (strikeTimer >= 40 && strikeCount < 4) {
-            performLightningStrike();
-            strikeTimer = 0;
-            strikeCount++;
-        }
-
-        // Continuous storm effects
-        if (tickCount % 10 == 0 && world instanceof ServerLevel serverLevel) {
-            Vec3 center = user.position();
-            for (int i = 0; i < 20; i++) {
-                double offsetX = (world.random.nextDouble() - 0.5) * range * 2;
-                double offsetZ = (world.random.nextDouble() - 0.5) * range * 2;
-                serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK,
-                        center.x + offsetX, center.y + 10 + world.random.nextDouble() * 5, center.z + offsetZ,
-                        1, 0, -0.2, 0, 0.1);
-            }
+        // Only execute once (on first perform tick after windup)
+        if (tickCount == windup + 1) {
+            spawnThunderBall();
         }
     }
 
-    private void performLightningStrike() {
-        ServerLevel serverLevel = (ServerLevel) world;
+    private void spawnThunderBall() {
+        if (!(world instanceof ServerLevel serverLevel)) return;
 
-        // Strike all tracked targets
-        for (LivingEntity target : trackedTargets) {
-            if (target.isAlive() && target.position().distanceTo(user.position()) <= range) {
-                // Create visual lightning bolt (doesn't do vanilla damage)
-                LightningBolt lightning = EntityType.LIGHTNING_BOLT.create(world);
-                if (lightning != null) {
-                    lightning.moveTo(target.position());
-                    lightning.setVisualOnly(true);
-                    serverLevel.addFreshEntity(lightning);
-                }
+        // Create and spawn the thunder ball entity
+        ThunderBallEntity thunderBall = new ThunderBallEntity(
+                NichirinEntityRegistry.THUNDER_BALL.get(),
+                world,
+                user,
+                damage, // Use configured damage
+                hitStun  // Use configured hit stun
+        );
 
-                // Apply our custom damage and effects (using configured damage and hitStun)
-                hitTarget(target);
+        // Position the ball at the player's chest level (not above)
+        Vec3 userChestPos = new Vec3(user.getX(), user.getY() + 1.0, user.getZ()); // 1 block above feet = chest level
+        Vec3 lookDirection = user.getLookAngle();
+        Vec3 spawnPos = userChestPos.add(lookDirection.scale(1.5));
 
-                // Extra effects at strike location
-                serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK,
-                        target.getX(), target.getY(), target.getZ(),
-                        50, 1.0, 2.0, 1.0, 0.5);
+        thunderBall.setPos(spawnPos.x, spawnPos.y, spawnPos.z);
+        thunderBall.setDeltaMovement(lookDirection.scale(0.2)); // 4 blocks per second
 
-                serverLevel.sendParticles(ParticleTypes.END_ROD,
-                        target.getX(), target.getY() + target.getBbHeight(), target.getZ(),
-                        20, 0.3, 0.3, 0.3, 0.1);
+        // Add to world
+        serverLevel.addFreshEntity(thunderBall);
 
-                // Thunder sound at target
-                world.playSound(null, target.getX(), target.getY(), target.getZ(),
-                        SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.PLAYERS, 0.8f, 1.0f);
-            }
-        }
+        // Launch sound effect
+        world.playSound(null, user.getX(), user.getY(), user.getZ(),
+                SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.PLAYERS, 0.8f, 1.5f);
 
-        // Also strike random positions for atmosphere
-        for (int i = 0; i < 3; i++) {
-            double offsetX = (world.random.nextDouble() - 0.5) * range * 1.5;
-            double offsetZ = (world.random.nextDouble() - 0.5) * range * 1.5;
-            Vec3 strikePos = user.position().add(offsetX, 0, offsetZ);
+        // Launch particles at chest level
+        serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK,
+                userChestPos.x, userChestPos.y, userChestPos.z,
+                40, 0.8, 0.8, 0.8, 0.3);
 
-            // Find ground level
-            BlockPos groundPos = world.getHeightmapPos(
-                    net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING,
-                    new BlockPos((int)strikePos.x, (int)strikePos.y, (int)strikePos.z)
-            );
-
-            LightningBolt lightning = EntityType.LIGHTNING_BOLT.create(world);
-            if (lightning != null) {
-                lightning.moveTo(groundPos.getX(), groundPos.getY(), groundPos.getZ());
-                lightning.setVisualOnly(true);
-                serverLevel.addFreshEntity(lightning);
-            }
-        }
+        System.out.println("DEBUG: Distant Thunder - Spawned thunder ball at chest level: " + spawnPos);
     }
 
     @Override
     protected void onStop() {
-        trackedTargets.clear();
+        // Nothing to clean up - the thunder ball entity manages itself
     }
 }

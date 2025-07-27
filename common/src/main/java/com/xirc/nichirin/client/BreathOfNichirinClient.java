@@ -8,6 +8,7 @@ import com.xirc.nichirin.client.registry.NichirinKeybindRegistry;
 import com.xirc.nichirin.client.renderer.BreathingBarRenderer;
 import com.xirc.nichirin.client.renderer.StaminaBarRenderer;
 import com.xirc.nichirin.common.attack.MoveExecutor;
+import com.xirc.nichirin.registry.NichirinEntityRendererRegistry;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import dev.architectury.event.events.client.ClientTickEvent;
 import dev.architectury.registry.client.particle.ParticleProviderRegistry;
@@ -41,6 +42,9 @@ public class BreathOfNichirinClient {
 
         // Register keybinds FIRST
         NichirinKeybindRegistry.init();
+
+        //Registries
+        NichirinEntityRendererRegistry.init();
 
         // Register handlers AFTER keybinds
         BigGuiKeyHandler.register();

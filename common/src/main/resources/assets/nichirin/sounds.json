@@ -8,5 +8,10 @@
     "sounds": [
       "nichirin:katana/hit2"
     ]
+  },
+  "thunderball": {
+    "sounds": [
+      "nichirin:entity/thunder_ball"
+    ]
   }
 }

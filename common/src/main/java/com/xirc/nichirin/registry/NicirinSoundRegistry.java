@@ -15,6 +15,10 @@ public interface NicirinSoundRegistry {
     RegistrySupplier<SoundEvent> BASIC_SLASH_1 = registerSound("basicslash1");
     RegistrySupplier<SoundEvent> BASIC_SLASH_2 = registerSound("basicslash2");
 
+    // Entity sounds
+    RegistrySupplier<SoundEvent> THUNDER_BALL = registerSound("thunderball");
+
+
     static RegistrySupplier<SoundEvent> registerSound(String name) {
         return SOUND_EVENTS.register(name, () -> SoundEvent.createVariableRangeEvent(
                 new ResourceLocation(BreathOfNichirin.MOD_ID, name)

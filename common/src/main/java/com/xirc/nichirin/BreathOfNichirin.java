@@ -40,6 +40,7 @@ public final class BreathOfNichirin {
         NichirinItemRegistry.ITEM_REGISTRY.register();
         CREATIVE_TAB_REGISTRY.register();
         NichirinMoveRegistry.init();
+        NichirinEntityRegistry.init();
         NichirinPacketRegistry.init();
         NichirinParticleRegistry.init();
         NicirinSoundRegistry.init();
