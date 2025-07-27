@@ -1,6 +1,5 @@
 package com.xirc.nichirin.common.attack.moveset;
 
-import com.xirc.nichirin.client.gui.MoveIcon;
 import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
 import lombok.Getter;
 import net.minecraft.resources.ResourceLocation;
@@ -14,6 +13,7 @@ import java.util.function.Consumer;
 /**
  * AbstractMoveset that works with any attack type
  * Flexible system supporting any number of moves with full configuration
+ * Icons are handled by the MoveIcon system, not stored in move configs
  */
 @Getter
 public abstract class AbstractMoveset {
@@ -104,13 +104,13 @@ public abstract class AbstractMoveset {
 
     /**
      * Complete configuration for a moveset move
+     * Icons are handled by the MoveIcon system using moveId and movesetId
      */
     @Getter
     public static class MoveConfiguration {
         // Basic properties
         public final String moveId;
         public final String displayName;
-        public final ResourceLocation iconLocation;
         public final Consumer<Player> startAction;
         public final ResourceLocation animationId;
         public final int animationPriority;
@@ -142,7 +142,6 @@ public abstract class AbstractMoveset {
             // Basic
             this.moveId = builder.moveId;
             this.displayName = builder.displayName;
-            this.iconLocation = builder.iconLocation;
             this.startAction = builder.startAction;
             this.animationId = builder.animationId;
             this.animationPriority = builder.animationPriority;
@@ -215,7 +214,6 @@ public abstract class AbstractMoveset {
 
         // Basic properties
         private Consumer<Player> startAction;
-        private ResourceLocation iconLocation;
         private ResourceLocation animationId;
         private int animationPriority = 0;
 
@@ -250,11 +248,6 @@ public abstract class AbstractMoveset {
         // Basic methods
         public MoveBuilder withAction(Consumer<Player> action) {
             this.startAction = action;
-            return this;
-        }
-
-        public MoveBuilder withIcon(String iconPath) {
-            this.iconLocation = new ResourceLocation(iconPath);
             return this;
         }
 
@@ -360,23 +353,6 @@ public abstract class AbstractMoveset {
 
         public MoveConfiguration build() {
             return new MoveConfiguration(this);
-        }
-
-        /**
-         * Automatically sets the icon based on breathing style and move name
-         * Uses the MoveIcon system to load from: textures/icons/{breathingStyle}/{moveName}.png
-         */
-        public MoveBuilder withAutoIcon(String breathingStyle) {
-            this.iconLocation = MoveIcon.getIcon(breathingStyle, this.moveId);
-            return this;
-        }
-
-        /**
-         * Sets icon using formatted move name (converts display name to file-safe format)
-         */
-        public MoveBuilder withFormattedIcon(String breathingStyle) {
-            this.iconLocation = MoveIcon.getIconFormatted(breathingStyle, this.displayName);
-            return this;
         }
     }
 

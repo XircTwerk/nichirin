@@ -20,6 +20,7 @@ import java.util.UUID;
 /**
  * Balanced Thunder Breathing moveset implementation
  * Thunder Clap Flash is right-click only, remaining 6 forms for attack wheel
+ * Icons are handled by the MoveIcon system using moveset ID and move IDs
  */
 public class ThunderBreathingMoveset extends AbstractMoveset {
 
@@ -45,7 +46,6 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
 
                 // Second Form: Rice Spirit - 5 quick slashes (INDEX 0 in wheel)
                 .withMove(new MoveBuilder("rice_spirit", "Rice Spirit")
-                        .withIcon("nichirin:textures/gui/moves/thunder_second_form.png")
                         .withAnimation("nichirin:rice_spirit", 8)
                         .withTiming(100, 8, 25) // 5 second cooldown, quick windup, duration
                         .withDamage(4.5f) // 5 slashes = 22.5 total damage (was 6.0f = 30 total)
@@ -66,7 +66,6 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
 
                 // Third Form: Thunder Swarm - AOE slashes (INDEX 1 in wheel)
                 .withMove(new MoveBuilder("thunder_swarm", "Thunder Swarm")
-                        .withIcon("nichirin:textures/gui/moves/thunder_third_form.png")
                         .withAnimation("nichirin:thunder_swarm", 9)
                         .withTiming(140, 12, 35) // 7 second cooldown, windup, duration
                         .withDamage(6.0f) // 4 slashes = 24 damage total (was 8.0f = 32 total)
@@ -87,7 +86,6 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
 
                 // Fourth Form: Distant Thunder - Lightning over time (INDEX 2 in wheel)
                 .withMove(new MoveBuilder("distant_thunder", "Distant Thunder")
-                        .withIcon("nichirin:textures/gui/moves/thunder_fourth_form.png")
                         .withAnimation("nichirin:distant_thunder", 7)
                         .withTiming(200, 20, 120) // 10 second cooldown, long windup, 6 second duration
                         .withDamage(9.0f) // 3 strikes = 27 damage over time (was 12.0f = 36 total)
@@ -107,9 +105,8 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
 
                 // Fifth Form: Heat Lightning - Anti-air combo (INDEX 3 in wheel)
                 .withMove(new MoveBuilder("heat_lightning", "Heat Lightning")
-                        .withIcon("nichirin:textures/gui/moves/thunder_fifth_form.png")
                         .withAnimation("nichirin:heat_lightning", 9)
-                        .withTiming(160, 10, 20) // 8 second cooldown, windup, duration
+                        .withTiming(100, 10, 20)
                         .withDamage(13.5f) // Single hit + lightning follow-up (was 18.0f)
                         .withRange(8.0f)
                         .withKnockback(0.1f) // Minimal horizontal, focuses on launch
@@ -128,7 +125,6 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
 
                 // Sixth Form: Rumble and Flash - Long range precision (INDEX 4 in wheel)
                 .withMove(new MoveBuilder("rumble_flash", "Rumble and Flash")
-                        .withIcon("nichirin:textures/gui/moves/thunder_sixth_form.png")
                         .withAnimation("nichirin:rumble_flash", 8)
                         .withTiming(180, 15, 25) // 9 second cooldown, aim time, duration
                         .withDamage(16.5f) // High damage for long range precision (was 22.0f)
@@ -148,10 +144,9 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
 
                 // Seventh Form: Honoikazuchi no Kami - Ultimate finisher (INDEX 5 in wheel)
                 .withMove(new MoveBuilder("honoikazuchi_no_kami", "Honoikazuchi no Kami")
-                        .withIcon("nichirin:textures/gui/moves/thunder_seventh_form.png")
                         .withAnimation("nichirin:honoikazuchi_no_kami", 15)
                         .withTiming(600, 60, 40) // 30 second cooldown, long windup, execution
-                        .withDamage(60.0f) // Very high damage ultimate (was 80.0f)
+                        .withDamage(100.0f) // Very high damage ultimate
                         .withTeleportDistance(20.0f) // Long dash
                         .withKnockback(2.0f) // High knockback
                         .withBreathCost(70.0f) // Very expensive ultimate
