@@ -1,10 +1,12 @@
 {
-	"format_version": "1.20.1",
 	"credit": "Made with Blockbench",
-	"texture_size": [32, 32],
+	"texture_size": [
+		32,
+		32
+	],
 	"textures": {
-		"1": "nichirin:thunder_katana",
-		"particle": "nichirin:thunder_katana"
+		"1": "nichirin:item/thunder_katana",
+		"particle": "nichirin:item/thunder_katana"
 	},
 	"elements": [
 		{
