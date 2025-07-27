@@ -61,20 +61,16 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
 
         // ✅ FIXED: Use range instead of exact tick to account for thread timing differences
         if (tickCount >= windup + 20 && tickCount <= windup + 30 && !lightningStruck && !hitEntities.isEmpty()) {
-            System.out.println("DEBUG: About to strike lightning - Tick: " + tickCount + ", hitEntities: " + hitEntities.size());
             strikeAllTargetsWithLightning();
             lightningStruck = true;
-            System.out.println("DEBUG: Lightning struck all targets at tick " + tickCount);
         }
 
         // Add debug info to see what's happening
         if (tickCount % 5 == 0) {
-            System.out.println("DEBUG: Tick " + tickCount + ", hitEntities size: " + hitEntities.size() + ", lightningStruck: " + lightningStruck);
         }
 
         // Stop attack after lightning has struck or if no targets were hit
         if ((lightningStruck && tickCount > windup + 30) || (hitEntities.isEmpty() && tickCount > windup + 30)) {
-            System.out.println("DEBUG: HeatLightningAttack - Stopping attack (lightningStruck: " + lightningStruck + ", hitEntities: " + hitEntities.size() + ", tickCount: " + tickCount + ")");
             stop();
         }
     }
@@ -142,7 +138,6 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
 
                 hitEntities.add(target);
 
-                System.out.println("DEBUG: Heat Lightning - Hit and launched " + target.getName().getString());
             }
         }
     }
@@ -167,7 +162,6 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
             serverPlayer.connection.send(new ClientboundSetEntityMotionPacket(target));
         }
 
-        System.out.println("DEBUG: Heat Lightning - Launched " + target.getName().getString() + " with velocity " + launchVelocity);
     }
 
     /**
@@ -190,7 +184,6 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
                 // lightning.setVisualOnly(true);  // ← REMOVED THIS LINE
 
                 serverLevel.addFreshEntity(lightning);
-                System.out.println("DEBUG: Lightning bolt created at " + targetPos + " for " + target.getName().getString());
             }
 
             // Apply our own controlled lightning damage (if still alive)
@@ -205,9 +198,7 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
                         false,
                         true
                 ));
-                System.out.println("DEBUG: Applied lightning effects to " + target.getName().getString());
             } else {
-                System.out.println("DEBUG: Target " + target.getName().getString() + " is dead, lightning strikes visually only");
             }
         }
     }
@@ -230,7 +221,6 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
         // Set the target on fire briefly (like real lightning)
         target.setSecondsOnFire(3);
 
-        System.out.println("DEBUG: Applied lightning damage to " + target.getName().getString());
     }
 
     @Override

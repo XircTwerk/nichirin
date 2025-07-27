@@ -115,7 +115,6 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
                         serverPlayer.connection.send(new ClientboundSetEntityMotionPacket(target));
                     }
 
-                    System.out.println("DEBUG: ThunderClap Flash - Knocked up " + target.getName().getString() + " with velocity " + upwardKnockback);
                 });
 
         // Set custom sound properties

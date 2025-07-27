@@ -189,13 +189,6 @@ public class AttackWheelOverlay {
         }
 
         currentlyHoveredMove = segmentIndex;
-
-        // Debug output (less frequent)
-        if (minecraft.level != null && minecraft.level.getGameTime() % 10 == 0) {
-            System.out.println("DEBUG: Mouse(" + (int)mouseX + "," + (int)mouseY + ") -> " +
-                    "Angle:" + (int)angle + "° -> Adjusted:" + (int)adjustedAngle + "° -> " +
-                    "Segment:" + segmentIndex + "/" + segments.size());
-        }
     }
 
     private void drawCenterIcon(GuiGraphics guiGraphics, int centerX, int centerY, MoveSegment segment) {

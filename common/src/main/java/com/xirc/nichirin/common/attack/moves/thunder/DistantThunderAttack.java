@@ -94,7 +94,6 @@ public class DistantThunderAttack extends ThunderBreathingAttackBase {
                 userChestPos.x, userChestPos.y, userChestPos.z,
                 40, 0.8, 0.8, 0.8, 0.3);
 
-        System.out.println("DEBUG: Distant Thunder - Spawned thunder ball at chest level: " + spawnPos);
     }
 
     @Override

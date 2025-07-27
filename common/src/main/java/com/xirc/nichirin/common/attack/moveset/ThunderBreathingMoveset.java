@@ -262,7 +262,6 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                                 .withStyle(style -> style.withColor(0xFFAA00)),
                         true
                 );
-                System.out.println("DEBUG: Rice Spirit blocked at moveset level - no targets in range");
                 return; // Don't execute at all - no breath consumed, no cooldown
             }
         }
@@ -312,8 +311,6 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
 
         List<LivingEntity> entities = player.level().getEntitiesOfClass(LivingEntity.class, searchBox,
                 entity -> entity != player && entity.isAlive() && !entity.isSpectator());
-
-        System.out.println("DEBUG: Rice Spirit range check - Found " + entities.size() + " targets in range " + range);
         return !entities.isEmpty();
     }
 

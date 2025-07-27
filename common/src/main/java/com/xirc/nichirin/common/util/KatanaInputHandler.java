@@ -42,7 +42,6 @@ public class KatanaInputHandler {
     private static final ResourceLocation FEEDBACK_ID = new ResourceLocation("nichirin", "katana_feedback");
 
     public static void register() {
-        System.out.println("DEBUG: KatanaInputHandler - Simple system starting");
 
         if (isClientSide()) {
             registerClientEvents();
@@ -60,7 +59,6 @@ public class KatanaInputHandler {
             if (!(item.getItem() instanceof SimpleKatana)) return;
 
             if (isWheelBlocking()) {
-                System.out.println("DEBUG: KatanaInputHandler CLIENT - BLOCKED left click (wheel)");
                 return;
             }
 
@@ -73,7 +71,6 @@ public class KatanaInputHandler {
             if (!(item.getItem() instanceof SimpleKatana)) return;
 
             if (isWheelBlocking()) {
-                System.out.println("DEBUG: KatanaInputHandler CLIENT - BLOCKED right click (wheel)");
                 return;
             }
 
@@ -112,7 +109,6 @@ public class KatanaInputHandler {
         // Send to server
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
         NetworkManager.sendToServer(LEFT_CLICK_ID, buf);
-        System.out.println("DEBUG: KatanaInputHandler CLIENT - Sent left click");
     }
 
     private static void sendRightClick(Player player) {
@@ -121,7 +117,6 @@ public class KatanaInputHandler {
 
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
         NetworkManager.sendToServer(id, buf);
-        System.out.println("DEBUG: KatanaInputHandler CLIENT - Sent right click (" + (crouch ? "crouch" : "normal") + ")");
     }
 
     private static void registerServerPackets() {
@@ -183,7 +178,6 @@ public class KatanaInputHandler {
 
     private static void handleServerLeftClick(ServerPlayer player) {
         if (isServerBlocked(player)) {
-            System.out.println("DEBUG: KatanaInputHandler SERVER - BLOCKED left click for " + player.getName().getString());
             return;
         }
 
@@ -191,13 +185,11 @@ public class KatanaInputHandler {
         if (item.getItem() instanceof SimpleKatana katana) {
             SimpleKatana instance = getKatanaInstance(player, katana);
             instance.performAttack(player);
-            System.out.println("DEBUG: KatanaInputHandler SERVER - Executed left click for " + player.getName().getString());
         }
     }
 
     private static void handleServerRightClick(ServerPlayer player, boolean crouch) {
         if (isServerBlocked(player)) {
-            System.out.println("DEBUG: KatanaInputHandler SERVER - BLOCKED right click for " + player.getName().getString());
             return;
         }
 
@@ -236,7 +228,6 @@ public class KatanaInputHandler {
                 player.setShiftKeyDown(originalCrouch);
             }
 
-            System.out.println("DEBUG: KatanaInputHandler SERVER - Executed right click (" + (crouch ? "crouch" : "normal") + ") for " + player.getName().getString());
         }
     }
 
@@ -284,7 +275,6 @@ public class KatanaInputHandler {
 
             if (level.isClientSide) {
                 if (isWheelBlocking()) {
-                    System.out.println("DEBUG: KatanaInputHandler CLIENT - BLOCKED entity attack (wheel)");
                     return EventResult.interruptFalse();
                 }
                 sendLeftClick(player);
@@ -336,7 +326,6 @@ public class KatanaInputHandler {
         UUID id = player.getUUID();
         PLAYER_KATANAS.remove(id);
         BLOCKED_UNTIL.remove(id);
-        System.out.println("DEBUG: KatanaInputHandler - Cleaned up " + player.getName().getString());
     }
 
     /**
@@ -346,8 +335,6 @@ public class KatanaInputHandler {
         if (!player.level().isClientSide) {
             long blockUntil = player.level().getGameTime() + BLOCK_TICKS;
             BLOCKED_UNTIL.put(player.getUUID(), blockUntil);
-            System.out.println("DEBUG: KatanaInputHandler - Blocked " + player.getName().getString() +
-                    " until tick " + blockUntil + " (breathing move executed)");
         }
     }
 

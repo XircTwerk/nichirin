@@ -51,8 +51,6 @@ public class ThunderSwarmAttack extends ThunderBreathingAttackBase {
         // Initial thunder sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, 0.8f, 1.2f);
-
-        System.out.println("DEBUG: Thunder Swarm started - will launch 4 slashes");
     }
 
     @Override
@@ -80,7 +78,6 @@ public class ThunderSwarmAttack extends ThunderBreathingAttackBase {
 
         // Stop attack when all slashes are launched and expired
         if (slashesLaunched >= 4 && activeSlashes.isEmpty()) {
-            System.out.println("DEBUG: Thunder Swarm complete - all slashes finished");
             stop();
         }
     }
@@ -106,7 +103,6 @@ public class ThunderSwarmAttack extends ThunderBreathingAttackBase {
                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS,
                 0.8f, 1.5f + ThreadLocalRandom.current().nextFloat() * 0.3f);
 
-        System.out.println("DEBUG: Launched slash " + (slashesLaunched + 1) + "/4 at position " + startPos);
     }
 
     /**
@@ -127,7 +123,6 @@ public class ThunderSwarmAttack extends ThunderBreathingAttackBase {
         // Check for entity hits FIRST (before ground)
         List<LivingEntity> nearbyEntities = getTargetsInCustomHitbox(slash.position, 1.8, 1.8, 1.8);
         for (LivingEntity target : nearbyEntities) {
-            System.out.println("DEBUG: Slash hit entity: " + target.getName().getString());
 
             // Hit the target WITHOUT immunity frames (so all 4 slashes can hit same target)
             hitTargetNoImmunity(target);
@@ -155,7 +150,6 @@ public class ThunderSwarmAttack extends ThunderBreathingAttackBase {
         ));
 
         if (blockHit.getType() == HitResult.Type.BLOCK) {
-            System.out.println("DEBUG: Slash hit ground/block at " + blockHit.getBlockPos());
 
             // Create lightning bolt at ground impact
             createLightningBolt(Vec3.atCenterOf(blockHit.getBlockPos()).add(0, 1, 0));
@@ -165,7 +159,6 @@ public class ThunderSwarmAttack extends ThunderBreathingAttackBase {
 
         // Check max distance - create lightning if expires without hitting anything
         if (slash.distanceTraveled >= MAX_TRAVEL_DISTANCE) {
-            System.out.println("DEBUG: Slash expired after traveling " + slash.distanceTraveled + " blocks");
 
             // Create lightning bolt at expiration point (didn't hit anything)
             createLightningBolt(slash.position);
@@ -225,7 +218,6 @@ public class ThunderSwarmAttack extends ThunderBreathingAttackBase {
             lightning.setCause((net.minecraft.server.level.ServerPlayer) user);
             world.addFreshEntity(lightning);
 
-            System.out.println("DEBUG: Created lightning bolt at " + groundPos);
         }
 
         // Extra lightning particles
@@ -257,7 +249,6 @@ public class ThunderSwarmAttack extends ThunderBreathingAttackBase {
     @Override
     protected void onStop() {
         activeSlashes.clear();
-        System.out.println("DEBUG: Thunder Swarm attack stopped");
     }
 
     /**

@@ -44,7 +44,6 @@ public class RiceSpiritAttack extends ThunderBreathingAttackBase {
         if (lockedTarget == null) {
             // FIXED: No target in range - stop the attack BEFORE it becomes active
             // This prevents breath consumption and cooldown application
-            System.out.println("DEBUG: Rice Spirit - No targets in range, canceling attack");
 
             // Stop the attack immediately - this will prevent breath consumption
             // since the attack never becomes fully active
@@ -52,7 +51,6 @@ public class RiceSpiritAttack extends ThunderBreathingAttackBase {
             return;
         }
 
-        System.out.println("DEBUG: Rice Spirit - Target locked: " + lockedTarget.getName().getString());
 
         // Thunder sound on start
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
@@ -65,7 +63,6 @@ public class RiceSpiritAttack extends ThunderBreathingAttackBase {
 
         // Check if we still have a valid target
         if (lockedTarget == null || !lockedTarget.isAlive() || lockedTarget.isRemoved()) {
-            System.out.println("DEBUG: Rice Spirit - Target lost, stopping attack");
             stop();
             return;
         }
@@ -77,12 +74,10 @@ public class RiceSpiritAttack extends ThunderBreathingAttackBase {
             performSlash();
             slashCount++;
 
-            System.out.println("DEBUG: Rice Spirit - Performed slash " + slashCount + "/5");
         }
 
         // Stop after all 5 slashes are complete
         if (slashCount >= 5) {
-            System.out.println("DEBUG: Rice Spirit - All slashes complete, stopping");
             stop();
         }
     }
@@ -134,7 +129,6 @@ public class RiceSpiritAttack extends ThunderBreathingAttackBase {
                 0.8f, 1.5f + random.nextFloat() * 0.2f);
 
         // FIXED: Use hitTargetNoImmunity to remove immunity frames for rapid slashes
-        System.out.println("DEBUG: Rice Spirit - Hitting target with no immunity frames");
         hitTargetNoImmunity(lockedTarget);
 
         // Visual feedback on the target
@@ -157,7 +151,6 @@ public class RiceSpiritAttack extends ThunderBreathingAttackBase {
         List<LivingEntity> entities = world.getEntitiesOfClass(LivingEntity.class, searchBox,
                 entity -> entity != user && entity.isAlive() && !entity.isSpectator());
 
-        System.out.println("DEBUG: Rice Spirit - Found " + entities.size() + " potential targets in range " + range);
 
         if (entities.isEmpty()) {
             return null;
@@ -170,7 +163,6 @@ public class RiceSpiritAttack extends ThunderBreathingAttackBase {
 
         if (closest != null) {
             double distance = Math.sqrt(closest.distanceToSqr(user));
-            System.out.println("DEBUG: Rice Spirit - Closest target: " + closest.getName().getString() + " at distance " + String.format("%.2f", distance));
         }
 
         return closest;
@@ -178,7 +170,6 @@ public class RiceSpiritAttack extends ThunderBreathingAttackBase {
 
     @Override
     protected void onStop() {
-        System.out.println("DEBUG: Rice Spirit - Attack stopped, clearing target");
         lockedTarget = null;
     }
 }
