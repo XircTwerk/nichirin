@@ -18,7 +18,6 @@ public interface NichirinEntityRegistry {
                     .sized(1.0f, 1.0f)
                     .clientTrackingRange(64)
                     .updateInterval(1)
-                    .fireImmune() // Optional: keep this if you want
                     .build("thunder_ball"));
 
     static void init() {
