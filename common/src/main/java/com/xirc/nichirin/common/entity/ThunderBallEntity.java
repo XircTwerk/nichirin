@@ -40,7 +40,7 @@ import java.util.Set;
 public class ThunderBallEntity extends Entity implements GeoEntity {
 
     private static final EntityDataAccessor<Integer> LIFE_TICKS = SynchedEntityData.defineId(ThunderBallEntity.class, EntityDataSerializers.INT);
-    private static final int MAX_LIFE_TICKS = 120; // 6 seconds at 20 TPS
+    private static final int MAX_LIFE_TICKS = 120; // 6 seconds at 20 TPS - EXACTLY 120 ticks
     private static final int LIGHTNING_INTERVAL = 40; // 2 seconds between lightning strikes
     private static final double TRAVEL_SPEED = 0.2; // 4 blocks per second (4/20 = 0.2 per tick)
     private static final double DAMAGE_RADIUS = 4.0;
@@ -57,6 +57,10 @@ public class ThunderBallEntity extends Entity implements GeoEntity {
         super(entityType, level);
         this.setNoGravity(true);
         this.entityData.set(LIFE_TICKS, 0);
+        // If no owner is set, immediately discard (prevents command summoning)
+        if (this.owner == null) {
+            this.discard();
+        }
     }
 
     public ThunderBallEntity(EntityType<? extends ThunderBallEntity> entityType, Level level, LivingEntity owner, float damage, int hitStun) {
@@ -83,9 +87,9 @@ public class ThunderBallEntity extends Entity implements GeoEntity {
         if (!this.level().isClientSide) {
             int currentLifeTicks = this.entityData.get(LIFE_TICKS);
 
-            // Check if entity should expire
+            // STRICT 120 tick lifespan - disappear immediately at 120 ticks
             if (currentLifeTicks >= MAX_LIFE_TICKS) {
-                this.discard();
+                this.discard(); // Disappear, not die
                 return;
             }
 
@@ -219,6 +223,12 @@ public class ThunderBallEntity extends Entity implements GeoEntity {
     @Override
     public boolean hurt(DamageSource damageSource, float amount) {
         return false; // Thunder ball cannot be damaged
+    }
+
+    // Prevent command summoning by making the entity non-summonable
+    @Override
+    public boolean canBeCollidedWith() {
+        return false;
     }
 
     @Override
