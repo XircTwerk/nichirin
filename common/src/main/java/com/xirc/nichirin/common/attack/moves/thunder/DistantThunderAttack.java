@@ -1,26 +1,23 @@
 package com.xirc.nichirin.common.attack.moves.thunder;
 
 import com.xirc.nichirin.common.entity.ThunderBallEntity;
-import com.xirc.nichirin.registry.NichirinEntityRegistry; // You'll need to create this
+import com.xirc.nichirin.registry.NichirinEntityRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.phys.Vec3;
 
 /**
  * Fourth Form: Distant Thunder
  * Spawns a thunder ball that travels forward for 6 seconds
  * The ball continuously damages nearby entities and strikes with lightning
- *
- * All configuration now comes from the moveset builder.
- * This class handles only the behavior and visual/audio effects.
  */
 public class DistantThunderAttack extends ThunderBreathingAttackBase {
 
     public DistantThunderAttack() {
         // No configuration here - everything comes from moveset
-        // All values will be set via configure() method
     }
 
     @Override
@@ -65,35 +62,31 @@ public class DistantThunderAttack extends ThunderBreathingAttackBase {
     private void spawnThunderBall() {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
-        // Create and spawn the thunder ball entity
-        ThunderBallEntity thunderBall = new ThunderBallEntity(
-                NichirinEntityRegistry.THUNDER_BALL.get(),
-                world,
-                user,
-                damage, // Use configured damage
-                hitStun  // Use configured hit stun
-        );
+        // Check entity type registration
+        EntityType<ThunderBallEntity> entityType = NichirinEntityRegistry.THUNDER_BALL.get();
+        if (entityType == null) return;
 
-        // Position the ball at the player's chest level (not above)
-        Vec3 userChestPos = new Vec3(user.getX(), user.getY() + 1.0, user.getZ()); // 1 block above feet = chest level
+        // Create entity
+        ThunderBallEntity thunderBall = new ThunderBallEntity(entityType, world, user, damage, hitStun);
+
+        // Set position and movement
+        Vec3 userChestPos = new Vec3(user.getX(), user.getY() + 1.0, user.getZ());
         Vec3 lookDirection = user.getLookAngle();
         Vec3 spawnPos = userChestPos.add(lookDirection.scale(1.5));
 
         thunderBall.setPos(spawnPos.x, spawnPos.y, spawnPos.z);
-        thunderBall.setDeltaMovement(lookDirection.scale(0.2)); // 4 blocks per second
+        thunderBall.setDeltaMovement(lookDirection.scale(0.2));
 
         // Add to world
         serverLevel.addFreshEntity(thunderBall);
 
-        // Launch sound effect
+        // Play effects
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.PLAYERS, 0.8f, 1.5f);
 
-        // Launch particles at chest level
         serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK,
                 userChestPos.x, userChestPos.y, userChestPos.z,
                 40, 0.8, 0.8, 0.8, 0.3);
-
     }
 
     @Override

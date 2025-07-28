@@ -57,10 +57,6 @@ public class ThunderBallEntity extends Entity implements GeoEntity {
         super(entityType, level);
         this.setNoGravity(true);
         this.entityData.set(LIFE_TICKS, 0);
-        // If no owner is set, immediately discard (prevents command summoning)
-        if (this.owner == null) {
-            this.discard();
-        }
     }
 
     public ThunderBallEntity(EntityType<? extends ThunderBallEntity> entityType, Level level, LivingEntity owner, float damage, int hitStun) {
