@@ -2,6 +2,7 @@ package com.xirc.nichirin.client.gui;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.xirc.nichirin.client.gui.biggui.*;
+import com.xirc.nichirin.client.registry.NichirinKeybindRegistry;
 import com.xirc.nichirin.common.util.PlayerStats;
 import lombok.Getter;
 import net.minecraft.client.Minecraft;
@@ -210,6 +211,12 @@ public class TheBigGui extends Screen {
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         // Close on ESC
         if (keyCode == 256) { // ESC key
+            this.onClose();
+            return true;
+        }
+
+        // Close on the Open GUI key
+        if (NichirinKeybindRegistry.OPEN_GUI_KEY.matches(keyCode, scanCode)) {
             this.onClose();
             return true;
         }

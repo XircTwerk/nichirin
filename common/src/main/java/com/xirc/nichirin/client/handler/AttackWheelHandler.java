@@ -8,19 +8,23 @@ import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.util.BreathingManager;
 import com.xirc.nichirin.common.util.StaminaManager;
 import com.xirc.nichirin.common.util.MultiplayerInputHandler;
+import dev.architectury.event.EventResult;
 import dev.architectury.event.events.client.ClientTickEvent;
 import dev.architectury.event.events.client.ClientGuiEvent;
+import dev.architectury.event.events.client.ClientRawInputEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
+import org.lwjgl.glfw.GLFW;
 
 /**
- * ENHANCED ATTACK WHEEL HANDLER WITH INPUT BLOCKING
+ * ENHANCED ATTACK WHEEL HANDLER WITH INPUT BLOCKING AND ESC SUPPORT
  *
  * Features:
  * - Blocks left-click attacks when wheel is open
  * - Blocks left-click attacks for 2 seconds after wheel closes
  * - Proper state management for multiplayer sync
+ * - ESC key support to close the wheel without opening pause menu
  */
 public class AttackWheelHandler {
 
@@ -37,13 +41,22 @@ public class AttackWheelHandler {
         // Create the overlay instance
         currentWheel = new AttackWheelOverlay();
 
+        // Register key event handler for ESC (intercepts before Minecraft handles it)
+        ClientRawInputEvent.KEY_PRESSED.register((client, keyCode, scanCode, action, modifiers) -> {
+            if (keyCode == GLFW.GLFW_KEY_ESCAPE && wheelOpen && action == GLFW.GLFW_PRESS) {
+                closeWheel();
+                return EventResult.interrupt(true); // Consume the event to prevent pause menu
+            }
+            return EventResult.interrupt(false); // Don't consume other keys
+        });
+
         // Register wheel toggle
         ClientTickEvent.CLIENT_POST.register(client -> {
             if (client.player == null) return;
 
             boolean isKeyDown = NichirinKeybindRegistry.ATTACK_WHEEL_KEY.isDown();
 
-            // Key just pressed (not held)
+            // Handle attack wheel key
             if (isKeyDown && !wasKeyDown) {
                 if (!wheelOpen) {
                     openWheel();
