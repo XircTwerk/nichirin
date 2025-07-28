@@ -8,10 +8,8 @@ import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.util.BreathingManager;
 import com.xirc.nichirin.common.util.StaminaManager;
 import com.xirc.nichirin.common.util.MultiplayerInputHandler;
-import dev.architectury.event.EventResult;
 import dev.architectury.event.events.client.ClientTickEvent;
 import dev.architectury.event.events.client.ClientGuiEvent;
-import dev.architectury.event.events.client.ClientRawInputEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
@@ -29,6 +27,7 @@ import org.lwjgl.glfw.GLFW;
 public class AttackWheelHandler {
 
     private static boolean wasKeyDown = false;
+    private static boolean wasEscDown = false;
     private static AttackWheelOverlay currentWheel = null;
     private static boolean wheelOpen = false;
     private static boolean wasAttackDown = false;
@@ -41,20 +40,22 @@ public class AttackWheelHandler {
         // Create the overlay instance
         currentWheel = new AttackWheelOverlay();
 
-        // Register key event handler for ESC (intercepts before Minecraft handles it)
-        ClientRawInputEvent.KEY_PRESSED.register((client, keyCode, scanCode, action, modifiers) -> {
-            if (keyCode == GLFW.GLFW_KEY_ESCAPE && wheelOpen && action == GLFW.GLFW_PRESS) {
-                closeWheel();
-                return EventResult.interrupt(true); // Consume the event to prevent pause menu
-            }
-            return EventResult.interrupt(false); // Don't consume other keys
-        });
-
-        // Register wheel toggle
+        // Register wheel toggle with ESC handling
         ClientTickEvent.CLIENT_POST.register(client -> {
             if (client.player == null) return;
 
             boolean isKeyDown = NichirinKeybindRegistry.ATTACK_WHEEL_KEY.isDown();
+            boolean isEscDown = org.lwjgl.glfw.GLFW.glfwGetKey(client.getWindow().getWindow(), GLFW.GLFW_KEY_ESCAPE) == GLFW.GLFW_PRESS;
+
+            // Handle ESC when wheel is open
+            if (wheelOpen && isEscDown && !wasEscDown) {
+                closeWheel();
+
+                // Prevent pause menu by immediately removing it if it appears
+                if (client.screen != null && client.screen.getClass().getSimpleName().contains("Pause")) {
+                    client.setScreen(null);
+                }
+            }
 
             // Handle attack wheel key
             if (isKeyDown && !wasKeyDown) {
@@ -66,6 +67,18 @@ public class AttackWheelHandler {
             }
 
             wasKeyDown = isKeyDown;
+            wasEscDown = isEscDown;
+        });
+
+        // Monitor and prevent pause screens during wheel operation
+        ClientTickEvent.CLIENT_PRE.register(client -> {
+            if (wheelOpen && client.screen != null) {
+                String screenName = client.screen.getClass().getSimpleName();
+                if (screenName.contains("Pause")) {
+                    client.setScreen(null);
+                    client.mouseHandler.grabMouse();
+                }
+            }
         });
 
         // Register HUD rendering
@@ -93,12 +106,11 @@ public class AttackWheelHandler {
             boolean isAttackDown = client.options.keyAttack.isDown();
 
             // NUCLEAR OPTION: Consume ALL clicks while wheel is open
-            int clicksConsumed = 0;
             while (client.options.keyAttack.consumeClick()) {
-                clicksConsumed++;
+                // Consume attack clicks
             }
             while (client.options.keyUse.consumeClick()) {
-                clicksConsumed++;
+                // Consume use clicks
             }
 
             // IMMEDIATE EXECUTION: Execute and close on first click detection
@@ -149,8 +161,6 @@ public class AttackWheelHandler {
             MultiplayerInputHandler.setAttackWheelOpen(true, mc.player);
 
             wasAttackDown = false;
-
-            System.out.println("DEBUG: Attack wheel opened - inputs now blocked");
         }
     }
 
@@ -168,7 +178,6 @@ public class AttackWheelHandler {
         // START BLOCKING TIMER - Record when wheel was closed
         if (mc.player != null) {
             wheelClosedTime = mc.player.level().getGameTime();
-            System.out.println("DEBUG: Attack wheel closed - inputs blocked for 2 seconds");
         }
 
         // Update state (handles server sync)
@@ -283,7 +292,6 @@ public class AttackWheelHandler {
             } else if (timeSinceClosed >= BLOCK_DURATION_TICKS) {
                 // Blocking period over, reset the timer
                 wheelClosedTime = 0;
-                System.out.println("DEBUG: Attack input blocking period ended");
                 return false;
             }
         }
@@ -318,11 +326,6 @@ public class AttackWheelHandler {
     public static boolean shouldBlockKatanaAttacks() {
         // Use the new comprehensive blocking system
         boolean shouldBlock = shouldBlockAttackInputs() || MultiplayerInputHandler.shouldBlockInputsClient();
-
-        if (shouldBlock) {
-            System.out.println("DEBUG: Katana attacks blocked - wheel state or multiplayer input handler");
-        }
-
         return shouldBlock;
     }
 }
