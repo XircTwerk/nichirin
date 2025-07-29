@@ -67,6 +67,15 @@ public class BreathingCommand {
             return 0;
         }
 
+        // Check if player already has this breathing style
+        String currentStyle = PlayerDataProvider.getData(player).getBreathingStyleData().getMovesetId();
+        if (style.equals(currentStyle)) {
+            source.sendFailure(Component.translatable("command.nichirin.breathing.already_has",
+                            player.getName(), Component.translatable("breathing_style." + style))
+                    .withStyle(style1 -> style1.withColor(0xFFAA00)));
+            return 0;
+        }
+
         // First unlock the style (this will trigger advancement if it's thunder_breathing)
         ProgressionHelper.unlockStyle(player, style);
 
