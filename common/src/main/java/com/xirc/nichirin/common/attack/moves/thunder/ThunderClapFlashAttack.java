@@ -2,6 +2,7 @@ package com.xirc.nichirin.common.attack.moves.thunder;
 
 import com.xirc.nichirin.common.network.CooldownDisplayPacket;
 import com.xirc.nichirin.common.util.TeleportUtil;
+import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
@@ -89,10 +90,10 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
         // Use teleportDistance from configuration (set by moveset)
         float dashDistance = teleportDistance != null ? teleportDistance : range;
 
-        // Configure teleport with thunder effects
+        // Configure teleport with thunder effects using custom thunder particles
         TeleportUtil.TeleportOptions options = new TeleportUtil.TeleportOptions()
-                .withParticles(ParticleTypes.ELECTRIC_SPARK, ParticleTypes.ELECTRIC_SPARK)
-                .withTrail(ParticleTypes.ELECTRIC_SPARK, 8.0f) // Dense lightning trail
+                .withParticles(NichirinParticleRegistry.THUNDER.get(), NichirinParticleRegistry.THUNDER.get())
+                .withTrail(NichirinParticleRegistry.THUNDER.get(), 1.0f) // Denser lightning trail with more particles
                 .withSounds(SoundEvents.LIGHTNING_BOLT_THUNDER, null)
                 .withDamage(damage) // Use damage from configuration
                 .withDamageCallback(target -> {
@@ -102,9 +103,9 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
                     // Add slight upward knockback
                     Vec3 currentVelocity = target.getDeltaMovement();
                     Vec3 upwardKnockback = new Vec3(
-                            currentVelocity.x * 0.5, // Reduce horizontal momentum slightly
-                            0.4, // Slight upward boost (about 1 block high)
-                            currentVelocity.z * 0.5  // Reduce horizontal momentum slightly
+                            currentVelocity.x * 0.1, // Reduce horizontal momentum slightly
+                            0.1, // Slight upward boost (about 1 block high)
+                            currentVelocity.z * 0.1  // Reduce horizontal momentum slightly
                     );
                     target.setDeltaMovement(upwardKnockback);
                     target.hurtMarked = true;
