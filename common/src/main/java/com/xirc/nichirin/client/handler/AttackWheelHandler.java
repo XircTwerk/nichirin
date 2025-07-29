@@ -47,13 +47,17 @@ public class AttackWheelHandler {
             boolean isKeyDown = NichirinKeybindRegistry.ATTACK_WHEEL_KEY.isDown();
             boolean isEscDown = org.lwjgl.glfw.GLFW.glfwGetKey(client.getWindow().getWindow(), GLFW.GLFW_KEY_ESCAPE) == GLFW.GLFW_PRESS;
 
-            // Handle ESC when wheel is open
+            // Handle ESC when wheel is open - more aggressive for multiplayer
             if (wheelOpen && isEscDown && !wasEscDown) {
                 closeWheel();
 
-                // Prevent pause menu by immediately removing it if it appears
-                if (client.screen != null && client.screen.getClass().getSimpleName().contains("Pause")) {
-                    client.setScreen(null);
+                // MULTIPLAYER FIX: More aggressive pause menu prevention
+                // Check immediately and for the next few ticks
+                for (int i = 0; i < 3; i++) {
+                    if (client.screen != null && client.screen.getClass().getSimpleName().contains("Pause")) {
+                        client.setScreen(null);
+                        client.mouseHandler.grabMouse();
+                    }
                 }
             }
 
@@ -70,8 +74,20 @@ public class AttackWheelHandler {
             wasEscDown = isEscDown;
         });
 
-        // Monitor and prevent pause screens during wheel operation
+        // Monitor and prevent pause screens during wheel operation - enhanced for multiplayer
         ClientTickEvent.CLIENT_PRE.register(client -> {
+            if (wheelOpen && client.screen != null) {
+                String screenName = client.screen.getClass().getSimpleName();
+                if (screenName.contains("Pause")) {
+                    client.setScreen(null);
+                    client.mouseHandler.grabMouse();
+                }
+            }
+        });
+
+        // Additional multiplayer-specific check in POST tick
+        ClientTickEvent.CLIENT_POST.register(client -> {
+            // MULTIPLAYER FIX: Double-check for pause screens that might appear delayed
             if (wheelOpen && client.screen != null) {
                 String screenName = client.screen.getClass().getSimpleName();
                 if (screenName.contains("Pause")) {
