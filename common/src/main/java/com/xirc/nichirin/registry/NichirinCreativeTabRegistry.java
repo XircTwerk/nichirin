@@ -34,8 +34,8 @@ public interface NichirinCreativeTabRegistry {
                             entries.accept(NichirinItemRegistry.THUNDER_KATANA.get());
 
                             // Add ore blocks
-                            entries.accept(OreRegistry.SCARLET_ORE_ITEM.get());
-                            entries.accept(OreRegistry.SCARLET_CRIMSON_IRON_SAND_ITEM.get());
+                            entries.accept(NichirinOreRegistry.SCARLET_ORE_ITEM.get());
+                            entries.accept(NichirinOreRegistry.SCARLET_CRIMSON_IRON_SAND_ITEM.get());
 
                             //gems/ingots
                             entries.accept(NichirinItemRegistry.SCARLET_CRIMSON_IRON_GEM.get());

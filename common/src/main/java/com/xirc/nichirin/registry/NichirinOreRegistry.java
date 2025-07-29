@@ -9,7 +9,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 
-public interface OreRegistry {
+public interface NichirinOreRegistry {
     DeferredRegister<Block> BLOCKS = DeferredRegister.create("nichirin", Registries.BLOCK);
     DeferredRegister<Item> ITEMS = DeferredRegister.create("nichirin", Registries.ITEM);
 
