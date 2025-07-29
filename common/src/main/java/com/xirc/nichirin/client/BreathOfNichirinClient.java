@@ -8,6 +8,7 @@ import com.xirc.nichirin.client.handler.ClientDoubleJumpHandler;
 import com.xirc.nichirin.client.registry.NichirinKeybindRegistry;
 import com.xirc.nichirin.client.renderer.BreathingBarRenderer;
 import com.xirc.nichirin.client.renderer.StaminaBarRenderer;
+import com.xirc.nichirin.client.renderer.StanceBarRenderer;
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.registry.NichirinEntityRendererRegistry;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
@@ -61,6 +62,7 @@ public class BreathOfNichirinClient {
         registerParticles();
         BreathingBarRenderer.register();
         StaminaBarRenderer.register();
+        StanceBarRenderer.register();
 
         System.out.println("DEBUG: Client initialization complete");
         initialized = true;

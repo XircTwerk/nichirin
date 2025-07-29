@@ -20,9 +20,10 @@
 
   "itemgroup.nichirin.main": "Nichirin",
 
+  "key.categories.nichirin": "Breath of Nichirin",
   "key.nichirin.attack_wheel": "Open Attack Wheel",
   "key.nichirin.open_gui": "Open Gui",
-  "key.categories.nichirin": "Breath of Nichirin",
+  "key.nichirin.block": "Block/Parry",
 
   "gui.nichirin.main.title": "Nichirin Menu",
   "gui.nichirin.coming_soon": "Coming Soon",

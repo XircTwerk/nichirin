@@ -7,11 +7,10 @@ import com.xirc.nichirin.common.advancement.NichirinCriteriaTriggers;
 import com.xirc.nichirin.common.data.BreathingStyleSyncPacket;
 import com.xirc.nichirin.common.data.MovesetRegistry;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
-import com.xirc.nichirin.common.event.BreathingEventHandler;
-import com.xirc.nichirin.common.event.StaminaEventHandler;
-import com.xirc.nichirin.common.event.ThunderBreathingUnlockHandler;
+import com.xirc.nichirin.common.event.*;
 import com.xirc.nichirin.common.handler.FallDamageHandler;
 import com.xirc.nichirin.common.handler.PlayerTickHandler;
+import com.xirc.nichirin.common.util.BlockingInputHandler;
 import com.xirc.nichirin.common.util.KatanaInputHandler;
 import com.xirc.nichirin.common.util.PlayerStats;
 import com.xirc.nichirin.registry.*;
@@ -56,6 +55,9 @@ public final class BreathOfNichirin {
         KatanaInputHandler.register();
         BreathingEventHandler.register();
         StaminaEventHandler.register();
+        BlockingEventHandler.register();
+        BlockingInputHandler.register();
+        BlockingEventHandler.register();
 
         //data
         PlayerStats.initialize();
@@ -78,12 +80,6 @@ public final class BreathOfNichirin {
                 e.printStackTrace();
             }
         }
-    }
-
-    public static void initClient() {
-        // Register client-side renderer
-        BreathingBarRenderer.register();
-        StaminaBarRenderer.register();
     }
 
     public static ResourceLocation id(String name) {

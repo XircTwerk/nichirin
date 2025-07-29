@@ -1,6 +1,7 @@
 package com.xirc.nichirin.registry;
 
 import com.xirc.nichirin.BreathOfNichirin;
+import com.xirc.nichirin.common.effect.BlockingStatusEffect;
 import com.xirc.nichirin.common.effect.ShockedStatusEffect;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
@@ -13,6 +14,7 @@ public interface NichirinEffectRegistry {
 
     // Register the Shocked effect
     RegistrySupplier<MobEffect> SHOCKED = EFFECT_REGISTRY.register("shocked", ShockedStatusEffect::new);
+    RegistrySupplier<MobEffect> BLOCKING = EFFECT_REGISTRY.register("blocking", BlockingStatusEffect::new);
 
     static void init() {
         // Register the deferred register

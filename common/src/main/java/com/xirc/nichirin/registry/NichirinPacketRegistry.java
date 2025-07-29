@@ -2,6 +2,7 @@ package com.xirc.nichirin.registry;
 
 import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.common.network.*;
+import com.xirc.nichirin.common.system.blocking.KatanaBlock;
 import dev.architectury.networking.NetworkManager;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -23,6 +24,10 @@ public interface NichirinPacketRegistry {
     ResourceLocation BREATHING_EFFECT_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "breathing_effect");
     ResourceLocation SYNC_BREATH_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "sync_breath");
     ResourceLocation SYNC_STAMINA_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "sync_stamina");
+    ResourceLocation SYNC_STANCE_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "sync_stance");
+    ResourceLocation BLOCK_START_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "block_start");
+    ResourceLocation BLOCK_STOP_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "block_stop");
+    ResourceLocation PARRY_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "parry");
 
     // Packet class mappings
     Map<Class<?>, ResourceLocation> PACKET_IDS = new HashMap<>();
@@ -37,6 +42,7 @@ public interface NichirinPacketRegistry {
         PACKET_IDS.put(BreathingEffectPacket.class, BREATHING_EFFECT_ID);
         PACKET_IDS.put(SyncBreathPacket.class, SYNC_BREATH_ID);
         PACKET_IDS.put(StaminaSyncPacket.class, SYNC_STAMINA_ID);
+        PACKET_IDS.put(StanceSyncPacket.class, SYNC_STANCE_ID);
 
         // Register with Architectury - ONCE
         registerPackets();
@@ -58,6 +64,24 @@ public interface NichirinPacketRegistry {
             }
         });
 
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, BLOCK_START_ID, (buf, context) -> {
+            if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
+                context.queue(() -> KatanaBlock.startBlocking(serverPlayer));
+            }
+        });
+
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, BLOCK_STOP_ID, (buf, context) -> {
+            if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
+                context.queue(() -> KatanaBlock.stopBlocking(serverPlayer));
+            }
+        });
+
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, PARRY_ID, (buf, context) -> {
+            if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
+                context.queue(() -> KatanaBlock.attemptParry(serverPlayer));
+            }
+        });
+
         // S2C packets
         NetworkManager.registerReceiver(NetworkManager.Side.S2C, BREATHING_EFFECT_ID, (buf, context) -> {
             BreathingEffectPacket packet = new BreathingEffectPacket(buf);
@@ -73,10 +97,14 @@ public interface NichirinPacketRegistry {
             StaminaSyncPacket packet = new StaminaSyncPacket(buf);
             context.queue(() -> packet.handleClient());
         });
+        NetworkManager.registerReceiver(NetworkManager.Side.S2C, SYNC_STANCE_ID, (buf, context) -> {
+            StanceSyncPacket packet = new StanceSyncPacket(buf);
+            context.queue(() -> packet.handleClient());
+        });
     }
 
     // Simple packet sending
-    public static void sendToPlayer(Object packet, ServerPlayer player) {
+    static void sendToPlayer(Object packet, ServerPlayer player) {
         ResourceLocation id = PACKET_IDS.get(packet.getClass());
         if (id != null) {
             FriendlyByteBuf buf = encodePacket(packet);
@@ -84,7 +112,7 @@ public interface NichirinPacketRegistry {
         }
     }
 
-    public static void sendToServer(Object packet) {
+    static void sendToServer(Object packet) {
         ResourceLocation id = PACKET_IDS.get(packet.getClass());
         if (id != null) {
             FriendlyByteBuf buf = encodePacket(packet);
@@ -92,7 +120,7 @@ public interface NichirinPacketRegistry {
         }
     }
 
-    public static void sendToAll(Object packet, MinecraftServer server) {
+    static void sendToAll(Object packet, MinecraftServer server) {
         ResourceLocation id = PACKET_IDS.get(packet.getClass());
         if (id != null && server != null) {
             for (ServerPlayer player : server.getPlayerList().getPlayers()) {
@@ -102,7 +130,7 @@ public interface NichirinPacketRegistry {
     }
 
     // Simple packet encoding
-    public static FriendlyByteBuf encodePacket(Object packet) {
+    static FriendlyByteBuf encodePacket(Object packet) {
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
 
         if (packet instanceof DoubleJumpPacket p) {
@@ -115,7 +143,10 @@ public interface NichirinPacketRegistry {
             p.toBytes(buf);
         } else if (packet instanceof StaminaSyncPacket p) {
             p.toBytes(buf);
+        } else if (packet instanceof StanceSyncPacket p) {
+            p.toBytes(buf);
         }
+
 
         return buf;
     }

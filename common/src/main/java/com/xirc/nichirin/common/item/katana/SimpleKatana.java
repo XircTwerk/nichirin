@@ -121,19 +121,18 @@ public class SimpleKatana extends SwordItem {
      * SERVER ONLY: Called by MultiplayerInputHandler after validation
      */
     public void performAttack(Player player) {
-        // This should only be called server-side by MultiplayerInputHandler
         if (player.level().isClientSide) {
-            System.out.println("WARNING: performAttack called on client - should only be server!");
             return;
         }
 
-        // Final server validation
+        // Check if player has blocking effect - CAN'T ATTACK
+        if (player.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.BLOCKING.get())) {
+            return;
+        }
+
         if (MultiplayerInputHandler.shouldBlockInputsServer(player)) {
-            System.out.println("DEBUG: SimpleKatana.performAttack() BLOCKED - server validation failed");
             return;
         }
-
-        System.out.println("DEBUG: SimpleKatana.performAttack() EXECUTING - server validated");
 
         PlayerAttackState state = getOrCreatePlayerState(player);
 
@@ -180,14 +179,12 @@ public class SimpleKatana extends SwordItem {
             state.comboCount = 2;
             state.slash2CooldownUntil = currentTime + state.currentSlash.getCooldown();
             AnimationUtils.playAnimation(player, "light_slash2");
-            System.out.println("DEBUG: Executed light slash 2");
         } else {
             state.currentSlash = createLightSlash1();
             state.currentSlash.start(player);
             state.comboCount = 1;
             state.slash1CooldownUntil = currentTime + state.currentSlash.getCooldown();
             AnimationUtils.playAnimation(player, "light_slash1");
-            System.out.println("DEBUG: Executed light slash 1");
         }
 
         state.lastAttackTime = currentTime;
@@ -198,13 +195,14 @@ public class SimpleKatana extends SwordItem {
      */
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-        // This should only be called server-side by MultiplayerInputHandler
         if (level.isClientSide) {
-            System.out.println("WARNING: use() called on client - should only be server!");
             return InteractionResultHolder.pass(player.getItemInHand(hand));
         }
 
-        System.out.println("DEBUG: SimpleKatana.use() EXECUTING - server validated");
+        // Check if player has blocking effect - CAN'T ATTACK
+        if (player.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.BLOCKING.get())) {
+            return InteractionResultHolder.pass(player.getItemInHand(hand));
+        }
 
         PlayerAttackState state = getOrCreatePlayerState(player);
 
@@ -254,12 +252,10 @@ public class SimpleKatana extends SwordItem {
             state.currentRisingSlash = createRisingSlashAttack();
             state.currentRisingSlash.start(player);
             state.risingSlashCooldownUntil = currentTime + state.currentRisingSlash.getCooldown();
-            System.out.println("DEBUG: Executed rising slash");
         } else {
             state.currentDoubleSlash = createDoubleSlashAttack();
             state.currentDoubleSlash.start(player);
             state.doubleSlashCooldownUntil = currentTime + state.currentDoubleSlash.getCooldown();
-            System.out.println("DEBUG: Executed double slash");
         }
 
         state.comboCount = 0;

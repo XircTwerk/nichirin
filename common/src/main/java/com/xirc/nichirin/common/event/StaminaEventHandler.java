@@ -1,5 +1,7 @@
 package com.xirc.nichirin.common.event;
 
+import com.xirc.nichirin.common.system.StanceManager;
+import com.xirc.nichirin.common.system.blocking.KatanaBlock;
 import com.xirc.nichirin.common.util.StaminaManager;
 import com.xirc.nichirin.common.system.slayerabilities.PlayerDoubleJump;
 import dev.architectury.event.events.common.TickEvent;
@@ -21,8 +23,8 @@ public class StaminaEventHandler {
                 // Tick stamina system
                 StaminaManager.tick(player);
 
-                // DON'T tick double jump here - it's already handled by the mixin!
-                // PlayerDoubleJump.tickPlayer(player); // REMOVED - prevents double ticking
+                StanceManager.tick(player);
+                KatanaBlock.tick(player);
             }
         });
 

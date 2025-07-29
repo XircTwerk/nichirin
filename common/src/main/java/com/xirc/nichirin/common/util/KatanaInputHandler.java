@@ -4,7 +4,9 @@ import com.xirc.nichirin.client.gui.CooldownHUD;
 import com.xirc.nichirin.common.attack.moves.thunder.ThunderClapFlashAttack;
 import com.xirc.nichirin.common.data.BreathingStyleHelper;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.common.system.blocking.KatanaBlock;
 import com.xirc.nichirin.common.util.AnimationUtils;
+import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.InteractionEvent;
 import dev.architectury.event.events.common.PlayerEvent;
@@ -86,6 +88,12 @@ public class KatanaInputHandler {
      * ENHANCED: Comprehensive input blocking check
      */
     private static boolean isInputBlocked() {
+        // Check if player has blocking effect - BLOCK ALL INPUTS
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null && mc.player.hasEffect(NichirinEffectRegistry.BLOCKING.get())) {
+            return true;
+        }
+
         // Check wheel state first (most important)
         try {
             if (com.xirc.nichirin.client.handler.AttackWheelHandler.shouldBlockAttackInputs()) {
@@ -253,6 +261,7 @@ public class KatanaInputHandler {
         }
     }
 
+
     private static boolean isServerBlocked(Player player) {
         Long blockedUntil = BLOCKED_UNTIL.get(player.getUUID());
         if (blockedUntil != null) {
@@ -263,8 +272,15 @@ public class KatanaInputHandler {
                 BLOCKED_UNTIL.remove(player.getUUID());
             }
         }
+
+        // Add blocking check - can't attack while blocking
+        if (player.hasEffect(NichirinEffectRegistry.BLOCKING.get())) {
+            return true;
+        }
+
         return false;
     }
+
 
     private static void sendFeedback(ServerPlayer player, String moveName, boolean crouch) {
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());

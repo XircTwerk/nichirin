@@ -18,11 +18,15 @@ public interface NichirinKeybindRegistry {
             "key.categories.nichirin"
     );
 
-    // Add any other keybinds here...
+    KeyMapping BLOCK_KEY = new KeyMapping(
+            "key.nichirin.block",
+            GLFW.GLFW_KEY_V,
+            "key.categories.nichirin"
+    );
 
     static void register() {
         KeyMappingRegistry.register(ATTACK_WHEEL_KEY);
         KeyMappingRegistry.register(OPEN_GUI_KEY);
-        // Register other keybinds...
+        KeyMappingRegistry.register(BLOCK_KEY);
     }
 }

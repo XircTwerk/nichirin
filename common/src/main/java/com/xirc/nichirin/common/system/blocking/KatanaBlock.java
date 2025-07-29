@@ -1,0 +1,389 @@
+package com.xirc.nichirin.common.system.blocking;
+
+import com.xirc.nichirin.common.effect.BlockingStatusEffect;
+import com.xirc.nichirin.common.system.StanceManager;
+import com.xirc.nichirin.common.util.KatanaInputHandler;
+import com.xirc.nichirin.registry.NichirinEffectRegistry;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.nbt.CompoundTag;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
+/**
+ * Complete katana blocking and parrying system using STANCE instead of stamina
+ */
+public class KatanaBlock {
+
+    // Player blocking states
+    private static final Map<UUID, BlockingState> BLOCKING_STATES = new HashMap<>();
+
+    // Configuration constants - using STANCE not stamina
+    private static final float BLOCK_STANCE_DRAIN = 0.8f; // Per tick while blocking (higher than stamina drain)
+    private static final float PARRY_STANCE_COST = 15.0f; // One-time cost for successful parry
+    private static final int PARRY_WINDOW_TICKS = 10; // Half a second at 20 TPS
+    private static final int PARRY_COOLDOWN_TICKS = 40; // 2 seconds
+    private static final float BACKSTAB_ANGLE = 90.0f; // Degrees for backstab detection
+
+    /**
+     * Blocking stance enum
+     */
+    public enum BlockingStance {
+        NONE,
+        BLOCKING,
+        PARRY_READY,
+        PARRY_SUCCESS,
+        PARRY_FAILED
+    }
+
+    /**
+     * Player blocking state data
+     */
+    private static class BlockingState {
+        BlockingStance stance = BlockingStance.NONE;
+        int blockTicks = 0;
+        int parryWindowTicks = 0;
+        long parryCooldownUntil = 0;
+        boolean wasBlockingLastTick = false;
+
+        void reset() {
+            stance = BlockingStance.NONE;
+            blockTicks = 0;
+            parryWindowTicks = 0;
+        }
+    }
+
+    /**
+     * Starts blocking for a player
+     */
+    public static boolean startBlocking(Player player) {
+        if (player.level().isClientSide) return false;
+
+        BlockingState state = getOrCreateState(player);
+
+        // Check if player can block
+        if (!canStartBlocking(player, state)) {
+            return false;
+        }
+
+        // Start blocking with automatic parry window
+        state.stance = BlockingStance.PARRY_READY; // Start with parry window
+        state.blockTicks = 0;
+        state.parryWindowTicks = 20; // 1 second parry window (20 ticks)
+
+        // Apply blocking effect
+        applyBlockingEffect(player);
+
+        // Block katana inputs
+        KatanaInputHandler.blockAfterBreathingMove(player);
+
+        // Send message to player about parry window
+        player.displayClientMessage(
+                Component.literal("Blocking - Perfect parry window active!")
+                        .withStyle(style -> style.withColor(0x55FF55)),
+                true // Overlay message
+        );
+
+        // Play blocking sound
+        player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
+                SoundEvents.SHIELD_BLOCK, SoundSource.PLAYERS, 0.7f, 1.2f);
+
+        System.out.println("DEBUG: Player " + player.getName().getString() + " started blocking with 1-second parry window");
+        return true;
+    }
+
+    /**
+     * Stops blocking for a player
+     */
+    public static void stopBlocking(Player player) {
+        if (player.level().isClientSide) return;
+
+        BlockingState state = BLOCKING_STATES.get(player.getUUID());
+        if (state == null || state.stance == BlockingStance.NONE) return;
+
+        // Remove blocking effect
+        removeBlockingEffect(player);
+
+        // Reset state
+        state.reset();
+
+        System.out.println("DEBUG: Player " + player.getName().getString() + " stopped blocking");
+    }
+
+    /**
+     * Attempts to parry for a player
+     */
+    public static boolean attemptParry(Player player) {
+        // Remove this method - parrying is now automatic at start of blocking
+        return false;
+    }
+
+    /**
+     * Handles incoming damage for blocking/parrying
+     */
+    public static boolean handleIncomingDamage(Player player, Player attacker, float damage) {
+        if (player.level().isClientSide) return false;
+
+        BlockingState state = BLOCKING_STATES.get(player.getUUID());
+        if (state == null || state.stance == BlockingStance.NONE) return false;
+
+        // Check for backstab
+        if (attacker != null && isBackstab(player, attacker)) {
+            System.out.println("DEBUG: Backstab detected - blocking negated");
+            stopBlocking(player);
+            return false; // Block negated by backstab
+        }
+
+        // Handle parry window
+        if (state.stance == BlockingStance.PARRY_READY && state.parryWindowTicks > 0) {
+            return handleSuccessfulParry(player, attacker, state);
+        }
+
+        // Handle regular blocking
+        if (state.stance == BlockingStance.BLOCKING) {
+            return handleSuccessfulBlock(player, state, damage);
+        }
+
+        return false;
+    }
+
+    /**
+     * Ticks the blocking system for a player
+     */
+    public static void tick(Player player) {
+        if (player.level().isClientSide) return;
+
+        BlockingState state = BLOCKING_STATES.get(player.getUUID());
+        if (state == null) return;
+
+        boolean isBlocking = (state.stance == BlockingStance.BLOCKING ||
+                state.stance == BlockingStance.PARRY_READY);
+
+        if (isBlocking) {
+            state.blockTicks++;
+
+            // Drain STANCE while blocking (not stamina)
+            if (!StanceManager.consume(player, BLOCK_STANCE_DRAIN)) {
+                // Out of stance - stop blocking
+                stopBlocking(player);
+                return;
+            }
+
+            // Handle parry window countdown
+            if (state.stance == BlockingStance.PARRY_READY) {
+                state.parryWindowTicks--;
+                if (state.parryWindowTicks <= 0) {
+                    // Parry window expired - transition to regular blocking
+                    state.stance = BlockingStance.BLOCKING;
+
+                    // Send message to player that parry window ended
+                    player.displayClientMessage(
+                            Component.literal("Parry window ended - now blocking")
+                                    .withStyle(style -> style.withColor(0xFFAA00)),
+                            true // Overlay message
+                    );
+
+                    System.out.println("DEBUG: Parry window expired, now regular blocking for " + player.getName().getString());
+                }
+            }
+
+            // Apply blocking effect if not already applied
+            if (!player.hasEffect(NichirinEffectRegistry.BLOCKING.get())) {
+                applyBlockingEffect(player);
+            }
+        } else {
+            // Clean up if no longer blocking
+            if (state.wasBlockingLastTick) {
+                removeBlockingEffect(player);
+            }
+        }
+
+        state.wasBlockingLastTick = isBlocking;
+    }
+
+    /**
+     * Gets the current blocking stance for a player
+     */
+    public static BlockingStance getStance(Player player) {
+        BlockingState state = BLOCKING_STATES.get(player.getUUID());
+        return state != null ? state.stance : BlockingStance.NONE;
+    }
+
+    /**
+     * Checks if player is currently blocking
+     */
+    public static boolean isBlocking(Player player) {
+        BlockingStance stance = getStance(player);
+        return stance == BlockingStance.BLOCKING || stance == BlockingStance.PARRY_READY;
+    }
+
+    /**
+     * Cleanup when player disconnects
+     */
+    public static void cleanupPlayer(Player player) {
+        BLOCKING_STATES.remove(player.getUUID());
+    }
+
+    // Private helper methods
+
+    private static BlockingState getOrCreateState(Player player) {
+        return BLOCKING_STATES.computeIfAbsent(player.getUUID(), k -> new BlockingState());
+    }
+
+    private static boolean canStartBlocking(Player player, BlockingState state) {
+        // Can't block if already blocking
+        if (state.stance != BlockingStance.NONE) return false;
+
+        // Must have minimum STANCE (not stamina)
+        if (!StanceManager.hasStance(player, BLOCK_STANCE_DRAIN * 25)) return false; // ~2 seconds worth
+
+        return true;
+    }
+
+    private static boolean canParry(Player player, BlockingState state) {
+        // Check cooldown
+        long currentTime = player.level().getGameTime();
+        if (currentTime < state.parryCooldownUntil) return false;
+
+        // Can't parry if already in parry state
+        if (state.stance == BlockingStance.PARRY_READY ||
+                state.stance == BlockingStance.PARRY_SUCCESS) return false;
+
+        return true;
+    }
+
+    private static boolean isBackstab(Player defender, Player attacker) {
+        // Calculate angle between defender's facing direction and attacker's position
+        Vec3 defenderLook = defender.getLookAngle();
+        Vec3 toAttacker = attacker.position().subtract(defender.position()).normalize();
+
+        double dot = defenderLook.dot(toAttacker);
+        double angle = Math.toDegrees(Math.acos(Math.abs(dot)));
+
+        // Backstab if attacker is more than 90 degrees behind defender
+        return angle > BACKSTAB_ANGLE;
+    }
+
+    private static boolean handleSuccessfulParry(Player player, Player attacker, BlockingState state) {
+        // Consume STANCE for parry (not stamina)
+        StanceManager.consume(player, PARRY_STANCE_COST);
+
+        // Set parry success state
+        state.stance = BlockingStance.PARRY_SUCCESS;
+        state.parryWindowTicks = 0;
+
+        // Play parry success sound
+        player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
+                SoundEvents.ANVIL_LAND, SoundSource.PLAYERS, 0.6f, 2.0f);
+
+        // Stun the attacker if it's a player
+        if (attacker instanceof ServerPlayer serverAttacker) {
+            // Block their inputs briefly
+            KatanaInputHandler.blockAfterBreathingMove(serverAttacker);
+
+            // Apply small knockback
+            Vec3 knockback = player.getLookAngle().scale(0.5);
+            serverAttacker.setDeltaMovement(serverAttacker.getDeltaMovement().add(knockback));
+        }
+
+        System.out.println("DEBUG: Successful parry by " + player.getName().getString());
+
+        // Stop blocking after successful parry (brief window)
+        player.level().getServer().execute(() -> {
+            try { Thread.sleep(200); } catch (InterruptedException e) {}
+            stopBlocking(player);
+        });
+
+        return true; // Damage completely negated
+    }
+
+    private static boolean handleSuccessfulBlock(Player player, BlockingState state, float damage) {
+        // Play block sound
+        player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
+                SoundEvents.SHIELD_BLOCK, SoundSource.PLAYERS, 0.8f, 1.0f);
+
+        System.out.println("DEBUG: Successful block by " + player.getName().getString() + " - damage reduced");
+
+        return true; // Damage reduced by blocking effect (80% resistance)
+    }
+
+    private static void applyBlockingEffect(Player player) {
+        // Apply blocking status effect (40% slowdown + prevents sprinting)
+        MobEffectInstance blockingEffect = new MobEffectInstance(
+                NichirinEffectRegistry.BLOCKING.get(),
+                Integer.MAX_VALUE, // Permanent while blocking
+                0, // Amplifier
+                false, // Ambient
+                false, // Show particles
+                true   // Show icon
+        );
+        player.addEffect(blockingEffect);
+
+        // Apply Resistance IV (80% damage reduction)
+        MobEffectInstance resistanceEffect = new MobEffectInstance(
+                net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE,
+                Integer.MAX_VALUE, // Permanent while blocking
+                3, // Amplifier 3 = Resistance IV (80% damage reduction)
+                false, // Ambient
+                false, // Show particles
+                true   // Show icon
+        );
+        player.addEffect(resistanceEffect);
+
+        System.out.println("DEBUG: Applied blocking effect + Resistance IV to " + player.getName().getString());
+    }
+
+    private static void removeBlockingEffect(Player player) {
+        player.removeEffect(NichirinEffectRegistry.BLOCKING.get());
+        player.removeEffect(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE);
+
+        System.out.println("DEBUG: Removed blocking effect + Resistance IV from " + player.getName().getString());
+    }
+
+    /**
+     * Save blocking data to NBT
+     */
+    public static void save(Player player, CompoundTag tag) {
+        BlockingState state = BLOCKING_STATES.get(player.getUUID());
+        if (state != null) {
+            CompoundTag blockingTag = new CompoundTag();
+            blockingTag.putString("stance", state.stance.name());
+            blockingTag.putInt("blockTicks", state.blockTicks);
+            blockingTag.putInt("parryWindowTicks", state.parryWindowTicks);
+            blockingTag.putLong("parryCooldownUntil", state.parryCooldownUntil);
+            tag.put("BlockingData", blockingTag);
+        }
+    }
+
+    /**
+     * Load blocking data from NBT
+     */
+    public static void load(Player player, CompoundTag tag) {
+        if (tag.contains("BlockingData")) {
+            CompoundTag blockingTag = tag.getCompound("BlockingData");
+            BlockingState state = getOrCreateState(player);
+
+            try {
+                state.stance = BlockingStance.valueOf(blockingTag.getString("stance"));
+                state.blockTicks = blockingTag.getInt("blockTicks");
+                state.parryWindowTicks = blockingTag.getInt("parryWindowTicks");
+                state.parryCooldownUntil = blockingTag.getLong("parryCooldownUntil");
+
+                // Reapply blocking effect if needed
+                if (state.stance == BlockingStance.BLOCKING || state.stance == BlockingStance.PARRY_READY) {
+                    applyBlockingEffect(player);
+                }
+            } catch (IllegalArgumentException e) {
+                // Invalid stance name, reset to none
+                state.reset();
+            }
+        }
+    }
+}

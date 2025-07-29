@@ -8,6 +8,7 @@ import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.util.BreathingManager;
 import com.xirc.nichirin.common.util.StaminaManager;
 import com.xirc.nichirin.common.util.MultiplayerInputHandler;
+import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import dev.architectury.event.events.client.ClientTickEvent;
 import dev.architectury.event.events.client.ClientGuiEvent;
 import net.minecraft.client.Minecraft;
@@ -157,6 +158,11 @@ public class AttackWheelHandler {
     private static void openWheel() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
+
+        // Check if player has blocking effect - CAN'T OPEN WHEEL
+        if (mc.player.hasEffect(NichirinEffectRegistry.BLOCKING.get())) {
+            return;
+        }
 
         // Check if holding katana
         ItemStack mainHand = mc.player.getMainHandItem();

@@ -130,6 +130,11 @@ public class MultiplayerInputHandler {
     public static boolean shouldBlockInputsServer(Player player) {
         if (player.level().isClientSide) return false;
 
+        // Check if player has blocking effect
+        if (player.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.BLOCKING.get())) {
+            return true;
+        }
+
         PlayerInputState state = serverPlayerStates.get(player.getUUID());
         if (state == null) return false;
 
