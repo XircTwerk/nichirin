@@ -1,7 +1,7 @@
 package com.xirc.nichirin.fabric.common.world;
 
 import com.xirc.nichirin.BreathOfNichirin;
-import com.xirc.nichirin.registry.OreRegistry;
+import com.xirc.nichirin.registry.NichirinOreRegistry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstapContext;
 import net.minecraft.resources.ResourceKey;
@@ -34,7 +34,7 @@ public class NichirinConfiguredFeatures {
         context.register(SCARLET_CRIMSON_IRON_SAND, new ConfiguredFeature<>(
                 Feature.ORE,
                 new OreConfiguration(
-                        List.of(OreConfiguration.target(sandReplaceable, OreRegistry.SCARLET_CRIMSON_IRON_SAND.get().defaultBlockState())),
+                        List.of(OreConfiguration.target(sandReplaceable, NichirinOreRegistry.SCARLET_CRIMSON_IRON_SAND.get().defaultBlockState())),
                         4, // vein size
                         0.0f // CRITICAL: 0.0 air exposure discard chance for surface generation
                 )
@@ -44,7 +44,7 @@ public class NichirinConfiguredFeatures {
         context.register(SCARLET_ORE, new ConfiguredFeature<>(
                 Feature.ORE,
                 new OreConfiguration(
-                        List.of(OreConfiguration.target(stoneReplaceable, OreRegistry.SCARLET_ORE.get().defaultBlockState())),
+                        List.of(OreConfiguration.target(stoneReplaceable, NichirinOreRegistry.SCARLET_ORE.get().defaultBlockState())),
                         6, // vein size
                         0.0f // CRITICAL: 0.0 air exposure discard chance for surface generation
                 )
