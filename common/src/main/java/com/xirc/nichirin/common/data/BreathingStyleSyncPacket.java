@@ -70,7 +70,7 @@ public class BreathingStyleSyncPacket {
                     if (movesetId != null) {
                         String styleName = formatStyleName(movesetId);
                         serverPlayer.sendSystemMessage(Component.literal(
-                                "§aSwitched to " + styleName + " breathing style!"
+                                "§aSwitched to " + styleName + "."
                         ));
                     } else {
                         serverPlayer.sendSystemMessage(Component.literal(
