@@ -61,8 +61,8 @@ public class BreathingGaugeSystem {
      * @return true if successful, false if insufficient breath
      */
     public boolean consume(float amount) {
-        // Breathing style may modify consumption
-        float actualCost = breathingStyle.modifyBreathCost(amount, concentrationLevel);
+        // Apply concentration level reduction to cost
+        float actualCost = amount * (1.0f - concentrationLevel * 0.02f);
 
         if (breathGauge >= actualCost) {
             breathGauge -= actualCost;
@@ -76,7 +76,7 @@ public class BreathingGaugeSystem {
      * Checks if player has enough breath
      */
     public boolean hasBreath(float amount) {
-        float actualCost = breathingStyle.modifyBreathCost(amount, concentrationLevel);
+        float actualCost = amount * (1.0f - concentrationLevel * 0.02f);
         return breathGauge >= actualCost;
     }
 
