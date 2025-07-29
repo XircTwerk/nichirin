@@ -196,7 +196,7 @@ public class TheBigGui extends Screen {
 
         // Render buttons with scaled coordinates
         for (SectionButton button : sectionButtons) {
-            button.render(graphics, mouseX, mouseY, partialTick);
+            button.render(graphics, adjustedMouseX, adjustedMouseY, partialTick);
         }
 
         poseStack.popPose();
@@ -278,7 +278,7 @@ public class TheBigGui extends Screen {
     }
 
     /**
-     * Custom button for sections
+     * Custom button for sections with fixed scaling support
      */
     @Getter
     private static class SectionButton extends Button {
@@ -299,6 +299,33 @@ public class TheBigGui extends Screen {
                         ACTIVE_BUTTON_COLOR);
             }
             super.renderWidget(graphics, mouseX, mouseY, partialTick);
+        }
+
+        @Override
+        public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            // Adjust mouse coordinates to match our fixed scaling
+            Minecraft mc = Minecraft.getInstance();
+            double currentScale = mc.getWindow().getGuiScale();
+            double scaleRatio = FIXED_GUI_SCALE / currentScale;
+
+            double adjustedMouseX = mouseX / scaleRatio;
+            double adjustedMouseY = mouseY / scaleRatio;
+
+            // Use adjusted coordinates for hit detection
+            return super.mouseClicked(adjustedMouseX, adjustedMouseY, button);
+        }
+
+        @Override
+        public boolean isMouseOver(double mouseX, double mouseY) {
+            // Also adjust mouse coordinates for hover detection
+            Minecraft mc = Minecraft.getInstance();
+            double currentScale = mc.getWindow().getGuiScale();
+            double scaleRatio = FIXED_GUI_SCALE / currentScale;
+
+            double adjustedMouseX = mouseX / scaleRatio;
+            double adjustedMouseY = mouseY / scaleRatio;
+
+            return super.isMouseOver(adjustedMouseX, adjustedMouseY);
         }
     }
 
