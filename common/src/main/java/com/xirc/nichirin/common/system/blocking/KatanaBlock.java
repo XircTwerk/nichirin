@@ -95,7 +95,6 @@ public class KatanaBlock {
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.SHIELD_BLOCK, SoundSource.PLAYERS, 0.7f, 1.2f);
 
-        System.out.println("DEBUG: Player " + player.getName().getString() + " started blocking with 1-second parry window");
         return true;
     }
 
@@ -113,8 +112,6 @@ public class KatanaBlock {
 
         // Reset state
         state.reset();
-
-        System.out.println("DEBUG: Player " + player.getName().getString() + " stopped blocking");
     }
 
     /**
@@ -136,7 +133,6 @@ public class KatanaBlock {
 
         // Check for backstab
         if (attacker != null && isBackstab(player, attacker)) {
-            System.out.println("DEBUG: Backstab detected - blocking negated");
             stopBlocking(player);
             return false; // Block negated by backstab
         }
@@ -185,8 +181,6 @@ public class KatanaBlock {
                                     .withStyle(style -> style.withColor(0xFFAA00)),
                             true // Overlay message
                     );
-
-                    System.out.println("DEBUG: Parry window expired, now regular blocking for " + player.getName().getString());
                 }
             }
 
@@ -272,6 +266,13 @@ public class KatanaBlock {
         state.stance = BlockingStance.PARRY_SUCCESS;
         state.parryWindowTicks = 0;
 
+        // Show successful parry message
+        player.displayClientMessage(
+                Component.literal("Successful Parry!")
+                        .withStyle(style -> style.withColor(0x00FF00).withBold(true)),
+                true // Overlay message
+        );
+
         // Play parry success sound
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.ANVIL_LAND, SoundSource.PLAYERS, 0.6f, 2.0f);
@@ -288,11 +289,7 @@ public class KatanaBlock {
                     true   // Show icon
             );
             serverAttacker.addEffect(stunEffect);
-
-            System.out.println("DEBUG: Applied 3-second stun to " + serverAttacker.getName().getString() + " after successful parry");
         }
-
-        System.out.println("DEBUG: Successful parry by " + player.getName().getString());
 
         // Stop blocking after successful parry (brief window)
         player.level().getServer().execute(() -> {
@@ -327,16 +324,12 @@ public class KatanaBlock {
                     true // Overlay message
             );
 
-            System.out.println("DEBUG: " + player.getName().getString() + " stance broken - applying stun");
-
             return false; // Stance broken, take full damage
         }
 
         // Play block sound
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.SHIELD_BLOCK, SoundSource.PLAYERS, 0.8f, 1.0f);
-
-        System.out.println("DEBUG: Successful block by " + player.getName().getString() + " - lost 10 stance");
 
         return true; // Damage reduced by blocking effect (80% resistance)
     }
@@ -363,15 +356,11 @@ public class KatanaBlock {
                 true   // Show icon
         );
         player.addEffect(resistanceEffect);
-
-        System.out.println("DEBUG: Applied blocking effect + Resistance IV to " + player.getName().getString());
     }
 
     private static void removeBlockingEffect(Player player) {
         player.removeEffect(NichirinEffectRegistry.BLOCKING.get());
         player.removeEffect(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE);
-
-        System.out.println("DEBUG: Removed blocking effect + Resistance IV from " + player.getName().getString());
     }
 
     /**
