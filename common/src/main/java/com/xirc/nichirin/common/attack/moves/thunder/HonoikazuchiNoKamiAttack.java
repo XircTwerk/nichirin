@@ -41,6 +41,9 @@ public class HonoikazuchiNoKamiAttack extends ThunderBreathingAttackBase {
 
         // Give user invulnerability during entire windup
         user.setInvulnerable(true);
+
+        // Add glowing effect
+        user.addEffect(new MobEffectInstance(MobEffects.GLOWING, 100, 0, false, false));
     }
 
     @Override
