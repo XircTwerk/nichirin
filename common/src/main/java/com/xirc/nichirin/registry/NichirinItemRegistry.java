@@ -2,6 +2,7 @@ package com.xirc.nichirin.registry;
 
 import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.common.item.throwable.SmokeBombItem;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.minecraft.core.registries.Registries;
@@ -31,6 +32,10 @@ public interface NichirinItemRegistry {
     //Ores and Ingots
     RegistrySupplier<Item> SCARLET_CRIMSON_IRON_GEM = register("scarlet_crimson_iron_gem", () -> new Item(settings()));
     RegistrySupplier<Item> SCARLET_GEM = register("scarlet_gem", () -> new Item(settings()));
+
+    //functional items
+    RegistrySupplier<Item> SMOKE_BOMB = register("smoke_bomb",
+            () -> new SmokeBombItem(settings().stacksTo(16)));
 
 
     static <T extends Item> RegistrySupplier<T> register(String id, Supplier<? extends T> supplier) {

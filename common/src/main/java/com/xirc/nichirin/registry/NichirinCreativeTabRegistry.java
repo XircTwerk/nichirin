@@ -40,6 +40,10 @@ public interface NichirinCreativeTabRegistry {
                             //gems/ingots
                             entries.accept(NichirinItemRegistry.SCARLET_CRIMSON_IRON_GEM.get());
                             entries.accept(NichirinItemRegistry.SCARLET_GEM.get());
+
+                            //functional items
+                            entries.accept(NichirinItemRegistry.SMOKE_BOMB.get());
+
                         } catch (Exception e) {
                             LOGGER.warn("Failed to add items to creative tab: " + e.getMessage());
                         }

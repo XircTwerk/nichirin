@@ -38,5 +38,17 @@ public class NichirinRecipeProvider extends FabricRecipeProvider {
                 .unlockedBy("has_katana", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinItemRegistry.KATANA.get()))
                 .unlockedBy("has_yellow_dye", InventoryChangeTrigger.TriggerInstance.hasItems(Items.YELLOW_DYE))
                 .save(exporter);
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.SMOKE_BOMB.get(), 4)
+                .define('G', Items.GUNPOWDER)
+                .define('R', Items.RED_DYE)
+                .define('P', Items.PAPER)
+                .define('E', Items.EGG)
+                .define('D', Items.GRAY_DYE)
+                .pattern("GRG")
+                .pattern("DED")
+                .pattern("GPG")
+                .unlockedBy("has_gunpowder", InventoryChangeTrigger.TriggerInstance.hasItems(Items.GUNPOWDER))
+                .unlockedBy("has_egg", InventoryChangeTrigger.TriggerInstance.hasItems(Items.EGG))
+                .save(exporter);
     }
 }
