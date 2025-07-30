@@ -1,5 +1,6 @@
 package com.xirc.nichirin.client.registry;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import com.xirc.nichirin.common.network.MovementInputPacket;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.registry.client.keymappings.KeyMappingRegistry;
@@ -36,7 +37,8 @@ public interface NichirinKeybindRegistry {
 
     KeyMapping MOVEMENT_KEY = new KeyMapping(
             "key.nichirin.movement",
-            GLFW.GLFW_MOUSE_BUTTON_5,
+            InputConstants.Type.MOUSE,
+            GLFW.GLFW_MOUSE_BUTTON_4,
             "key.categories.nichirin"
     );
 

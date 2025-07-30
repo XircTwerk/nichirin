@@ -20,11 +20,6 @@ import java.util.List;
 
 public class SmokeBombEntity extends ThrowableItemProjectile {
 
-    private boolean hasLanded = false;
-    private int smokeTicks = 0;
-    private final int SMOKE_DURATION = 140; // 7 seconds at 20 TPS
-    private final double SMOKE_RADIUS = 4.5;
-
     public SmokeBombEntity(EntityType<? extends SmokeBombEntity> entityType, Level level) {
         super(entityType, level);
     }
@@ -42,72 +37,78 @@ public class SmokeBombEntity extends ThrowableItemProjectile {
     protected void onHit(HitResult hitResult) {
         super.onHit(hitResult);
 
-        if (!this.level().isClientSide && !hasLanded) {
-            hasLanded = true;
+        if (!this.level().isClientSide) {
+            Vec3 impactPos = this.position();
 
             // Play impact sound
-            this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
-                    SoundEvents.GLASS_BREAK, SoundSource.NEUTRAL, 1.0F, 1.0F);
+            this.level().playSound(null, impactPos.x, impactPos.y, impactPos.z,
+                    SoundEvents.FIRE_EXTINGUISH, SoundSource.NEUTRAL, 1.0F, 1.0F);
 
-            // Stop the projectile motion
-            this.setDeltaMovement(Vec3.ZERO);
-            this.setNoGravity(true);
+            // Create the smoke effect directly
+            createSmokeEffect(impactPos);
+
+            // Remove the smoke bomb projectile immediately
+            this.discard();
         }
     }
 
-    @Override
-    public void tick() {
-        super.tick();
+    private void createSmokeEffect(Vec3 position) {
+        if (this.level() instanceof ServerLevel serverLevel) {
+            final double SMOKE_RADIUS = 6;
+            final int SMOKE_DURATION = 140; // 7 seconds at 20 TPS
 
-        if (hasLanded) {
-            smokeTicks++;
+            // Schedule the smoke effect to run every tick for constant blindness
+            for (int tick = 0; tick < SMOKE_DURATION; tick++) { // Every tick instead of every other tick
+                int finalTick = tick;
+                serverLevel.getServer().tell(new net.minecraft.server.TickTask(
+                        serverLevel.getServer().getTickCount() + tick, () -> {
 
-            // Remove after smoke duration
-            if (smokeTicks >= SMOKE_DURATION) {
-                this.discard();
-                return;
-            }
+                    // Apply blindness to entities in range
+                    AABB effectArea = new AABB(
+                            position.x - SMOKE_RADIUS, position.y - SMOKE_RADIUS, position.z - SMOKE_RADIUS,
+                            position.x + SMOKE_RADIUS, position.y + SMOKE_RADIUS, position.z + SMOKE_RADIUS
+                    );
 
-            if (!this.level().isClientSide) {
-                ServerLevel serverLevel = (ServerLevel) this.level();
-
-                // Apply blindness to entities in range
-                AABB effectArea = new AABB(
-                        this.getX() - SMOKE_RADIUS, this.getY() - SMOKE_RADIUS, this.getZ() - SMOKE_RADIUS,
-                        this.getX() + SMOKE_RADIUS, this.getY() + SMOKE_RADIUS, this.getZ() + SMOKE_RADIUS
-                );
-
-                List<LivingEntity> entities = this.level().getEntitiesOfClass(LivingEntity.class, effectArea);
-                for (LivingEntity entity : entities) {
-                    double distance = entity.distanceTo(this);
-                    if (distance <= SMOKE_RADIUS) {
-                        // Apply blindness effect
-                        MobEffectInstance blindness = new MobEffectInstance(
-                                MobEffects.BLINDNESS,
-                                30, // 1.5 seconds (refreshed while in smoke)
-                                0,  // Level 1
-                                false, // Ambient
-                                true,  // Show particles
-                                true   // Show icon
+                    List<LivingEntity> entities = serverLevel.getEntitiesOfClass(LivingEntity.class, effectArea);
+                    for (LivingEntity entity : entities) {
+                        double distance = Math.sqrt(
+                                Math.pow(entity.getX() - position.x, 2) +
+                                        Math.pow(entity.getY() - position.y, 2) +
+                                        Math.pow(entity.getZ() - position.z, 2)
                         );
-                        entity.addEffect(blindness);
+                        if (distance <= SMOKE_RADIUS) {
+                            // Apply blindness for 2 seconds to ensure constant coverage
+                            MobEffectInstance blindness = new MobEffectInstance(
+                                    MobEffects.BLINDNESS,
+                                    120,
+                                    1,
+                                    false,
+                                    false,
+                                    true
+                            );
+                            entity.addEffect(blindness);
+                        }
                     }
-                }
 
-                // Spawn particles continuously (dense smoke)
-                if (smokeTicks % 2 == 0) { // Every other tick
-                    for (int i = 0; i < 20; i++) { // Increased particle count
-                        double offsetX = (this.random.nextDouble() - 0.5) * SMOKE_RADIUS * 2;
-                        double offsetY = this.random.nextDouble() * SMOKE_RADIUS;
-                        double offsetZ = (this.random.nextDouble() - 0.5) * SMOKE_RADIUS * 2;
+                    // Spawn particles every other tick to reduce particle spam
+                    if (finalTick % 2 == 0) {
+                        // Spawn much larger particles
+                        for (int i = 0; i < 25; i++) {
+                            double offsetX = (serverLevel.random.nextDouble() - 0.5) * SMOKE_RADIUS * 2;
+                            double offsetY = serverLevel.random.nextDouble() * SMOKE_RADIUS;
+                            double offsetZ = (serverLevel.random.nextDouble() - 0.5) * SMOKE_RADIUS * 2;
 
-                        if (offsetX * offsetX + offsetY * offsetY + offsetZ * offsetZ <= SMOKE_RADIUS * SMOKE_RADIUS) {
-                            serverLevel.sendParticles(ParticleTypes.CAMPFIRE_COSY_SMOKE,
-                                    this.getX() + offsetX, this.getY() + offsetY, this.getZ() + offsetZ,
-                                    1, 0.05, 0.05, 0.05, 0.01);
+                            if (offsetX * offsetX + offsetY * offsetY + offsetZ * offsetZ <= SMOKE_RADIUS * SMOKE_RADIUS) {
+                                serverLevel.sendParticles(ParticleTypes.CAMPFIRE_COSY_SMOKE,
+                                        position.x + offsetX, position.y + offsetY, position.z + offsetZ,
+                                        6, // More particles per spawn
+                                        0, 0, 0, // Much larger spread
+                                        0.02); // Higher velocity
+                            }
                         }
                     }
                 }
+                ));
             }
         }
     }
