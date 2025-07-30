@@ -7,6 +7,7 @@ import dev.architectury.event.events.common.TickEvent;
 import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.event.events.common.EntityEvent;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.effect.MobEffectInstance;
 
 /**
  * Event handler for blocking system and stance management
@@ -61,24 +62,35 @@ public class BlockingEventHandler {
             }
         });
 
+        // Handle parry success (perfect damage negation) - WORKS AGAINST ALL DAMAGE SOURCES
         EntityEvent.LIVING_HURT.register((entity, damageSource, amount) -> {
             if (entity instanceof Player player && !player.level().isClientSide) {
                 // Check if this player is blocking
                 if (KatanaBlock.isBlocking(player)) {
-                    // Get the player attacker (if any) - but parrying works regardless
-                    Player attacker = null;
-                    if (damageSource.getEntity() instanceof Player playerAttacker) {
-                        attacker = playerAttacker;
-                        System.out.println("DEBUG: Found player attacker: " + playerAttacker.getName().getString());
+                    // Get the attacking entity (player OR mob)
+                    Player playerAttacker = null;
+                    net.minecraft.world.entity.LivingEntity attackingEntity = null;
+
+                    System.out.println("DEBUG: Damage source entity: " +
+                            (damageSource.getEntity() != null ? damageSource.getEntity().getClass().getSimpleName() : "null"));
+
+                    if (damageSource.getEntity() instanceof Player playerAtk) {
+                        playerAttacker = playerAtk;
+                        attackingEntity = playerAtk;
+                        System.out.println("DEBUG: Found player attacker: " + playerAtk.getName().getString());
+                    } else if (damageSource.getEntity() instanceof net.minecraft.world.entity.LivingEntity livingAtk) {
+                        attackingEntity = livingAtk;
+                        System.out.println("DEBUG: Found mob attacker: " + livingAtk.getType().getDescription().getString());
                     } else {
-                        System.out.println("DEBUG: Non-player damage source: " + damageSource.getMsgId() +
-                                " from entity: " + (damageSource.getEntity() != null ? damageSource.getEntity().getType().getDescription().getString() : "null"));
+                        System.out.println("DEBUG: Non-entity damage source: " + damageSource.getMsgId() +
+                                ", direct entity: " + (damageSource.getDirectEntity() != null ?
+                                damageSource.getDirectEntity().getClass().getSimpleName() : "null"));
                     }
 
                     System.out.println("DEBUG: Player " + player.getName().getString() + " is blocking, calling handleIncomingDamage");
 
                     // Handle the damage through blocking system - works for ALL damage sources
-                    boolean handled = KatanaBlock.handleIncomingDamage(player, attacker, amount);
+                    boolean handled = KatanaBlock.handleIncomingDamage(player, playerAttacker, amount);
 
                     System.out.println("DEBUG: handleIncomingDamage returned: " + handled);
                     System.out.println("DEBUG: Current blocking stance: " + KatanaBlock.getStance(player));
@@ -89,10 +101,31 @@ public class BlockingEventHandler {
                             // Perfect parry - cancel ALL damage from ANY source
                             System.out.println("DEBUG: Perfect parry - negating all damage from " + damageSource.getMsgId());
 
-                            // Double-check that stun was applied to attacker (if it's a player)
-                            if (attacker != null) {
-                                boolean hasStun = attacker.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.STUNNED.get());
-                                System.out.println("DEBUG: Attacker " + attacker.getName().getString() + " has stun effect: " + hasStun);
+                            // Apply stun to ANY living entity that attacked (including mobs!)
+                            if (attackingEntity != null && attackingEntity != player) {
+                                System.out.println("DEBUG: Attempting to apply stun and damage to " + attackingEntity.getType().getDescription().getString());
+
+                                MobEffectInstance stunEffect = new MobEffectInstance(
+                                        com.xirc.nichirin.registry.NichirinEffectRegistry.STUNNED.get(),
+                                        30, // 1.5 seconds (30 ticks)
+                                        0, // Amplifier
+                                        false, // Ambient
+                                        true, // Show particles
+                                        true   // Show icon
+                                );
+                                boolean stunApplied = attackingEntity.addEffect(stunEffect);
+
+                                // Deal parry damage to the attacker (3 hearts = 6.0 damage)
+                                float parryDamage = 6.0f;
+                                boolean damageDealt = attackingEntity.hurt(player.damageSources().playerAttack(player), parryDamage);
+
+                                System.out.println("DEBUG: Stun applied: " + stunApplied + ", Damage dealt: " + damageDealt +
+                                        " (" + parryDamage + " damage) to " +
+                                        (attackingEntity instanceof Player p ? p.getName().getString() :
+                                                attackingEntity.getType().getDescription().getString()));
+                            } else {
+                                System.out.println("DEBUG: No valid attacking entity to stun/damage - attackingEntity: " +
+                                        (attackingEntity != null ? attackingEntity.getType().getDescription().getString() : "null"));
                             }
 
                             return EventResult.interruptFalse(); // Completely negate damage

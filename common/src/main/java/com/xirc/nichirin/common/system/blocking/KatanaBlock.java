@@ -28,8 +28,8 @@ public class KatanaBlock {
     // Configuration constants - using STANCE not stamina
     private static final float BLOCK_STANCE_DRAIN = 0.8f; // Per tick while blocking (higher than stamina drain)
     private static final float PARRY_STANCE_COST = 15.0f; // One-time cost for successful parry
-    private static final int PARRY_WINDOW_TICKS = 10; // Half a second at 20 TPS
-    private static final int PARRY_COOLDOWN_TICKS = 40; // 2 seconds
+    private static final int PARRY_WINDOW_TICKS = 10; // 0.5 seconds at 20 TPS (reduced from 20)
+    private static final int PARRY_COOLDOWN_TICKS = 60; // 3 seconds (increased from 40)
     private static final float BACKSTAB_ANGLE = 90.0f; // Degrees for backstab detection
 
     /**
@@ -57,6 +57,7 @@ public class KatanaBlock {
             stance = BlockingStance.NONE;
             blockTicks = 0;
             parryWindowTicks = 0;
+            // Don't reset cooldown on block end - it persists
         }
     }
 
@@ -68,15 +69,24 @@ public class KatanaBlock {
 
         BlockingState state = getOrCreateState(player);
 
-        // Check if player can block
+        // Check if player can block (including parry cooldown)
         if (!canStartBlocking(player, state)) {
+            // Check if it's specifically a parry cooldown issue
+            if (isOnParryCooldown(player, state)) {
+                int remainingTicks = getRemainingParryCooldown(player, state);
+                player.displayClientMessage(
+                        Component.literal("Parry on cooldown! (" + (remainingTicks / 20.0f) + "s)")
+                                .withStyle(style -> style.withColor(0xFFAA00)),
+                        true
+                );
+            }
             return false;
         }
 
         // Start blocking with automatic parry window
         state.stance = BlockingStance.PARRY_READY; // Start with parry window
         state.blockTicks = 0;
-        state.parryWindowTicks = 20; // 1 second parry window (20 ticks)
+        state.parryWindowTicks = PARRY_WINDOW_TICKS; // 0.5 second parry window (10 ticks)
 
         // Apply blocking effect
         applyBlockingEffect(player);
@@ -86,7 +96,7 @@ public class KatanaBlock {
 
         // Send message to player about parry window
         player.displayClientMessage(
-                Component.literal("Blocking - Perfect parry window active!")
+                Component.literal("Blocking - Perfect parry window active! (0.5s)")
                         .withStyle(style -> style.withColor(0x55FF55)),
                 true // Overlay message
         );
@@ -235,10 +245,43 @@ public class KatanaBlock {
         // Can't block if already blocking
         if (state.stance != BlockingStance.NONE) return false;
 
+        // Check parry cooldown
+        if (isOnParryCooldown(player, state)) return false;
+
         // Must have minimum STANCE (not stamina)
         if (!StanceManager.hasStance(player, BLOCK_STANCE_DRAIN * 25)) return false; // ~2 seconds worth
 
         return true;
+    }
+
+    /**
+     * Check if player is on parry cooldown
+     */
+    private static boolean isOnParryCooldown(Player player, BlockingState state) {
+        long currentTime = player.level().getGameTime();
+        return currentTime < state.parryCooldownUntil;
+    }
+
+    /**
+     * Get remaining parry cooldown ticks
+     */
+    private static int getRemainingParryCooldown(Player player, BlockingState state) {
+        long currentTime = player.level().getGameTime();
+        return Math.max(0, (int)(state.parryCooldownUntil - currentTime));
+    }
+
+    /**
+     * Set parry cooldown
+     */
+    private static void setParryCooldown(Player player, BlockingState state) {
+        long currentTime = player.level().getGameTime();
+        state.parryCooldownUntil = currentTime + PARRY_COOLDOWN_TICKS;
+
+        // Display cooldown on HUD like movement system
+        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            com.xirc.nichirin.common.network.CooldownDisplayPacket.sendToClient(
+                    serverPlayer, "Parry", PARRY_COOLDOWN_TICKS);
+        }
     }
 
     private static boolean canParry(Player player, BlockingState state) {
@@ -270,6 +313,9 @@ public class KatanaBlock {
         state.stance = BlockingStance.PARRY_SUCCESS;
         state.parryWindowTicks = 0;
 
+        // Set parry cooldown (3 seconds)
+        setParryCooldown(player, state);
+
         // Show successful parry message
         player.displayClientMessage(
                 Component.literal("Successful Parry!")
@@ -283,13 +329,13 @@ public class KatanaBlock {
 
         // Stun ANY living entity that attacked (players AND mobs)
         if (attacker instanceof ServerPlayer serverPlayer) {
-            // Apply 1.5-second stun to player
+            // Apply 1-second stun to player (reduced from 1.5 seconds)
             MobEffectInstance stunEffect = new MobEffectInstance(
                     NichirinEffectRegistry.STUNNED.get(),
-                    30, // 1.5 seconds (30 ticks)
+                    20, // 1 second (20 ticks, reduced from 30)
                     0, // Amplifier
                     false, // Ambient
-                    true, // Show particles
+                    false, // Show particles - DISABLED
                     true   // Show icon
             );
             serverPlayer.addEffect(stunEffect);

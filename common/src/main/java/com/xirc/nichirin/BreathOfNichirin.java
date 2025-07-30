@@ -57,7 +57,6 @@ public final class BreathOfNichirin {
         StaminaEventHandler.register();
         BlockingEventHandler.register();
         BlockingInputHandler.register();
-        BlockingEventHandler.register();
 
         //data
         PlayerStats.initialize();

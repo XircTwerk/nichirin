@@ -21,21 +21,13 @@ public class StunnedStatusEffect extends MobEffect {
     private static final UUID MOVEMENT_MODIFIER_UUID = UUID.fromString("9107DE5E-9CE8-5030-941E-514C1F160892");
 
     public StunnedStatusEffect() {
-        super(MobEffectCategory.HARMFUL, 0xFFD700); // Golden color for stun
+        super(MobEffectCategory.NEUTRAL, 0xFFD700); // Golden color for stun
 
         // Complete movement lockdown
         this.addAttributeModifier(
                 Attributes.MOVEMENT_SPEED,
                 MOVEMENT_MODIFIER_UUID.toString(),
-                -1.0, // 100% movement speed reduction (complete immobilization)
-                AttributeModifier.Operation.MULTIPLY_TOTAL
-        );
-
-        // Prevent jumping for horses and other entities with jump strength
-        this.addAttributeModifier(
-                Attributes.JUMP_STRENGTH,
-                "9207DE5E-9CE8-5030-941E-514C1F160893", // Different UUID
-                -1.0, // 100% jump strength reduction
+                0,
                 AttributeModifier.Operation.MULTIPLY_TOTAL
         );
     }
