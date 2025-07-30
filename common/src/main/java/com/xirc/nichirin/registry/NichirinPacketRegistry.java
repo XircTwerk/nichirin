@@ -29,6 +29,9 @@ public interface NichirinPacketRegistry {
     ResourceLocation BLOCK_STOP_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "block_stop");
     ResourceLocation PARRY_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "parry");
     ResourceLocation PLAYER_ANIMATION_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "player_animation");
+    ResourceLocation MOVEMENT_INPUT_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "movement_input");
+    ResourceLocation MOVEMENT_INPUT_SYNC_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "movement_input_sync");
+
 
 
     // Packet class mappings
@@ -46,6 +49,8 @@ public interface NichirinPacketRegistry {
         PACKET_IDS.put(StaminaSyncPacket.class, SYNC_STAMINA_ID);
         PACKET_IDS.put(StanceSyncPacket.class, SYNC_STANCE_ID);
         PACKET_IDS.put(PlayerAnimationPacket.class, PLAYER_ANIMATION_ID);
+        PACKET_IDS.put(MovementInputPacket.class, MOVEMENT_INPUT_ID);
+        PACKET_IDS.put(MovementInputSyncPacket.class, MOVEMENT_INPUT_SYNC_ID);
 
         // Register with Architectury - ONCE
         registerPackets();
@@ -82,6 +87,20 @@ public interface NichirinPacketRegistry {
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, PARRY_ID, (buf, context) -> {
             if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
                 context.queue(() -> KatanaBlock.attemptParry(serverPlayer));
+            }
+        });
+
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, MOVEMENT_INPUT_ID, (buf, context) -> {
+            MovementInputPacket packet = new MovementInputPacket(buf);
+            if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
+                context.queue(() -> packet.handle(serverPlayer));
+            }
+        });
+
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, MOVEMENT_INPUT_SYNC_ID, (buf, context) -> {
+            MovementInputSyncPacket packet = new MovementInputSyncPacket(buf);
+            if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
+                context.queue(() -> packet.handle(serverPlayer));
             }
         });
 
@@ -154,6 +173,10 @@ public interface NichirinPacketRegistry {
         } else if (packet instanceof StanceSyncPacket p) {
             p.toBytes(buf);
         } else if (packet instanceof PlayerAnimationPacket p) {
+            p.toBytes(buf);
+        } else if (packet instanceof MovementInputPacket p) {
+            p.toBytes(buf);
+        }  else if (packet instanceof MovementInputSyncPacket p) {
             p.toBytes(buf);
         }
 

@@ -9,7 +9,9 @@ import com.xirc.nichirin.client.registry.NichirinKeybindRegistry;
 import com.xirc.nichirin.client.renderer.BreathingBarRenderer;
 import com.xirc.nichirin.client.renderer.StaminaBarRenderer;
 import com.xirc.nichirin.client.renderer.StanceBarRenderer;
+import com.xirc.nichirin.client.util.ClientInputTracker;
 import com.xirc.nichirin.common.attack.MoveExecutor;
+import com.xirc.nichirin.common.network.CooldownDisplayPacket;
 import com.xirc.nichirin.registry.NichirinEntityRendererRegistry;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import dev.architectury.event.events.client.ClientTickEvent;
@@ -34,8 +36,13 @@ public class BreathOfNichirinClient {
 
         // Register client tick event to monitor player state
         ClientTickEvent.CLIENT_POST.register(minecraft -> {
-            if (minecraft.level != null && minecraft.level.getGameTime() % 100 == 0) {
-                LocalPlayer player = minecraft.player;
+            if (minecraft.level != null) {
+                // Add input tracking
+                ClientInputTracker.tick();
+
+                if (minecraft.level.getGameTime() % 100 == 0) {
+                    LocalPlayer player = minecraft.player;
+                }
             }
         });
 
@@ -52,6 +59,7 @@ public class BreathOfNichirinClient {
         BigGuiKeyHandler.register();
         AttackWheelHandler.register();
         ClientDoubleJumpHandler.register();
+        CooldownDisplayPacket.registerClient();
 
         // Register animations
         NichirinAnimations.init();
