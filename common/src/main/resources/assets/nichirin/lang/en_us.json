@@ -11,21 +11,15 @@
   "command.nichirin.breathing.get.none": "%s has no breathing style",
   "command.nichirin.breathing.unknown": "Unknown breathing style: %s",
 
+  "cooldown.nichirin.dodge": "Dodge",
+  "cooldown.nichirin.air_dodge": "Air Dodge",
+  "cooldown.nichirin.backstep": "Backstep",
+  "cooldown.nichirin.dash": "Dash",
+  "cooldown.nichirin.movement": "Movement",
+
   "effect.nichirin.blocking": "Blocking",
   "effect.nichirin.shocked": "Shocked",
   "effect.nichirin.stunned": "Stunned",
-
-  "item.nichirin.katana": "Katana",
-  "item.nichirin.thunder_katana": "Thunder Katana",
-  "item.nichirin.scarlet_crimson_iron_gem": "Scarlet Crimson Iron Sand",
-  "item.nichirin.scarlet_gem": "Scarlet Gem",
-
-  "itemgroup.nichirin.main": "Nichirin",
-
-  "key.categories.nichirin": "Breath of Nichirin",
-  "key.nichirin.attack_wheel": "Open Attack Wheel",
-  "key.nichirin.open_gui": "Open Gui",
-  "key.nichirin.block": "Block/Parry",
 
   "gui.nichirin.main.title": "Nichirin Menu",
   "gui.nichirin.coming_soon": "Coming Soon",
@@ -62,5 +56,21 @@
   "gui.nichirin.moveset.title": "Current Moveset",
   "gui.nichirin.moveset.current_style": "Style: %s",
   "gui.nichirin.moveset.move_details_coming_soon": "Move details coming soon...",
-  "gui.nichirin.moveset.select_style": "Select a breathing style to view moves"
+  "gui.nichirin.moveset.select_style": "Select a breathing style to view moves",
+
+  "item.nichirin.katana": "Katana",
+  "item.nichirin.thunder_katana": "Thunder Katana",
+  "item.nichirin.scarlet_crimson_iron_gem": "Scarlet Crimson Iron Sand",
+  "item.nichirin.scarlet_gem": "Scarlet Gem",
+
+  "itemgroup.nichirin.main": "Nichirin",
+
+  "key.categories.nichirin": "Breath of Nichirin",
+  "key.nichirin.attack_wheel": "Open Attack Wheel",
+  "key.nichirin.movement": "Movement",
+  "key.nichirin.open_gui": "Open Gui",
+  "key.nichirin.block": "Block/Parry",
+
+  "message.nichirin.movement_cooldown": "Movement on cooldown!",
+  "message.nichirin.no_stamina_movement": "Not enough stamina for movement!"
 }
