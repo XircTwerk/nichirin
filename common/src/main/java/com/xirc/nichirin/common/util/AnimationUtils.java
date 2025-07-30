@@ -53,7 +53,7 @@ public class AnimationUtils {
         if (player == null) return;
 
         if (player.level().isClientSide) {
-            playClientAnimation(player, animationName, easing);
+      //      playClientAnimation(player, animationName, easing);
         } else {
             // Server side - send packet to client
             if (player instanceof ServerPlayer serverPlayer) {
