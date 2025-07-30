@@ -182,13 +182,13 @@ public class SimpleKatana extends SwordItem {
             state.currentSlash.start(player);
             state.comboCount = 2;
             state.slash2CooldownUntil = currentTime + state.currentSlash.getCooldown();
-            AnimationUtils.playAnimation(player, "light_slash2");
+            AnimationUtils.playAnimation(player, "sword_slash");
         } else {
             state.currentSlash = createLightSlash1();
             state.currentSlash.start(player);
             state.comboCount = 1;
             state.slash1CooldownUntil = currentTime + state.currentSlash.getCooldown();
-            AnimationUtils.playAnimation(player, "light_slash1");
+            AnimationUtils.playAnimation(player, "sword_slash");
         }
 
         state.lastAttackTime = currentTime;
@@ -261,10 +261,17 @@ public class SimpleKatana extends SwordItem {
             state.currentRisingSlash = createRisingSlashAttack();
             state.currentRisingSlash.start(player);
             state.risingSlashCooldownUntil = currentTime + state.currentRisingSlash.getCooldown();
+
+            System.out.println("DEBUG: Trying to play sword_vertical animation");
+            AnimationUtils.playAnimation(player, "sword_vertical");
+
         } else {
             state.currentDoubleSlash = createDoubleSlashAttack();
             state.currentDoubleSlash.start(player);
             state.doubleSlashCooldownUntil = currentTime + state.currentDoubleSlash.getCooldown();
+
+            System.out.println("DEBUG: Trying to play sword_doubleslash animation");
+            AnimationUtils.playAnimation(player, "sword_doubleslash");
         }
 
         state.comboCount = 0;
@@ -285,10 +292,10 @@ public class SimpleKatana extends SwordItem {
 
         if (isCombo && state.comboCount == 1) {
             CooldownHUD.setCooldown("Slash2", 0);
-            AnimationUtils.playAnimation(player, "light_slash2");
+            AnimationUtils.playAnimation(player, "sword_slash");
         } else {
             CooldownHUD.setCooldown("Slash1", 0);
-            AnimationUtils.playAnimation(player, "light_slash1");
+            AnimationUtils.playAnimation(player, "sword_slash");
         }
     }
 
@@ -302,12 +309,12 @@ public class SimpleKatana extends SwordItem {
             return;
         }
 
-        // Only show default cooldowns if no breathing style
+        // ALWAYS play animations regardless of breathing style
         if (isCrouching) {
-            AnimationUtils.playAnimation(player, "rising_slash");
+            AnimationUtils.playAnimation(player, "sword_vertical");
             CooldownHUD.setCooldown("Rising Slash", 25);
         } else {
-            AnimationUtils.playAnimation(player, "double_slash");
+            AnimationUtils.playAnimation(player, "sword_doubleslash");
             CooldownHUD.setCooldown("Double Slash", 20);
         }
     }

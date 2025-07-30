@@ -28,6 +28,8 @@ public interface NichirinPacketRegistry {
     ResourceLocation BLOCK_START_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "block_start");
     ResourceLocation BLOCK_STOP_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "block_stop");
     ResourceLocation PARRY_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "parry");
+    ResourceLocation PLAYER_ANIMATION_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "player_animation");
+
 
     // Packet class mappings
     Map<Class<?>, ResourceLocation> PACKET_IDS = new HashMap<>();
@@ -43,6 +45,7 @@ public interface NichirinPacketRegistry {
         PACKET_IDS.put(SyncBreathPacket.class, SYNC_BREATH_ID);
         PACKET_IDS.put(StaminaSyncPacket.class, SYNC_STAMINA_ID);
         PACKET_IDS.put(StanceSyncPacket.class, SYNC_STANCE_ID);
+        PACKET_IDS.put(PlayerAnimationPacket.class, PLAYER_ANIMATION_ID);
 
         // Register with Architectury - ONCE
         registerPackets();
@@ -101,6 +104,11 @@ public interface NichirinPacketRegistry {
             StanceSyncPacket packet = new StanceSyncPacket(buf);
             context.queue(() -> packet.handleClient());
         });
+
+        NetworkManager.registerReceiver(NetworkManager.Side.S2C, PLAYER_ANIMATION_ID, (buf, context) -> {
+            PlayerAnimationPacket packet = new PlayerAnimationPacket(buf);
+            context.queue(() -> packet.handleClient());
+        });
     }
 
     // Simple packet sending
@@ -144,6 +152,8 @@ public interface NichirinPacketRegistry {
         } else if (packet instanceof StaminaSyncPacket p) {
             p.toBytes(buf);
         } else if (packet instanceof StanceSyncPacket p) {
+            p.toBytes(buf);
+        } else if (packet instanceof PlayerAnimationPacket p) {
             p.toBytes(buf);
         }
 
