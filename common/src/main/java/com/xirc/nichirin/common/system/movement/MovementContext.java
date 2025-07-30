@@ -18,8 +18,8 @@ import java.util.UUID;
  */
 public class MovementContext {
 
-    private static final float MOVEMENT_STAMINA_COST = 20.0f;
-    private static final int MOVEMENT_COOLDOWN_TICKS = 60; // 3 seconds
+    private static final float MOVEMENT_STAMINA_COST = 15.0f;
+    private static final int MOVEMENT_COOLDOWN_TICKS = 40; // 2 seconds
 
     // Track cooldowns per player
     private static final Map<UUID, Long> playerCooldowns = new HashMap<>();
@@ -138,7 +138,6 @@ public class MovementContext {
     private static void executeMovement(Player player, MovementType movementType, InputState input) {
         switch (movementType) {
             case DODGE -> Dodge.execute(player);
-            case AIR_DODGE -> AirDodge.execute(player);
             case BACKSTEP -> Backstep.execute(player); // Backstep doesn't need input direction
             case DASH -> {
                 // Convert InputState to public class for Dash

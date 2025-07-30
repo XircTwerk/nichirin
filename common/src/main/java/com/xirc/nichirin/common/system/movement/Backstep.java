@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.system.movement;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
@@ -12,11 +13,11 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Backstep system - teleports player 5 blocks backward
+ * Backstep system - teleports player 3 blocks backward with thunder particles
  */
 public class Backstep {
 
-    private static final double BACKSTEP_DISTANCE = 3.0;
+    private static final double BACKSTEP_DISTANCE = 3.0; // Reduced from 5.0 to 3.0
     private static final double SAFETY_CHECK_RADIUS = 0.5; // Player collision box consideration
 
     /**
@@ -26,6 +27,9 @@ public class Backstep {
         if (player == null || player.level().isClientSide) {
             return;
         }
+
+        // Store starting position for particles
+        Vec3 startPosition = player.position();
 
         // Calculate backstep destination
         Vec3 backstepDestination = calculateBackstepDestination(player);
@@ -40,6 +44,9 @@ public class Backstep {
 
         // Perform the teleport
         performBackstepTeleport(player, backstepDestination);
+
+        // Add teleport effects with thunder particles
+        addBackstepEffects(player, startPosition, backstepDestination);
 
         // Play backstep sound
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
@@ -149,27 +156,77 @@ public class Backstep {
 
         // Stop current movement
         player.setDeltaMovement(Vec3.ZERO);
-
-        // Add teleport particles at both locations
-        addTeleportEffects(player, player.position(), destination);
     }
 
     /**
-     * Add visual effects for the teleport
+     * Add visual effects for the teleport using regular minecraft particles
      */
-    private static void addTeleportEffects(Player player, Vec3 startPos, Vec3 endPos) {
+    private static void addBackstepEffects(Player player, Vec3 startPos, Vec3 endPos) {
         Level level = player.level();
 
-        // TODO: Add particle effects at start and end positions
-        // For now, just play sounds at both locations
+        if (level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+            // Wind particles at start position
+            for (int i = 0; i < 20; i++) {
+                double offsetX = (player.getRandom().nextDouble() - 0.5) * 1.5;
+                double offsetY = (player.getRandom().nextDouble() - 0.5) * 2.0;
+                double offsetZ = (player.getRandom().nextDouble() - 0.5) * 1.5;
+
+                serverLevel.sendParticles(
+                        ParticleTypes.CLOUD,
+                        startPos.x + offsetX,
+                        startPos.y + offsetY + 1.0,
+                        startPos.z + offsetZ,
+                        1, 0, 0, 0, 0.1
+                );
+            }
+
+            // Wind particles at end position
+            for (int i = 0; i < 20; i++) {
+                double offsetX = (player.getRandom().nextDouble() - 0.5) * 1.5;
+                double offsetY = (player.getRandom().nextDouble() - 0.5) * 2.0;
+                double offsetZ = (player.getRandom().nextDouble() - 0.5) * 1.5;
+
+                serverLevel.sendParticles(
+                        ParticleTypes.CLOUD,
+                        endPos.x + offsetX,
+                        endPos.y + offsetY + 1.0,
+                        endPos.z + offsetZ,
+                        1, 0, 0, 0, 0.1
+                );
+            }
+
+            // Create particle trail between start and end positions
+            Vec3 direction = endPos.subtract(startPos);
+            double distance = direction.length();
+            Vec3 normalizedDirection = direction.normalize();
+
+            // Add particles along the path
+            for (double d = 0; d < distance; d += 0.4) {
+                Vec3 trailPos = startPos.add(normalizedDirection.scale(d));
+
+                for (int i = 0; i < 3; i++) {
+                    double offsetX = (player.getRandom().nextDouble() - 0.5) * 0.6;
+                    double offsetY = (player.getRandom().nextDouble() - 0.5) * 0.6;
+                    double offsetZ = (player.getRandom().nextDouble() - 0.5) * 0.6;
+
+                    serverLevel.sendParticles(
+                            ParticleTypes.CLOUD,
+                            trailPos.x + offsetX,
+                            trailPos.y + offsetY + 1.0,
+                            trailPos.z + offsetZ,
+                            1, 0, 0, 0, 0.05
+                    );
+                }
+            }
+        }
 
         // Sound at start position
         level.playSound(null, startPos.x, startPos.y, startPos.z,
-                SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 0.3f, 0.8f);
+                SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.4f, 1.5f);
 
         // Sound at end position
         level.playSound(null, endPos.x, endPos.y, endPos.z,
-                SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 0.3f, 1.4f);
+                SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.4f, 1.8f);
     }
 
     /**

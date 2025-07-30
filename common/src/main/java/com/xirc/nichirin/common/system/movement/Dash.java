@@ -1,190 +1,182 @@
 package com.xirc.nichirin.common.system.movement;
 
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.WeakHashMap;
+import java.util.UUID;
 
 /**
- * Dash system with global tracking
+ * Dash system with directional input support
  */
 public class Dash {
 
-    // Global dash map for all active dashes
-    public static final Map<LivingEntity, DashData> activeDashes = new WeakHashMap<>();
+    private static final float DASH_FORCE = 1f;
+    private static final int DASH_DURATION = 12; // ticks
+    private static final float PARTICLE_HEIGHT_OFFSET = 1.0f; // Move particles up
 
-    private static final double DASH_SPEED = 0.75; // Base dash speed
+    // Track active dashes with player references instead of UUIDs
+    private static final Map<Player, DashState> activeDashes = new HashMap<>();
 
     /**
-     * Try to start a dash
+     * Execute dash with input direction
      */
     public static void execute(Player player, MovementContext.DashInput input) {
         if (player == null || player.level().isClientSide) {
             return;
         }
 
-        // Check if already dashing
-        if (isDashing(player)) {
-            System.out.println("DEBUG: Player already dashing");
-            return;
+        // Calculate dash direction
+        Vec3 dashDirection = calculateDashDirection(player, input);
+
+        if (dashDirection.equals(Vec3.ZERO)) {
+            // Fallback to forward dash if no valid input
+            dashDirection = player.getLookAngle().normalize();
         }
 
-        // Calculate forward/side components
-        int forward = 0;
-        int side = 0;
+        // Start dash
+        startDash(player, dashDirection);
 
-        if (input.forward && !input.backward) forward = 1;
-        else if (input.backward && !input.forward) forward = -1;
+        // Play dash sound
+        player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
+                SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.5f, 1.3f);
 
-        if (input.right && !input.left) side = 1;
-        else if (input.left && !input.right) side = -1;
+        // Add initial particles at player position (moved up)
+        addDashParticles(player, player.position().add(0, PARTICLE_HEIGHT_OFFSET, 0));
 
-        // Execute dash with calculated direction
-        tryDash(forward, side, player);
+        System.out.println("DEBUG: Started dash - direction: " + dashDirection + ", force: " + DASH_FORCE);
     }
 
     /**
-     * Main dash execution method
+     * Calculate dash direction based on input
      */
-    public static void tryDash(int forward, int side, LivingEntity entity) {
-        // Check conditions
-        if (!entity.onGround() || isDashing(entity)) {
-            return;
+    private static Vec3 calculateDashDirection(Player player, MovementContext.DashInput input) {
+        Vec3 lookDirection = player.getLookAngle();
+        Vec3 rightDirection = lookDirection.cross(new Vec3(0, 1, 0)).normalize();
+        Vec3 forwardDirection = new Vec3(lookDirection.x, 0, lookDirection.z).normalize();
+
+        double forward = 0;
+        double side = 0;
+
+        if (input.forward) forward += 1;
+        if (input.backward) forward -= 1;
+        if (input.right) side += 1;    // Fixed: was side -= 1
+        if (input.left) side -= 1;     // Fixed: was side += 1
+
+        // Combine directions
+        Vec3 dashDirection = forwardDirection.scale(forward).add(rightDirection.scale(side));
+
+        if (dashDirection.length() > 0) {
+            dashDirection = dashDirection.normalize();
         }
 
-        double dashSpeed = DASH_SPEED;
-        Vec3 rotVec = Vec3.directionFromRotation(entity.getXRot(), entity.getYRot());
-        rotVec = rotVec.yRot(1.57079632679f * side); // L/R rotation
+        System.out.println("DEBUG: Calculated dash - forward: " + forward + ", side: " + side + ", direction: " + dashDirection);
 
-        if (side != 0) {
-            dashSpeed *= 0.75; // Sideways speed nerf
-            if (forward == 1) {
-                rotVec = rotVec.yRot(-0.785398163397f * side); // Forward diagonals
-            }
-        }
-        if (forward == -1) {
-            rotVec = rotVec.yRot(side == 0 ? 3.14159265359f : 0.785398163397f * side); // Back diagonals
-            dashSpeed *= 0.75; // Backwards speed nerf
-        }
-
-        // Add to global map
-        activeDashes.put(entity, new DashData(rotVec.normalize().scale(dashSpeed), entity));
-
-        // Play sound
-        entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(),
-                SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.5f, 0.8f);
-
-        System.out.println("DEBUG: Started dash - forward: " + forward + ", side: " + side + ", vector: " + rotVec.normalize().scale(dashSpeed));
+        return dashDirection;
     }
 
     /**
-     * Global tick method for all dashes
-     * This should be called from server tick
+     * Start a new dash
+     */
+    private static void startDash(Player player, Vec3 direction) {
+        DashState dashState = new DashState();
+        dashState.direction = direction;
+        dashState.remainingTicks = DASH_DURATION;
+        dashState.force = DASH_FORCE;
+
+        activeDashes.put(player, dashState);
+
+        System.out.println("DEBUG: Started dash - direction: " + direction + ", duration: " + DASH_DURATION);
+    }
+
+    /**
+     * Tick all active dashes
      */
     public static void tickAllDashes() {
-        if (!activeDashes.isEmpty()) {
-            System.out.println("DEBUG: Ticking " + activeDashes.size() + " active dashes");
-        }
+        activeDashes.entrySet().removeIf(entry -> {
+            Player player = entry.getKey();
+            DashState dashState = entry.getValue();
 
-        // Tick all active dashes
-        for (Map.Entry<LivingEntity, DashData> entry : activeDashes.entrySet()) {
-            DashData dash = entry.getValue();
-            dash.tickDash();
-
-            // Add particles for players
-            if (dash.entity instanceof Player) {
-                addDashParticles((Player) dash.entity);
-            }
-        }
-
-        // Remove finished dashes
-        activeDashes.entrySet().removeIf(entry -> entry.getValue().finished);
-    }
-
-    /**
-     * Add particle trail during dash
-     */
-    private static void addDashParticles(Player player) {
-        if (player.level() instanceof ServerLevel serverLevel) {
-            Vec3 playerPos = player.position();
-            Vec3 velocity = player.getDeltaMovement();
-
-            // Particles behind the player
-            Vec3 particlePos = playerPos.add(velocity.scale(-0.3));
-
-            serverLevel.sendParticles(
-                    ParticleTypes.CLOUD,
-                    particlePos.x, particlePos.y + 0.1, particlePos.z,
-                    2, // particle count
-                    0.1, 0.05, 0.1, // spread
-                    0.02 // speed
-            );
-        }
-    }
-
-    /**
-     * Check if entity is dashing
-     */
-    public static boolean isDashing(LivingEntity entity) {
-        return activeDashes.containsKey(entity);
-    }
-
-    /**
-     * Get dash data
-     */
-    public static DashData getDash(LivingEntity entity) {
-        return activeDashes.get(entity);
-    }
-
-    /**
-     * Dash data container
-     */
-    public static class DashData {
-        public final Vec3 dashVector;
-        public final LivingEntity entity;
-        public boolean finished = false;
-        private int duration = 10;
-
-        public DashData(Vec3 dashVector, LivingEntity entity) {
-            this.dashVector = dashVector;
-            this.entity = entity;
-        }
-
-        public void tickDash() {
-            duration--;
-
-            // Check if stunned (stops dashes)
-            if (entity.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.STUNNED.get())) {
-                finished = true;
-                return;
+            // Check if player is still valid
+            if (player == null || player.level().isClientSide) {
+                return true; // Remove if player not valid
             }
 
-            if (duration <= 5) { // 5 ticks of movement, then recovery
-                if (duration <= 0) {
-                    finished = true;
-                }
-                return;
+            // Apply dash force
+            Vec3 dashVelocity = dashState.direction.scale(dashState.force * 0.1);
+            Vec3 currentVelocity = player.getDeltaMovement();
+            Vec3 newVelocity = currentVelocity.add(dashVelocity);
+
+            player.setDeltaMovement(newVelocity);
+            player.hurtMarked = true;
+
+            // Add particles during dash (moved up)
+            if (dashState.remainingTicks % 2 == 0) { // Every other tick
+                addDashParticles(player, player.position().add(0, PARTICLE_HEIGHT_OFFSET, 0));
             }
 
-            // Apply movement
-            entity.setDeltaMovement(entity.getDeltaMovement().add(dashVector).scale(0.5));
-            entity.hurtMarked = true;
+            dashState.remainingTicks--;
 
-            System.out.println("DEBUG: Dash tick - duration: " + duration + ", applied vector: " + dashVector + ", new velocity: " + entity.getDeltaMovement());
+            System.out.println("DEBUG: Dash tick - remaining: " + dashState.remainingTicks +
+                    ", applied velocity: " + dashVelocity + ", new velocity: " + newVelocity);
+
+            return dashState.remainingTicks <= 0;
+        });
+    }
+
+    /**
+     * Add dash particles
+     */
+    private static void addDashParticles(Player player, Vec3 position) {
+        if (player.level().isClientSide) return;
+
+        // Use regular minecraft wind particles
+        if (player.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+            for (int i = 0; i < 5; i++) {
+                double offsetX = (player.getRandom().nextDouble() - 0.5) * 0.8;
+                double offsetY = (player.getRandom().nextDouble() - 0.5) * 0.8;
+                double offsetZ = (player.getRandom().nextDouble() - 0.5) * 0.8;
+
+                serverLevel.sendParticles(
+                        ParticleTypes.CLOUD,
+                        position.x + offsetX,
+                        position.y + offsetY,
+                        position.z + offsetZ,
+                        1, 0, 0, 0, 0.05
+                );
+            }
         }
     }
 
     /**
-     * Legacy method for compatibility - not used in new system
+     * Find player by UUID (helper method) - No longer needed
      */
-    public static void tick() {
-        // This method is kept for compatibility but does nothing
-        // The real ticking happens in tickAllDashes()
+
+    /**
+     * Check if player is currently dashing
+     */
+    public static boolean isPlayerDashing(Player player) {
+        return activeDashes.containsKey(player);
+    }
+
+    /**
+     * Get remaining dash ticks for player
+     */
+    public static int getRemainingDashTicks(Player player) {
+        DashState dashState = activeDashes.get(player);
+        return dashState != null ? dashState.remainingTicks : 0;
+    }
+
+    /**
+     * Internal dash state tracking
+     */
+    private static class DashState {
+        Vec3 direction;
+        int remainingTicks;
+        float force;
     }
 }
