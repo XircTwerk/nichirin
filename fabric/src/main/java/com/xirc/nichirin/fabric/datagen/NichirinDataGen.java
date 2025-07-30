@@ -12,6 +12,7 @@ public final class NichirinDataGen implements DataGeneratorEntrypoint {
         pack.addProvider(NichirinWorldProvider::new);
         pack.addProvider(NichirinRecipeProvider::new);
         pack.addProvider(NichirinTagProvider::new);
+        pack.addProvider(NichirinTagProvider.ItemTagProvider::new);
         pack.addProvider(NichirinLootTableProvider::new);
         pack.addProvider(NichirinAdvancementProvider::new);
 
