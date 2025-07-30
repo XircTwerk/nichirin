@@ -2,6 +2,8 @@ CHANGELOG FOR BREATH OF NICHIRIN V1.0.1
 
 Thank you guys for waiting so long, and i promise this update won't disappoint
 
+Heads up! azurelib is now a new dependency. 
+
 NEW FEATURES:
 Added gui screen, that displays player information, that also serves as a hub for managing your player
 Added an attack wheel, that lets you cast your attacks from your breathing style
