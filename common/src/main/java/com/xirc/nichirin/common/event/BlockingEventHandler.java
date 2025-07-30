@@ -61,28 +61,44 @@ public class BlockingEventHandler {
             }
         });
 
-        // Handle parry success (perfect damage negation)
         EntityEvent.LIVING_HURT.register((entity, damageSource, amount) -> {
             if (entity instanceof Player player && !player.level().isClientSide) {
                 // Check if this player is blocking
                 if (KatanaBlock.isBlocking(player)) {
-                    // Get the attacker
+                    // Get the player attacker (if any) - but parrying works regardless
                     Player attacker = null;
                     if (damageSource.getEntity() instanceof Player playerAttacker) {
                         attacker = playerAttacker;
+                        System.out.println("DEBUG: Found player attacker: " + playerAttacker.getName().getString());
+                    } else {
+                        System.out.println("DEBUG: Non-player damage source: " + damageSource.getMsgId() +
+                                " from entity: " + (damageSource.getEntity() != null ? damageSource.getEntity().getType().getDescription().getString() : "null"));
                     }
 
-                    // Handle the damage through blocking system
+                    System.out.println("DEBUG: Player " + player.getName().getString() + " is blocking, calling handleIncomingDamage");
+
+                    // Handle the damage through blocking system - works for ALL damage sources
                     boolean handled = KatanaBlock.handleIncomingDamage(player, attacker, amount);
 
+                    System.out.println("DEBUG: handleIncomingDamage returned: " + handled);
+                    System.out.println("DEBUG: Current blocking stance: " + KatanaBlock.getStance(player));
+
                     if (handled) {
-                        // Check if it was a perfect parry (first 1 second of blocking)
+                        // Check if it was a perfect parry
                         if (KatanaBlock.getStance(player) == KatanaBlock.BlockingStance.PARRY_SUCCESS) {
-                            // Perfect parry - cancel all damage
-                            System.out.println("DEBUG: Perfect parry - negating all damage");
-                            return EventResult.interruptFalse();
+                            // Perfect parry - cancel ALL damage from ANY source
+                            System.out.println("DEBUG: Perfect parry - negating all damage from " + damageSource.getMsgId());
+
+                            // Double-check that stun was applied to attacker (if it's a player)
+                            if (attacker != null) {
+                                boolean hasStun = attacker.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.STUNNED.get());
+                                System.out.println("DEBUG: Attacker " + attacker.getName().getString() + " has stun effect: " + hasStun);
+                            }
+
+                            return EventResult.interruptFalse(); // Completely negate damage
                         }
                         // Regular blocking damage reduction is handled by Resistance IV effect
+                        System.out.println("DEBUG: Regular block - damage will be reduced by Resistance IV");
                     }
                 }
             }
