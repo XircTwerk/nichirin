@@ -38,7 +38,7 @@ public interface NichirinKeybindRegistry {
     KeyMapping MOVEMENT_KEY = new KeyMapping(
             "key.nichirin.movement",
             InputConstants.Type.MOUSE,
-            GLFW.GLFW_MOUSE_BUTTON_4,
+            GLFW.GLFW_MOUSE_BUTTON_5,
             "key.categories.nichirin"
     );
 
