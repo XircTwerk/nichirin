@@ -23,10 +23,10 @@ public class StanceBarHUD {
     private static final int BORDER_WIDTH = 1;
 
     // Stance values
-    private static float currentStance = 80f; // Default max is 80
-    private static float maxStance = 80f;
-    private static float displayedStance = 80f;
-    private static float lastStance = 80f;
+    private static float currentStance = 100f;
+    private static float maxStance = 100f;
+    private static float displayedStance = 100f;
+    private static float lastStance = 100f;
 
     // Animation (slightly slower than stamina)
     private static final float ANIMATION_SPEED = 0.12f;
@@ -42,7 +42,7 @@ public class StanceBarHUD {
      * Updates the stance values
      */
     public static void updateStance(float current, float max) {
-        if (max <= 0) max = 80f;
+        if (max <= 0) max = 100f;
         current = Math.max(0, Math.min(current, max));
 
         // Check if values changed

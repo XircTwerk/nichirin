@@ -48,7 +48,6 @@ public class Dash {
         // Add initial particles at player position (moved up)
         addDashParticles(player, player.position().add(0, PARTICLE_HEIGHT_OFFSET, 0));
 
-        System.out.println("DEBUG: Started dash - direction: " + dashDirection + ", force: " + DASH_FORCE);
     }
 
     /**
@@ -74,7 +73,6 @@ public class Dash {
             dashDirection = dashDirection.normalize();
         }
 
-        System.out.println("DEBUG: Calculated dash - forward: " + forward + ", side: " + side + ", direction: " + dashDirection);
 
         return dashDirection;
     }
@@ -90,7 +88,6 @@ public class Dash {
 
         activeDashes.put(player, dashState);
 
-        System.out.println("DEBUG: Started dash - direction: " + direction + ", duration: " + DASH_DURATION);
     }
 
     /**
@@ -121,8 +118,6 @@ public class Dash {
 
             dashState.remainingTicks--;
 
-            System.out.println("DEBUG: Dash tick - remaining: " + dashState.remainingTicks +
-                    ", applied velocity: " + dashVelocity + ", new velocity: " + newVelocity);
 
             return dashState.remainingTicks <= 0;
         });

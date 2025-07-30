@@ -38,7 +38,6 @@ public class Backstep {
             // Backstep blocked - play fail sound
             player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                     SoundEvents.NOTE_BLOCK_BASS.value(), SoundSource.PLAYERS, 0.5f, 0.5f);
-            System.out.println("DEBUG: Backstep blocked for player " + player.getName().getString());
             return;
         }
 
@@ -51,8 +50,6 @@ public class Backstep {
         // Play backstep sound
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 0.6f, 1.2f);
-
-        System.out.println("DEBUG: Player " + player.getName().getString() + " backstepped to " + backstepDestination);
     }
 
     /**
