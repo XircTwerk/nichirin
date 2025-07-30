@@ -33,6 +33,7 @@ public final class BreathOfNichirin {
         LOGGER.info("=== STARTING NICHIRIN COMMON INITIALIZATION ===");
 
         // Initialize common registries first
+        NichirinMenuRegistry.init();
         NichirinItemRegistry.init();
         NichirinCreativeTabRegistry.init();
         NichirinOreRegistry.register();
