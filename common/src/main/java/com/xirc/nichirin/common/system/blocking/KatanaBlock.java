@@ -169,12 +169,8 @@ public class KatanaBlock {
         if (isBlocking) {
             state.blockTicks++;
 
-            // Drain STANCE while blocking (not stamina)
-            if (!StanceManager.consume(player, BLOCK_STANCE_DRAIN)) {
-                // Out of stance - stop blocking
-                stopBlocking(player);
-                return;
-            }
+            // DON'T drain stance while blocking - only lose stance when hit
+            // No more continuous stance consumption
 
             // Handle parry window countdown
             if (state.stance == BlockingStance.PARRY_READY) {
@@ -272,9 +268,6 @@ public class KatanaBlock {
     }
 
     private static boolean handleSuccessfulParry(Player player, Player attacker, BlockingState state) {
-        // Consume STANCE for parry (not stamina)
-        StanceManager.consume(player, PARRY_STANCE_COST);
-
         // Set parry success state
         state.stance = BlockingStance.PARRY_SUCCESS;
         state.parryWindowTicks = 0;
@@ -283,14 +276,20 @@ public class KatanaBlock {
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.ANVIL_LAND, SoundSource.PLAYERS, 0.6f, 2.0f);
 
-        // Stun the attacker if it's a player
+        // Stun the attacker for 3 seconds if it's a player
         if (attacker instanceof ServerPlayer serverAttacker) {
-            // Block their inputs briefly
-            KatanaInputHandler.blockAfterBreathingMove(serverAttacker);
+            // Apply 3-second stun
+            MobEffectInstance stunEffect = new MobEffectInstance(
+                    NichirinEffectRegistry.STUNNED.get(),
+                    60, // 3 seconds (60 ticks)
+                    0, // Amplifier
+                    false, // Ambient
+                    true, // Show particles
+                    true   // Show icon
+            );
+            serverAttacker.addEffect(stunEffect);
 
-            // Apply small knockback
-            Vec3 knockback = player.getLookAngle().scale(0.5);
-            serverAttacker.setDeltaMovement(serverAttacker.getDeltaMovement().add(knockback));
+            System.out.println("DEBUG: Applied 3-second stun to " + serverAttacker.getName().getString() + " after successful parry");
         }
 
         System.out.println("DEBUG: Successful parry by " + player.getName().getString());
@@ -305,11 +304,39 @@ public class KatanaBlock {
     }
 
     private static boolean handleSuccessfulBlock(Player player, BlockingState state, float damage) {
+        // Take 10 stance damage when hit while blocking
+        if (!StanceManager.consume(player, 10.0f)) {
+            // Out of stance - stance broken! Apply stun to the blocker
+            MobEffectInstance stunEffect = new MobEffectInstance(
+                    NichirinEffectRegistry.STUNNED.get(),
+                    60, // 3 seconds (60 ticks)
+                    0, // Amplifier
+                    false, // Ambient
+                    true, // Show particles
+                    true   // Show icon
+            );
+            player.addEffect(stunEffect);
+
+            // Stop blocking
+            stopBlocking(player);
+
+            // Send message to player
+            player.displayClientMessage(
+                    Component.literal("Stance broken! You are stunned!")
+                            .withStyle(style -> style.withColor(0xFF5555)),
+                    true // Overlay message
+            );
+
+            System.out.println("DEBUG: " + player.getName().getString() + " stance broken - applying stun");
+
+            return false; // Stance broken, take full damage
+        }
+
         // Play block sound
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.SHIELD_BLOCK, SoundSource.PLAYERS, 0.8f, 1.0f);
 
-        System.out.println("DEBUG: Successful block by " + player.getName().getString() + " - damage reduced");
+        System.out.println("DEBUG: Successful block by " + player.getName().getString() + " - lost 10 stance");
 
         return true; // Damage reduced by blocking effect (80% resistance)
     }
