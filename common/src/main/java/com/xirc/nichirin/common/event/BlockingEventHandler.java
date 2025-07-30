@@ -71,67 +71,37 @@ public class BlockingEventHandler {
                     Player playerAttacker = null;
                     net.minecraft.world.entity.LivingEntity attackingEntity = null;
 
-                    System.out.println("DEBUG: Damage source entity: " +
-                            (damageSource.getEntity() != null ? damageSource.getEntity().getClass().getSimpleName() : "null"));
-
                     if (damageSource.getEntity() instanceof Player playerAtk) {
                         playerAttacker = playerAtk;
                         attackingEntity = playerAtk;
-                        System.out.println("DEBUG: Found player attacker: " + playerAtk.getName().getString());
                     } else if (damageSource.getEntity() instanceof net.minecraft.world.entity.LivingEntity livingAtk) {
                         attackingEntity = livingAtk;
-                        System.out.println("DEBUG: Found mob attacker: " + livingAtk.getType().getDescription().getString());
-                    } else {
-                        System.out.println("DEBUG: Non-entity damage source: " + damageSource.getMsgId() +
-                                ", direct entity: " + (damageSource.getDirectEntity() != null ?
-                                damageSource.getDirectEntity().getClass().getSimpleName() : "null"));
                     }
-
-                    System.out.println("DEBUG: Player " + player.getName().getString() + " is blocking, calling handleIncomingDamage");
 
                     // Handle the damage through blocking system - works for ALL damage sources
                     boolean handled = KatanaBlock.handleIncomingDamage(player, playerAttacker, amount);
-
-                    System.out.println("DEBUG: handleIncomingDamage returned: " + handled);
-                    System.out.println("DEBUG: Current blocking stance: " + KatanaBlock.getStance(player));
 
                     if (handled) {
                         // Check if it was a perfect parry
                         if (KatanaBlock.getStance(player) == KatanaBlock.BlockingStance.PARRY_SUCCESS) {
                             // Perfect parry - cancel ALL damage from ANY source
-                            System.out.println("DEBUG: Perfect parry - negating all damage from " + damageSource.getMsgId());
 
                             // Apply stun to ANY living entity that attacked (including mobs!)
                             if (attackingEntity != null && attackingEntity != player) {
-                                System.out.println("DEBUG: Attempting to apply stun and damage to " + attackingEntity.getType().getDescription().getString());
-
                                 MobEffectInstance stunEffect = new MobEffectInstance(
                                         com.xirc.nichirin.registry.NichirinEffectRegistry.STUNNED.get(),
-                                        30, // 1.5 seconds (30 ticks)
-                                        0, // Amplifier
-                                        false, // Ambient
-                                        true, // Show particles
-                                        true   // Show icon
+                                        30,
+                                        0,
+                                        false,
+                                        false,
+                                        true
                                 );
-                                boolean stunApplied = attackingEntity.addEffect(stunEffect);
-
-                                // Deal parry damage to the attacker (3 hearts = 6.0 damage)
-                                float parryDamage = 6.0f;
-                                boolean damageDealt = attackingEntity.hurt(player.damageSources().playerAttack(player), parryDamage);
-
-                                System.out.println("DEBUG: Stun applied: " + stunApplied + ", Damage dealt: " + damageDealt +
-                                        " (" + parryDamage + " damage) to " +
-                                        (attackingEntity instanceof Player p ? p.getName().getString() :
-                                                attackingEntity.getType().getDescription().getString()));
-                            } else {
-                                System.out.println("DEBUG: No valid attacking entity to stun/damage - attackingEntity: " +
-                                        (attackingEntity != null ? attackingEntity.getType().getDescription().getString() : "null"));
+                                attackingEntity.addEffect(stunEffect);
                             }
 
-                            return EventResult.interruptFalse(); // Completely negate damage
+                            return EventResult.interruptTrue(); // Completely negate damage
                         }
                         // Regular blocking damage reduction is handled by Resistance IV effect
-                        System.out.println("DEBUG: Regular block - damage will be reduced by Resistance IV");
                     }
                 }
             }

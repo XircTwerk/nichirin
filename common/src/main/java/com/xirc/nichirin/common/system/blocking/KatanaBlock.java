@@ -141,8 +141,6 @@ public class KatanaBlock {
         BlockingState state = BLOCKING_STATES.get(player.getUUID());
         if (state == null || state.stance == BlockingStance.NONE) return false;
 
-        System.out.println("DEBUG: handleIncomingDamage - stance: " + state.stance + ", parryWindowTicks: " + state.parryWindowTicks);
-
         // Check for backstab ONLY if attacker is a player
         if (attacker != null && isBackstab(player, attacker)) {
             stopBlocking(player);
@@ -151,13 +149,11 @@ public class KatanaBlock {
 
         // Handle parry window - works against ALL damage sources
         if (state.stance == BlockingStance.PARRY_READY && state.parryWindowTicks > 0) {
-            System.out.println("DEBUG: PARRY DETECTED - parryWindowTicks remaining: " + state.parryWindowTicks);
             return handleSuccessfulParry(player, attacker, state);
         }
 
         // Handle regular blocking - works against ALL damage sources
         if (state.stance == BlockingStance.BLOCKING) {
-            System.out.println("DEBUG: REGULAR BLOCK DETECTED");
             return handleSuccessfulBlock(player, state, damage);
         }
 
@@ -342,11 +338,6 @@ public class KatanaBlock {
         }
         // Note: We need the actual LivingEntity from damage source for mobs
         // This method only gets Player attacker, so we'll handle mob stunning in the event handler
-
-        // Stop blocking after successful parry (brief window) - DON'T DO THIS IMMEDIATELY
-        // The stance should stay PARRY_SUCCESS until the event handler processes it
-        // Delay stopping to allow damage negation to process
-        // Remove the immediate stopping - let the tick system handle it naturally
 
         return true; // Damage completely negated
     }
