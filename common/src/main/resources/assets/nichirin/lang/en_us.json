@@ -11,7 +11,9 @@
   "command.nichirin.breathing.get.none": "%s has no breathing style",
   "command.nichirin.breathing.unknown": "Unknown breathing style: %s",
 
+  "effect.nichirin.blocking": "Blocking",
   "effect.nichirin.shocked": "Shocked",
+  "effect.nichirin.stunned": "Stunned",
 
   "item.nichirin.katana": "Katana",
   "item.nichirin.thunder_katana": "Thunder Katana",

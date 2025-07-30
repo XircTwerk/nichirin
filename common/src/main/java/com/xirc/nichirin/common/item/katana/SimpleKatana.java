@@ -125,6 +125,10 @@ public class SimpleKatana extends SwordItem {
             return;
         }
 
+        if (player.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.STUNNED.get())) {
+            return;
+        }
+
         // Check if player has blocking effect - CAN'T ATTACK
         if (player.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.BLOCKING.get())) {
             return;
@@ -198,6 +202,11 @@ public class SimpleKatana extends SwordItem {
         if (level.isClientSide) {
             return InteractionResultHolder.pass(player.getItemInHand(hand));
         }
+
+        if (player.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.STUNNED.get())) {
+            return InteractionResultHolder.pass(player.getItemInHand(hand));
+        }
+
 
         // Check if player has blocking effect - CAN'T ATTACK
         if (player.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.BLOCKING.get())) {

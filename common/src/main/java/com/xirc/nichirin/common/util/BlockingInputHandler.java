@@ -83,6 +83,18 @@ public class BlockingInputHandler {
      * Check if inputs should be blocked (same logic as KatanaInputHandler)
      */
     private static boolean isInputBlocked() {
+        Minecraft mc = Minecraft.getInstance();
+
+        // Check if player has blocking effect - BLOCK ALL INPUTS
+        if (mc.player != null && mc.player.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.BLOCKING.get())) {
+            return true;
+        }
+
+        // Check if player is stunned - BLOCK ALL INPUTS
+        if (mc.player != null && mc.player.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.STUNNED.get())) {
+            return true;
+        }
+
         // Check wheel state first
         try {
             if (com.xirc.nichirin.client.handler.AttackWheelHandler.shouldBlockAttackInputs()) {

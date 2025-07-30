@@ -159,6 +159,10 @@ public class AttackWheelHandler {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
 
+        if (mc.player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+            return;
+        }
+
         // Check if player has blocking effect - CAN'T OPEN WHEEL
         if (mc.player.hasEffect(NichirinEffectRegistry.BLOCKING.get())) {
             return;
