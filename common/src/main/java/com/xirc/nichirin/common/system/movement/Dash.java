@@ -11,11 +11,11 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Dash system with directional input support
+ * Dash system with directional input support - prevents jump launching
  */
 public class Dash {
 
-    private static final float DASH_FORCE = 1f;
+    private static final float DASH_FORCE = 2f;
     private static final int DASH_DURATION = 12; // ticks
     private static final float PARTICLE_HEIGHT_OFFSET = 1.0f; // Move particles up
 
@@ -47,7 +47,6 @@ public class Dash {
 
         // Add initial particles at player position (moved up)
         addDashParticles(player, player.position().add(0, PARTICLE_HEIGHT_OFFSET, 0));
-
     }
 
     /**
@@ -73,7 +72,6 @@ public class Dash {
             dashDirection = dashDirection.normalize();
         }
 
-
         return dashDirection;
     }
 
@@ -87,7 +85,6 @@ public class Dash {
         dashState.force = DASH_FORCE;
 
         activeDashes.put(player, dashState);
-
     }
 
     /**
@@ -103,10 +100,18 @@ public class Dash {
                 return true; // Remove if player not valid
             }
 
-            // Apply dash force
-            Vec3 dashVelocity = dashState.direction.scale(dashState.force * 0.1);
+            // REDUCED AIR ACCELERATION: Much gentler when in air
             Vec3 currentVelocity = player.getDeltaMovement();
-            Vec3 newVelocity = currentVelocity.add(dashVelocity);
+
+            double forceMultiplier = player.onGround() ? 0.1 : 0.05; // Half acceleration in air
+            Vec3 dashVelocity = dashState.direction.scale(dashState.force * forceMultiplier);
+
+            // Always additive - preserves natural momentum
+            Vec3 newVelocity = new Vec3(
+                    currentVelocity.x + dashVelocity.x,
+                    currentVelocity.y, // Never modify Y to prevent jump launching
+                    currentVelocity.z + dashVelocity.z
+            );
 
             player.setDeltaMovement(newVelocity);
             player.hurtMarked = true;
@@ -117,7 +122,6 @@ public class Dash {
             }
 
             dashState.remainingTicks--;
-
 
             return dashState.remainingTicks <= 0;
         });
@@ -146,10 +150,6 @@ public class Dash {
             }
         }
     }
-
-    /**
-     * Find player by UUID (helper method) - No longer needed
-     */
 
     /**
      * Check if player is currently dashing

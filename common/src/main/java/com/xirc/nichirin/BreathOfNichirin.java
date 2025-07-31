@@ -2,7 +2,6 @@ package com.xirc.nichirin;
 
 import com.xirc.nichirin.client.BreathOfNichirinClient;
 import com.xirc.nichirin.common.advancement.NichirinCriteriaTriggers;
-import com.xirc.nichirin.common.network.BreathingStyleSyncPacket;
 import com.xirc.nichirin.common.data.MovesetRegistry;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.event.*;

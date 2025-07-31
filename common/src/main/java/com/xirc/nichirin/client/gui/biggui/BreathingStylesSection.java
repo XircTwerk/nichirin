@@ -2,6 +2,7 @@ package com.xirc.nichirin.client.gui.biggui;
 
 import com.xirc.nichirin.common.data.BreathingStyleHelper;
 import com.xirc.nichirin.common.data.ProgressionHelper;
+import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -147,7 +148,16 @@ public class BreathingStylesSection {
                 contentHeight - 60, 0x777777);
     }
 
+    private static long lastClickTime = 0;
+    private static final long CLICK_COOLDOWN = 500; // 500ms cooldown
+
     public boolean handleClick(double mouseX, double mouseY, Player player, int contentWidth) {
+        // Prevent click spam
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastClickTime < CLICK_COOLDOWN) {
+            return false;
+        }
+
         String currentStyle = BreathingStyleHelper.getMovesetId(player);
         int centerX = (contentWidth - 20) / 2;
 
@@ -169,13 +179,14 @@ public class BreathingStylesSection {
                                 net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 0.5F, 0.8F
                         )
                 );
+                lastClickTime = currentTime;
                 return true;
             }
 
             // Style is unlocked - only set if not already selected
             if (!styleName.equals(currentStyle)) {
-                // Set the breathing style for the player
-                BreathingStyleHelper.setMovesetId(player, styleName);
+                // Use packet to request style change from server
+                NichirinPacketRegistry.requestStyleChange(styleName);
 
                 // Play success sound
                 Minecraft.getInstance().getSoundManager().play(
@@ -184,6 +195,7 @@ public class BreathingStylesSection {
                         )
                 );
             }
+            lastClickTime = currentTime;
             return true;
         }
 
@@ -197,14 +209,13 @@ public class BreathingStylesSection {
         if (mouseX >= noneButtonX && mouseX <= noneButtonX + noneButtonWidth &&
                 mouseY >= noneButtonY && mouseY <= noneButtonY + noneButtonHeight) {
 
-            // Toggle between None and current style
+            // Use packet to request clearing breathing style
             if (currentStyle != null) {
-                // Clear breathing style (but preserve unlock)
-                BreathingStyleHelper.setMovesetId(player, null);
+                NichirinPacketRegistry.requestStyleChange(null);
             } else {
                 // Find any unlocked style and set it
                 if (ProgressionHelper.isStyleUnlocked(player, "thunder_breathing")) {
-                    BreathingStyleHelper.setMovesetId(player, "thunder_breathing");
+                    NichirinPacketRegistry.requestStyleChange("thunder_breathing");
                 }
             }
 
@@ -215,6 +226,7 @@ public class BreathingStylesSection {
                     )
             );
 
+            lastClickTime = currentTime;
             return true;
         }
 

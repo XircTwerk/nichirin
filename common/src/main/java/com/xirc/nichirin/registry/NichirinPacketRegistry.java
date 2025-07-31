@@ -134,6 +134,14 @@ public interface NichirinPacketRegistry {
             }
         });
 
+        // BREATHING STYLE CHANGE REQUEST (C2S)
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, REQUEST_STYLE_CHANGE, (buf, context) -> {
+            String movesetId = buf.readBoolean() ? buf.readUtf() : null;
+            if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
+                context.queue(() -> handleStyleChangeRequestFromOriginalPacket(serverPlayer, movesetId));
+            }
+        });
+
         BreathOfNichirin.LOGGER.info("C2S packets registered successfully");
     }
 
@@ -316,6 +324,7 @@ public interface NichirinPacketRegistry {
         return buf;
     }
 
+    // Handler method for breathing style change requests (copying logic from original BreathingStyleSyncPacket)
     private static void handleStyleChangeRequestFromOriginalPacket(ServerPlayer player, String movesetId) {
         try {
             // Validate the moveset exists
