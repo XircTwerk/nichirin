@@ -1,18 +1,13 @@
 package com.xirc.nichirin;
 
 import com.xirc.nichirin.client.BreathOfNichirinClient;
-import com.xirc.nichirin.client.renderer.BreathingBarRenderer;
-import com.xirc.nichirin.client.renderer.StaminaBarRenderer;
 import com.xirc.nichirin.common.advancement.NichirinCriteriaTriggers;
-import com.xirc.nichirin.common.data.BreathingStyleSyncPacket;
+import com.xirc.nichirin.common.network.BreathingStyleSyncPacket;
 import com.xirc.nichirin.common.data.MovesetRegistry;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.event.*;
 import com.xirc.nichirin.common.handler.FallDamageHandler;
 import com.xirc.nichirin.common.handler.PlayerTickHandler;
-import com.xirc.nichirin.common.util.BlockingInputHandler;
-import com.xirc.nichirin.common.util.KatanaInputHandler;
-import com.xirc.nichirin.common.util.PlayerStats;
 import com.xirc.nichirin.registry.*;
 import dev.architectury.platform.Platform;
 import dev.architectury.registry.registries.DeferredRegister;
@@ -49,27 +44,22 @@ public final class BreathOfNichirin {
         NichirinItemRegistry.ITEM_REGISTRY.register();
         CREATIVE_TAB_REGISTRY.register();
 
-        //handlers
+        // SERVER-SIDE handlers only
         PlayerTickHandler.register();
         FallDamageHandler.register();
-        KatanaInputHandler.register();
         BreathingEventHandler.register();
         StaminaEventHandler.register();
         BlockingEventHandler.register();
         DodgeEventHandler.register();
-        BlockingInputHandler.register();
 
-        //data
-        PlayerStats.initialize();
+        // Data
         MovesetRegistry.init();
         PlayerDataProvider.register();
-        BreathingStyleSyncPacket.register();
         NichirinCriteriaTriggers.init();
-
 
         LOGGER.info("=== NICHIRIN COMMON INITIALIZATION COMPLETE ===");
 
-        // Client-side initialization - ONLY call BreathOfNichirinClient.init()
+        // Client-side initialization
         if (Platform.getEnv() == EnvType.CLIENT) {
             System.out.println("DEBUG: Initializing client side");
             try {

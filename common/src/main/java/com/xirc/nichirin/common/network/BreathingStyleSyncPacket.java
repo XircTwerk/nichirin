@@ -1,6 +1,10 @@
-package com.xirc.nichirin.common.data;
+package com.xirc.nichirin.common.network;
 
 import com.xirc.nichirin.BreathOfNichirin;
+import com.xirc.nichirin.common.data.BreathingStyleData;
+import com.xirc.nichirin.common.data.MovesetRegistry;
+import com.xirc.nichirin.common.data.PlayerDataProvider;
+import com.xirc.nichirin.common.data.ProgressionHelper;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;

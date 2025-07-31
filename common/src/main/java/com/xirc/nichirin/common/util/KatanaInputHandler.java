@@ -1,19 +1,17 @@
 package com.xirc.nichirin.common.util;
 
-import com.xirc.nichirin.client.gui.CooldownHUD;
 import com.xirc.nichirin.common.attack.moves.thunder.ThunderClapFlashAttack;
 import com.xirc.nichirin.common.data.BreathingStyleHelper;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
-import com.xirc.nichirin.common.system.blocking.KatanaBlock;
-import com.xirc.nichirin.common.util.AnimationUtils;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.InteractionEvent;
 import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.event.events.common.TickEvent;
 import dev.architectury.networking.NetworkManager;
+import dev.architectury.platform.Platform;
 import io.netty.buffer.Unpooled;
-import net.minecraft.client.Minecraft;
+import net.fabricmc.api.EnvType;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -26,7 +24,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Enhanced katana input handler with proper wheel blocking
+ * FIXED: Server-safe katana input handler
  */
 public class KatanaInputHandler {
 
@@ -44,14 +42,20 @@ public class KatanaInputHandler {
     private static final ResourceLocation FEEDBACK_ID = new ResourceLocation("nichirin", "katana_feedback");
 
     public static void register() {
-
-        if (isClientSide()) {
-            registerClientEvents();
-            registerClientPackets();
-        }
-
+        // Always register server packets and shared events
         registerServerPackets();
         registerSharedEvents();
+
+        System.out.println("DEBUG: KatanaInputHandler - registered server-side components");
+    }
+
+    // MOVED TO CLIENT INIT: Client-specific registration should be done in BreathOfNichirinClient
+    public static void registerClient() {
+        if (Platform.getEnv() == EnvType.CLIENT) {
+            registerClientEvents();
+            registerClientPackets();
+            System.out.println("DEBUG: KatanaInputHandler - registered client-side components");
+        }
     }
 
     private static void registerClientEvents() {
@@ -85,13 +89,27 @@ public class KatanaInputHandler {
     }
 
     /**
-     * ENHANCED: Comprehensive input blocking check
+     * ENHANCED: Comprehensive input blocking check - CLIENT ONLY
      */
     private static boolean isInputBlocked() {
-        // Check if player has blocking effect - BLOCK ALL INPUTS
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player != null && mc.player.hasEffect(NichirinEffectRegistry.BLOCKING.get())) {
-            return true;
+        // This method should only be called on client side
+        try {
+            // Import Minecraft class dynamically to avoid server loading issues
+            Class<?> minecraftClass = Class.forName("net.minecraft.client.Minecraft");
+            Object minecraft = minecraftClass.getMethod("getInstance").invoke(null);
+            Object player = minecraftClass.getField("player").get(minecraft);
+
+            if (player != null) {
+                // Check blocking effect using reflection to avoid client class loading on server
+                java.lang.reflect.Method hasEffectMethod = player.getClass().getMethod("hasEffect", net.minecraft.world.effect.MobEffect.class);
+                boolean hasBlockingEffect = (boolean) hasEffectMethod.invoke(player, NichirinEffectRegistry.BLOCKING.get());
+
+                if (hasBlockingEffect) {
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("WARNING: Could not check blocking effect: " + e.getMessage());
         }
 
         // Check wheel state first (most important)
@@ -115,17 +133,14 @@ public class KatanaInputHandler {
         return false;
     }
 
-    /**
-     * LEGACY METHOD: Keep for backward compatibility but use enhanced blocking
-     */
-    private static boolean isWheelBlocking() {
-        return isInputBlocked();
-    }
-
     private static void sendLeftClick(Player player) {
-        // Client feedback
-        if (player.getMainHandItem().getItem() instanceof SimpleKatana katana) {
-            katana.displayClientCooldown(player);
+        // Client feedback - use reflection to avoid server class loading
+        try {
+            if (player.getMainHandItem().getItem() instanceof SimpleKatana katana) {
+                katana.displayClientCooldown(player);
+            }
+        } catch (Exception e) {
+            System.out.println("WARNING: Could not display client cooldown: " + e.getMessage());
         }
 
         // Send to server
@@ -176,27 +191,43 @@ public class KatanaInputHandler {
             boolean hasBreathingMove = buf.readBoolean();
 
             context.queue(() -> {
-                if (hasBreathingMove) {
-                    String moveName = buf.readUtf();
-                    int cooldown = buf.readInt();
+                try {
+                    // Use reflection to avoid loading client classes on server
+                    Class<?> minecraftClass = Class.forName("net.minecraft.client.Minecraft");
+                    Object minecraft = minecraftClass.getMethod("getInstance").invoke(null);
+                    Object player = minecraftClass.getField("player").get(minecraft);
 
-                    CooldownHUD.setCooldown(moveName, cooldown);
+                    if (hasBreathingMove) {
+                        String moveName = buf.readUtf();
+                        int cooldown = buf.readInt();
 
-                    if (moveName.contains("Thunder Clap")) {
-                        AnimationUtils.playAnimation(Minecraft.getInstance().player, "thunder_clap_flash");
-                    } else if (moveName.contains("Heat Lightning")) {
-                        AnimationUtils.playAnimation(Minecraft.getInstance().player, "heat_lightning");
-                    }
-                } else {
-                    boolean wasCrouching = buf.readBoolean();
+                        // Use reflection for CooldownHUD
+                        Class<?> cooldownHUDClass = Class.forName("com.xirc.nichirin.client.gui.CooldownHUD");
+                        cooldownHUDClass.getMethod("setCooldown", String.class, int.class).invoke(null, moveName, cooldown);
 
-                    if (wasCrouching) {
-                        AnimationUtils.playAnimation(Minecraft.getInstance().player, "rising_slash");
-                        CooldownHUD.setCooldown("Rising Slash", 25);
+                        // Use reflection for AnimationUtils
+                        Class<?> animationUtilsClass = Class.forName("com.xirc.nichirin.common.util.AnimationUtils");
+                        if (moveName.contains("Thunder Clap")) {
+                            animationUtilsClass.getMethod("playAnimation", Object.class, String.class).invoke(null, player, "thunder_clap_flash");
+                        } else if (moveName.contains("Heat Lightning")) {
+                            animationUtilsClass.getMethod("playAnimation", Object.class, String.class).invoke(null, player, "heat_lightning");
+                        }
                     } else {
-                        AnimationUtils.playAnimation(Minecraft.getInstance().player, "double_slash");
-                        CooldownHUD.setCooldown("Double Slash", 20);
+                        boolean wasCrouching = buf.readBoolean();
+
+                        Class<?> animationUtilsClass = Class.forName("com.xirc.nichirin.common.util.AnimationUtils");
+                        Class<?> cooldownHUDClass = Class.forName("com.xirc.nichirin.client.gui.CooldownHUD");
+
+                        if (wasCrouching) {
+                            animationUtilsClass.getMethod("playAnimation", Object.class, String.class).invoke(null, player, "rising_slash");
+                            cooldownHUDClass.getMethod("setCooldown", String.class, int.class).invoke(null, "Rising Slash", 25);
+                        } else {
+                            animationUtilsClass.getMethod("playAnimation", Object.class, String.class).invoke(null, player, "double_slash");
+                            cooldownHUDClass.getMethod("setCooldown", String.class, int.class).invoke(null, "Double Slash", 20);
+                        }
                     }
+                } catch (Exception e) {
+                    System.out.println("WARNING: Could not handle client feedback: " + e.getMessage());
                 }
             });
         });
@@ -261,7 +292,6 @@ public class KatanaInputHandler {
         }
     }
 
-
     private static boolean isServerBlocked(Player player) {
         Long blockedUntil = BLOCKED_UNTIL.get(player.getUUID());
         if (blockedUntil != null) {
@@ -280,7 +310,6 @@ public class KatanaInputHandler {
 
         return false;
     }
-
 
     private static void sendFeedback(ServerPlayer player, String moveName, boolean crouch) {
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
@@ -376,15 +405,6 @@ public class KatanaInputHandler {
             long blockUntil = player.level().getGameTime() + BLOCK_TICKS;
             BLOCKED_UNTIL.put(player.getUUID(), blockUntil);
             System.out.println("DEBUG: Blocked inputs for player " + player.getName().getString() + " after breathing move");
-        }
-    }
-
-    private static boolean isClientSide() {
-        try {
-            Class.forName("net.minecraft.client.Minecraft");
-            return true;
-        } catch (ClassNotFoundException e) {
-            return false;
         }
     }
 }

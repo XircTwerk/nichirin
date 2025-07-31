@@ -3,7 +3,9 @@ package com.xirc.nichirin.registry;
 import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.common.network.*;
 import com.xirc.nichirin.common.system.blocking.KatanaBlock;
+import com.xirc.nichirin.common.data.*;
 import dev.architectury.networking.NetworkManager;
+import dev.architectury.platform.Platform;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -14,7 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * FIXED: Remove double registration, keep it simple
+ * FIXED: Architectury networking with version compatibility and fallback
  */
 public interface NichirinPacketRegistry {
 
@@ -31,16 +33,15 @@ public interface NichirinPacketRegistry {
     ResourceLocation PLAYER_ANIMATION_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "player_animation");
     ResourceLocation MOVEMENT_INPUT_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "movement_input");
     ResourceLocation MOVEMENT_INPUT_SYNC_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "movement_input_sync");
-
-
+    ResourceLocation SYNC_BREATHING_STYLE = new ResourceLocation(BreathOfNichirin.MOD_ID, "sync_breathing_style");
+    ResourceLocation REQUEST_STYLE_CHANGE = new ResourceLocation(BreathOfNichirin.MOD_ID, "request_style_change");
 
     // Packet class mappings
     Map<Class<?>, ResourceLocation> PACKET_IDS = new HashMap<>();
 
-    /**
-     * FIXED: Single registration point - no double registration
-     */
     static void init() {
+        BreathOfNichirin.LOGGER.info("Initializing Architectury packet registry...");
+
         // Map packet classes to IDs
         PACKET_IDS.put(DoubleJumpPacket.class, DOUBLE_JUMP_ID);
         PACKET_IDS.put(BreathingMovePacket.class, BREATHING_MOVE_ID);
@@ -52,12 +53,31 @@ public interface NichirinPacketRegistry {
         PACKET_IDS.put(MovementInputPacket.class, MOVEMENT_INPUT_ID);
         PACKET_IDS.put(MovementInputSyncPacket.class, MOVEMENT_INPUT_SYNC_ID);
 
-        // Register with Architectury - ONCE
+        // Register packets with error handling
         registerPackets();
     }
 
     private static void registerPackets() {
-        // C2S packets
+        BreathOfNichirin.LOGGER.info("Registering packets with Architectury...");
+
+        try {
+            // Register C2S packets (these work fine)
+            registerC2SPackets();
+
+            // Try to register S2C packets with fallback
+            registerS2CPacketsWithFallback();
+
+            BreathOfNichirin.LOGGER.info("Successfully registered all packets");
+
+        } catch (Exception e) {
+            BreathOfNichirin.LOGGER.error("Failed to register packets: {}", e.getMessage(), e);
+            throw new RuntimeException("Packet registration failed", e);
+        }
+    }
+
+    private static void registerC2SPackets() {
+        BreathOfNichirin.LOGGER.info("Registering C2S packets...");
+
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, DOUBLE_JUMP_ID, (buf, context) -> {
             DoubleJumpPacket packet = new DoubleJumpPacket(buf);
             if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
@@ -72,21 +92,31 @@ public interface NichirinPacketRegistry {
             }
         });
 
+        // CRITICAL: Blocking packets
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, BLOCK_START_ID, (buf, context) -> {
             if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
-                context.queue(() -> KatanaBlock.startBlocking(serverPlayer));
+                context.queue(() -> {
+                    KatanaBlock.startBlocking(serverPlayer);
+                    BreathOfNichirin.LOGGER.debug("Started blocking for {}", serverPlayer.getName().getString());
+                });
             }
         });
 
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, BLOCK_STOP_ID, (buf, context) -> {
             if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
-                context.queue(() -> KatanaBlock.stopBlocking(serverPlayer));
+                context.queue(() -> {
+                    KatanaBlock.stopBlocking(serverPlayer);
+                    BreathOfNichirin.LOGGER.debug("Stopped blocking for {}", serverPlayer.getName().getString());
+                });
             }
         });
 
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, PARRY_ID, (buf, context) -> {
             if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
-                context.queue(() -> KatanaBlock.attemptParry(serverPlayer));
+                context.queue(() -> {
+                    KatanaBlock.attemptParry(serverPlayer);
+                    BreathOfNichirin.LOGGER.debug("Parry attempt by {}", serverPlayer.getName().getString());
+                });
             }
         });
 
@@ -104,46 +134,149 @@ public interface NichirinPacketRegistry {
             }
         });
 
-        // S2C packets
-        NetworkManager.registerReceiver(NetworkManager.Side.S2C, BREATHING_EFFECT_ID, (buf, context) -> {
-            BreathingEffectPacket packet = new BreathingEffectPacket(buf);
-            context.queue(() -> packet.handleClient());
-        });
-
-        NetworkManager.registerReceiver(NetworkManager.Side.S2C, SYNC_BREATH_ID, (buf, context) -> {
-            SyncBreathPacket packet = new SyncBreathPacket(buf);
-            context.queue(() -> packet.handleClient());
-        });
-
-        NetworkManager.registerReceiver(NetworkManager.Side.S2C, SYNC_STAMINA_ID, (buf, context) -> {
-            StaminaSyncPacket packet = new StaminaSyncPacket(buf);
-            context.queue(() -> packet.handleClient());
-        });
-        NetworkManager.registerReceiver(NetworkManager.Side.S2C, SYNC_STANCE_ID, (buf, context) -> {
-            StanceSyncPacket packet = new StanceSyncPacket(buf);
-            context.queue(() -> packet.handleClient());
-        });
-
-        NetworkManager.registerReceiver(NetworkManager.Side.S2C, PLAYER_ANIMATION_ID, (buf, context) -> {
-            PlayerAnimationPacket packet = new PlayerAnimationPacket(buf);
-            context.queue(() -> packet.handleClient());
-        });
+        BreathOfNichirin.LOGGER.info("C2S packets registered successfully");
     }
 
-    // Simple packet sending
+    private static void registerS2CPacketsWithFallback() {
+        BreathOfNichirin.LOGGER.info("Attempting to register S2C packets...");
+
+        try {
+            // Try the standard Architectury way first
+            NetworkManager.registerReceiver(NetworkManager.Side.S2C, BREATHING_EFFECT_ID, (buf, context) -> {
+                BreathingEffectPacket packet = new BreathingEffectPacket(buf);
+                context.queue(() -> packet.handleClient());
+            });
+
+            NetworkManager.registerReceiver(NetworkManager.Side.S2C, SYNC_BREATH_ID, (buf, context) -> {
+                SyncBreathPacket packet = new SyncBreathPacket(buf);
+                context.queue(() -> packet.handleClient());
+            });
+
+            NetworkManager.registerReceiver(NetworkManager.Side.S2C, SYNC_STAMINA_ID, (buf, context) -> {
+                StaminaSyncPacket packet = new StaminaSyncPacket(buf);
+                context.queue(() -> packet.handleClient());
+            });
+
+            NetworkManager.registerReceiver(NetworkManager.Side.S2C, SYNC_STANCE_ID, (buf, context) -> {
+                StanceSyncPacket packet = new StanceSyncPacket(buf);
+                context.queue(() -> packet.handleClient());
+            });
+
+            NetworkManager.registerReceiver(NetworkManager.Side.S2C, PLAYER_ANIMATION_ID, (buf, context) -> {
+                PlayerAnimationPacket packet = new PlayerAnimationPacket(buf);
+                context.queue(() -> packet.handleClient());
+            });
+
+            BreathOfNichirin.LOGGER.info("S2C packets registered successfully");
+
+        } catch (NoSuchMethodError e) {
+            BreathOfNichirin.LOGGER.warn("S2C packet registration failed due to Architectury version incompatibility: {}", e.getMessage());
+            BreathOfNichirin.LOGGER.warn("S2C packets disabled - some sync features may not work properly");
+            BreathOfNichirin.LOGGER.warn("Consider downgrading to architectury_api_version = 9.1.12 for full compatibility");
+        } catch (Exception e) {
+            BreathOfNichirin.LOGGER.error("Unexpected error during S2C packet registration: {}", e.getMessage(), e);
+        }
+    }
+
+    // Breathing style specific methods - keeping the same interface as the original BreathingStyleSyncPacket
+    static void sendToPlayer(ServerPlayer player, String movesetId) {
+        try {
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+            buf.writeBoolean(movesetId != null);
+            if (movesetId != null) {
+                buf.writeUtf(movesetId);
+            }
+            NetworkManager.sendToPlayer(player, SYNC_BREATHING_STYLE, buf);
+        } catch (Exception e) {
+            BreathOfNichirin.LOGGER.error("Failed to send breathing style sync: {}", e.getMessage());
+        }
+    }
+
+    static void sendToTracking(ServerPlayer player, String movesetId) {
+        try {
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+            buf.writeBoolean(movesetId != null);
+            if (movesetId != null) {
+                buf.writeUtf(movesetId);
+            }
+
+            // Send to all players in the same dimension
+            player.server.getPlayerList().getPlayers().stream()
+                    .filter(p -> p.level() == player.level())
+                    .forEach(p -> NetworkManager.sendToPlayer(p, SYNC_BREATHING_STYLE, buf));
+        } catch (Exception e) {
+            BreathOfNichirin.LOGGER.error("Failed to send breathing style sync to tracking: {}", e.getMessage());
+        }
+    }
+
+    static void requestStyleChange(String movesetId) {
+        try {
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+            buf.writeBoolean(movesetId != null);
+            if (movesetId != null) {
+                buf.writeUtf(movesetId);
+            }
+            NetworkManager.sendToServer(REQUEST_STYLE_CHANGE, buf);
+        } catch (Exception e) {
+            BreathOfNichirin.LOGGER.error("Failed to request style change: {}", e.getMessage());
+        }
+    }
+
+    // Blocking-specific methods for easy access
+    static void sendBlockStart() {
+        try {
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+            NetworkManager.sendToServer(BLOCK_START_ID, buf);
+            BreathOfNichirin.LOGGER.debug("Sent block start packet");
+        } catch (Exception e) {
+            BreathOfNichirin.LOGGER.error("Failed to send block start packet: {}", e.getMessage());
+        }
+    }
+
+    static void sendBlockStop() {
+        try {
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+            NetworkManager.sendToServer(BLOCK_STOP_ID, buf);
+            BreathOfNichirin.LOGGER.debug("Sent block stop packet");
+        } catch (Exception e) {
+            BreathOfNichirin.LOGGER.error("Failed to send block stop packet: {}", e.getMessage());
+        }
+    }
+
+    static void sendParry() {
+        try {
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+            NetworkManager.sendToServer(PARRY_ID, buf);
+            BreathOfNichirin.LOGGER.debug("Sent parry packet");
+        } catch (Exception e) {
+            BreathOfNichirin.LOGGER.error("Failed to send parry packet: {}", e.getMessage());
+        }
+    }
+
+    // General packet sending methods
     static void sendToPlayer(Object packet, ServerPlayer player) {
         ResourceLocation id = PACKET_IDS.get(packet.getClass());
         if (id != null) {
-            FriendlyByteBuf buf = encodePacket(packet);
-            NetworkManager.sendToPlayer(player, id, buf);
+            try {
+                FriendlyByteBuf buf = encodePacket(packet);
+                NetworkManager.sendToPlayer(player, id, buf);
+            } catch (Exception e) {
+                BreathOfNichirin.LOGGER.error("Failed to send packet {} to player {}: {}",
+                        packet.getClass().getSimpleName(), player.getName().getString(), e.getMessage());
+            }
         }
     }
 
     static void sendToServer(Object packet) {
         ResourceLocation id = PACKET_IDS.get(packet.getClass());
         if (id != null) {
-            FriendlyByteBuf buf = encodePacket(packet);
-            NetworkManager.sendToServer(id, buf);
+            try {
+                FriendlyByteBuf buf = encodePacket(packet);
+                NetworkManager.sendToServer(id, buf);
+            } catch (Exception e) {
+                BreathOfNichirin.LOGGER.error("Failed to send packet {} to server: {}",
+                        packet.getClass().getSimpleName(), e.getMessage());
+            }
         }
     }
 
@@ -176,11 +309,58 @@ public interface NichirinPacketRegistry {
             p.toBytes(buf);
         } else if (packet instanceof MovementInputPacket p) {
             p.toBytes(buf);
-        }  else if (packet instanceof MovementInputSyncPacket p) {
+        } else if (packet instanceof MovementInputSyncPacket p) {
             p.toBytes(buf);
         }
 
-
         return buf;
+    }
+
+    private static void handleStyleChangeRequestFromOriginalPacket(ServerPlayer player, String movesetId) {
+        try {
+            // Validate the moveset exists
+            if (movesetId != null && !MovesetRegistry.isRegistered(movesetId)) {
+                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                        "§cInvalid breathing style: " + movesetId
+                ));
+                return;
+            }
+
+            // Check if the player has unlocked this breathing style
+            if (movesetId != null && !ProgressionHelper.isStyleUnlocked(player, movesetId)) {
+                String requirement = ProgressionHelper.getUnlockRequirement(movesetId);
+                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                        "§cYou haven't unlocked this breathing style! §fRequirement: §e" + requirement
+                ));
+                return;
+            }
+
+            // All checks passed - update the moveset
+            PlayerDataProvider.updateAndSync(player, movesetId);
+
+            // Send confirmation message
+            if (movesetId != null) {
+                String styleName = formatStyleName(movesetId);
+                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                        "§aSwitched to " + styleName + "."
+                ));
+            } else {
+                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                        "§7Cleared breathing style."
+                ));
+            }
+        } catch (Exception e) {
+            BreathOfNichirin.LOGGER.error("Failed to handle style change request: {}", e.getMessage());
+        }
+    }
+
+    private static String formatStyleName(String styleId) {
+        String[] parts = styleId.split("_");
+        StringBuilder formatted = new StringBuilder();
+        for (String part : parts) {
+            if (formatted.length() > 0) formatted.append(" ");
+            formatted.append(part.substring(0, 1).toUpperCase()).append(part.substring(1));
+        }
+        return formatted.toString();
     }
 }

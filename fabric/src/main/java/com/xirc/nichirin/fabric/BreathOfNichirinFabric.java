@@ -10,7 +10,6 @@ public final class BreathOfNichirinFabric implements ModInitializer {
     public void onInitialize() {
         BreathOfNichirin.LOGGER.info("Initializing Nichirin for Fabric");
         BreathOfNichirin.init();
-        FabricPacketHandler.registerServerPackets();
         NichirinTerraFabric.onModInitialized();
     }
 }

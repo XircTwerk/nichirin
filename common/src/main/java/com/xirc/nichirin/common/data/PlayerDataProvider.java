@@ -1,9 +1,8 @@
 package com.xirc.nichirin.common.data;
 
-import dev.architectury.event.events.common.EntityEvent;
+import com.xirc.nichirin.common.network.BreathingStyleSyncPacket;
 import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.event.events.common.TickEvent;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 

@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.data;
 
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
+import com.xirc.nichirin.common.network.BreathingStyleSyncPacket;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
 
