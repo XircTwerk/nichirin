@@ -68,8 +68,6 @@ public class PlayerDoubleJump {
         return canJump;
     }
 
-    // Add this method to PlayerDoubleJump.java after the existing performDoubleJump method:
-
     /**
      * Perform the double jump WITHOUT consuming stamina (for server-side use after stamina is already consumed)
      */
@@ -99,9 +97,23 @@ public class PlayerDoubleJump {
         state.hasDoubleJumped = true;
         state.fallDistanceAtDoubleJump = player.fallDistance;
 
-        // Apply jump velocity
+        // Apply jump velocity with horizontal boost in look direction
         Vec3 velocity = player.getDeltaMovement();
-        player.setDeltaMovement(velocity.x, DOUBLE_JUMP_VELOCITY * 1.5, velocity.z);
+
+        // Get look direction (horizontal only)
+        Vec3 lookDirection = player.getLookAngle();
+        Vec3 horizontalLook = new Vec3(lookDirection.x, 0, lookDirection.z).normalize();
+
+        // Add moderate horizontal boost in look direction
+        double horizontalBoost = 0.3; // Moderate boost amount
+        Vec3 horizontalVelocity = horizontalLook.scale(horizontalBoost);
+
+        // Combine vertical jump with horizontal boost
+        player.setDeltaMovement(
+                velocity.x + horizontalVelocity.x,
+                DOUBLE_JUMP_VELOCITY * 1.5,
+                velocity.z + horizontalVelocity.z
+        );
 
         // Sync to client if on server
         if (player instanceof ServerPlayer serverPlayer) {
@@ -112,9 +124,6 @@ public class PlayerDoubleJump {
         playDoubleJumpEffects(player);
     }
 
-    /**
-     * Perform the double jump (CLIENT SIDE ONLY - for immediate feedback)
-     */
     /**
      * Perform the double jump
      */
@@ -158,12 +167,23 @@ public class PlayerDoubleJump {
         state.hasDoubleJumped = true;
         state.fallDistanceAtDoubleJump = player.fallDistance; // Record fall distance when double jumping
 
-        // Apply jump velocity - increased for more noticeable effect
+        // Apply jump velocity with horizontal boost in look direction
         Vec3 velocity = player.getDeltaMovement();
-        player.setDeltaMovement(velocity.x, DOUBLE_JUMP_VELOCITY * 1.5, velocity.z);
 
-        // Don't reset fall distance here - we'll reduce it when they land
-        // player.fallDistance = 0; // REMOVED - we track it instead
+        // Get look direction (horizontal only)
+        Vec3 lookDirection = player.getLookAngle();
+        Vec3 horizontalLook = new Vec3(lookDirection.x, 0, lookDirection.z).normalize();
+
+        // Add moderate horizontal boost in look direction
+        double horizontalBoost = 0.3; // Moderate boost amount
+        Vec3 horizontalVelocity = horizontalLook.scale(horizontalBoost);
+
+        // Combine vertical jump with horizontal boost
+        player.setDeltaMovement(
+                velocity.x + horizontalVelocity.x,
+                DOUBLE_JUMP_VELOCITY * 1.5,
+                velocity.z + horizontalVelocity.z
+        );
 
         // Sync to client if on server
         if (player instanceof ServerPlayer serverPlayer) {
