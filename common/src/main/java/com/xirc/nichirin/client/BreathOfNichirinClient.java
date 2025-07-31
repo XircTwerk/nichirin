@@ -51,7 +51,7 @@ public class BreathOfNichirinClient {
 
         // Register all client handlers and components
         ClientEventHandler.register();
-        KatanaInputHandler.register();
+        KatanaInputHandler.registerClient();
         BlockingInputHandler.register();
 
         PlayerStats.initialize();

@@ -8,6 +8,7 @@ import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.event.*;
 import com.xirc.nichirin.common.handler.FallDamageHandler;
 import com.xirc.nichirin.common.handler.PlayerTickHandler;
+import com.xirc.nichirin.common.util.KatanaInputHandler;
 import com.xirc.nichirin.registry.*;
 import dev.architectury.platform.Platform;
 import dev.architectury.registry.registries.DeferredRegister;
@@ -36,7 +37,6 @@ public final class BreathOfNichirin {
         NichirinPacketRegistry.init();
         NichirinParticleRegistry.init();
         NicirinSoundRegistry.init();
-        ThunderBreathingUnlockHandler.register();
         NichirinEffectRegistry.init();
         NichirinCommandRegistry.init();
 
@@ -45,6 +45,8 @@ public final class BreathOfNichirin {
         CREATIVE_TAB_REGISTRY.register();
 
         // SERVER-SIDE handlers only
+        KatanaInputHandler.register();
+        ThunderBreathingUnlockHandler.register();
         PlayerTickHandler.register();
         FallDamageHandler.register();
         BreathingEventHandler.register();
