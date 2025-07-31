@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.system.slayerabilities;
 
+import com.xirc.nichirin.common.system.movement.MovementContext;
 import com.xirc.nichirin.common.util.StaminaManager;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
@@ -28,19 +29,70 @@ public class PlayerDoubleJump {
     private static final float STAMINA_COST = 10.0f; // Stamina required for double jump
 
     /**
-     * Call this when a player attempts to jump
+     * Call this when a player attempts to jump (without directional input)
      */
     public static void tryDoubleJump(Player player) {
-
         // STRICT: Only allow double jump when NOT on ground
         if (player.onGround()) {
             return;
         }
 
         if (canDoubleJump(player)) {
-            performDoubleJump(player);
-        } else {
+            // Default to forward direction if no input provided
+            performDoubleJump(player, Vec3.ZERO);
         }
+    }
+
+    /**
+     * Call this when a player attempts to jump with directional input
+     */
+    public static void tryDoubleJump(Player player, MovementContext.DashInput input) {
+        // STRICT: Only allow double jump when NOT on ground
+        if (player.onGround()) {
+            return;
+        }
+
+        if (canDoubleJump(player)) {
+            Vec3 jumpDirection = calculateJumpDirection(player, input);
+            performDoubleJump(player, jumpDirection);
+        }
+    }
+
+    /**
+     * Calculate jump direction based on WASD input (similar to Dash system)
+     */
+    private static Vec3 calculateJumpDirection(Player player, MovementContext.DashInput input) {
+        Vec3 lookDirection = player.getLookAngle();
+        Vec3 rightDirection = lookDirection.cross(new Vec3(0, 1, 0)).normalize();
+        Vec3 forwardDirection = new Vec3(lookDirection.x, 0, lookDirection.z).normalize();
+
+        double forward = 0;
+        double side = 0;
+
+        // Calculate movement direction based on input
+        if (input.forward) forward += 1;
+        if (input.backward) forward -= 1;
+        if (input.right) side += 1;
+        if (input.left) side -= 1;
+
+        // Debug logging
+        System.out.println("DEBUG: Double Jump Input - forward=" + input.forward +
+                ", backward=" + input.backward +
+                ", left=" + input.left +
+                ", right=" + input.right);
+        System.out.println("DEBUG: Calculated values - forward=" + forward + ", side=" + side);
+
+        // Combine directions
+        Vec3 jumpDirection = forwardDirection.scale(forward).add(rightDirection.scale(side));
+
+        if (jumpDirection.length() > 0) {
+            jumpDirection = jumpDirection.normalize();
+            System.out.println("DEBUG: Final jump direction: " + jumpDirection);
+        } else {
+            System.out.println("DEBUG: No directional input, using zero vector");
+        }
+
+        return jumpDirection;
     }
 
     /**
@@ -72,7 +124,13 @@ public class PlayerDoubleJump {
      * Perform the double jump WITHOUT consuming stamina (for server-side use after stamina is already consumed)
      */
     public static void performDoubleJumpWithoutStamina(Player player) {
+        performDoubleJumpWithoutStamina(player, Vec3.ZERO);
+    }
 
+    /**
+     * Perform the double jump WITHOUT consuming stamina with directional input
+     */
+    public static void performDoubleJumpWithoutStamina(Player player, Vec3 horizontalDirection) {
         // Safety check - never double jump on ground
         if (player.onGround()) {
             return;
@@ -97,38 +155,17 @@ public class PlayerDoubleJump {
         state.hasDoubleJumped = true;
         state.fallDistanceAtDoubleJump = player.fallDistance;
 
-        // Apply jump velocity with horizontal boost in look direction
-        Vec3 velocity = player.getDeltaMovement();
-
-        // Get look direction (horizontal only)
-        Vec3 lookDirection = player.getLookAngle();
-        Vec3 horizontalLook = new Vec3(lookDirection.x, 0, lookDirection.z).normalize();
-
-        // Add moderate horizontal boost in look direction
-        double horizontalBoost = 0.3; // Moderate boost amount
-        Vec3 horizontalVelocity = horizontalLook.scale(horizontalBoost);
-
-        // Combine vertical jump with horizontal boost
-        player.setDeltaMovement(
-                velocity.x + horizontalVelocity.x,
-                DOUBLE_JUMP_VELOCITY * 1.5,
-                velocity.z + horizontalVelocity.z
-        );
-
-        // Sync to client if on server
-        if (player instanceof ServerPlayer serverPlayer) {
-            serverPlayer.connection.send(new ClientboundSetEntityMotionPacket(player));
-        }
+        // Apply jump velocity with directional movement
+        applyDoubleJumpVelocity(player, horizontalDirection);
 
         // Effects
         playDoubleJumpEffects(player);
     }
 
     /**
-     * Perform the double jump
+     * Perform the double jump with directional input
      */
-    private static void performDoubleJump(Player player) {
-
+    private static void performDoubleJump(Player player, Vec3 horizontalDirection) {
         // Safety check - never double jump on ground
         if (player.onGround()) {
             return;
@@ -160,25 +197,41 @@ public class PlayerDoubleJump {
             if (!StaminaManager.consume(player, STAMINA_COST)) {
                 return;
             }
-        } else {
         }
 
         // Mark as used
         state.hasDoubleJumped = true;
-        state.fallDistanceAtDoubleJump = player.fallDistance; // Record fall distance when double jumping
+        state.fallDistanceAtDoubleJump = player.fallDistance;
 
-        // Apply jump velocity with horizontal boost in look direction
+        // Apply jump velocity with directional movement
+        applyDoubleJumpVelocity(player, horizontalDirection);
+
+        // Effects - always play, both client and server
+        playDoubleJumpEffects(player);
+    }
+
+    /**
+     * Apply velocity for double jump with directional support
+     */
+    private static void applyDoubleJumpVelocity(Player player, Vec3 horizontalDirection) {
         Vec3 velocity = player.getDeltaMovement();
 
-        // Get look direction (horizontal only)
-        Vec3 lookDirection = player.getLookAngle();
-        Vec3 horizontalLook = new Vec3(lookDirection.x, 0, lookDirection.z).normalize();
+        // Determine horizontal movement
+        Vec3 horizontalVelocity;
 
-        // Add moderate horizontal boost in look direction
-        double horizontalBoost = 0.3; // Moderate boost amount
-        Vec3 horizontalVelocity = horizontalLook.scale(horizontalBoost);
+        if (horizontalDirection.equals(Vec3.ZERO)) {
+            // No directional input - use look direction like before
+            Vec3 lookDirection = player.getLookAngle();
+            Vec3 horizontalLook = new Vec3(lookDirection.x, 0, lookDirection.z).normalize();
+            double horizontalBoost = 0.3;
+            horizontalVelocity = horizontalLook.scale(horizontalBoost);
+        } else {
+            // Use directional input
+            double horizontalBoost = 0.4; // Slightly stronger for directional movement
+            horizontalVelocity = horizontalDirection.scale(horizontalBoost);
+        }
 
-        // Combine vertical jump with horizontal boost
+        // Combine vertical jump with horizontal movement
         player.setDeltaMovement(
                 velocity.x + horizontalVelocity.x,
                 DOUBLE_JUMP_VELOCITY * 1.5,
@@ -189,9 +242,6 @@ public class PlayerDoubleJump {
         if (player instanceof ServerPlayer serverPlayer) {
             serverPlayer.connection.send(new ClientboundSetEntityMotionPacket(player));
         }
-
-        // Effects - always play, both client and server
-        playDoubleJumpEffects(player);
     }
 
     /**
@@ -205,7 +255,7 @@ public class PlayerDoubleJump {
                 SoundEvents.ENDER_DRAGON_FLAP, SoundSource.PLAYERS, 0.5f, 1.8f);
 
         // Particles - create on both client and server for immediate feedback
-        if (world instanceof ServerLevel serverLevel) {;
+        if (world instanceof ServerLevel serverLevel) {
             createParticleEffects(serverLevel, player);
         } else {
             // For client side, we need to spawn particles differently
@@ -323,7 +373,6 @@ public class PlayerDoubleJump {
 
         // Reset everything when player lands (transitions from air to ground)
         if (!wasOnGround && isOnGround) {
-
             // Reset all flags
             state.hasDoubleJumped = false;
             state.hasLeftGround = false;

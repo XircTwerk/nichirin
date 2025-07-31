@@ -45,8 +45,19 @@ public class ClientDoubleJumpHandler {
                 // Set cooldown to prevent spam
                 jumpCooldown = 10;
 
-                // Send packet to server
-                NichirinPacketRegistry.sendToServer(new DoubleJumpPacket());
+                // CAPTURE CURRENT WASD INPUT STATES
+                boolean forward = player.input.up;      // W key
+                boolean backward = player.input.down;   // S key
+                boolean left = player.input.left;       // A key
+                boolean right = player.input.right;     // D key
+
+                // Debug output
+                System.out.println("DEBUG: Client sending double jump packet - W=" + forward +
+                        ", S=" + backward + ", A=" + left + ", D=" + right);
+
+                // Send packet to server WITH movement input
+                DoubleJumpPacket packet = new DoubleJumpPacket(forward, backward, left, right);
+                NichirinPacketRegistry.sendToServer(packet);
             }
         }
 
