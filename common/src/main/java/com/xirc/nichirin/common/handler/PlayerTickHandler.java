@@ -10,18 +10,20 @@ public class PlayerTickHandler {
 
     public static void register() {
         TickEvent.PLAYER_POST.register(PlayerTickHandler::onPlayerTick);
+
+        // Register server tick for global systems
+        TickEvent.SERVER_POST.register(server -> {
+            Dodge.tick(); // Global cleanup
+            Dash.tickAllDashes(); // Move this here - once per server tick
+        });
     }
 
     private static void onPlayerTick(Player player) {
         PlayerDoubleJump.tickPlayer(player);
 
-        // Add movement system ticks
-        if (!player.level().isClientSide) { // Server-side only
-            // Tick these once per server tick, not per player
-            if (player.level().getGameTime() % 1 == 0) { // Every tick
-                Dodge.tick();
-                Dash.tickAllDashes(); // Back to no parameters
-            }
+        // Only per-player dodge tick
+        if (!player.level().isClientSide) {
+            Dodge.tickForPlayer(player);
         }
     }
 }

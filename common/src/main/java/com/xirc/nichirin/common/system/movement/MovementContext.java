@@ -38,8 +38,6 @@ public class MovementContext {
         input.jump = jump;
 
         playerInputs.put(playerId, input);
-
-        System.out.println("DEBUG: Updated input for player " + playerId + " - W:" + forward + " S:" + backward + " A:" + left + " D:" + right + " Space:" + jump);
     }
 
     /**
@@ -137,7 +135,16 @@ public class MovementContext {
      */
     private static void executeMovement(Player player, MovementType movementType, InputState input) {
         switch (movementType) {
-            case DODGE -> Dodge.execute(player);
+            case DODGE -> Dodge.executeGroundDodge(player); // FIXED: use executeGroundDodge
+            case AIR_DODGE -> {
+                // Convert InputState to DashInput for air dodge
+                DashInput airDodgeInput = new DashInput();
+                airDodgeInput.forward = input.forward;
+                airDodgeInput.backward = input.backward;
+                airDodgeInput.left = input.left;
+                airDodgeInput.right = input.right;
+                Dodge.executeAirDodge(player, airDodgeInput); // Pass input for directional air dodge
+            }
             case BACKSTEP -> Backstep.execute(player); // Backstep doesn't need input direction
             case DASH -> {
                 // Convert InputState to public class for Dash

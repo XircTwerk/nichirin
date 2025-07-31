@@ -52,8 +52,6 @@ public class ClientInputTracker {
             lastLeft = left;
             lastRight = right;
             lastJump = jump;
-
-            System.out.println("DEBUG: Sent input sync - W:" + forward + " S:" + backward + " A:" + left + " D:" + right + " Space:" + jump);
         }
     }
 }

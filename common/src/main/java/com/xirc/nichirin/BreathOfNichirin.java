@@ -56,6 +56,7 @@ public final class BreathOfNichirin {
         BreathingEventHandler.register();
         StaminaEventHandler.register();
         BlockingEventHandler.register();
+        DodgeEventHandler.register();
         BlockingInputHandler.register();
 
         //data

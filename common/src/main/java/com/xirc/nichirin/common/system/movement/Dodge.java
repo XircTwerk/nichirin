@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.system.movement;
 
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
+import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -16,11 +17,10 @@ import java.util.UUID;
  */
 public class Dodge {
 
-    private static final int IMMUNITY_FRAMES = 6; // 6 ticks of immunity
+    private static final int IMMUNITY_FRAMES = 20; // 1 second of immunity (20 ticks)
     private static final int STUN_DURATION = 20; // 1 second stun on whiff
-    private static final float GROUND_DODGE_DISTANCE = 1.5f;
-    private static final float AIR_DODGE_DISTANCE = 2.0f;
-    private static final float AIR_DODGE_VERTICAL_COMPONENT = 0.3f;
+    private static final float GROUND_DODGE_DISTANCE = 1.5f; //lmao this is so pointless
+    private static final float AIR_DODGE_DISTANCE = 0.5f;
 
     // Track active dodges for whiff detection
     private static final Map<UUID, DodgeState> activeDodges = new HashMap<>();
@@ -48,9 +48,9 @@ public class Dodge {
     }
 
     /**
-     * Execute air dodge
+     * Execute air dodge with directional input (teleport-like dash)
      */
-    public static void executeAirDodge(Player player) {
+    public static void executeAirDodge(Player player, MovementContext.DashInput input) {
         if (player == null || player.level().isClientSide) {
             return;
         }
@@ -58,8 +58,8 @@ public class Dodge {
         // Start immunity frames
         grantImmunityFrames(player);
 
-        // Perform air dodge movement
-        performAirDodgeMovement(player);
+        // Perform air dodge movement with input
+        performAirDodgeMovement(player, input);
 
         // Track dodge for whiff detection
         startDodgeTracking(player, DodgeType.AIR);
@@ -67,6 +67,15 @@ public class Dodge {
         // Play air dodge sound (higher pitch)
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.4f, 1.8f);
+    }
+
+    /**
+     * Execute air dodge without input (for compatibility)
+     */
+    public static void executeAirDodge(Player player) {
+        // Create neutral input (no direction)
+        MovementContext.DashInput neutralInput = new MovementContext.DashInput();
+        executeAirDodge(player, neutralInput);
     }
 
     /**
@@ -81,6 +90,13 @@ public class Dodge {
      */
     private static void grantImmunityFrames(Player player) {
         player.invulnerableTime = IMMUNITY_FRAMES;
+
+        // Show immunity granted message
+        player.displayClientMessage(
+                Component.literal("Immunity Frames Granted!")
+                        .withStyle(style -> style.withColor(0xFFD700).withBold(true)),
+                true
+        );
     }
 
     /**
@@ -103,24 +119,53 @@ public class Dodge {
     }
 
     /**
-     * Performs air dodge movement
+     * Performs air dodge movement with directional input (teleport-like)
      */
-    private static void performAirDodgeMovement(Player player) {
-        Vec3 lookDirection = player.getLookAngle();
+    private static void performAirDodgeMovement(Player player, MovementContext.DashInput input) {
+        // Calculate air dodge direction based on WASD input
+        Vec3 dodgeDirection = calculateAirDodgeDirection(player, input);
 
-        // For air dodge, use 3D direction but limit vertical component
-        Vec3 dodgeDirection = new Vec3(
-                lookDirection.x,
-                Math.max(-0.2, Math.min(0.2, lookDirection.y)),
-                lookDirection.z
-        ).normalize();
+        if (dodgeDirection.equals(Vec3.ZERO)) {
+            // Neutral air dodge - no movement, just immunity
+            return;
+        }
 
-        Vec3 dodgeVelocity = dodgeDirection.scale(AIR_DODGE_DISTANCE);
-        dodgeVelocity = dodgeVelocity.add(0, AIR_DODGE_VERTICAL_COMPONENT, 0);
+        // Moderate movement (not too far)
+        Vec3 airDodgeVelocity = dodgeDirection.scale(AIR_DODGE_DISTANCE);
 
-        // Replace current velocity for air dodge
-        player.setDeltaMovement(dodgeVelocity);
+        // Replace current velocity completely for instant effect
+        player.setDeltaMovement(airDodgeVelocity);
         player.fallDistance = 0; // Prevent fall damage
+        player.hurtMarked = true; // Force client sync
+
+        System.out.println("DEBUG: Air dodge - direction: " + dodgeDirection + ", velocity: " + airDodgeVelocity);
+    }
+
+    /**
+     * Calculate air dodge direction based on WASD input
+     */
+    private static Vec3 calculateAirDodgeDirection(Player player, MovementContext.DashInput input) {
+        Vec3 lookDirection = player.getLookAngle();
+        Vec3 rightDirection = lookDirection.cross(new Vec3(0, 1, 0)).normalize();
+        Vec3 forwardDirection = new Vec3(lookDirection.x, 0, lookDirection.z).normalize();
+
+        double forward = 0;
+        double side = 0;
+
+        // WASD input - NO vertical component
+        if (input.forward) forward += 1;
+        if (input.backward) forward -= 1;
+        if (input.right) side += 1;
+        if (input.left) side -= 1;
+
+        // Only horizontal movement - no up/down
+        Vec3 dodgeDirection = forwardDirection.scale(forward).add(rightDirection.scale(side));
+
+        if (dodgeDirection.length() > 0) {
+            dodgeDirection = dodgeDirection.normalize();
+        }
+
+        return dodgeDirection;
     }
 
     /**
@@ -182,6 +227,13 @@ public class Dodge {
         DodgeState dodgeState = activeDodges.get(player.getUUID());
         if (dodgeState != null) {
             dodgeState.dodgedAttack = true;
+
+            // Show "Move Dodged!" message
+            player.displayClientMessage(
+                    Component.literal("Move Dodged!")
+                            .withStyle(style -> style.withColor(0x00FF00).withBold(true)),
+                    true
+            );
         }
     }
 
@@ -230,6 +282,28 @@ public class Dodge {
             return timeSinceDodge < IMMUNITY_FRAMES;
         }
         return false;
+    }
+
+    /**
+     * Simple tick method for each player - call this from your PlayerTickHandler
+     */
+    public static void tickForPlayer(Player player) {
+        if (player.level().isClientSide) return;
+
+        DodgeState dodgeState = activeDodges.get(player.getUUID());
+        if (dodgeState == null) return;
+
+        long currentTime = player.level().getGameTime();
+        long timeSinceDodge = currentTime - dodgeState.startTime;
+
+        // Check if immunity frames just expired
+        if (timeSinceDodge == IMMUNITY_FRAMES) {
+            player.displayClientMessage(
+                    Component.literal("Immunity Frames Removed!")
+                            .withStyle(style -> style.withColor(0xFF6600)),
+                    true
+            );
+        }
     }
 
     /**
