@@ -198,12 +198,19 @@ public class AttackWheelOverlay {
         double deltaY = mouseY - centerY;
         double distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 
-        // Only check if mouse is outside the wheel entirely
+        // Don't highlight anything if mouse is outside the wheel entirely
         if (distance > OUTER_RADIUS) {
             currentlyHoveredMove = -1;
             return;
         }
 
+        // NEW FIX: Don't highlight anything if mouse is in the center area (inner circle)
+        if (distance < INNER_RADIUS) {
+            currentlyHoveredMove = -1;
+            return;
+        }
+
+        // Only highlight moves when mouse is in the actual selectable area (between inner and outer radius)
         // Calculate angle from center, starting from top (-90°) going clockwise
         double angle = Math.toDegrees(Math.atan2(deltaY, deltaX));
 
