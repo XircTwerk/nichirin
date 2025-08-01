@@ -33,6 +33,10 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
     private Vec3 targetPosition;
     private Set<LivingEntity> hitEntities = new HashSet<>();
 
+    // Invulnerability and fall damage protection
+    private boolean wasInvulnerable = false;
+    private boolean shouldPreventFallDamage = false;
+
     public UnknowingFireAttack() {
         // No configuration here - everything comes from moveset
         // All values will be set via configure() method
@@ -47,6 +51,10 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
         dashDirection = user.getLookAngle().normalize();
         startPosition = user.position();
         targetPosition = startPosition.add(dashDirection.scale(DASH_DISTANCE));
+
+        // Make user invulnerable during attack
+        wasInvulnerable = user.isInvulnerable();
+        user.setInvulnerable(true);
 
         // Flame startup sound
         playFlameSound();
@@ -327,11 +335,6 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
                 8, 0.3, 0.3, 0.3, 0.15);
     }
 
-    // No longer needed - using velocity-based movement instead
-    // private float easeInOutQuad(float t) {
-    //     return t < 0.5 ? 2 * t * t : 1 - (float)Math.pow(-2 * t + 2, 2) / 2;
-    // }
-
     @Override
     public boolean isDashAttack() {
         return true; // This is a dash attack
@@ -339,6 +342,17 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
 
     @Override
     protected void onStop() {
+        // Restore original invulnerability state
+        user.setInvulnerable(wasInvulnerable);
+
+        // Set flag to prevent fall damage on next landing
+        shouldPreventFallDamage = true;
+
+        // If user is already on ground, reset fall distance to prevent immediate fall damage
+        if (user.onGround()) {
+            user.resetFallDistance();
+        }
+
         // Reset user velocity
         user.setDeltaMovement(Vec3.ZERO);
 
@@ -367,5 +381,16 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
         dashStarted = false;
         slashExecuted = false;
         hitEntities.clear();
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+
+        // Check if we should prevent fall damage and user just landed
+        if (shouldPreventFallDamage && user.onGround() && user.fallDistance > 0) {
+            user.resetFallDistance(); // Prevent fall damage
+            shouldPreventFallDamage = false; // Reset flag after use
+        }
     }
 }

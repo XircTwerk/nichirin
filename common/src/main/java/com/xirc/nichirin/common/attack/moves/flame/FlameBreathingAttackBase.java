@@ -181,7 +181,7 @@ public abstract class FlameBreathingAttackBase extends AbstractBreathingAttack<F
                     3, 0.2, 0.2, 0.2, 0.1);
 
             if (d % 1.0 < 0.1) { // Every other particle position
-                serverLevel.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
+                serverLevel.sendParticles(ParticleTypes.FLAME,
                         particlePos.x, particlePos.y, particlePos.z,
                         1, 0.1, 0.1, 0.1, 0.05);
             }

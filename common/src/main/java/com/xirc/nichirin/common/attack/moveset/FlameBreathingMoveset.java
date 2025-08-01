@@ -54,7 +54,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withTeleportDistance(12.0f) // 12 block dash
                         .withRange(3.0f) // Close range after dash
                         .withKnockback(0.4f)
-                        .withBreathCost(30.0f)
+                        .withBreathCost(25.0f)
                         .withHitStun(25)
                         .withHitboxSize(2.0f)
                         .withAction(player -> {
@@ -74,7 +74,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withDamage(15.0f) // Good damage + bonus vs airborne
                         .withRange(6.0f) // Upward arc range
                         .withKnockback(0.8f) // Strong upward knockback
-                        .withBreathCost(25.0f)
+                        .withBreathCost(20.0f)
                         .withHitStun(20)
                         .withHitboxSize(2.5f) // Larger for arc
                         .withAction(player -> {
@@ -94,7 +94,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withDamage(25.0f) // Very high damage
                         .withRange(8.0f) // Large AOE
                         .withKnockback(0.6f)
-                        .withBreathCost(45.0f) // Expensive for heavy attack
+                        .withBreathCost(30.0f) // Expensive for heavy attack
                         .withHitStun(35)
                         .withHitboxSize(4.0f) // Large explosion hitbox
                         .withAction(player -> {
@@ -114,7 +114,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withDamage(12.0f) // Multiple hits around user
                         .withRange(3.5f) // 3.5 block radius
                         .withKnockback(0.3f)
-                        .withBreathCost(35.0f)
+                        .withBreathCost(25.0f)
                         .withHitStun(15)
                         .withHitboxSize(3.5f) // Full radius
                         .withAction(player -> {
@@ -135,7 +135,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withDashSpeed(8.0f) // 8 block dash
                         .withRange(8.0f) // Dash distance
                         .withKnockback(0.2f) // Light knockback to keep enemies close
-                        .withBreathCost(40.0f)
+                        .withBreathCost(30.0f)
                         .withHitStun(10) // Short stun for combo potential
                         .withHitboxSize(2.0f)
                         .withAction(player -> {
