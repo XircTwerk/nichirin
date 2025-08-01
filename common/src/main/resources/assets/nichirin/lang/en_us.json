@@ -3,6 +3,7 @@
   "block.nichirin.scarlet_crimson_iron_sand": "Scarlet Crimson Iron Sand",
 
   "breathing_style.thunder_breathing": "Thunder Breathing",
+  "breathing_style.flame_breathing": "Flame Breathing",
 
   "command.nichirin.breathing.add.success": "Gave %s the breathing style %s",
   "command.nichirin.breathing.player.add.success": "You have been given the breathing style %s",

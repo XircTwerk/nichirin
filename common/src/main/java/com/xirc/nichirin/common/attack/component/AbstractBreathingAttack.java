@@ -1,405 +1,283 @@
 package com.xirc.nichirin.common.attack.component;
 
-import com.xirc.nichirin.common.util.enums.MoveClass;
+import com.xirc.nichirin.common.attack.moveset.AbstractMoveset.MoveConfiguration;
+import com.xirc.nichirin.common.util.BreathingManager;
 import lombok.Getter;
 import lombok.Setter;
-import net.minecraft.core.particles.ParticleOptions;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.UUID;
 
 /**
  * Base class for all breathing technique attacks.
- * Highly customizable through builder pattern.
+ * Now follows the same pattern as ThunderBreathingAttackBase with moveset configuration.
  */
 @Getter
-public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack<T, A>, A extends IBreathingAttacker<A, ?>> {
+@SuppressWarnings("rawtypes")
+public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack, A extends IBreathingAttacker> {
 
-    // Timing
-    private int cooldown = 1;
-    private int windup = 1;
-    private int duration = 1;
+    // Configuration from moveset - NO DEFAULT VALUES
+    // These are set via configure() method called by the moveset
+    protected float damage;
+    protected float range;
+    protected float knockback;
+    protected float breathCost;
+    protected int hitStun;
+    protected float hitboxSize;
+    protected int cooldown;
+    protected int windup;
+    protected int duration;
 
-    // Combat stats
-    private float damage = 5.0f;
-    private float range = 3.0f;
-    private float knockback = 0.4f;
-    private int hitStun = 20;
+    // Movement properties (nullable - not all attacks use these)
+    protected Float teleportDistance;
+    protected Float dashSpeed;
+    protected Integer teleportWindup;
 
-    // Resource management
-    private float breathCost = 10.0f;
-    private boolean consumeOnHit = false;
+    // Runtime state
+    protected boolean isActive = false;
+    protected int tickCount = 0;
+    protected Player user;
+    protected Level world;
 
-    // Particles
-    private ParticleOptions primaryParticle = ParticleTypes.CLOUD;
-    @Nullable
-    private ParticleOptions secondaryParticle;
-    private int particleCount = 10;
-    private float particleSpread = 0.5f;
-
-    // Sounds
-    @Nullable
-    private SoundEvent startSound;
-    @Nullable
-    private SoundEvent hitSound;
-    private float soundVolume = 1.0f;
-    private float soundPitch = 1.0f;
-
-    // Effects
-    private final Map<MobEffect, MobEffectData> userEffects = new HashMap<>();
-    private final Map<MobEffect, MobEffectData> targetEffects = new HashMap<>();
-
-    // Behavior flags
-    private boolean holdable = false;
-    private boolean piercing = false;
-    private boolean areaOfEffect = false;
-    private boolean multiHit = false;
-    private int maxHits = 1;
-    private int maxTargets = 1;
-
-    // Movement
-    @Nullable
-    private Vec3 userVelocity;
-    private boolean lockMovement = false;
-
-    // Metadata
-    private Component name = Component.literal("Breathing Technique");
-    private Component description = Component.empty();
-    private int formNumber = 1;
-
-    // State
-    @Setter
-    private int currentTick = 0;
-    @Setter
-    private int hitCount = 0;
+    // Hit tracking
     @Setter
     private Set<UUID> hitEntities = new HashSet<>();
     @Setter
-    private boolean active = false;
-    @Setter
-    private MoveClass moveClass;
+    private int hitCount = 0;
 
-    // Store the current player performing the attack
-    @Setter
-    @Nullable
-    private Player currentUser;
+    // Configuration and breath consumption tracking
+    private boolean configured = false;
+    private boolean breathConsumed = false;
 
-    // Builder methods remain the same...
+    // Legacy builder pattern support (for backward compatibility)
+    // These will be overridden by configure() if called
+    protected boolean builderConfigured = false;
 
+    /**
+     * Configure this attack with values from the moveset
+     * This MUST be called by the moveset before starting the attack
+     */
+    public void configure(MoveConfiguration config) {
+        if (configured) {
+            return; // Prevent double-configuration
+        }
+
+        // Combat Stats - use sensible defaults if not configured
+        this.damage = config.getDamageOrDefault(10.0f);
+        this.range = config.getRangeOrDefault(5.0f);
+        this.knockback = config.getKnockbackOrDefault(0.3f);
+        this.hitStun = config.getHitStunOrDefault(20);
+        this.hitboxSize = config.getHitboxSizeOrDefault(2.0f);
+
+        // Timing
+        this.cooldown = config.getCooldownOrDefault(40);
+        this.windup = config.getWindupOrDefault(5);
+        this.duration = config.getDurationOrDefault(20);
+
+        // Resources
+        this.breathCost = config.getBreathCostOrDefault(15.0f);
+
+        // Movement (nullable - only set if configured in moveset)
+        this.teleportDistance = config.getTeleportDistance();
+        this.dashSpeed = config.getDashSpeed();
+        this.teleportWindup = config.getTeleportWindup();
+
+        this.configured = true;
+        this.builderConfigured = false; // Moveset config overrides builder
+    }
+
+    /**
+     * Legacy builder method support - will be overridden by configure() if called
+     */
     @SuppressWarnings("unchecked")
     public T withTiming(int cooldown, int windup, int duration) {
-        this.cooldown = cooldown;
-        this.windup = windup;
-        this.duration = duration;
+        if (!configured) {
+            this.cooldown = cooldown;
+            this.windup = windup;
+            this.duration = duration;
+            this.builderConfigured = true;
+        }
         return (T) this;
     }
 
     @SuppressWarnings("unchecked")
     public T withDamage(float damage) {
-        this.damage = damage;
+        if (!configured) {
+            this.damage = damage;
+            this.builderConfigured = true;
+        }
         return (T) this;
     }
 
     @SuppressWarnings("unchecked")
     public T withRange(float range) {
-        this.range = range;
+        if (!configured) {
+            this.range = range;
+            this.builderConfigured = true;
+        }
         return (T) this;
     }
 
     @SuppressWarnings("unchecked")
     public T withKnockback(float knockback) {
-        this.knockback = knockback;
-        return (T) this;
-    }
-
-    @SuppressWarnings("unchecked")
-    public T withHitStun(int stun) {
-        this.hitStun = stun;
+        if (!configured) {
+            this.knockback = knockback;
+            this.builderConfigured = true;
+        }
         return (T) this;
     }
 
     @SuppressWarnings("unchecked")
     public T withBreathCost(float cost) {
-        this.breathCost = cost;
-        return (T) this;
-    }
-
-    @SuppressWarnings("unchecked")
-    public T withParticle(ParticleOptions particle) {
-        this.primaryParticle = particle;
-        return (T) this;
-    }
-
-    @SuppressWarnings("unchecked")
-    public T withParticles(ParticleOptions primary, ParticleOptions secondary, int count) {
-        this.primaryParticle = primary;
-        this.secondaryParticle = secondary;
-        this.particleCount = count;
-        return (T) this;
-    }
-
-    @SuppressWarnings("unchecked")
-    public T withSound(SoundEvent sound) {
-        this.startSound = sound;
-        return (T) this;
-    }
-
-    @SuppressWarnings("unchecked")
-    public T withSounds(SoundEvent start, SoundEvent hit) {
-        this.startSound = start;
-        this.hitSound = hit;
-        return (T) this;
-    }
-
-    @SuppressWarnings("unchecked")
-    public T withSoundPitch(float pitch) {
-        this.soundPitch = pitch;
-        return (T) this;
-    }
-
-    @SuppressWarnings("unchecked")
-    public T withUserEffect(MobEffect effect, int duration, int amplifier) {
-        userEffects.put(effect, new MobEffectData(duration, amplifier));
-        return (T) this;
-    }
-
-    @SuppressWarnings("unchecked")
-    public T withTargetEffect(MobEffect effect, int duration, int amplifier) {
-        targetEffects.put(effect, new MobEffectData(duration, amplifier));
-        return (T) this;
-    }
-
-    @SuppressWarnings("unchecked")
-    public T withUserVelocity(Vec3 velocity) {
-        this.userVelocity = velocity;
-        return (T) this;
-    }
-
-    @SuppressWarnings("unchecked")
-    public T withUserVelocity(double x, double y, double z) {
-        this.userVelocity = new Vec3(x, y, z);
-        return (T) this;
-    }
-
-    @SuppressWarnings("unchecked")
-    public T setHoldable(boolean holdable) {
-        this.holdable = holdable;
-        return (T) this;
-    }
-
-    @SuppressWarnings("unchecked")
-    public T setPiercing(boolean piercing) {
-        this.piercing = piercing;
-        return (T) this;
-    }
-
-    @SuppressWarnings("unchecked")
-    public T setAreaOfEffect(boolean aoe, int maxTargets) {
-        this.areaOfEffect = aoe;
-        this.maxTargets = maxTargets;
-        return (T) this;
-    }
-
-    @SuppressWarnings("unchecked")
-    public T setMultiHit(int hits) {
-        this.multiHit = hits > 1;
-        this.maxHits = hits;
-        return (T) this;
-    }
-
-    @SuppressWarnings("unchecked")
-    public T withForm(int number, String name) {
-        this.formNumber = number;
-        this.name = Component.translatable("nichirin.form." + number, name);
-        return (T) this;
-    }
-
-    @SuppressWarnings("unchecked")
-    public T lockMovement(boolean lock) {
-        this.lockMovement = lock;
-        return (T) this;
-    }
-
-    // Core lifecycle methods
-
-    /**
-     * Called when the move is registered to a MoveClass
-     */
-    public void onRegister(MoveClass moveClass) {
-        this.moveClass = moveClass;
-    }
-
-    /**
-     * Called every tick by the player performing the attack
-     */
-    public void tick(Player player) {
-        if (active && currentUser != null) {
-            Level world = player.level();
-
-            if (!onTick(currentUser, world)) {
-                onEnd(currentUser, world);
-                active = false;
-                currentUser = null;
-            }
+        if (!configured) {
+            this.breathCost = cost;
+            this.builderConfigured = true;
         }
+        return (T) this;
     }
 
     /**
-     * Starts the breathing attack
+     * Start the attack - unified interface
      */
-    public void start(Player player) {
-        if (active) return;
-
-        Level world = player.level();
-
-        currentUser = player;
-        active = true;
-        onStart(player, world);
-    }
-
-    /**
-     * Starts the breathing attack with an attacker interface
-     */
-    public void start(A attacker) {
-        Player player = attacker.getPlayer();
-        start(player);
-    }
-
-    /**
-     * Stops the breathing attack
-     */
-    public void stop() {
-        if (!active || currentUser == null) return;
-
-        Level world = currentUser.level();
-        onEnd(currentUser, world);
-        active = false;
-        currentUser = null;
-    }
-
-    /**
-     * Called when technique starts
-     */
-    public void onStart(Player user, Level world) {
-        // Play sound
-        if (startSound != null) {
-            world.playSound(null, user.getX(), user.getY(), user.getZ(),
-                    startSound, user.getSoundSource(), soundVolume, soundPitch);
+    public void start(Player user, Level world) {
+        if (!configured && !builderConfigured) {
+            System.err.println("Warning: " + this.getClass().getSimpleName() + " started without configuration!");
+            setEmergencyDefaults();
         }
 
-        // Apply user effects
-        userEffects.forEach((effect, data) -> {
-            user.addEffect(new MobEffectInstance(effect, data.duration, data.amplifier));
-        });
+        this.user = user;
+        this.world = world;
+        this.tickCount = 0;
+        this.breathConsumed = false;
+        this.hitEntities.clear();
+        this.hitCount = 0;
 
-        // Apply velocity
-        if (userVelocity != null) {
-            Vec3 look = user.getLookAngle();
-            Vec3 velocity = new Vec3(
-                    look.x * userVelocity.x,
-                    userVelocity.y,
-                    look.z * userVelocity.z
+        // Check breath cost BEFORE marking as active
+        if (breathCost > 0 && !BreathingManager.hasBreath(user, breathCost)) {
+            user.displayClientMessage(
+                    Component.literal("Not enough breath!")
+                            .withStyle(style -> style.withColor(0xFF5555)),
+                    true
             );
-            user.setDeltaMovement(velocity);
-        }
-
-        // Reset state
-        currentTick = 0;
-        hitCount = 0;
-        hitEntities.clear();
-    }
-
-    /**
-     * Called every tick while active
-     * @return true to continue, false to end
-     */
-    public boolean onTick(Player user, Level world) {
-        currentTick++;
-
-        // Check if we should perform the attack
-        if (shouldPerform()) {
-            perform(user, world);
-        }
-
-        // Create particles
-        createParticles(user, world);
-
-        // Lock movement if configured
-        if (lockMovement) {
-            user.setDeltaMovement(Vec3.ZERO);
-        }
-
-        return currentTick < duration;
-    }
-
-    /**
-     * Called when technique ends
-     */
-    public void onEnd(Player user, Level world) {
-        // Override for cleanup
-    }
-
-    /**
-     * Determines when to perform the attack
-     */
-    protected boolean shouldPerform() {
-        if (multiHit) {
-            // For multi-hit attacks, space them out
-            int interval = duration / maxHits;
-            return currentTick % interval == windup && hitCount < maxHits;
-        }
-        // For single hit, perform after windup
-        return currentTick == windup;
-    }
-
-    /**
-     * Performs the actual attack
-     */
-    protected abstract void perform(Player user, Level world);
-
-    /**
-     * Applies damage and effects to a target
-     */
-    protected void hitTarget(Player user, LivingEntity target) {
-        // Check if already hit (for non-multi-hit attacks)
-        if (!multiHit && hitEntities.contains(target.getUUID())) {
             return;
         }
 
-        // Deal damage
-        DamageSource source = user.damageSources().playerAttack(user);
-        target.hurt(source, damage);
-
-        // Apply knockback
-        if (knockback > 0) {
-            Vec3 knockVec = target.position().subtract(user.position()).normalize();
-            target.knockback(knockback, -knockVec.x, -knockVec.z);
+        // Consume breath BEFORE calling onStart()
+        if (breathCost > 0) {
+            if (BreathingManager.consume(user, breathCost)) {
+                breathConsumed = true;
+            } else {
+                user.displayClientMessage(
+                        Component.literal("Failed to consume breath!")
+                                .withStyle(style -> style.withColor(0xFF5555)),
+                        true
+                );
+                return;
+            }
         }
 
-        // Apply stun
+        // Mark as active AFTER breath consumption
+        this.isActive = true;
+
+        // Call onStart() - if this calls stop(), the attack will be cancelled
+        onStart();
+
+        // If onStart() called stop(), we need to refund the breath
+        if (!isActive && breathConsumed) {
+            BreathingManager.restore(user, breathCost);
+            breathConsumed = false;
+        }
+    }
+
+    /**
+     * Legacy start method for backward compatibility
+     */
+    public void start(Player player) {
+        start(player, player.level());
+    }
+
+    /**
+     * Start with attacker interface (legacy support)
+     */
+    public void start(A attacker) {
+        Player player = attacker.getPlayer();
+        start(player, player.level());
+    }
+
+    /**
+     * Tick the attack - called every game tick while active
+     */
+    public void tick() {
+        if (!isActive || user == null || world == null) {
+            return;
+        }
+
+        tickCount++;
+
+        // Check if we're past windup phase
+        if (tickCount > windup) {
+            perform();
+        }
+
+        // Check if attack duration is complete
+        if (tickCount >= windup + duration) {
+            stop();
+        }
+    }
+
+    /**
+     * Legacy tick method for backward compatibility
+     */
+    public void tick(Player player) {
+        tick();
+    }
+
+    /**
+     * Stop the attack
+     */
+    public void stop() {
+        if (isActive) {
+            isActive = false;
+            onStop();
+        }
+    }
+
+    /**
+     * Apply damage and effects to a target with immunity frames
+     */
+    protected void hitTarget(LivingEntity target) {
+        if (world.isClientSide) return;
+
+        // Check if already hit (for non-multi-hit attacks)
+        if (hitEntities.contains(target.getUUID())) {
+            return;
+        }
+
+        // Apply damage using configured values
+        DamageSource source = user.damageSources().playerAttack(user);
+        boolean damaged = target.hurt(source, damage);
+
+        // Apply hit stun if configured
         if (hitStun > 0) {
             target.invulnerableTime = hitStun;
         }
 
-        // Apply target effects
-        targetEffects.forEach((effect, data) -> {
-            target.addEffect(new MobEffectInstance(effect, data.duration, data.amplifier));
-        });
-
-        // Play hit sound
-        if (hitSound != null) {
-            target.level().playSound(null, target.getX(), target.getY(), target.getZ(),
-                    hitSound, target.getSoundSource(), soundVolume, soundPitch);
+        // Apply knockback if configured
+        if (knockback > 0) {
+            Vec3 knockbackDir = target.position().subtract(user.position()).normalize();
+            target.push(knockbackDir.x * knockback, 0.1, knockbackDir.z * knockback);
         }
 
         // Track hit
@@ -408,41 +286,181 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack<
     }
 
     /**
-     * Creates particle effects
+     * Special hit method that removes immunity frames
      */
-    protected void createParticles(Player user, Level world) {
-        for (int i = 0; i < particleCount; i++) {
-            double x = user.getX() + (world.random.nextDouble() - 0.5) * particleSpread;
-            double y = user.getY() + user.getBbHeight() / 2;
-            double z = user.getZ() + (world.random.nextDouble() - 0.5) * particleSpread;
+    protected void hitTargetNoImmunity(LivingEntity target) {
+        if (world.isClientSide) return;
 
-            world.addParticle(primaryParticle, x, y, z, 0, 0.1, 0);
+        // Reset invulnerability to allow immediate damage
+        target.invulnerableTime = 0;
+        target.hurtTime = 0;
 
-            if (secondaryParticle != null && world.random.nextBoolean()) {
-                world.addParticle(secondaryParticle, x, y, z, 0, 0.05, 0);
+        // Apply damage
+        DamageSource source = user.damageSources().playerAttack(user);
+        boolean damaged = target.hurt(source, damage);
+
+        // Apply hit stun
+        if (hitStun > 0) {
+            target.invulnerableTime = hitStun;
+        }
+
+        // Apply knockback
+        if (knockback > 0) {
+            Vec3 knockbackDir = target.position().subtract(user.position()).normalize();
+            target.push(knockbackDir.x * knockback, 0.1, knockbackDir.z * knockback);
+        }
+
+        // Track hit (allow multiple hits for no-immunity attacks)
+        hitCount++;
+    }
+
+    /**
+     * Get entities in a hitbox centered at the given position
+     */
+    protected List<LivingEntity> getTargetsInHitbox(Vec3 center) {
+        AABB hitbox = new AABB(
+                center.x - hitboxSize/2, center.y - hitboxSize/2, center.z - hitboxSize/2,
+                center.x + hitboxSize/2, center.y + hitboxSize/2, center.z + hitboxSize/2
+        );
+
+        return world.getEntitiesOfClass(LivingEntity.class, hitbox,
+                entity -> entity != user && entity.isAlive());
+    }
+
+    /**
+     * Get entities in a custom hitbox with specified dimensions
+     */
+    protected List<LivingEntity> getTargetsInCustomHitbox(Vec3 center, double width, double height, double depth) {
+        AABB hitbox = new AABB(
+                center.x - width/2, center.y - height/2, center.z - depth/2,
+                center.x + width/2, center.y + height/2, center.z + depth/2
+        );
+
+        return world.getEntitiesOfClass(LivingEntity.class, hitbox,
+                entity -> entity != user && entity.isAlive());
+    }
+
+    /**
+     * Get entities in a line between two points
+     */
+    protected List<LivingEntity> getTargetsInLine(Vec3 start, Vec3 end, double thickness) {
+        AABB lineBounds = new AABB(
+                Math.min(start.x, end.x) - thickness,
+                Math.min(start.y, end.y) - thickness,
+                Math.min(start.z, end.z) - thickness,
+                Math.max(start.x, end.x) + thickness,
+                Math.max(start.y, end.y) + thickness,
+                Math.max(start.z, end.z) + thickness
+        );
+
+        return world.getEntitiesOfClass(LivingEntity.class, lineBounds, entity -> {
+            if (entity == user || !entity.isAlive()) {
+                return false;
             }
-        }
+
+            Vec3 entityPos = entity.position().add(0, entity.getBbHeight()/2, 0);
+            double distanceToLine = distancePointToLine(entityPos, start, end);
+            return distanceToLine <= thickness;
+        });
     }
 
     /**
-     * Gets entities in range
+     * Calculate distance from a point to a line segment
      */
-    protected List<LivingEntity> getTargetsInRange(Player user, Level world) {
-        return world.getEntitiesOfClass(LivingEntity.class,
-                user.getBoundingBox().inflate(range),
-                entity -> entity != user && entity.isAlive() && user.hasLineOfSight(entity));
+    private double distancePointToLine(Vec3 point, Vec3 lineStart, Vec3 lineEnd) {
+        Vec3 lineVec = lineEnd.subtract(lineStart);
+        Vec3 pointVec = point.subtract(lineStart);
+
+        double lineLength = lineVec.length();
+        if (lineLength == 0) {
+            return point.distanceTo(lineStart);
+        }
+
+        double projection = pointVec.dot(lineVec) / (lineLength * lineLength);
+        projection = Math.max(0, Math.min(1, projection));
+
+        Vec3 closestPoint = lineStart.add(lineVec.scale(projection));
+        return point.distanceTo(closestPoint);
     }
 
     /**
-     * Helper class for effect data
+     * Set emergency default values if attack wasn't properly configured
      */
-    private static class MobEffectData {
-        final int duration;
-        final int amplifier;
+    private void setEmergencyDefaults() {
+        this.damage = 10.0f;
+        this.range = 5.0f;
+        this.knockback = 0.3f;
+        this.breathCost = 15.0f;
+        this.hitStun = 20;
+        this.hitboxSize = 2.0f;
+        this.cooldown = 40;
+        this.windup = 5;
+        this.duration = 20;
+        this.configured = true;
+    }
 
-        MobEffectData(int duration, int amplifier) {
-            this.duration = duration;
-            this.amplifier = amplifier;
-        }
+    // Abstract methods that must be implemented by subclasses
+
+    /**
+     * Called when attack starts (after breath consumption)
+     * Implement visual/audio startup effects here
+     * If you call stop() in this method, breath will be refunded
+     */
+    protected abstract void onStart();
+
+    /**
+     * Called every tick during the attack (after windup period)
+     * Implement the main attack logic here
+     */
+    protected abstract void perform();
+
+    /**
+     * Called when attack ends
+     * Implement cleanup logic here
+     */
+    protected void onStop() {
+        // Override if needed - default implementation does nothing
+    }
+
+    // Utility methods
+
+    /**
+     * Get total attack duration (windup + active duration)
+     */
+    public int getTotalDuration() {
+        return windup + duration;
+    }
+
+    /**
+     * Check if attack is in windup phase
+     */
+    public boolean isInWindup() {
+        return isActive && tickCount <= windup;
+    }
+
+    /**
+     * Check if attack is in active/perform phase
+     */
+    public boolean isInActivePhase() {
+        return isActive && tickCount > windup && tickCount < windup + duration;
+    }
+
+    // Helper methods to check if movement properties are configured
+    public boolean hasTeleport() { return teleportDistance != null && teleportDistance > 0; }
+    public boolean hasDash() { return dashSpeed != null && dashSpeed > 0; }
+    public boolean hasTeleportWindup() { return teleportWindup != null; }
+
+    /**
+     * Check if breath was consumed (for debugging)
+     */
+    public boolean wasBreathConsumed() {
+        return breathConsumed;
+    }
+
+    /**
+     * Legacy method support for MoveClass registration
+     */
+    public void onRegister(com.xirc.nichirin.common.util.enums.MoveClass moveClass) {
+        // Override if needed - default implementation does nothing
     }
 }

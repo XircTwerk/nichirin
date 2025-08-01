@@ -4,7 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.data.BreathingStyleHelper;
-import com.xirc.nichirin.common.data.MovesetRegistry;
+import com.xirc.nichirin.registry.MovesetRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;

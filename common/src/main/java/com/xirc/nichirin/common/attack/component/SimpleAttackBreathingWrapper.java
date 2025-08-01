@@ -8,115 +8,163 @@ import net.minecraft.world.level.Level;
 /**
  * Wrapper that allows AbstractSimpleAttack to be used where AbstractBreathingAttack is expected
  */
-public class SimpleAttackBreathingWrapper<A extends IBreathingAttacker<A, ?>> extends AbstractBreathingAttack<SimpleAttackBreathingWrapper<A>, A> {
+@SuppressWarnings("rawtypes")
+public class SimpleAttackBreathingWrapper<A extends IBreathingAttacker> extends AbstractBreathingAttack<SimpleAttackBreathingWrapper<A>, A> {
 
     private final AbstractSimpleAttack<?, ?> simpleAttack;
-    private Player currentPlayer;
 
     public SimpleAttackBreathingWrapper(AbstractSimpleAttack<?, ?> simpleAttack) {
         this.simpleAttack = simpleAttack;
-    }
 
-    @Override
-    protected void perform(Player user, Level world) {
-        // Delegate to simple attack's hit check
-        if (simpleAttack instanceof BasicSlashAttack) {
-            ((BasicSlashAttack<?>) simpleAttack).performHitCheck(user, world);
-        }
-    }
-
-    @Override
-    public void start(Player player) {
-        this.currentPlayer = player;
-
-        // The simple attack expects an IPhysicalAttacker, not a Player directly
-        // We need to create or get the appropriate attacker instance
-
-        // Since we can't call start without the proper type, we'll just mark as active
-        // and handle the attack logic in perform()
-        setActive(true);
-        setCurrentUser(player);
-
-        // Initialize the simple attack's state if possible
-        if (simpleAttack instanceof BasicSlashAttack) {
-            // For now, we'll handle the attack logic directly in perform()
-            ((BasicSlashAttack<?>) simpleAttack).setActive(true);
-            ((BasicSlashAttack<?>) simpleAttack).setCurrentTick(0);
-        }
-    }
-
-    @Override
-    public void start(A attacker) {
-        Player player = attacker.getPlayer();
-        start(player);
-    }
-
-    @Override
-    public void tick(Player player) {
-        if (!isActive() || currentPlayer == null) return;
-
-        // Since we can't call tick() directly on the simple attack without the proper attacker type,
-        // we'll handle the ticking manually
+        // Copy configuration from simple attack to breathing attack
+        // This ensures the wrapper has the same stats as the wrapped attack
         if (simpleAttack instanceof BasicSlashAttack) {
             BasicSlashAttack<?> basicAttack = (BasicSlashAttack<?>) simpleAttack;
 
-            // Update tick count
-            int currentTick = basicAttack.getCurrentTick();
-            basicAttack.setCurrentTick(currentTick + 1);
+            // Set default values based on the simple attack using correct method names
+            this.damage = basicAttack.getDamage();
+            this.range = basicAttack.getRange();
+            this.knockback = basicAttack.getKnockback();
+            this.hitStun = basicAttack.getHitStun();
 
-            // Check if attack should end based on total duration
-            if (currentTick >= basicAttack.getTotalDuration()) {
-                basicAttack.setActive(false);
-                setActive(false);
-                setCurrentUser(null);
-                currentPlayer = null;
+            // Use correct method names from AbstractSimpleAttack
+            this.cooldown = basicAttack.getTotalDuration(); // Total duration as cooldown
+            this.windup = basicAttack.getStartup(); // Startup frames as windup
+            this.duration = basicAttack.getActiveFrames(); // Active frames as duration
+
+            // Simple attacks typically don't use breath
+            this.breathCost = 0.0f;
+            this.hitboxSize = basicAttack.getHitboxSize(); // Use actual hitbox size
+
+            // Mark as configured to prevent emergency defaults
+            this.builderConfigured = true;
+        }
+    }
+
+    @Override
+    protected void onStart() {
+        // Initialize the simple attack's state if possible
+        if (simpleAttack instanceof BasicSlashAttack) {
+            BasicSlashAttack<?> basicAttack = (BasicSlashAttack<?>) simpleAttack;
+            basicAttack.setActive(true);
+            basicAttack.setCurrentTick(0);
+        }
+    }
+
+    @Override
+    protected void perform() {
+        // Delegate to simple attack's hit detection method
+        if (simpleAttack instanceof BasicSlashAttack && user != null && world != null) {
+            // Call the public performHitDetection method if it exists, otherwise use reflection
+            try {
+                var method = simpleAttack.getClass().getDeclaredMethod("performHitDetection", Player.class, Level.class);
+                method.setAccessible(true);
+                method.invoke(simpleAttack, user, world);
+            } catch (Exception e) {
+                // Fallback: just call the tick method which should handle hit detection
+                ((BasicSlashAttack<?>) simpleAttack).tick(user);
             }
-        } else {
-            // For other attack types, just deactivate after a default duration
-            setActive(false);
-            setCurrentUser(null);
-            currentPlayer = null;
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        // Clean up the simple attack
+        if (simpleAttack instanceof BasicSlashAttack) {
+            BasicSlashAttack<?> basicAttack = (BasicSlashAttack<?>) simpleAttack;
+            basicAttack.setActive(false);
+        }
+    }
+
+    @Override
+    public void tick() {
+        // Call the parent tick method which handles the unified logic
+        super.tick();
+
+        // Additional simple attack specific ticking if needed
+        if (simpleAttack instanceof BasicSlashAttack && isActive) {
+            BasicSlashAttack<?> basicAttack = (BasicSlashAttack<?>) simpleAttack;
+            basicAttack.setCurrentTick(tickCount);
         }
     }
 
     @Override
     public void onRegister(MoveClass moveClass) {
         super.onRegister(moveClass);
-        simpleAttack.onRegister(moveClass);
+        if (simpleAttack != null) {
+            simpleAttack.onRegister(moveClass);
+        }
     }
 
-    // Delegate configuration methods to the wrapped simple attack
+    // Override builder methods to update both wrapper and wrapped attack
     @Override
     public SimpleAttackBreathingWrapper<A> withDamage(float damage) {
-        simpleAttack.withDamage(damage);
+        super.withDamage(damage);
+        if (simpleAttack != null) {
+            simpleAttack.withDamage(damage);
+        }
         return this;
     }
 
     @Override
     public SimpleAttackBreathingWrapper<A> withRange(float range) {
-        simpleAttack.withRange(range);
+        super.withRange(range);
+        if (simpleAttack != null) {
+            simpleAttack.withRange(range);
+        }
         return this;
     }
 
     @Override
     public SimpleAttackBreathingWrapper<A> withKnockback(float knockback) {
-        simpleAttack.withKnockback(knockback);
+        super.withKnockback(knockback);
+        if (simpleAttack != null) {
+            simpleAttack.withKnockback(knockback);
+        }
         return this;
     }
 
     @Override
-    public SimpleAttackBreathingWrapper<A> withHitStun(int hitStun) {
-        simpleAttack.withHitStun(hitStun);
+    public SimpleAttackBreathingWrapper<A> withBreathCost(float cost) {
+        super.withBreathCost(cost);
+        // Simple attacks typically don't use breath, but allow override
         return this;
     }
 
     @Override
     public SimpleAttackBreathingWrapper<A> withTiming(int cooldown, int windup, int duration) {
-        simpleAttack.withTiming(windup, duration - windup, cooldown);
+        super.withTiming(cooldown, windup, duration);
+        if (simpleAttack != null) {
+            // Simple attack expects (startup, activeFrames, recovery)
+            // Map our parameters: windup = startup, duration = activeFrames
+            int recovery = Math.max(1, cooldown - windup - duration);
+            simpleAttack.withTiming(windup, duration, recovery);
+        }
         return this;
     }
 
+    /**
+     * Get the wrapped simple attack
+     */
     public AbstractSimpleAttack<?, ?> getSimpleAttack() {
         return simpleAttack;
+    }
+
+    /**
+     * Check if this wrapper contains a specific type of simple attack
+     */
+    public boolean wraps(Class<?> attackType) {
+        return simpleAttack != null && attackType.isInstance(simpleAttack);
+    }
+
+    /**
+     * Get the wrapped attack cast to a specific type (unsafe)
+     */
+    @SuppressWarnings("unchecked")
+    public <T> T getWrappedAttack(Class<T> type) {
+        if (wraps(type)) {
+            return (T) simpleAttack;
+        }
+        return null;
     }
 }

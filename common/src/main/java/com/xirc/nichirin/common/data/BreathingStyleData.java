@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.data;
 
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
+import com.xirc.nichirin.registry.MovesetRegistry;
 import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.Nullable;
 

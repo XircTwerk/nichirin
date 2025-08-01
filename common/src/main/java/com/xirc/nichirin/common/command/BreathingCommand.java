@@ -5,7 +5,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import com.xirc.nichirin.common.data.MovesetRegistry;
+import com.xirc.nichirin.registry.MovesetRegistry;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;

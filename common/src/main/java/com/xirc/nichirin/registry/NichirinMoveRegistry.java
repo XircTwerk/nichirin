@@ -58,21 +58,7 @@ public interface NichirinMoveRegistry {
 
         // Register all movesets here
         registerMoveset(new ThunderBreathingMoveset());
-
-        // Add new movesets as you create them:
-        // registerMoveset(new WaterBreathingMoveset());
-        // registerMoveset(new FlameBreathingMoveset());
-        // registerMoveset(new WindBreathingMoveset());
-        // registerMoveset(new StoneBreathingMoveset());
-        // registerMoveset(new MistBreathingMoveset());
-        // registerMoveset(new SerpentBreathingMoveset());
-        // registerMoveset(new SoundBreathingMoveset());
-        // registerMoveset(new LoveBreathingMoveset());
-        // registerMoveset(new InsectBreathingMoveset());
-        // registerMoveset(new BeastBreathingMoveset());
-        // registerMoveset(new MoonBreathingMoveset());
-        // registerMoveset(new SunBreathingMoveset());
-
+        registerMoveset(new FlameBreathingMoveset());
         BreathOfNichirin.LOGGER.info("Auto-registered {} movesets with {} total moves",
                 MOVESETS.size(), GLOBAL_MOVES.size());
     }
