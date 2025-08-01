@@ -125,7 +125,6 @@ public class SimpleSliceAttack {
     }
 
     public void start(Player player) {
-        System.out.println("DEBUG: SimpleSliceAttack start called");
 
         // Only run on server side
         if (player.level().isClientSide()) {
@@ -252,7 +251,6 @@ public class SimpleSliceAttack {
     }
 
     private void end(Player player) {
-        System.out.println("DEBUG: SimpleSliceAttack ended");
         isActive = false;
         hitEntities.clear();
     }

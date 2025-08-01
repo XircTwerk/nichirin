@@ -19,6 +19,7 @@ import java.util.UUID;
 
 /**
  * Complete katana blocking and parrying system using STANCE instead of stamina
+ * FIXED: Parry cooldown only affects parrying, not all blocking
  */
 public class KatanaBlock {
 
@@ -69,37 +70,46 @@ public class KatanaBlock {
 
         BlockingState state = getOrCreateState(player);
 
-        // Check if player can block (including parry cooldown)
+        // Check if player can block (REMOVED parry cooldown check)
         if (!canStartBlocking(player, state)) {
-            // Check if it's specifically a parry cooldown issue
-            if (isOnParryCooldown(player, state)) {
-                int remainingTicks = getRemainingParryCooldown(player, state);
-                player.displayClientMessage(
-                        Component.literal("Parry on cooldown! (" + (remainingTicks / 20.0f) + "s)")
-                                .withStyle(style -> style.withColor(0xFFAA00)),
-                        true
-                );
-            }
             return false;
         }
 
-        // Start blocking with automatic parry window
-        state.stance = BlockingStance.PARRY_READY; // Start with parry window
-        state.blockTicks = 0;
-        state.parryWindowTicks = PARRY_WINDOW_TICKS; // 0.5 second parry window (10 ticks)
+        // FIXED: Check if parry is available, but allow blocking regardless
+        boolean canParry = !isOnParryCooldown(player, state);
+
+        if (canParry) {
+            // Start blocking with automatic parry window
+            state.stance = BlockingStance.PARRY_READY;
+            state.blockTicks = 0;
+            state.parryWindowTicks = PARRY_WINDOW_TICKS; // 0.5 second parry window (10 ticks)
+
+            // Send message to player about parry window
+            player.displayClientMessage(
+                    Component.literal("Blocking - Perfect parry window active! (0.5s)")
+                            .withStyle(style -> style.withColor(0x55FF55)),
+                    true // Overlay message
+            );
+        } else {
+            // Start blocking without parry window (parry on cooldown)
+            state.stance = BlockingStance.BLOCKING;
+            state.blockTicks = 0;
+            state.parryWindowTicks = 0;
+
+            // Send message to player that only blocking is available
+            int remainingTicks = getRemainingParryCooldown(player, state);
+            player.displayClientMessage(
+                    Component.literal("Blocking - Parry on cooldown (" + (remainingTicks / 20.0f) + "s)")
+                            .withStyle(style -> style.withColor(0xFFAA00)),
+                    true // Overlay message
+            );
+        }
 
         // Apply blocking effect
         applyBlockingEffect(player);
 
         // Block katana inputs
         KatanaInputHandler.blockAfterBreathingMove(player);
-
-        // Send message to player about parry window
-        player.displayClientMessage(
-                Component.literal("Blocking - Perfect parry window active! (0.5s)")
-                        .withStyle(style -> style.withColor(0x55FF55)),
-                true // Overlay message
-        );
 
         // Play blocking sound
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
@@ -241,8 +251,7 @@ public class KatanaBlock {
         // Can't block if already blocking
         if (state.stance != BlockingStance.NONE) return false;
 
-        // Check parry cooldown
-        if (isOnParryCooldown(player, state)) return false;
+        // REMOVED: Check parry cooldown - now only affects parrying, not blocking
 
         // Must have minimum STANCE (not stamina)
         if (!StanceManager.hasStance(player, BLOCK_STANCE_DRAIN * 25)) return false; // ~2 seconds worth

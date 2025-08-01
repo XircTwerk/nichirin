@@ -230,22 +230,13 @@ public class AttackWheelOverlay {
     private void drawCenterIcon(GuiGraphics guiGraphics, int centerX, int centerY, MoveSegment segment) {
         ResourceLocation iconLocation = null;
 
-        System.out.println("DEBUG: === Drawing center icon ===");
-        System.out.println("DEBUG: Move ID: " + segment.config.getMoveId());
-        System.out.println("DEBUG: Display Name: " + segment.config.getDisplayName());
-
         // Get the breathing style and move name for the icon using MoveIcon system only
         if (minecraft.player != null && segment.config != null) {
             String movesetId = BreathingStyleHelper.getMovesetId(minecraft.player);
             if (movesetId != null) {
                 String moveName = segment.config.getMoveId();
-
-                System.out.println("DEBUG: Moveset ID: " + movesetId);
-                System.out.println("DEBUG: Using move ID: " + moveName);
-
                 if (moveName != null) {
                     iconLocation = MoveIcon.getIcon(movesetId, moveName);
-                    System.out.println("DEBUG: MoveIcon returned: " + iconLocation);
                 }
             }
         }
@@ -257,9 +248,7 @@ public class AttackWheelOverlay {
 
             RenderSystem.setShaderTexture(0, iconLocation);
             guiGraphics.blit(iconLocation, iconX, iconY, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
-            System.out.println("DEBUG: Successfully rendered icon: " + iconLocation);
         } else {
-            System.out.println("DEBUG: No valid icon found, showing move name");
             drawMoveNameFallback(guiGraphics, centerX, centerY, segment);
         }
     }

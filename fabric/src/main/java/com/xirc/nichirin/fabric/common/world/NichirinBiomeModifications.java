@@ -28,6 +28,5 @@ public class NichirinBiomeModifications {
                         new ResourceLocation(BreathOfNichirin.MOD_ID, "scarlet_ore"))
         );
 
-        System.out.println("[Nichirin] Ore generation features added to ALL biomes for TerraBlender compatibility!");
     }
 }

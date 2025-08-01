@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Enhanced katana input handler with debug logging
+ * Enhanced katana input handler
  */
 public class KatanaInputHandler {
 
@@ -47,81 +47,44 @@ public class KatanaInputHandler {
 
     public static void register() {
         // Always register server packets and shared events
-        System.out.println("DEBUG: KatanaInputHandler.register() - registering server-side components");
         registerServerPackets();
         registerSharedEvents();
-        System.out.println("DEBUG: KatanaInputHandler.register() - server-side registration complete");
     }
 
     // Client-specific registration
     public static void registerClient() {
-        System.out.println("DEBUG: KatanaInputHandler.registerClient() called");
-
         if (Platform.getEnv() == EnvType.CLIENT) {
-            System.out.println("DEBUG: Environment is CLIENT - proceeding with client registration");
-            try {
-                registerClientEvents();
-                System.out.println("DEBUG: Client events registered successfully");
-
-                registerClientPackets();
-                System.out.println("DEBUG: Client packets registered successfully");
-
-                System.out.println("DEBUG: KatanaInputHandler client registration COMPLETE");
-            } catch (Exception e) {
-                System.out.println("ERROR: Failed to register KatanaInputHandler client: " + e.getMessage());
-                e.printStackTrace();
-            }
-        } else {
-            System.out.println("DEBUG: Environment is NOT CLIENT - skipping client registration");
+            registerClientEvents();
+            registerClientPackets();
         }
     }
 
     private static void registerClientEvents() {
-        System.out.println("DEBUG: Registering client events for KatanaInputHandler");
-
         // Left click air
         InteractionEvent.CLIENT_LEFT_CLICK_AIR.register((player, hand) -> {
             ItemStack item = player.getItemInHand(hand);
-            System.out.println("DEBUG: CLIENT_LEFT_CLICK_AIR triggered - item=" +
-                    (item.getItem() instanceof SimpleKatana ? "SimpleKatana" : item.getItem().getClass().getSimpleName()));
-
-            if (!(item.getItem() instanceof SimpleKatana)) {
-                System.out.println("DEBUG: Not a katana, ignoring left click air");
-                return;
-            }
+            if (!(item.getItem() instanceof SimpleKatana)) return;
 
             // ENHANCED BLOCKING CHECK
             if (isInputBlocked()) {
-                System.out.println("DEBUG: Left click air BLOCKED by input handler");
                 return;
             }
 
-            System.out.println("DEBUG: Left click air ALLOWED - sending to server");
             sendLeftClick(player);
         });
 
         // Right click air
         InteractionEvent.CLIENT_RIGHT_CLICK_AIR.register((player, hand) -> {
             ItemStack item = player.getItemInHand(hand);
-            System.out.println("DEBUG: CLIENT_RIGHT_CLICK_AIR triggered - item=" +
-                    (item.getItem() instanceof SimpleKatana ? "SimpleKatana" : item.getItem().getClass().getSimpleName()));
-
-            if (!(item.getItem() instanceof SimpleKatana)) {
-                System.out.println("DEBUG: Not a katana, ignoring right click air");
-                return;
-            }
+            if (!(item.getItem() instanceof SimpleKatana)) return;
 
             // ENHANCED BLOCKING CHECK (also block right clicks if needed)
             if (isInputBlocked()) {
-                System.out.println("DEBUG: Right click air BLOCKED by input handler");
                 return;
             }
 
-            System.out.println("DEBUG: Right click air ALLOWED - sending to server");
             sendRightClick(player);
         });
-
-        System.out.println("DEBUG: Client events registration complete");
     }
 
     /**
@@ -133,60 +96,50 @@ public class KatanaInputHandler {
 
             // Check if player has blocking effect - BLOCK ALL INPUTS
             if (mc.player != null && mc.player.hasEffect(NichirinEffectRegistry.BLOCKING.get())) {
-                System.out.println("DEBUG: Input BLOCKED - player has BLOCKING effect");
                 return true;
             }
 
             // Check wheel state first (most important)
             try {
                 if (com.xirc.nichirin.client.handler.AttackWheelHandler.shouldBlockAttackInputs()) {
-                    System.out.println("DEBUG: Input BLOCKED - attack wheel is blocking");
                     return true;
                 }
             } catch (Exception e) {
-                System.out.println("WARNING: Could not check wheel blocking state: " + e.getMessage());
+                // Ignore
             }
 
             // Check multiplayer input handler
             try {
                 if (MultiplayerInputHandler.shouldBlockInputsClient()) {
-                    System.out.println("DEBUG: Input BLOCKED - multiplayer input handler blocking");
                     return true;
                 }
             } catch (Exception e) {
-                System.out.println("WARNING: Could not check multiplayer input blocking: " + e.getMessage());
+                // Ignore
             }
 
-            System.out.println("DEBUG: Input NOT BLOCKED - all checks passed");
             return false;
 
         } catch (Exception e) {
-            System.out.println("ERROR: Exception in isInputBlocked(): " + e.getMessage());
             return false;
         }
     }
 
     private static void sendLeftClick(Player player) {
-        System.out.println("DEBUG: sendLeftClick() called for player " + player.getName().getString());
-
         // Client feedback
         try {
             if (player.getMainHandItem().getItem() instanceof SimpleKatana katana) {
                 katana.displayClientCooldown(player);
-                System.out.println("DEBUG: Displayed client cooldown");
             }
         } catch (Exception e) {
-            System.out.println("WARNING: Could not display client cooldown: " + e.getMessage());
+            // Ignore
         }
 
         // Send to server
         try {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             NetworkManager.sendToServer(LEFT_CLICK_ID, buf);
-            System.out.println("DEBUG: LEFT_CLICK packet sent to server successfully");
         } catch (Exception e) {
-            System.out.println("ERROR: Failed to send LEFT_CLICK packet: " + e.getMessage());
-            e.printStackTrace();
+            // Ignore
         }
     }
 
@@ -194,26 +147,19 @@ public class KatanaInputHandler {
         boolean crouch = player.isCrouching();
         ResourceLocation id = crouch ? RIGHT_CROUCH_ID : RIGHT_CLICK_ID;
 
-        System.out.println("DEBUG: sendRightClick() called - crouch=" + crouch + ", packet=" + id);
-
         try {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             NetworkManager.sendToServer(id, buf);
-            System.out.println("DEBUG: RIGHT_CLICK packet sent to server successfully");
         } catch (Exception e) {
-            System.out.println("ERROR: Failed to send RIGHT_CLICK packet: " + e.getMessage());
-            e.printStackTrace();
+            // Ignore
         }
     }
 
     private static void registerServerPackets() {
-        System.out.println("DEBUG: Registering server packets for KatanaInputHandler");
-
         // Left click
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, LEFT_CLICK_ID, (buf, context) -> {
             ServerPlayer player = (ServerPlayer) context.getPlayer();
             if (player != null) {
-                System.out.println("DEBUG: Received LEFT_CLICK packet from " + player.getName().getString());
                 context.queue(() -> handleServerLeftClick(player));
             }
         });
@@ -222,7 +168,6 @@ public class KatanaInputHandler {
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, RIGHT_CLICK_ID, (buf, context) -> {
             ServerPlayer player = (ServerPlayer) context.getPlayer();
             if (player != null) {
-                System.out.println("DEBUG: Received RIGHT_CLICK packet from " + player.getName().getString());
                 context.queue(() -> handleServerRightClick(player, false));
             }
         });
@@ -231,27 +176,20 @@ public class KatanaInputHandler {
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, RIGHT_CROUCH_ID, (buf, context) -> {
             ServerPlayer player = (ServerPlayer) context.getPlayer();
             if (player != null) {
-                System.out.println("DEBUG: Received RIGHT_CROUCH packet from " + player.getName().getString());
                 context.queue(() -> handleServerRightClick(player, true));
             }
         });
-
-        System.out.println("DEBUG: Server packets registration complete");
     }
 
     private static void registerClientPackets() {
-        System.out.println("DEBUG: Registering client packets for KatanaInputHandler");
-
         NetworkManager.registerReceiver(NetworkManager.Side.S2C, FEEDBACK_ID, (buf, context) -> {
             boolean hasBreathingMove = buf.readBoolean();
-            System.out.println("DEBUG: Received FEEDBACK packet - hasBreathingMove=" + hasBreathingMove);
 
             context.queue(() -> {
                 try {
                     if (hasBreathingMove) {
                         String moveName = buf.readUtf();
                         int cooldown = buf.readInt();
-                        System.out.println("DEBUG: Processing breathing move feedback - " + moveName + " cooldown=" + cooldown);
 
                         CooldownHUD.setCooldown(moveName, cooldown);
 
@@ -262,7 +200,6 @@ public class KatanaInputHandler {
                         }
                     } else {
                         boolean wasCrouching = buf.readBoolean();
-                        System.out.println("DEBUG: Processing regular attack feedback - wasCrouching=" + wasCrouching);
 
                         if (wasCrouching) {
                             AnimationUtils.playAnimation(Minecraft.getInstance().player, "rising_slash");
@@ -273,39 +210,26 @@ public class KatanaInputHandler {
                         }
                     }
                 } catch (Exception e) {
-                    System.out.println("ERROR: Failed to process feedback packet: " + e.getMessage());
-                    e.printStackTrace();
+                    // Ignore
                 }
             });
         });
-
-        System.out.println("DEBUG: Client packets registration complete");
     }
 
     private static void handleServerLeftClick(ServerPlayer player) {
-        System.out.println("DEBUG: handleServerLeftClick() for " + player.getName().getString());
-
         if (isServerBlocked(player)) {
-            System.out.println("DEBUG: Server left click BLOCKED for player " + player.getName().getString());
             return;
         }
 
         ItemStack item = player.getMainHandItem();
         if (item.getItem() instanceof SimpleKatana katana) {
-            System.out.println("DEBUG: Executing performAttack() for " + player.getName().getString());
             SimpleKatana instance = getKatanaInstance(player, katana);
             instance.performAttack(player);
-            System.out.println("DEBUG: performAttack() completed for " + player.getName().getString());
-        } else {
-            System.out.println("DEBUG: Player " + player.getName().getString() + " not holding katana");
         }
     }
 
     private static void handleServerRightClick(ServerPlayer player, boolean crouch) {
-        System.out.println("DEBUG: handleServerRightClick() for " + player.getName().getString() + " crouch=" + crouch);
-
         if (isServerBlocked(player)) {
-            System.out.println("DEBUG: Server right click BLOCKED for player " + player.getName().getString());
             return;
         }
 
@@ -343,10 +267,6 @@ public class KatanaInputHandler {
             if (crouch != originalCrouch) {
                 player.setShiftKeyDown(originalCrouch);
             }
-
-            System.out.println("DEBUG: Server right click executed for " + player.getName().getString());
-        } else {
-            System.out.println("DEBUG: Player " + player.getName().getString() + " not holding katana for right click");
         }
     }
 
@@ -355,7 +275,6 @@ public class KatanaInputHandler {
         if (blockedUntil != null) {
             long currentTime = player.level().getGameTime();
             if (currentTime < blockedUntil) {
-                System.out.println("DEBUG: Player " + player.getName().getString() + " server blocked until " + blockedUntil);
                 return true;
             } else {
                 BLOCKED_UNTIL.remove(player.getUUID());
@@ -364,7 +283,6 @@ public class KatanaInputHandler {
 
         // Add blocking check - can't attack while blocking
         if (player.hasEffect(NichirinEffectRegistry.BLOCKING.get())) {
-            System.out.println("DEBUG: Player " + player.getName().getString() + " server blocked due to BLOCKING effect");
             return true;
         }
 
@@ -372,8 +290,6 @@ public class KatanaInputHandler {
     }
 
     private static void sendFeedback(ServerPlayer player, String moveName, boolean crouch) {
-        System.out.println("DEBUG: Sending feedback to " + player.getName().getString() + " - move=" + moveName);
-
         try {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             buf.writeBoolean(moveName != null);
@@ -393,16 +309,12 @@ public class KatanaInputHandler {
             }
 
             NetworkManager.sendToPlayer(player, FEEDBACK_ID, buf);
-            System.out.println("DEBUG: Feedback sent successfully");
         } catch (Exception e) {
-            System.out.println("ERROR: Failed to send feedback: " + e.getMessage());
-            e.printStackTrace();
+            // Ignore
         }
     }
 
     private static void registerSharedEvents() {
-        System.out.println("DEBUG: Registering shared events for KatanaInputHandler");
-
         // Entity attack blocking
         PlayerEvent.ATTACK_ENTITY.register((player, level, entity, hand, hitResult) -> {
             ItemStack item = player.getItemInHand(hand);
@@ -411,18 +323,12 @@ public class KatanaInputHandler {
             }
 
             if (level.isClientSide) {
-                System.out.println("DEBUG: ATTACK_ENTITY triggered on client side");
-
                 // ENHANCED BLOCKING CHECK for entity attacks too
                 if (isInputBlocked()) {
-                    System.out.println("DEBUG: Entity attack BLOCKED - wheel state or input handler");
                     return EventResult.interruptFalse();
                 }
 
-                System.out.println("DEBUG: Entity attack ALLOWED - sending left click");
                 sendLeftClick(player);
-            } else {
-                System.out.println("DEBUG: ATTACK_ENTITY triggered on server side");
             }
 
             return EventResult.interruptFalse();
@@ -441,8 +347,6 @@ public class KatanaInputHandler {
                 cleanupPlayer(player);
             }
         });
-
-        System.out.println("DEBUG: Shared events registration complete");
     }
 
     private static void tickPlayer(Player player) {
@@ -482,7 +386,6 @@ public class KatanaInputHandler {
         if (!player.level().isClientSide) {
             long blockUntil = player.level().getGameTime() + BLOCK_TICKS;
             BLOCKED_UNTIL.put(player.getUUID(), blockUntil);
-            System.out.println("DEBUG: Blocked inputs for player " + player.getName().getString() + " after breathing move until " + blockUntil);
         }
     }
 }

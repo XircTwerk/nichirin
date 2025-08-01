@@ -75,21 +75,13 @@ public class PlayerDoubleJump {
         if (input.right) side += 1;
         if (input.left) side -= 1;
 
-        // Debug logging
-        System.out.println("DEBUG: Double Jump Input - forward=" + input.forward +
-                ", backward=" + input.backward +
-                ", left=" + input.left +
-                ", right=" + input.right);
-        System.out.println("DEBUG: Calculated values - forward=" + forward + ", side=" + side);
 
         // Combine directions
         Vec3 jumpDirection = forwardDirection.scale(forward).add(rightDirection.scale(side));
 
         if (jumpDirection.length() > 0) {
             jumpDirection = jumpDirection.normalize();
-            System.out.println("DEBUG: Final jump direction: " + jumpDirection);
         } else {
-            System.out.println("DEBUG: No directional input, using zero vector");
         }
 
         return jumpDirection;

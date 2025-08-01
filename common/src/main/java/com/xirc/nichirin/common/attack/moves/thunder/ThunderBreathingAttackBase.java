@@ -132,7 +132,6 @@ public abstract class ThunderBreathingAttackBase {
         if (breathCost > 0) {
             if (BreathingManager.consume(user, breathCost)) {
                 breathConsumed = true;
-                System.out.println("DEBUG: " + this.getClass().getSimpleName() + " - Consumed " + breathCost + " breath");
             } else {
                 user.displayClientMessage(
                         Component.literal("Failed to consume breath!")
@@ -151,7 +150,6 @@ public abstract class ThunderBreathingAttackBase {
 
         // If onStart() called stop(), we need to refund the breath
         if (!isActive && breathConsumed) {
-            System.out.println("DEBUG: " + this.getClass().getSimpleName() + " - Attack cancelled in onStart(), refunding breath");
             // Refund the breath since the attack was cancelled
             BreathingManager.restore(user, breathCost);
             breathConsumed = false;
@@ -186,7 +184,6 @@ public abstract class ThunderBreathingAttackBase {
         if (isActive) {
             isActive = false;
             onStop();
-            System.out.println("DEBUG: " + this.getClass().getSimpleName() + " - Attack stopped");
         }
     }
 
@@ -200,8 +197,6 @@ public abstract class ThunderBreathingAttackBase {
         // Apply damage using configured values
         DamageSource source = user.damageSources().playerAttack(user);
         boolean damaged = target.hurt(source, damage);
-
-        System.out.println("DEBUG: hitTarget - Damaged " + target.getName().getString() + " for " + damage + " (success: " + damaged + ")");
 
         // Apply shocked effect if hitStun is configured
         if (hitStun > 0) {
@@ -232,13 +227,10 @@ public abstract class ThunderBreathingAttackBase {
         target.invulnerableTime = 0;
         target.hurtTime = 0; // Also reset hurt animation timer
 
-        System.out.println("DEBUG: hitTargetNoImmunity - Reset immunity frames for " + target.getName().getString());
-
         // Apply damage
         DamageSource source = user.damageSources().playerAttack(user);
         boolean damaged = target.hurt(source, damage);
 
-        System.out.println("DEBUG: hitTargetNoImmunity - Damaged " + target.getName().getString() + " for " + damage + " (success: " + damaged + ")");
 
         // Apply shocked effect
         if (hitStun > 0) {
