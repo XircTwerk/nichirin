@@ -104,7 +104,7 @@ public class RengokuAttack extends FlameBreathingAttackBase {
                 double z = userPos.z + Math.sin(angle) * ringRadius;
                 double y = userPos.y + ring * 0.3;
 
-                serverLevel.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
+                serverLevel.sendParticles(ParticleTypes.FLAME,
                         x, y, z, 2, 0.1, 0.1, 0.1, 0.05);
             }
         }
@@ -123,8 +123,8 @@ public class RengokuAttack extends FlameBreathingAttackBase {
 
         // Configure ultimate dash with dragon effects
         TeleportUtil.TeleportOptions options = new TeleportUtil.TeleportOptions()
-                .withParticles(ParticleTypes.SOUL_FIRE_FLAME, ParticleTypes.EXPLOSION)
-                .withTrail(ParticleTypes.SOUL_FIRE_FLAME, 8.0f) // Very dense dragon trail
+                .withParticles(ParticleTypes.FLAME, ParticleTypes.EXPLOSION)
+                .withTrail(ParticleTypes.FLAME, 8.0f) // Very dense dragon trail
                 .withSounds(SoundEvents.ENDER_DRAGON_FLAP, SoundEvents.GENERIC_EXPLODE)
                 .withDamageCallback(target -> {
                     // Hit targets along the dragon's path
@@ -208,7 +208,7 @@ public class RengokuAttack extends FlameBreathingAttackBase {
                     .add(0, 2 + dragonHeight, 0);
 
             // Dragon spine
-            serverLevel.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
+            serverLevel.sendParticles(ParticleTypes.FLAME,
                     spinePos.x, spinePos.y, spinePos.z,
                     5, 0.2, 0.2, 0.2, 0.1);
 

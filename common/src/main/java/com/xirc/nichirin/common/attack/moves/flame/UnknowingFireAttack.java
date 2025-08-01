@@ -98,7 +98,7 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
             double z = userPos.z + Math.sin(angle) * radius;
             double y = userPos.y + Math.random() * 2.0;
 
-            serverLevel.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
+            serverLevel.sendParticles(ParticleTypes.FLAME,
                     x, y, z, 2, 0.1, 0.1, 0.1, 0.05);
         }
 
@@ -226,7 +226,7 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
         for (int i = 1; i <= 6; i++) {
             Vec3 trailPos = userPos.subtract(dashDirection.scale(i * 0.4));
 
-            serverLevel.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
+            serverLevel.sendParticles(ParticleTypes.FLAME,
                     trailPos.x, trailPos.y, trailPos.z,
                     4, 0.3, 0.3, 0.3, 0.1);
 
@@ -267,9 +267,8 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
                         slashPos.x, slashPos.y, slashPos.z,
                         particleCount, 0.2, 0.2, 0.2, 0.1);
 
-                // Soul fire for the core of the slash
                 if (Math.abs(i) <= 8) {
-                    serverLevel.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
+                    serverLevel.sendParticles(ParticleTypes.FLAME,
                             slashPos.x, slashPos.y, slashPos.z,
                             3, 0.1, 0.1, 0.1, 0.08);
                 }
@@ -323,7 +322,7 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
                 impactPos.x, impactPos.y + 1, impactPos.z,
                 10, 0.4, 0.4, 0.4, 0.2);
 
-        serverLevel.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
+        serverLevel.sendParticles(ParticleTypes.FLAME,
                 impactPos.x, impactPos.y + 1, impactPos.z,
                 8, 0.3, 0.3, 0.3, 0.15);
     }

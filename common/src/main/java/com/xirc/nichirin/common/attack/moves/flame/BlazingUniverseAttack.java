@@ -89,7 +89,7 @@ public class BlazingUniverseAttack extends FlameBreathingAttackBase {
             double z = userPos.z + Math.sin(angle) * radius;
             double y = userPos.y + height;
 
-            serverLevel.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
+            serverLevel.sendParticles(ParticleTypes.FLAME,
                     x, y, z, 1, 0.1, 0.1, 0.1, 0.02);
         }
 
@@ -163,7 +163,7 @@ public class BlazingUniverseAttack extends FlameBreathingAttackBase {
             Vec3 arcPos = userPos.add(lookDir.scale(forward)).add(0, height, 0);
 
             // Intense flame trail
-            serverLevel.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
+            serverLevel.sendParticles(ParticleTypes.FLAME,
                     arcPos.x, arcPos.y, arcPos.z,
                     6, 0.3, 0.3, 0.3, 0.15);
 

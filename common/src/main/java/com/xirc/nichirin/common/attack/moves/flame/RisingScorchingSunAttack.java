@@ -131,9 +131,8 @@ public class RisingScorchingSunAttack extends FlameBreathingAttackBase {
                     arcPos.x, arcPos.y, arcPos.z,
                     4, 0.2, 0.2, 0.2, 0.1);
 
-            // Soul fire for the peak of the arc
             if (progress > 0.3 && progress < 0.7) {
-                serverLevel.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
+                serverLevel.sendParticles(ParticleTypes.FLAME,
                         arcPos.x, arcPos.y, arcPos.z,
                         2, 0.1, 0.1, 0.1, 0.05);
             }

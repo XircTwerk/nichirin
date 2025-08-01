@@ -208,7 +208,7 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
                     Math.sin(angle) * tigerRadius
             );
 
-            serverLevel.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
+            serverLevel.sendParticles(ParticleTypes.FLAME,
                     tigerPos.x, tigerPos.y, tigerPos.z,
                     2, 0.1, 0.1, 0.1, 0.05);
         }
@@ -217,9 +217,9 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
         Vec3 eyePos1 = userPos.add(dashDirection.scale(2.5)).add(0.3, 1, 0);
         Vec3 eyePos2 = userPos.add(dashDirection.scale(2.5)).add(-0.3, 1, 0);
 
-        serverLevel.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
+        serverLevel.sendParticles(ParticleTypes.FLAME,
                 eyePos1.x, eyePos1.y, eyePos1.z, 5, 0.05, 0.05, 0.05, 0.02);
-        serverLevel.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
+        serverLevel.sendParticles(ParticleTypes.FLAME,
                 eyePos2.x, eyePos2.y, eyePos2.z, 5, 0.05, 0.05, 0.05, 0.02);
     }
 
@@ -239,10 +239,10 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
 
             // Tiger stripes (alternating soul fire)
             if (i % 2 == 0) {
-                serverLevel.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
+                serverLevel.sendParticles(ParticleTypes.FLAME,
                         trailPos.x + 0.3, trailPos.y, trailPos.z,
                         1, 0.1, 0.1, 0.1, 0.02);
-                serverLevel.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
+                serverLevel.sendParticles(ParticleTypes.FLAME,
                         trailPos.x - 0.3, trailPos.y, trailPos.z,
                         1, 0.1, 0.1, 0.1, 0.02);
             }
@@ -280,7 +280,7 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
         // Tiger jaw snapping effect
-        serverLevel.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
+        serverLevel.sendParticles(ParticleTypes.FLAME,
                 enemyPos.x, enemyPos.y + 1, enemyPos.z,
                 10, 0.5, 0.5, 0.5, 0.2);
 

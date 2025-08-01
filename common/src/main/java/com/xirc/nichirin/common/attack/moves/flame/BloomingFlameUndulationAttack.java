@@ -152,7 +152,7 @@ public class BloomingFlameUndulationAttack extends FlameBreathingAttackBase {
 
                 // Soul fire for inner ring
                 if (ring == 0) {
-                    serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.SOUL_FIRE_FLAME,
+                    serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.FLAME,
                             x, y, z, 1, 0.05, 0.05, 0.05, 0.02);
                 }
 

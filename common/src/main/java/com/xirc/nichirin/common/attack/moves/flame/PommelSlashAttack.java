@@ -130,8 +130,7 @@ public class PommelSlashAttack extends FlameBreathingAttackBase {
                     particlePos.x, particlePos.y, particlePos.z,
                     3, 0.1, 0.1, 0.1, 0.05);
 
-            // Soul fire for the slash core
-            serverLevel.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
+            serverLevel.sendParticles(ParticleTypes.FLAME,
                     particlePos.x, particlePos.y, particlePos.z,
                     2, 0.05, 0.05, 0.05, 0.02);
         }
