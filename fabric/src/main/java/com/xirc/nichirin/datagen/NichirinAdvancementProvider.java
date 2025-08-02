@@ -1,4 +1,4 @@
-package com.xirc.nichirin.fabric.datagen;
+package com.xirc.nichirin.datagen;
 
 import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.registry.NichirinItemRegistry;

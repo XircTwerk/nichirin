@@ -10,12 +10,15 @@ import com.xirc.nichirin.client.renderer.BreathingBarRenderer;
 import com.xirc.nichirin.client.renderer.StaminaBarRenderer;
 import com.xirc.nichirin.client.renderer.StanceBarRenderer;
 import com.xirc.nichirin.client.util.ClientInputTracker;
+import com.xirc.nichirin.client.util.ItemPropertiesHelper;
 import com.xirc.nichirin.common.attack.MoveExecutor;
+import com.xirc.nichirin.common.item.tool.BentoBoxItem;
 import com.xirc.nichirin.common.network.CooldownDisplayPacket;
 import com.xirc.nichirin.common.util.BlockingInputHandler;
 import com.xirc.nichirin.common.util.KatanaInputHandler;
 import com.xirc.nichirin.common.util.PlayerStats;
 import com.xirc.nichirin.registry.NichirinEntityRendererRegistry;
+import com.xirc.nichirin.registry.NichirinItemRegistry;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import dev.architectury.event.events.client.ClientTickEvent;
 import dev.architectury.registry.client.particle.ParticleProviderRegistry;
@@ -24,6 +27,9 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import com.xirc.nichirin.client.particle.ThunderParticleProvider;
+import net.minecraft.client.renderer.item.ItemProperties;
+import net.minecraft.client.renderer.item.ItemPropertyFunction;
+import net.minecraft.resources.ResourceLocation;
 
 @Environment(EnvType.CLIENT)
 public class BreathOfNichirinClient {
@@ -55,7 +61,6 @@ public class BreathOfNichirinClient {
         KatanaInputHandler.registerClient();
         System.out.println("DEBUG: Katana client handler registered");
         BlockingInputHandler.register();
-
         PlayerStats.initialize();
 
         // Register keybinds FIRST
@@ -63,6 +68,8 @@ public class BreathOfNichirinClient {
 
         //Registries
         NichirinEntityRendererRegistry.init();
+
+        ItemPropertiesHelper.registerBentoBoxProperty();
 
         // Register handlers AFTER keybinds
         BigGuiKeyHandler.register();

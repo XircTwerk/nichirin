@@ -16,16 +16,16 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-      "com.xirc.nichirin.fabric.BreathOfNichirinFabric"
+      "com.xirc.nichirin.BreathOfNichirinFabric"
     ],
     "client": [
-      "com.xirc.nichirin.fabric.client.BreathOfNichirinFabricClient"
+      "com.xirc.nichirin.client.BreathOfNichirinFabricClient"
     ],
     "fabric-datagen": [
-      "com.xirc.nichirin.fabric.datagen.NichirinDataGen"
+      "com.xirc.nichirin.datagen.NichirinDataGen"
     ],
     "terrablender": [
-      "com.xirc.nichirin.fabric.common.terrablender.NichirinTerraFabric"
+      "com.xirc.nichirin.common.terrablender.NichirinTerraFabric"
     ]
   },
   "mixins": [

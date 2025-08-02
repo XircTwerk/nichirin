@@ -1,4 +1,4 @@
-package com.xirc.nichirin.fabric.common.terrablender;
+package com.xirc.nichirin.common.terrablender;
 
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.SurfaceRules;

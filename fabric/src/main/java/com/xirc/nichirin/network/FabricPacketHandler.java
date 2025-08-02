@@ -1,4 +1,4 @@
-package com.xirc.nichirin.fabric.network;
+package com.xirc.nichirin.network;
 
 import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;

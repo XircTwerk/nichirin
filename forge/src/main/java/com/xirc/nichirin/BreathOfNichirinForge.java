@@ -1,16 +1,9 @@
-package com.xirc.nichirin.forge;
+package com.xirc.nichirin;
 
 import dev.architectury.platform.forge.EventBuses;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.biome.BiomeGenerationSettings;
-import net.minecraft.world.level.levelgen.GenerationStep;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-
-import com.xirc.nichirin.BreathOfNichirin;
 
 @Mod(BreathOfNichirin.MOD_ID)
 public final class BreathOfNichirinForge {

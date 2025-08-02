@@ -1,4 +1,4 @@
-package com.xirc.nichirin.fabric.datagen;
+package com.xirc.nichirin.datagen;
 
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricDynamicRegistryProvider;

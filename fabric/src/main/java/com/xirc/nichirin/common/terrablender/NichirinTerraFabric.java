@@ -1,7 +1,7 @@
-package com.xirc.nichirin.fabric.common.terrablender;
+package com.xirc.nichirin.common.terrablender;
 
 import com.xirc.nichirin.BreathOfNichirin;
-import com.xirc.nichirin.fabric.common.world.NichirinBiomeModifications;
+import com.xirc.nichirin.common.world.NichirinBiomeModifications;
 import terrablender.api.Regions;
 import terrablender.api.SurfaceRuleManager;
 import terrablender.api.TerraBlenderApi;

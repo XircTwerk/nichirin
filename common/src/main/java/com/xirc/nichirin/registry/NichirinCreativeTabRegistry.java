@@ -43,7 +43,7 @@ public interface NichirinCreativeTabRegistry {
 
                             //functional items
                             entries.accept(NichirinItemRegistry.SMOKE_BOMB.get());
-                            //entries.accept(NichirinItemRegistry.BENTO_BOX.get());
+                            entries.accept(NichirinItemRegistry.BENTO_BOX.get());
 
                         } catch (Exception e) {
                             LOGGER.warn("Failed to add items to creative tab: " + e.getMessage());

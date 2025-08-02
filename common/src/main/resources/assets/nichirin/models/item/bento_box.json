@@ -1,0 +1,14 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "nichirin:item/bento_box_empty"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "nichirin:filled": 1.0
+      },
+      "model": "nichirin:item/bento_box_full"
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-package com.xirc.nichirin.fabric.common.world;
+package com.xirc.nichirin.common.world;
 
 import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.registry.NichirinOreRegistry;

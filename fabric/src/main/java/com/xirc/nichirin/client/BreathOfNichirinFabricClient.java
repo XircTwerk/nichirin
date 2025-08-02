@@ -1,10 +1,9 @@
-package com.xirc.nichirin.fabric.client;
+package com.xirc.nichirin.client;
 
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
-import com.xirc.nichirin.fabric.network.FabricPacketHandler;
+import com.xirc.nichirin.network.FabricPacketHandler;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;

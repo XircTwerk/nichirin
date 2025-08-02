@@ -1,4 +1,4 @@
-package com.xirc.nichirin.fabric.common.world;
+package com.xirc.nichirin.common.world;
 
 import com.xirc.nichirin.BreathOfNichirin;
 import net.fabricmc.fabric.api.biome.v1.BiomeModifications;

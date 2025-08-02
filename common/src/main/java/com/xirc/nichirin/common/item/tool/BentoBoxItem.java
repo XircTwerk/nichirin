@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.item.tool;
 
+import net.minecraft.client.renderer.item.ClampedItemPropertyFunction;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -64,6 +65,34 @@ public class BentoBoxItem extends Item {
 
         player.openMenu(new BentoBoxMenuProvider(stack, bentoBoxSlotIndex));
         return InteractionResultHolder.success(stack);
+    }
+
+    /**
+     * Returns the number of food items stored in the bento box
+     */
+    public static int getFoodCount(ItemStack stack) {
+        if (!stack.hasTag() || !stack.getTag().contains(ITEMS_TAG)) {
+            return 0;
+        }
+
+        ListTag nbtList = stack.getTag().getList(ITEMS_TAG, 10);
+        return nbtList.size();
+    }
+
+    /**
+     * Item property function for determining texture based on contents
+     * Returns 0.0f for empty (use empty texture)
+     * Returns 1.0f for full (use full texture)
+     */
+    public static ClampedItemPropertyFunction getFilledPropertyFunction() {
+        return (stack, level, entity, seed) -> {
+            if (!(stack.getItem() instanceof BentoBoxItem)) {
+                return 0.0f;
+            }
+
+            int foodCount = getFoodCount(stack);
+            return foodCount > 0 ? 1.0f : 0.0f;
+        };
     }
 
     private static class BentoBoxMenuProvider implements MenuProvider {
@@ -229,11 +258,7 @@ public class BentoBoxItem extends Item {
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(stack, level, tooltip, flag);
 
-        int foodCount = 0;
-        if (stack.hasTag() && stack.getTag().contains(ITEMS_TAG)) {
-            ListTag nbtList = stack.getTag().getList(ITEMS_TAG, 10);
-            foodCount = nbtList.size();
-        }
+        int foodCount = getFoodCount(stack);
 
         tooltip.add(Component.literal("§6Food Items: §f" + foodCount + "/" + BENTO_SIZE));
         tooltip.add(Component.literal("§7Right-click to open"));

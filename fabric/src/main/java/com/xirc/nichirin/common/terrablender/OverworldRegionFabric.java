@@ -1,4 +1,4 @@
-package com.xirc.nichirin.fabric.common.terrablender;
+package com.xirc.nichirin.common.terrablender;
 
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.core.Registry;

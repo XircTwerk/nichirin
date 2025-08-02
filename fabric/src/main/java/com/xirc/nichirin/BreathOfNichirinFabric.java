@@ -1,8 +1,6 @@
-package com.xirc.nichirin.fabric;
+package com.xirc.nichirin;
 
-import com.xirc.nichirin.BreathOfNichirin;
-import com.xirc.nichirin.fabric.common.terrablender.NichirinTerraFabric;
-import com.xirc.nichirin.fabric.network.FabricPacketHandler;
+import com.xirc.nichirin.common.terrablender.NichirinTerraFabric;
 import net.fabricmc.api.ModInitializer;
 
 public final class BreathOfNichirinFabric implements ModInitializer {

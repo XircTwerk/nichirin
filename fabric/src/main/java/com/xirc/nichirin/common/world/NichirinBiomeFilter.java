@@ -1,6 +1,5 @@
-package com.xirc.nichirin.fabric.common.world;
+package com.xirc.nichirin.common.world;
 
-import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.tags.BiomeTags;
