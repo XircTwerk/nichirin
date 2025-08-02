@@ -9,6 +9,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.entity.player.Player;
 import io.netty.buffer.Unpooled;
 
 import java.util.HashMap;
@@ -174,6 +175,18 @@ public interface NichirinPacketRegistry {
                 context.queue(() -> packet.handleClient());
             });
 
+            // FIXED: Add the missing SYNC_BREATHING_STYLE S2C packet!
+            NetworkManager.registerReceiver(NetworkManager.Side.S2C, SYNC_BREATHING_STYLE, (buf, context) -> {
+                String movesetId = buf.readBoolean() ? buf.readUtf() : null;
+                context.queue(() -> {
+                    Player player = context.getPlayer();
+                    if (player != null) {
+                        PlayerDataProvider.getBreathingStyleData(player).setMovesetId(movesetId);
+                        BreathOfNichirin.LOGGER.debug("Client received breathing style sync: {}", movesetId);
+                    }
+                });
+            });
+
             BreathOfNichirin.LOGGER.info("S2C packets registered successfully");
 
         } catch (NoSuchMethodError e) {
@@ -194,6 +207,7 @@ public interface NichirinPacketRegistry {
                 buf.writeUtf(movesetId);
             }
             NetworkManager.sendToPlayer(player, SYNC_BREATHING_STYLE, buf);
+            BreathOfNichirin.LOGGER.debug("Sent breathing style sync to {}: {}", player.getName().getString(), movesetId);
         } catch (Exception e) {
             BreathOfNichirin.LOGGER.error("Failed to send breathing style sync: {}", e.getMessage());
         }
@@ -224,6 +238,7 @@ public interface NichirinPacketRegistry {
                 buf.writeUtf(movesetId);
             }
             NetworkManager.sendToServer(REQUEST_STYLE_CHANGE, buf);
+            BreathOfNichirin.LOGGER.debug("Requested style change: {}", movesetId);
         } catch (Exception e) {
             BreathOfNichirin.LOGGER.error("Failed to request style change: {}", e.getMessage());
         }

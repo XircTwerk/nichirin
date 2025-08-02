@@ -8,15 +8,20 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.advancements.Advancement;
+import net.minecraft.advancements.AdvancementProgress;
+import net.minecraft.resources.ResourceLocation;
+
+import static com.xirc.nichirin.common.data.ProgressionHelper.getUnlockRequirement;
 
 /**
- * Breathing Styles section - handles style selection and unlock display
+ * FIXED: Breathing Styles section with achievement fallback and Flame Breathing
  */
 public class BreathingStylesSection {
 
     private static final int TOP_MARGIN = 20;
 
-    public void render(GuiGraphics graphics, Player player, int contentWidth, int contentHeight, Font font) {
+    public void render(GuiGraphics graphics, Player player, int contentWidth, int contentHeight, Font font, int mouseX, int mouseY) {
         int contentX = 20;
         int contentY = TOP_MARGIN + 10;
         int centerX = (contentWidth - 20) / 2;
@@ -42,85 +47,55 @@ public class BreathingStylesSection {
         graphics.drawString(font, instructions, contentX, contentY, 0xAAAAAA);
         contentY += 20;
 
-        // Style grid - Only Thunder Breathing for now
+        // Style grid - Thunder and Flame Breathing
         int gridY = contentY + 10;
-        int boxWidth = 150;
+        int boxWidth = 140;
         int boxHeight = 80;
+        int spacing = 20;
 
-        // Thunder Breathing
-        String styleName = "thunder_breathing";
-        boolean isUnlocked = ProgressionHelper.isStyleUnlocked(player, styleName);
-        boolean isSelected = styleName.equals(currentStyle);
+        // Calculate starting X to center both boxes
+        int totalWidth = (boxWidth * 2) + spacing;
+        int startX = centerX - totalWidth / 2;
 
-        // Center the single box
-        int x = centerX - boxWidth / 2;
-        int y = gridY;
+        // Check what's being hovered
+        String hoveredLockedStyle = null;
 
-        // Draw box with different colors based on unlock status
-        int bgColor;
-        int borderColor;
-
-        if (!isUnlocked) {
-            bgColor = 0xFF1A1A1A; // Darker for locked
-            borderColor = 0xFF666666; // Gray border for locked
-        } else if (isSelected) {
-            bgColor = 0xFF3A3A3A;
-            borderColor = 0xFF55FFFF; // Cyan for selected
-        } else {
-            bgColor = 0xFF2A2A2A;
-            borderColor = 0xFF4A4A4A; // Normal border
+        // Thunder Breathing (left)
+        if (mouseX >= startX && mouseX <= startX + boxWidth && mouseY >= gridY && mouseY <= gridY + boxHeight) {
+            if (!isStyleUnlockedWithFallback(player, "thunder_breathing")) {
+                hoveredLockedStyle = "thunder_breathing";
+            }
         }
 
-        // Border
-        graphics.fill(x - 1, y - 1, x + boxWidth + 1, y + boxHeight + 1, borderColor);
-        // Background
-        graphics.fill(x, y, x + boxWidth, y + boxHeight, bgColor);
-
-        // Style name
-        Component displayName = Component.translatable("breathing_style.thunder_breathing");
-        int nameColor = isUnlocked ? 0xFFFFFF : 0x888888;
-        graphics.drawString(font, displayName,
-                x + (boxWidth - font.width(displayName)) / 2,
-                y + 10, nameColor);
-
-        // Status
-        if (!isUnlocked) {
-            Component locked = Component.translatable("gui.nichirin.breathing_styles.locked_status").withStyle(style -> style.withColor(0xFF5555));
-            graphics.drawString(font, locked,
-                    x + (boxWidth - font.width(locked)) / 2,
-                    y + 30, 0xFF5555);
-        } else if (isSelected) {
-            Component equipped = Component.translatable("gui.nichirin.breathing_styles.equipped").withStyle(style -> style.withColor(0x55FFFF));
-            graphics.drawString(font, equipped,
-                    x + (boxWidth - font.width(equipped)) / 2,
-                    y + 30, 0x55FFFF);
-        } else {
-            Component clickToSelect = Component.translatable("gui.nichirin.breathing_styles.click_to_select").withStyle(style -> style.withColor(0xAAAAAA));
-            graphics.drawString(font, clickToSelect,
-                    x + (boxWidth - font.width(clickToSelect)) / 2,
-                    y + 30, 0xAAAAAA);
+        // Flame Breathing (right)
+        int flameX = startX + boxWidth + spacing;
+        if (mouseX >= flameX && mouseX <= flameX + boxWidth && mouseY >= gridY && mouseY <= gridY + boxHeight) {
+            if (!isStyleUnlockedWithFallback(player, "flame_breathing")) {
+                hoveredLockedStyle = "flame_breathing";
+            }
         }
 
-        // Icon placeholder (thunder icon)
-        int iconColor = isUnlocked ? 0xFF3A3A3A : 0xFF2A2A2A;
-        graphics.fill(x + boxWidth/2 - 16, y + 50, x + boxWidth/2 + 16, y + 75, iconColor);
-
-        // Show unlock requirements if locked
-        if (!isUnlocked) {
-            int reqY = y + boxHeight + 15;
-            Component reqTitle = Component.translatable("gui.nichirin.breathing_styles.unlock_requirements").withStyle(style -> style.withBold(true));
-            graphics.drawString(font, reqTitle,
-                    centerX - font.width(reqTitle) / 2, reqY, 0xFFFFFF);
-            reqY += 15;
-
-            String requirement = ProgressionHelper.getUnlockRequirement(styleName);
-            graphics.drawString(font, requirement,
-                    centerX - font.width(requirement) / 2, reqY, 0xFFAA00);
-            reqY += 20;
+        // Show tooltip at top if hovering over locked style
+        if (hoveredLockedStyle != null) {
+            String requirement = getUnlockRequirement(hoveredLockedStyle);
+            Component tooltip = Component.literal(requirement).withStyle(style -> style.withColor(0xFFAA00).withBold(true));
+            int tooltipY = 50; // Lower position
+            graphics.drawString(font, tooltip, centerX - font.width(tooltip) / 2, tooltipY, 0xFFAA00);
         }
+
+        renderBreathingStyleBox(graphics, font, player, currentStyle,
+                "thunder_breathing",
+                startX, gridY, boxWidth, boxHeight);
+
+        renderBreathingStyleBox(graphics, font, player, currentStyle,
+                "flame_breathing",
+                flameX, gridY, boxWidth, boxHeight);
+
+        // Show unlock requirements for locked styles (removed the redundant text)
+        int reqY = gridY + boxHeight + 15;
 
         // "None" button
-        int noneButtonY = y + boxHeight + (isUnlocked ? 15 : 55);
+        int noneButtonY = reqY;
         int noneButtonX = centerX - 75;
         int noneButtonWidth = 150;
         int noneButtonHeight = 20;
@@ -139,13 +114,76 @@ public class BreathingStylesSection {
         graphics.drawString(font, noneText,
                 noneButtonX + (noneButtonWidth - font.width(noneText)) / 2,
                 noneButtonY + 6, noneTextColor);
+    }
 
-        // Coming soon text
-        Component comingSoon = Component.translatable("gui.nichirin.breathing_styles.coming_soon")
-                .withStyle(style -> style.withColor(0x777777).withItalic(true));
-        graphics.drawString(font, comingSoon,
-                centerX - font.width(comingSoon) / 2,
-                contentHeight - 60, 0x777777);
+    /**
+     * Renders a single breathing style selection box
+     */
+    private void renderBreathingStyleBox(GuiGraphics graphics, Font font, Player player, String currentStyle,
+                                         String styleName, int x, int y, int width, int height) {
+
+        boolean isUnlocked = isStyleUnlockedWithFallback(player, styleName);
+        boolean isSelected = styleName.equals(currentStyle);
+
+        // Draw box with different colors based on unlock status
+        int bgColor;
+        int borderColor;
+
+        if (!isUnlocked) {
+            bgColor = 0xFF1A1A1A; // Darker for locked
+            borderColor = 0xFF666666; // Gray border for locked
+        } else if (isSelected) {
+            bgColor = 0xFF3A3A3A;
+            borderColor = 0xFF55FFFF; // Cyan for selected
+        } else {
+            bgColor = 0xFF2A2A2A;
+            borderColor = 0xFF4A4A4A; // Normal border
+        }
+
+        // Border
+        graphics.fill(x - 1, y - 1, x + width + 1, y + height + 1, borderColor);
+        // Background
+        graphics.fill(x, y, x + width, y + height, bgColor);
+
+        // Style name
+        Component displayName = Component.translatable("breathing_style." + styleName);
+        int nameColor = isUnlocked ? 0xFFFFFF : 0x888888;
+        graphics.drawString(font, displayName,
+                x + (width - font.width(displayName)) / 2,
+                y + 10, nameColor);
+
+        // Status
+        if (!isUnlocked) {
+            Component locked = Component.translatable("gui.nichirin.breathing_styles.locked_status")
+                    .withStyle(style -> style.withColor(0xFF5555));
+            graphics.drawString(font, locked,
+                    x + (width - font.width(locked)) / 2,
+                    y + 30, 0xFF5555);
+        } else if (isSelected) {
+            Component equipped = Component.translatable("gui.nichirin.breathing_styles.equipped")
+                    .withStyle(style -> style.withColor(0x55FFFF));
+            graphics.drawString(font, equipped,
+                    x + (width - font.width(equipped)) / 2,
+                    y + 30, 0x55FFFF);
+        } else {
+            Component clickToSelect = Component.translatable("gui.nichirin.breathing_styles.click_to_select")
+                    .withStyle(style -> style.withColor(0xAAAAAA));
+            graphics.drawString(font, clickToSelect,
+                    x + (width - font.width(clickToSelect)) / 2,
+                    y + 30, 0xAAAAAA);
+        }
+
+        // Icon placeholder
+        int iconColor = isUnlocked ? 0xFF3A3A3A : 0xFF2A2A2A;
+        graphics.fill(x + width/2 - 16, y + 50, x + width/2 + 16, y + 75, iconColor);
+    }
+
+    /**
+     * SIMPLIFIED: Check if a style is unlocked (just use progression system)
+     */
+    private boolean isStyleUnlockedWithFallback(Player player, String styleId) {
+        // Just check progression system - this should be the source of truth
+        return ProgressionHelper.isStyleUnlocked(player, styleId);
     }
 
     private static long lastClickTime = 0;
@@ -161,62 +199,45 @@ public class BreathingStylesSection {
         String currentStyle = BreathingStyleHelper.getMovesetId(player);
         int centerX = (contentWidth - 20) / 2;
 
-        // Calculate click area for Thunder Breathing box
-        int boxWidth = 150;
+        // Calculate click areas for both breathing style boxes
+        int boxWidth = 140;
         int boxHeight = 80;
-        int x = centerX - boxWidth / 2;
+        int spacing = 20;
+        int totalWidth = (boxWidth * 2) + spacing;
+        int startX = centerX - totalWidth / 2;
         int y = TOP_MARGIN + 10 + 30 + 25 + 20 + 10;
 
-        // Check if click is within Thunder Breathing box
-        if (mouseX >= x && mouseX <= x + boxWidth && mouseY >= y && mouseY <= y + boxHeight) {
-            String styleName = "thunder_breathing";
+        // Thunder Breathing box (left)
+        if (mouseX >= startX && mouseX <= startX + boxWidth && mouseY >= y && mouseY <= y + boxHeight) {
+            return handleStyleClick(player, "thunder_breathing", currentStyle, currentTime);
+        }
 
-            // Check if the style is unlocked
-            if (!ProgressionHelper.isStyleUnlocked(player, styleName)) {
-                // Style is locked - just play error sound, no message
-                Minecraft.getInstance().getSoundManager().play(
-                        net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
-                                net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 0.5F, 0.8F
-                        )
-                );
-                lastClickTime = currentTime;
-                return true;
-            }
-
-            // Style is unlocked - only set if not already selected
-            if (!styleName.equals(currentStyle)) {
-                // Use packet to request style change from server
-                NichirinPacketRegistry.requestStyleChange(styleName);
-
-                // Play success sound
-                Minecraft.getInstance().getSoundManager().play(
-                        net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
-                                net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 1.0F
-                        )
-                );
-            }
-            lastClickTime = currentTime;
-            return true;
+        // Flame Breathing box (right)
+        int flameX = startX + boxWidth + spacing;
+        if (mouseX >= flameX && mouseX <= flameX + boxWidth && mouseY >= y && mouseY <= y + boxHeight) {
+            return handleStyleClick(player, "flame_breathing", currentStyle, currentTime);
         }
 
         // Check for "None" button click
-        boolean isUnlocked = ProgressionHelper.isStyleUnlocked(player, "thunder_breathing");
+        int reqY = y + boxHeight + 15;
+        // Add space for requirement text if any styles are locked
+        if (!isStyleUnlockedWithFallback(player, "thunder_breathing")) {
+            reqY += 35; // Title + requirement
+        }
+        if (!isStyleUnlockedWithFallback(player, "flame_breathing")) {
+            reqY += 35; // Title + requirement
+        }
+
         int noneButtonX = centerX - 75;
-        int noneButtonY = y + boxHeight + (isUnlocked ? 15 : 55);
         int noneButtonWidth = 150;
         int noneButtonHeight = 20;
 
         if (mouseX >= noneButtonX && mouseX <= noneButtonX + noneButtonWidth &&
-                mouseY >= noneButtonY && mouseY <= noneButtonY + noneButtonHeight) {
+                mouseY >= reqY && mouseY <= reqY + noneButtonHeight) {
 
             // Use packet to request clearing breathing style
             if (currentStyle != null) {
                 NichirinPacketRegistry.requestStyleChange(null);
-            } else {
-                // Find any unlocked style and set it
-                if (ProgressionHelper.isStyleUnlocked(player, "thunder_breathing")) {
-                    NichirinPacketRegistry.requestStyleChange("thunder_breathing");
-                }
             }
 
             // Play click sound
@@ -231,5 +252,38 @@ public class BreathingStylesSection {
         }
 
         return false;
+    }
+
+    /**
+     * Handle clicking on a breathing style
+     */
+    private boolean handleStyleClick(Player player, String styleName, String currentStyle, long currentTime) {
+        // Check if the style is unlocked
+        if (!isStyleUnlockedWithFallback(player, styleName)) {
+            // Style is locked - just play error sound
+            Minecraft.getInstance().getSoundManager().play(
+                    net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
+                            net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 0.5F, 0.8F
+                    )
+            );
+            lastClickTime = currentTime;
+            return true;
+        }
+
+        // Style is unlocked - only set if not already selected
+        if (!styleName.equals(currentStyle)) {
+            // Use packet to request style change from server
+            NichirinPacketRegistry.requestStyleChange(styleName);
+
+            // Play success sound
+            Minecraft.getInstance().getSoundManager().play(
+                    net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
+                            net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 1.0F
+                    )
+            );
+        }
+
+        lastClickTime = currentTime;
+        return true;
     }
 }

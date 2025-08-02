@@ -17,13 +17,7 @@ import net.minecraft.world.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
 
 /**
- * ENHANCED ATTACK WHEEL HANDLER WITH INPUT BLOCKING AND ESC SUPPORT
- *
- * Features:
- * - Blocks left-click attacks when wheel is open
- * - Blocks left-click attacks for 2 seconds after wheel closes
- * - Proper state management for multiplayer sync
- * - ESC key support to close the wheel without opening pause menu
+ * ENHANCED ATTACK WHEEL HANDLER WITH EXTENSIVE DEBUG LOGGING
  */
 public class AttackWheelHandler {
 
@@ -38,8 +32,11 @@ public class AttackWheelHandler {
     private static final long BLOCK_DURATION_TICKS = 40; // 2 seconds at 20 TPS
 
     public static void register() {
+        System.out.println("DEBUG: AttackWheelHandler.register() called");
+
         // Create the overlay instance
         currentWheel = new AttackWheelOverlay();
+        System.out.println("DEBUG: AttackWheelOverlay created");
 
         // Register wheel toggle with ESC handling
         ClientTickEvent.CLIENT_POST.register(client -> {
@@ -48,14 +45,30 @@ public class AttackWheelHandler {
             boolean isKeyDown = NichirinKeybindRegistry.ATTACK_WHEEL_KEY.isDown();
             boolean isEscDown = org.lwjgl.glfw.GLFW.glfwGetKey(client.getWindow().getWindow(), GLFW.GLFW_KEY_ESCAPE) == GLFW.GLFW_PRESS;
 
+            // DEBUG: Log key state changes
+            if (isKeyDown != wasKeyDown) {
+                System.out.println("DEBUG: Attack wheel key state changed: " + isKeyDown);
+                if (isKeyDown) {
+                    System.out.println("DEBUG: Attack wheel key PRESSED!");
+                    System.out.println("DEBUG: Player has katana: " + (client.player.getMainHandItem().getItem() instanceof SimpleKatana));
+                    System.out.println("DEBUG: Player has moveset: " + BreathingStyleHelper.hasMoveset(client.player));
+                    System.out.println("DEBUG: Current screen: " + (client.screen != null ? client.screen.getClass().getSimpleName() : "null"));
+                    System.out.println("DEBUG: Wheel currently open: " + wheelOpen);
+                    System.out.println("DEBUG: Player stunned: " + client.player.hasEffect(NichirinEffectRegistry.STUNNED.get()));
+                    System.out.println("DEBUG: Player blocking: " + client.player.hasEffect(NichirinEffectRegistry.BLOCKING.get()));
+                }
+            }
+
             // Handle ESC when wheel is open - more aggressive for multiplayer
             if (wheelOpen && isEscDown && !wasEscDown) {
+                System.out.println("DEBUG: ESC pressed while wheel open - closing wheel");
                 closeWheel();
 
                 // MULTIPLAYER FIX: More aggressive pause menu prevention
                 // Check immediately and for the next few ticks
                 for (int i = 0; i < 3; i++) {
                     if (client.screen != null && client.screen.getClass().getSimpleName().contains("Pause")) {
+                        System.out.println("DEBUG: Preventing pause screen #" + i);
                         client.setScreen(null);
                         client.mouseHandler.grabMouse();
                     }
@@ -64,9 +77,12 @@ public class AttackWheelHandler {
 
             // Handle attack wheel key
             if (isKeyDown && !wasKeyDown) {
+                System.out.println("DEBUG: Processing attack wheel key press");
                 if (!wheelOpen) {
+                    System.out.println("DEBUG: Attempting to open wheel");
                     openWheel();
                 } else {
+                    System.out.println("DEBUG: Attempting to close wheel");
                     closeWheel();
                 }
             }
@@ -80,6 +96,7 @@ public class AttackWheelHandler {
             if (wheelOpen && client.screen != null) {
                 String screenName = client.screen.getClass().getSimpleName();
                 if (screenName.contains("Pause")) {
+                    System.out.println("DEBUG: PRE tick - preventing pause screen: " + screenName);
                     client.setScreen(null);
                     client.mouseHandler.grabMouse();
                 }
@@ -92,6 +109,7 @@ public class AttackWheelHandler {
             if (wheelOpen && client.screen != null) {
                 String screenName = client.screen.getClass().getSimpleName();
                 if (screenName.contains("Pause")) {
+                    System.out.println("DEBUG: POST tick - preventing pause screen: " + screenName);
                     client.setScreen(null);
                     client.mouseHandler.grabMouse();
                 }
@@ -104,6 +122,7 @@ public class AttackWheelHandler {
 
             // Close wheel if screen opens
             if (wheelOpen && mc.screen != null) {
+                System.out.println("DEBUG: Screen opened while wheel active - closing wheel");
                 closeWheel();
                 return;
             }
@@ -132,6 +151,7 @@ public class AttackWheelHandler {
 
             // IMMEDIATE EXECUTION: Execute and close on first click detection
             if (isAttackDown && !wasAttackDown) {
+                System.out.println("DEBUG: Attack button pressed while wheel open - executing move");
                 executeWheelMove(); // This closes the wheel immediately
             }
 
@@ -150,43 +170,65 @@ public class AttackWheelHandler {
 
             wasAttackDown = isAttackDown;
         });
+
+        System.out.println("DEBUG: AttackWheelHandler registration complete");
     }
 
     /**
      * Open the attack wheel
      */
     private static void openWheel() {
+        System.out.println("DEBUG: openWheel() called");
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null) return;
+        if (mc.player == null) {
+            System.out.println("DEBUG: openWheel() failed - no player");
+            return;
+        }
 
         if (mc.player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+            System.out.println("DEBUG: openWheel() failed - player stunned");
             return;
         }
 
         // Check if player has blocking effect - CAN'T OPEN WHEEL
         if (mc.player.hasEffect(NichirinEffectRegistry.BLOCKING.get())) {
+            System.out.println("DEBUG: openWheel() failed - player blocking");
             return;
         }
 
         // Check if holding katana
         ItemStack mainHand = mc.player.getMainHandItem();
-        if (!(mainHand.getItem() instanceof SimpleKatana)) return;
+        if (!(mainHand.getItem() instanceof SimpleKatana)) {
+            System.out.println("DEBUG: openWheel() failed - not holding katana");
+            System.out.println("DEBUG: Main hand item: " + mainHand.getItem().getClass().getSimpleName());
+            return;
+        }
 
         // Check if has breathing style
-        if (!BreathingStyleHelper.hasMoveset(mc.player)) return;
+        if (!BreathingStyleHelper.hasMoveset(mc.player)) {
+            System.out.println("DEBUG: openWheel() failed - no breathing style");
+            return;
+        }
 
         // Don't open if screen is open
-        if (mc.screen != null) return;
+        if (mc.screen != null) {
+            System.out.println("DEBUG: openWheel() failed - screen is open: " + mc.screen.getClass().getSimpleName());
+            return;
+        }
 
         if (currentWheel != null) {
+            System.out.println("DEBUG: Opening attack wheel");
             mc.mouseHandler.releaseMouse();
             currentWheel.activate();
             wheelOpen = true;
 
             // Update state (handles server sync)
             MultiplayerInputHandler.setAttackWheelOpen(true, mc.player);
+            System.out.println("DEBUG: Attack wheel opened successfully");
 
             wasAttackDown = false;
+        } else {
+            System.out.println("DEBUG: openWheel() failed - currentWheel is null");
         }
     }
 
@@ -194,21 +236,25 @@ public class AttackWheelHandler {
      * Close the attack wheel and start blocking timer
      */
     private static void closeWheel() {
+        System.out.println("DEBUG: closeWheel() called");
         Minecraft mc = Minecraft.getInstance();
 
         if (currentWheel != null) {
             currentWheel.deactivate();
+            System.out.println("DEBUG: Wheel overlay deactivated");
         }
         wheelOpen = false;
 
         // START BLOCKING TIMER - Record when wheel was closed
         if (mc.player != null) {
             wheelClosedTime = mc.player.level().getGameTime();
+            System.out.println("DEBUG: Wheel close time recorded: " + wheelClosedTime);
         }
 
         // Update state (handles server sync)
         if (mc.player != null) {
             MultiplayerInputHandler.setAttackWheelOpen(false, mc.player);
+            System.out.println("DEBUG: Multiplayer state updated");
         }
 
         wasAttackDown = false;
@@ -216,40 +262,53 @@ public class AttackWheelHandler {
         // Recapture mouse
         if (mc.screen == null) {
             mc.mouseHandler.grabMouse();
+            System.out.println("DEBUG: Mouse recaptured");
         }
+
+        System.out.println("DEBUG: Attack wheel closed successfully");
     }
 
     /**
      * Execute the currently hovered wheel move
      */
     private static void executeWheelMove() {
+        System.out.println("DEBUG: executeWheelMove() called");
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || currentWheel == null) return;
+        if (mc.player == null || currentWheel == null) {
+            System.out.println("DEBUG: executeWheelMove() failed - null player or wheel");
+            return;
+        }
 
         int selectedMove = currentWheel.getCurrentlyHoveredMove();
+        System.out.println("DEBUG: Selected move index: " + selectedMove);
 
         if (selectedMove == -1) {
+            System.out.println("DEBUG: No move selected - closing wheel");
             closeWheel();
             return;
         }
 
         var moveset = BreathingStyleHelper.getMoveset(mc.player);
         if (moveset == null) {
+            System.out.println("DEBUG: executeWheelMove() failed - no moveset");
             closeWheel();
             return;
         }
 
         var moveConfig = moveset.getMove(selectedMove);
         if (moveConfig == null) {
+            System.out.println("DEBUG: executeWheelMove() failed - no move config for index " + selectedMove);
             closeWheel();
             return;
         }
 
         // Check requirements client-side (for immediate feedback)
         String moveName = moveConfig.getDisplayName();
+        System.out.println("DEBUG: Executing move: " + moveName);
 
         if (CooldownHUD.isOnCooldown(moveName)) {
             int remaining = CooldownHUD.getRemainingCooldown(moveName);
+            System.out.println("DEBUG: Move on cooldown: " + remaining + " ticks remaining");
             mc.player.displayClientMessage(
                     Component.literal("Move on cooldown! " + (remaining / 20.0f) + "s remaining")
                             .withStyle(style -> style.withColor(0xFF5555)),
@@ -260,6 +319,7 @@ public class AttackWheelHandler {
         }
 
         if (moveConfig.hasStaminaCost() && !StaminaManager.hasStamina(mc.player, moveConfig.getStaminaCost())) {
+            System.out.println("DEBUG: Not enough stamina");
             mc.player.displayClientMessage(
                     Component.literal("Not enough stamina!")
                             .withStyle(style -> style.withColor(0xFF5555)),
@@ -270,6 +330,7 @@ public class AttackWheelHandler {
         }
 
         if (moveConfig.hasBreathCost() && !BreathingManager.hasBreath(mc.player, moveConfig.getBreathCost())) {
+            System.out.println("DEBUG: Not enough breath");
             mc.player.displayClientMessage(
                     Component.literal("Not enough breath!")
                             .withStyle(style -> style.withColor(0xFF5555)),
@@ -280,9 +341,11 @@ public class AttackWheelHandler {
         }
 
         // Send breathing move to server FIRST (while wheel is still considered open)
+        System.out.println("DEBUG: Sending breathing move to server");
         MultiplayerInputHandler.sendBreathingMove(selectedMove, mc.player);
 
         // THEN close wheel (this maintains input blocking until move is sent)
+        System.out.println("DEBUG: Closing wheel after move execution");
         closeWheel();
     }
 

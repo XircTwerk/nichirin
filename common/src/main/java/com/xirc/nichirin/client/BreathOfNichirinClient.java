@@ -51,7 +51,9 @@ public class BreathOfNichirinClient {
 
         // Register all client handlers and components
         ClientEventHandler.register();
+        System.out.println("DEBUG: About to register katana client handler");
         KatanaInputHandler.registerClient();
+        System.out.println("DEBUG: Katana client handler registered");
         BlockingInputHandler.register();
 
         PlayerStats.initialize();
@@ -64,7 +66,9 @@ public class BreathOfNichirinClient {
 
         // Register handlers AFTER keybinds
         BigGuiKeyHandler.register();
-        AttackWheelHandler.register();
+        System.out.println("DEBUG: About to register attack wheel handler");
+        com.xirc.nichirin.client.handler.AttackWheelHandler.register();
+        System.out.println("DEBUG: Attack wheel handler registered");
         ClientDoubleJumpHandler.register();
         CooldownDisplayPacket.registerClient();
 

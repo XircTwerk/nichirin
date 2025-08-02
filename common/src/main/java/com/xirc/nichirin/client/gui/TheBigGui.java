@@ -176,7 +176,7 @@ public class TheBigGui extends Screen {
         // Render current section content
         switch (currentSection) {
             case HOME -> homeSection.render(graphics, adjustedMouseX, adjustedMouseY, player, contentWidth, contentHeight, this.font);
-            case BREATHING_STYLES -> breathingStylesSection.render(graphics, player, contentWidth, contentHeight, this.font);
+            case BREATHING_STYLES -> breathingStylesSection.render(graphics, player, contentWidth, contentHeight, this.font, adjustedMouseX, adjustedMouseY);
             case SKILLS -> skillsSection.render(graphics, player, this.font);
             case BESTIARY -> bestiarySection.render(graphics, player, this.font);
             case PERKS -> perksSection.render(graphics, player, this.font);
