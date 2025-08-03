@@ -1,7 +1,7 @@
 package com.xirc.nichirin.common.attack.moveset;
 
 import com.xirc.nichirin.common.attack.MoveExecutor;
-import com.xirc.nichirin.common.attack.moves.flame.*;
+import com.xirc.nichirin.common.attack.moves.insect.*;
 import com.xirc.nichirin.common.util.BreathingManager;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
@@ -18,14 +18,14 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Flame Breathing moveset implementation
- * Flame Breathing excels at crowd control and burning effects
- * All attacks hit multiple enemies and apply fire damage
+ * Insect Breathing moveset implementation
+ * Insect Breathing excels at precision strikes, venom, and agile movement
+ * Focus on high mobility, single-target damage, and poison effects
  *
- * Right-click: Pommel Slash (6 rapid slashes)
- * Crouch + Right-click: Thrust Attack (dash forward with thrust)
+ * Right-click: Quick Sting (rapid thrust with poison)
+ * Crouch + Right-click: Poison Dash (short dash with venom trail)
  */
-public class FlameBreathingMoveset extends AbstractMoveset {
+public class InsectBreathingMoveset extends AbstractMoveset {
 
     // Track cooldowns per player per move
     private static final Map<UUID, Map<Integer, Long>> playerCooldowns = new HashMap<>();
@@ -34,168 +34,147 @@ public class FlameBreathingMoveset extends AbstractMoveset {
     private static final Map<UUID, Boolean> executingMove = new HashMap<>();
 
     // Thread-local to store current moveset instance for action access
-    private static final ThreadLocal<FlameBreathingMoveset> CURRENT_MOVESET = new ThreadLocal<>();
+    private static final ThreadLocal<InsectBreathingMoveset> CURRENT_MOVESET = new ThreadLocal<>();
 
-    public FlameBreathingMoveset() {
-        super("flame_breathing", "Flame Breathing", createBuilder());
+    public InsectBreathingMoveset() {
+        super("insect_breathing", "Insect Breathing", createBuilder());
     }
 
     private static MovesetBuilder createBuilder() {
         return new MovesetBuilder()
-                .withIdleAnimation("nichirin:flame_idle")
-                .withDamageMultiplier(1.1f) // Slight damage boost for slugger style
-                .withSpeedMultiplier(0.9f) // Slightly slower but more powerful
+                .withIdleAnimation("nichirin:insect_idle")
+                .withDamageMultiplier(0.9f) // Slightly less raw damage, compensated by poison
+                .withSpeedMultiplier(1.3f) // Very fast and agile
 
-                //skip unknowing fire (index 0)
-
-                // Second Form: Rising Scorching Sun - Upward arc (INDEX 1 in wheel)
-                .withMove(new MoveBuilder("rising_scorching_sun", "Scorching Sun")
-                        .withAnimation("nichirin:rising_scorching_sun", 8)
-                        .withTiming(100, 12, 25) // 5 second cooldown
-                        .withDamage(15.0f) // Good damage + bonus vs airborne
-                        .withRange(6.0f) // Upward arc range
-                        .withKnockback(0.8f) // Strong upward knockback
-                        .withBreathCost(20.0f)
-                        .withHitStun(20)
-                        .withHitboxSize(2.5f) // Larger for arc
+                // First Form: Butterfly - Precision dash strike (INDEX 0 in wheel)
+                .withMove(new MoveBuilder("butterfly", "Butterfly")
+                        .withAnimation("nichirin:butterfly", 8)
+                        .withTiming(120, 8, 40) // 6 second cooldown, quick windup, LONGER duration for 2-phase attack
+                        .withDamage(18.0f) // High single-target damage
+                        .withTeleportDistance(5.0f) // Dash to target (was 10.0f)
+                        .withRange(10.0f) // Lock-on range
+                        .withKnockback(0.3f) // Light knockback
+                        .withBreathCost(25.0f)
+                        .withHitStun(25) // Good stun for precision strike
+                        .withHitboxSize(1.5f) // Small precise hitbox
                         .withAction(player -> {
-                            RisingScorchingSunAttack attack = new RisingScorchingSunAttack();
-                            FlameBreathingMoveset moveset = getCurrentMoveset();
+                            ButterflyAttack attack = new ButterflyAttack();
+                            InsectBreathingMoveset moveset = getCurrentMoveset();
                             if (moveset != null) {
                                 attack.configure(moveset.getMove(0));
                             }
-                            MoveExecutor.executeAttack(player, attack, "flame_breathing", "rising_scorching_sun");
+                            MoveExecutor.executeAttack(player, attack, "insect_breathing", "butterfly");
                         })
                 )
 
-                // Third Form: Blazing Universe - Heavy downward strike (INDEX 2 in wheel)
-                .withMove(new MoveBuilder("blazing_universe", "Blazing Universe")
-                        .withAnimation("nichirin:blazing_universe", 12)
-                        .withTiming(160, 40, 50) // 8 second cooldown, 2s windup, explosive finish
-                        .withDamage(25.0f) // Very high damage
-                        .withRange(8.0f) // Large AOE
-                        .withKnockback(0.6f)
-                        .withBreathCost(30.0f) // Expensive for heavy attack
-                        .withHitStun(35)
-                        .withHitboxSize(4.0f) // Large explosion hitbox
+                // Second Form: Bee Sting - Piercing dash (INDEX 1 in wheel)
+                .withMove(new MoveBuilder("bee_sting", "Bee Sting")
+                        .withAnimation("nichirin:bee_sting", 9)
+                        .withTiming(80, 6, 13) // 4 second cooldown, mobile attack
+                        .withDamage(8.0f) // Light damage per enemy hit
+                        .withDashSpeed(6.0f) // Fast dash forward (was 12.0f)
+                        .withRange(6.0f) // Dash distance (was 12.0f)
+                        .withKnockback(0.1f) // Very light knockback
+                        .withBreathCost(20.0f) // Lower cost for mobility
+                        .withHitStun(10) // Short stun for crowd poke
+                        .withHitboxSize(2.0f) // Line hitbox
                         .withAction(player -> {
-                            BlazingUniverseAttack attack = new BlazingUniverseAttack();
-                            FlameBreathingMoveset moveset = getCurrentMoveset();
+                            BeeStingAttack attack = new BeeStingAttack();
+                            InsectBreathingMoveset moveset = getCurrentMoveset();
                             if (moveset != null) {
                                 attack.configure(moveset.getMove(1));
                             }
-                            MoveExecutor.executeAttack(player, attack, "flame_breathing", "blazing_universe");
+                            MoveExecutor.executeAttack(player, attack, "insect_breathing", "bee_sting");
                         })
                 )
 
-                // Fourth Form: Blooming Flame Undulation - 360° defense (INDEX 3 in wheel)
-                .withMove(new MoveBuilder("blooming_flame_undulation", "Blooming Flame")
-                        .withAnimation("nichirin:blooming_flame_undulation", 10)
-                        .withTiming(140, 15, 35) // 7 second cooldown
-                        .withDamage(12.0f) // Multiple hits around user
-                        .withRange(3.5f) // 3.5 block radius
-                        .withKnockback(0.3f)
-                        .withBreathCost(25.0f)
-                        .withHitStun(15)
-                        .withHitboxSize(3.5f) // Full radius
+                // Third Form: Dragonfly - Multi-hit lock-on (INDEX 2 in wheel)
+                .withMove(new MoveBuilder("dragonfly", "Dragonfly")
+                        .withAnimation("nichirin:dragonfly", 12)
+                        .withTiming(180, 15, 30) // 9 second cooldown, root during windup
+                        .withDamage(6.0f) // 6 hits = 36 total damage
+                        .withRange(6.0f) // Lock-on range
+                        .withKnockback(0.05f) // Minimal knockback to keep target close
+                        .withBreathCost(35.0f) // Higher cost for multi-hit
+                        .withHitStun(5) // Very short per hit, final hit has more
+                        .withHitboxSize(2.0f) // Target lock area
                         .withAction(player -> {
-                            BloomingFlameUndulationAttack attack = new BloomingFlameUndulationAttack();
-                            FlameBreathingMoveset moveset = getCurrentMoveset();
+                            DragonflyAttack attack = new DragonflyAttack();
+                            InsectBreathingMoveset moveset = getCurrentMoveset();
                             if (moveset != null) {
                                 attack.configure(moveset.getMove(2));
                             }
-                            MoveExecutor.executeAttack(player, attack, "flame_breathing", "blooming_flame_undulation");
+                            MoveExecutor.executeAttack(player, attack, "insect_breathing", "dragonfly");
                         })
                 )
 
-                // Fifth Form: Flame Tiger - Multi-hit dash (INDEX 4 in wheel)
-                .withMove(new MoveBuilder("flame_tiger", "Flame Tiger")
-                        .withAnimation("nichirin:flame_tiger", 11)
-                        .withTiming(120, 10, 40) // 6 second cooldown, dash duration
-                        .withDamage(24.0f)
-                        .withDashSpeed(8.0f) // 8 block dash
-                        .withRange(8.0f) // Dash distance
-                        .withKnockback(0.2f) // Light knockback to keep enemies close
-                        .withBreathCost(50.0f)
-                        .withHitStun(10) // Short stun for combo potential
-                        .withHitboxSize(2.0f)
+                // Fourth Form: Centipede - Zigzag dash finisher (INDEX 3 in wheel)
+                .withMove(new MoveBuilder("centipede", "Centipede")
+                        .withAnimation("nichirin:centipede", 15)
+                        .withTiming(240, 20, 50) // 12 second cooldown, complex movement
+                        .withDamage(22.0f) // High damage finisher
+                        .withDashSpeed(4.0f) // Multiple zigzag dashes (was 8.0f)
+                        .withRange(6.0f) // Total movement range (was 12.0f)
+                        .withKnockback(0.8f) // Strong finisher knockback
+                        .withBreathCost(45.0f) // Expensive ultimate-level move
+                        .withHitStun(40) // Strong stun on finisher
+                        .withHitboxSize(2.5f) // Larger finisher hitbox
                         .withAction(player -> {
-                            FlameTigerAttack attack = new FlameTigerAttack();
-                            FlameBreathingMoveset moveset = getCurrentMoveset();
+                            CentipedeAttack attack = new CentipedeAttack();
+                            InsectBreathingMoveset moveset = getCurrentMoveset();
                             if (moveset != null) {
                                 attack.configure(moveset.getMove(3));
                             }
-                            MoveExecutor.executeAttack(player, attack, "flame_breathing", "flame_tiger");
-                        })
-                )
-
-                // Ninth Form: Rengoku - Ultimate dragon technique (INDEX 5 in wheel)
-                .withMove(new MoveBuilder("rengoku", "Rengoku")
-                        .withAnimation("nichirin:rengoku", 20)
-                        .withTiming(600, 80, 60) // 30 second cooldown, 4s windup, dragon dash
-                        .withDamage(100.0f) // Massive damage
-                        .withDashSpeed(25.0f) // Very fast dash
-                        .withRange(20.0f) // Long range dash
-                        .withKnockback(0f) // Massive knockback
-                        .withBreathCost(100.0f) // Most expensive ultimate
-                        .withHitStun(80) // 4 second stun
-                        .withHitboxSize(4.0f) // Large dragon hitbox
-                        .withAction(player -> {
-                            RengokuAttack attack = new RengokuAttack();
-                            FlameBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) {
-                                attack.configure(moveset.getMove(4));
-                            }
-                            MoveExecutor.executeAttack(player, attack, "flame_breathing", "rengoku");
+                            MoveExecutor.executeAttack(player, attack, "insect_breathing", "centipede");
                         })
                 );
     }
 
     @Override
     public int getMoveCount() {
-        return 5; //amount of moves in wheel
+        return 4; // Four forms in attack wheel
     }
 
     @Override
     public boolean handleRightClick(Player player, boolean isCrouching) {
         if (isCrouching) {
-            // Crouch + Right-click: Unknowing Fire
-            return executeUnknowingFire(player);
+            // Crouch + Right-click: Poison Dash
+            return executePoisonDash(player);
         } else {
-            // Regular Right-click: Pommel Slash
-            return executePommelSlash(player);
+            // Regular Right-click: Quick Sting
+            return executeQuickSting(player);
         }
     }
 
-    private boolean executePommelSlash(Player player) {
-        // Check breath cost for Pommel Slash (halved to compensate for doubling bug)
-        float breathCost = 7.5f; // Will become 15 after doubling
+    private boolean executeQuickSting(Player player) {
+        // Check breath cost for Quick Sting
+        float breathCost = 5.0f;
 
         // Use atomic consume - no separate check needed
         if (BreathingManager.consume(player, breathCost)) {
             // Breath was successfully consumed - execute attack
-            PommelSlashAttack attack = new PommelSlashAttack();
+            QuickStingAttack attack = new QuickStingAttack();
 
-            // Create temporary config for Pommel Slash
-            MoveConfiguration tempConfig = new MoveBuilder("pommel_slash", "Pommel Slash")
-                    .withAnimation("nichirin:pommel_slash", 8)
-                    .withTiming(0, 5, 18) // No cooldown, quick windup, 6 slashes over 18 ticks
-                    .withDamage(6.0f) // 6 slashes, first hit full damage, rest 30%
-                    .withRange(4.0f) // Medium range
+            // Create temporary config for Quick Sting
+            MoveConfiguration tempConfig = new MoveBuilder("quick_sting", "Quick Sting")
+                    .withAnimation("nichirin:quick_sting", 6)
+                    .withTiming(0, 3, 12) // No cooldown, very quick
+                    .withDamage(9.0f) // Moderate damage + poison
+                    .withRange(4.0f) // Close range thrust
                     .withKnockback(0f)
                     .withBreathCost(breathCost)
-                    .withHitStun(8) // Short stun for combo potential
-                    .withHitboxSize(2.0f)
+                    .withHitStun(15)
+                    .withHitboxSize(1.5f) // Precise hitbox
                     .build();
 
             attack.configure(tempConfig);
-            MoveExecutor.executeAttack(player, attack, "flame_breathing", "pommel_slash");
+            MoveExecutor.executeAttack(player, attack, "insect_breathing", "quick_sting");
 
             onMovePerformed(player, -1, false); // Use -1 to indicate right-click move
         } else {
             // Breath consumption failed - show error message
             player.displayClientMessage(
-                    Component.literal("Not enough breath for Pommel Slash!")
+                    Component.literal("Not enough breath for Quick Sting!")
                             .withStyle(style -> style.withColor(0xFF3333)), // Red for no breath
                     true
             );
@@ -204,35 +183,35 @@ public class FlameBreathingMoveset extends AbstractMoveset {
         return true;
     }
 
-    private boolean executeUnknowingFire(Player player) {
-        // Check breath cost for Unknowing Fire (halved to compensate for doubling bug)
-        float breathCost = 20.0f;
-
+    private boolean executePoisonDash(Player player) {
+        // Check breath cost for Poison Dash
+        float breathCost = 15.0f;
 
         // Use atomic consume - no separate check needed
         if (BreathingManager.consume(player, breathCost)) {
             // Breath was successfully consumed - execute attack
-            UnknowingFireAttack attack = new UnknowingFireAttack();
+            PoisonDashAttack attack = new PoisonDashAttack();
 
-            MoveConfiguration tempConfig = new MoveBuilder("unknowing_fire_quick", "Unknowing Fire")
-                    .withAnimation("nichirin:unknowing_fire", 9)
-                    .withTiming(0, 6, 15) // No cooldown
-                    .withDamage(16.0f) // Slightly less than wheel version (18.0f)
-                    .withRange(3.0f) // Close range after dash
-                    .withKnockback(0.4f)
+            MoveConfiguration tempConfig = new MoveBuilder("poison_dash", "Poison Dash")
+                    .withAnimation("nichirin:poison_dash", 8)
+                    .withTiming(0, 4, 10) // No cooldown, quick dash
+                    .withDamage(7.0f) // Light damage + poison trail
+                    .withDashSpeed(3.0f) // Quick short dash (was 6.0f)
+                    .withRange(3.0f)
+                    .withKnockback(0.1f) // Very light knockback
                     .withBreathCost(breathCost)
-                    .withHitStun(20) // Slightly less stun than wheel version
-                    .withHitboxSize(2.0f)
+                    .withHitStun(10)
+                    .withHitboxSize(2.0f) // Trail hitbox
                     .build();
 
             attack.configure(tempConfig);
-            MoveExecutor.executeAttack(player, attack, "flame_breathing", "unknowing_fire_quick");
+            MoveExecutor.executeAttack(player, attack, "insect_breathing", "poison_dash");
 
             onMovePerformed(player, -2, true); // Use -2 to indicate crouch right-click move
         } else {
             // Breath consumption failed - show error message
             player.displayClientMessage(
-                    Component.literal("Not enough breath for Unknowing Fire!")
+                    Component.literal("Not enough breath for Poison Dash!")
                             .withStyle(style -> style.withColor(0xFF3333)), // Red for no breath
                     true
             );
@@ -255,7 +234,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         long remaining = (cooldownEnd - player.level().getGameTime()) / 20;
                         player.displayClientMessage(
                                 Component.literal(config.getDisplayName() + " on cooldown! " + remaining + "s remaining")
-                                        .withStyle(style -> style.withColor(0xFF6600)), // Orange color for flame
+                                        .withStyle(style -> style.withColor(0xAA00FF)), // Purple color for insect
                                 true
                         );
                     }
@@ -280,8 +259,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
             }
         }
 
-        // Remove the range check for Flame Breathing - it's designed for crowd control
-        // and should work even without enemies nearby (unlike Thunder's targeted attacks)
+        // Removed range checks - all moves should execute regardless of targets
 
         // Mark that we're executing a move
         executingMove.put(player.getUUID(), true);
@@ -318,7 +296,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
     }
 
     /**
-     * Check if there are valid targets within range for crowd control moves
+     * Check if there are valid targets within range for targeted moves
      */
     private boolean hasTargetsInRange(Player player, float range) {
         net.minecraft.world.phys.AABB searchBox = new net.minecraft.world.phys.AABB(
@@ -334,7 +312,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
     /**
      * Get the current moveset instance (for use in action lambdas)
      */
-    public static FlameBreathingMoveset getCurrentMoveset() {
+    public static InsectBreathingMoveset getCurrentMoveset() {
         return CURRENT_MOVESET.get();
     }
 
@@ -382,19 +360,19 @@ public class FlameBreathingMoveset extends AbstractMoveset {
 
     @Override
     public String getRightClickMoveName() {
-        return "Pommel Slash";
+        return "Quick Sting";
     }
 
     @Override
     public String getCrouchRightClickMoveName() {
-        return "Unknowing Fire";
+        return "Poison Dash";
     }
 
     @Override
     public void onMovePerformed(Player player, int moveIndex, boolean isCrouching) {
-        // Flame Breathing specific post-move effects can be added here
-        // moveIndex -1 = Pommel Slash (right-click)
-        // moveIndex -2 = Unknowing Fire (crouch + right-click)
+        // Insect Breathing specific post-move effects can be added here
+        // moveIndex -1 = Quick Sting (right-click)
+        // moveIndex -2 = Poison Dash (crouch + right-click)
     }
 
     /**

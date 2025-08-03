@@ -59,6 +59,7 @@ public interface NichirinMoveRegistry {
         // Register all movesets here
         registerMoveset(new ThunderBreathingMoveset());
         registerMoveset(new FlameBreathingMoveset());
+        registerMoveset(new InsectBreathingMoveset());
         BreathOfNichirin.LOGGER.info("Auto-registered {} movesets with {} total moves",
                 MOVESETS.size(), GLOBAL_MOVES.size());
     }

@@ -21,7 +21,7 @@ import java.util.Set;
  * - Lots of strikes during 8 block dash
  * - User goes in a straight line
  * - Drags enemies with you
- * - High DPS multi-hit attack
+ * - High DPS multi-hit attack - NOW RESPECTS IMMUNITY FRAMES
  *
  * All configuration comes from the moveset builder.
  * This class handles only the behavior and visual/audio effects.
@@ -31,8 +31,8 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
     private boolean dashStarted = false;
     private Vec3 dashDirection;
     private Vec3 startPosition;
-    private Set<LivingEntity> caughtEnemies = new HashSet<>();
-    private List<LivingEntity> draggedEnemies = new ArrayList<>();
+    private final Set<LivingEntity> caughtEnemies = new HashSet<>();
+    private final List<LivingEntity> draggedEnemies = new ArrayList<>();
     private int hitCounter = 0;
 
     public FlameTigerAttack() {
@@ -125,8 +125,8 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
                 userPos, 4.0, 3.0, 4.0); // Large hitbox around user
 
         for (LivingEntity target : nearbyTargets) {
-            // Hit each enemy (allowing multiple hits for high DPS)
-            hitTargetNoImmunity(target); // Use no-immunity for rapid strikes
+            // Hit each enemy - NOW RESPECTS IMMUNITY FRAMES
+            hitTarget(target); // Changed from hitTargetNoImmunity to hitTarget
 
             // Create claw marks effect
             createClawMarksEffect(target.position());
@@ -139,7 +139,7 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
         // Also hit dragged enemies
         for (LivingEntity draggedEnemy : draggedEnemies) {
             if (draggedEnemy.isAlive()) {
-                hitTargetNoImmunity(draggedEnemy);
+                hitTarget(draggedEnemy); // Changed from hitTargetNoImmunity to hitTarget
                 createClawMarksEffect(draggedEnemy.position());
             }
         }
@@ -319,11 +319,6 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
         // Release all dragged enemies with final tiger swipe
         for (LivingEntity draggedEnemy : draggedEnemies) {
             if (draggedEnemy.isAlive()) {
-                // Final powerful hit
-                float originalDamage = damage;
-                damage = damage * 1.5f; // 50% bonus damage for finisher
-                hitTarget(draggedEnemy);
-                damage = originalDamage;
 
                 // Strong knockback for finale
                 Vec3 finalKnockback = dashDirection.scale(knockback * 2.0);

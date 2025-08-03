@@ -48,7 +48,8 @@ public class BentoBoxItem extends Item {
             return InteractionResultHolder.fail(stack);
         }
 
-        LOGGER.info("BentoBox use() - Hand: {}, Player: {}", hand, player.getName().getString());
+        LOGGER.info("" +
+                "Box use() - Hand: {}, Player: {}", hand, player.getName().getString());
 
         if (level.isClientSide) {
             return InteractionResultHolder.success(stack);

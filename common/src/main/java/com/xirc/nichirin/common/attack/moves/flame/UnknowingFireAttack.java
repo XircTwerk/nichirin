@@ -1,5 +1,7 @@
 package com.xirc.nichirin.common.attack.moves.flame;
 
+import lombok.Getter;
+import lombok.Setter;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -21,16 +23,17 @@ import java.util.Set;
  */
 public class UnknowingFireAttack extends FlameBreathingAttackBase {
 
-    private static final float DASH_DISTANCE = 4.0f; // Longer dash for this attack
-    private static final int DASH_DURATION = 6; // Faster dash (6 ticks)
+    private static final float DASH_DISTANCE = 0.8f;
+    private static final int DASH_DURATION = 40;
     private static final float SLASH_WIDTH = 8.0f; // Very wide slash
     private static final float SLASH_DEPTH = 3.0f; // Deep slash
 
     private boolean dashStarted = false;
     private boolean slashExecuted = false;
     private Vec3 dashDirection;
+    @Getter
+    @Setter
     private Vec3 startPosition;
-    private Vec3 targetPosition;
     private Set<LivingEntity> hitEntities = new HashSet<>();
 
     // Invulnerability and fall damage protection
@@ -50,7 +53,6 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
 
         dashDirection = user.getLookAngle().normalize();
         startPosition = user.position();
-        targetPosition = startPosition.add(dashDirection.scale(DASH_DISTANCE));
 
         // Make user invulnerable during attack
         wasInvulnerable = user.isInvulnerable();
@@ -80,7 +82,7 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
             dashStarted = true;
         }
 
-        // Continue dash
+        // Continue dash with constant hitboxes like Flame Tiger
         if (dashStarted && tickCount > windup && tickCount <= windup + DASH_DURATION) {
             continueDash();
         }
@@ -126,8 +128,8 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
     }
 
     private void startDash() {
-        // Set user velocity for dash - using FlameTiger's method
-        Vec3 dashVelocity = dashDirection.scale(DASH_DISTANCE / DASH_DURATION * 6);
+        // Set user velocity for dash - using Flame Tiger's method
+        Vec3 dashVelocity = dashDirection.scale(DASH_DISTANCE * 6);
         user.setDeltaMovement(dashVelocity);
         user.hurtMarked = true;
         user.hasImpulse = true;
@@ -141,25 +143,24 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
     }
 
     private void continueDash() {
-        // Maintain dash velocity - using FlameTiger's method
-        Vec3 dashVelocity = dashDirection.scale(DASH_DISTANCE / DASH_DURATION * 6);
+        // Maintain dash velocity - using Flame Tiger's method
+        Vec3 dashVelocity = dashDirection.scale(DASH_DISTANCE * 6);
         user.setDeltaMovement(dashVelocity);
         user.hurtMarked = true;
 
         // Create continuous intense trail
         createIntenseDashTrail();
 
-        // Hit enemies during dash with light damage
+        // Hit enemies during dash with light damage - using constant hitboxes like Flame Tiger
         List<LivingEntity> dashTargets = getTargetsInCustomHitbox(
                 user.position().add(0, user.getBbHeight() / 2, 0),
                 2.0, 2.5, 2.0);
 
         for (LivingEntity target : dashTargets) {
             if (!hitEntities.contains(target)) {
-                // Very light dash damage (20% of full damage)
+                // Very light dash damage (20% of full damage) - RESPECTS IMMUNITY FRAMES
                 float originalDamage = damage;
-                damage = damage * 0.2f;
-                hitTarget(target);
+                hitTarget(target); // Respects immunity frames
                 damage = originalDamage;
 
                 hitEntities.add(target);
@@ -167,6 +168,9 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
                 // Light knockback during dash
                 Vec3 dashKnockback = dashDirection.scale(knockback * 0.3);
                 target.push(dashKnockback.x, 0.05, dashKnockback.z);
+
+                // Create impact particles
+                createDashImpactParticles(target.position());
             }
         }
     }
@@ -175,7 +179,7 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
         // Create MASSIVE horizontal slash effect
         createMassiveSlashEffect();
 
-        // Hit all enemies in the massive slash area
+        // Hit all enemies in the massive slash area - RESPECTS IMMUNITY FRAMES
         Vec3 userPos = user.position().add(0, user.getBbHeight() * 0.7, 0);
         Vec3 lookDir = user.getLookAngle();
         Vec3 rightDir = lookDir.cross(new Vec3(0, 1, 0)).normalize();
@@ -188,8 +192,8 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
             List<LivingEntity> targets = getTargetsInCustomHitbox(slashCenter, 2.0, 3.0, 2.0);
 
             for (LivingEntity target : targets) {
-                // Full power slash damage
-                hitTargetNoImmunity(target);
+                // Full power slash damage - RESPECTS IMMUNITY FRAMES
+                hitTarget(target);
 
                 // Strong sideways knockback based on position
                 Vec3 slashKnockback = rightDir.scale(knockback * (i > 0 ? 1 : -1) * 1.5);
@@ -251,6 +255,19 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
                     sidePos.x, sidePos.y, sidePos.z,
                     3, 0.2, 0.2, 0.2, 0.1);
         }
+    }
+
+    private void createDashImpactParticles(Vec3 impactPos) {
+        if (!(world instanceof ServerLevel serverLevel)) return;
+
+        // Flame burst at impact during dash
+        serverLevel.sendParticles(ParticleTypes.FLAME,
+                impactPos.x, impactPos.y + 1, impactPos.z,
+                8, 0.3, 0.3, 0.3, 0.15);
+
+        serverLevel.sendParticles(ParticleTypes.CRIT,
+                impactPos.x, impactPos.y + 1, impactPos.z,
+                5, 0.2, 0.2, 0.2, 0.1);
     }
 
     private void createMassiveSlashEffect() {
@@ -360,7 +377,7 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
         if (world instanceof ServerLevel serverLevel) {
             Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
-            // Massive finale explosion
+            // Finale explosion
             createFlameExplosion(userPos, 2.0f);
 
             // Extra dramatic effects
@@ -393,4 +410,5 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
             shouldPreventFallDamage = false; // Reset flag after use
         }
     }
+
 }
