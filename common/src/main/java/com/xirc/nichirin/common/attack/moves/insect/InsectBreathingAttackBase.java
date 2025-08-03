@@ -39,12 +39,20 @@ public abstract class InsectBreathingAttackBase extends AbstractBreathingAttack<
         int totalAttackTime = windup + duration;
         user.invulnerableTime = totalAttackTime;
 
+        System.out.println("DEBUG: Insect attack started - Original invTime: " + originalInvulnerableTime +
+                ", New invTime: " + user.invulnerableTime +
+                ", Total duration: " + totalAttackTime);
+
         // Call the default onStart method for specific attacks
         onStartInsectAttack();
     }
 
     @Override
     protected void onStop() {
+
+        System.out.println("DEBUG: Insect attack ending - Current invTime: " + user.invulnerableTime +
+                ", Restoring to: " + originalInvulnerableTime);
+
         // Restore original invulnerable time (usually 0)
         user.invulnerableTime = originalInvulnerableTime;
 
@@ -163,11 +171,14 @@ public abstract class InsectBreathingAttackBase extends AbstractBreathingAttack<
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDir = user.getLookAngle();
 
+        // Use ServerLevel's random instead of world.random to avoid threading issues
+        net.minecraft.util.RandomSource random = serverLevel.getRandom();
+
         // Create butterfly/insect particles around the user
         for (int i = 0; i < INSECT_PARTICLE_COUNT; i++) {
-            double offsetX = (world.random.nextDouble() - 0.5) * INSECT_PARTICLE_SPREAD;
-            double offsetY = world.random.nextDouble() * INSECT_PARTICLE_SPREAD;
-            double offsetZ = (world.random.nextDouble() - 0.5) * INSECT_PARTICLE_SPREAD;
+            double offsetX = (random.nextDouble() - 0.5) * INSECT_PARTICLE_SPREAD;
+            double offsetY = random.nextDouble() * INSECT_PARTICLE_SPREAD;
+            double offsetZ = (random.nextDouble() - 0.5) * INSECT_PARTICLE_SPREAD;
 
             Vec3 particlePos = userPos.add(offsetX, offsetY, offsetZ);
 
@@ -176,7 +187,7 @@ public abstract class InsectBreathingAttackBase extends AbstractBreathingAttack<
                     particlePos.x, particlePos.y, particlePos.z,
                     1, 0.1, 0.1, 0.1, 0.05);
 
-            if (world.random.nextBoolean()) {
+            if (random.nextBoolean()) {
                 serverLevel.sendParticles(ParticleTypes.PORTAL,
                         particlePos.x, particlePos.y, particlePos.z,
                         1, 0.1, 0.1, 0.1, 0.02);
@@ -248,11 +259,14 @@ public abstract class InsectBreathingAttackBase extends AbstractBreathingAttack<
     protected void createInsectSwarm(Vec3 center, float radius, int particleCount) {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
+        // Use ServerLevel's random instead of world.random to avoid threading issues
+        net.minecraft.util.RandomSource random = serverLevel.getRandom();
+
         for (int i = 0; i < particleCount; i++) {
             double angle = (2 * Math.PI * i) / particleCount;
             double x = center.x + Math.cos(angle) * radius;
             double z = center.z + Math.sin(angle) * radius;
-            double y = center.y + world.random.nextDouble() * 1.5;
+            double y = center.y + random.nextDouble() * 1.5;
 
             serverLevel.sendParticles(ParticleTypes.WITCH,
                     x, y, z, 1, 0.1, 0.1, 0.1, 0.05);
@@ -272,6 +286,9 @@ public abstract class InsectBreathingAttackBase extends AbstractBreathingAttack<
     protected void createPoisonBurst(Vec3 center, float intensity) {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
+        // Use ServerLevel's random instead of world.random to avoid threading issues
+        net.minecraft.util.RandomSource random = serverLevel.getRandom();
+
         int baseParticles = (int)(15 * intensity);
 
         // Central poison cloud
@@ -288,7 +305,7 @@ public abstract class InsectBreathingAttackBase extends AbstractBreathingAttack<
                 double angle = (2 * Math.PI * i) / ringParticles;
                 double x = center.x + Math.cos(angle) * ringRadius;
                 double z = center.z + Math.sin(angle) * ringRadius;
-                double y = center.y + world.random.nextDouble() * 2;
+                double y = center.y + random.nextDouble() * 2;
 
                 serverLevel.sendParticles(ParticleTypes.WITCH,
                         x, y, z, 2, 0.2, 0.2, 0.2, 0.15);

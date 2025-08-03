@@ -67,28 +67,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                         })
                 )
 
-                // Second Form: Bee Sting - Piercing dash (INDEX 1 in wheel)
-                .withMove(new MoveBuilder("bee_sting", "Bee Sting")
-                        .withAnimation("nichirin:bee_sting", 9)
-                        .withTiming(80, 6, 13) // 4 second cooldown, mobile attack
-                        .withDamage(8.0f) // Light damage per enemy hit
-                        .withDashSpeed(6.0f) // Fast dash forward (was 12.0f)
-                        .withRange(6.0f) // Dash distance (was 12.0f)
-                        .withKnockback(0.1f) // Very light knockback
-                        .withBreathCost(20.0f) // Lower cost for mobility
-                        .withHitStun(10) // Short stun for crowd poke
-                        .withHitboxSize(2.0f) // Line hitbox
-                        .withAction(player -> {
-                            BeeStingAttack attack = new BeeStingAttack();
-                            InsectBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) {
-                                attack.configure(moveset.getMove(1));
-                            }
-                            MoveExecutor.executeAttack(player, attack, "insect_breathing", "bee_sting");
-                        })
-                )
-
-                // Third Form: Dragonfly - Multi-hit lock-on (INDEX 2 in wheel)
+                // Third Form: Dragonfly - Multi-hit lock-on (INDEX 1 in wheel)
                 .withMove(new MoveBuilder("dragonfly", "Dragonfly")
                         .withAnimation("nichirin:dragonfly", 12)
                         .withTiming(180, 15, 30) // 9 second cooldown, root during windup
@@ -102,13 +81,13 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                             DragonflyAttack attack = new DragonflyAttack();
                             InsectBreathingMoveset moveset = getCurrentMoveset();
                             if (moveset != null) {
-                                attack.configure(moveset.getMove(2));
+                                attack.configure(moveset.getMove(1));
                             }
                             MoveExecutor.executeAttack(player, attack, "insect_breathing", "dragonfly");
                         })
                 )
 
-                // Fourth Form: Centipede - Zigzag dash finisher (INDEX 3 in wheel)
+                // Fourth Form: Centipede - Zigzag dash finisher (INDEX 2 in wheel)
                 .withMove(new MoveBuilder("centipede", "Centipede")
                         .withAnimation("nichirin:centipede", 15)
                         .withTiming(240, 20, 50) // 12 second cooldown, complex movement
@@ -123,7 +102,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                             CentipedeAttack attack = new CentipedeAttack();
                             InsectBreathingMoveset moveset = getCurrentMoveset();
                             if (moveset != null) {
-                                attack.configure(moveset.getMove(3));
+                                attack.configure(moveset.getMove(2));
                             }
                             MoveExecutor.executeAttack(player, attack, "insect_breathing", "centipede");
                         })
@@ -132,14 +111,14 @@ public class InsectBreathingMoveset extends AbstractMoveset {
 
     @Override
     public int getMoveCount() {
-        return 4; // Four forms in attack wheel
+        return 3; //three forms in attack wheel
     }
 
     @Override
     public boolean handleRightClick(Player player, boolean isCrouching) {
         if (isCrouching) {
             // Crouch + Right-click: Poison Dash
-            return executePoisonDash(player);
+            return executeBeeSting(player);
         } else {
             // Regular Right-click: Quick Sting
             return executeQuickSting(player);
@@ -183,35 +162,35 @@ public class InsectBreathingMoveset extends AbstractMoveset {
         return true;
     }
 
-    private boolean executePoisonDash(Player player) {
-        // Check breath cost for Poison Dash
-        float breathCost = 15.0f;
+    private boolean executeBeeSting(Player player) {
+        // Check breath cost for Bee Sting
+        float breathCost = 20.0f;
 
         // Use atomic consume - no separate check needed
         if (BreathingManager.consume(player, breathCost)) {
             // Breath was successfully consumed - execute attack
-            PoisonDashAttack attack = new PoisonDashAttack();
+            BeeStingAttack attack = new BeeStingAttack();
 
-            MoveConfiguration tempConfig = new MoveBuilder("poison_dash", "Poison Dash")
-                    .withAnimation("nichirin:poison_dash", 8)
-                    .withTiming(0, 4, 10) // No cooldown, quick dash
-                    .withDamage(7.0f) // Light damage + poison trail
-                    .withDashSpeed(3.0f) // Quick short dash (was 6.0f)
-                    .withRange(3.0f)
+            MoveConfiguration tempConfig = new MoveBuilder("bee_sting", "Bee Sting")
+                    .withAnimation("nichirin:bee_sting", 9)
+                    .withTiming(0, 6, 14)
+                    .withDamage(8.0f) // Light damage per enemy hit
+                    .withDashSpeed(6.0f) // Fast dash forward
+                    .withRange(6.0f) // Dash distance
                     .withKnockback(0.1f) // Very light knockback
                     .withBreathCost(breathCost)
-                    .withHitStun(10)
-                    .withHitboxSize(2.0f) // Trail hitbox
+                    .withHitStun(10) // Short stun for crowd poke
+                    .withHitboxSize(2.0f) // Line hitbox
                     .build();
 
             attack.configure(tempConfig);
-            MoveExecutor.executeAttack(player, attack, "insect_breathing", "poison_dash");
+            MoveExecutor.executeAttack(player, attack, "insect_breathing", "bee_sting");
 
             onMovePerformed(player, -2, true); // Use -2 to indicate crouch right-click move
         } else {
             // Breath consumption failed - show error message
             player.displayClientMessage(
-                    Component.literal("Not enough breath for Poison Dash!")
+                    Component.literal("Not enough breath for Bee Sting!")
                             .withStyle(style -> style.withColor(0xFF3333)), // Red for no breath
                     true
             );
