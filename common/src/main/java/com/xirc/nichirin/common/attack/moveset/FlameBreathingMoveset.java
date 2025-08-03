@@ -46,26 +46,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                 .withDamageMultiplier(1.1f) // Slight damage boost for slugger style
                 .withSpeedMultiplier(0.9f) // Slightly slower but more powerful
 
-                // First Form: Unknowing Fire - Quick dash strike (INDEX 0 in wheel)
-                .withMove(new MoveBuilder("unknowing_fire", "Unknowing Fire")
-                        .withAnimation("nichirin:unknowing_fire", 9)
-                        .withTiming(120, 8, 20) // 6 second cooldown, quick execution
-                        .withDamage(18.0f) // High damage single hit
-                        .withTeleportDistance(12.0f) // 12 block dash
-                        .withRange(3.0f) // Close range after dash
-                        .withKnockback(0.4f)
-                        .withBreathCost(25.0f)
-                        .withHitStun(25)
-                        .withHitboxSize(2.0f)
-                        .withAction(player -> {
-                            UnknowingFireAttack attack = new UnknowingFireAttack();
-                            FlameBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) {
-                                attack.configure(moveset.getMove(0));
-                            }
-                            MoveExecutor.executeAttack(player, attack, "flame_breathing", "unknowing_fire");
-                        })
-                )
+                //skip unknowing fire (index 0)
 
                 // Second Form: Rising Scorching Sun - Upward arc (INDEX 1 in wheel)
                 .withMove(new MoveBuilder("rising_scorching_sun", "Scorching Sun")
@@ -81,7 +62,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                             RisingScorchingSunAttack attack = new RisingScorchingSunAttack();
                             FlameBreathingMoveset moveset = getCurrentMoveset();
                             if (moveset != null) {
-                                attack.configure(moveset.getMove(1));
+                                attack.configure(moveset.getMove(0));
                             }
                             MoveExecutor.executeAttack(player, attack, "flame_breathing", "rising_scorching_sun");
                         })
@@ -101,7 +82,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                             BlazingUniverseAttack attack = new BlazingUniverseAttack();
                             FlameBreathingMoveset moveset = getCurrentMoveset();
                             if (moveset != null) {
-                                attack.configure(moveset.getMove(2));
+                                attack.configure(moveset.getMove(1));
                             }
                             MoveExecutor.executeAttack(player, attack, "flame_breathing", "blazing_universe");
                         })
@@ -121,7 +102,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                             BloomingFlameUndulationAttack attack = new BloomingFlameUndulationAttack();
                             FlameBreathingMoveset moveset = getCurrentMoveset();
                             if (moveset != null) {
-                                attack.configure(moveset.getMove(3));
+                                attack.configure(moveset.getMove(2));
                             }
                             MoveExecutor.executeAttack(player, attack, "flame_breathing", "blooming_flame_undulation");
                         })
@@ -131,18 +112,18 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("flame_tiger", "Flame Tiger")
                         .withAnimation("nichirin:flame_tiger", 11)
                         .withTiming(120, 10, 40) // 6 second cooldown, dash duration
-                        .withDamage(8.0f) // Lower per hit, but many hits
+                        .withDamage(24.0f)
                         .withDashSpeed(8.0f) // 8 block dash
                         .withRange(8.0f) // Dash distance
                         .withKnockback(0.2f) // Light knockback to keep enemies close
-                        .withBreathCost(30.0f)
+                        .withBreathCost(50.0f)
                         .withHitStun(10) // Short stun for combo potential
                         .withHitboxSize(2.0f)
                         .withAction(player -> {
                             FlameTigerAttack attack = new FlameTigerAttack();
                             FlameBreathingMoveset moveset = getCurrentMoveset();
                             if (moveset != null) {
-                                attack.configure(moveset.getMove(4));
+                                attack.configure(moveset.getMove(3));
                             }
                             MoveExecutor.executeAttack(player, attack, "flame_breathing", "flame_tiger");
                         })
@@ -152,18 +133,18 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("rengoku", "Rengoku")
                         .withAnimation("nichirin:rengoku", 20)
                         .withTiming(600, 80, 60) // 30 second cooldown, 4s windup, dragon dash
-                        .withDamage(120.0f) // Massive damage ultimate
+                        .withDamage(100.0f) // Massive damage
                         .withDashSpeed(25.0f) // Very fast dash
                         .withRange(20.0f) // Long range dash
-                        .withKnockback(2.5f) // Massive knockback
-                        .withBreathCost(80.0f) // Most expensive ultimate
+                        .withKnockback(0f) // Massive knockback
+                        .withBreathCost(100.0f) // Most expensive ultimate
                         .withHitStun(80) // 4 second stun
                         .withHitboxSize(4.0f) // Large dragon hitbox
                         .withAction(player -> {
                             RengokuAttack attack = new RengokuAttack();
                             FlameBreathingMoveset moveset = getCurrentMoveset();
                             if (moveset != null) {
-                                attack.configure(moveset.getMove(5));
+                                attack.configure(moveset.getMove(4));
                             }
                             MoveExecutor.executeAttack(player, attack, "flame_breathing", "rengoku");
                         })
@@ -172,7 +153,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
 
     @Override
     public int getMoveCount() {
-        return 6; // 6 forms in the attack wheel
+        return 5; // 6 forms in the attack wheel
     }
 
     @Override
@@ -201,7 +182,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                     .withTiming(0, 5, 18) // No cooldown, quick windup, 6 slashes over 18 ticks
                     .withDamage(6.0f) // 6 slashes, first hit full damage, rest 30%
                     .withRange(4.0f) // Medium range
-                    .withKnockback(0.2f) // Light knockback for combos
+                    .withKnockback(0f)
                     .withBreathCost(breathCost)
                     .withHitStun(8) // Short stun for combo potential
                     .withHitboxSize(2.0f)
@@ -225,17 +206,17 @@ public class FlameBreathingMoveset extends AbstractMoveset {
 
     private boolean executeUnknowingFire(Player player) {
         // Check breath cost for Unknowing Fire (halved to compensate for doubling bug)
-        float breathCost = 15.0f; // Will become 30 after doubling (same as wheel version)
+        float breathCost = 20.0f;
+
 
         // Use atomic consume - no separate check needed
         if (BreathingManager.consume(player, breathCost)) {
             // Breath was successfully consumed - execute attack
             UnknowingFireAttack attack = new UnknowingFireAttack();
 
-            // Create temporary config for Unknowing Fire (similar to wheel version but faster)
             MoveConfiguration tempConfig = new MoveBuilder("unknowing_fire_quick", "Unknowing Fire")
                     .withAnimation("nichirin:unknowing_fire", 9)
-                    .withTiming(0, 6, 15) // No cooldown, quicker windup for right-click version
+                    .withTiming(0, 6, 15) // No cooldown
                     .withDamage(16.0f) // Slightly less than wheel version (18.0f)
                     .withRange(3.0f) // Close range after dash
                     .withKnockback(0.4f)

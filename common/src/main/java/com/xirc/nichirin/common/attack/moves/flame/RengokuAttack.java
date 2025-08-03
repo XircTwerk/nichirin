@@ -1,6 +1,5 @@
 package com.xirc.nichirin.common.attack.moves.flame;
 
-import com.xirc.nichirin.common.util.TeleportUtil;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -25,13 +24,20 @@ import java.util.Set;
  * - Summons a flaming dragon effect during the dash
  * - Creates massive ground damage in its wake
  * - Ultimate technique with massive damage and range
+ * - SUPER FAST dash with constant damage along entire path
  *
  * All configuration comes from the moveset builder.
  * This class handles only the behavior and visual/audio effects.
  */
 public class RengokuAttack extends FlameBreathingAttackBase {
 
+    private static final int DASH_DURATION = 5; // Fast dragon dash - 5 ticks
+    private static final float DASH_DISTANCE = 24.0f; // 24 block dash distance
+
     private boolean hasExecuted = false;
+    private boolean isDashing = false;
+    private int dashTicks = 0;
+    private Vec3 dashDirection;
     private Set<LivingEntity> hitEntities = new HashSet<>();
 
     public RengokuAttack() {
@@ -42,7 +48,12 @@ public class RengokuAttack extends FlameBreathingAttackBase {
     @Override
     protected void onStart() {
         hasExecuted = false;
+        isDashing = false;
+        dashTicks = 0;
         hitEntities.clear();
+
+        // Set dash direction in onStart, not during perform
+        dashDirection = user.getLookAngle().normalize();
 
         // Epic windup effects
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
@@ -73,18 +84,27 @@ public class RengokuAttack extends FlameBreathingAttackBase {
             return;
         }
 
-        // Execute the ultimate dragon dash once after windup completes
+        // Start the SUPER FAST dragon dash once after windup completes
         if (!hasExecuted && tickCount == windup + 1) {
             // Remove invulnerability now that dash begins
             user.setInvulnerable(false);
 
-            executeRengokuDash();
+            startFastDash();
             hasExecuted = true;
+            isDashing = true;
+            dashDirection = user.getLookAngle().normalize();
         }
 
-        // Continue hitting enemies along the path during the entire dash duration
-        if (hasExecuted && tickCount > windup && tickCount < windup + duration) {
-            continueFlameWake();
+        // Continue fast dashing and hitting enemies along the path
+        if (isDashing && dashTicks < DASH_DURATION) {
+            continueFastDash();
+            dashTicks++;
+        }
+
+        // End dash with massive explosion
+        if (isDashing && dashTicks >= DASH_DURATION) {
+            endFastDash();
+            isDashing = false;
         }
     }
 
@@ -114,82 +134,63 @@ public class RengokuAttack extends FlameBreathingAttackBase {
                 userPos.x, userPos.y, userPos.z, 20, 0.5, 2.0, 0.5, 0.2);
     }
 
-    private void executeRengokuDash() {
-        // Store initial position for wake effect
-        Vec3 startPos = user.position();
+    private void startFastDash() {
+        // Create dragon emergence effect
+        createDragonEmergenceEffect();
 
-        // Use dashSpeed from configuration (set by moveset)
-        float dashDistance = range; // Use full range for ultimate
+        // Dragon roar
+        world.playSound(null, user.getX(), user.getY(), user.getZ(),
+                SoundEvents.ENDER_DRAGON_GROWL, SoundSource.PLAYERS, 3.0f, 0.4f);
 
-        // Configure ultimate dash with dragon effects
-        TeleportUtil.TeleportOptions options = new TeleportUtil.TeleportOptions()
-                .withParticles(ParticleTypes.FLAME, ParticleTypes.EXPLOSION)
-                .withTrail(ParticleTypes.FLAME, 8.0f) // Very dense dragon trail
-                .withSounds(SoundEvents.ENDER_DRAGON_FLAP, SoundEvents.GENERIC_EXPLODE)
-                .withDamageCallback(target -> {
-                    // Hit targets along the dragon's path
-                    if (!hitEntities.contains(target)) {
-                        hitTargetUltimate(target);
-                        hitEntities.add(target);
-                    }
-                });
-
-        // Custom sound properties
-        options.soundVolume = 2.5f;
-        options.soundPitch = 0.4f;
-        options.departureParticleCount = 200;
-        options.arrivalParticleCount = 200;
-
-        // Pre-dash: Create dragon emergence effect
-        options.preTeleport = entity -> {
-            createDragonEmergenceEffect();
-            // Dragon roar
-            world.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
-                    SoundEvents.ENDER_DRAGON_GROWL, SoundSource.PLAYERS, 3.0f, 0.4f);
-        };
-
-        // Post-dash: Massive explosion and ground carving
-        options.postTeleport = entity -> {
-            createGroundCarvingEffect();
-            createMassiveExplosion();
-
-            // Hit all enemies in the large area at destination
-            List<LivingEntity> finalTargets = getTargetsInHitbox(entity.position());
-            for (LivingEntity target : finalTargets) {
-                if (!hitEntities.contains(target)) {
-                    hitTargetUltimate(target);
-                    hitEntities.add(target);
-                }
-            }
-        };
-
-        // Perform the ultimate dragon dash
-        boolean success = TeleportUtil.teleportInDirection(user, dashDistance, options);
-
-        // If dash was blocked, still create effects at current position
-        if (!success) {
-            createGroundCarvingEffect();
-            createMassiveExplosion();
-        }
+        // Fast dash movement - cover 24 blocks in 5 ticks
+        float dashSpeed = DASH_DISTANCE / DASH_DURATION;
+        Vec3 dashVelocity = dashDirection.scale(dashSpeed);
+        user.setDeltaMovement(dashVelocity);
+        user.hurtMarked = true;
+        user.hasImpulse = true;
     }
 
-    private void continueFlameWake() {
-        // Create continuous flame wake behind the user
-        Vec3 userPos = user.position();
-        Vec3 behind = userPos.subtract(user.getDeltaMovement().normalize().scale(2));
+    private void continueFastDash() {
+        // Maintain fast dash velocity
+        float dashSpeed = DASH_DISTANCE / DASH_DURATION;
+        Vec3 dashVelocity = dashDirection.scale(dashSpeed);
+        user.setDeltaMovement(dashVelocity);
+        user.hurtMarked = true;
 
-        createFlameTrail(behind, userPos);
+        // Create intense dragon trail effects
+        createIntenseDragonTrailEffect();
 
-        // Continuous area damage around user
-        List<LivingEntity> nearbyTargets = getTargetsInCustomHitbox(
-                userPos.add(0, 1, 0), 6.0, 3.0, 6.0);
+        // Hit enemies along the dragon's path with large hitbox
+        List<LivingEntity> targets = getTargetsInCustomHitbox(
+                user.position().add(0, user.getBbHeight() / 2, 0),
+                8.0, 4.0, 8.0); // Large hitbox for ultimate attack
 
-        for (LivingEntity target : nearbyTargets) {
+        for (LivingEntity target : targets) {
             if (!hitEntities.contains(target)) {
                 hitTargetUltimate(target);
                 hitEntities.add(target);
             }
         }
+
+        // Create ground carving effect at current position
+        createGroundCarvingEffect();
+    }
+
+    private void endFastDash() {
+        // Massive explosion at end
+        createMassiveExplosion();
+
+        // Hit all enemies in final blast area
+        List<LivingEntity> finalTargets = getTargetsInHitbox(user.position());
+        for (LivingEntity target : finalTargets) {
+            if (!hitEntities.contains(target)) {
+                hitTargetUltimate(target);
+                hitEntities.add(target);
+            }
+        }
+
+        // Stop movement
+        user.setDeltaMovement(Vec3.ZERO);
     }
 
     private void createDragonEmergenceEffect() {
@@ -223,26 +224,62 @@ public class RengokuAttack extends FlameBreathingAttackBase {
         }
     }
 
+    private void createIntenseDragonTrailEffect() {
+        if (!(world instanceof net.minecraft.server.level.ServerLevel serverLevel)) return;
+
+        Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
+
+        // INTENSE dragon flame trail - much more dramatic than normal attacks
+        for (int i = 1; i <= 15; i++) { // Longer trail for dragon
+            Vec3 trailPos = userPos.subtract(dashDirection.scale(i * 0.8));
+
+            // Main dragon body flames - much more intense
+            serverLevel.sendParticles(ParticleTypes.FLAME,
+                    trailPos.x, trailPos.y, trailPos.z,
+                    12, 0.8, 0.8, 0.8, 0.3);
+
+            // Dragon soul fire
+            serverLevel.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
+                    trailPos.x, trailPos.y + 1, trailPos.z,
+                    6, 0.5, 0.5, 0.5, 0.2);
+
+            // Explosion particles for dragon power
+            if (i % 3 == 0) {
+                serverLevel.sendParticles(ParticleTypes.EXPLOSION,
+                        trailPos.x, trailPos.y, trailPos.z,
+                        1, 0, 0, 0, 0);
+            }
+        }
+
+        // Dragon wings effect
+        Vec3 rightDir = dashDirection.cross(new Vec3(0, 1, 0)).normalize();
+        for (int side = -1; side <= 1; side += 2) {
+            Vec3 wingPos = userPos.add(rightDir.scale(side * 3.0));
+            serverLevel.sendParticles(ParticleTypes.FLAME,
+                    wingPos.x, wingPos.y, wingPos.z,
+                    10, 0.6, 0.6, 0.6, 0.25);
+        }
+    }
+
     private void createGroundCarvingEffect() {
         if (!(world instanceof net.minecraft.server.level.ServerLevel serverLevel)) return;
 
         Vec3 userPos = user.position();
-        Vec3 lookDir = user.getLookAngle();
 
-        // Create carved ground effect behind the user
-        for (int i = 0; i < 20; i++) {
-            Vec3 groundPos = userPos.subtract(lookDir.scale(i));
+        // Create carved ground effect at current position
+        serverLevel.sendParticles(ParticleTypes.FLAME,
+                userPos.x, userPos.y, userPos.z,
+                15, 1.5, 0.5, 1.5, 0.2);
 
-            // Ground fire
-            serverLevel.sendParticles(ParticleTypes.FLAME,
-                    groundPos.x, groundPos.y, groundPos.z,
-                    10, 1.0, 0.5, 1.0, 0.1);
+        // Lava particles for carved ground
+        serverLevel.sendParticles(ParticleTypes.LAVA,
+                userPos.x, userPos.y, userPos.z,
+                8, 0.8, 0.3, 0.8, 0.1);
 
-            // Lava particles for carved ground
-            serverLevel.sendParticles(ParticleTypes.LAVA,
-                    groundPos.x, groundPos.y, groundPos.z,
-                    5, 0.5, 0.2, 0.5, 0.05);
-        }
+        // Ground explosion
+        serverLevel.sendParticles(ParticleTypes.EXPLOSION,
+                userPos.x, userPos.y, userPos.z,
+                1, 0, 0, 0, 0);
     }
 
     private void createMassiveExplosion() {
@@ -251,18 +288,18 @@ public class RengokuAttack extends FlameBreathingAttackBase {
         Vec3 pos = user.position();
 
         // Multiple explosion particles
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 8; i++) {
             serverLevel.sendParticles(ParticleTypes.EXPLOSION_EMITTER,
                     pos.x, pos.y + 1 + i, pos.z,
                     1, 0, 0, 0, 0);
         }
 
         // Massive flame burst
-        createFlameExplosion(pos.add(0, 2, 0), 4.0f);
+        createFlameExplosion(pos.add(0, 2, 0), 5.0f); // Bigger explosion
 
         // Ground shockwave
-        for (int radius = 1; radius <= 10; radius++) {
-            createFlameCircle(pos, radius * 2, radius * 4);
+        for (int radius = 1; radius <= 15; radius++) {
+            createFlameCircle(pos, radius * 2, radius * 6);
         }
 
         // Explosion sound
@@ -272,7 +309,7 @@ public class RengokuAttack extends FlameBreathingAttackBase {
     }
 
     private void hitTargetUltimate(LivingEntity target) {
-        // Use base hit method for damage and fire effect
+        // Use base hit method for damage and fire effect - RESPECTS IMMUNITY FRAMES
         hitTarget(target);
 
         // Ultimate-specific effects
@@ -284,10 +321,10 @@ public class RengokuAttack extends FlameBreathingAttackBase {
         target.push(knockbackDir.x * knockback, 1.0, knockbackDir.z * knockback);
 
         // Set on fire for much longer
-        target.setSecondsOnFire(6);
+        target.setSecondsOnFire(8); // Longer fire for ultimate
 
         // Massive particle explosion per target
-        createFlameExplosion(target.position().add(0, 1, 0), 2.0f);
+        createFlameExplosion(target.position().add(0, 1, 0), 3.0f);
     }
 
     @Override
