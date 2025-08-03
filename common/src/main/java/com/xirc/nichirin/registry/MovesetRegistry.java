@@ -1,8 +1,7 @@
 package com.xirc.nichirin.registry;
 
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
-import com.xirc.nichirin.common.attack.moveset.FlameBreathingMoveset;
-import com.xirc.nichirin.common.attack.moveset.ThunderBreathingMoveset;
+import com.xirc.nichirin.common.attack.moveset.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -119,5 +118,6 @@ public interface MovesetRegistry {
         // Register Thunder Breathing moveset
         registerMoveset("thunder_breathing", ThunderBreathingMoveset::new);
         registerMoveset("flame_breathing", FlameBreathingMoveset::new);
+        registerMoveset("insect_breathing", InsectBreathingMoveset::new);
     }
 }

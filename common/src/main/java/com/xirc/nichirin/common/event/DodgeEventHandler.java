@@ -11,13 +11,8 @@ public class DodgeEventHandler {
         // Register damage event with debug
         EntityEvent.LIVING_HURT.register((entity, damageSource, amount) -> {
             if (entity instanceof Player player) {
-                System.out.println("DEBUG: Player " + player.getName().getString() +
-                        " taking damage: " + amount + " from " + damageSource.getMsgId() +
-                        ", immunity: " + player.invulnerableTime +
-                        ", is dodging: " + Dodge.isPlayerDodging(player));
 
                 if (Dodge.isPlayerDodging(player)) {
-                    System.out.println("DEBUG: Dodge detected, marking successful and canceling damage");
                     Dodge.markDodgeSuccessful(player);
                     return EventResult.interruptFalse(); // Cancel damage
                 }
