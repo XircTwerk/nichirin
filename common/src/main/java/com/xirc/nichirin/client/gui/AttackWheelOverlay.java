@@ -19,6 +19,7 @@ import java.util.List;
  * Simplified attack wheel overlay with clean click detection
  * FIXED SCALE: Always renders at GUI scale 2 regardless of user's GUI scale setting
  * FIXED: Square center for better icon display, reliable click detection
+ * FIXED: Connected divider lines and proper layering (lines -> square/outline -> icon)
  */
 public class AttackWheelOverlay {
 
@@ -154,6 +155,9 @@ public class AttackWheelOverlay {
 
                 drawSegment(guiGraphics, scaledCenterX, scaledCenterY, startAngle, endAngle, isHovered);
 
+                // Draw divider line
+                drawDividerLine(guiGraphics, scaledCenterX, scaledCenterY, startAngle);
+
                 // Draw move name
                 float midAngle = startAngle + segmentAngle / 2;
                 int textRadius = (INNER_RADIUS + OUTER_RADIUS) / 2;
@@ -231,6 +235,44 @@ public class AttackWheelOverlay {
         segmentIndex = Math.max(0, Math.min(segmentIndex, segments.size() - 1));
 
         currentlyHoveredMove = segmentIndex;
+    }
+
+    private void drawDividerLine(GuiGraphics guiGraphics, int centerX, int centerY, float angle) {
+        float angleRad = (float) Math.toRadians(angle);
+
+        // Calculate where the line intersects the square's edge
+        int halfSquare = CENTER_SQUARE_SIZE / 2;
+
+        // For a square, we need to find which edge the line hits based on the angle
+        double absX = Math.abs(Math.cos(angleRad));
+        double absY = Math.abs(Math.sin(angleRad));
+
+        int xStart, yStart;
+        if (absX > absY) {
+            // Line hits left or right edge of square
+            xStart = centerX + (Math.cos(angleRad) > 0 ? halfSquare : -halfSquare);
+            yStart = centerY + (int)(halfSquare * Math.tan(angleRad) * (Math.cos(angleRad) > 0 ? 1 : -1));
+        } else {
+            // Line hits top or bottom edge of square
+            yStart = centerY + (Math.sin(angleRad) > 0 ? halfSquare : -halfSquare);
+            xStart = centerX + (int)(halfSquare / Math.tan(angleRad) * (Math.sin(angleRad) > 0 ? 1 : -1));
+        }
+
+        // End point at outer circle
+        int xEnd = centerX + (int)(OUTER_RADIUS * Math.cos(angleRad));
+        int yEnd = centerY + (int)(OUTER_RADIUS * Math.sin(angleRad));
+
+        // Draw the line
+        int dividerColor = 0xFF1A1A1A; // Dark gray
+        int steps = Math.max(Math.abs(xEnd - xStart), Math.abs(yEnd - yStart));
+
+        for (int i = 0; i <= steps; i++) {
+            float t = (float) i / steps;
+            int x = (int) (xStart + t * (xEnd - xStart));
+            int y = (int) (yStart + t * (yEnd - yStart));
+
+            guiGraphics.fill(x, y, x + 1, y + 1, dividerColor);
+        }
     }
 
     /**
@@ -392,33 +434,6 @@ public class AttackWheelOverlay {
         }
 
         tesselator.end();
-
-        // Draw divider line
-        drawDividerLine(guiGraphics, centerX, centerY, startAngle);
-    }
-
-    private void drawDividerLine(GuiGraphics guiGraphics, int centerX, int centerY, float angle) {
-        float angleRad = (float) Math.toRadians(angle);
-
-        // Calculate start and end points of the divider line
-        int xInner = centerX + (int)(INNER_RADIUS * Math.cos(angleRad));
-        int yInner = centerY + (int)(INNER_RADIUS * Math.sin(angleRad));
-        int xOuter = centerX + (int)(OUTER_RADIUS * Math.cos(angleRad));
-        int yOuter = centerY + (int)(OUTER_RADIUS * Math.sin(angleRad));
-
-        // Draw a thin line using GuiGraphics (which respects our scaling)
-        int dividerColor = 0xFF1A1A1A; // Dark gray
-
-        // Draw the line by interpolating between inner and outer points
-        int steps = Math.max(OUTER_RADIUS - INNER_RADIUS, 1);
-        for (int i = 0; i <= steps; i++) {
-            float t = (float) i / steps;
-            int x = (int) (xInner + t * (xOuter - xInner));
-            int y = (int) (yInner + t * (yOuter - yInner));
-
-            // Draw a single pixel for a thin line
-            guiGraphics.fill(x, y, x + 1, y + 1, dividerColor);
-        }
     }
 
     private void drawCircle(GuiGraphics guiGraphics, int centerX, int centerY, int radius, float r, float g, float b, float a) {
