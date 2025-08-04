@@ -198,7 +198,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                 .withDamage(16.0f)
                 .withRange(3.0f)
                 .withKnockback(0.4f)
-                .withBreathCost(20.0f) // System will consume this automatically
+                .withBreathCost(40.0f)
                 .withHitStun(20)
                 .withHitboxSize(2.0f)
                 .build();

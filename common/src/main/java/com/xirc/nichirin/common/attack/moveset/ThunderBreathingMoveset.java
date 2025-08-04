@@ -182,7 +182,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 .withDamage(10.5f)
                 .withTeleportDistance(12.0f)
                 .withKnockback(0.2f)
-                .withBreathCost(15.0f) // System will consume this automatically (was 7.5f)
+                .withBreathCost(15.0f)
                 .withHitStun(10)
                 .withHitboxSize(1.5f)
                 .build();

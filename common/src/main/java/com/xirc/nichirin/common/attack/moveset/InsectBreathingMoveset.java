@@ -135,7 +135,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                 .withDamage(9.0f)
                 .withRange(4.0f)
                 .withKnockback(0f)
-                .withBreathCost(5.0f) // System will consume this automatically
+                .withBreathCost(10.0f) // System will consume this automatically
                 .withHitStun(15)
                 .withHitboxSize(1.5f)
                 .build();
@@ -157,7 +157,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                 .withDashSpeed(6.0f)
                 .withRange(6.0f)
                 .withKnockback(0.1f)
-                .withBreathCost(20.0f) // System will consume this automatically
+                .withBreathCost(40.0f)
                 .withHitStun(10)
                 .withHitboxSize(2.0f)
                 .build();
