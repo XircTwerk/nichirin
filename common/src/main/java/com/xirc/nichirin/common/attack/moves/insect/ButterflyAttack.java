@@ -43,6 +43,10 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
         secondDashExecuted = false;
         startPosition = user.position();
 
+        // DON'T set dash direction here - we'll capture it when the dash actually executes
+        // This allows player to adjust aim during the leap phase
+        System.out.println("DEBUG: Attack started, dash direction will be captured later");
+
         // Make user invulnerable during attack
         wasInvulnerable = user.isInvulnerable();
         user.setInvulnerable(true);
@@ -90,12 +94,13 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
         }
     }
 
-    // Removed findClosestTarget() method since we don't need it anymore
-
     private void createDashChargeEffect() {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
+
+        // Use ServerLevel's random instead of world.random to avoid threading issues
+        net.minecraft.util.RandomSource random = serverLevel.getRandom();
 
         // Create butterfly gathering effect
         for (int i = 0; i < 12; i++) {
@@ -114,21 +119,24 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
                         x, y, z, 1, 0.02, 0.02, 0.02, 0.01);
             }
         }
+
+        // FIXED: Remove direction indicator from charging since direction isn't set yet
+        // Player can aim during the leap phase
     }
 
     private void executeInitialLeap() {
         System.out.println("DEBUG: executeInitialLeap() called");
 
-        // Store dash direction for later use
-        Vec3 lookDirection = user.getLookAngle();
-        dashDirection = new Vec3(lookDirection.x, 0, lookDirection.z).normalize();
-        System.out.println("DEBUG: Stored dash direction: " + dashDirection);
-
-        // Leap upward AND slightly forward
+        // For the leap, just go straight up with minimal forward movement
+        // Don't commit to a direction yet - player can still aim during leap
         double upwardVelocity = 0.8; // Perfect height as tested
-        double initialForwardVelocity = 0.3; // Small forward momentum during leap
+        double initialForwardVelocity = 0.1; // Very minimal forward momentum during leap
 
-        Vec3 forwardComponent = dashDirection.scale(initialForwardVelocity);
+        // Use current look direction for minimal forward movement during leap
+        Vec3 currentLookDirection = user.getLookAngle();
+        Vec3 horizontalDirection = new Vec3(currentLookDirection.x, 0, currentLookDirection.z).normalize();
+
+        Vec3 forwardComponent = horizontalDirection.scale(initialForwardVelocity);
         user.setDeltaMovement(forwardComponent.x, upwardVelocity, forwardComponent.z);
         System.out.println("DEBUG: Leap velocity set: " + user.getDeltaMovement());
 
@@ -148,9 +156,17 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
     private void executeForwardDash() {
         System.out.println("DEBUG: executeForwardDash() called");
 
-        // Copy the dash mechanism from PoisonDashAttack
-        // Set dash velocity like Poison Dash does
-        Vec3 dashVelocity = dashDirection.scale(3.0); // Use the same dash speed as Poison Dash
+        // CAPTURE DASH DIRECTION NOW - when the dash actually executes
+        // This allows player to aim during the leap phase
+        Vec3 currentLookDirection = user.getLookAngle();
+        dashDirection = new Vec3(currentLookDirection.x, 0, currentLookDirection.z).normalize();
+        System.out.println("DEBUG: Dash direction captured at dash time: " + dashDirection);
+
+        // Use teleportDistance as dash speed (like the builder config shows)
+        float actualDashSpeed = (dashSpeed != null) ? dashSpeed : 3.0f;
+        System.out.println("DEBUG: dashSpeed = " + dashSpeed + ", using actualDashSpeed = " + actualDashSpeed);
+
+        Vec3 dashVelocity = dashDirection.scale(actualDashSpeed);
         user.setDeltaMovement(dashVelocity);
         user.hurtMarked = true;
         user.hasImpulse = true;
@@ -199,15 +215,18 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
+        // Use ServerLevel's random instead of world.random to avoid threading issues
+        net.minecraft.util.RandomSource random = serverLevel.getRandom();
+
         // Butterfly burst at arrival
         for (int i = 0; i < 20; i++) {
             double angle = (i / 20.0) * 2 * Math.PI;
             double radius = 1.5;
-            double speed = 0.3 + world.random.nextDouble() * 0.2;
+            double speed = 0.3 + random.nextDouble() * 0.2;
 
             double x = userPos.x + Math.cos(angle) * radius;
             double z = userPos.z + Math.sin(angle) * radius;
-            double y = userPos.y + world.random.nextDouble() * 2;
+            double y = userPos.y + random.nextDouble() * 2;
 
             serverLevel.sendParticles(ParticleTypes.WITCH,
                     x, y, z, 1, speed, speed, speed, 0.1);
