@@ -202,10 +202,18 @@ public class MoveExecutor {
      */
     public static void tickAttacks(Player player) {
         var attacks = activeAttacks.get(player);
-        if (attacks != null) {
-            // Create a copy to avoid concurrent modification
-            List<Object> attacksCopy = new ArrayList<>(attacks);
+        if (attacks != null && !attacks.isEmpty()) {  // Add !attacks.isEmpty() check
+            // Create a copy to avoid concurrent modification - with null safety
+            List<Object> attacksCopy;
             List<Object> toRemove = new ArrayList<>();
+
+            // Thread-safe copy creation
+            synchronized (attacks) {
+                if (attacks.isEmpty()) {
+                    return; // Exit early if empty
+                }
+                attacksCopy = new ArrayList<>(attacks);
+            }
 
             for (Object attack : attacksCopy) {
                 try {
@@ -221,12 +229,16 @@ public class MoveExecutor {
                 }
             }
 
-            // Remove all inactive attacks
-            attacks.removeAll(toRemove);
+            // Remove all inactive attacks - with synchronization
+            if (!toRemove.isEmpty()) {
+                synchronized (attacks) {
+                    attacks.removeAll(toRemove);
 
-            // Clean up empty lists
-            if (attacks.isEmpty()) {
-                activeAttacks.remove(player);
+                    // Clean up empty lists
+                    if (attacks.isEmpty()) {
+                        activeAttacks.remove(player);
+                    }
+                }
             }
         }
     }
