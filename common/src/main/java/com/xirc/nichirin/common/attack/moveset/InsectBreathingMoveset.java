@@ -51,7 +51,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                         .withAnimation("nichirin:butterfly", 8)
                         .withTiming(120, 8, 40) // 6 second cooldown, quick windup, LONGER duration for 2-phase attack
                         .withDamage(18.0f) // High single-target damage
-                        .withTeleportDistance(5.0f) // Dash to target (was 10.0f)
+                        .withDashSpeed(5.0f) // Dash speed (changed from withTeleportDistance)
                         .withRange(10.0f) // Lock-on range
                         .withKnockback(0.3f) // Light knockback
                         .withBreathCost(25.0f)
@@ -126,76 +126,45 @@ public class InsectBreathingMoveset extends AbstractMoveset {
     }
 
     private boolean executeQuickSting(Player player) {
-        // Check breath cost for Quick Sting
-        float breathCost = 5.0f;
+        // Remove manual breath consumption - let attack system handle it
+        QuickStingAttack attack = new QuickStingAttack();
 
-        // Use atomic consume - no separate check needed
-        if (BreathingManager.consume(player, breathCost)) {
-            // Breath was successfully consumed - execute attack
-            QuickStingAttack attack = new QuickStingAttack();
+        MoveConfiguration tempConfig = new MoveBuilder("quick_sting", "Quick Sting")
+                .withAnimation("nichirin:quick_sting", 6)
+                .withTiming(0, 3, 12)
+                .withDamage(9.0f)
+                .withRange(4.0f)
+                .withKnockback(0f)
+                .withBreathCost(5.0f) // System will consume this automatically
+                .withHitStun(15)
+                .withHitboxSize(1.5f)
+                .build();
 
-            // Create temporary config for Quick Sting
-            MoveConfiguration tempConfig = new MoveBuilder("quick_sting", "Quick Sting")
-                    .withAnimation("nichirin:quick_sting", 6)
-                    .withTiming(0, 3, 12) // No cooldown, very quick
-                    .withDamage(9.0f) // Moderate damage + poison
-                    .withRange(4.0f) // Close range thrust
-                    .withKnockback(0f)
-                    .withBreathCost(breathCost)
-                    .withHitStun(15)
-                    .withHitboxSize(1.5f) // Precise hitbox
-                    .build();
-
-            attack.configure(tempConfig);
-            MoveExecutor.executeAttack(player, attack, "insect_breathing", "quick_sting");
-
-            onMovePerformed(player, -1, false); // Use -1 to indicate right-click move
-        } else {
-            // Breath consumption failed - show error message
-            player.displayClientMessage(
-                    Component.literal("Not enough breath for Quick Sting!")
-                            .withStyle(style -> style.withColor(0xFF3333)), // Red for no breath
-                    true
-            );
-        }
-
+        attack.configure(tempConfig);
+        MoveExecutor.executeAttack(player, attack, "insect_breathing", "quick_sting");
+        onMovePerformed(player, -1, false);
         return true;
     }
 
     private boolean executeBeeSting(Player player) {
-        // Check breath cost for Bee Sting
-        float breathCost = 20.0f;
+        // Remove manual breath consumption - let attack system handle it
+        BeeStingAttack attack = new BeeStingAttack();
 
-        // Use atomic consume - no separate check needed
-        if (BreathingManager.consume(player, breathCost)) {
-            // Breath was successfully consumed - execute attack
-            BeeStingAttack attack = new BeeStingAttack();
+        MoveConfiguration tempConfig = new MoveBuilder("bee_sting", "Bee Sting")
+                .withAnimation("nichirin:bee_sting", 9)
+                .withTiming(0, 6, 14)
+                .withDamage(8.0f)
+                .withDashSpeed(6.0f)
+                .withRange(6.0f)
+                .withKnockback(0.1f)
+                .withBreathCost(20.0f) // System will consume this automatically
+                .withHitStun(10)
+                .withHitboxSize(2.0f)
+                .build();
 
-            MoveConfiguration tempConfig = new MoveBuilder("bee_sting", "Bee Sting")
-                    .withAnimation("nichirin:bee_sting", 9)
-                    .withTiming(0, 6, 14)
-                    .withDamage(8.0f) // Light damage per enemy hit
-                    .withDashSpeed(6.0f) // Fast dash forward
-                    .withRange(6.0f) // Dash distance
-                    .withKnockback(0.1f) // Very light knockback
-                    .withBreathCost(breathCost)
-                    .withHitStun(10) // Short stun for crowd poke
-                    .withHitboxSize(2.0f) // Line hitbox
-                    .build();
-
-            attack.configure(tempConfig);
-            MoveExecutor.executeAttack(player, attack, "insect_breathing", "bee_sting");
-
-            onMovePerformed(player, -2, true); // Use -2 to indicate crouch right-click move
-        } else {
-            // Breath consumption failed - show error message
-            player.displayClientMessage(
-                    Component.literal("Not enough breath for Bee Sting!")
-                            .withStyle(style -> style.withColor(0xFF3333)), // Red for no breath
-                    true
-            );
-        }
-
+        attack.configure(tempConfig);
+        MoveExecutor.executeAttack(player, attack, "insect_breathing", "bee_sting");
+        onMovePerformed(player, -2, true);
         return true;
     }
 

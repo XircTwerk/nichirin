@@ -168,76 +168,44 @@ public class FlameBreathingMoveset extends AbstractMoveset {
     }
 
     private boolean executePommelSlash(Player player) {
-        // Check breath cost for Pommel Slash (halved to compensate for doubling bug)
-        float breathCost = 7.5f; // Will become 15 after doubling
+        // Remove manual breath consumption - let attack system handle it
+        PommelSlashAttack attack = new PommelSlashAttack();
 
-        // Use atomic consume - no separate check needed
-        if (BreathingManager.consume(player, breathCost)) {
-            // Breath was successfully consumed - execute attack
-            PommelSlashAttack attack = new PommelSlashAttack();
+        MoveConfiguration tempConfig = new MoveBuilder("pommel_slash", "Pommel Slash")
+                .withAnimation("nichirin:pommel_slash", 8)
+                .withTiming(0, 5, 18)
+                .withDamage(6.0f)
+                .withRange(4.0f)
+                .withKnockback(0f)
+                .withBreathCost(15.0f) // System will consume this automatically (was 7.5f)
+                .withHitStun(8)
+                .withHitboxSize(2.0f)
+                .build();
 
-            // Create temporary config for Pommel Slash
-            MoveConfiguration tempConfig = new MoveBuilder("pommel_slash", "Pommel Slash")
-                    .withAnimation("nichirin:pommel_slash", 8)
-                    .withTiming(0, 5, 18) // No cooldown, quick windup, 6 slashes over 18 ticks
-                    .withDamage(6.0f) // 6 slashes, first hit full damage, rest 30%
-                    .withRange(4.0f) // Medium range
-                    .withKnockback(0f)
-                    .withBreathCost(breathCost)
-                    .withHitStun(8) // Short stun for combo potential
-                    .withHitboxSize(2.0f)
-                    .build();
-
-            attack.configure(tempConfig);
-            MoveExecutor.executeAttack(player, attack, "flame_breathing", "pommel_slash");
-
-            onMovePerformed(player, -1, false); // Use -1 to indicate right-click move
-        } else {
-            // Breath consumption failed - show error message
-            player.displayClientMessage(
-                    Component.literal("Not enough breath for Pommel Slash!")
-                            .withStyle(style -> style.withColor(0xFF3333)), // Red for no breath
-                    true
-            );
-        }
-
+        attack.configure(tempConfig);
+        MoveExecutor.executeAttack(player, attack, "flame_breathing", "pommel_slash");
+        onMovePerformed(player, -1, false);
         return true;
     }
 
     private boolean executeUnknowingFire(Player player) {
-        // Check breath cost for Unknowing Fire (halved to compensate for doubling bug)
-        float breathCost = 20.0f;
+        // Remove manual breath consumption - let attack system handle it
+        UnknowingFireAttack attack = new UnknowingFireAttack();
 
+        MoveConfiguration tempConfig = new MoveBuilder("unknowing_fire_quick", "Unknowing Fire")
+                .withAnimation("nichirin:unknowing_fire", 9)
+                .withTiming(0, 6, 15)
+                .withDamage(16.0f)
+                .withRange(3.0f)
+                .withKnockback(0.4f)
+                .withBreathCost(20.0f) // System will consume this automatically
+                .withHitStun(20)
+                .withHitboxSize(2.0f)
+                .build();
 
-        // Use atomic consume - no separate check needed
-        if (BreathingManager.consume(player, breathCost)) {
-            // Breath was successfully consumed - execute attack
-            UnknowingFireAttack attack = new UnknowingFireAttack();
-
-            MoveConfiguration tempConfig = new MoveBuilder("unknowing_fire_quick", "Unknowing Fire")
-                    .withAnimation("nichirin:unknowing_fire", 9)
-                    .withTiming(0, 6, 15) // No cooldown
-                    .withDamage(16.0f) // Slightly less than wheel version (18.0f)
-                    .withRange(3.0f) // Close range after dash
-                    .withKnockback(0.4f)
-                    .withBreathCost(breathCost)
-                    .withHitStun(20) // Slightly less stun than wheel version
-                    .withHitboxSize(2.0f)
-                    .build();
-
-            attack.configure(tempConfig);
-            MoveExecutor.executeAttack(player, attack, "flame_breathing", "unknowing_fire_quick");
-
-            onMovePerformed(player, -2, true); // Use -2 to indicate crouch right-click move
-        } else {
-            // Breath consumption failed - show error message
-            player.displayClientMessage(
-                    Component.literal("Not enough breath for Unknowing Fire!")
-                            .withStyle(style -> style.withColor(0xFF3333)), // Red for no breath
-                    true
-            );
-        }
-
+        attack.configure(tempConfig);
+        MoveExecutor.executeAttack(player, attack, "flame_breathing", "unknowing_fire_quick");
+        onMovePerformed(player, -2, true);
         return true;
     }
 
