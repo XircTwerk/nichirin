@@ -17,7 +17,8 @@ import net.minecraft.world.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
 
 /**
- * ENHANCED ATTACK WHEEL HANDLER WITH EXTENSIVE DEBUG LOGGING
+ * FIXED ATTACK WHEEL HANDLER - RELIABLE MOVE EXECUTION
+ * Now captures and stores the highlighted move instead of calculating at click time
  */
 public class AttackWheelHandler {
 
@@ -26,6 +27,10 @@ public class AttackWheelHandler {
     private static AttackWheelOverlay currentWheel = null;
     private static boolean wheelOpen = false;
     private static boolean wasAttackDown = false;
+
+    // NEW: Store the currently selected move reliably
+    private static int capturedSelectedMove = -1;
+    private static int lastHoveredMove = -1;
 
     // New blocking system
     private static long wheelClosedTime = 0;
@@ -84,6 +89,20 @@ public class AttackWheelHandler {
                 } else {
                     System.out.println("DEBUG: Attempting to close wheel");
                     closeWheel();
+                }
+            }
+
+            // NEW: Capture highlighted move every tick while wheel is open
+            if (wheelOpen && currentWheel != null) {
+                int currentHovered = currentWheel.getCurrentlyHoveredMove();
+                if (currentHovered != lastHoveredMove) {
+                    System.out.println("DEBUG: Hovered move changed from " + lastHoveredMove + " to " + currentHovered);
+                    lastHoveredMove = currentHovered;
+                    // Capture the move when it becomes highlighted
+                    if (currentHovered >= 0) {
+                        capturedSelectedMove = currentHovered;
+                        System.out.println("DEBUG: Captured selected move: " + capturedSelectedMove);
+                    }
                 }
             }
 
@@ -222,6 +241,11 @@ public class AttackWheelHandler {
             currentWheel.activate();
             wheelOpen = true;
 
+            // Reset captured move state
+            capturedSelectedMove = -1;
+            lastHoveredMove = -1;
+            System.out.println("DEBUG: Reset captured move state");
+
             // Update state (handles server sync)
             MultiplayerInputHandler.setAttackWheelOpen(true, mc.player);
             System.out.println("DEBUG: Attack wheel opened successfully");
@@ -244,6 +268,10 @@ public class AttackWheelHandler {
             System.out.println("DEBUG: Wheel overlay deactivated");
         }
         wheelOpen = false;
+
+        // Reset captured move state
+        capturedSelectedMove = -1;
+        lastHoveredMove = -1;
 
         // START BLOCKING TIMER - Record when wheel was closed
         if (mc.player != null) {
@@ -269,7 +297,7 @@ public class AttackWheelHandler {
     }
 
     /**
-     * Execute the currently hovered wheel move
+     * FIXED: Execute the captured selected move instead of calculating at click time
      */
     private static void executeWheelMove() {
         System.out.println("DEBUG: executeWheelMove() called");
@@ -279,11 +307,13 @@ public class AttackWheelHandler {
             return;
         }
 
-        int selectedMove = currentWheel.getCurrentlyHoveredMove();
-        System.out.println("DEBUG: Selected move index: " + selectedMove);
+        // USE CAPTURED MOVE instead of real-time calculation
+        int selectedMove = capturedSelectedMove;
+        System.out.println("DEBUG: Using captured selected move index: " + selectedMove);
+        System.out.println("DEBUG: Real-time hovered move would be: " + currentWheel.getCurrentlyHoveredMove());
 
         if (selectedMove == -1) {
-            System.out.println("DEBUG: No move selected - closing wheel");
+            System.out.println("DEBUG: No move captured - closing wheel");
             closeWheel();
             return;
         }
@@ -304,7 +334,7 @@ public class AttackWheelHandler {
 
         // Check requirements client-side (for immediate feedback)
         String moveName = moveConfig.getDisplayName();
-        System.out.println("DEBUG: Executing move: " + moveName);
+        System.out.println("DEBUG: Executing captured move: " + moveName);
 
         if (CooldownHUD.isOnCooldown(moveName)) {
             int remaining = CooldownHUD.getRemainingCooldown(moveName);
@@ -341,7 +371,7 @@ public class AttackWheelHandler {
         }
 
         // Send breathing move to server FIRST (while wheel is still considered open)
-        System.out.println("DEBUG: Sending breathing move to server");
+        System.out.println("DEBUG: Sending captured breathing move to server: " + selectedMove);
         MultiplayerInputHandler.sendBreathingMove(selectedMove, mc.player);
 
         // THEN close wheel (this maintains input blocking until move is sent)
@@ -416,5 +446,12 @@ public class AttackWheelHandler {
         // Use the new comprehensive blocking system
         boolean shouldBlock = shouldBlockAttackInputs() || MultiplayerInputHandler.shouldBlockInputsClient();
         return shouldBlock;
+    }
+
+    /**
+     * NEW: Get the currently captured/selected move (for debugging)
+     */
+    public static int getCapturedSelectedMove() {
+        return capturedSelectedMove;
     }
 }

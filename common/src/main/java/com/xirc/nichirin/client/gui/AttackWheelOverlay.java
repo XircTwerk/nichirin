@@ -18,12 +18,14 @@ import java.util.List;
 /**
  * Simplified attack wheel overlay with clean click detection
  * FIXED SCALE: Always renders at GUI scale 2 regardless of user's GUI scale setting
+ * FIXED: Square center for better icon display, reliable click detection
  */
 public class AttackWheelOverlay {
 
     private static final int OUTER_RADIUS = 150;
     private static final int INNER_RADIUS = 50;
-    private static final int ICON_SIZE = 64; // Increased from 40 to 64
+    private static final int ICON_SIZE = 80;
+    private static final int CENTER_SQUARE_SIZE = 80; // Size of center square
 
     // Fixed scale constant
     private static final double FIXED_GUI_SCALE = 2.0;
@@ -132,7 +134,9 @@ public class AttackWheelOverlay {
 
         // Draw background circles
         drawFilledCircle(guiGraphics, scaledCenterX, scaledCenterY, OUTER_RADIUS, 0.3f, 0.3f, 0.3f, 0.5f);
-        drawFilledCircle(guiGraphics, scaledCenterX, scaledCenterY, INNER_RADIUS, 0.2f, 0.2f, 0.2f, 0.7f);
+
+        // Draw center square instead of circle
+        drawCenterSquare(guiGraphics, scaledCenterX, scaledCenterY, CENTER_SQUARE_SIZE, 0.2f, 0.2f, 0.2f, 0.7f);
 
         if (segments.isEmpty()) {
             // Draw placeholder
@@ -169,8 +173,8 @@ public class AttackWheelOverlay {
             }
         }
 
-        // Draw border circles
-        drawCircle(guiGraphics, scaledCenterX, scaledCenterY, INNER_RADIUS, 0.1f, 0.1f, 0.1f, 1.0f);
+        // Draw border square instead of inner circle
+        drawSquareBorder(guiGraphics, scaledCenterX, scaledCenterY, CENTER_SQUARE_SIZE, 0.1f, 0.1f, 0.1f, 1.0f);
         drawCircle(guiGraphics, scaledCenterX, scaledCenterY, OUTER_RADIUS, 0.1f, 0.1f, 0.1f, 1.0f);
 
         RenderSystem.disableBlend();
@@ -204,13 +208,13 @@ public class AttackWheelOverlay {
             return;
         }
 
-        // NEW FIX: Don't highlight anything if mouse is in the center area (inner circle)
+        // Don't highlight anything if mouse is in the center area (keep center unclickable)
         if (distance < INNER_RADIUS) {
             currentlyHoveredMove = -1;
             return;
         }
 
-        // Only highlight moves when mouse is in the actual selectable area (between inner and outer radius)
+        // Mouse is in the selectable ring area - calculate which segment
         // Calculate angle from center, starting from top (-90°) going clockwise
         double angle = Math.toDegrees(Math.atan2(deltaY, deltaX));
 
@@ -219,19 +223,58 @@ public class AttackWheelOverlay {
         if (adjustedAngle < 0) adjustedAngle += 360; // Normalize to 0-360
         if (adjustedAngle >= 360) adjustedAngle -= 360;
 
-        // Calculate segment
+        // Calculate segment with more precise floating point math
         float segmentAngle = 360f / segments.size();
-        int segmentIndex = (int) (adjustedAngle / segmentAngle);
+        int segmentIndex = (int) Math.floor(adjustedAngle / segmentAngle);
 
-        // Ensure valid range
-        if (segmentIndex >= segments.size()) {
-            segmentIndex = segments.size() - 1;
-        }
-        if (segmentIndex < 0) {
-            segmentIndex = 0;
-        }
+        // Ensure valid range with proper bounds checking
+        segmentIndex = Math.max(0, Math.min(segmentIndex, segments.size() - 1));
 
         currentlyHoveredMove = segmentIndex;
+    }
+
+    /**
+     * Draw a filled square in the center
+     */
+    private void drawCenterSquare(GuiGraphics guiGraphics, int centerX, int centerY, int size, float r, float g, float b, float a) {
+        int halfSize = size / 2;
+        int x1 = centerX - halfSize;
+        int y1 = centerY - halfSize;
+        int x2 = centerX + halfSize;
+        int y2 = centerY + halfSize;
+
+        int red = (int)(r * 255);
+        int green = (int)(g * 255);
+        int blue = (int)(b * 255);
+        int alpha = (int)(a * 255);
+        int color = (alpha << 24) | (red << 16) | (green << 8) | blue;
+
+        guiGraphics.fill(x1, y1, x2, y2, color);
+    }
+
+    /**
+     * Draw square border with thicker outline
+     */
+    private void drawSquareBorder(GuiGraphics guiGraphics, int centerX, int centerY, int size, float r, float g, float b, float a) {
+        int halfSize = size / 2;
+        int x1 = centerX - halfSize;
+        int y1 = centerY - halfSize;
+        int x2 = centerX + halfSize;
+        int y2 = centerY + halfSize;
+
+        int red = (int)(r * 255);
+        int green = (int)(g * 255);
+        int blue = (int)(b * 255);
+        int alpha = (int)(a * 255);
+        int color = (alpha << 24) | (red << 16) | (green << 8) | blue;
+
+        int borderThickness = 2; // Make outline thicker and more visible
+
+        // Draw thicker border lines
+        guiGraphics.fill(x1, y1, x2, y1 + borderThickness, color); // Top
+        guiGraphics.fill(x1, y2 - borderThickness, x2, y2, color); // Bottom
+        guiGraphics.fill(x1, y1, x1 + borderThickness, y2, color); // Left
+        guiGraphics.fill(x2 - borderThickness, y1, x2, y2, color); // Right
     }
 
     private void drawCenterIcon(GuiGraphics guiGraphics, int centerX, int centerY, MoveSegment segment) {

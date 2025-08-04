@@ -93,7 +93,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                         .withTiming(240, 20, 50) // 12 second cooldown, complex movement
                         .withDamage(22.0f) // High damage finisher
                         .withDashSpeed(4.0f) // Multiple zigzag dashes (was 8.0f)
-                        .withRange(6.0f) // Total movement range (was 12.0f)
+                        .withRange(2.0f)
                         .withKnockback(0.8f) // Strong finisher knockback
                         .withBreathCost(45.0f) // Expensive ultimate-level move
                         .withHitStun(40) // Strong stun on finisher

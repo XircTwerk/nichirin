@@ -137,7 +137,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withDashSpeed(25.0f) // Very fast dash
                         .withRange(20.0f) // Long range dash
                         .withKnockback(0f) // Massive knockback
-                        .withBreathCost(100.0f) // Most expensive ultimate
+                        .withBreathCost(75.0f)
                         .withHitStun(80) // 4 second stun
                         .withHitboxSize(4.0f) // Large dragon hitbox
                         .withAction(player -> {
