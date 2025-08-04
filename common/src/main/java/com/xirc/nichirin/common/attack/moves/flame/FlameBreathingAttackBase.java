@@ -110,11 +110,14 @@ public abstract class FlameBreathingAttackBase extends AbstractBreathingAttack<F
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDir = user.getLookAngle();
 
+        // Use ServerLevel's random instead of world.random to avoid threading issues
+        net.minecraft.util.RandomSource random = serverLevel.getRandom();
+
         // Create flame particles around the user
         for (int i = 0; i < FLAME_PARTICLE_COUNT; i++) {
-            double offsetX = (world.random.nextDouble() - 0.5) * FLAME_PARTICLE_SPREAD;
-            double offsetY = world.random.nextDouble() * FLAME_PARTICLE_SPREAD;
-            double offsetZ = (world.random.nextDouble() - 0.5) * FLAME_PARTICLE_SPREAD;
+            double offsetX = (random.nextDouble() - 0.5) * FLAME_PARTICLE_SPREAD;
+            double offsetY = random.nextDouble() * FLAME_PARTICLE_SPREAD;
+            double offsetZ = (random.nextDouble() - 0.5) * FLAME_PARTICLE_SPREAD;
 
             Vec3 particlePos = userPos.add(offsetX, offsetY, offsetZ);
 
@@ -123,7 +126,7 @@ public abstract class FlameBreathingAttackBase extends AbstractBreathingAttack<F
                     particlePos.x, particlePos.y, particlePos.z,
                     1, 0.1, 0.1, 0.1, 0.05);
 
-            if (world.random.nextBoolean()) {
+            if (random.nextBoolean()) {
                 serverLevel.sendParticles(ParticleTypes.LARGE_SMOKE,
                         particlePos.x, particlePos.y, particlePos.z,
                         1, 0.1, 0.1, 0.1, 0.02);
@@ -195,11 +198,14 @@ public abstract class FlameBreathingAttackBase extends AbstractBreathingAttack<F
     protected void createFlameCircle(Vec3 center, float radius, int particleCount) {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
+        // Use ServerLevel's random instead of world.random to avoid threading issues
+        net.minecraft.util.RandomSource random = serverLevel.getRandom();
+
         for (int i = 0; i < particleCount; i++) {
             double angle = (2 * Math.PI * i) / particleCount;
             double x = center.x + Math.cos(angle) * radius;
             double z = center.z + Math.sin(angle) * radius;
-            double y = center.y + world.random.nextDouble() * 2;
+            double y = center.y + random.nextDouble() * 2;
 
             serverLevel.sendParticles(ParticleTypes.FLAME,
                     x, y, z, 2, 0.2, 0.2, 0.2, 0.1);
@@ -219,6 +225,9 @@ public abstract class FlameBreathingAttackBase extends AbstractBreathingAttack<F
     protected void createFlameExplosion(Vec3 center, float intensity) {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
+        // Use ServerLevel's random instead of world.random to avoid threading issues
+        net.minecraft.util.RandomSource random = serverLevel.getRandom();
+
         int baseParticles = (int)(20 * intensity);
 
         // Central explosion
@@ -235,7 +244,7 @@ public abstract class FlameBreathingAttackBase extends AbstractBreathingAttack<F
                 double angle = (2 * Math.PI * i) / ringParticles;
                 double x = center.x + Math.cos(angle) * ringRadius;
                 double z = center.z + Math.sin(angle) * ringRadius;
-                double y = center.y + world.random.nextDouble() * 3;
+                double y = center.y + random.nextDouble() * 3;
 
                 serverLevel.sendParticles(ParticleTypes.FLAME,
                         x, y, z, 3, 0.3, 0.3, 0.3, 0.2);

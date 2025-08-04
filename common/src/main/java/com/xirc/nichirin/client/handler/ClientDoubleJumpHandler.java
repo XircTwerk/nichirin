@@ -51,10 +51,6 @@ public class ClientDoubleJumpHandler {
                 boolean left = player.input.left;       // A key
                 boolean right = player.input.right;     // D key
 
-                // Debug output
-                System.out.println("DEBUG: Client sending double jump packet - W=" + forward +
-                        ", S=" + backward + ", A=" + left + ", D=" + right);
-
                 // Send packet to server WITH movement input
                 DoubleJumpPacket packet = new DoubleJumpPacket(forward, backward, left, right);
                 NichirinPacketRegistry.sendToServer(packet);
