@@ -11,6 +11,7 @@ import com.xirc.nichirin.common.util.MultiplayerInputHandler;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import dev.architectury.event.events.client.ClientTickEvent;
 import dev.architectury.event.events.client.ClientGuiEvent;
+import lombok.Getter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
@@ -25,10 +26,20 @@ public class AttackWheelHandler {
     private static boolean wasKeyDown = false;
     private static boolean wasEscDown = false;
     private static AttackWheelOverlay currentWheel = null;
+    /**
+     * -- GETTER --
+     *  Check if wheel is open (for other systems)
+     */
+    @Getter
     private static boolean wheelOpen = false;
     private static boolean wasAttackDown = false;
 
+    /**
+     * -- GETTER --
+     *  NEW: Get the currently captured/selected move (for debugging)
+     */
     // NEW: Store the currently selected move reliably
+    @Getter
     private static int capturedSelectedMove = -1;
     private static int lastHoveredMove = -1;
 
@@ -380,13 +391,6 @@ public class AttackWheelHandler {
     }
 
     /**
-     * Check if wheel is open (for other systems)
-     */
-    public static boolean isWheelOpen() {
-        return wheelOpen;
-    }
-
-    /**
      * NEW METHOD: Check if inputs should be blocked due to wheel state
      * This includes:
      * 1. When wheel is currently open
@@ -448,10 +452,4 @@ public class AttackWheelHandler {
         return shouldBlock;
     }
 
-    /**
-     * NEW: Get the currently captured/selected move (for debugging)
-     */
-    public static int getCapturedSelectedMove() {
-        return capturedSelectedMove;
-    }
 }
