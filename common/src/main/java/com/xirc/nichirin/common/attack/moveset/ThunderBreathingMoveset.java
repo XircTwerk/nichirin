@@ -173,40 +173,23 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
         // Thunder Clap Flash - right-click exclusive move
         ThunderClapFlashAttack.setCrouchDash(player, isCrouching);
 
-        // Check breath cost for Thunder Clap Flash
-        float breathCost = 7.5f; // for some reason it's double the amount. 7.5 would be 15 breath cost.
-        if (!BreathingManager.hasBreath(player, breathCost)) {
-            player.displayClientMessage(
-                    Component.literal("Not enough breath for Thunderclap and Flash!")
-                            .withStyle(style -> style.withColor(0xFF5555)),
-                    true
-            );
-            return true; // Still handled, just blocked
-        }
+        // Remove manual breath consumption - let attack system handle it
+        ThunderClapFlashAttack attack = new ThunderClapFlashAttack();
 
-        // Consume breath for Thunder Clap Flash
-        if (BreathingManager.consume(player, breathCost)) {
-            // Execute Thunder Clap Flash attack directly
-            ThunderClapFlashAttack attack = new ThunderClapFlashAttack();
+        MoveConfiguration tempConfig = new MoveBuilder("thunderclap_flash", "Thunderclap and Flash")
+                .withAnimation("nichirin:thunderclap_flash", 10)
+                .withTiming(0, 1, 15)
+                .withDamage(10.5f)
+                .withTeleportDistance(12.0f)
+                .withKnockback(0.2f)
+                .withBreathCost(15.0f)
+                .withHitStun(10)
+                .withHitboxSize(1.5f)
+                .build();
 
-            // Create temporary config for Thunder Clap Flash
-            MoveConfiguration tempConfig = new MoveBuilder("thunderclap_flash", "Thunderclap and Flash")
-                    .withAnimation("nichirin:thunderclap_flash", 10)
-                    .withTiming(0, 1, 15) // No cooldown
-                    .withDamage(10.5f) // Moderate damage for mobility move (was 14.0f)
-                    .withTeleportDistance(12.0f) // Good mobility
-                    .withKnockback(0.2f)
-                    .withBreathCost(breathCost)
-                    .withHitStun(10)
-                    .withHitboxSize(1.5f)
-                    .build();
-
-            attack.configure(tempConfig);
-            MoveExecutor.executeAttack(player, attack, "thunder_breathing", "thunderclap_flash");
-
-            onMovePerformed(player, -1, isCrouching); // Use -1 to indicate right-click move
-        }
-
+        attack.configure(tempConfig);
+        MoveExecutor.executeAttack(player, attack, "thunder_breathing", "thunderclap_flash");
+        onMovePerformed(player, -1, isCrouching);
         return true;
     }
 

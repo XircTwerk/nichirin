@@ -19,8 +19,8 @@ import java.util.Set;
 public class CentipedeAttack extends InsectBreathingAttackBase {
 
     private static final int ZIGZAG_COUNT = 3;
-    private static final int DASH_DURATION = 12;
-    private static final int DASH_INTERVAL = 3;
+    private static final int DASH_DURATION = 2; // 1/3 of 6
+    private static final int DASH_INTERVAL = 2; // 1/3 of 6
 
     private int zigzagsExecuted = 0;
     private int nextZigzagTick = 0;
@@ -97,8 +97,8 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
             zigzagDirection = rotateDirection(baseDirection, 22.5);
         }
 
-        // Fast dash with invincibility
-        Vec3 dashVelocity = zigzagDirection.scale(dashSpeed * 2.0); // Very fast
+        // Fast dash with invincibility - 1/3 speed
+        Vec3 dashVelocity = zigzagDirection.scale(dashSpeed * 0.67); // 1/3 of 2.0
         user.setDeltaMovement(dashVelocity);
         user.hurtMarked = true;
         user.hasImpulse = true;
@@ -137,9 +137,9 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
     private void catchAndDragEnemies() {
         Vec3 userPos = user.position();
 
-        // Large hitbox to catch enemies (like Flame Tiger)
+        // Large hitbox to catch enemies (like Flame Tiger) - 1/3
         List<LivingEntity> pathEnemies = getTargetsInCustomHitbox(
-                userPos, 6.0, 4.0, 6.0); // Big hitbox
+                userPos, 2.0, 1.33, 2.0); // 1/3 of 6.0, 4.0, 6.0
 
         for (LivingEntity enemy : pathEnemies) {
             if (!caughtEnemies.contains(enemy)) {
@@ -160,9 +160,9 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
         // Drag caught enemies (like Flame Tiger)
         for (LivingEntity draggedEnemy : new ArrayList<>(draggedEnemies)) {
             if (draggedEnemy.isAlive()) {
-                // Pull enemy toward user
-                Vec3 dragPosition = userPos.subtract(baseDirection.scale(2.0));
-                Vec3 dragVelocity = dragPosition.subtract(draggedEnemy.position()).scale(0.9);
+                // Pull enemy toward user - 1/3 distance
+                Vec3 dragPosition = userPos.subtract(baseDirection.scale(0.67)); // 1/3 of 2.0
+                Vec3 dragVelocity = dragPosition.subtract(draggedEnemy.position()).scale(0.3); // 1/3 of 0.9
 
                 draggedEnemy.setDeltaMovement(dragVelocity);
                 draggedEnemy.hurtMarked = true;
@@ -179,8 +179,8 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
     private void hitEnemiesAlongPath() {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
-        // Hit enemies in large area during zigzag
-        List<LivingEntity> targets = getTargetsInCustomHitbox(userPos, 5.0, 3.0, 5.0);
+        // Hit enemies in large area during zigzag - 1/3
+        List<LivingEntity> targets = getTargetsInCustomHitbox(userPos, 1.67, 1.0, 1.67); // 1/3 of 5.0, 3.0, 5.0
 
         for (LivingEntity target : targets) {
             // Reduced damage per zigzag hit (like Flame Tiger)
@@ -189,9 +189,9 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
             hitTarget(target);
             damage = originalDamage;
 
-            // Light knockback to keep enemies close
-            Vec3 lightKnockback = target.position().subtract(userPos).normalize().scale(knockback * 0.3);
-            target.push(lightKnockback.x, 0.1, lightKnockback.z);
+            // Light knockback to keep enemies close - 1/3
+            Vec3 lightKnockback = target.position().subtract(userPos).normalize().scale(knockback * 0.1); // 1/3 of 0.3
+            target.push(lightKnockback.x, 0.033, lightKnockback.z); // 1/3 of 0.1
 
             createZigzagImpactEffect(target.position());
         }
@@ -209,24 +209,24 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
     }
 
     private void executeFinisher() {
-        // Massive forward dash for finisher (0° - straight forward)
-        Vec3 finisherVelocity = baseDirection.scale(dashSpeed * 2.5);
+        // Massive forward dash for finisher (0° - straight forward) - 1/3 speed
+        Vec3 finisherVelocity = baseDirection.scale(dashSpeed * 0.83); // 1/3 of 2.5
         user.setDeltaMovement(finisherVelocity);
         user.hurtMarked = true;
         user.hasImpulse = true;
 
-        // Hit all enemies in huge finisher area
+        // Hit all enemies in huge finisher area - 1/3
         List<LivingEntity> finisherTargets = getTargetsInCustomHitbox(
                 user.position().add(0, user.getBbHeight() / 2, 0),
-                hitboxSize * 2.5, 4.0, hitboxSize * 2.5); // Massive hitbox
+                hitboxSize * 0.83, 1.33, hitboxSize * 0.83); // 1/3 of 2.5, 4.0, 2.5
 
         for (LivingEntity target : finisherTargets) {
             // Full finisher damage
             hitTarget(target);
 
-            // Strong knockback
+            // Strong knockback - 1/3
             Vec3 finisherKnockback = target.position().subtract(user.position()).normalize();
-            target.push(finisherKnockback.x * knockback * 1.5, 0.8, finisherKnockback.z * knockback * 1.5);
+            target.push(finisherKnockback.x * knockback * 0.5, 0.27, finisherKnockback.z * knockback * 0.5); // 1/3 of 1.5, 0.8
 
             createFinisherImpactEffect(target.position());
         }
@@ -240,9 +240,9 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
                 hitTarget(draggedEnemy);
                 damage = originalDamage;
 
-                // Massive knockback
-                Vec3 finalKnockback = baseDirection.scale(knockback * 3.0);
-                draggedEnemy.push(finalKnockback.x, 1.0, finalKnockback.z);
+                // Massive knockback - 1/3
+                Vec3 finalKnockback = baseDirection.scale(knockback * 1.0); // 1/3 of 3.0
+                draggedEnemy.push(finalKnockback.x, 0.33, finalKnockback.z); // 1/3 of 1.0
 
                 createFinisherImpactEffect(draggedEnemy.position());
             }
@@ -266,8 +266,8 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
         for (int i = 0; i < 25; i++) {
             double progress = i / 25.0;
             double angle = progress * 6 * Math.PI; // Multiple rotations
-            double radius = 2.0 * (1.0 - progress); // Spiral inward
-            double height = progress * 2.5;
+            double radius = 0.67 * (1.0 - progress); // 1/3 of 2.0
+            double height = progress * 0.83; // 1/3 of 2.5
 
             double x = userPos.x + Math.cos(angle) * radius;
             double z = userPos.z + Math.sin(angle) * radius;
@@ -286,7 +286,7 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
         for (int i = 1; i <= 6; i++) {
-            Vec3 trailPos = userPos.subtract(baseDirection.scale(i * 0.4));
+            Vec3 trailPos = userPos.subtract(baseDirection.scale(i * 0.13)); // 1/3 of 0.4
 
             serverLevel.sendParticles(ParticleTypes.WITCH,
                     trailPos.x, trailPos.y, trailPos.z, 3, 0.2, 0.2, 0.2, 0.1);
@@ -335,7 +335,7 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
         Vec3 targetPos = impactPos.add(0, 1, 0);
         serverLevel.sendParticles(ParticleTypes.CRIT,
                 targetPos.x, targetPos.y, targetPos.z, 20, 0.6, 0.6, 0.6, 0.3);
-        createPoisonBurst(targetPos, 2.0f);
+        createPoisonBurst(targetPos, 0.67f); // 1/3 of 2.0f
         serverLevel.sendParticles(ParticleTypes.WITCH,
                 targetPos.x, targetPos.y, targetPos.z, 25, 0.8, 0.8, 0.8, 0.4);
     }
@@ -345,19 +345,19 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         serverLevel.sendParticles(ParticleTypes.WITCH,
-                userPos.x, userPos.y, userPos.z, 60, 2.5, 2.5, 2.5, 0.5);
+                userPos.x, userPos.y, userPos.z, 60, 0.83, 0.83, 0.83, 0.17); // 1/3 of 2.5
         serverLevel.sendParticles(ParticleTypes.PORTAL,
-                userPos.x, userPos.y, userPos.z, 40, 2.0, 2.0, 2.0, 0.4);
+                userPos.x, userPos.y, userPos.z, 40, 0.67, 0.67, 0.67, 0.13); // 1/3 of 2.0
 
         // Centipede dissipation effect
         for (int i = 0; i < 30; i++) {
             double angle = (i / 30.0) * 2 * Math.PI;
-            double radius = 5.0;
+            double radius = 1.67; // 1/3 of 5.0
             double x = userPos.x + Math.cos(angle) * radius;
             double z = userPos.z + Math.sin(angle) * radius;
             double y = userPos.y;
 
-            serverLevel.sendParticles(ParticleTypes.WITCH, x, y, z, 8, 0.6, 1.2, 0.6, 0.3);
+            serverLevel.sendParticles(ParticleTypes.WITCH, x, y, z, 8, 0.2, 0.4, 0.2, 0.1); // 1/3 of 0.6, 1.2, 0.6, 0.3
         }
     }
 

@@ -76,10 +76,12 @@ public class RumbleFlashAttack extends ThunderBreathingAttackBase {
                 LivingEntity target = targets.get(i);
                 Vec3 targetCurrentPos = target.position(); // Capture current position when attack starts
 
+                net.minecraft.util.RandomSource random = ((ServerLevel) world).getRandom();
+
                 // Mark multiple lightning strikes around target's CURRENT position (won't move)
                 for (int j = 0; j < 3; j++) {
-                    double offsetX = (world.random.nextDouble() - 0.5) * 3;
-                    double offsetZ = (world.random.nextDouble() - 0.5) * 3;
+                    double offsetX = (random.nextDouble() - 0.5) * 3;
+                    double offsetZ = (random.nextDouble() - 0.5) * 3;
                     Vec3 strikePos = targetCurrentPos.add(offsetX, 0, offsetZ);
 
                     // Add to pending strikes at this FIXED position
