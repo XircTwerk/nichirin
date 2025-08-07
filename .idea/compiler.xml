@@ -35,7 +35,6 @@
         <option name="quiet" value="true" />
         <processorPath useClasspath="false">
           <entry name="$PROJECT_DIR$/../../temp/gradle-cache/caches/modules-2/files-2.1/org.projectlombok/lombok/1.18.32/17d46b3e205515e1e8efd3ee4d57ce8018914163/lombok-1.18.32.jar" />
-          <entry name="$PROJECT_DIR$/../../temp/gradle-cache/caches/modules-2/files-2.1/io.github.llamalad7/mixinextras-common/0.3.5/5de895137aa0478675b6ecf7602d9652b05dc37e/mixinextras-common-0.3.5.jar" />
         </processorPath>
         <module name="nichirin.forge.main" />
       </profile>

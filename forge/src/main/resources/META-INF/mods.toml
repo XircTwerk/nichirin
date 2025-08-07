@@ -1,6 +1,5 @@
 modLoader = "javafml"
 loaderVersion = "[47,)"
-#issueTrackerURL = ""
 license = "All Rights Reserved"
 
 [[mods]]
@@ -11,7 +10,6 @@ authors = "XircTwerk"
 description = '''
 Vanilla+ styled demon slayer mod.
 '''
-#logoFile = ""
 
 [[dependencies.nichirin]]
 modId = "forge"
@@ -33,3 +31,17 @@ mandatory = true
 versionRange = "[9.2.14,)"
 ordering = "AFTER"
 side = "BOTH"
+
+[[dependencies.nichirin]]
+modId = "azurelib"
+mandatory = true
+versionRange = "[1.0.34,)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.nichirin]]
+modId = "playeranimator"
+mandatory = true
+versionRange = "[1.0.2-rc1+1.20,)"
+ordering = "AFTER"
+side = "CLIENT"
