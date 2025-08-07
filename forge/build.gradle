@@ -8,8 +8,9 @@ configurations {
         canBeConsumed = false
     }
     compileClasspath.extendsFrom common
-    runtimeClasspath.extendsFrom common
-    developmentForge.extendsFrom common  // Add this back - needed for development runtime
+    // Remove these two lines to prevent duplicates:
+    // runtimeClasspath.extendsFrom common
+    // developmentForge.extendsFrom common
 
     shadowBundle {
         canBeResolved = true
@@ -59,9 +60,14 @@ dependencies {
     modImplementation("dev.kosmx.player-anim:player-animation-lib-forge:${player_anim_version}")
     implementation "mod.azure.azurelib:azurelib-forge-1.20.1:1.0.34"
 
-    modImplementation(project(path: ':common', configuration: 'namedElements')) { transitive false }
+    // Try both approaches for maximum compatibility:
+    common(project(path: ':common', configuration: 'namedElements')) { transitive false }
+    runtimeOnly(project(':common')) { transitive false }
     shadowBundle(project(path: ':common', configuration: 'transformProductionForge')) { transitive = false }
 }
+
+// Make sure common is built first
+compileJava.dependsOn(':common:build')
 
 processResources {
     inputs.property 'version', project.version

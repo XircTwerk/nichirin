@@ -28,6 +28,11 @@ shadowJar {
     enabled = false
 }
 
+// Add duplicate handling to all jar tasks
+tasks.withType(Jar) {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
 processResources {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
