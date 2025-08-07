@@ -64,9 +64,6 @@ dependencies {
     // TerraBlender - Fixed to use Modrinth format
     include modImplementation("com.github.glitchfiend:TerraBlender-fabric:${minecraft_version}-${terrablender_version}")
 
-    // Cloth Config
-    include modApi("me.shedaniel.cloth:cloth-config-fabric:11.1.118")
-
     common(project(path: ':common', configuration: 'namedElements')) { transitive false }
     shadowBundle project(path: ':common', configuration: 'transformProductionFabric')
 }
