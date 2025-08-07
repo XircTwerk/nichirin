@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Input-based movement system like the JCraft example
+ * Input-based movement system
  */
 public class MovementContext {
 

@@ -1,10 +1,12 @@
 plugins {
     id 'architectury-plugin' version '3.4-SNAPSHOT'
-    id 'dev.architectury.loom' version '1.10-SNAPSHOT' apply false
-    id 'com.github.johnrengelman.shadow' version '8.1.1' apply false
+    id 'dev.architectury.loom' version '1.10-SNAPSHOT'
+    id 'com.gradleup.shadow' version '8.3.7' apply false
+    id 'java'
+    id 'maven-publish'
 }
 
-apply plugin: 'java'
+apply plugin: 'dev.architectury.loom'
 apply plugin: 'architectury-plugin'
 apply plugin: 'maven-publish'
 
@@ -12,14 +14,37 @@ architectury {
     minecraft = rootProject.minecraft_version
 }
 
+// ADD REPOSITORIES TO ROOT PROJECT:
+repositories {
+    mavenCentral()
+    maven { url "https://maven.fabricmc.net/" }
+    maven { url "https://maven.minecraftforge.net/" }
+    maven { url "https://maven.architectury.dev/" }
+    maven { url "https://maven.parchmentmc.org" }
+    maven { url "https://maven.shedaniel.me/" }
+    maven { url "https://maven.kosmx.dev/" }
+    maven { url "https://api.modrinth.com/maven" }
+    maven { url "https://cursemaven.com" }
+    maven { url "https://modmaven.dev/" }
+    maven { url "https://dvs1.progwml6.com/files/maven/" }
+    maven { url "https://maven.azuredoom.com/mods/" }
+}
+
+allprojects {
+    apply plugin: "architectury-plugin"
+    group = rootProject.maven_group
+    version = rootProject.mod_version
+}
+
 subprojects {
     apply plugin: 'dev.architectury.loom'
     apply plugin: 'java'
     apply plugin: 'architectury-plugin'
     apply plugin: 'maven-publish'
+    apply plugin: 'com.gradleup.shadow'
 
     base {
-        archivesName = rootProject.archives_name
+        archivesName = "$rootProject.archives_name-$project.name"
     }
 
     loom {
@@ -46,15 +71,14 @@ subprojects {
         mappings loom.layered() {
             officialMojangMappings()
             parchment("org.parchmentmc.data:parchment-$rootProject.minecraft_version:$rootProject.parchment_mappings@zip")
-
-            compileOnly 'org.projectlombok:lombok:1.18.32'
-            annotationProcessor 'org.projectlombok:lombok:1.18.32'
         }
+
+        compileOnly 'org.projectlombok:lombok:1.18.32'
+        annotationProcessor 'org.projectlombok:lombok:1.18.32'
     }
 
     java {
         withSourcesJar()
-
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -64,7 +88,26 @@ subprojects {
     }
 }
 
-allprojects {
-    group = rootProject.maven_group
-    version = rootProject.mod_version
+architectury {
+    common rootProject.enabled_platforms.split(',')
+}
+
+loom {
+    accessWidenerPath = file("common/src/main/resources/nichirin.accesswidener")
+}
+
+sourceSets {
+    main {
+        resources {
+            srcDirs("src/main/generated")
+        }
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:$rootProject.minecraft_version"
+    mappings loom.layered() {
+        officialMojangMappings()
+        parchment("org.parchmentmc.data:parchment-$rootProject.minecraft_version:$rootProject.parchment_mappings@zip")
+    }
 }
