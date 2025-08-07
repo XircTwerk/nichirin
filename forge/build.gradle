@@ -1,21 +1,5 @@
 plugins {
-    id 'com.gradleup.shadow'
-}
-
-loom {
-    accessWidenerPath = project(":common").loom.accessWidenerPath
-
-    forge {
-        convertAccessWideners.set(true)
-        extraAccessWideners.add loom.accessWidenerPath.get().asFile.name
-
-        mixinConfig "nichirin.mixins.json"
-    }
-}
-
-architectury {
-    platformSetupLoomIde()
-    forge()
+    id 'com.github.johnrengelman.shadow'
 }
 
 configurations {
@@ -25,7 +9,7 @@ configurations {
     }
     compileClasspath.extendsFrom common
     runtimeClasspath.extendsFrom common
-    developmentForge.extendsFrom common
+    developmentForge.extendsFrom common  // Add this back - needed for development runtime
 
     shadowBundle {
         canBeResolved = true
@@ -33,33 +17,69 @@ configurations {
     }
 }
 
+loom {
+    accessWidenerPath = project(":common").loom.accessWidenerPath
+
+    forge {
+        convertAccessWideners.set(true)
+        extraAccessWideners.add loom.accessWidenerPath.get().asFile.name
+        mixinConfig "nichirin.mixins.json"
+    }
+
+    runs {
+        client {
+            client()
+            setConfigName("Forge Client")
+            ideConfigGenerated = true
+            runDir = "run"
+
+            vmArgs "-Xmx4G"
+            vmArgs "-Xms1G"
+            vmArgs "-XX:+UnlockExperimentalVMOptions"
+            vmArgs "-XX:+UseG1GC"
+            vmArgs "-XX:G1NewSizePercent=20"
+            vmArgs "-XX:G1ReservePercent=20"
+            vmArgs "-XX:MaxGCPauseMillis=50"
+            vmArgs "-XX:G1HeapRegionSize=32M"
+
+            property "fml.earlyprogresswindow", "false"
+            property "mixin.debug.export", "true"
+        }
+    }
+}
+
+architectury {
+    platformSetupLoomIde()
+    forge()
+}
+
 dependencies {
     forge "net.minecraftforge:forge:$rootProject.forge_version"
-
     modImplementation "dev.architectury:architectury-forge:$rootProject.architectury_api_version"
-
     modImplementation("dev.kosmx.player-anim:player-animation-lib-forge:${player_anim_version}")
-
     implementation "mod.azure.azurelib:azurelib-forge-1.20.1:1.0.34"
 
-    modApi("me.shedaniel.cloth:cloth-config-forge:11.1.118"){ transitive = false }
-
-    common(project(path: ':common', configuration: 'namedElements')) { transitive false }
-    shadowBundle project(path: ':common', configuration: 'transformProductionForge')
+    modImplementation(project(path: ':common', configuration: 'namedElements')) { transitive false }
+    shadowBundle(project(path: ':common', configuration: 'transformProductionForge')) { transitive = false }
 }
 
 processResources {
     inputs.property 'version', project.version
-
     filesMatching('META-INF/mods.toml') {
         expand version: project.version
     }
 }
 
+sourcesJar {
+    duplicatesStrategy DuplicatesStrategy.EXCLUDE
+    def commonSources = project(":common").sourcesJar
+    dependsOn commonSources
+    from commonSources.archiveFile.map { zipTree(it) }
+}
+
 shadowJar {
     exclude "fabric.mod.json"
     exclude "architectury.common.json"
-
     configurations = [project.configurations.shadowBundle]
     archiveClassifier = 'dev-shadow'
 }
@@ -67,4 +87,5 @@ shadowJar {
 remapJar {
     input.set shadowJar.archiveFile
     dependsOn shadowJar
+    archiveClassifier = null
 }

@@ -1,44 +1,23 @@
 plugins {
+    id 'dev.architectury.loom' version '1.9-SNAPSHOT' apply false
     id 'architectury-plugin' version '3.4-SNAPSHOT'
-    id 'dev.architectury.loom' version '1.10-SNAPSHOT'
     id 'com.gradleup.shadow' version '8.3.7' apply false
-    id 'java'
     id 'maven-publish'
 }
 
-apply plugin: 'dev.architectury.loom'
-apply plugin: 'architectury-plugin'
-apply plugin: 'maven-publish'
-
 architectury {
-    minecraft = rootProject.minecraft_version
-}
-
-// ADD REPOSITORIES TO ROOT PROJECT:
-repositories {
-    mavenCentral()
-    maven { url "https://maven.fabricmc.net/" }
-    maven { url "https://maven.minecraftforge.net/" }
-    maven { url "https://maven.architectury.dev/" }
-    maven { url "https://maven.parchmentmc.org" }
-    maven { url "https://maven.shedaniel.me/" }
-    maven { url "https://maven.kosmx.dev/" }
-    maven { url "https://api.modrinth.com/maven" }
-    maven { url "https://cursemaven.com" }
-    maven { url "https://modmaven.dev/" }
-    maven { url "https://dvs1.progwml6.com/files/maven/" }
-    maven { url "https://maven.azuredoom.com/mods/" }
+    minecraft = project.minecraft_version
 }
 
 allprojects {
     apply plugin: "architectury-plugin"
+
     group = rootProject.maven_group
     version = rootProject.mod_version
 }
 
 subprojects {
     apply plugin: 'dev.architectury.loom'
-    apply plugin: 'java'
     apply plugin: 'architectury-plugin'
     apply plugin: 'maven-publish'
     apply plugin: 'com.gradleup.shadow'
@@ -47,31 +26,35 @@ subprojects {
         archivesName = "$rootProject.archives_name-$project.name"
     }
 
-    loom {
-        silentMojangMappingsLicense()
-    }
-
     repositories {
         mavenCentral()
-        maven { url "https://maven.fabricmc.net/" }
-        maven { url "https://maven.minecraftforge.net/" }
-        maven { url "https://maven.architectury.dev/" }
-        maven { url "https://maven.parchmentmc.org" }
+        maven { url 'https://maven.azuredoom.com/mods' }
+        maven {
+            name "KosmX's maven"
+            url 'https://maven.kosmx.dev/'
+        }
+        maven { url = "https://maven.parchmentmc.org" }
         maven { url "https://maven.shedaniel.me/" }
-        maven { url "https://maven.kosmx.dev/" }
-        maven { url "https://api.modrinth.com/maven" }
-        maven { url "https://cursemaven.com" }
-        maven { url "https://modmaven.dev/" }
-        maven { url "https://dvs1.progwml6.com/files/maven/" }
-        maven { url "https://maven.azuredoom.com/mods/" }
+        maven {
+            name = "Modrinth"
+            url = "https://api.modrinth.com/maven"
+        }
+        maven {
+            url "https://cursemaven.com"
+        }
+        maven {
+            url = "https://maven.minecraftforge.net/"
+        }
     }
 
     dependencies {
-        minecraft "com.mojang:minecraft:$rootProject.minecraft_version"
+        minecraft "net.minecraft:minecraft:$rootProject.minecraft_version"
         mappings loom.layered() {
             officialMojangMappings()
-            parchment("org.parchmentmc.data:parchment-$rootProject.minecraft_version:$rootProject.parchment_mappings@zip")
+            parchment("org.parchmentmc.data:parchment-${project.minecraft_version}:${project.parchment_mappings}@zip")
         }
+        compileOnly "com.google.guava:guava:32.1.2-jre"
+        runtimeOnly "org.joml:joml:1.10.4"
 
         compileOnly 'org.projectlombok:lombok:1.18.32'
         annotationProcessor 'org.projectlombok:lombok:1.18.32'
@@ -79,35 +62,16 @@ subprojects {
 
     java {
         withSourcesJar()
+
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
 
     tasks.withType(JavaCompile).configureEach {
-        options.release = 17
+        it.options.release = 17
     }
-}
 
-architectury {
-    common rootProject.enabled_platforms.split(',')
-}
-
-loom {
-    accessWidenerPath = file("common/src/main/resources/nichirin.accesswidener")
-}
-
-sourceSets {
-    main {
-        resources {
-            srcDirs("src/main/generated")
-        }
-    }
-}
-
-dependencies {
-    minecraft "com.mojang:minecraft:$rootProject.minecraft_version"
-    mappings loom.layered() {
-        officialMojangMappings()
-        parchment("org.parchmentmc.data:parchment-$rootProject.minecraft_version:$rootProject.parchment_mappings@zip")
+    tasks.withType(org.gradle.jvm.tasks.Jar).configureEach {
+        it.zip64 = true
     }
 }

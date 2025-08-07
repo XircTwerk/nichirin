@@ -2,20 +2,16 @@ architectury {
     common rootProject.enabled_platforms.split(',')
 }
 
+loom {
+    accessWidenerPath = file("src/main/resources/nichirin.accesswidener")
+}
+
 sourceSets {
     main {
         resources {
             srcDirs("src/main/generated")
         }
     }
-}
-
-processResources {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-}
-
-loom {
-    accessWidenerPath = file("src/main/resources/nichirin.accesswidener")
 }
 
 dependencies {
@@ -26,6 +22,10 @@ dependencies {
 
     modImplementation "dev.kosmx.player-anim:player-animation-lib:${rootProject.player_anim_version}"
     modImplementation "dev.kosmx.player-anim:anim-core:${rootProject.player_anim_version}"
+}
+
+shadowJar {
+    enabled = false
 }
 
 processResources {
