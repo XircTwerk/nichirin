@@ -5,7 +5,7 @@ license = "All Rights Reserved"
 [[mods]]
 modId = "nichirin"
 version = "${version}"
-displayName = "Breath of Nichirin: Demon Slayer"
+displayName = "Demon Slayer: Breath of Nichirin"
 authors = "XircTwerk"
 description = '''
 Vanilla+ styled demon slayer mod.

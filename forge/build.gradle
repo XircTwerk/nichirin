@@ -2,22 +2,6 @@ plugins {
     id 'com.github.johnrengelman.shadow'
 }
 
-configurations {
-    common {
-        canBeResolved = true
-        canBeConsumed = false
-    }
-    compileClasspath.extendsFrom common
-    // Remove these two lines to prevent duplicates:
-    // runtimeClasspath.extendsFrom common
-    // developmentForge.extendsFrom common
-
-    shadowBundle {
-        canBeResolved = true
-        canBeConsumed = false
-    }
-}
-
 loom {
     accessWidenerPath = project(":common").loom.accessWidenerPath
 
@@ -25,27 +9,6 @@ loom {
         convertAccessWideners.set(true)
         extraAccessWideners.add loom.accessWidenerPath.get().asFile.name
         mixinConfig "nichirin.mixins.json"
-    }
-
-    runs {
-        client {
-            client()
-            setConfigName("Forge Client")
-            ideConfigGenerated = true
-            runDir = "run"
-
-            vmArgs "-Xmx4G"
-            vmArgs "-Xms1G"
-            vmArgs "-XX:+UnlockExperimentalVMOptions"
-            vmArgs "-XX:+UseG1GC"
-            vmArgs "-XX:G1NewSizePercent=20"
-            vmArgs "-XX:G1ReservePercent=20"
-            vmArgs "-XX:MaxGCPauseMillis=50"
-            vmArgs "-XX:G1HeapRegionSize=32M"
-
-            property "fml.earlyprogresswindow", "false"
-            property "mixin.debug.export", "true"
-        }
     }
 }
 
@@ -60,14 +23,31 @@ dependencies {
     modImplementation("dev.kosmx.player-anim:player-animation-lib-forge:${player_anim_version}")
     implementation "mod.azure.azurelib:azurelib-forge-1.20.1:1.0.34"
 
-    // Try both approaches for maximum compatibility:
-    common(project(path: ':common', configuration: 'namedElements')) { transitive false }
-    runtimeOnly(project(':common')) { transitive false }
-    shadowBundle(project(path: ':common', configuration: 'transformProductionForge')) { transitive = false }
+    // Use implementation with files() to bypass module system entirely
+    implementation files(project(':common').sourceSets.main.output.classesDirs)
+    implementation files(project(':common').sourceSets.main.output.resourcesDir)
 }
 
-// Make sure common is built first
-compileJava.dependsOn(':common:build')
+// Make sure common is built before forge compiles
+compileJava.dependsOn(':common:classes')
+processResources.dependsOn(':common:processResources')
+
+// Ensure classes are copied to the right location for the mod loader
+task copyCommonClasses(type: Copy) {
+    from project(':common').sourceSets.main.output.classesDirs
+    into sourceSets.main.output.classesDirs.singleFile
+    dependsOn ':common:classes'
+}
+
+task copyCommonResources(type: Copy) {
+    from project(':common').sourceSets.main.output.resourcesDir
+    into sourceSets.main.output.resourcesDir
+    exclude 'fabric.mod.json'
+    exclude 'architectury.common.json'
+    dependsOn ':common:processResources'
+}
+
+classes.dependsOn copyCommonClasses, copyCommonResources
 
 processResources {
     inputs.property 'version', project.version
@@ -83,15 +63,15 @@ sourcesJar {
     from commonSources.archiveFile.map { zipTree(it) }
 }
 
+jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
 shadowJar {
-    exclude "fabric.mod.json"
-    exclude "architectury.common.json"
-    configurations = [project.configurations.shadowBundle]
-    archiveClassifier = 'dev-shadow'
+    enabled = false
 }
 
 remapJar {
-    input.set shadowJar.archiveFile
-    dependsOn shadowJar
+    dependsOn jar
     archiveClassifier = null
 }

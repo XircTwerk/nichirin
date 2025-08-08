@@ -9,6 +9,7 @@ import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.event.events.common.TickEvent;
 import dev.architectury.networking.NetworkManager;
 import dev.architectury.platform.Platform;
+import dev.architectury.utils.Env;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -53,7 +54,7 @@ public class KatanaInputHandler {
      * CLIENT-ONLY: Call this from client initialization only
      */
     public static void registerClient() {
-        if (Platform.getEnv() == EnvType.CLIENT) {
+        if (Platform.getEnvironment() == Env.CLIENT) {
             try {
                 // Use reflection to avoid loading client classes on server
                 Class<?> clientHandlerClass = Class.forName("com.xirc.nichirin.client.util.KatanaClientHandler");

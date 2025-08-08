@@ -11,7 +11,7 @@ import com.xirc.nichirin.common.util.KatanaInputHandler;
 import com.xirc.nichirin.registry.*;
 import dev.architectury.platform.Platform;
 import dev.architectury.registry.registries.DeferredRegister;
-import net.fabricmc.api.EnvType;
+import dev.architectury.utils.Env;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;
@@ -61,7 +61,7 @@ public final class BreathOfNichirin {
         LOGGER.info("=== NICHIRIN COMMON INITIALIZATION COMPLETE ===");
 
         // Client-side initialization
-        if (Platform.getEnv() == EnvType.CLIENT) {
+        if (Platform.getEnvironment() == Env.CLIENT) {
             System.out.println("DEBUG: Initializing client side");
             try {
                 BreathOfNichirinClient.init();

@@ -11,8 +11,6 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/fabric/nichirin.fabric.test.iml" filepath="$PROJECT_DIR$/.idea/modules/fabric/nichirin.fabric.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/forge/nichirin.forge.main.iml" filepath="$PROJECT_DIR$/.idea/modules/forge/nichirin.forge.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/forge/nichirin.forge.test.iml" filepath="$PROJECT_DIR$/.idea/modules/forge/nichirin.forge.test.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/nichirin.main.iml" filepath="$PROJECT_DIR$/.idea/modules/nichirin.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/nichirin.test.iml" filepath="$PROJECT_DIR$/.idea/modules/nichirin.test.iml" />
     </modules>
   </component>
 </project>
