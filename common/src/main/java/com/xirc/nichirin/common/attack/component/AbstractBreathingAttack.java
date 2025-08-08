@@ -2,6 +2,7 @@ package com.xirc.nichirin.common.attack.component;
 
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset.MoveConfiguration;
 import com.xirc.nichirin.common.util.BreathingManager;
+import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.network.chat.Component;
@@ -272,6 +273,17 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         // Apply hit stun if configured
         if (hitStun > 0) {
             target.invulnerableTime = hitStun;
+
+            // Apply actual stun effect
+            MobEffectInstance stunInstance = new MobEffectInstance(
+                    NichirinEffectRegistry.STUNNED.get(),
+                    hitStun, // Duration in ticks
+                    0, // Amplifier
+                    false, // Ambient
+                    true, // Show particles
+                    true // Show icon
+            );
+            target.addEffect(stunInstance);
         }
 
         // Apply knockback if configured
@@ -302,6 +314,17 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         // Apply hit stun
         if (hitStun > 0) {
             target.invulnerableTime = hitStun;
+
+            // Apply actual stun effect
+            MobEffectInstance stunInstance = new MobEffectInstance(
+                    NichirinEffectRegistry.STUNNED.get(),
+                    hitStun, // Duration in ticks
+                    0, // Amplifier
+                    false, // Ambient
+                    true, // Show particles
+                    true // Show icon
+            );
+            target.addEffect(stunInstance);
         }
 
         // Apply knockback

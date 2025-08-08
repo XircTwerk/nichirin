@@ -63,28 +63,16 @@ public class AttackWheelHandler {
 
             // DEBUG: Log key state changes
             if (isKeyDown != wasKeyDown) {
-                System.out.println("DEBUG: Attack wheel key state changed: " + isKeyDown);
-                if (isKeyDown) {
-                    System.out.println("DEBUG: Attack wheel key PRESSED!");
-                    System.out.println("DEBUG: Player has katana: " + (client.player.getMainHandItem().getItem() instanceof SimpleKatana));
-                    System.out.println("DEBUG: Player has moveset: " + BreathingStyleHelper.hasMoveset(client.player));
-                    System.out.println("DEBUG: Current screen: " + (client.screen != null ? client.screen.getClass().getSimpleName() : "null"));
-                    System.out.println("DEBUG: Wheel currently open: " + wheelOpen);
-                    System.out.println("DEBUG: Player stunned: " + client.player.hasEffect(NichirinEffectRegistry.STUNNED.get()));
-                    System.out.println("DEBUG: Player blocking: " + client.player.hasEffect(NichirinEffectRegistry.BLOCKING.get()));
-                }
             }
 
             // Handle ESC when wheel is open - more aggressive for multiplayer
             if (wheelOpen && isEscDown && !wasEscDown) {
-                System.out.println("DEBUG: ESC pressed while wheel open - closing wheel");
                 closeWheel();
 
                 // MULTIPLAYER FIX: More aggressive pause menu prevention
                 // Check immediately and for the next few ticks
                 for (int i = 0; i < 3; i++) {
                     if (client.screen != null && client.screen.getClass().getSimpleName().contains("Pause")) {
-                        System.out.println("DEBUG: Preventing pause screen #" + i);
                         client.setScreen(null);
                         client.mouseHandler.grabMouse();
                     }
@@ -93,12 +81,9 @@ public class AttackWheelHandler {
 
             // Handle attack wheel key
             if (isKeyDown && !wasKeyDown) {
-                System.out.println("DEBUG: Processing attack wheel key press");
                 if (!wheelOpen) {
-                    System.out.println("DEBUG: Attempting to open wheel");
                     openWheel();
                 } else {
-                    System.out.println("DEBUG: Attempting to close wheel");
                     closeWheel();
                 }
             }
@@ -107,12 +92,10 @@ public class AttackWheelHandler {
             if (wheelOpen && currentWheel != null) {
                 int currentHovered = currentWheel.getCurrentlyHoveredMove();
                 if (currentHovered != lastHoveredMove) {
-                    System.out.println("DEBUG: Hovered move changed from " + lastHoveredMove + " to " + currentHovered);
                     lastHoveredMove = currentHovered;
                     // Capture the move when it becomes highlighted
                     if (currentHovered >= 0) {
                         capturedSelectedMove = currentHovered;
-                        System.out.println("DEBUG: Captured selected move: " + capturedSelectedMove);
                     }
                 }
             }
@@ -126,7 +109,6 @@ public class AttackWheelHandler {
             if (wheelOpen && client.screen != null) {
                 String screenName = client.screen.getClass().getSimpleName();
                 if (screenName.contains("Pause")) {
-                    System.out.println("DEBUG: PRE tick - preventing pause screen: " + screenName);
                     client.setScreen(null);
                     client.mouseHandler.grabMouse();
                 }
@@ -139,7 +121,6 @@ public class AttackWheelHandler {
             if (wheelOpen && client.screen != null) {
                 String screenName = client.screen.getClass().getSimpleName();
                 if (screenName.contains("Pause")) {
-                    System.out.println("DEBUG: POST tick - preventing pause screen: " + screenName);
                     client.setScreen(null);
                     client.mouseHandler.grabMouse();
                 }
@@ -152,7 +133,6 @@ public class AttackWheelHandler {
 
             // Close wheel if screen opens
             if (wheelOpen && mc.screen != null) {
-                System.out.println("DEBUG: Screen opened while wheel active - closing wheel");
                 closeWheel();
                 return;
             }
@@ -181,7 +161,6 @@ public class AttackWheelHandler {
 
             // IMMEDIATE EXECUTION: Execute and close on first click detection
             if (isAttackDown && !wasAttackDown) {
-                System.out.println("DEBUG: Attack button pressed while wheel open - executing move");
                 executeWheelMove(); // This closes the wheel immediately
             }
 
@@ -201,36 +180,29 @@ public class AttackWheelHandler {
             wasAttackDown = isAttackDown;
         });
 
-        System.out.println("DEBUG: AttackWheelHandler registration complete");
     }
 
     /**
      * Open the attack wheel
      */
     private static void openWheel() {
-        System.out.println("DEBUG: openWheel() called");
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) {
-            System.out.println("DEBUG: openWheel() failed - no player");
             return;
         }
 
         if (mc.player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
-            System.out.println("DEBUG: openWheel() failed - player stunned");
             return;
         }
 
         // Check if player has blocking effect - CAN'T OPEN WHEEL
         if (mc.player.hasEffect(NichirinEffectRegistry.BLOCKING.get())) {
-            System.out.println("DEBUG: openWheel() failed - player blocking");
             return;
         }
 
         // Check if holding katana
         ItemStack mainHand = mc.player.getMainHandItem();
         if (!(mainHand.getItem() instanceof SimpleKatana)) {
-            System.out.println("DEBUG: openWheel() failed - not holding katana");
-            System.out.println("DEBUG: Main hand item: " + mainHand.getItem().getClass().getSimpleName());
             return;
         }
 
