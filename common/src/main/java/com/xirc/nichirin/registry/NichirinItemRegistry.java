@@ -1,6 +1,7 @@
 package com.xirc.nichirin.registry;
 
 import com.xirc.nichirin.BreathOfNichirin;
+import com.xirc.nichirin.common.item.armor.NichirinArmorItem;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.item.throwable.SmokeBombItem;
 import com.xirc.nichirin.common.item.tool.BentoBoxItem;
@@ -8,6 +9,7 @@ import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ArmorMaterials;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
 import org.slf4j.Logger;
@@ -40,6 +42,20 @@ public interface NichirinItemRegistry {
 
     RegistrySupplier<Item> BENTO_BOX = register("bento_box",
             () -> new BentoBoxItem(settings().stacksTo(1)));
+
+
+    // Shinobu Armor Set
+    RegistrySupplier<Item> SHINOBU_HEADPIECE = register("shinobu_headpiece",
+            () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.HELMET, settings().stacksTo(1)));
+
+    RegistrySupplier<Item> SHINOBU_CAPE = register("shinobu_cape",
+            () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.CHESTPLATE, settings().stacksTo(1)));
+
+    RegistrySupplier<Item> SHINOBU_LEGGINGS = register("shinobu_leggings",
+            () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.LEGGINGS, settings().stacksTo(1)));
+
+    RegistrySupplier<Item> SHINOBU_BOOTS = register("shinobu_boots",
+            () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.BOOTS, settings().stacksTo(1)));
 
 
     static <T extends Item> RegistrySupplier<T> register(String id, Supplier<? extends T> supplier) {

@@ -17,14 +17,15 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
-public class NichirinArmor<T extends Item & GeoItem> extends GeoArmorRenderer<T> {
-    public NichirinArmor(final GeoModel<T> model) {
+public class NichirinArmorRenderer<T extends Item & GeoItem> extends GeoArmorRenderer<T> {
+
+    public NichirinArmorRenderer(final GeoModel<T> model) {
         super(model);
     }
 
     @Override
     public GeoBone getHeadBone() {
-        return this.model.getBone("helmet").orElse(super.getHeadBone());
+        return this.model.getBone("Head").orElse(super.getHeadBone());
     }
 
     @Nullable
@@ -89,5 +90,12 @@ public class NichirinArmor<T extends Item & GeoItem> extends GeoArmorRenderer<T>
             leftArm.setScaleX(0.75f);
             rightArm.setScaleX(0.75f);
         }
+
+        // Also scale cape arms if they exist
+        GeoBone capeLeft = this.model.getBone("capeLeft").orElse(null);
+        GeoBone capeRight = this.model.getBone("capeRight").orElse(null);
+
+        if (capeLeft != null) capeLeft.setScaleX(0.75f);
+        if (capeRight != null) capeRight.setScaleX(0.75f);
     }
 }
