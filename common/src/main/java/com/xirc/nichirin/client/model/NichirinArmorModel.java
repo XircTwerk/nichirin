@@ -3,61 +3,45 @@ package com.xirc.nichirin.client.model;
 import com.xirc.nichirin.BreathOfNichirin;
 import mod.azure.azurelib.core.animatable.GeoAnimatable;
 import mod.azure.azurelib.model.GeoModel;
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.Resource;
 
-/**
- * Base model class for Nichirin armor pieces using AzureLib
- * Handles resource location generation for models, textures, and animations
- */
 public class NichirinArmorModel<T extends GeoAnimatable> extends GeoModel<T> {
+    protected final String modelName;
+    protected final String textureName;
 
-    private final ArmorResourcePaths resourcePaths;
-
-    public NichirinArmorModel(String armorName) {
-        this.resourcePaths = new ArmorResourcePaths(armorName, armorName);
+    public NichirinArmorModel(final String name) {
+        this(name, name);
     }
 
-    public NichirinArmorModel(String modelPath, String texturePath) {
-        this.resourcePaths = new ArmorResourcePaths(modelPath, texturePath);
-    }
-
-    @Override
-    public ResourceLocation getModelResource(T armorPiece) {
-        return resourcePaths.getModelLocation();
+    public NichirinArmorModel(final String modelName, final String textureName) {
+        this.modelName = modelName;
+        this.textureName = textureName;
     }
 
     @Override
-    public ResourceLocation getTextureResource(T armorPiece) {
-        return resourcePaths.getTextureLocation();
+    public ResourceLocation getModelResource(final T object) {
+        return BreathOfNichirin.id("geo/" + modelName + ".geo.json");
     }
 
     @Override
-    public ResourceLocation getAnimationResource(T armorPiece) {
-        return resourcePaths.getAnimationLocation();
+    public ResourceLocation getTextureResource(final T object) {
+        return BreathOfNichirin.id("textures/armor/" + textureName + ".png");
     }
 
-    /**
-     * Inner class to manage armor resource paths
-     */
-    private static class ArmorResourcePaths {
-        private final String modelIdentifier;
-        private final String textureIdentifier;
+    @Override
+    public ResourceLocation getAnimationResource(final T animatable) {
+        ResourceLocation animationFile = BreathOfNichirin.id("animations/" + modelName + ".animation.json");
 
-        ArmorResourcePaths(String modelId, String textureId) {
-            this.modelIdentifier = modelId;
-            this.textureIdentifier = textureId;
-        }
-
-        ResourceLocation getModelLocation() {
-            return BreathOfNichirin.id("geo/" + modelIdentifier + ".geo.json");
-        }
-
-        ResourceLocation getTextureLocation() {
-            return BreathOfNichirin.id("textures/armor/" + textureIdentifier + ".png");
-        }
-
-        ResourceLocation getAnimationLocation() {
-            return BreathOfNichirin.id("animations/" + modelIdentifier + ".animation.json");
+        // Check if animation file exists
+        try {
+            Resource resource = Minecraft.getInstance().getResourceManager().getResourceOrThrow(animationFile);
+            return animationFile; // File exists, return it
+        } catch (Exception e) {
+            // Animation file doesn't exist, create a dummy/empty animation file resource location
+            // AzureLib requires a valid ResourceLocation, so we'll return a fallback
+            return BreathOfNichirin.id("animations/empty.animation.json");
         }
     }
 }

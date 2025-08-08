@@ -1,0 +1,49 @@
+{
+	"format_version": "1.12.0",
+	"minecraft:geometry": [
+		{
+			"description": {
+				"identifier": "geometry.Kimono",
+				"texture_width": 128,
+				"texture_height": 128,
+				"visible_bounds_width": 3,
+				"visible_bounds_height": 4.5,
+				"visible_bounds_offset": [0, 1.75, 0]
+			},
+			"bones": [
+				{
+					"name": "capeLeft",
+					"pivot": [0, 18.35361, -0.35284],
+					"cubes": [
+						{"origin": [4, 11.9, -2], "size": [3, 12, 4], "inflate": 0.55, "uv": [67, 78], "mirror": true}
+					]
+				},
+				{
+					"name": "capeRight",
+					"pivot": [0, 18.35361, -0.35284],
+					"cubes": [
+						{"origin": [-7, 11.9, -2], "size": [3, 12, 4], "inflate": 0.55, "uv": [67, 78]}
+					]
+				},
+				{
+					"name": "Cape",
+					"pivot": [0, 18.35361, -0.35284],
+					"cubes": [
+						{"origin": [-2, 23.25, -2], "size": [4, 2, 4], "inflate": 0.1, "uv": [66, 94]},
+						{"origin": [-4, 13.95, -2.8], "size": [8, 10, 5], "inflate": 0.55, "uv": [65, 104]},
+						{"origin": [-3.89, 13.94, -1.91], "size": [7.75, 10, 4], "inflate": 0.55, "uv": [98, 82]}
+					]
+				},
+				{
+					"name": "Lower parts",
+					"parent": "Cape",
+					"pivot": [0, 14.45, 1.7],
+					"cubes": [
+						{"origin": [-4, 4.95, -1.8], "size": [8, 9, 4], "inflate": 0.65, "uv": [98, 96]},
+						{"origin": [-3.89, 4.95, -2.91], "size": [7.75, 9, 5], "inflate": 0.65, "uv": [97, 109]}
+					]
+				}
+			]
+		}
+	]
+}

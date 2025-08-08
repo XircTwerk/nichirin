@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.item.armor;
 
+import com.xirc.nichirin.client.renderer.armor.ShinobuCapeRenderer;
 import lombok.NonNull;
 import mod.azure.azurelib.animatable.GeoItem;
 import mod.azure.azurelib.animatable.client.RenderProvider;
@@ -92,7 +93,7 @@ public class NichirinArmorItem extends ArmorItem implements GeoItem {
             return new ShinobuUniformRenderer();
         }
         else if (armorStack.is(NichirinItemRegistry.SHINOBU_CAPE.get())) {
-            return new ShinobuUniformRenderer();
+            return new ShinobuCapeRenderer();
         }
         else if (armorStack.is(NichirinItemRegistry.SHINOBU_LEGGINGS.get())) {
             return new ShinobuUniformRenderer();
