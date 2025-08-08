@@ -69,8 +69,6 @@ public class BreathOfNichirinClient {
         //Registries
         NichirinEntityRendererRegistry.init();
 
-        ItemPropertiesHelper.registerBentoBoxProperty();
-
         // Register handlers AFTER keybinds
         BigGuiKeyHandler.register();
         System.out.println("DEBUG: About to register attack wheel handler");

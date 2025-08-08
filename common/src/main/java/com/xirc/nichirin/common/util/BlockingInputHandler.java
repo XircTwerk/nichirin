@@ -4,6 +4,7 @@ import com.xirc.nichirin.client.registry.NichirinKeybindRegistry;
 import dev.architectury.event.events.client.ClientTickEvent;
 import dev.architectury.networking.NetworkManager;
 import dev.architectury.platform.Platform;
+import dev.architectury.utils.Env;
 import io.netty.buffer.Unpooled;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
@@ -27,7 +28,7 @@ public class BlockingInputHandler {
 
     public static void register() {
         // Only register on client side
-        if (Platform.getEnv() == EnvType.CLIENT) {
+        if (Platform.getEnvironment() == Env.CLIENT) {
             registerClientEvents();
         }
     }

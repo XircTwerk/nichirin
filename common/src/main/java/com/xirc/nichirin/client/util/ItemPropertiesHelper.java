@@ -1,11 +1,9 @@
 package com.xirc.nichirin.client.util;
 
-import dev.architectury.injectables.annotations.ExpectPlatform;
-
 public class ItemPropertiesHelper {
 
-    @ExpectPlatform
     public static void registerBentoBoxProperty() {
-        throw new AssertionError();
+        // This will be called from platform-specific event handlers
+        // No implementation needed here since each platform handles it differently
     }
 }
