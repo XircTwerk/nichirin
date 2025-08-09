@@ -53,7 +53,6 @@ public class TheBigGui extends Screen {
     private final PerksSection perksSection = new PerksSection();
     private final QuestsSection questsSection = new QuestsSection();
     private final ReputationSection reputationSection = new ReputationSection();
-    private final CosmeticsSection cosmeticsSection = new CosmeticsSection();
     private final MovesetSection movesetSection = new MovesetSection();
     private final ConfigSection configSection = new ConfigSection();
 
@@ -182,7 +181,6 @@ public class TheBigGui extends Screen {
             case PERKS -> perksSection.render(graphics, player, this.font);
             case QUESTS -> questsSection.render(graphics, player, this.font);
             case REPUTATION -> reputationSection.render(graphics, player, this.font);
-            case COSMETICS -> cosmeticsSection.render(graphics, player, this.font);
             case MOVESET -> movesetSection.render(graphics, player, this.font);
             case CONFIG -> configSection.render(graphics, player, this.font);
         }
@@ -251,7 +249,6 @@ public class TheBigGui extends Screen {
             case PERKS -> perksSection.handleClick(adjustedMouseX, adjustedMouseY, player);
             case QUESTS -> questsSection.handleClick(adjustedMouseX, adjustedMouseY, player);
             case REPUTATION -> reputationSection.handleClick(adjustedMouseX, adjustedMouseY, player);
-            case COSMETICS -> cosmeticsSection.handleClick(adjustedMouseX, adjustedMouseY, player);
             case MOVESET -> movesetSection.handleClick(adjustedMouseX, adjustedMouseY, player);
             case CONFIG -> configSection.handleClick(adjustedMouseX, adjustedMouseY, player);
         };
@@ -341,7 +338,6 @@ public class TheBigGui extends Screen {
         PERKS("gui.nichirin.section.perks"),
         QUESTS("gui.nichirin.section.quests"),
         REPUTATION("gui.nichirin.section.reputation"),
-        COSMETICS("gui.nichirin.section.cosmetics"),
         MOVESET("gui.nichirin.section.moveset"),
         CONFIG("gui.nichirin.section.config");
 

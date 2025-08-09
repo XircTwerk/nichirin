@@ -25,6 +25,15 @@ public interface NichirinParticleRegistry {
     RegistrySupplier<Flash2ParticleType> FLASH2 =
             PARTICLES.register("flash2", Flash2ParticleType::new);
 
+    RegistrySupplier<BlueFlash1ParticleType> BLUE_FLASH1 =
+            PARTICLES.register("blue_flash1", BlueFlash1ParticleType::new);
+
+    RegistrySupplier<BlueFlash2ParticleType> BLUE_FLASH2 =
+            PARTICLES.register("blue_flash2", BlueFlash2ParticleType::new);
+
+    RegistrySupplier<BlueShockwaveParticleType> BLUE_SHOCKWAVE =
+            PARTICLES.register("blue_shockwave", BlueShockwaveParticleType::new);
+
     static void init() {
         PARTICLES.register();
     }

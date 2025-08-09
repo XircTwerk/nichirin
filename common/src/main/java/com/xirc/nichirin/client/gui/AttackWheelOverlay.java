@@ -25,7 +25,7 @@ public class AttackWheelOverlay {
 
     private static final int OUTER_RADIUS = 150;
     private static final int INNER_RADIUS = 50;
-    private static final int ICON_SIZE = 80;
+    private static final int ICON_SIZE = 72;
     private static final int CENTER_SQUARE_SIZE = 80; // Size of center square
 
     // Fixed scale constant
