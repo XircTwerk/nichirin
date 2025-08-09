@@ -1,9 +1,6 @@
 package com.xirc.nichirin.registry;
 
-import com.xirc.nichirin.common.particle.Flash1ParticleType;
-import com.xirc.nichirin.common.particle.ShockwaveParticleType;
-import com.xirc.nichirin.common.particle.SoundParticleType;
-import com.xirc.nichirin.common.particle.ThunderParticleType;
+import com.xirc.nichirin.common.particle.*;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.minecraft.core.particles.ParticleType;
@@ -24,6 +21,9 @@ public interface NichirinParticleRegistry {
 
     RegistrySupplier<Flash1ParticleType> FLASH1 =
             PARTICLES.register("flash1", Flash1ParticleType::new);
+
+    RegistrySupplier<Flash2ParticleType> FLASH2 =
+            PARTICLES.register("flash2", Flash2ParticleType::new);
 
     static void init() {
         PARTICLES.register();

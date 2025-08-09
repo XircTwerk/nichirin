@@ -5,9 +5,7 @@ import com.xirc.nichirin.client.animation.NichirinAnimations;
 import com.xirc.nichirin.client.handler.AttackWheelHandler;
 import com.xirc.nichirin.client.handler.BigGuiKeyHandler;
 import com.xirc.nichirin.client.handler.ClientDoubleJumpHandler;
-import com.xirc.nichirin.client.particle.Flash1ParticleProvider;
-import com.xirc.nichirin.client.particle.ShockwaveParticleProvider;
-import com.xirc.nichirin.client.particle.SoundParticleProvider;
+import com.xirc.nichirin.client.particle.*;
 import com.xirc.nichirin.client.registry.NichirinKeybindRegistry;
 import com.xirc.nichirin.client.renderer.BreathingBarRenderer;
 import com.xirc.nichirin.client.renderer.StaminaBarRenderer;
@@ -29,7 +27,6 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import com.xirc.nichirin.client.particle.ThunderParticleProvider;
 import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.client.renderer.item.ItemPropertyFunction;
 import net.minecraft.resources.ResourceLocation;
@@ -44,6 +41,7 @@ public class BreathOfNichirinClient {
         ParticleProviderRegistry.register(NichirinParticleRegistry.SHOCKWAVE, ShockwaveParticleProvider::new);
         ParticleProviderRegistry.register(NichirinParticleRegistry.SOUND, SoundParticleProvider::new);
         ParticleProviderRegistry.register(NichirinParticleRegistry.FLASH1, Flash1ParticleProvider::new);
+        ParticleProviderRegistry.register(NichirinParticleRegistry.FLASH2, Flash2ParticleProvider::new);
     }
 
     public static void init() {
