@@ -49,6 +49,13 @@ public abstract class AbstractMoveset {
     }
 
     /**
+     * Gets the display name
+     */
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    /**
      * Override the left-click (M1) behavior for SimpleKatana
      * Return true to override default behavior, false to use default
      */
@@ -115,6 +122,20 @@ public abstract class AbstractMoveset {
      */
     @Getter
     public static class MoveConfiguration {
+
+        /**
+        * Gets the move ID
+        */
+        public String getMoveId() {
+            return moveId;
+        }
+
+        /**
+         * Gets the display name
+         */
+        public String getDisplayName() {
+            return displayName;
+        }
         // Basic properties
         public final String moveId;
         public final String displayName;
