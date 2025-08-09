@@ -5,6 +5,8 @@ import com.xirc.nichirin.client.animation.NichirinAnimations;
 import com.xirc.nichirin.client.handler.AttackWheelHandler;
 import com.xirc.nichirin.client.handler.BigGuiKeyHandler;
 import com.xirc.nichirin.client.handler.ClientDoubleJumpHandler;
+import com.xirc.nichirin.client.particle.ShockwaveParticleProvider;
+import com.xirc.nichirin.client.particle.SoundParticleProvider;
 import com.xirc.nichirin.client.registry.NichirinKeybindRegistry;
 import com.xirc.nichirin.client.renderer.BreathingBarRenderer;
 import com.xirc.nichirin.client.renderer.StaminaBarRenderer;
@@ -38,6 +40,8 @@ public class BreathOfNichirinClient {
 
     private static void registerParticles() {
         ParticleProviderRegistry.register(NichirinParticleRegistry.THUNDER, ThunderParticleProvider::new);
+        ParticleProviderRegistry.register(NichirinParticleRegistry.SHOCKWAVE, ShockwaveParticleProvider::new);
+        ParticleProviderRegistry.register(NichirinParticleRegistry.SOUND, SoundParticleProvider::new);
     }
 
     public static void init() {

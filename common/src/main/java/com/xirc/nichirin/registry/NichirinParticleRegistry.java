@@ -1,5 +1,7 @@
 package com.xirc.nichirin.registry;
 
+import com.xirc.nichirin.common.particle.ShockwaveParticleType;
+import com.xirc.nichirin.common.particle.SoundParticleType;
 import com.xirc.nichirin.common.particle.ThunderParticleType;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
@@ -12,6 +14,12 @@ public interface NichirinParticleRegistry {
 
     RegistrySupplier<ThunderParticleType> THUNDER =
             PARTICLES.register("thunder", ThunderParticleType::new);
+
+    RegistrySupplier<SoundParticleType> SOUND =
+            PARTICLES.register("sound", SoundParticleType::new);
+
+    RegistrySupplier<ShockwaveParticleType> SHOCKWAVE =
+            PARTICLES.register("shockwave", ShockwaveParticleType::new);
 
     static void init() {
         PARTICLES.register();
