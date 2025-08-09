@@ -42,6 +42,13 @@ public abstract class AbstractMoveset {
     }
 
     /**
+     * Gets the moveset ID
+     */
+    public String getMovesetId() {
+        return movesetId;
+    }
+
+    /**
      * Override the left-click (M1) behavior for SimpleKatana
      * Return true to override default behavior, false to use default
      */
