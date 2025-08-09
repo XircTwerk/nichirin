@@ -1,5 +1,6 @@
 package com.xirc.nichirin.registry;
 
+import com.xirc.nichirin.common.particle.Flash1ParticleType;
 import com.xirc.nichirin.common.particle.ShockwaveParticleType;
 import com.xirc.nichirin.common.particle.SoundParticleType;
 import com.xirc.nichirin.common.particle.ThunderParticleType;
@@ -20,6 +21,9 @@ public interface NichirinParticleRegistry {
 
     RegistrySupplier<ShockwaveParticleType> SHOCKWAVE =
             PARTICLES.register("shockwave", ShockwaveParticleType::new);
+
+    RegistrySupplier<Flash1ParticleType> FLASH1 =
+            PARTICLES.register("flash1", Flash1ParticleType::new);
 
     static void init() {
         PARTICLES.register();
