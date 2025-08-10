@@ -78,9 +78,7 @@ public class BreathOfNichirinClient {
 
         // Register handlers AFTER keybinds
         BigGuiKeyHandler.register();
-        System.out.println("DEBUG: About to register attack wheel handler");
         com.xirc.nichirin.client.handler.AttackWheelHandler.register();
-        System.out.println("DEBUG: Attack wheel handler registered");
         ClientDoubleJumpHandler.register();
         CooldownDisplayPacket.registerClient();
 
