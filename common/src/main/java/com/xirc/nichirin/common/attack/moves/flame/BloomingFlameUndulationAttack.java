@@ -5,6 +5,8 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.HashSet;
@@ -19,6 +21,7 @@ import java.util.Set;
  * Mechanics:
  * - 360 degree spinning slash, omnidirectional
  * - User becomes invulnerable during active frames
+ * - Deflects or destroys projectiles during active frames
  * - 3.5 block radius
  *
  * All configuration comes from the moveset builder.
@@ -70,6 +73,9 @@ public class BloomingFlameUndulationAttack extends FlameBreathingAttackBase {
 
             // Continuous spinning attack
             performSpinAttack();
+
+            // Deflect projectiles during spinning
+            deflectProjectiles();
         }
 
         // Remove invulnerability when attack ends
@@ -120,6 +126,68 @@ public class BloomingFlameUndulationAttack extends FlameBreathingAttackBase {
             world.playSound(null, user.getX(), user.getY(), user.getZ(),
                     SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.6f, 1.5f);
         }
+    }
+
+    private void deflectProjectiles() {
+        Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
+
+        // Find all projectiles in range
+        List<Projectile> projectiles = world.getEntitiesOfClass(Projectile.class,
+                new net.minecraft.world.phys.AABB(userPos.subtract(range, 2, range), userPos.add(range, 2, range)),
+                projectile -> projectile.isAlive() && projectile.getOwner() != user);
+
+        for (Projectile projectile : projectiles) {
+            // Destroy arrows and similar projectiles with flame
+            if (projectile instanceof AbstractArrow) {
+                projectile.discard();
+
+                // Create flame deflection effect
+                createFlameDeflectionEffect(projectile.position());
+
+                // Deflection sound
+                world.playSound(null, projectile.getX(), projectile.getY(), projectile.getZ(),
+                        SoundEvents.FIRE_EXTINGUISH, SoundSource.PLAYERS, 1.0f, 1.5f);
+            } else {
+                // For other projectiles, reflect them back with flame trail
+                Vec3 reflectDirection = projectile.position().subtract(userPos).normalize();
+                projectile.setDeltaMovement(reflectDirection.scale(1.5));
+                projectile.hurtMarked = true;
+
+                // Create flame deflection effect
+                createFlameDeflectionEffect(projectile.position());
+
+                // Deflection sound
+                world.playSound(null, projectile.getX(), projectile.getY(), projectile.getZ(),
+                        SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 0.8f, 1.3f);
+            }
+        }
+    }
+
+    /**
+     * Create flame deflection effect when destroying/reflecting projectiles
+     */
+    private void createFlameDeflectionEffect(Vec3 position) {
+        if (!(world instanceof net.minecraft.server.level.ServerLevel serverLevel)) return;
+
+        // Flame burst from deflection
+        serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.FLAME,
+                position.x, position.y, position.z,
+                8, 0.3, 0.3, 0.3, 0.2);
+
+        // Lava particles for impact
+        serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.LAVA,
+                position.x, position.y, position.z,
+                3, 0.2, 0.2, 0.2, 0.1);
+
+        // Spark effect
+        serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.CRIT,
+                position.x, position.y, position.z,
+                5, 0.4, 0.4, 0.4, 0.3);
+
+        // Smoke from deflection
+        serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.LARGE_SMOKE,
+                position.x, position.y, position.z,
+                2, 0.2, 0.2, 0.2, 0.05);
     }
 
     /**
