@@ -21,6 +21,7 @@ import com.xirc.nichirin.common.util.PlayerStats;
 import com.xirc.nichirin.registry.NichirinEntityRendererRegistry;
 import com.xirc.nichirin.registry.NichirinItemRegistry;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
+import com.xirc.nichirin.registry.NichirinShaderRegistry;
 import dev.architectury.event.events.client.ClientTickEvent;
 import dev.architectury.registry.client.particle.ParticleProviderRegistry;
 import net.fabricmc.api.EnvType;
@@ -69,6 +70,7 @@ public class BreathOfNichirinClient {
         System.out.println("DEBUG: Katana client handler registered");
         BlockingInputHandler.register();
         PlayerStats.initialize();
+        NichirinShaderRegistry.init();
 
         // Register keybinds FIRST
         NichirinKeybindRegistry.register();
