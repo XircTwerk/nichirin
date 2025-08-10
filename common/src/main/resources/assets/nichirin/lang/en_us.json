@@ -4,6 +4,8 @@
 
   "breathing_style.thunder_breathing": "Thunder Breathing",
   "breathing_style.flame_breathing": "Flame Breathing",
+  "breathing_style.insect_breathing": "Insect Breathing",
+  "breathing_style.sound_breathing": "Sound Breathing",
 
   "command.nichirin.breathing.add.success": "Gave %s the breathing style %s",
   "command.nichirin.breathing.player.add.success": "You have been given the breathing style %s",
