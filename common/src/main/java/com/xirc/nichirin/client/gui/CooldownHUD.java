@@ -165,6 +165,20 @@ public class CooldownHUD {
         return remaining > 0 ? (int)(remaining / 50L) : 0;
     }
 
+    /**
+     * Clear all cooldowns (called on death/respawn)
+     */
+    public static void clearAllCooldowns() {
+        cooldowns.clear();
+    }
+
+    /**
+     * Remove a specific cooldown
+     */
+    public static void removeCooldown(String name) {
+        cooldowns.remove(name);
+    }
+
     private static class CooldownEntry {
         final long endTime;
         final long duration;
