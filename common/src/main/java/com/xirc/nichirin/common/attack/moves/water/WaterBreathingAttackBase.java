@@ -52,26 +52,8 @@ public abstract class WaterBreathingAttackBase extends AbstractBreathingAttack<W
         // Apply base no-immunity hit
         super.hitTargetNoImmunity(target);
 
-        // Apply Thunder Breathing specific "shocked" effect
-        if (hitStun > 0) {
-            target.addEffect(new MobEffectInstance(
-                    NichirinEffectRegistry.SHOCKED.get(),
-                    hitStun,
-                    0,
-                    false,
-                    true
-            ));
-        }
-    }
 
-    // Thunder Breathing specific utility methods
 
-    /**
-     * Check if this attack uses teleportation mechanics
-     * Thunder Breathing often features instant movement attacks
-     */
-    public boolean isTeleportAttack() {
-        return hasTeleport();
     }
 
     /**
@@ -106,31 +88,9 @@ public abstract class WaterBreathingAttackBase extends AbstractBreathingAttack<W
         return windup;
     }
 
-    /**
-     * Thunder Breathing specific method to create electrical particle effects
-     * Should be overridden by individual attacks for their specific visual style
-     */
-    protected void createThunderParticles() {
-        // Override in subclasses for specific thunder effects
-        // This is a placeholder for common thunder particle logic
-    }
 
-    /**
-     * Thunder Breathing specific method to play electrical sound effects
-     * Should be overridden by individual attacks for their specific audio
-     */
-    protected void playThunderSound() {
-        // Override in subclasses for specific thunder sound effects
-        // This is a placeholder for common thunder audio logic
-    }
 
-    // Abstract methods that Thunder attacks must implement
-    // These are inherited from AbstractBreathingAttack but documented here for clarity
 
-    /**
-     * Called when the Thunder attack starts (after breath consumption)
-     * Implement Thunder-specific startup effects here (particles, sounds, positioning)
-     */
     @Override
     protected abstract void onStart();
 

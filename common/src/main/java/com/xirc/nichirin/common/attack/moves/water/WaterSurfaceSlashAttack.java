@@ -28,11 +28,13 @@ import java.util.Set;
  * All configuration now comes from the moveset builder.
  * This class handles only the behavior and visual/audio effects.
  */
-public class WaterSurfaceSlashAttack extends ThunderBreathingAttackBase {
+public class WaterSurfaceSlashAttack extends WaterBreathingAttackBase {
 
-    private final Set<LivingEntity> hitEntities = new HashSet<>();
-    private float launchPower = 1.125f; // 75% of original 1.5f
-    private boolean lightningStruck = false; // Track if lightning has been summoned
+    private static final int TOTAL_SLASHES = 6;
+    private static final int SLASH_INTERVAL = 3; // Ticks between each slash
+
+    private int slashesPerformed = 0;
+    private Set<LivingEntity> hitEntities = new HashSet<>();
 
     public WaterSurfaceSlashAttack() {
         // No configuration here - everything comes from moveset
@@ -41,190 +43,146 @@ public class WaterSurfaceSlashAttack extends ThunderBreathingAttackBase {
 
     @Override
     protected void onStart() {
+        slashesPerformed = 0;
         hitEntities.clear();
-        lightningStruck = false;
 
-        // Rising slash sound
+        // Flame pommel sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
-                SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0f, 0.7f);
+                SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0f, 1.2f);
+
+        // Initial flame buildup
+        createFlameParticles();
     }
 
     @Override
     protected void perform() {
         if (world.isClientSide) return;
 
-        // Perform the rising slash on first tick
-        if (tickCount == windup + 1) {
-            performRisingSlash();
-        }
+        // Perform slashes at regular intervals after windup
+        int ticksSinceWindup = tickCount - windup;
 
-        // ✅ FIXED: Use range instead of exact tick to account for thread timing differences
-        if (tickCount >= windup + 20 && tickCount <= windup + 30 && !lightningStruck && !hitEntities.isEmpty()) {
-            strikeAllTargetsWithLightning();
-            lightningStruck = true;
-        }
+        // Check if it's time for a slash (every SLASH_INTERVAL ticks)
+        if (ticksSinceWindup >= 0 && ticksSinceWindup % SLASH_INTERVAL == 0) {
+            int slashIndex = ticksSinceWindup / SLASH_INTERVAL;
 
-        // Add debug info to see what's happening
-        if (tickCount % 5 == 0) {
-        }
-
-        // Stop attack after lightning has struck or if no targets were hit
-        if ((lightningStruck && tickCount > windup + 30) || (hitEntities.isEmpty() && tickCount > windup + 30)) {
-            stop();
+            if (slashIndex < TOTAL_SLASHES) {
+                performSlash(slashIndex);
+                slashesPerformed++;
+            }
         }
     }
 
-    private void performRisingSlash() {
+    private void performSlash(int slashIndex) {
+        // Alternate between left and right slashes
+        boolean isLeftSlash = slashIndex % 2 == 0;
+
+        // Create slash particles
+        createSlashParticles(isLeftSlash);
+
+        // Hit detection
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDir = user.getLookAngle();
 
-        // Create slash effect in the direction the user is looking
-        Vec3 slashDirection = lookDir;
-        Vec3 slashBase = userPos.add(lookDir.scale(2.0));
+        // Slightly different positions for left/right slashes
+        Vec3 rightDir = lookDir.cross(new Vec3(0, 1, 0)).normalize();
+        Vec3 slashOffset = rightDir.scale(isLeftSlash ? -0.5 : 0.5);
+        Vec3 slashCenter = userPos.add(lookDir.scale(range * 0.8)).add(slashOffset);
 
-        // Create visual effect - vertical slash
-        if (world instanceof ServerLevel serverLevel) {
-            float slashHeight = 4.0f;
+        List<LivingEntity> targets = getTargetsInCustomHitbox(slashCenter, 2.0, 2.5, 1.5);
 
-            // Vertical line of particles in look direction
-            for (int i = 0; i <= 10; i++) {
-                float progress = i / 10.0f;
-                Vec3 particlePos = slashBase.add(0, progress * slashHeight, 0);
+        for (LivingEntity target : targets) {
+            // Allow multiple hits but with reduced damage after first hit
+            boolean hasBeenHit = hitEntities.contains(target);
 
-                serverLevel.sendParticles(ParticleTypes.SWEEP_ATTACK,
-                        particlePos.x, particlePos.y, particlePos.z,
-                        1, 0, 0, 0, 0);
-
-                if (i % 2 == 0) {
-                    serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK,
-                            particlePos.x, particlePos.y, particlePos.z,
-                            5, 0.2, 0.2, 0.2, 0.05);
-                }
-            }
-        }
-
-        // Thunder sound
-        world.playSound(null, user.getX(), user.getY(), user.getZ(),
-                SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, 0.4f, 2.5f);
-
-        // Hit entities in the attack area
-        hitEntitiesInSlashArea(slashBase, slashDirection);
-    }
-
-    private void hitEntitiesInSlashArea(Vec3 slashBase, Vec3 slashDirection) {
-        // Define the attack area
-        AABB attackArea = new AABB(
-                slashBase.x - range, slashBase.y, slashBase.z - range,
-                slashBase.x + range, slashBase.y + 4.0, slashBase.z + range
-        );
-
-        List<LivingEntity> entitiesInArea = world.getEntitiesOfClass(LivingEntity.class, attackArea,
-                entity -> entity != user && entity.isAlive() && !entity.isSpectator());
-
-        for (LivingEntity target : entitiesInArea) {
-            // Check if entity is within the slash area and in front of the user
-            Vec3 toEntity = target.position().subtract(user.position()).normalize();
-            double dot = slashDirection.dot(toEntity);
-
-            // Only hit entities that are reasonably in front of the user
-            if (dot > 0.3) {
-                // Create armor-bypassing damage source (using configured damage)
-                DamageSource armorPiercingSource = user.damageSources().magic();
-                target.hurt(armorPiercingSource, damage);
-
-                // Launch the target
-                launchTarget(target);
-
+            if (hasBeenHit) {
+                // Reduced damage for subsequent hits (30% damage)
+                float originalDamage = damage;
+                damage = damage * 0.3f;
+                hitTargetNoImmunity(target);
+                damage = originalDamage; // Reset damage
+            } else {
+                // Full damage for first hit
+                hitTarget(target);
                 hitEntities.add(target);
-
             }
+
+            // Light knockback to keep enemies close for combo
+            Vec3 lightKnockback = target.position().subtract(userPos).normalize().scale(knockback * 0.2f);
+            target.push(lightKnockback.x, 0.05, lightKnockback.z);
         }
+
+        // Slash sound with increasing pitch
+        float pitch = 1.0f + (slashIndex * 0.1f);
+        world.playSound(null, user.getX(), user.getY(), user.getZ(),
+                SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.8f, pitch);
     }
 
-    private void launchTarget(LivingEntity target) {
-        // Clear existing velocity
-        target.setDeltaMovement(Vec3.ZERO);
-
-        // Lift off ground
-        if (target.onGround()) {
-            target.setPos(target.getX(), target.getY() + 0.1, target.getZ());
-        }
-
-        // Apply upward velocity
-        Vec3 launchVelocity = new Vec3(0, launchPower, 0);
-        target.setDeltaMovement(launchVelocity);
-        target.hurtMarked = true;
-        target.hasImpulse = true;
-
-        // Force sync for players
-        if (target instanceof ServerPlayer serverPlayer) {
-            serverPlayer.connection.send(new ClientboundSetEntityMotionPacket(target));
-        }
-
-    }
-
-    /**
-     * ✅ NEW METHOD: Strike all hit targets with lightning at once
-     */
-    private void strikeAllTargetsWithLightning() {
+    private void createSlashParticles(boolean isLeftSlash) {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
-        for (LivingEntity target : hitEntities) {
-            // Get target position (even if dead, we can still get last known position)
-            Vec3 targetPos = target.position();
+        Vec3 userPos = user.position().add(0, user.getBbHeight() * 0.7, 0);
+        Vec3 lookDir = user.getLookAngle();
+        Vec3 rightDir = lookDir.cross(new Vec3(0, 1, 0)).normalize();
 
-            // Create real lightning bolt at target position
-            LightningBolt lightning = EntityType.LIGHTNING_BOLT.create(world);
-            if (lightning != null) {
-                lightning.moveTo(targetPos);
-                lightning.setCause((ServerPlayer) user);
+        // Create arc of particles for the slash
+        for (int i = -4; i <= 4; i++) {
+            double angle = i * 15; // 15-degree increments for 120-degree arc
+            double radians = Math.toRadians(angle);
 
-                // ✅ FIXED: Don't set visual only - let it be a real lightning bolt
-                // lightning.setVisualOnly(true);  // ← REMOVED THIS LINE
+            // Alternate direction based on left/right slash
+            double actualAngle = isLeftSlash ? radians : -radians;
 
-                serverLevel.addFreshEntity(lightning);
-            }
+            Vec3 slashDir = lookDir.yRot((float)actualAngle);
+            Vec3 particlePos = userPos.add(slashDir.scale(range * 0.8));
 
-            // Apply our own controlled lightning damage (if still alive)
-            if (target.isAlive()) {
-                applyLightningDamage(target);
+            // Flame particles for slashes
+            serverLevel.sendParticles(ParticleTypes.FLAME,
+                    particlePos.x, particlePos.y, particlePos.z,
+                    3, 0.1, 0.1, 0.1, 0.05);
 
-                // Apply the shocked effect after lightning hits
-                target.addEffect(new MobEffectInstance(
-                        NichirinEffectRegistry.SHOCKED.get(),
-                        hitStun,
-                        0,
-                        false,
-                        true
-                ));
-            } else {
-            }
+            serverLevel.sendParticles(ParticleTypes.FLAME,
+                    particlePos.x, particlePos.y, particlePos.z,
+                    2, 0.05, 0.05, 0.05, 0.02);
         }
+
+        // Central flame burst
+        Vec3 centerPos = userPos.add(lookDir.scale(range * 0.6));
+        serverLevel.sendParticles(ParticleTypes.FLAME,
+                centerPos.x, centerPos.y, centerPos.z,
+                8, 0.3, 0.3, 0.3, 0.1);
     }
 
-    /**
-     * ✅ NEW METHOD: Applies controlled lightning damage to only the intended target
-     */
-    private void applyLightningDamage(LivingEntity target) {
-        // Lightning damage (magic damage to bypass armor - using configured damage)
-        DamageSource lightningSource = user.damageSources().magic();
-        target.hurt(lightningSource, damage * 0.5f);
+    protected void createFlameParticles() {
+        if (!(world instanceof ServerLevel serverLevel)) return;
 
-        // Additional lightning particles at impact
-        if (world instanceof ServerLevel serverLevel) {
-            serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK,
-                    target.getX(), target.getY() + target.getBbHeight() / 2, target.getZ(),
-                    40, 0.8, 0.8, 0.8, 0.3);
+        Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
+
+        // Flame aura around user during pommel strikes
+        for (int i = 0; i < 8; i++) {
+            double angle = (i / 8.0) * 2 * Math.PI;
+            double radius = 1.0 + Math.sin(tickCount * 0.3) * 0.2;
+
+            double x = userPos.x + Math.cos(angle) * radius;
+            double z = userPos.z + Math.sin(angle) * radius;
+            double y = userPos.y + Math.random() * 1.5;
+
+            serverLevel.sendParticles(ParticleTypes.FLAME,
+                    x, y, z, 1, 0.05, 0.05, 0.05, 0.02);
         }
-
-        // Set the target on fire briefly (like real lightning)
-        target.setSecondsOnFire(3);
-
     }
 
     @Override
     protected void onStop() {
+        // Final flame discharge
+        if (world instanceof ServerLevel serverLevel) {
+            Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
+            serverLevel.sendParticles(ParticleTypes.FLAME,
+                    userPos.x, userPos.y, userPos.z,
+                    20, 0.5, 0.5, 0.5, 0.2);
+        }
+
+        // Clear hit tracking
         hitEntities.clear();
-        lightningStruck = false;
+        slashesPerformed = 0;
     }
 }

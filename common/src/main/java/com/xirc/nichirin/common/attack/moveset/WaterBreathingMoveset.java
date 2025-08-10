@@ -119,15 +119,15 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withHitStun(40) // Strong stun on finisher
                         .withHitboxSize(2.5f) // Larger finisher hitbox
                         .withAction(player -> {
-        BlessedRainAfterTheDroughtAttack attack = new BlessedRainAfterTheDroughtAttack();
-        WaterBreathingMoveset moveset = getCurrentMoveset();
-        if (moveset != null) {
-            attack.configure(moveset.getMove(3));
-        }
-        MoveExecutor.executeAttack(player, attack, "water_breathing", "whirlpool");
+                            BlessedRainAfterTheDroughtAttack attack = new BlessedRainAfterTheDroughtAttack();
+                            WaterBreathingMoveset moveset = getCurrentMoveset();
+                            if (moveset != null) {
+                                attack.configure(moveset.getMove(3));
+                            }
+                            MoveExecutor.executeAttack(player, attack, "water_breathing", "whirlpool");
     })
             )
-                .withMove(new MoveBuilder("whirpool", "Whirpool")
+                .withMove(new MoveBuilder("whirlpool", "Whirlpool")
                         .withAnimation("nichirin:whirlpool", 15)
                         .withTiming(240, 20, 50) // 12 second cooldown, complex movement
                         .withDamage(22.0f) // High damage finisher
@@ -143,7 +143,102 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                             if (moveset != null) {
                                 attack.configure(moveset.getMove(4));
                             }
-                            MoveExecutor.executeAttack(player, attack, "water_breathing", "Whirlpool");
+                            MoveExecutor.executeAttack(player, attack, "water_breathing", "whirlpool");
+                        })
+                )
+                .withMove(new MoveBuilder("drop_ripple_thrust", "Drop Ripple Thrust")
+                                .withAnimation("nichirin:drop_ripple_thrust", 15)
+                                .withTiming(240, 20, 50) // 12 second cooldown, complex movement
+                                .withDamage(22.0f) // High damage finisher
+                                .withDashSpeed(4.0f) // Multiple zigzag dashes (was 8.0f)
+                                .withRange(2.0f)
+                                .withKnockback(0.8f) // Strong finisher knockback
+                                .withBreathCost(45.0f) // Expensive ultimate-level move
+                                .withHitStun(40) // Strong stun on finisher
+                                .withHitboxSize(2.5f) // Larger finisher hitbox
+                                .withAction(player -> {
+                                    DropRippleThrustAttack attack = new DropRippleThrustAttack();
+                                    WaterBreathingMoveset moveset = getCurrentMoveset();
+                                    if (moveset != null) {
+                                        attack.configure(moveset.getMove(5));
+                                    }
+                                    MoveExecutor.executeAttack(player, attack, "water_breathing", "drop_ripple_thrust");
+                                })
+                )
+                .withMove(new MoveBuilder("waterfall_basin", "Waterfall Basin")
+                        .withAnimation("nichirin:waterfall_basin", 15)
+                        .withTiming(240, 20, 50) // 12 second cooldown, complex movement
+                        .withDamage(22.0f) // High damage finisher
+                        .withDashSpeed(4.0f) // Multiple zigzag dashes (was 8.0f)
+                        .withRange(2.0f)
+                        .withKnockback(0.8f) // Strong finisher knockback
+                        .withBreathCost(45.0f) // Expensive ultimate-level move
+                        .withHitStun(40) // Strong stun on finisher
+                        .withHitboxSize(2.5f) // Larger finisher hitbox
+                        .withAction(player -> {
+                            WaterfallBasinAttack attack = new WaterfallBasinAttack();
+                            WaterBreathingMoveset moveset = getCurrentMoveset();
+                            if (moveset != null) {
+                                attack.configure(moveset.getMove(6));
+                            }
+                            MoveExecutor.executeAttack(player, attack, "water_breathing", "waterfall_basin");
+                        })
+                )
+                .withMove(new MoveBuilder("splashing_water_flow", "Splashing Water Flow")
+                        .withAnimation("nichirin:splashing_water_flow", 15)
+                        .withTiming(240, 20, 50) // 12 second cooldown, complex movement
+                        .withDamage(22.0f) // High damage finisher
+                        .withDashSpeed(4.0f) // Multiple zigzag dashes (was 8.0f)
+                        .withRange(2.0f)
+                        .withKnockback(0.8f) // Strong finisher knockback
+                        .withBreathCost(45.0f) // Expensive ultimate-level move
+                        .withHitStun(40) // Strong stun on finisher
+                        .withHitboxSize(2.5f) // Larger finisher hitbox
+                        .withAction(player -> {
+                            SplashingWaterFlowAttack attack = new SplashingWaterFlowAttack();
+                            WaterBreathingMoveset moveset = getCurrentMoveset();
+                            if (moveset != null) {
+                                attack.configure(moveset.getMove(7));
+                            }
+                            MoveExecutor.executeAttack(player, attack, "water_breathing", "splashing_water_flow");
+                        })
+                )
+                .withMove(new MoveBuilder("constant_flux", "Constant Flux")
+                        .withAnimation("nichirin:drop_ripple_thrust", 15)
+                        .withTiming(240, 20, 50) // 12 second cooldown, complex movement
+                        .withDamage(22.0f) // High damage finisher
+                        .withDashSpeed(4.0f) // Multiple zigzag dashes (was 8.0f)
+                        .withRange(2.0f)
+                        .withKnockback(0.8f) // Strong finisher knockback
+                        .withBreathCost(45.0f) // Expensive ultimate-level move
+                        .withHitStun(40) // Strong stun on finisher
+                        .withHitboxSize(2.5f) // Larger finisher hitbox
+                        .withAction(player -> {
+                            ConstantFluxAttack attack = new ConstantFluxAttack();
+                            WaterBreathingMoveset moveset = getCurrentMoveset();
+                            if (moveset != null) {
+                                attack.configure(moveset.getMove(8));
+                            }
+                            MoveExecutor.executeAttack(player, attack, "water_breathing", "drop_ripple_thrust");
+                        })
+                )
+                .withMove(new MoveBuilder("dead_calm", "Dead Calm")
+                        .withAnimation("nichirin:dead_calm", 15)
+                        .withTiming(240, 20, 50) // 12 second cooldown, complex movement
+                        .withDamage(22.0f) // High damage finisher
+                        .withDashSpeed(4.0f) // Multiple zigzag dashes (was 8.0f)
+                        .withRange(2.0f)
+                        .withKnockback(0.8f) // Strong finisher knockback
+                        .withBreathCost(45.0f) // Expensive ultimate-level move
+                        .withHitStun(40) // Strong stun on finisher
+                        .withHitboxSize(2.5f) // Larger finisher hitbox
+                        .withAction(player -> {
+                            DeadCalmAttack attack = new DeadCalmAttack();
+                            WaterBreathingMoveset moveset = getCurrentMoveset();
+                            if (moveset != null) {
+                                attack.configure(moveset.getMove(9));
+                            }
+                            MoveExecutor.executeAttack(player, attack, "water_breathing", "dead_calm");
                         })
                 );
 
