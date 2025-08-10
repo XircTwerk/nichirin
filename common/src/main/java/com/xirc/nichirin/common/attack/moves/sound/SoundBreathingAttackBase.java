@@ -322,7 +322,7 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         net.minecraft.util.RandomSource random = serverLevel.getRandom();
 
-        // Create all particle types except thunder
+        // Create all particle types except thunder, including blue flash particles
         for (int i = 0; i < SOUND_PARTICLE_COUNT; i++) {
             double offsetX = (random.nextDouble() - 0.5) * SOUND_PARTICLE_SPREAD;
             double offsetY = random.nextDouble() * SOUND_PARTICLE_SPREAD;
@@ -330,21 +330,29 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
 
             Vec3 particlePos = userPos.add(offsetX, offsetY, offsetZ);
 
-            // Mix of different particles
-            if (i % 5 == 0) {
+            // Mix of different particles including blue flash
+            if (i % 6 == 0) {
                 serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
                         particlePos.x, particlePos.y, particlePos.z,
                         1, 0.1, 0.1, 0.1, 0.05);
-            } else if (i % 5 == 1) {
+            } else if (i % 6 == 1) {
                 serverLevel.sendParticles(NichirinParticleRegistry.SHOCKWAVE.get(),
                         particlePos.x, particlePos.y, particlePos.z,
                         1, 0.1, 0.1, 0.1, 0.05);
-            } else if (i % 5 == 2) {
+            } else if (i % 6 == 2) {
                 serverLevel.sendParticles(NichirinParticleRegistry.FLASH1.get(),
                         particlePos.x, particlePos.y, particlePos.z,
                         1, 0.1, 0.1, 0.1, 0.05);
-            } else if (i % 5 == 3) {
+            } else if (i % 6 == 3) {
                 serverLevel.sendParticles(NichirinParticleRegistry.FLASH2.get(),
+                        particlePos.x, particlePos.y, particlePos.z,
+                        1, 0.1, 0.1, 0.1, 0.05);
+            } else if (i % 6 == 4) {
+                serverLevel.sendParticles(NichirinParticleRegistry.BLUE_FLASH1.get(),
+                        particlePos.x, particlePos.y, particlePos.z,
+                        1, 0.1, 0.1, 0.1, 0.05);
+            } else if (i % 6 == 5) {
+                serverLevel.sendParticles(NichirinParticleRegistry.BLUE_FLASH2.get(),
                         particlePos.x, particlePos.y, particlePos.z,
                         1, 0.1, 0.1, 0.1, 0.05);
             } else {
@@ -362,18 +370,18 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
     protected void createSoundHitParticles(Vec3 hitPosition) {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
-        // Much reduced particle explosion at hit location
+        // Much reduced particle explosion at hit location with blue flash
         serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
                 hitPosition.x, hitPosition.y + 1, hitPosition.z,
-                4, 1.0, 1.0, 1.0, 0.2);
+                2, 1.0, 1.0, 1.0, 0.2);
 
         // Shockwave particles
         serverLevel.sendParticles(NichirinParticleRegistry.SHOCKWAVE.get(),
                 hitPosition.x, hitPosition.y + 0.5, hitPosition.z,
-                3, 0.8, 0.8, 0.8, 0.1);
+                2, 0.8, 0.8, 0.8, 0.1);
 
-        // Flash particles for impact
-        serverLevel.sendParticles(NichirinParticleRegistry.FLASH1.get(),
+        // Blue flash particles for impact
+        serverLevel.sendParticles(NichirinParticleRegistry.BLUE_FLASH1.get(),
                 hitPosition.x, hitPosition.y + 0.5, hitPosition.z,
                 2, 0.5, 0.5, 0.5, 0.1);
     }
@@ -384,22 +392,22 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
     protected void createComboExplosion(Vec3 center) {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
-        // Much more spread out and fewer particles
+        // Much more spread out and fewer particles with blue flash
         serverLevel.sendParticles(NichirinParticleRegistry.SHOCKWAVE.get(),
                 center.x, center.y + 1, center.z,
-                8, 6.0, 3.0, 6.0, 0.3); // Much wider spread (12 block radius)
+                6, 6.0, 3.0, 6.0, 0.3); // Much wider spread (12 block radius)
 
         serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
                 center.x, center.y + 1, center.z,
-                6, 5.0, 2.5, 5.0, 0.2); // Wider spread
+                4, 5.0, 2.5, 5.0, 0.2); // Wider spread
 
-        serverLevel.sendParticles(NichirinParticleRegistry.FLASH1.get(),
+        serverLevel.sendParticles(NichirinParticleRegistry.BLUE_FLASH1.get(),
                 center.x, center.y + 1, center.z,
-                4, 4.0, 2.0, 4.0, 0.15); // Wider spread
+                4, 4.0, 2.0, 4.0, 0.15); // Blue flash for combo explosion
 
-        serverLevel.sendParticles(NichirinParticleRegistry.FLASH2.get(),
+        serverLevel.sendParticles(NichirinParticleRegistry.BLUE_FLASH2.get(),
                 center.x, center.y + 1, center.z,
-                4, 4.0, 2.0, 4.0, 0.15); // Wider spread
+                4, 4.0, 2.0, 4.0, 0.15); // Blue flash for combo explosion
 
         // Single vanilla explosion effect
         serverLevel.sendParticles(ParticleTypes.EXPLOSION,

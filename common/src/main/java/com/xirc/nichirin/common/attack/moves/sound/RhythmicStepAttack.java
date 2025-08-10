@@ -44,11 +44,13 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
         finishingSlash = false;
         dashPath.clear();
 
-        dashDirection = user.getLookAngle().normalize();
+        // Force horizontal direction only (ignore Y component)
+        Vec3 rawDirection = user.getLookAngle();
+        dashDirection = new Vec3(rawDirection.x, 0, rawDirection.z).normalize();
         startPosition = user.position();
 
-        // Calculate end position (8 blocks)
-        endPosition = startPosition.add(dashDirection.scale(8.0));
+        // Calculate end position (4 blocks to match the velocity)
+        endPosition = startPosition.add(dashDirection.scale(4.0));
 
         // Rhythmic step preparation sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
@@ -62,23 +64,16 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
     protected void perform() {
         if (world.isClientSide) return;
 
-        // Execute dash and IMMEDIATELY stop after 1 tick
+        // Execute near-instant dash after minimal windup
         if (!dashExecuted && tickCount == windup + 1) {
             executeRhythmicDash();
             dashExecuted = true;
         }
 
-        // FORCE STOP immediately after dash
+        // Stop the dash after just 2 ticks for shorter distance
         if (dashExecuted && tickCount == windup + 2) {
             user.setDeltaMovement(Vec3.ZERO);
             user.hurtMarked = true;
-            user.hasImpulse = false;
-        }
-
-        // Keep user stopped
-        if (dashExecuted && tickCount > windup + 2) {
-            user.setDeltaMovement(Vec3.ZERO);
-            keepUserGrounded();
         }
 
         // Finishing slash at the end
@@ -94,8 +89,8 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
     }
 
     private void executeRhythmicDash() {
-        // Set a fixed velocity for exactly 4 blocks (halved from 8)
-        Vec3 dashVelocity = dashDirection.scale(4.0f); // 4 block movement
+        // Use much lower velocity for proper 4-block movement
+        Vec3 dashVelocity = dashDirection.scale(8.0f); // Much lower velocity
         user.setDeltaMovement(dashVelocity);
         user.hurtMarked = true;
         user.hasImpulse = true;
@@ -106,7 +101,7 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
         // Deal damage along the entire dash path
         damageAlongPath();
 
-        // Create massive dash effect
+        // Create massive dash effect with blue particles
         createRhythmicDashEffect();
 
         // Dash sound
@@ -232,7 +227,7 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
-        // Gathering energy effect
+        // Gathering energy effect with blue particles
         for (int i = 0; i < 15; i++) {
             double angle = (i / 15.0) * 2 * Math.PI;
             double radius = 1.5;
@@ -242,9 +237,16 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
                     Math.sin(angle) * radius
             );
 
+            // Mix of sound and blue flash particles
             serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
                     gatherPos.x, gatherPos.y, gatherPos.z,
                     1, 0.05, 0.05, 0.05, 0.02);
+
+            if (i % 3 == 0) {
+                serverLevel.sendParticles(NichirinParticleRegistry.BLUE_FLASH2.get(),
+                        gatherPos.x, gatherPos.y, gatherPos.z,
+                        1, 0.05, 0.05, 0.05, 0.02);
+            }
         }
 
         // Ground preparation effect
@@ -256,36 +258,44 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
     private void createRhythmicDashEffect() {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
-        // Massive dash trail effect
+        // Massive dash trail effect with blue particles
         for (Vec3 pathPoint : dashPath) {
-            // Main dash trail
+            // Main dash trail - mix of sound and blue flash
             serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
                     pathPoint.x, pathPoint.y + 0.5, pathPoint.z,
-                    5, 0.3, 0.3, 0.3, 0.1);
+                    3, 0.3, 0.3, 0.3, 0.1);
 
-            serverLevel.sendParticles(NichirinParticleRegistry.FLASH2.get(),
+            serverLevel.sendParticles(NichirinParticleRegistry.BLUE_FLASH2.get(),
                     pathPoint.x, pathPoint.y + 1, pathPoint.z,
-                    3, 0.2, 0.2, 0.2, 0.08);
+                    2, 0.2, 0.2, 0.2, 0.08);
 
             // Speed lines
             serverLevel.sendParticles(ParticleTypes.CRIT,
                     pathPoint.x, pathPoint.y + 0.5, pathPoint.z,
-                    2, 0.1, 0.1, 0.1, 0.05);
+                    1, 0.1, 0.1, 0.1, 0.05);
         }
 
-        // Start position burst
+        // Start position burst with blue flash
         serverLevel.sendParticles(NichirinParticleRegistry.SHOCKWAVE.get(),
                 startPosition.x, startPosition.y + 1, startPosition.z,
-                20, 1.0, 1.0, 1.0, 0.3);
+                15, 1.0, 1.0, 1.0, 0.3);
 
-        // End position impact
+        serverLevel.sendParticles(NichirinParticleRegistry.BLUE_FLASH2.get(),
+                startPosition.x, startPosition.y + 1, startPosition.z,
+                10, 0.8, 0.8, 0.8, 0.2);
+
+        // End position impact with blue flash
         serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
                 endPosition.x, endPosition.y + 1, endPosition.z,
-                25, 1.5, 1.5, 1.5, 0.4);
+                15, 1.5, 1.5, 1.5, 0.4);
+
+        serverLevel.sendParticles(NichirinParticleRegistry.BLUE_FLASH2.get(),
+                endPosition.x, endPosition.y + 1, endPosition.z,
+                12, 1.2, 1.2, 1.2, 0.3);
 
         serverLevel.sendParticles(ParticleTypes.SONIC_BOOM,
                 endPosition.x, endPosition.y + 1, endPosition.z,
-                3, 0.5, 0.5, 0.5, 0);
+                2, 0.5, 0.5, 0.5, 0);
     }
 
     private void createDashHitEffect(Vec3 hitPos) {
