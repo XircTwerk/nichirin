@@ -6,7 +6,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,7 +13,7 @@ import java.util.UUID;
 
 /**
  * Musical Score Status Effect - Tengen's ultimate ability
- * Activates when at 1 heart
+ * Activates when at 1 heart, provides stat boosts and rhythm bonuses
  * Has a 45-second cooldown system
  */
 public class MusicalScoreEffect extends MobEffect {
@@ -27,6 +26,9 @@ public class MusicalScoreEffect extends MobEffect {
     // Cooldown tracking
     private static final Map<UUID, Long> playerCooldowns = new HashMap<>();
     private static final int COOLDOWN_DURATION = 900; // 45 seconds in ticks
+
+    // Active Musical Score tracking (since we can't use getPersistentData)
+    private static final Map<UUID, MusicalScoreData> activeEffects = new HashMap<>();
 
     public MusicalScoreEffect() {
         super(MobEffectCategory.BENEFICIAL, 0xF5DEB3); // Bone color (musical score paper)
@@ -42,7 +44,7 @@ public class MusicalScoreEffect extends MobEffect {
         this.addAttributeModifier(
                 Attributes.MOVEMENT_SPEED,
                 MOVEMENT_SPEED_UUID.toString(),
-                0.5, // +100% movement speed
+                1.0, // +100% movement speed
                 AttributeModifier.Operation.MULTIPLY_TOTAL
         );
 
@@ -55,14 +57,22 @@ public class MusicalScoreEffect extends MobEffect {
     }
 
     /**
-     * Check if player can activate Musical Score (not on cooldown and at low health)
+     * Data class for tracking Musical Score effects
+     */
+    private static class MusicalScoreData {
+        final float breathingMultiplier;
+        final long endTime;
+
+        MusicalScoreData(float breathingMultiplier, long endTime) {
+            this.breathingMultiplier = breathingMultiplier;
+            this.endTime = endTime;
+        }
+    }
+
+    /**
+     * Check if player can activate Musical Score (not on cooldown)
      */
     public static boolean canActivate(Player player) {
-        // Check health requirement (1 heart = 2 health points)
-        if (player.getHealth() > 2.0f) {
-            return false;
-        }
-
         // Check cooldown
         Long cooldownEnd = playerCooldowns.get(player.getUUID());
         if (cooldownEnd != null) {
@@ -99,6 +109,10 @@ public class MusicalScoreEffect extends MobEffect {
         // Set cooldown
         long cooldownEnd = player.level().getGameTime() + COOLDOWN_DURATION;
         playerCooldowns.put(player.getUUID(), cooldownEnd);
+
+        // Store Musical Score data
+        long effectEndTime = player.level().getGameTime() + 100; // 5 seconds
+        activeEffects.put(player.getUUID(), new MusicalScoreData(3.0f, effectEndTime));
 
         com.xirc.nichirin.BreathOfNichirin.LOGGER.info("Musical Score activated successfully for {}. Cooldown set for {} seconds",
                 player.getName().getString(), COOLDOWN_DURATION / 20);
@@ -140,7 +154,7 @@ public class MusicalScoreEffect extends MobEffect {
     }
 
     @Override
-    public void applyEffectTick(@NotNull LivingEntity entity, int amplifier) {
+    public void applyEffectTick(LivingEntity entity, int amplifier) {
         if (!(entity instanceof Player player)) {
             return;
         }
@@ -148,6 +162,18 @@ public class MusicalScoreEffect extends MobEffect {
         // Heal slightly to maintain the low health threshold
         if (player.getHealth() < 2.0f) {
             player.setHealth(2.0f); // Keep at exactly 1 heart
+        }
+
+        // Ensure Musical Score data is tracked
+        if (!activeEffects.containsKey(player.getUUID())) {
+            long effectEndTime = player.level().getGameTime() + 100; // 5 seconds from now
+            activeEffects.put(player.getUUID(), new MusicalScoreData(3.0f, effectEndTime));
+        }
+
+        // Restore breath every tick (infinite breath during Musical Score)
+        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            // Restore breath to full every tick so attacks don't consume breath
+            com.xirc.nichirin.common.util.BreathingManager.restore(player, 1000.0f); // Large amount to ensure full
         }
 
         // Visual and audio feedback
@@ -158,12 +184,129 @@ public class MusicalScoreEffect extends MobEffect {
                     net.minecraft.sounds.SoundSource.PLAYERS,
                     0.5f, 1.0f + (float)(Math.random() * 0.5));
         }
+
+        // Log every second for debugging
+        if (player.level().getGameTime() % 20 == 0) {
+            com.xirc.nichirin.BreathOfNichirin.LOGGER.debug("Musical Score active for {}: Health={}, Breathing Damage Multiplier=3.0x, Infinite Breath",
+                    player.getName().getString(), player.getHealth());
+        }
     }
+
     /**
-     * Clean up player data on logout
+     * Get breathing damage multiplier for a player (includes rhythm bonus)
+     * Returns 1.0 if no Musical Score effect, 3.0+ if active with rhythm bonus
+     */
+    public static float getBreathingDamageMultiplier(Player player) {
+        // Null check first
+        if (player == null) {
+            return 1.0f;
+        }
+
+        // Check if Musical Score breathing buff is active
+        MusicalScoreData data = activeEffects.get(player.getUUID());
+        if (data != null) {
+            long currentTime = player.level().getGameTime();
+
+            if (currentTime < data.endTime) {
+                float baseMultiplier = data.breathingMultiplier;
+
+                // Get rhythm timing bonus
+                float rhythmMultiplier = getRhythmDamageMultiplier(player);
+
+                return baseMultiplier * rhythmMultiplier;
+            } else {
+                // Effect expired - clean up
+                activeEffects.remove(player.getUUID());
+            }
+        }
+
+        return 1.0f; // No buff active
+    }
+
+    /**
+     * Calculate rhythm-based damage multiplier
+     */
+    private static float getRhythmDamageMultiplier(Player player) {
+        // Null check first
+        if (player == null) {
+            return 1.0f;
+        }
+
+        // Calculate server-side rhythm timing (same logic as client)
+        long gameTime = player.level().getGameTime();
+        float beatCycle = (gameTime % 10.0f) / 10.0f; // 0.0 to 1.0 cycle
+
+        // Calculate distance from center (0.5 = perfect beat)
+        float distanceFromCenter = Math.abs(beatCycle - 0.5f);
+
+        // Perfect timing (within 15% of center) - 2x bonus
+        if (distanceFromCenter <= 0.15f) {
+            return 2.0f;
+        }
+        // Good timing (within 30% of center) - 1.5x bonus
+        else if (distanceFromCenter <= 0.30f) {
+            return 1.5f;
+        }
+        // Off beat - no bonus
+        else {
+            return 1.0f;
+        }
+    }
+
+    /**
+     * Check if current timing allows no cooldown
+     */
+    public static boolean allowsNoCooldown(Player player) {
+        // Null check first
+        if (player == null) {
+            return false;
+        }
+
+        // Only allow no cooldown if Musical Score is active
+        if (!player.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.MUSICAL_SCORE.get())) {
+            return false;
+        }
+
+        // Check for perfect timing
+        long gameTime = player.level().getGameTime();
+        float beatCycle = (gameTime % 10.0f) / 10.0f;
+        float distanceFromCenter = Math.abs(beatCycle - 0.5f);
+
+        return distanceFromCenter <= 0.15f; // Perfect timing only
+    }
+
+    /**
+     * Clean up when effect is removed
+     */
+    public static void cleanupEffect(LivingEntity entity) {
+        if (entity instanceof Player player) {
+            // Clear breathing damage multiplier data
+            activeEffects.remove(player.getUUID());
+        }
+    }
+
+    /**
+     * Clean up player data on logout or death
      */
     public static void cleanupPlayer(Player player) {
         playerCooldowns.remove(player.getUUID());
+        activeEffects.remove(player.getUUID());
+    }
+
+    /**
+     * Clear cooldown on death/respawn
+     */
+    public static void clearCooldownOnDeath(Player player) {
+        playerCooldowns.remove(player.getUUID());
+        activeEffects.remove(player.getUUID());
+
+        // Also clear from client-side HUD if this is a server player
+        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            // Send packet to clear Musical Score cooldown from client HUD
+            com.xirc.nichirin.common.network.CooldownDisplayPacket.sendToClient(
+                    serverPlayer, "Musical Score", 0 // 0 duration removes the cooldown
+            );
+        }
     }
 
     /**
@@ -171,5 +314,6 @@ public class MusicalScoreEffect extends MobEffect {
      */
     public static void resetCooldown(Player player) {
         playerCooldowns.remove(player.getUUID());
+        activeEffects.remove(player.getUUID());
     }
 }
