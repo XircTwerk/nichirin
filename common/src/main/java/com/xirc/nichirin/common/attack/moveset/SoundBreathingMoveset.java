@@ -1,0 +1,345 @@
+package com.xirc.nichirin.common.attack.moveset;
+
+import com.xirc.nichirin.common.attack.MoveExecutor;
+import com.xirc.nichirin.common.attack.moves.sound.*;
+import com.xirc.nichirin.common.util.BreathingManager;
+import dev.architectury.networking.NetworkManager;
+import io.netty.buffer.Unpooled;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+/**
+ * Sound Breathing moveset implementation
+ * Sound Breathing excels at combo building and explosive burst damage
+ * All attacks build momentum with consecutive hits and create particle explosions
+ *
+ * Right-click: Tempo Breaker (wide sweep with delayed explosion)
+ * Crouch + Right-click: Rhythmic Step (8 block instant dash with trail damage)
+ */
+public class SoundBreathingMoveset extends AbstractMoveset {
+
+    // Track cooldowns per player per move
+    private static final Map<UUID, Map<Integer, Long>> playerCooldowns = new HashMap<>();
+
+    // Track active attacks to prevent breath consumption on failed attempts
+    private static final Map<UUID, Boolean> executingMove = new HashMap<>();
+
+    // Thread-local to store current moveset instance for action access
+    private static final ThreadLocal<SoundBreathingMoveset> CURRENT_MOVESET = new ThreadLocal<>();
+
+    public SoundBreathingMoveset() {
+        super("sound_breathing", "Sound Breathing", createBuilder());
+    }
+
+    private static MovesetBuilder createBuilder() {
+        return new MovesetBuilder()
+                .withIdleAnimation("nichirin:sound_idle")
+                .withDamageMultiplier(1.0f) // Balanced base damage
+                .withSpeedMultiplier(1.1f) // Slightly faster for combo building
+
+                // First Form: Roar - AOE slam (INDEX 0 in wheel)
+                .withMove(new MoveBuilder("roar", "Roar")
+                        .withAnimation("nichirin:roar", 10)
+                        .withTiming(100, 15, 20) // 5 second cooldown, moderate windup
+                        .withDamage(18.0f) // Good AOE damage
+                        .withRange(13.5f) // Tripled from 4.5f (4.5 * 3 = 13.5)
+                        .withKnockback(1.0f) // Strong knockback
+                        .withBreathCost(25.0f)
+                        .withHitStun(10) // 0.5 second stun
+                        .withHitboxSize(13.5f) // Full radius
+                        .withAction(player -> {
+                            RoarAttack attack = new RoarAttack();
+                            SoundBreathingMoveset moveset = getCurrentMoveset();
+                            if (moveset != null) {
+                                attack.configure(moveset.getMove(0));
+                            }
+                            MoveExecutor.executeAttack(player, attack, "sound_breathing", "roar");
+                        })
+                )
+
+                // Fourth Form: Constant Resounding Slashes - 360° defense (INDEX 1 in wheel)
+                .withMove(new MoveBuilder("constant_resounding_slashes", "Resounding Slashes")
+                        .withAnimation("nichirin:constant_resounding_slashes", 12)
+                        .withTiming(140, 10, 30) // 7 second cooldown, 1.5s duration
+                        .withDamage(10.0f) // Lower damage per hit but multi-hit
+                        .withRange(8.25f) // Increased from 5.5f (1.5x = 8.25f)
+                        .withKnockback(0.2f) // Light knockback to keep enemies close
+                        .withBreathCost(30.0f)
+                        .withHitStun(5) // Brief stun per hit
+                        .withHitboxSize(8.25f) // Full 360° radius
+                        .withAction(player -> {
+                            ConstantResoundingSlashesAttack attack = new ConstantResoundingSlashesAttack();
+                            SoundBreathingMoveset moveset = getCurrentMoveset();
+                            if (moveset != null) {
+                                attack.configure(moveset.getMove(1));
+                            }
+                            MoveExecutor.executeAttack(player, attack, "sound_breathing", "constant_resounding_slashes");
+                        })
+                )
+
+                // Fifth Form: String Performance - Multi-segment dash (INDEX 2 in wheel)
+                .withMove(new MoveBuilder("string_performance", "String Performance")
+                        .withAnimation("nichirin:string_performance", 15)
+                        .withTiming(160, 20, 80) // 8 second cooldown, 4s duration
+                        .withDamage(22.0f) // High damage for finale
+                        .withDashSpeed(16.0f) // 16 block total dash
+                        .withRange(16.0f) // Dash distance
+                        .withKnockback(0.3f) // Light knockback during dash
+                        .withBreathCost(45.0f) // Expensive ultimate-style move
+                        .withHitStun(15) // Good stun
+                        .withHitboxSize(3.0f) // Wide chain hitbox
+                        .withAction(player -> {
+                            StringPerformanceAttack attack = new StringPerformanceAttack();
+                            SoundBreathingMoveset moveset = getCurrentMoveset();
+                            if (moveset != null) {
+                                attack.configure(moveset.getMove(2)); // Index 2 for String Performance
+                            }
+                            MoveExecutor.executeAttack(player, attack, "sound_breathing", "string_performance");
+                        })
+                );
+    }
+
+    @Override
+    public int getMoveCount() {
+        return 3; // Amount of moves in wheel
+    }
+
+    @Override
+    public boolean handleRightClick(Player player, boolean isCrouching) {
+        if (isCrouching) {
+            // Crouch + Right-click: Rhythmic Step
+            return executeRhythmicStep(player);
+        } else {
+            // Regular Right-click: Tempo Breaker
+            return executeTempoBreaker(player);
+        }
+    }
+
+    private boolean executeTempoBreaker(Player player) {
+        // Remove manual breath consumption - let attack system handle it
+        TempoBreakerAttack attack = new TempoBreakerAttack();
+
+        MoveConfiguration tempConfig = new MoveBuilder("tempo_breaker", "Tempo Breaker")
+                .withAnimation("nichirin:tempo_breaker", 8)
+                .withTiming(0, 8, 60) // Extended duration to allow delayed explosions
+                .withDamage(14.0f) // Good damage
+                .withRange(5.0f) // Wide sweep range
+                .withKnockback(0.8f) // Reduced from 1.2f - still too strong
+                .withBreathCost(20.0f) // Moderate cost
+                .withHitStun(10)
+                .withHitboxSize(3.0f)
+                .build();
+
+        attack.configure(tempConfig);
+        MoveExecutor.executeAttack(player, attack, "sound_breathing", "tempo_breaker");
+        onMovePerformed(player, -1, false);
+        return true;
+    }
+
+    private boolean executeRhythmicStep(Player player) {
+        // Remove manual breath consumption - let attack system handle it
+        RhythmicStepAttack attack = new RhythmicStepAttack();
+
+        MoveConfiguration tempConfig = new MoveBuilder("rhythmic_step", "Rhythmic Step")
+                .withAnimation("nichirin:rhythmic_step", 9)
+                .withTiming(0, 5, 20) // Fast dash with finishing duration
+                .withDamage(12.0f) // Moderate damage but hits multiple times
+                .withDashSpeed(4.0f) // 4 block dash (halved from 8)
+                .withRange(4.0f) // Dash distance (halved from 8)
+                .withKnockback(0.5f) // Light knockback during dash
+                .withBreathCost(25.0f) // Mobility move cost
+                .withHitStun(15) // Good stun for finishing slash
+                .withHitboxSize(2.0f)
+                .build();
+
+        attack.configure(tempConfig);
+        MoveExecutor.executeAttack(player, attack, "sound_breathing", "rhythmic_step");
+        onMovePerformed(player, -2, true);
+        return true;
+    }
+
+    @Override
+    public void performMove(Player player, int moveIndex) {
+        // Check cooldown before allowing move
+        if (!canUseMove(player, moveIndex)) {
+            // Show cooldown message
+            MoveConfiguration config = getMove(moveIndex);
+            if (config != null) {
+                Map<Integer, Long> cooldowns = playerCooldowns.get(player.getUUID());
+                if (cooldowns != null) {
+                    Long cooldownEnd = cooldowns.get(moveIndex);
+                    if (cooldownEnd != null) {
+                        long remaining = (cooldownEnd - player.level().getGameTime()) / 20;
+                        player.displayClientMessage(
+                                Component.literal(config.getDisplayName() + " on cooldown! " + remaining + "s remaining")
+                                        .withStyle(style -> style.withColor(0x9900FF)), // Purple color for sound
+                                true
+                        );
+                    }
+                }
+            }
+            return;
+        }
+
+        // Check breath BEFORE executing
+        MoveConfiguration config = getMove(moveIndex);
+        if (config != null) {
+            float breathCost = config.getBreathCostOrDefault(0.0f);
+
+            // Add small buffer to prevent race conditions
+            if (breathCost > 0 && !BreathingManager.hasBreath(player, breathCost + 0.1f)) {
+                player.displayClientMessage(
+                        Component.literal("Not enough breath for " + config.getDisplayName() + "!")
+                                .withStyle(style -> style.withColor(0xFF3333)), // Red for no breath
+                        true
+                );
+                return;
+            }
+        }
+
+        // Check if there are valid targets for offensive moves (only for defensive moves that need them)
+        // Most Sound Breathing moves should work without targets
+
+        // Mark that we're executing a move
+        executingMove.put(player.getUUID(), true);
+
+        // Store current moveset instance for access by actions
+        CURRENT_MOVESET.set(this);
+
+        try {
+            // Execute the move
+            super.performMove(player, moveIndex);
+        } finally {
+            // Always clean up the thread local
+            CURRENT_MOVESET.remove();
+        }
+
+        // Check if move actually executed by seeing if breath was consumed
+        boolean moveExecuted = !executingMove.getOrDefault(player.getUUID(), false);
+        executingMove.remove(player.getUUID());
+
+        if (moveExecuted && config != null) {
+            // Set cooldown after successful execution
+            setMoveCooldown(player, moveIndex);
+
+            // Send cooldown display packet if on server and has cooldown
+            if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer
+                    && config.getCooldownOrDefault(0) > 0) {
+                FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+                buf.writeUtf(config.getDisplayName());
+                buf.writeInt(config.getCooldownOrDefault(0));
+
+                NetworkManager.sendToPlayer(serverPlayer, new ResourceLocation("nichirin", "cooldown_display"), buf);
+            }
+        }
+    }
+
+    /**
+     * Check if there are valid targets within range
+     */
+    private boolean hasTargetsInRange(Player player, float range) {
+        net.minecraft.world.phys.AABB searchBox = new net.minecraft.world.phys.AABB(
+                player.getX() - range, player.getY() - range, player.getZ() - range,
+                player.getX() + range, player.getY() + range, player.getZ() + range
+        );
+
+        List<LivingEntity> entities = player.level().getEntitiesOfClass(LivingEntity.class, searchBox,
+                entity -> entity != player && entity.isAlive() && !entity.isSpectator());
+        return !entities.isEmpty();
+    }
+
+    /**
+     * Get the current moveset instance (for use in action lambdas)
+     */
+    public static SoundBreathingMoveset getCurrentMoveset() {
+        return CURRENT_MOVESET.get();
+    }
+
+    /**
+     * Check if a player can use a specific move (not on cooldown)
+     */
+    private boolean canUseMove(Player player, int moveIndex) {
+        MoveConfiguration config = getMove(moveIndex);
+        if (config == null || config.getCooldownOrDefault(0) <= 0) {
+            return true; // No cooldown
+        }
+
+        Map<Integer, Long> cooldowns = playerCooldowns.get(player.getUUID());
+        if (cooldowns == null) {
+            return true; // No cooldowns tracked yet
+        }
+
+        Long cooldownEnd = cooldowns.get(moveIndex);
+        if (cooldownEnd == null) {
+            return true; // Move never used
+        }
+
+        long currentTime = player.level().getGameTime();
+        return currentTime >= cooldownEnd;
+    }
+
+    /**
+     * Set a move on cooldown
+     */
+    private void setMoveCooldown(Player player, int moveIndex) {
+        MoveConfiguration config = getMove(moveIndex);
+        if (config == null || config.getCooldownOrDefault(0) <= 0) {
+            return; // No cooldown
+        }
+
+        long cooldownEnd = player.level().getGameTime() + config.getCooldownOrDefault(0);
+        playerCooldowns.computeIfAbsent(player.getUUID(), k -> new HashMap<>())
+                .put(moveIndex, cooldownEnd);
+    }
+
+    @Override
+    public int getRightClickMoveIndex(boolean isCrouching) {
+        return isCrouching ? -2 : -1; // Not in attack wheel, handled separately
+    }
+
+    @Override
+    public String getRightClickMoveName() {
+        return "Tempo Breaker";
+    }
+
+    @Override
+    public String getCrouchRightClickMoveName() {
+        return "Rhythmic Step";
+    }
+
+    @Override
+    public void onMovePerformed(Player player, int moveIndex, boolean isCrouching) {
+        // Sound Breathing specific post-move effects can be added here
+        // moveIndex -1 = Tempo Breaker (right-click)
+        // moveIndex -2 = Rhythmic Step (crouch + right-click)
+
+        // Could add combo tracking or other Sound-specific mechanics here
+    }
+
+    /**
+     * Called when a player logs out - clean up their data
+     */
+    public static void cleanupPlayer(Player player) {
+        playerCooldowns.remove(player.getUUID());
+        executingMove.remove(player.getUUID());
+
+        // Also clean up combo tracking from the base class
+        SoundBreathingAttackBase.resetCombo(player.getUUID());
+    }
+
+    /**
+     * Reset combo for a player (can be called externally)
+     */
+    public static void resetPlayerCombo(Player player) {
+        SoundBreathingAttackBase.resetCombo(player.getUUID());
+    }
+}

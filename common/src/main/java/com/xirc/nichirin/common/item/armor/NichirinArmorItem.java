@@ -49,7 +49,7 @@ public class NichirinArmorItem extends ArmorItem implements GeoItem {
         if (isMoving) {
             animationState.getController().setAnimation(RawAnimation.begin().thenLoop("Walking"));
         } else {
-            animationState.getController().setAnimation(RawAnimation.begin().thenPlay("walking stop"));
+            animationState.getController().stop();
         }
 
         return PlayState.CONTINUE;

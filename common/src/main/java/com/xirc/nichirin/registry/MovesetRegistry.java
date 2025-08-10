@@ -119,5 +119,6 @@ public interface MovesetRegistry {
         registerMoveset("thunder_breathing", ThunderBreathingMoveset::new);
         registerMoveset("flame_breathing", FlameBreathingMoveset::new);
         registerMoveset("insect_breathing", InsectBreathingMoveset::new);
+        registerMoveset("sound_breathing", SoundBreathingMoveset::new);
     }
 }

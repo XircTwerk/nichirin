@@ -60,6 +60,7 @@ public interface NichirinMoveRegistry {
         registerMoveset(new ThunderBreathingMoveset());
         registerMoveset(new FlameBreathingMoveset());
         registerMoveset(new InsectBreathingMoveset());
+        registerMoveset(new SoundBreathingMoveset());
         BreathOfNichirin.LOGGER.info("Auto-registered {} movesets with {} total moves",
                 MOVESETS.size(), GLOBAL_MOVES.size());
     }
