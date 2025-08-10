@@ -77,9 +77,9 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
 
         // Combat Stats - use sensible defaults if not configured
         this.damage = config.getDamageOrDefault(10.0f);
-        this.range = config.getRangeOrDefault(5.0f);
-        this.knockback = config.getKnockbackOrDefault(0.3f);
-        this.hitStun = config.getHitStunOrDefault(20);
+        this.range = config.getRangeOrDefault(3.0f);
+        this.knockback = config.getKnockbackOrDefault(0f);
+        this.hitStun = config.getHitStunOrDefault(8);
         this.hitboxSize = config.getHitboxSizeOrDefault(2.0f);
 
         // Timing
