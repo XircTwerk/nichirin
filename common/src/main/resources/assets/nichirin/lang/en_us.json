@@ -63,11 +63,14 @@
 
   "item.nichirin.katana": "Katana",
   "item.nichirin.thunder_katana": "Thunder Katana",
+  "item.nichirin.insect_katana": "Insect Katana",
+  "item.nichirin.flame_katana": "Flame Katana",
   "item.nichirin.scarlet_crimson_iron_gem": "Scarlet Crimson Iron Sand",
   "item.nichirin.scarlet_gem": "Scarlet Gem",
   "item.nichirin.smoke_bomb": "Smoke Bomb",
 
   "itemgroup.nichirin.main": "Nichirin",
+  "itemgroup.nichirin.equipment": "Equipment",
 
   "key.categories.nichirin": "Breath of Nichirin",
   "key.nichirin.attack_wheel": "Open Attack Wheel",

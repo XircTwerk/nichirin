@@ -51,6 +51,38 @@ public interface NichirinCreativeTabRegistry {
                     })
                     .build();
         });
+        BreathOfNichirin.CREATIVE_TAB_REGISTRY.register("equipment", () -> {
+            LOGGER.info("Creating equipment creative tab...");
+            return CreativeModeTab.builder(CreativeModeTab.Row.TOP , 1 )
+                    .title(Component.translatable("itemgroup.nichirin.equipment"))
+                    .icon(() -> {
+                        try {
+                            // Try to use katana as icon, fallback to diamond sword
+                            return new ItemStack(NichirinItemRegistry.THUNDER_KATANA.get());
+                        } catch (Exception e) {
+                            LOGGER.warn("Sex");
+                            return new ItemStack(Items.DIAMOND_SWORD);
+                        }
+                    })
+                    .displayItems((displayContext, entries) -> {
+                        try {
+                            // Add katana
+                            entries.accept(NichirinItemRegistry.KATANA.get());
+                            entries.accept(NichirinItemRegistry.THUNDER_KATANA.get());
+                            entries.accept(NichirinItemRegistry.FLAME_KATANA.get());
+                            entries.accept(NichirinItemRegistry.INSECT_KATANA.get());
+                            entries.accept(NichirinItemRegistry.SHINOBU_HEADPIECE.get());
+                            entries.accept(NichirinItemRegistry.SHINOBU_CAPE.get());
+                            entries.accept(NichirinItemRegistry.SHINOBU_LEGGINGS.get());
+                            entries.accept(NichirinItemRegistry.SHINOBU_BOOTS.get());
+
+
+                        } catch (Exception e) {
+                            LOGGER.warn("Failed to add items to sigma creative tab: " + e.getMessage());
+                        }
+                    })
+                    .build();
+        });
 
         LOGGER.info("CreativeTabRegistry initialization complete");
     }
