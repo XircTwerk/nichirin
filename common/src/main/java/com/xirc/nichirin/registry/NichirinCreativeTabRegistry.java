@@ -49,8 +49,8 @@ public interface NichirinCreativeTabRegistry {
                         // Add katana
                         entries.accept(NichirinItemRegistry.KATANA.get());
                         entries.accept(NichirinItemRegistry.THUNDER_KATANA.get());
-                        //entries.accept(NichirinItemRegistry.FLAME_KATANA.get());
-                        //entries.accept(NichirinItemRegistry.INSECT_KATANA.get());
+                        entries.accept(NichirinItemRegistry.FLAME_KATANA.get());
+                        entries.accept(NichirinItemRegistry.INSECT_KATANA.get());
                     })
                     .build();
         });
