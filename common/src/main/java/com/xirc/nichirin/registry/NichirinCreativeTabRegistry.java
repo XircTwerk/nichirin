@@ -19,67 +19,57 @@ public interface NichirinCreativeTabRegistry {
             return CreativeModeTab.builder(CreativeModeTab.Row.TOP , 1 )
                     .title(Component.translatable("itemgroup.nichirin.main"))
                     .icon(() -> {
-                        try {
-                            // Try to use katana as icon, fallback to diamond sword
-                            return new ItemStack(NichirinItemRegistry.KATANA.get());
-                        } catch (Exception e) {
-                            LOGGER.warn("Failed to use katana as icon, using diamond sword fallback");
-                            return new ItemStack(Items.DIAMOND_SWORD);
-                        }
+                        return new ItemStack(NichirinItemRegistry.SMOKE_BOMB.get());
                     })
                     .displayItems((displayContext, entries) -> {
-                        try {
-                            // Add katana
-                            entries.accept(NichirinItemRegistry.KATANA.get());
-                            entries.accept(NichirinItemRegistry.THUNDER_KATANA.get());
 
-                            // Add ore blocks
-                            entries.accept(NichirinOreRegistry.SCARLET_ORE_ITEM.get());
-                            entries.accept(NichirinOreRegistry.SCARLET_CRIMSON_IRON_SAND_ITEM.get());
+                        // Add ore blocks
+                        entries.accept(NichirinOreRegistry.SCARLET_ORE_ITEM.get());
+                        entries.accept(NichirinOreRegistry.SCARLET_CRIMSON_IRON_SAND_ITEM.get());
 
-                            //gems/ingots
-                            entries.accept(NichirinItemRegistry.SCARLET_CRIMSON_IRON_GEM.get());
-                            entries.accept(NichirinItemRegistry.SCARLET_GEM.get());
+                        //gems/ingots
+                        entries.accept(NichirinItemRegistry.SCARLET_CRIMSON_IRON_GEM.get());
+                        entries.accept(NichirinItemRegistry.SCARLET_GEM.get());
 
-                            //functional items
-                            entries.accept(NichirinItemRegistry.SMOKE_BOMB.get());
-                            entries.accept(NichirinItemRegistry.BENTO_BOX.get());
+                        //functional items
+                        entries.accept(NichirinItemRegistry.SMOKE_BOMB.get());
+                        entries.accept(NichirinItemRegistry.BENTO_BOX.get());
 
-                        } catch (Exception e) {
-                            LOGGER.warn("Failed to add items to creative tab: " + e.getMessage());
-                        }
                     })
                     .build();
         });
+        BreathOfNichirin.CREATIVE_TAB_REGISTRY.register("katanas", () -> {
+            LOGGER.info("Creating katana creative tab...");
+            return CreativeModeTab.builder(CreativeModeTab.Row.TOP , 1 )
+                    .title(Component.translatable("itemgroup.nichirin.katanas"))
+                    .icon(() -> {
+                        return new ItemStack(NichirinItemRegistry.KATANA.get());
+                    })
+                    .displayItems((displayContext, entries) -> {
+                        // Add katana
+                        entries.accept(NichirinItemRegistry.KATANA.get());
+                        entries.accept(NichirinItemRegistry.THUNDER_KATANA.get());
+                        //entries.accept(NichirinItemRegistry.FLAME_KATANA.get());
+                        //entries.accept(NichirinItemRegistry.INSECT_KATANA.get());
+                    })
+                    .build();
+        });
+
         BreathOfNichirin.CREATIVE_TAB_REGISTRY.register("equipment", () -> {
             LOGGER.info("Creating equipment creative tab...");
             return CreativeModeTab.builder(CreativeModeTab.Row.TOP , 1 )
                     .title(Component.translatable("itemgroup.nichirin.equipment"))
                     .icon(() -> {
-                        try {
-                            // Try to use katana as icon, fallback to diamond sword
-                            return new ItemStack(NichirinItemRegistry.THUNDER_KATANA.get());
-                        } catch (Exception e) {
-                            LOGGER.warn("Sex");
-                            return new ItemStack(Items.DIAMOND_SWORD);
-                        }
+                        return new ItemStack(NichirinItemRegistry.SHINOBU_CAPE.get());
                     })
                     .displayItems((displayContext, entries) -> {
-                        try {
-                            // Add katana
-                            entries.accept(NichirinItemRegistry.KATANA.get());
-                            entries.accept(NichirinItemRegistry.THUNDER_KATANA.get());
-                            entries.accept(NichirinItemRegistry.FLAME_KATANA.get());
-                            entries.accept(NichirinItemRegistry.INSECT_KATANA.get());
-                            entries.accept(NichirinItemRegistry.SHINOBU_HEADPIECE.get());
-                            entries.accept(NichirinItemRegistry.SHINOBU_CAPE.get());
-                            entries.accept(NichirinItemRegistry.SHINOBU_LEGGINGS.get());
-                            entries.accept(NichirinItemRegistry.SHINOBU_BOOTS.get());
+                        // Add armor
+                        entries.accept(NichirinItemRegistry.SHINOBU_HEADPIECE.get());
+                        entries.accept(NichirinItemRegistry.SHINOBU_CAPE.get());
+                        entries.accept(NichirinItemRegistry.SHINOBU_LEGGINGS.get());
+                        entries.accept(NichirinItemRegistry.SHINOBU_BOOTS.get());
 
 
-                        } catch (Exception e) {
-                            LOGGER.warn("Failed to add items to sigma creative tab: " + e.getMessage());
-                        }
                     })
                     .build();
         });
