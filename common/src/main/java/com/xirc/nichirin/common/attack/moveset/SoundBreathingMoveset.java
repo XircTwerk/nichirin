@@ -72,7 +72,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                         .withTiming(140, 10, 30) // 7 second cooldown, 1.5s duration
                         .withDamage(10.0f) // Lower damage per hit but multi-hit
                         .withRange(8.25f) // Increased from 5.5f (1.5x = 8.25f)
-                        .withKnockback(0f)
+                        .withKnockback(0.2f) // Light knockback to keep enemies close
                         .withBreathCost(30.0f)
                         .withHitStun(5) // Brief stun per hit
                         .withHitboxSize(8.25f) // Full 360° radius
@@ -93,7 +93,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                         .withDamage(22.0f) // High damage for finale
                         .withDashSpeed(16.0f) // 16 block total dash
                         .withRange(16.0f) // Dash distance
-                        .withKnockback(0f)
+                        .withKnockback(0.3f) // Light knockback during dash
                         .withBreathCost(45.0f) // Expensive ultimate-style move
                         .withHitStun(15) // Good stun
                         .withHitboxSize(3.0f) // Wide chain hitbox
@@ -155,7 +155,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                 .withDamage(12.0f) // Moderate damage but hits multiple times
                 .withDashSpeed(4.0f) // 4 block dash (halved from 8)
                 .withRange(4.0f) // Dash distance (halved from 8)
-                .withKnockback(0f)
+                .withKnockback(0.5f) // Light knockback during dash
                 .withBreathCost(25.0f) // Mobility move cost
                 .withHitStun(15) // Good stun for finishing slash
                 .withHitboxSize(2.0f)

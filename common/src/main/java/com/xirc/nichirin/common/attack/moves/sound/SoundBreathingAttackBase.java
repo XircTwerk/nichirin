@@ -8,7 +8,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.HashMap;
@@ -21,7 +20,6 @@ import java.util.UUID;
  *
  * Sound-specific functionality includes explosive particles, combo stacking, and stunning
  * All Sound Breathing attacks build up momentum with consecutive hits and create particle explosions
- * Now integrates with the new note-based Musical Score rhythm system
  */
 @SuppressWarnings("rawtypes")
 public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<SoundBreathingAttackBase, IBreathingAttacker> {
@@ -39,70 +37,29 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
     private static final int COMBO_TIMEOUT = 100; // 5 seconds to maintain combo
 
     /**
-     * Called every tick during the attack (after windup period)
-     * Implement the main Sound attack logic here (movement, damage, effects)
-     */
-    @Override
-    protected abstract void perform();
-
-    /**
      * Apply Sound Breathing specific damage and effects to a target
      * Overrides the base hitTarget to add Sound-specific effects
-     * Now integrates with the note-based rhythm system
      */
     @Override
     protected void hitTarget(LivingEntity target) {
         if (world.isClientSide) return;
 
-        // Check for perfect timing before applying damage
-        boolean perfectTiming = false;
-        if (user.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.MUSICAL_SCORE.get())) {
-            // This will be handled by client-side integration
-            // Server just applies the effect's damage multiplier
-            float rhythmMultiplier = com.xirc.nichirin.common.effect.MusicalScoreEffect.getBreathingDamageMultiplier(user);
-            if (rhythmMultiplier >= 6.0f) { // 3.0 base * 2.0 perfect = 6.0
-                perfectTiming = true;
-            }
-        }
-
-        // Apply combo bonus before hitting (includes rhythm bonus)
+        // Apply combo bonus before hitting
         applyComboBonus();
 
         // Apply base damage first
         net.minecraft.world.damagesource.DamageSource source = user.damageSources().playerAttack(user);
         boolean damaged = target.hurt(source, damage);
 
-        // Enhanced effects for perfect timing
-        if (perfectTiming) {
-            // Extra knockback on perfect hits
-            if (knockback > 0) {
-                // Mark entity for knockback grace period
-                com.xirc.nichirin.common.effect.StunnedStatusEffect.markRecentKnockback(target);
+        // Apply knockback BEFORE stun to ensure it takes effect
+        if (knockback > 0) {
+            // Mark entity for knockback grace period
+            com.xirc.nichirin.common.effect.StunnedStatusEffect.markRecentKnockback(target);
 
-                Vec3 knockbackDir = target.position().subtract(user.position()).normalize();
-                target.push(knockbackDir.x * knockback * 1.5f, 0.4, knockbackDir.z * knockback * 1.5f);
-                target.hurtMarked = true;
-                target.hasImpulse = true;
-            }
-
-            // Enhanced particle effects for perfect hits
-            createPerfectHitParticles(target.position());
-
-            // Perfect hit sound
-            world.playSound(null, target.getX(), target.getY(), target.getZ(),
-                    net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_CRIT,
-                    net.minecraft.sounds.SoundSource.PLAYERS, 1.0f, 1.5f);
-        } else {
-            // Normal knockback
-            if (knockback > 0) {
-                // Mark entity for knockback grace period
-                com.xirc.nichirin.common.effect.StunnedStatusEffect.markRecentKnockback(target);
-
-                Vec3 knockbackDir = target.position().subtract(user.position()).normalize();
-                target.push(knockbackDir.x * knockback, 0.3, knockbackDir.z * knockback);
-                target.hurtMarked = true;
-                target.hasImpulse = true;
-            }
+            Vec3 knockbackDir = target.position().subtract(user.position()).normalize();
+            target.push(knockbackDir.x * knockback, 0.3, knockbackDir.z * knockback);
+            target.hurtMarked = true;
+            target.hasImpulse = true;
         }
 
         // Track hit first
@@ -131,10 +88,8 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
         // Increment combo count
         incrementCombo();
 
-        // Create sound particles at target location (unless perfect hit handles it)
-        if (!perfectTiming) {
-            createSoundHitParticles(target.position());
-        }
+        // Create sound particles at target location
+        createSoundHitParticles(target.position());
 
         // Check for combo explosion (every 4th hit)
         checkComboExplosion(target.position());
@@ -269,7 +224,6 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
 
     /**
      * Apply combo bonus to damage and speed
-     * Now includes rhythm bonus from the new note-based Musical Score system
      */
     private void applyComboBonus() {
         if (user == null) return;
@@ -278,30 +232,6 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
         if (comboCount > 0) {
             // Apply damage bonus (but don't make it too overpowered)
             float damageMultiplier = 1.0f + Math.min(comboCount * COMBO_DAMAGE_BOOST, 1.0f); // Cap at 100% bonus
-
-            // Apply rhythm bonus from Musical Score if active
-            if (user.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.MUSICAL_SCORE.get())) {
-                float rhythmMultiplier = 1.0f;
-
-                if (user.level().isClientSide) {
-                    // Use client-side rhythm meter for accurate timing
-                    rhythmMultiplier = com.xirc.nichirin.client.gui.RhythmMeter.getDamageMultiplier();
-                } else {
-                    // Server-side fallback
-                    rhythmMultiplier = com.xirc.nichirin.common.effect.MusicalScoreEffect.getBreathingDamageMultiplier(user) / 3.0f;
-                }
-
-                damageMultiplier *= rhythmMultiplier;
-
-                // Trigger success feedback on perfect hits
-                if (user.level().isClientSide && rhythmMultiplier >= 2.0f) {
-                    com.xirc.nichirin.client.gui.RhythmMeter.triggerSuccess();
-                } else if (!user.level().isClientSide && rhythmMultiplier >= 2.0f) {
-                    // Server-side: extend Musical Score duration for perfect timing
-                    com.xirc.nichirin.common.effect.MusicalScoreEffect.extendForPerfectTiming(user);
-                }
-            }
-
             damage = damage * damageMultiplier;
 
             // Apply speed bonus to attack timing (reduce windup/duration)
@@ -454,38 +384,6 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
         serverLevel.sendParticles(NichirinParticleRegistry.BLUE_FLASH1.get(),
                 hitPosition.x, hitPosition.y + 0.5, hitPosition.z,
                 2, 0.5, 0.5, 0.5, 0.1);
-    }
-
-    /**
-     * Create enhanced particles for perfect timing hits
-     */
-    protected void createPerfectHitParticles(Vec3 hitPosition) {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-
-        // Enhanced particle explosion for perfect hits
-        serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
-                hitPosition.x, hitPosition.y + 1, hitPosition.z,
-                4, 1.5, 1.5, 1.5, 0.3); // More particles, wider spread
-
-        // Enhanced shockwave
-        serverLevel.sendParticles(NichirinParticleRegistry.SHOCKWAVE.get(),
-                hitPosition.x, hitPosition.y + 0.5, hitPosition.z,
-                4, 1.2, 1.2, 1.2, 0.2);
-
-        // Special perfect hit particles (bright gold/yellow)
-        serverLevel.sendParticles(ParticleTypes.CRIT,
-                hitPosition.x, hitPosition.y + 0.5, hitPosition.z,
-                6, 1.0, 1.0, 1.0, 0.2);
-
-        // Blue flash for perfect rhythm
-        serverLevel.sendParticles(NichirinParticleRegistry.BLUE_FLASH1.get(),
-                hitPosition.x, hitPosition.y + 0.5, hitPosition.z,
-                3, 0.8, 0.8, 0.8, 0.15);
-
-        // Extra golden sparkles for perfect hits
-        serverLevel.sendParticles(ParticleTypes.END_ROD,
-                hitPosition.x, hitPosition.y + 0.5, hitPosition.z,
-                4, 0.6, 0.6, 0.6, 0.1);
     }
 
     /**
@@ -658,6 +556,13 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
     protected abstract void onStart();
 
     /**
+     * Called every tick during the attack (after windup period)
+     * Implement the main Sound attack logic here (movement, damage, effects)
+     */
+    @Override
+    protected abstract void perform();
+
+    /**
      * Called when the Sound attack ends (optional override)
      * Implement Sound-specific cleanup logic here
      */
@@ -667,26 +572,11 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
         // Additional Sound-specific cleanup can be added here
     }
 
+
     /**
      * Check if this attack should have no cooldown due to perfect rhythm
-     * Now uses the new note-based timing system
      */
     public boolean shouldSkipCooldown() {
-        // Null check for user - return false if not initialized
-        if (user == null) {
-            return false;
-        }
-
-        if (!user.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.MUSICAL_SCORE.get())) {
-            return false;
-        }
-
-        // Check client-side timing if available
-        if (user.level().isClientSide) {
-            return com.xirc.nichirin.client.gui.RhythmMeter.allowsNoCooldown();
-        }
-
-        // Server-side fallback using Musical Score effect's timing
         return com.xirc.nichirin.common.effect.MusicalScoreEffect.allowsNoCooldown(user);
     }
 
@@ -699,26 +589,5 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
             return 0; // No cooldown on perfect rhythm
         }
         return this.cooldown;
-    }
-
-    /**
-     * Safe version that takes a player parameter for early cooldown checks
-     */
-    public static boolean shouldSkipCooldownForPlayer(Player player) {
-        if (player == null) {
-            return false;
-        }
-
-        if (!player.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.MUSICAL_SCORE.get())) {
-            return false;
-        }
-
-        // Check client-side timing if available
-        if (player.level().isClientSide) {
-            return com.xirc.nichirin.client.gui.RhythmMeter.allowsNoCooldown();
-        }
-
-        // Server-side fallback using Musical Score effect's timing
-        return com.xirc.nichirin.common.effect.MusicalScoreEffect.allowsNoCooldown(player);
     }
 }

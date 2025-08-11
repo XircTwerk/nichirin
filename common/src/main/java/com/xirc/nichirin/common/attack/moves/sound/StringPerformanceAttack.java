@@ -75,11 +75,6 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
 
         // Start first dash after windup
         if (!dashStarted && tickCount == windup + 1) {
-            // Clear notes when first dash starts
-            if (user != null && user.level().isClientSide && user.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.MUSICAL_SCORE.get())) {
-                com.xirc.nichirin.client.gui.RhythmMeter.clearTargetedNotes();
-            }
-
             performDash();
             dashStarted = true;
             lastDashTick = tickCount;
@@ -345,7 +340,7 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
         // Chain impact effect
         serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
                 targetPos.x, targetPos.y + 0.5, targetPos.z,
-                3, 0.3, 0.3, 0.3, 0.1);
+                3, 0.3, 0.3, 0.3, 0.1); // Reduced particles
 
         serverLevel.sendParticles(ParticleTypes.CRIT,
                 targetPos.x, targetPos.y + 0.5, targetPos.z,
@@ -360,7 +355,7 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
         // Segment burst effect
         serverLevel.sendParticles(NichirinParticleRegistry.FLASH2.get(),
                 userPos.x, userPos.y, userPos.z,
-                8, 1.0, 1.0, 1.0, 0.2);
+                8, 1.0, 1.0, 1.0, 0.2); // Reduced particles
 
         serverLevel.sendParticles(NichirinParticleRegistry.SHOCKWAVE.get(),
                 userPos.x, userPos.y, userPos.z,
@@ -373,7 +368,7 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
         // Chain wrapping effect
         serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
                 enemyPos.x, enemyPos.y + 1, enemyPos.z,
-                5, 0.5, 0.5, 0.5, 0.2);
+                5, 0.5, 0.5, 0.5, 0.2); // Reduced particles
 
         serverLevel.sendParticles(ParticleTypes.CRIT,
                 enemyPos.x, enemyPos.y + 1, enemyPos.z,
@@ -399,30 +394,30 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
                 center.x, center.y, center.z,
                 2, 1.0, 1.0, 1.0, 0);
 
-        // Huge shockwave
-        createSoundShockwave(center, range * 2.0f, 16);
+        // Huge shockwave - much more spread out
+        createSoundShockwave(center, range * 2.0f, 16); // Reduced from 48 particles
 
-        // Massive particle burst
+        // Massive particle burst - much more spread out and fewer particles
         serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
                 center.x, center.y, center.z,
-                20, range * 1.5, 5.0, range * 1.5, 0.4);
+                20, range * 1.5, 5.0, range * 1.5, 0.4); // Much wider spread
 
         serverLevel.sendParticles(NichirinParticleRegistry.SHOCKWAVE.get(),
                 center.x, center.y, center.z,
-                15, range * 1.2, 4.0, range * 1.2, 0.3);
+                15, range * 1.2, 4.0, range * 1.2, 0.3); // Much wider spread
 
         serverLevel.sendParticles(NichirinParticleRegistry.FLASH1.get(),
                 center.x, center.y, center.z,
-                10, range * 0.8, 3.0, range * 0.8, 0.25);
+                10, range * 0.8, 3.0, range * 0.8, 0.25); // Much wider spread
 
         serverLevel.sendParticles(NichirinParticleRegistry.FLASH2.get(),
                 center.x, center.y, center.z,
-                10, range * 0.8, 3.0, range * 0.8, 0.25);
+                10, range * 0.8, 3.0, range * 0.8, 0.25); // Much wider spread
 
-        // Sonic boom finale
+        // Sonic boom finale - reduced
         serverLevel.sendParticles(ParticleTypes.SONIC_BOOM,
                 center.x, center.y, center.z,
-                3, 3.0, 3.0, 3.0, 0);
+                3, 3.0, 3.0, 3.0, 0); // Wider spread
     }
 
     @Override

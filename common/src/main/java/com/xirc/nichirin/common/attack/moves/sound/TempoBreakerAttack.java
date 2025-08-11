@@ -51,11 +51,6 @@ public class TempoBreakerAttack extends SoundBreathingAttackBase {
 
     @Override
     protected void perform() {
-        // Clear notes when the attack actually executes (CLIENT-SIDE ONLY)
-        if (user != null && user.level().isClientSide && user.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.MUSICAL_SCORE.get()) && !hasExecuted && tickCount == windup + 1) {
-            com.xirc.nichirin.client.gui.RhythmMeter.clearTargetedNotes();
-        }
-
         if (world.isClientSide) return;
 
         // Execute the tempo breaking slash once after windup completes
@@ -93,6 +88,17 @@ public class TempoBreakerAttack extends SoundBreathingAttackBase {
             // Schedule delayed explosion for this target ONLY
             long explosionTime = world.getGameTime() + EXPLOSION_DELAY;
             delayedExplosions.put(target, explosionTime);
+
+            // Debug message to confirm delay is set
+            if (user instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+                serverPlayer.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                        "Explosion scheduled in " + EXPLOSION_DELAY + " ticks for " + target.getName().getString()
+                ));
+            }
+
+            // DON'T create immediate hit particles - only create them for the delayed explosion
+            // createSoundHitParticles(target.position()); // REMOVED - no immediate explosion
+
             // Hit sound
             world.playSound(null, target.getX(), target.getY(), target.getZ(),
                     SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.PLAYERS, 1.0f, 1.2f);

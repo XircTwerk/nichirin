@@ -67,11 +67,6 @@ public class RoarAttack extends SoundBreathingAttackBase {
 
         // Execute the slam once after windup completes
         if (!hasExecuted && tickCount == windup + 1) {
-            // Clear notes when the attack actually executes
-            if (user != null && user.level().isClientSide && user.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.MUSICAL_SCORE.get())) {
-                com.xirc.nichirin.client.gui.RhythmMeter.clearTargetedNotes();
-            }
-
             executeRoarSlam();
             hasExecuted = true;
         }

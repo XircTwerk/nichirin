@@ -62,11 +62,11 @@ public class MoveExecutor {
         NichirinMoveRegistry.MoveInfo moveInfo = NichirinMoveRegistry.getMove(movesetId, moveId);
         String displayName = moveInfo != null ? moveInfo.displayName : attack.getClass().getSimpleName();
 
-        // Check for perfect rhythm no-cooldown BEFORE configuring the attack
-        boolean perfectRhythm = checkPerfectRhythmForPlayer(player);
+        // Check for perfect rhythm no-cooldown
+        boolean perfectRhythm = com.xirc.nichirin.common.effect.MusicalScoreEffect.allowsNoCooldown(player);
 
         // Get cooldown from the attack object (may be 0 if perfect rhythm)
-        int cooldown = getCooldownForAttackWithRhythm(attack, player, perfectRhythm);
+        int cooldown = getCooldownForAttackWithRhythm(attack, player);
 
         if (perfectRhythm) {
             cooldown = 0; // Override cooldown for perfect rhythm
@@ -175,36 +175,35 @@ public class MoveExecutor {
     }
 
     /**
-     * Safe method to check perfect rhythm for a player
-     */
-    private static boolean checkPerfectRhythmForPlayer(Player player) {
-        try {
-            // Try Sound Breathing specific check first
-            return com.xirc.nichirin.common.attack.moves.sound.SoundBreathingAttackBase.shouldSkipCooldownForPlayer(player);
-        } catch (Exception e) {
-            // Fallback to Musical Score effect check
-            return com.xirc.nichirin.common.effect.MusicalScoreEffect.allowsNoCooldown(player);
-        }
-    }
-
-    /**
      * Enhanced cooldown getter that accounts for rhythm bonuses
      */
-    private static int getCooldownForAttackWithRhythm(Object attack, Player player, boolean perfectRhythm) {
-        // If perfect rhythm, return 0 immediately
-        if (perfectRhythm) {
-            return 0;
+    private static int getCooldownForAttackWithRhythm(Object attack, Player player) {
+        // Null check for player
+        if (player == null) {
+            return getCooldownForAttack(attack); // Fall back to normal cooldown
         }
 
-        // Handle AbstractBreathingAttack directly
+        // Handle AbstractBreathingAttack directly with rhythm check
         if (attack instanceof AbstractBreathingAttack<?, ?> breathingAttack) {
+            // Check for perfect rhythm first
+            if (com.xirc.nichirin.common.effect.MusicalScoreEffect.allowsNoCooldown(player)) {
+                return 0; // No cooldown for perfect rhythm
+            }
+            // Return normal cooldown
             return breathingAttack.getCooldown();
         }
 
         // Fallback to reflection for other types
         try {
             var getCooldownMethod = attack.getClass().getMethod("getCooldown");
-            return (int) getCooldownMethod.invoke(attack);
+            int normalCooldown = (int) getCooldownMethod.invoke(attack);
+
+            // Check for perfect rhythm
+            if (com.xirc.nichirin.common.effect.MusicalScoreEffect.allowsNoCooldown(player)) {
+                return 0;
+            }
+
+            return normalCooldown;
         } catch (Exception e) {
             return 0;
         }
@@ -240,7 +239,7 @@ public class MoveExecutor {
         }
 
         // Check for perfect rhythm no-cooldown first
-        boolean perfectRhythm = checkPerfectRhythmForPlayer(player);
+        boolean perfectRhythm = com.xirc.nichirin.common.effect.MusicalScoreEffect.allowsNoCooldown(player);
 
         if (perfectRhythm) {
             cooldownTicks = 0;
