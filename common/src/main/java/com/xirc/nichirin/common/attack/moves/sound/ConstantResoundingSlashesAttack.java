@@ -67,6 +67,11 @@ public class ConstantResoundingSlashesAttack extends SoundBreathingAttackBase {
 
     @Override
     protected void perform() {
+        // Clear notes when spinning starts (CLIENT-SIDE ONLY)
+        if (user != null && user.level().isClientSide && user.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.MUSICAL_SCORE.get()) && !isSpinning && tickCount == windup + 1) {
+            com.xirc.nichirin.client.gui.RhythmMeter.clearTargetedNotes();
+        }
+
         if (world.isClientSide) return;
 
         // Start spinning after windup

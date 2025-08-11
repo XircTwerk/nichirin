@@ -1,6 +1,7 @@
 package com.xirc.nichirin.client;
 
 import com.xirc.nichirin.client.gui.CooldownHUD;
+import com.xirc.nichirin.client.gui.RhythmMeter;
 import com.xirc.nichirin.client.renderer.shaders.MusicalScoreOverlay;
 import dev.architectury.event.events.client.ClientGuiEvent;
 import net.fabricmc.api.EnvType;
@@ -17,6 +18,9 @@ public class ClientEventHandler {
 
             // Render Musical Score overlay when effect is active
             MusicalScoreOverlay.render(graphics, partialTicks);
+
+            // Render rhythm meter when Musical Score is active
+            RhythmMeter.render(graphics, partialTicks);
         });
     }
 }

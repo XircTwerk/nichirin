@@ -8,6 +8,7 @@ import com.xirc.nichirin.common.data.BreathingStyleHelper;
 import com.xirc.nichirin.common.util.AnimationUtils;
 import com.xirc.nichirin.common.util.StaminaManager;
 import com.xirc.nichirin.common.util.MultiplayerInputHandler;
+import com.xirc.nichirin.common.util.RhythmCheckUtility;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -26,7 +27,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Clean katana that works with MultiplayerInputHandler
+ * Clean katana
  */
 public class SimpleKatana extends SwordItem {
 
@@ -84,7 +85,6 @@ public class SimpleKatana extends SwordItem {
                 .withTiming(4, 16, 6)
                 .withCooldown(20)
                 .withDamage(3.5f)
-                .withRange(2.8f)
                 .withKnockback(0.4f)
                 .withHitbox(1.6f, new Vec3(0, 0, 1.0))
                 .withHitStun(12)
@@ -138,6 +138,18 @@ public class SimpleKatana extends SwordItem {
             return;
         }
 
+        // Check rhythm timing FIRST - using generic utility
+        RhythmCheckUtility.RhythmResult rhythmResult = RhythmCheckUtility.checkRhythmTiming(player);
+
+        // Play rhythm feedback
+        RhythmCheckUtility.playRhythmFeedback(player, rhythmResult.timing);
+
+        // Block attack if timing is off during Musical Score
+        if (!rhythmResult.canAttack) {
+            RhythmCheckUtility.showTimingFeedback(player, rhythmResult.timing, rhythmResult.damageMultiplier);
+            return;
+        }
+
         PlayerAttackState state = getOrCreatePlayerState(player);
 
         // Check if any attack is currently active
@@ -176,22 +188,29 @@ public class SimpleKatana extends SwordItem {
             return;
         }
 
-        // Execute combo attacks
+        // Create attack and apply rhythm damage multiplier
+        SimpleSlashAttack attack;
         if (isCombo && state.comboCount == 1) {
-            state.currentSlash = createLightSlash2();
-            state.currentSlash.start(player);
+            attack = createLightSlash2();
             state.comboCount = 2;
-            state.slash2CooldownUntil = currentTime + state.currentSlash.getCooldown();
-            AnimationUtils.playAnimation(player, "sword_slash");
+            state.slash2CooldownUntil = currentTime + attack.getCooldown();
         } else {
-            state.currentSlash = createLightSlash1();
-            state.currentSlash.start(player);
+            attack = createLightSlash1();
             state.comboCount = 1;
-            state.slash1CooldownUntil = currentTime + state.currentSlash.getCooldown();
-            AnimationUtils.playAnimation(player, "sword_slash");
+            state.slash1CooldownUntil = currentTime + attack.getCooldown();
         }
 
+        // Apply rhythm damage multiplier using the generic utility
+        RhythmCheckUtility.applyDamageMultiplier(attack, rhythmResult.damageMultiplier);
+
+        attack.start(player);
+        state.currentSlash = attack;
         state.lastAttackTime = currentTime;
+
+        AnimationUtils.playAnimation(player, "sword_slash");
+
+        // Show damage multiplier feedback
+        RhythmCheckUtility.showTimingFeedback(player, rhythmResult.timing, rhythmResult.damageMultiplier);
     }
 
     /**
@@ -207,9 +226,20 @@ public class SimpleKatana extends SwordItem {
             return InteractionResultHolder.pass(player.getItemInHand(hand));
         }
 
-
         // Check if player has blocking effect - CAN'T ATTACK
         if (player.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.BLOCKING.get())) {
+            return InteractionResultHolder.pass(player.getItemInHand(hand));
+        }
+
+        // Check rhythm timing FIRST - using generic utility
+        RhythmCheckUtility.RhythmResult rhythmResult = RhythmCheckUtility.checkRhythmTiming(player);
+
+        // Play rhythm feedback
+        RhythmCheckUtility.playRhythmFeedback(player, rhythmResult.timing);
+
+        // Block attack if timing is off during Musical Score
+        if (!rhythmResult.canAttack) {
+            RhythmCheckUtility.showTimingFeedback(player, rhythmResult.timing, rhythmResult.damageMultiplier);
             return InteractionResultHolder.pass(player.getItemInHand(hand));
         }
 
@@ -257,25 +287,26 @@ public class SimpleKatana extends SwordItem {
             return InteractionResultHolder.pass(player.getItemInHand(hand));
         }
 
+        // Create attack and apply rhythm damage multiplier
         if (isCrouching) {
             state.currentRisingSlash = createRisingSlashAttack();
+            RhythmCheckUtility.applyDamageMultiplier(state.currentRisingSlash, rhythmResult.damageMultiplier);
             state.currentRisingSlash.start(player);
             state.risingSlashCooldownUntil = currentTime + state.currentRisingSlash.getCooldown();
-
-            System.out.println("DEBUG: Trying to play sword_vertical animation");
             AnimationUtils.playAnimation(player, "sword_vertical");
-
         } else {
             state.currentDoubleSlash = createDoubleSlashAttack();
+            RhythmCheckUtility.applyDamageMultiplier(state.currentDoubleSlash, rhythmResult.damageMultiplier);
             state.currentDoubleSlash.start(player);
             state.doubleSlashCooldownUntil = currentTime + state.currentDoubleSlash.getCooldown();
-
-            System.out.println("DEBUG: Trying to play sword_doubleslash animation");
             AnimationUtils.playAnimation(player, "sword_doubleslash");
         }
 
         state.comboCount = 0;
         state.lastAttackTime = 0;
+
+        // Show damage multiplier feedback
+        RhythmCheckUtility.showTimingFeedback(player, rhythmResult.timing, rhythmResult.damageMultiplier);
 
         return InteractionResultHolder.success(player.getItemInHand(hand));
     }
