@@ -1,0 +1,10 @@
+package com.xirc.nichirin.common.item.armor.rengoku;
+
+import com.xirc.nichirin.common.item.armor.NichirinArmorItem;
+import net.minecraft.world.item.ArmorMaterial;
+
+public class RengokuLeggingsItem extends NichirinArmorItem {
+    public RengokuLeggingsItem(ArmorMaterial material, Properties properties) {
+        super(material, Type.LEGGINGS, properties);
+    }
+}
