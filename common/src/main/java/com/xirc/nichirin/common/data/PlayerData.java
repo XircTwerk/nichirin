@@ -1,31 +1,25 @@
 package com.xirc.nichirin.common.data;
 
+import lombok.Getter;
 import net.minecraft.nbt.CompoundTag;
 
 /**
  * Complete player data container including breathing styles and progression
  */
+@Getter
 public class PlayerData {
 
+    /**
+     *  Gets breathing style data
+     */
     private final BreathingStyleData breathingStyleData = new BreathingStyleData();
+    /**
+     *  Gets progression data
+     */
     private final BreathingStyleProgression progression = new BreathingStyleProgression();
 
     public PlayerData() {
         // Constructor
-    }
-
-    /**
-     * Gets breathing style data
-     */
-    public BreathingStyleData getBreathingStyleData() {
-        return breathingStyleData;
-    }
-
-    /**
-     * Gets progression data
-     */
-    public BreathingStyleProgression getProgression() {
-        return progression;
     }
 
     /**
