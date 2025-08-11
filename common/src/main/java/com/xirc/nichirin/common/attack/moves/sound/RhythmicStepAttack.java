@@ -66,6 +66,11 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
 
         // Execute near-instant dash after minimal windup
         if (!dashExecuted && tickCount == windup + 1) {
+            // Clear notes when the dash executes
+            if (user != null && user.level().isClientSide && user.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.MUSICAL_SCORE.get())) {
+                com.xirc.nichirin.client.gui.RhythmMeter.clearTargetedNotes();
+            }
+
             executeRhythmicDash();
             dashExecuted = true;
         }
@@ -90,7 +95,7 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
 
     private void executeRhythmicDash() {
         // Use much lower velocity for proper 4-block movement
-        Vec3 dashVelocity = dashDirection.scale(8.0f); // Much lower velocity
+        Vec3 dashVelocity = dashDirection.scale(8.0f);
         user.setDeltaMovement(dashVelocity);
         user.hurtMarked = true;
         user.hasImpulse = true;
@@ -107,13 +112,6 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
         // Dash sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 1.5f, 1.8f);
-    }
-
-    private void keepUserGrounded() {
-        // Force user to stay on the ground during dash
-        Vec3 currentVelocity = user.getDeltaMovement();
-        user.setDeltaMovement(currentVelocity.x, Math.min(0, currentVelocity.y), currentVelocity.z);
-        user.setOnGround(true);
     }
 
     private void calculateDashPath() {
@@ -193,31 +191,31 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
     private void createContinuousTrailExplosions() {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
-        // Create explosions along the path over time - much fewer particles
-        int pathIndex = (tickCount - windup - 2) * 2; // 2 explosions per tick instead of 3
+        // Create explosions along the path over time
+        int pathIndex = (tickCount - windup - 2) * 2; // 2 explosions per tick
 
         for (int i = 0; i < 2 && pathIndex + i < dashPath.size(); i++) {
             Vec3 explosionPos = dashPath.get(pathIndex + i);
 
-            // Trail explosion effect - much reduced
+            // Trail explosion effect
             serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
                     explosionPos.x, explosionPos.y + 0.5, explosionPos.z,
-                    2, 1.0, 1.0, 1.0, 0.2); // Reduced from 8 particles
+                    2, 1.0, 1.0, 1.0, 0.2);
 
             serverLevel.sendParticles(NichirinParticleRegistry.SHOCKWAVE.get(),
                     explosionPos.x, explosionPos.y, explosionPos.z,
-                    1, 0.8, 0.8, 0.8, 0.1); // Reduced from 5 particles
+                    1, 0.8, 0.8, 0.8, 0.1);
 
             if (i == 0) { // Only one flash particle per tick
                 serverLevel.sendParticles(NichirinParticleRegistry.FLASH1.get(),
                         explosionPos.x, explosionPos.y + 0.5, explosionPos.z,
-                        1, 0.5, 0.5, 0.5, 0.1); // Reduced from 3 particles
+                        1, 0.5, 0.5, 0.5, 0.1);
             }
 
             // Small explosion sound
             if (i == 0) { // Only play sound once per tick to avoid spam
                 world.playSound(null, explosionPos.x, explosionPos.y, explosionPos.z,
-                        SoundEvents.FIREWORK_ROCKET_BLAST, SoundSource.PLAYERS, 0.2f, 1.5f); // Reduced volume
+                        SoundEvents.FIREWORK_ROCKET_BLAST, SoundSource.PLAYERS, 0.2f, 1.5f);
             }
         }
     }
@@ -342,7 +340,7 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
     }
 
     /**
-     * Get targets in a cone shape (copied from TempoBreaker)
+     * Get targets in a cone shape
      */
     private List<LivingEntity> getTargetsInCone(Vec3 origin, Vec3 direction, double range, double angleDegrees) {
         double angleRadians = Math.toRadians(angleDegrees / 2);
