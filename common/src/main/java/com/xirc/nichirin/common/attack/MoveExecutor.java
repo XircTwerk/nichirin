@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Generic attack executor - handles all types of breathing attacks with automatic configuration and rhythm bonuses
+ * Generic attack executor - handles all types of breathing attacks with automatic configuration
  */
 public class MoveExecutor {
 
@@ -29,22 +29,9 @@ public class MoveExecutor {
     private static final ResourceLocation COOLDOWN_PACKET_ID = new ResourceLocation("nichirin", "cooldown_display");
 
     /**
-     * Execute any breathing attack with rhythm-aware cooldown handling
+     * Execute any breathing attack with metadata lookup and automatic configuration
      */
     public static void executeAttack(Player player, Object attack, String movesetId, String moveId) {
-        executeAttackWithRhythmCheck(player, attack, movesetId, moveId);
-    }
-
-    /**
-     * Execute any breathing attack with rhythm-aware cooldown handling
-     */
-    public static void executeAttackWithRhythmCheck(Player player, Object attack, String movesetId, String moveId) {
-        // Null check for player
-        if (player == null) {
-            com.xirc.nichirin.BreathOfNichirin.LOGGER.warn("Cannot execute attack - player is null");
-            return;
-        }
-
         // Handle all breathing attacks through the unified interface
         if (attack instanceof AbstractBreathingAttack<?, ?> breathingAttack) {
             // Get the moveset for configuration
@@ -62,26 +49,10 @@ public class MoveExecutor {
         NichirinMoveRegistry.MoveInfo moveInfo = NichirinMoveRegistry.getMove(movesetId, moveId);
         String displayName = moveInfo != null ? moveInfo.displayName : attack.getClass().getSimpleName();
 
-        // Check for perfect rhythm no-cooldown
-        boolean perfectRhythm = com.xirc.nichirin.common.effect.MusicalScoreEffect.allowsNoCooldown(player);
+        // Get cooldown from the attack object
+        int cooldown = getCooldownForAttack(attack);
 
-        // Get cooldown from the attack object (may be 0 if perfect rhythm)
-        int cooldown = getCooldownForAttackWithRhythm(attack, player);
-
-        if (perfectRhythm) {
-            cooldown = 0; // Override cooldown for perfect rhythm
-
-            // Show success message
-            player.displayClientMessage(net.minecraft.network.chat.Component.literal("PERFECT RHYTHM - NO COOLDOWN!")
-                    .withStyle(style -> style.withColor(0x00FF00).withBold(true)), true);
-
-            // Trigger client-side success feedback
-            if (player.level().isClientSide) {
-                com.xirc.nichirin.client.gui.RhythmMeter.triggerSuccess();
-            }
-        }
-
-        // Execute with rhythm-adjusted cooldown
+        // Execute with proper display name
         executeAttackInternal(player, attack, displayName, cooldown);
     }
 
@@ -93,7 +64,7 @@ public class MoveExecutor {
     }
 
     /**
-     * Modified internal execution method with rhythm feedback
+     * Internal execution method
      */
     private static void executeAttackInternal(Player player, Object attack, String displayName, int cooldown) {
         if (!isAttackActive(attack)) {
@@ -101,13 +72,8 @@ public class MoveExecutor {
             trackAttack(player, attack);
 
             // Send cooldown to client if on server
-            if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
-                if (cooldown > 0) {
-                    sendCooldownToClient(serverPlayer, displayName, cooldown);
-                } else {
-                    // Send "no cooldown" message for perfect rhythm
-                    sendCooldownToClient(serverPlayer, displayName + " (Perfect Rhythm!)", 0);
-                }
+            if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer && cooldown > 0) {
+                sendCooldownToClient(serverPlayer, displayName, cooldown);
             }
         }
     }
@@ -175,42 +141,7 @@ public class MoveExecutor {
     }
 
     /**
-     * Enhanced cooldown getter that accounts for rhythm bonuses
-     */
-    private static int getCooldownForAttackWithRhythm(Object attack, Player player) {
-        // Null check for player
-        if (player == null) {
-            return getCooldownForAttack(attack); // Fall back to normal cooldown
-        }
-
-        // Handle AbstractBreathingAttack directly with rhythm check
-        if (attack instanceof AbstractBreathingAttack<?, ?> breathingAttack) {
-            // Check for perfect rhythm first
-            if (com.xirc.nichirin.common.effect.MusicalScoreEffect.allowsNoCooldown(player)) {
-                return 0; // No cooldown for perfect rhythm
-            }
-            // Return normal cooldown
-            return breathingAttack.getCooldown();
-        }
-
-        // Fallback to reflection for other types
-        try {
-            var getCooldownMethod = attack.getClass().getMethod("getCooldown");
-            int normalCooldown = (int) getCooldownMethod.invoke(attack);
-
-            // Check for perfect rhythm
-            if (com.xirc.nichirin.common.effect.MusicalScoreEffect.allowsNoCooldown(player)) {
-                return 0;
-            }
-
-            return normalCooldown;
-        } catch (Exception e) {
-            return 0;
-        }
-    }
-
-    /**
-     * Generic method to get cooldown from attack (legacy)
+     * Generic method to get cooldown from attack
      */
     private static int getCooldownForAttack(Object attack) {
         // Handle AbstractBreathingAttack directly
@@ -231,29 +162,12 @@ public class MoveExecutor {
      * Execute a move by name with cooldown
      */
     public static void executeMove(Player player, String moveName, Runnable moveExecution, int cooldownTicks) {
-        // Null check for player
-        if (player == null) {
-            // Execute the move anyway, but skip rhythm checks
-            moveExecution.run();
-            return;
-        }
-
-        // Check for perfect rhythm no-cooldown first
-        boolean perfectRhythm = com.xirc.nichirin.common.effect.MusicalScoreEffect.allowsNoCooldown(player);
-
-        if (perfectRhythm) {
-            cooldownTicks = 0;
-            player.displayClientMessage(net.minecraft.network.chat.Component.literal("PERFECT RHYTHM - NO COOLDOWN!")
-                    .withStyle(style -> style.withColor(0x00FF00).withBold(true)), true);
-        }
-
         // Execute the move
         moveExecution.run();
 
         // Send cooldown to client if on server
-        if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer && cooldownTicks >= 0) {
-            String displayName = perfectRhythm ? moveName + " (Perfect Rhythm!)" : moveName;
-            sendCooldownToClient(serverPlayer, displayName, cooldownTicks);
+        if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer && cooldownTicks > 0) {
+            sendCooldownToClient(serverPlayer, moveName, cooldownTicks);
         }
     }
 
@@ -288,7 +202,7 @@ public class MoveExecutor {
      */
     public static void tickAttacks(Player player) {
         var attacks = activeAttacks.get(player);
-        if (attacks != null && !attacks.isEmpty()) {
+        if (attacks != null && !attacks.isEmpty()) {  // Add !attacks.isEmpty() check
             // Create a copy to avoid concurrent modification - with null safety
             List<Object> attacksCopy;
             List<Object> toRemove = new ArrayList<>();

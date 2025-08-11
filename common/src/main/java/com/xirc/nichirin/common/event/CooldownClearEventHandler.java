@@ -1,6 +1,5 @@
 package com.xirc.nichirin.common.event;
 
-import com.xirc.nichirin.common.effect.MusicalScoreEffect;
 import com.xirc.nichirin.common.network.CooldownDisplayPacket;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.EntityEvent;
@@ -61,7 +60,6 @@ public class CooldownClearEventHandler {
         // Clear all other cooldowns by sending 0-duration packets
         // This covers any breathing technique cooldowns
         String[] commonCooldowns = {
-                "Musical Score",
                 "Thunder Breathing",
                 "Flame Breathing",
                 "Sound Breathing",

@@ -96,9 +96,6 @@ public class TempoBreakerAttack extends SoundBreathingAttackBase {
                 ));
             }
 
-            // DON'T create immediate hit particles - only create them for the delayed explosion
-            // createSoundHitParticles(target.position()); // REMOVED - no immediate explosion
-
             // Hit sound
             world.playSound(null, target.getX(), target.getY(), target.getZ(),
                     SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.PLAYERS, 1.0f, 1.2f);

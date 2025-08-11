@@ -571,23 +571,4 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
         super.onStop();
         // Additional Sound-specific cleanup can be added here
     }
-
-
-    /**
-     * Check if this attack should have no cooldown due to perfect rhythm
-     */
-    public boolean shouldSkipCooldown() {
-        return com.xirc.nichirin.common.effect.MusicalScoreEffect.allowsNoCooldown(user);
-    }
-
-    /**
-     * Get the cooldown for this attack (accounts for Musical Score rhythm bonuses)
-     */
-    @Override
-    public int getCooldown() {
-        if (shouldSkipCooldown()) {
-            return 0; // No cooldown on perfect rhythm
-        }
-        return this.cooldown;
-    }
 }
