@@ -31,14 +31,14 @@ import java.util.Set;
  */
 public class RengokuAttack extends FlameBreathingAttackBase {
 
-    private static final int DASH_DURATION = 5; // Fast dragon dash - 5 ticks
+    private static final int DASH_DURATION = 20; // Fast dragon dash - 5 ticks
     private static final float DASH_DISTANCE = 24.0f; // 24 block dash distance
 
     private boolean hasExecuted = false;
     private boolean isDashing = false;
     private int dashTicks = 0;
     private Vec3 dashDirection;
-    private Set<LivingEntity> hitEntities = new HashSet<>();
+    private final Set<LivingEntity> hitEntities = new HashSet<>();
 
     public RengokuAttack() {
         // No configuration here - everything comes from moveset
@@ -143,8 +143,7 @@ public class RengokuAttack extends FlameBreathingAttackBase {
                 SoundEvents.ENDER_DRAGON_GROWL, SoundSource.PLAYERS, 3.0f, 0.4f);
 
         // Fast dash movement - cover 24 blocks in 5 ticks
-        float dashSpeed = DASH_DISTANCE / DASH_DURATION;
-        Vec3 dashVelocity = dashDirection.scale(dashSpeed);
+        Vec3 dashVelocity = dashDirection.scale(DASH_DISTANCE);
         user.setDeltaMovement(dashVelocity);
         user.hurtMarked = true;
         user.hasImpulse = true;
@@ -152,8 +151,7 @@ public class RengokuAttack extends FlameBreathingAttackBase {
 
     private void continueFastDash() {
         // Maintain fast dash velocity
-        float dashSpeed = DASH_DISTANCE / DASH_DURATION;
-        Vec3 dashVelocity = dashDirection.scale(dashSpeed);
+        Vec3 dashVelocity = dashDirection.scale(DASH_DISTANCE);
         user.setDeltaMovement(dashVelocity);
         user.hurtMarked = true;
 

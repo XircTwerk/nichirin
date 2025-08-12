@@ -24,6 +24,7 @@ public class BreathingStyleProgression {
     public BreathingStyleProgression() {
         // Everyone starts with no breathing styles unlocked
         // Thunder Breathing is unlocked via lightning strike (handled elsewhere)
+        // Flame Breathing is unlocked via being on fire for 15 seconds (handled elsewhere)
     }
 
     /**
@@ -48,22 +49,31 @@ public class BreathingStyleProgression {
     }
 
     /**
+     * Checks if player has unlocked any breathing style
+     */
+    public boolean hasAnyBreathingStyle() {
+        return !unlockedStyles.isEmpty();
+    }
+
+    /**
      * Gets the unlock requirement description for a style
      */
     public String getUnlockRequirement(String styleId) {
         return switch (styleId) {
             case "thunder_breathing" -> "Get struck by lightning while wearing no armor";
+            case "flame_breathing" -> "Survive being on fire for 15 seconds";
             default -> "Unknown requirement";
         };
     }
 
     /**
      * Checks if requirements are met for a breathing style
-     * Note: Thunder Breathing unlock is handled by ThunderBreathingUnlockHandler
+     * Note: Thunder Breathing and Flame Breathing unlocks are handled by their respective handlers
      */
     public boolean meetsRequirements(String styleId) {
         return switch (styleId) {
             case "thunder_breathing" -> false; // Handled by lightning strike event
+            case "flame_breathing" -> false; // Handled by burning duration event
             default -> false;
         };
     }

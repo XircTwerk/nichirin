@@ -43,16 +43,19 @@ public final class BreathOfNichirin {
         NichirinItemRegistry.ITEM_REGISTRY.register();
         CREATIVE_TAB_REGISTRY.register();
 
+        //unlock handlers
+        FlameBreathingUnlockHandler.register();
+        ThunderBreathingUnlockHandler.register();
+
         // SERVER-SIDE handlers only
         KatanaInputHandler.register();
-        ThunderBreathingUnlockHandler.register();
         PlayerTickHandler.register();
         FallDamageHandler.register();
         BreathingEventHandler.register();
         StaminaEventHandler.register();
         BlockingEventHandler.register();
         DodgeEventHandler.register();
-        CooldownClearEventHandler.register(); // ADD THIS LINE
+        CooldownClearEventHandler.register();
 
         // Data
         MovesetRegistry.init();
