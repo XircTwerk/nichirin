@@ -7,7 +7,6 @@
     "client.PlayerModelAccessor"
   ],
   "mixins": [
-    "MusicalScorePlayerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

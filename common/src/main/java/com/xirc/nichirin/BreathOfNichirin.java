@@ -52,7 +52,6 @@ public final class BreathOfNichirin {
         StaminaEventHandler.register();
         BlockingEventHandler.register();
         DodgeEventHandler.register();
-        MusicalScoreEventHandler.register();
         CooldownClearEventHandler.register(); // ADD THIS LINE
 
         // Data

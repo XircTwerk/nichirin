@@ -256,7 +256,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     }
 
     /**
-     * Apply damage and effects to a target with immunity frames and Musical Score bonuses
+     * Apply damage and effects to a target with immunity frames
      */
     protected void hitTarget(LivingEntity target) {
         if (world.isClientSide) return;
@@ -266,39 +266,9 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
             return;
         }
 
-        // Get Musical Score breathing damage multiplier (includes rhythm bonus)
-        float breathingMultiplier = com.xirc.nichirin.common.effect.MusicalScoreEffect.getBreathingDamageMultiplier(user);
-
-        // Apply breathing damage multiplier to base damage
-        float originalDamage = this.damage;
-        this.damage = originalDamage * breathingMultiplier;
-
-        // Log the damage boost if active
-        if (breathingMultiplier > 1.0f) {
-            com.xirc.nichirin.BreathOfNichirin.LOGGER.debug("Musical Score boosting {} breathing damage: {}x multiplier ({}->{})",
-                    user.getName().getString(), breathingMultiplier, originalDamage, this.damage);
-
-            // Show rhythm feedback to player
-            if (breathingMultiplier >= 6.0f) { // 3.0 base * 2.0 rhythm = perfect timing
-                user.displayClientMessage(net.minecraft.network.chat.Component.literal("PERFECT RHYTHM! 6x DAMAGE!")
-                        .withStyle(style -> style.withColor(0x00FF00).withBold(true)), true);
-
-                // Trigger client-side success feedback
-                if (world.isClientSide) {
-                    com.xirc.nichirin.client.gui.RhythmMeter.triggerSuccess();
-                }
-            } else if (breathingMultiplier >= 4.5f) { // 3.0 base * 1.5 rhythm = good timing
-                user.displayClientMessage(net.minecraft.network.chat.Component.literal("Good Rhythm! 4.5x Damage!")
-                        .withStyle(style -> style.withColor(0xFFFF00).withBold(true)), true);
-            }
-        }
-
         // Apply damage using configured values
         DamageSource source = user.damageSources().playerAttack(user);
         boolean damaged = target.hurt(source, damage);
-
-        // Restore original damage for next hit
-        this.damage = originalDamage;
 
         // Apply hit stun if configured
         if (hitStun > 0) {
@@ -328,26 +298,10 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     }
 
     /**
-     * Special hit method that removes immunity frames with Musical Score bonuses
+     * Special hit method that removes immunity frames
      */
     protected void hitTargetNoImmunity(LivingEntity target) {
         if (world.isClientSide) return;
-
-        // Get Musical Score breathing damage multiplier (includes rhythm bonus)
-        float breathingMultiplier = com.xirc.nichirin.common.effect.MusicalScoreEffect.getBreathingDamageMultiplier(user);
-
-        // Apply breathing damage multiplier to base damage
-        float originalDamage = this.damage;
-        this.damage = originalDamage * breathingMultiplier;
-
-        // Show rhythm feedback for no-immunity hits too
-        if (breathingMultiplier >= 6.0f) {
-            user.displayClientMessage(net.minecraft.network.chat.Component.literal("PERFECT RHYTHM! 6x DAMAGE!")
-                    .withStyle(style -> style.withColor(0x00FF00).withBold(true)), true);
-        } else if (breathingMultiplier >= 4.5f) {
-            user.displayClientMessage(net.minecraft.network.chat.Component.literal("Good Rhythm! 4.5x Damage!")
-                    .withStyle(style -> style.withColor(0xFFFF00).withBold(true)), true);
-        }
 
         // Reset invulnerability to allow immediate damage
         target.invulnerableTime = 0;
@@ -356,9 +310,6 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         // Apply damage
         DamageSource source = user.damageSources().playerAttack(user);
         boolean damaged = target.hurt(source, damage);
-
-        // Restore original damage
-        this.damage = originalDamage;
 
         // Apply hit stun
         if (hitStun > 0) {
@@ -385,7 +336,6 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         // Track hit (allow multiple hits for no-immunity attacks)
         hitCount++;
     }
-
 
     /**
      * Get entities in a hitbox centered at the given position
