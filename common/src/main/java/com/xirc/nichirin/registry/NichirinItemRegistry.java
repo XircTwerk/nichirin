@@ -9,10 +9,7 @@ import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ArmorMaterials;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.item.Rarity;
+import net.minecraft.world.item.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,7 +84,7 @@ public interface NichirinItemRegistry {
             () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.BOOTS, settings().stacksTo(1)));
 
     RegistrySupplier<Item> SHINOBU_HEADPIECE = register("shinobu_headpiece",
-            () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.CHESTPLATE, settings().stacksTo(1)));
+            () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.HELMET, settings().stacksTo(1)));
 
     RegistrySupplier<Item> SHINOBU_CAPE = register("shinobu_cape",
             () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.CHESTPLATE, settings().stacksTo(1)));
@@ -111,6 +108,6 @@ public interface NichirinItemRegistry {
     }
 
     static void init() {
-        LOGGER.info("ModItemRegistry.init() called - Total items to register: {}", ITEMS.size());
+        LOGGER.info("NichirintemRegistry.init() called - Total items to register: {}", ITEMS.size());
     }
 }

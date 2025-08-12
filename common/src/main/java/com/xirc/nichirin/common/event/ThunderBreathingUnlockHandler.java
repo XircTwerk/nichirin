@@ -5,8 +5,10 @@ import com.xirc.nichirin.common.advancement.NichirinCriteriaTriggers;
 import com.xirc.nichirin.common.data.BreathingStyleHelper;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.data.ProgressionHelper;
+import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import dev.architectury.event.events.common.EntityEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -76,7 +78,7 @@ public class ThunderBreathingUnlockHandler {
      * Unlocks Thunder Breathing for the player
      */
     private static void unlockThunderBreathing(ServerPlayer player) {
-        // Record the unlock in progression system
+        // Record the unlock in progression system (this handles all advancement triggers)
         ProgressionHelper.unlockStyle(player, "thunder_breathing");
 
         // Set Thunder Breathing as the player's style
@@ -94,17 +96,21 @@ public class ThunderBreathingUnlockHandler {
                 net.minecraft.sounds.SoundEvents.LIGHTNING_BOLT_THUNDER,
                 net.minecraft.sounds.SoundSource.PLAYERS, 1.0f, 1.0f);
 
-        // Grant advancement
-        grantThunderBreathingAdvancement(player);
-    }
+        // Spawn thunder particles around the player
+        if (player.level() instanceof ServerLevel serverLevel) {
+            for (int i = 0; i < 20; i++) {
+                double offsetX = (player.getRandom().nextDouble() - 0.5) * 3.0;
+                double offsetY = player.getRandom().nextDouble() * 2.0;
+                double offsetZ = (player.getRandom().nextDouble() - 0.5) * 3.0;
 
-    /**
-     * Grants the Thunder Breathing advancement
-     */
-    private static void grantThunderBreathingAdvancement(ServerPlayer player) {
-        // Trigger the custom advancement
-        if (NichirinCriteriaTriggers.THUNDER_BREATHING_TRIGGER != null) {
-            NichirinCriteriaTriggers.THUNDER_BREATHING_TRIGGER.trigger(player);
+                serverLevel.sendParticles(NichirinParticleRegistry.THUNDER.get(),
+                        player.getX() + offsetX,
+                        player.getY() + offsetY,
+                        player.getZ() + offsetZ,
+                        1, 0, 0, 0, 0);
+            }
         }
     }
+
+
 }

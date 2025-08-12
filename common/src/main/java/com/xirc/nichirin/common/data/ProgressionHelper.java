@@ -24,16 +24,41 @@ public class ProgressionHelper {
     }
 
     /**
+     * Checks if a player has unlocked any breathing style
+     */
+    public static boolean hasAnyBreathingStyle(Player player) {
+        return getProgression(player).hasAnyBreathingStyle();
+    }
+
+    /**
      * Unlocks a breathing style for a player (used by unlock handlers)
      */
     public static void unlockStyle(Player player, String styleId) {
         boolean wasAlreadyUnlocked = isStyleUnlocked(player, styleId);
+        boolean wasFirstBreathingStyle = !hasAnyBreathingStyle(player);
 
         getProgression(player).unlockStyle(styleId);
 
-        // Trigger advancement if this is a new unlock and it's Thunder Breathing
-        if (!wasAlreadyUnlocked && styleId.equals("thunder_breathing") && player instanceof ServerPlayer) {
-            NichirinCriteriaTriggers.THUNDER_BREATHING_TRIGGER.trigger((ServerPlayer) player);
+        // Trigger advancements if this is a new unlock and player is on server
+        if (!wasAlreadyUnlocked && player instanceof ServerPlayer serverPlayer) {
+            // Trigger specific breathing style advancement
+            switch (styleId) {
+                case "thunder_breathing" -> {
+                    if (NichirinCriteriaTriggers.THUNDER_BREATHING_TRIGGER != null) {
+                        NichirinCriteriaTriggers.THUNDER_BREATHING_TRIGGER.trigger(serverPlayer);
+                    }
+                }
+                case "flame_breathing" -> {
+                    if (NichirinCriteriaTriggers.FLAME_BREATHING_TRIGGER != null) {
+                        NichirinCriteriaTriggers.FLAME_BREATHING_TRIGGER.trigger(serverPlayer);
+                    }
+                }
+            }
+
+            // Trigger First Breath advancement if this was their first breathing style
+            if (wasFirstBreathingStyle && NichirinCriteriaTriggers.FIRST_BREATH_TRIGGER != null) {
+                NichirinCriteriaTriggers.FIRST_BREATH_TRIGGER.trigger(serverPlayer);
+            }
         }
 
         // Save the data after unlocking
@@ -55,7 +80,7 @@ public class ProgressionHelper {
      */
     public static void recordDemonKill(Player player) {
         getProgression(player).addDemonKill();
-        // Note: No auto-unlock checking since Thunder Breathing uses lightning strike
+        // Note: No auto-unlock checking since breathing styles have specific unlock requirements
     }
 
     /**
