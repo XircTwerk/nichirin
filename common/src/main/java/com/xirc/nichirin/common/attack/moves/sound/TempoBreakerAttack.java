@@ -89,13 +89,6 @@ public class TempoBreakerAttack extends SoundBreathingAttackBase {
             long explosionTime = world.getGameTime() + EXPLOSION_DELAY;
             delayedExplosions.put(target, explosionTime);
 
-            // Debug message to confirm delay is set
-            if (user instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-                serverPlayer.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                        "Explosion scheduled in " + EXPLOSION_DELAY + " ticks for " + target.getName().getString()
-                ));
-            }
-
             // Hit sound
             world.playSound(null, target.getX(), target.getY(), target.getZ(),
                     SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.PLAYERS, 1.0f, 1.2f);
@@ -173,7 +166,7 @@ public class TempoBreakerAttack extends SoundBreathingAttackBase {
     }
 
     /**
-     * Create the wide tempo-breaking sweep effect - much fewer particles
+     * Create the wide tempo-breaking sweep effect - slash pattern in front of player
      */
     private void createTempoSweepEffect() {
         if (!(world instanceof ServerLevel serverLevel)) return;
@@ -182,30 +175,48 @@ public class TempoBreakerAttack extends SoundBreathingAttackBase {
         Vec3 lookDir = user.getLookAngle();
         Vec3 rightDir = lookDir.cross(new Vec3(0, 1, 0)).normalize();
 
-        // Create wide sweep arc - much reduced particles
-        for (int i = -45; i <= 45; i += 15) { // Much fewer particles (every 15 degrees instead of 5)
+        // Create slash effect starting in front of the player
+        Vec3 slashCenter = userPos.add(lookDir.scale(2.5)); // Start 2.5 blocks in front of player
+
+        // Create wide sweep arc - particles form a slash pattern
+        for (int i = -45; i <= 45; i += 10) { // Every 10 degrees for good coverage
             double angle = Math.toRadians(i);
             Vec3 sweepDir = lookDir.scale(Math.cos(angle)).add(rightDir.scale(Math.sin(angle)));
 
-            for (double r = 2.0; r <= range; r += 1.0) { // Fewer particles along range
-                Vec3 sweepPos = userPos.add(sweepDir.scale(r));
+            // Create particles along the slash arc at varying distances
+            for (double r = 0.5; r <= range - 2.0; r += 0.8) { // Start from slash center, not player
+                Vec3 sweepPos = slashCenter.add(sweepDir.scale(r));
 
                 serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
                         sweepPos.x, sweepPos.y, sweepPos.z,
-                        1, 0.2, 0.2, 0.2, 0.05); // Only 1 particle instead of 2
+                        1, 0.1, 0.1, 0.1, 0.03);
             }
         }
 
-        // Central tempo break effect - reduced
-        serverLevel.sendParticles(NichirinParticleRegistry.FLASH1.get(),
-                userPos.x, userPos.y, userPos.z,
-                5, 0.5, 0.5, 0.5, 0.2); // Reduced from 15 particles
+        // Create horizontal slash trail effect
+        for (double t = -2.0; t <= 2.0; t += 0.4) { // Horizontal slash line
+            Vec3 slashPos = slashCenter.add(rightDir.scale(t));
 
-        // Ground impact effect - reduced
-        Vec3 groundImpact = userPos.add(lookDir.scale(2)).add(0, -1, 0);
+            serverLevel.sendParticles(NichirinParticleRegistry.FLASH1.get(),
+                    slashPos.x, slashPos.y, slashPos.z,
+                    2, 0.2, 0.2, 0.2, 0.1);
+        }
+
+        // Add some depth to the slash with a second layer
+        Vec3 slashCenter2 = userPos.add(lookDir.scale(3.5)); // Slightly further out
+        for (double t = -1.5; t <= 1.5; t += 0.5) {
+            Vec3 slashPos = slashCenter2.add(rightDir.scale(t));
+
+            serverLevel.sendParticles(NichirinParticleRegistry.SHOCKWAVE.get(),
+                    slashPos.x, slashPos.y, slashPos.z,
+                    1, 0.3, 0.3, 0.3, 0.05);
+        }
+
+        // Ground impact effect at the end of the slash
+        Vec3 groundImpact = slashCenter.add(lookDir.scale(1.5)).add(0, -1, 0);
         serverLevel.sendParticles(ParticleTypes.POOF,
                 groundImpact.x, groundImpact.y, groundImpact.z,
-                3, 0.8, 0.1, 0.8, 0.15); // Reduced from 10 particles
+                3, 0.8, 0.1, 0.8, 0.15);
     }
 
     /**

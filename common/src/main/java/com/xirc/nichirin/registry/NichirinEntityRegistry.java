@@ -1,6 +1,7 @@
 package com.xirc.nichirin.registry;
 
 import com.xirc.nichirin.BreathOfNichirin;
+import com.xirc.nichirin.common.entity.FlashBombEntity;
 import com.xirc.nichirin.common.entity.SmokeBombEntity;
 import com.xirc.nichirin.common.entity.ThunderBallEntity;
 import dev.architectury.registry.registries.DeferredRegister;
@@ -28,6 +29,16 @@ public interface NichirinEntityRegistry {
                     .clientTrackingRange(64)
                     .updateInterval(1)
                     .build("smoke_bomb"));
+
+    RegistrySupplier<EntityType<FlashBombEntity>> FLASH_BOMB =
+            ENTITY_TYPES.register("flash_bomb", () -> EntityType.Builder.<FlashBombEntity>of(
+                            FlashBombEntity::new, MobCategory.MISC)
+                    .sized(0.25f, 0.25f)
+                    .clientTrackingRange(64)
+                    .updateInterval(1)
+                    .build("flash_bomb"));
+
+
 
     static void init() {
         ENTITY_TYPES.register();
