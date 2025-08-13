@@ -15,7 +15,7 @@ import net.minecraft.resources.ResourceLocation;
 import static com.xirc.nichirin.common.data.ProgressionHelper.getUnlockRequirement;
 
 /**
- * FIXED: Breathing Styles section with achievement fallback and Flame Breathing
+ * Breathing Styles section with all 4 breathing styles and fixed "none" button
  */
 public class BreathingStylesSection {
 
@@ -47,31 +47,45 @@ public class BreathingStylesSection {
         graphics.drawString(font, instructions, contentX, contentY, 0xAAAAAA);
         contentY += 20;
 
-        // Style grid - Thunder and Flame Breathing
+        // Style grid - 2x2 grid for 4 breathing styles
         int gridY = contentY + 10;
         int boxWidth = 140;
         int boxHeight = 80;
         int spacing = 20;
 
-        // Calculate starting X to center both boxes
+        // Calculate starting X to center the 2x2 grid
         int totalWidth = (boxWidth * 2) + spacing;
         int startX = centerX - totalWidth / 2;
 
         // Check what's being hovered
         String hoveredLockedStyle = null;
 
-        // Thunder Breathing (left)
+        // Top row - Thunder and Flame
         if (mouseX >= startX && mouseX <= startX + boxWidth && mouseY >= gridY && mouseY <= gridY + boxHeight) {
             if (!isStyleUnlockedWithFallback(player, "thunder_breathing")) {
                 hoveredLockedStyle = "thunder_breathing";
             }
         }
 
-        // Flame Breathing (right)
         int flameX = startX + boxWidth + spacing;
         if (mouseX >= flameX && mouseX <= flameX + boxWidth && mouseY >= gridY && mouseY <= gridY + boxHeight) {
             if (!isStyleUnlockedWithFallback(player, "flame_breathing")) {
                 hoveredLockedStyle = "flame_breathing";
+            }
+        }
+
+        // Bottom row - Insect and Sound
+        int bottomRowY = gridY + boxHeight + spacing;
+        if (mouseX >= startX && mouseX <= startX + boxWidth && mouseY >= bottomRowY && mouseY <= bottomRowY + boxHeight) {
+            if (!isStyleUnlockedWithFallback(player, "insect_breathing")) {
+                hoveredLockedStyle = "insect_breathing";
+            }
+        }
+
+        int soundX = startX + boxWidth + spacing;
+        if (mouseX >= soundX && mouseX <= soundX + boxWidth && mouseY >= bottomRowY && mouseY <= bottomRowY + boxHeight) {
+            if (!isStyleUnlockedWithFallback(player, "sound_breathing")) {
+                hoveredLockedStyle = "sound_breathing";
             }
         }
 
@@ -83,6 +97,8 @@ public class BreathingStylesSection {
             graphics.drawString(font, tooltip, centerX - font.width(tooltip) / 2, tooltipY, 0xFFAA00);
         }
 
+        // Render all 4 breathing style boxes
+        // Top row
         renderBreathingStyleBox(graphics, font, player, currentStyle,
                 "thunder_breathing",
                 startX, gridY, boxWidth, boxHeight);
@@ -91,11 +107,17 @@ public class BreathingStylesSection {
                 "flame_breathing",
                 flameX, gridY, boxWidth, boxHeight);
 
-        // Show unlock requirements for locked styles (removed the redundant text)
-        int reqY = gridY + boxHeight + 15;
+        // Bottom row
+        renderBreathingStyleBox(graphics, font, player, currentStyle,
+                "insect_breathing",
+                startX, bottomRowY, boxWidth, boxHeight);
 
-        // "None" button
-        int noneButtonY = reqY;
+        renderBreathingStyleBox(graphics, font, player, currentStyle,
+                "sound_breathing",
+                soundX, bottomRowY, boxWidth, boxHeight);
+
+        // "None" button - positioned below the grid
+        int noneButtonY = bottomRowY + boxHeight + 20;
         int noneButtonX = centerX - 75;
         int noneButtonWidth = 150;
         int noneButtonHeight = 20;
@@ -179,10 +201,9 @@ public class BreathingStylesSection {
     }
 
     /**
-     * SIMPLIFIED: Check if a style is unlocked (just use progression system)
+     * Check if a style is unlocked
      */
     private boolean isStyleUnlockedWithFallback(Player player, String styleId) {
-        // Just check progression system - this should be the source of truth
         return ProgressionHelper.isStyleUnlocked(player, styleId);
     }
 
@@ -199,46 +220,48 @@ public class BreathingStylesSection {
         String currentStyle = BreathingStyleHelper.getMovesetId(player);
         int centerX = (contentWidth - 20) / 2;
 
-        // Calculate click areas for both breathing style boxes
+        // Calculate click areas for all 4 breathing style boxes
         int boxWidth = 140;
         int boxHeight = 80;
         int spacing = 20;
         int totalWidth = (boxWidth * 2) + spacing;
         int startX = centerX - totalWidth / 2;
-        int y = TOP_MARGIN + 10 + 30 + 25 + 20 + 10;
+        int topRowY = TOP_MARGIN + 10 + 30 + 25 + 20 + 10;
+        int bottomRowY = topRowY + boxHeight + spacing;
 
-        // Thunder Breathing box (left)
-        if (mouseX >= startX && mouseX <= startX + boxWidth && mouseY >= y && mouseY <= y + boxHeight) {
+        // Top row - Thunder Breathing (left)
+        if (mouseX >= startX && mouseX <= startX + boxWidth && mouseY >= topRowY && mouseY <= topRowY + boxHeight) {
             return handleStyleClick(player, "thunder_breathing", currentStyle, currentTime);
         }
 
-        // Flame Breathing box (right)
+        // Top row - Flame Breathing (right)
         int flameX = startX + boxWidth + spacing;
-        if (mouseX >= flameX && mouseX <= flameX + boxWidth && mouseY >= y && mouseY <= y + boxHeight) {
+        if (mouseX >= flameX && mouseX <= flameX + boxWidth && mouseY >= topRowY && mouseY <= topRowY + boxHeight) {
             return handleStyleClick(player, "flame_breathing", currentStyle, currentTime);
         }
 
-        // Check for "None" button click
-        int reqY = y + boxHeight + 15;
-        // Add space for requirement text if any styles are locked
-        if (!isStyleUnlockedWithFallback(player, "thunder_breathing")) {
-            reqY += 35; // Title + requirement
-        }
-        if (!isStyleUnlockedWithFallback(player, "flame_breathing")) {
-            reqY += 35; // Title + requirement
+        // Bottom row - Insect Breathing (left)
+        if (mouseX >= startX && mouseX <= startX + boxWidth && mouseY >= bottomRowY && mouseY <= bottomRowY + boxHeight) {
+            return handleStyleClick(player, "insect_breathing", currentStyle, currentTime);
         }
 
+        // Bottom row - Sound Breathing (right)
+        int soundX = startX + boxWidth + spacing;
+        if (mouseX >= soundX && mouseX <= soundX + boxWidth && mouseY >= bottomRowY && mouseY <= bottomRowY + boxHeight) {
+            return handleStyleClick(player, "sound_breathing", currentStyle, currentTime);
+        }
+
+        // Check for "None" button click - FIXED positioning
+        int noneButtonY = bottomRowY + boxHeight + 20;
         int noneButtonX = centerX - 75;
         int noneButtonWidth = 150;
         int noneButtonHeight = 20;
 
         if (mouseX >= noneButtonX && mouseX <= noneButtonX + noneButtonWidth &&
-                mouseY >= reqY && mouseY <= reqY + noneButtonHeight) {
+                mouseY >= noneButtonY && mouseY <= noneButtonY + noneButtonHeight) {
 
-            // Use packet to request clearing breathing style
-            if (currentStyle != null) {
-                NichirinPacketRegistry.requestStyleChange(null);
-            }
+            // Clear breathing style regardless of current state
+            NichirinPacketRegistry.requestStyleChange(null);
 
             // Play click sound
             Minecraft.getInstance().getSoundManager().play(
