@@ -3,6 +3,7 @@ package com.xirc.nichirin.registry;
 import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.common.item.armor.NichirinArmorItem;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.common.item.throwable.FlashBombItem;
 import com.xirc.nichirin.common.item.throwable.SmokeBombItem;
 import com.xirc.nichirin.common.item.tool.BentoBoxItem;
 import dev.architectury.registry.registries.DeferredRegister;
@@ -41,6 +42,9 @@ public interface NichirinItemRegistry {
     //functional items
     RegistrySupplier<Item> SMOKE_BOMB = register("smoke_bomb",
             () -> new SmokeBombItem(settings().stacksTo(16)));
+
+    RegistrySupplier<Item> FLASH_BOMB = register("flash_bomb",
+            () -> new FlashBombItem(settings().stacksTo(16)));
 
     RegistrySupplier<Item> BENTO_BOX = register("bento_box",
             () -> new BentoBoxItem(settings().stacksTo(1)));

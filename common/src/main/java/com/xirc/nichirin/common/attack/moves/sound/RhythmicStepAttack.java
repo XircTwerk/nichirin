@@ -8,17 +8,18 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * Rhythmic Step (Crouch + Right Click Attack)
- * 8 block near instant dash leaving a particle explosion trail
+ * 12 block dash with continuous hitboxes leaving a particle explosion trail
  *
  * Mechanics:
- * - Deals damage to all enemies where they dashed past
+ * - Deals damage to all enemies during dash (like UnknowingFireAttack)
  * - Does a slash at the end
- * - Near-instant movement
+ * - Continuous movement with constant velocity
  * - Explosion trail effects
  *
  * All configuration comes from the moveset builder.
@@ -26,12 +27,16 @@ import java.util.List;
  */
 public class RhythmicStepAttack extends SoundBreathingAttackBase {
 
-    private boolean dashExecuted = false;
+    private static final float DASH_DISTANCE = 0.4f; // Distance per tick
+    private static final int DASH_DURATION = 10; // 1 second dash
+    private static final float SLASH_WIDTH = 6.0f; // Wide finishing slash
+    private static final float SLASH_DEPTH = 4.0f; // Deep finishing slash
+
+    private boolean dashStarted = false;
+    private boolean slashExecuted = false;
     private Vec3 dashDirection;
     private Vec3 startPosition;
-    private Vec3 endPosition;
-    private final List<Vec3> dashPath = new ArrayList<>();
-    private boolean finishingSlash = false;
+    private final Set<LivingEntity> hitEntities = new HashSet<>();
 
     public RhythmicStepAttack() {
         // No configuration here - everything comes from moveset
@@ -40,17 +45,14 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
 
     @Override
     protected void onStart() {
-        dashExecuted = false;
-        finishingSlash = false;
-        dashPath.clear();
+        dashStarted = false;
+        slashExecuted = false;
+        hitEntities.clear();
 
         // Force horizontal direction only (ignore Y component)
         Vec3 rawDirection = user.getLookAngle();
         dashDirection = new Vec3(rawDirection.x, 0, rawDirection.z).normalize();
         startPosition = user.position();
-
-        // Calculate end position (4 blocks to match the velocity)
-        endPosition = startPosition.add(dashDirection.scale(4.0));
 
         // Rhythmic step preparation sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
@@ -64,85 +66,69 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
     protected void perform() {
         if (world.isClientSide) return;
 
-        // Execute near-instant dash after minimal windup
-        if (!dashExecuted && tickCount == windup + 1) {
-            executeRhythmicDash();
-            dashExecuted = true;
+        // Start dash immediately since windup is 0
+        if (!dashStarted && tickCount == 1) {
+            startDash();
+            dashStarted = true;
         }
 
-        // Stop the dash after just 2 ticks for shorter distance
-        if (dashExecuted && tickCount == windup + 2) {
-            user.setDeltaMovement(Vec3.ZERO);
-            user.hurtMarked = true;
+        // Continue dash with constant hitboxes (like UnknowingFireAttack)
+        if (dashStarted && tickCount > 0 && tickCount <= DASH_DURATION) {
+            continueDash();
         }
 
-        // Finishing slash at the end
-        if (dashExecuted && !finishingSlash && tickCount >= windup + 5) {
+        // Execute finishing slash at the end of dash
+        if (!slashExecuted && tickCount == DASH_DURATION + 5) {
             executeFinishingSlash();
-            finishingSlash = true;
+            slashExecuted = true;
         }
 
-        // Continue explosion trail effects
-        if (dashExecuted && tickCount <= windup + 8) {
+        // Continue explosion trail effects throughout the duration
+        if (dashStarted && tickCount <= 50) {
             createContinuousTrailExplosions();
         }
     }
 
-    private void executeRhythmicDash() {
-        // Use much lower velocity for proper 4-block movement
-        Vec3 dashVelocity = dashDirection.scale(8.0f); // Much lower velocity
+    private void startDash() {
+        // Set user velocity for dash - using UnknowingFireAttack's method
+        Vec3 dashVelocity = dashDirection.scale(DASH_DISTANCE * 20); // 12 blocks over 20 ticks
         user.setDeltaMovement(dashVelocity);
         user.hurtMarked = true;
         user.hasImpulse = true;
 
-        // Calculate path points for damage and effects
-        calculateDashPath();
-
-        // Deal damage along the entire dash path
-        damageAlongPath();
-
-        // Create massive dash effect with blue particles
-        createRhythmicDashEffect();
-
-        // Dash sound
+        // Dash start sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 1.5f, 1.8f);
+
+        // Create initial dash burst
+        createRhythmicDashEffect();
     }
 
-    private void keepUserGrounded() {
-        // Force user to stay on the ground during dash
-        Vec3 currentVelocity = user.getDeltaMovement();
-        user.setDeltaMovement(currentVelocity.x, Math.min(0, currentVelocity.y), currentVelocity.z);
-        user.setOnGround(true);
-    }
+    private void continueDash() {
+        // Maintain dash velocity every tick - using UnknowingFireAttack's method
+        Vec3 dashVelocity = dashDirection.scale(DASH_DISTANCE * 20);
+        user.setDeltaMovement(dashVelocity);
+        user.hurtMarked = true;
 
-    private void calculateDashPath() {
-        // Create path points from start to end
-        Vec3 direction = endPosition.subtract(startPosition);
-        double distance = direction.length();
-        Vec3 normalized = direction.normalize();
+        // Create continuous dash trail
+        createIntenseDashTrail();
 
-        dashPath.clear();
-        for (double d = 0; d <= distance; d += 0.5) {
-            Vec3 pathPoint = startPosition.add(normalized.scale(d));
-            dashPath.add(pathPoint);
-        }
-    }
+        // Hit enemies during dash with constant hitboxes - using UnknowingFireAttack's method
+        List<LivingEntity> dashTargets = getTargetsInCustomHitbox(
+                user.position().add(0, user.getBbHeight() / 2, 0),
+                2.0, 2.5, 2.0);
 
-    private void damageAlongPath() {
-        // Hit all enemies along the dash path
-        for (Vec3 pathPoint : dashPath) {
-            List<LivingEntity> targets = getTargetsInCustomHitbox(pathPoint, 2.0, 2.0, 2.0);
-
-            for (LivingEntity target : targets) {
+        for (LivingEntity target : dashTargets) {
+            if (!hitEntities.contains(target)) {
+                // Light dash damage - respects immunity frames
                 hitTarget(target);
+                hitEntities.add(target);
 
-                // Light knockback to not disrupt the dash
-                Vec3 lightKnockback = dashDirection.scale(knockback * 0.5);
-                target.push(lightKnockback.x, 0.2, lightKnockback.z);
-                target.hurtMarked = true;
+                // Light knockback during dash
+                Vec3 dashKnockback = dashDirection.scale(knockback * 0.3);
+                target.push(dashKnockback.x, 0.05, dashKnockback.z);
 
-                // Dash hit effect
+                // Create impact particles
                 createDashHitEffect(target.position());
 
                 // Hit sound
@@ -152,37 +138,47 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
         }
     }
 
-    private void executeFinishingSlash() {
-        Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
-        // Create finishing slash effect
+
+    private void executeFinishingSlash() {
+        // Create MASSIVE horizontal slash effect like UnknowingFireAttack
         createFinishingSlashEffect();
 
-        // Hit enemies in front of user at end position
-        List<LivingEntity> finishTargets = getTargetsInCone(userPos, dashDirection, 4.0, 60);
+        // Hit all enemies in the massive slash area
+        Vec3 userPos = user.position().add(0, user.getBbHeight() * 0.7, 0);
+        Vec3 lookDir = user.getLookAngle();
+        Vec3 rightDir = lookDir.cross(new Vec3(0, 1, 0)).normalize();
 
-        for (LivingEntity target : finishTargets) {
-            // Enhanced damage for finishing slash
-            float originalDamage = damage;
-            damage = damage * 1.5f; // 50% bonus damage
+        // Create multiple hitboxes for the wide slash
+        for (int i = -3; i <= 3; i++) {
+            double offset = i * (SLASH_WIDTH / 6.0);
+            Vec3 slashCenter = userPos.add(lookDir.scale(SLASH_DEPTH / 2)).add(rightDir.scale(offset));
 
-            hitTarget(target);
+            List<LivingEntity> targets = getTargetsInCustomHitbox(slashCenter, 2.0, 3.0, 2.0);
 
-            damage = originalDamage; // Restore
+            for (LivingEntity target : targets) {
+                // Enhanced damage for finishing slash
+                float originalDamage = damage;
+                damage = damage * 1.5f; // 50% bonus damage
 
-            // Strong finishing knockback
-            Vec3 finishingKnockback = dashDirection.scale(knockback * 2.0);
-            target.push(finishingKnockback.x, 0.5, finishingKnockback.z);
-            target.hurtMarked = true;
+                hitTarget(target);
 
-            // Extended stun
-            target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-                    net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN,
-                    30, // 1.5 seconds
-                    5,
-                    false,
-                    false
-            ));
+                damage = originalDamage; // Restore
+
+                // Strong finishing knockback
+                Vec3 slashKnockback = rightDir.scale(knockback * (i > 0 ? 1 : -1) * 1.5);
+                slashKnockback = slashKnockback.add(lookDir.scale(knockback * 0.5));
+                target.push(slashKnockback.x, 0.4, slashKnockback.z);
+
+                // Extended stun
+                target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                        net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN,
+                        30, // 1.5 seconds
+                        5,
+                        false,
+                        false
+                ));
+            }
         }
 
         // Finishing slash sound
@@ -190,35 +186,57 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
                 SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.PLAYERS, 1.2f, 0.8f);
     }
 
+    private void createIntenseDashTrail() {
+        if (!(world instanceof ServerLevel serverLevel)) return;
+
+        Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
+
+        // Dense sound trail behind user
+        for (int i = 1; i <= 6; i++) {
+            Vec3 trailPos = userPos.subtract(dashDirection.scale(i * 0.4));
+
+            serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
+                    trailPos.x, trailPos.y, trailPos.z,
+                    2, 0.3, 0.3, 0.3, 0.1);
+
+            serverLevel.sendParticles(NichirinParticleRegistry.BLUE_FLASH2.get(),
+                    trailPos.x, trailPos.y, trailPos.z,
+                    1, 0.2, 0.2, 0.2, 0.08);
+        }
+
+        // Side sound waves during dash
+        Vec3 rightDir = dashDirection.cross(new Vec3(0, 1, 0)).normalize();
+        for (int side = -1; side <= 1; side += 2) {
+            Vec3 sidePos = userPos.add(rightDir.scale(side * 1.0));
+            serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
+                    sidePos.x, sidePos.y, sidePos.z,
+                    1, 0.2, 0.2, 0.2, 0.1);
+        }
+    }
+
     private void createContinuousTrailExplosions() {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
-        // Create explosions along the path over time - much fewer particles
-        int pathIndex = (tickCount - windup - 2) * 2; // 2 explosions per tick instead of 3
+        // Create trail explosions at current position every few ticks
+        if (tickCount % 3 == 0) { // Every 3 ticks
+            Vec3 explosionPos = user.position().add(0, 0.5, 0);
 
-        for (int i = 0; i < 2 && pathIndex + i < dashPath.size(); i++) {
-            Vec3 explosionPos = dashPath.get(pathIndex + i);
-
-            // Trail explosion effect - much reduced
+            // Trail explosion effect
             serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
-                    explosionPos.x, explosionPos.y + 0.5, explosionPos.z,
-                    2, 1.0, 1.0, 1.0, 0.2); // Reduced from 8 particles
+                    explosionPos.x, explosionPos.y, explosionPos.z,
+                    2, 1.0, 1.0, 1.0, 0.2);
 
             serverLevel.sendParticles(NichirinParticleRegistry.SHOCKWAVE.get(),
                     explosionPos.x, explosionPos.y, explosionPos.z,
-                    1, 0.8, 0.8, 0.8, 0.1); // Reduced from 5 particles
+                    1, 0.8, 0.8, 0.8, 0.1);
 
-            if (i == 0) { // Only one flash particle per tick
-                serverLevel.sendParticles(NichirinParticleRegistry.FLASH1.get(),
-                        explosionPos.x, explosionPos.y + 0.5, explosionPos.z,
-                        1, 0.5, 0.5, 0.5, 0.1); // Reduced from 3 particles
-            }
+            serverLevel.sendParticles(NichirinParticleRegistry.FLASH1.get(),
+                    explosionPos.x, explosionPos.y, explosionPos.z,
+                    1, 0.5, 0.5, 0.5, 0.1);
 
             // Small explosion sound
-            if (i == 0) { // Only play sound once per tick to avoid spam
-                world.playSound(null, explosionPos.x, explosionPos.y, explosionPos.z,
-                        SoundEvents.FIREWORK_ROCKET_BLAST, SoundSource.PLAYERS, 0.2f, 1.5f); // Reduced volume
-            }
+            world.playSound(null, explosionPos.x, explosionPos.y, explosionPos.z,
+                    SoundEvents.FIREWORK_ROCKET_BLAST, SoundSource.PLAYERS, 0.2f, 1.5f);
         }
     }
 
@@ -258,43 +276,19 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
     private void createRhythmicDashEffect() {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
-        // Massive dash trail effect with blue particles
-        for (Vec3 pathPoint : dashPath) {
-            // Main dash trail - mix of sound and blue flash
-            serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
-                    pathPoint.x, pathPoint.y + 0.5, pathPoint.z,
-                    3, 0.3, 0.3, 0.3, 0.1);
-
-            serverLevel.sendParticles(NichirinParticleRegistry.BLUE_FLASH2.get(),
-                    pathPoint.x, pathPoint.y + 1, pathPoint.z,
-                    2, 0.2, 0.2, 0.2, 0.08);
-
-            // Speed lines
-            serverLevel.sendParticles(ParticleTypes.CRIT,
-                    pathPoint.x, pathPoint.y + 0.5, pathPoint.z,
-                    1, 0.1, 0.1, 0.1, 0.05);
-        }
+        Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
         // Start position burst with blue flash
         serverLevel.sendParticles(NichirinParticleRegistry.SHOCKWAVE.get(),
-                startPosition.x, startPosition.y + 1, startPosition.z,
+                userPos.x, userPos.y, userPos.z,
                 15, 1.0, 1.0, 1.0, 0.3);
 
         serverLevel.sendParticles(NichirinParticleRegistry.BLUE_FLASH2.get(),
-                startPosition.x, startPosition.y + 1, startPosition.z,
+                userPos.x, userPos.y, userPos.z,
                 10, 0.8, 0.8, 0.8, 0.2);
 
-        // End position impact with blue flash
-        serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
-                endPosition.x, endPosition.y + 1, endPosition.z,
-                15, 1.5, 1.5, 1.5, 0.4);
-
-        serverLevel.sendParticles(NichirinParticleRegistry.BLUE_FLASH2.get(),
-                endPosition.x, endPosition.y + 1, endPosition.z,
-                12, 1.2, 1.2, 1.2, 0.3);
-
         serverLevel.sendParticles(ParticleTypes.SONIC_BOOM,
-                endPosition.x, endPosition.y + 1, endPosition.z,
+                userPos.x, userPos.y, userPos.z,
                 2, 0.5, 0.5, 0.5, 0);
     }
 
@@ -315,15 +309,18 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
+        Vec3 rightDir = dashDirection.cross(new Vec3(0, 1, 0)).normalize();
+
+        // Create slash effect in front of player
+        Vec3 slashCenter = userPos.add(dashDirection.scale(2.0));
 
         // Finishing slash arc
         for (int i = -30; i <= 30; i += 10) {
             double angle = Math.toRadians(i);
-            Vec3 rightDir = dashDirection.cross(new Vec3(0, 1, 0)).normalize();
             Vec3 slashDir = dashDirection.scale(Math.cos(angle)).add(rightDir.scale(Math.sin(angle)));
 
-            for (double r = 1.0; r <= 4.0; r += 0.4) {
-                Vec3 slashPos = userPos.add(slashDir.scale(r));
+            for (double r = 0.5; r <= 3.0; r += 0.4) {
+                Vec3 slashPos = slashCenter.add(slashDir.scale(r));
 
                 serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
                         slashPos.x, slashPos.y, slashPos.z,
@@ -331,18 +328,27 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
             }
         }
 
+        // Horizontal slash trail
+        for (double t = -2.0; t <= 2.0; t += 0.4) {
+            Vec3 slashPos = slashCenter.add(rightDir.scale(t));
+
+            serverLevel.sendParticles(NichirinParticleRegistry.FLASH1.get(),
+                    slashPos.x, slashPos.y, slashPos.z,
+                    2, 0.2, 0.2, 0.2, 0.1);
+        }
+
         // Central finishing burst
         serverLevel.sendParticles(NichirinParticleRegistry.FLASH1.get(),
-                userPos.x, userPos.y, userPos.z,
-                20, 0.8, 0.8, 0.8, 0.3);
+                slashCenter.x, slashCenter.y, slashCenter.z,
+                15, 0.8, 0.8, 0.8, 0.3);
 
         serverLevel.sendParticles(NichirinParticleRegistry.SHOCKWAVE.get(),
-                userPos.x, userPos.y, userPos.z,
-                15, 0.6, 0.6, 0.6, 0.2);
+                slashCenter.x, slashCenter.y, slashCenter.z,
+                10, 0.6, 0.6, 0.6, 0.2);
     }
 
     /**
-     * Get targets in a cone shape (copied from TempoBreaker)
+     * Get targets in a cone shape
      */
     private List<LivingEntity> getTargetsInCone(Vec3 origin, Vec3 direction, double range, double angleDegrees) {
         double angleRadians = Math.toRadians(angleDegrees / 2);
@@ -374,9 +380,9 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
         user.hasImpulse = false; // Stop all physics impulses
 
         // Reset state
-        dashExecuted = false;
-        finishingSlash = false;
-        dashPath.clear();
+        dashStarted = false;
+        slashExecuted = false;
+        hitEntities.clear();
 
         // Final rhythmic echo
         if (world != null && user != null) {

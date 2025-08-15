@@ -1,5 +1,6 @@
 package com.xirc.nichirin.registry;
 
+import com.xirc.nichirin.client.renderer.entity.FlashBombRenderer;
 import com.xirc.nichirin.client.renderer.entity.SmokeBombRenderer;
 import com.xirc.nichirin.client.renderer.entity.ThunderBallRenderer;
 import dev.architectury.registry.client.level.entity.EntityRendererRegistry;
@@ -23,7 +24,8 @@ public interface NichirinEntityRendererRegistry {
 
     RendererData<?>[] entries = {
             new RendererData<>(NichirinEntityRegistry.THUNDER_BALL, ThunderBallRenderer::new),
-            new RendererData<>(NichirinEntityRegistry.SMOKE_BOMB, SmokeBombRenderer::new)
+            new RendererData<>(NichirinEntityRegistry.SMOKE_BOMB, SmokeBombRenderer::new),
+            new RendererData<>(NichirinEntityRegistry.FLASH_BOMB, FlashBombRenderer::new)
     };
 
     static void registerEntityRenderers(Consumer<RendererData<?>> consumer) {
