@@ -27,8 +27,8 @@ import java.util.HashSet;
  */
 public class RhythmicStepAttack extends SoundBreathingAttackBase {
 
-    private static final float DASH_DISTANCE = 1.2f; // Distance per tick (doubled)
-    private static final int DASH_DURATION = 10; // 0.5 second dash (halved)
+    private static final float DASH_DISTANCE = 0.4f; // Distance per tick
+    private static final int DASH_DURATION = 10; // 1 second dash
     private static final float SLASH_WIDTH = 6.0f; // Wide finishing slash
     private static final float SLASH_DEPTH = 4.0f; // Deep finishing slash
 
@@ -78,7 +78,7 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
         }
 
         // Execute finishing slash at the end of dash
-        if (!slashExecuted && tickCount == DASH_DURATION + 3) {
+        if (!slashExecuted && tickCount == DASH_DURATION + 5) {
             executeFinishingSlash();
             slashExecuted = true;
         }
@@ -90,8 +90,8 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
     }
 
     private void startDash() {
-        // Set user velocity for dash - 12 blocks over 10 ticks (0.5 seconds)
-        Vec3 dashVelocity = dashDirection.scale(DASH_DISTANCE * 10); // 12 blocks over 10 ticks
+        // Set user velocity for dash - using UnknowingFireAttack's method
+        Vec3 dashVelocity = dashDirection.scale(DASH_DISTANCE * 20); // 12 blocks over 20 ticks
         user.setDeltaMovement(dashVelocity);
         user.hurtMarked = true;
         user.hasImpulse = true;
@@ -105,8 +105,8 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
     }
 
     private void continueDash() {
-        // Maintain dash velocity every tick - 12 blocks over 10 ticks
-        Vec3 dashVelocity = dashDirection.scale(DASH_DISTANCE * 10);
+        // Maintain dash velocity every tick - using UnknowingFireAttack's method
+        Vec3 dashVelocity = dashDirection.scale(DASH_DISTANCE * 20);
         user.setDeltaMovement(dashVelocity);
         user.hurtMarked = true;
 

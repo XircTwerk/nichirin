@@ -151,7 +151,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
 
         MoveConfiguration tempConfig = new MoveBuilder("rhythmic_step", "Rhythmic Step")
                 .withAnimation("nichirin:rhythmic_step", 9)
-                .withTiming(0, 0, 60) // Fast dash with finishing duration
+                .withTiming(0, 0, 20) // Fast dash with finishing duration
                 .withDamage(12.0f) // Moderate damage but hits multiple times
                 .withDashSpeed(4.0f) // 4 block dash (halved from 8)
                 .withRange(4.0f) // Dash distance (halved from 8)
