@@ -15,6 +15,8 @@ import mod.azure.azurelib.renderer.GeoArmorRenderer;
 import mod.azure.azurelib.util.AzureLibUtil;
 import com.xirc.nichirin.client.renderer.armor.NichirinArmorRenderer;
 import com.xirc.nichirin.client.renderer.armor.ShinobuUniformRenderer;
+import com.xirc.nichirin.client.renderer.armor.ZenitsuUniformRenderer;
+import com.xirc.nichirin.client.renderer.armor.ZenitsuCapeRenderer;
 import com.xirc.nichirin.client.model.NichirinArmorModel;
 import com.xirc.nichirin.registry.NichirinItemRegistry;
 import net.minecraft.client.model.HumanoidModel;
@@ -100,6 +102,19 @@ public class NichirinArmorItem extends ArmorItem implements GeoItem {
         }
         else if (armorStack.is(NichirinItemRegistry.SHINOBU_BOOTS.get())) {
             return new ShinobuUniformRenderer();
+        }
+
+        if (armorStack.is(NichirinItemRegistry.ZENITSU_HEADPIECE.get())) {
+            return new ZenitsuUniformRenderer();
+        }
+        else if (armorStack.is(NichirinItemRegistry.ZENITSU_CAPE.get())) {
+            return new ZenitsuCapeRenderer();
+        }
+        else if (armorStack.is(NichirinItemRegistry.ZENITSU_LEGGINGS.get())) {
+            return new ZenitsuUniformRenderer();
+        }
+        else if (armorStack.is(NichirinItemRegistry.ZENITSU_BOOTS.get())) {
+            return new ZenitsuUniformRenderer();
         }
 
         return new NichirinArmorRenderer<>(new NichirinArmorModel<>("default_armor"));
