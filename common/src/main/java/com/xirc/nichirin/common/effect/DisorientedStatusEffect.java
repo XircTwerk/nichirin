@@ -35,7 +35,45 @@ public class DisorientedStatusEffect extends MobEffect {
         super.addAttributeModifiers(entity, attributeMap, amplifier);
     }
 
-    // Method to create the disoriented effect instance
+    // Helper methods for applying different tiers
+
+    // Tier 1: Movement disorientation only (amplifier 0)
+    public static void applyTier1Disorientation(Player player, int duration) {
+        player.addEffect(new MobEffectInstance(
+                NichirinEffectRegistry.DISORIENTED.get(),
+                duration,
+                0, // amplifier 0 = tier 1
+                false,
+                true,
+                true
+        ));
+    }
+
+    // Tier 2: Mouse disorientation only (amplifier 1)
+    public static void applyTier2Disorientation(Player player, int duration) {
+        player.addEffect(new MobEffectInstance(
+                NichirinEffectRegistry.DISORIENTED.get(),
+                duration,
+                1, // amplifier 1 = tier 2
+                false,
+                true,
+                true
+        ));
+    }
+
+    // Tier 3: Both movement and mouse disorientation (amplifier 2)
+    public static void applyTier3Disorientation(Player player, int duration) {
+        player.addEffect(new MobEffectInstance(
+                NichirinEffectRegistry.DISORIENTED.get(),
+                duration,
+                2, // amplifier 2 = tier 3
+                false,
+                true,
+                true
+        ));
+    }
+
+    // General method to create the disoriented effect instance with custom amplifier
     public static void applyDisorientedEffect(Player player, int duration, int amplifier) {
         player.addEffect(new MobEffectInstance(
                 NichirinEffectRegistry.DISORIENTED.get(),
