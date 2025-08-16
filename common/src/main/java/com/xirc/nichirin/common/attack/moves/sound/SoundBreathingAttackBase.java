@@ -313,6 +313,27 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
     }
 
     /**
+     * Apply disoriented effect to target (movement only - Tier 1)
+     * 1.5 seconds duration (30 ticks)
+     */
+    protected void applyDisorientedEffect(LivingEntity target) {
+        // Skip creative mode players
+        if (target instanceof net.minecraft.world.entity.player.Player player && player.isCreative()) {
+            return;
+        }
+
+        // Apply Tier 1 disoriented effect (movement only)
+        target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                com.xirc.nichirin.registry.NichirinEffectRegistry.DISORIENTED.get(),
+                30, // 1.5 seconds (30 ticks)
+                0,  // Amplifier 0 = Tier 1 (movement only)
+                false, // Not ambient
+                true,  // Show particles
+                true   // Show icon
+        ));
+    }
+
+    /**
      * Create sound particles around the user
      * Called during attack startup and execution
      */

@@ -70,9 +70,9 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("constant_resounding_slashes", "Constant Resounding Slashes")
                         .withAnimation("nichirin:constant_resounding_slashes", 12)
                         .withTiming(140, 10, 30) // 7 second cooldown, 1.5s duration
-                        .withDamage(20.0f) // Lower damage per hit but multi-hit
+                        .withDamage(20.0f)
                         .withRange(8.25f) // Increased from 5.5f (1.5x = 8.25f)
-                        .withKnockback(0.2f) // Light knockback to keep enemies close
+                        .withKnockback(0f) // Light knockback to keep enemies close
                         .withBreathCost(30.0f)
                         .withHitStun(5) // Brief stun per hit
                         .withHitboxSize(8.25f) // Full 360° radius
@@ -93,7 +93,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                         .withDamage(22.0f) // High damage for finale
                         .withDashSpeed(16.0f) // 16 block total dash
                         .withRange(16.0f) // Dash distance
-                        .withKnockback(0.3f) // Light knockback during dash
+                        .withKnockback(0f) // Light knockback during dash
                         .withBreathCost(45.0f) // Expensive ultimate-style move
                         .withHitStun(15) // Good stun
                         .withHitboxSize(3.0f) // Wide chain hitbox
@@ -131,7 +131,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
         MoveConfiguration tempConfig = new MoveBuilder("tempo_breaker", "Tempo Breaker")
                 .withAnimation("nichirin:tempo_breaker", 8)
                 .withTiming(0, 8, 60) // Extended duration to allow delayed explosions
-                .withDamage(14.0f) // Good damage
+                .withDamage(10.0f) // Good damage
                 .withRange(5.0f) // Wide sweep range
                 .withKnockback(0.8f) // Reduced from 1.2f - still too strong
                 .withBreathCost(20.0f) // Moderate cost
@@ -158,7 +158,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                 .withKnockback(0.5f) // Light knockback during dash
                 .withBreathCost(25.0f) // Mobility move cost
                 .withHitStun(15) // Good stun for finishing slash
-                .withHitboxSize(2.0f)
+                .withHitboxSize(3.0f)
                 .build();
 
         attack.configure(tempConfig);

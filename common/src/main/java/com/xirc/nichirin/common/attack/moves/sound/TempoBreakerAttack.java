@@ -78,6 +78,9 @@ public class TempoBreakerAttack extends SoundBreathingAttackBase {
         for (LivingEntity target : targets) {
             hitTarget(target);
 
+            applyDisorientedEffect(target);
+
+
             // Massive knockback (6 blocks) - this was missing proper implementation
             Vec3 knockbackDir = target.position().subtract(userPos).normalize();
             Vec3 massiveKnockback = knockbackDir.scale(2.5); // 6 block knockback

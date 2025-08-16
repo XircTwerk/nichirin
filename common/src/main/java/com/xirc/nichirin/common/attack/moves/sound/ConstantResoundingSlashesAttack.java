@@ -112,6 +112,9 @@ public class ConstantResoundingSlashesAttack extends SoundBreathingAttackBase {
 
                 hitTargetNoImmunity(target); // Use no immunity for multi-hit
 
+                applyDisorientedEffect(target);
+
+
                 damage = originalDamage; // Restore original damage
 
                 // Light knockback to keep enemies in range
