@@ -125,14 +125,40 @@
 			}
 		},
 		{
-			"from": [7.5, 4, 9],
+			"from": [7.4, 4.45, 8.9],
+			"to": [8.6, 5.15, 11.1],
+			"rotation": {"angle": 0, "axis": "y", "origin": [6.75, 6.6, 9.8]},
+			"faces": {
+				"north": {"uv": [7, 5, 7.5, 5.5], "texture": "#2"},
+				"east": {"uv": [6, 5, 7, 5.5], "texture": "#2"},
+				"south": {"uv": [8.5, 5, 9, 5.5], "texture": "#2"},
+				"west": {"uv": [7.5, 5, 8.5, 5.5], "texture": "#2"},
+				"up": {"uv": [7.5, 5, 7, 4], "texture": "#2"},
+				"down": {"uv": [8, 4, 7.5, 5], "texture": "#2"}
+			}
+		},
+		{
+			"from": [7.4, 3.45, 8.9],
+			"to": [8.6, 4.15, 11.1],
+			"rotation": {"angle": 0, "axis": "y", "origin": [6.75, 6.6, 9.8]},
+			"faces": {
+				"north": {"uv": [7, 5, 7.5, 5.5], "texture": "#2"},
+				"east": {"uv": [6, 5, 7, 5.5], "texture": "#2"},
+				"south": {"uv": [8.5, 5, 9, 5.5], "texture": "#2"},
+				"west": {"uv": [7.5, 5, 8.5, 5.5], "texture": "#2"},
+				"up": {"uv": [7.5, 5, 7, 4], "texture": "#2"},
+				"down": {"uv": [8, 4, 7.5, 5], "texture": "#2"}
+			}
+		},
+		{
+			"from": [7.5, 2, 9],
 			"to": [8.5, 10, 11],
 			"rotation": {"angle": 0, "axis": "y", "origin": [7.5, 4, 10]},
 			"faces": {
-				"north": {"uv": [4, 3.5, 4.5, 6.5], "texture": "#2"},
-				"east": {"uv": [3, 3.5, 4, 6.5], "texture": "#2"},
-				"south": {"uv": [5.5, 3.5, 6, 6.5], "texture": "#2"},
-				"west": {"uv": [4.5, 3.5, 5.5, 6.5], "texture": "#2"},
+				"north": {"uv": [4, 3.5, 4.5, 7.5], "texture": "#2"},
+				"east": {"uv": [3, 3.5, 4, 7.5], "texture": "#2"},
+				"south": {"uv": [5.5, 3.5, 6, 7.5], "texture": "#2"},
+				"west": {"uv": [4.5, 3.5, 5.5, 7.5], "texture": "#2"},
 				"up": {"uv": [4.5, 3.5, 4, 2.5], "texture": "#2"},
 				"down": {"uv": [5, 2.5, 4.5, 3.5], "texture": "#2"}
 			}
@@ -208,16 +234,15 @@
 			"translation": [0, -1.25, 0]
 		},
 		"thirdperson_lefthand": {
-			"rotation": [180, 0, 0],
-			"translation": [-1, 3.75, 3.5]
+			"rotation": [180, 180, 0],
+			"translation": [-1, 2.75, -0.5]
 		},
 		"firstperson_righthand": {
 			"scale": [0.8, 0.8, 0.8]
 		},
 		"firstperson_lefthand": {
-			"rotation": [152, 180, 0],
-			"translation": [0.5, 3, 0],
-			"scale": [0.8, 0.8, 0.8]
+			"rotation": [150, -180, 0],
+			"translation": [-1, 2.75, -0.5]
 		},
 		"ground": {
 			"rotation": [0, 0, 90],
@@ -255,7 +280,7 @@
 							"name": "Grip",
 							"origin": [6.75, 6.6, 9.8],
 							"color": 0,
-							"children": [5, 6, 7, 8, 9]
+							"children": [5, 6, 7, 8, 9, 10, 11]
 						}
 					]
 				},
@@ -263,7 +288,7 @@
 					"name": "Blade",
 					"origin": [8, 0, 8],
 					"color": 0,
-					"children": [10, 11, 12, 13, 14]
+					"children": [12, 13, 14, 15, 16]
 				}
 			]
 		}

@@ -1,9 +1,7 @@
 {
+	"format_version": "1.9.0",
 	"credit": "Made with Blockbench",
-	"texture_size": [
-		32,
-		32
-	],
+	"texture_size": [32, 32],
 	"textures": {
 		"1": "nichirin:item/thunder_katana",
 		"particle": "nichirin:item/thunder_katana"
@@ -14,12 +12,12 @@
 			"to": [10, 10.974, 11],
 			"rotation": {"angle": 0, "axis": "y", "origin": [8, 10.475, 10]},
 			"faces": {
-				"north": {"uv": [5.5, 8.5, 7.5, 9], "texture": "#1"},
-				"east": {"uv": [4.5, 8.5, 5.5, 9], "texture": "#1"},
-				"south": {"uv": [8.5, 8.5, 10.5, 9], "texture": "#1"},
-				"west": {"uv": [7.5, 8.5, 8.5, 9], "texture": "#1"},
-				"up": {"uv": [7.5, 8.5, 5.5, 7.5], "texture": "#1"},
-				"down": {"uv": [9.5, 7.5, 7.5, 8.5], "texture": "#1"}
+				"north": {"uv": [5.5, 9.5, 7.5, 10], "texture": "#1"},
+				"east": {"uv": [4.5, 9.5, 5.5, 10], "texture": "#1"},
+				"south": {"uv": [8.5, 9.5, 10.5, 10], "texture": "#1"},
+				"west": {"uv": [7.5, 9.5, 8.5, 10], "texture": "#1"},
+				"up": {"uv": [7.5, 9.5, 5.5, 8.5], "texture": "#1"},
+				"down": {"uv": [9.5, 8.5, 7.5, 9.5], "texture": "#1"}
 			}
 		},
 		{
@@ -36,14 +34,14 @@
 			}
 		},
 		{
-			"from": [7.5, 4, 9],
+			"from": [7.5, 2, 9],
 			"to": [8.5, 10, 11],
 			"rotation": {"angle": 0, "axis": "y", "origin": [7.5, 4, 10]},
 			"faces": {
-				"north": {"uv": [4, 4, 4.5, 7], "texture": "#1"},
-				"east": {"uv": [3, 4, 4, 7], "texture": "#1"},
-				"south": {"uv": [5.5, 4, 6, 7], "texture": "#1"},
-				"west": {"uv": [4.5, 4, 5.5, 7], "texture": "#1"},
+				"north": {"uv": [4, 4, 4.5, 8], "texture": "#1"},
+				"east": {"uv": [3, 4, 4, 8], "texture": "#1"},
+				"south": {"uv": [5.5, 4, 6, 8], "texture": "#1"},
+				"west": {"uv": [4.5, 4, 5.5, 8], "texture": "#1"},
 				"up": {"uv": [4.5, 4, 4, 3], "texture": "#1"},
 				"down": {"uv": [5, 3, 4.5, 4], "texture": "#1"}
 			}
@@ -53,12 +51,12 @@
 			"to": [8.775, 11.5, 11.275],
 			"rotation": {"angle": 0, "axis": "y", "origin": [7, 12.25, 10]},
 			"faces": {
-				"north": {"uv": [10, 7, 10.5, 8], "texture": "#1"},
-				"east": {"uv": [9, 7, 10, 8], "texture": "#1"},
-				"south": {"uv": [11.5, 7, 12, 8], "texture": "#1"},
-				"west": {"uv": [10.5, 7, 11.5, 8], "texture": "#1"},
-				"up": {"uv": [10.5, 7, 10, 6], "texture": "#1"},
-				"down": {"uv": [11, 6, 10.5, 7], "texture": "#1"}
+				"north": {"uv": [10, 8, 10.5, 9], "texture": "#1"},
+				"east": {"uv": [9, 8, 10, 9], "texture": "#1"},
+				"south": {"uv": [11.5, 8, 12, 9], "texture": "#1"},
+				"west": {"uv": [10.5, 8, 11.5, 9], "texture": "#1"},
+				"up": {"uv": [10.5, 8, 10, 7], "texture": "#1"},
+				"down": {"uv": [11, 7, 10.5, 8], "texture": "#1"}
 			}
 		},
 		{
@@ -90,6 +88,32 @@
 		{
 			"from": [7.4, 5.45, 8.9],
 			"to": [8.6, 6.15, 11.1],
+			"rotation": {"angle": 0, "axis": "y", "origin": [6.75, 6.6, 9.8]},
+			"faces": {
+				"north": {"uv": [7, 5.5, 7.5, 6], "texture": "#1"},
+				"east": {"uv": [6, 5.5, 7, 6], "texture": "#1"},
+				"south": {"uv": [8.5, 5.5, 9, 6], "texture": "#1"},
+				"west": {"uv": [7.5, 5.5, 8.5, 6], "texture": "#1"},
+				"up": {"uv": [7.5, 5.5, 7, 4.5], "texture": "#1"},
+				"down": {"uv": [8, 4.5, 7.5, 5.5], "texture": "#1"}
+			}
+		},
+		{
+			"from": [7.4, 4.45, 8.9],
+			"to": [8.6, 5.15, 11.1],
+			"rotation": {"angle": 0, "axis": "y", "origin": [6.75, 6.6, 9.8]},
+			"faces": {
+				"north": {"uv": [7, 5.5, 7.5, 6], "texture": "#1"},
+				"east": {"uv": [6, 5.5, 7, 6], "texture": "#1"},
+				"south": {"uv": [8.5, 5.5, 9, 6], "texture": "#1"},
+				"west": {"uv": [7.5, 5.5, 8.5, 6], "texture": "#1"},
+				"up": {"uv": [7.5, 5.5, 7, 4.5], "texture": "#1"},
+				"down": {"uv": [8, 4.5, 7.5, 5.5], "texture": "#1"}
+			}
+		},
+		{
+			"from": [7.4, 3.45, 8.9],
+			"to": [8.6, 4.15, 11.1],
 			"rotation": {"angle": 0, "axis": "y", "origin": [6.75, 6.6, 9.8]},
 			"faces": {
 				"north": {"uv": [7, 5.5, 7.5, 6], "texture": "#1"},
@@ -158,13 +182,15 @@
 			"translation": [0, -1.25, 0]
 		},
 		"thirdperson_lefthand": {
-			"translation": [0, -1.25, 0]
+			"rotation": [-180, -180, 0],
+			"translation": [-1, 2.75, -0.5]
 		},
 		"firstperson_righthand": {
 			"scale": [0.8, 0.8, 0.8]
 		},
 		"firstperson_lefthand": {
-			"scale": [0.8, 0.8, 0.8]
+			"rotation": [150, -180, 0],
+			"translation": [-1, 2.75, -0.5]
 		},
 		"ground": {
 			"rotation": [0, 0, 90],
@@ -203,14 +229,16 @@
 						4,
 						5,
 						6,
-						7
+						7,
+						8,
+						9
 					]
 				},
 				{
 					"name": "Blade",
 					"origin": [8, 0, 8],
 					"color": 0,
-					"children": [8, 9, 10]
+					"children": [10, 11, 12]
 				}
 			]
 		}
