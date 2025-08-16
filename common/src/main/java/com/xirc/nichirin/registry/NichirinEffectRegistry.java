@@ -18,6 +18,7 @@ public interface NichirinEffectRegistry {
     RegistrySupplier<MobEffect> STUNNED = EFFECT_REGISTRY.register("stunned", StunnedStatusEffect::new);
     RegistrySupplier<MobEffect> BURNING = EFFECT_REGISTRY.register("burning", BurningStatusEffect::new);
     RegistrySupplier<MobEffect> VENOM = EFFECT_REGISTRY.register("venom", VenomStatusEffect::new);
+    RegistrySupplier<MobEffect> DISORIENTED = EFFECT_REGISTRY.register("disoriented", DisorientedStatusEffect::new);
 
     static void init() {
         // Register the deferred register
