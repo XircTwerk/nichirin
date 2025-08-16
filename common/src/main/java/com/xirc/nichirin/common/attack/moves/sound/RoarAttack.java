@@ -105,6 +105,9 @@ public class RoarAttack extends SoundBreathingAttackBase {
         for (LivingEntity target : targets) {
             hitTarget(target);
 
+            applyDisorientedEffect(target);
+
+
             // Strong knockback away from slam point
             Vec3 knockbackDir = target.position().subtract(slamPoint).normalize();
             Vec3 strongKnockback = knockbackDir.scale(knockback * 1.5);

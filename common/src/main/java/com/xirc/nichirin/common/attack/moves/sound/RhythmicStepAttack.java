@@ -122,6 +122,9 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
             if (!hitEntities.contains(target)) {
                 // Light dash damage - respects immunity frames
                 hitTarget(target);
+
+                applyDisorientedEffect(target);
+
                 hitEntities.add(target);
 
                 // Light knockback during dash

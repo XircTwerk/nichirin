@@ -43,6 +43,7 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
     private final int DASH_SPACING = 14; // 14 ticks between dashes
     private int hitCounter = 0;
     private int lastDashTick = 0;
+    private boolean finaleExecuted = false;
 
     public StringPerformanceAttack() {
         // No configuration here - everything comes from moveset
@@ -57,6 +58,7 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
         dashSegment = 0;
         hitCounter = 0;
         lastDashTick = 0;
+        finaleExecuted = false;
 
         dashDirection = user.getLookAngle().normalize();
         startPosition = user.position();
@@ -99,8 +101,9 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
         }
 
         // Final explosion when all dashes are complete
-        if (dashSegment >= TOTAL_SEGMENTS && dashSegment <= TOTAL_SEGMENTS && tickCount >= lastDashTick + 10) {
+        if (dashSegment >= TOTAL_SEGMENTS && !finaleExecuted && tickCount >= lastDashTick + 10) {
             executeFinishingExplosion();
+            finaleExecuted = true;
         }
     }
 
@@ -159,7 +162,8 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
             float originalDamage = damage;
             damage = damage * 0.3f; // 30% damage per spin
 
-            hitTargetNoImmunity(target); // Multi-hit with no immunity
+            // Use direct damage application instead of hitTarget methods
+            applyDirectDamage(target);
 
             damage = originalDamage; // Restore
 
@@ -173,12 +177,32 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
                 float originalDamage = damage;
                 damage = damage * 0.3f;
 
-                hitTargetNoImmunity(draggedEnemy);
+                // Use direct damage application
+                applyDirectDamage(draggedEnemy);
 
                 damage = originalDamage;
                 createChainStrikeEffect(draggedEnemy.position());
             }
         }
+    }
+
+    // Add this helper method to apply damage without triggering attack stop conditions
+    private void applyDirectDamage(LivingEntity target) {
+        if (target == null || target == user || !target.isAlive()) {
+            return;
+        }
+
+        // Apply damage directly using DamageSource
+        target.hurt(world.damageSources().playerAttack(user), damage);
+
+        // Apply knockback manually
+        Vec3 knockbackDirection = target.position().subtract(user.position()).normalize();
+        Vec3 knockbackVelocity = knockbackDirection.scale(knockback * 0.3); // Reduced knockback for multi-hit
+        target.push(knockbackVelocity.x, knockbackVelocity.y * 0.5, knockbackVelocity.z);
+        target.hurtMarked = true;
+
+        // Add any status effects if configured
+        applyDisorientedEffect(target);
     }
 
     private void catchAndDragEnemies() {
@@ -225,8 +249,8 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
         List<LivingEntity> finaleTargets = getTargetsInCustomHitbox(userPos, range * 1.5f, 3.0, range * 1.5f);
 
         for (LivingEntity target : finaleTargets) {
-            // Full damage for finale
-            hitTarget(target);
+            // Full damage for finale - use direct damage to avoid stopping
+            applyFinaleDamage(target);
 
             // Massive knockback
             Vec3 explosiveKnockback = target.position().subtract(userPos).normalize().scale(knockback * 3.0);
@@ -259,9 +283,19 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
 
         world.playSound(null, userPos.x, userPos.y, userPos.z,
                 SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 2.0f, 0.8f);
+    }
 
-        // Mark finale as completed by setting dashSegment beyond max
-        dashSegment = TOTAL_SEGMENTS + 1;
+    // Separate method for finale damage to ensure it uses full damage
+    private void applyFinaleDamage(LivingEntity target) {
+        if (target == null || target == user || !target.isAlive()) {
+            return;
+        }
+
+        // Apply full damage for finale
+        target.hurt(world.damageSources().playerAttack(user), damage);
+
+        // Apply status effects if configured
+        applyDisorientedEffect(target);
     }
 
     private void createQuickDashEffect(Vec3 startPos, Vec3 endPos) {
@@ -438,6 +472,7 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
         dashSegment = 0;
         hitCounter = 0;
         lastDashTick = 0;
+        finaleExecuted = false;
 
         // Final chain settling sound
         if (world != null && user != null) {
