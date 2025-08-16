@@ -24,21 +24,21 @@
 				{
 					"name": "Lower parts",
 					"parent": "Cape",
-					"pivot": [0, 14.45, -2],
+					"pivot": [0, 14.45, 1.7],
 					"cubes": [
 						{"origin": [-4, 4.95, -2.8], "size": [8, 9, 5], "inflate": 0.65, "uv": [33, 31]}
 					]
 				},
 				{
 					"name": "CapeRight",
-					"pivot": [0, 22, 0],
+					"pivot": [-5, 22, 0],
 					"cubes": [
 						{"origin": [-7, 11.9, -2], "size": [3, 12, 4], "inflate": 0.55, "uv": [3, 14]}
 					]
 				},
 				{
 					"name": "CapeLeft",
-					"pivot": [0, 22, 0],
+					"pivot": [5, 22, 0],
 					"cubes": [
 						{"origin": [4, 11.9, -2], "size": [3, 12, 4], "inflate": 0.55, "uv": [3, 14], "mirror": true}
 					]

@@ -70,8 +70,8 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinItemRegistry.SHINOBU_BOOTS.get());
                         entries.accept(NichirinItemRegistry.ZENITSU_HEADPIECE.get());
                         entries.accept(NichirinItemRegistry.ZENITSU_CAPE.get());
-                        entries.accept(NichirinItemRegistry.ZENITSU_BOOTS.get());
                         entries.accept(NichirinItemRegistry.ZENITSU_LEGGINGS.get());
+                        entries.accept(NichirinItemRegistry.ZENITSU_BOOTS.get());
                         entries.accept(NichirinItemRegistry.RENGOKU_HEADPIECE.get());
                         entries.accept(NichirinItemRegistry.RENGOKU_CAPE.get());
                         entries.accept(NichirinItemRegistry.RENGOKU_BOOTS.get());
