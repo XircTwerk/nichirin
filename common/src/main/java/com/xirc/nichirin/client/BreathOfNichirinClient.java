@@ -71,6 +71,7 @@ public class BreathOfNichirinClient {
         BlockingInputHandler.register();
         PlayerStats.initialize();
         NichirinShaderRegistry.init();
+        ItemPropertiesHelper.registerBentoBoxProperty();
 
         // Register keybinds FIRST
         NichirinKeybindRegistry.register();
