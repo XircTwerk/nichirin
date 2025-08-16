@@ -80,7 +80,7 @@ public class TempoBreakerAttack extends SoundBreathingAttackBase {
 
             // Massive knockback (6 blocks) - this was missing proper implementation
             Vec3 knockbackDir = target.position().subtract(userPos).normalize();
-            Vec3 massiveKnockback = knockbackDir.scale(6.0f); // 6 block knockback
+            Vec3 massiveKnockback = knockbackDir.scale(2.5); // 6 block knockback
             target.setDeltaMovement(massiveKnockback.x, 0.4, massiveKnockback.z); // Set velocity directly
             target.hurtMarked = true;
             target.hasImpulse = true;

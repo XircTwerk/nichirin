@@ -70,7 +70,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("constant_resounding_slashes", "Constant Resounding Slashes")
                         .withAnimation("nichirin:constant_resounding_slashes", 12)
                         .withTiming(140, 10, 30) // 7 second cooldown, 1.5s duration
-                        .withDamage(10.0f) // Lower damage per hit but multi-hit
+                        .withDamage(20.0f) // Lower damage per hit but multi-hit
                         .withRange(8.25f) // Increased from 5.5f (1.5x = 8.25f)
                         .withKnockback(0.2f) // Light knockback to keep enemies close
                         .withBreathCost(30.0f)
