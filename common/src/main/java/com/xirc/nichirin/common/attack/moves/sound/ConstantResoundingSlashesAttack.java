@@ -61,8 +61,10 @@ public class ConstantResoundingSlashesAttack extends SoundBreathingAttackBase {
             ));
         }
 
-        // Create initial particle ring
-        createSoundParticles();
+        // Create initial particle ring - only show SOUND particles during move duration
+        if (tickCount < windup + duration) {
+            createSoundParticles();
+        }
     }
 
     @Override
@@ -80,8 +82,8 @@ public class ConstantResoundingSlashesAttack extends SoundBreathingAttackBase {
             performSpinningSlashes();
             deflectProjectiles();
 
-            // Reset hit tracking every few ticks for multi-hit
-            if (tickCount % 5 == 0) {
+            // Reset hit tracking every 2 ticks for more multi-hits
+            if (tickCount % 2 == 0) {
                 hitThisCycle.clear();
                 spinCycle++;
             }
@@ -108,12 +110,12 @@ public class ConstantResoundingSlashesAttack extends SoundBreathingAttackBase {
             if (!hitThisCycle.contains(target)) {
                 // Reduced damage per hit since it's multi-hit
                 float originalDamage = damage;
-                damage = damage * 0.4f; // 40% of full damage per hit for balance
+                damage = damage * 0.25f; // Reduced to 25% for more frequent hits
 
                 hitTargetNoImmunity(target); // Use no immunity for multi-hit
 
+                // Apply disoriented effect
                 applyDisorientedEffect(target);
-
 
                 damage = originalDamage; // Restore original damage
 
@@ -177,33 +179,33 @@ public class ConstantResoundingSlashesAttack extends SoundBreathingAttackBase {
         // Calculate spin angle based on tick count for smooth rotation
         double spinAngle = (tickCount * 0.5) % (2 * Math.PI);
 
-        // Create blade trails in a cross pattern - much fewer particles
+        // Create blade trails in a cross pattern - only show SOUND particles during move duration
         for (int blade = 0; blade < 4; blade++) { // 4 blades for twin swords
             double bladeAngle = spinAngle + (blade * Math.PI / 2);
 
-            // Each blade extends from center to range - fewer particles, larger spacing
-            for (double r = 2.0; r <= range; r += 1.5) { // Much larger spacing, start further out
+            // Each blade extends from center to range
+            for (double r = 2.0; r <= range; r += 1.5) {
                 double x = center.x + Math.cos(bladeAngle) * r;
                 double z = center.z + Math.sin(bladeAngle) * r;
                 double y = center.y + Math.sin(r * 2) * 0.3; // Slight wave motion
 
-                // Sound particles for blade trail - reduced
-                if (r % 3.0 < 1.5) { // Only every other particle
+                // Sound particles for blade trail - only during move duration
+                if (r % 3.0 < 1.5 && tickCount < windup + duration) {
                     serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
                             x, y, z, 1, 0.3, 0.3, 0.3, 0.05);
                 }
             }
         }
 
-        // Central spinning effect - reduced
+        // Central spinning effect
         serverLevel.sendParticles(NichirinParticleRegistry.FLASH1.get(),
-                center.x, center.y, center.z, 1, 0.4, 0.4, 0.4, 0.08); // Reduced from 2 particles
+                center.x, center.y, center.z, 1, 0.4, 0.4, 0.4, 0.08);
 
-        // Outer ring effect - much fewer particles, larger radius
-        int ringParticles = 6; // Reduced from 8
+        // Outer ring effect - only show SOUND particles during move duration
+        int ringParticles = 6;
         for (int i = 0; i < ringParticles; i++) {
             double angle = (i / (double)ringParticles) * 2 * Math.PI + spinAngle;
-            double x = center.x + Math.cos(angle) * range; // Use full range
+            double x = center.x + Math.cos(angle) * range;
             double z = center.z + Math.sin(angle) * range;
 
             serverLevel.sendParticles(NichirinParticleRegistry.FLASH2.get(),
@@ -247,17 +249,19 @@ public class ConstantResoundingSlashesAttack extends SoundBreathingAttackBase {
                     SoundEvents.ELYTRA_FLYING, SoundSource.PLAYERS, 0.8f, 0.5f);
         }
 
-        // Final particle burst - reduced even more
+        // Final particle burst - only show SOUND particles during move duration
         if (world instanceof ServerLevel serverLevel && user != null) {
             Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
-            // Final shockwave ring - fewer particles
-            createSoundShockwave(userPos, range * 1.2f, 8); // Reduced from 12
+            // Final shockwave ring
+            createSoundShockwave(userPos, range * 1.2f, 8);
 
-            // Upward particle burst - reduced
-            serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
-                    userPos.x, userPos.y, userPos.z,
-                    4, range * 0.4, 1.5, range * 0.4, 0.15); // Reduced from 8 particles
+            // Upward particle burst - only show SOUND particles if within duration
+            if (tickCount < windup + duration) {
+                serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
+                        userPos.x, userPos.y, userPos.z,
+                        4, range * 0.4, 1.5, range * 0.4, 0.15);
+            }
         }
     }
 }

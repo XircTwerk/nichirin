@@ -20,8 +20,8 @@ import java.util.Set;
  * continual slashes while still being in motion.
  *
  * Mechanics:
- * - Forward dash (16 blocks) in 4 separate 4-block dashes
- * - Each dash is spaced 14 ticks apart
+ * - Forward dash (18 blocks) in 6 separate 3-block dashes
+ * - Each dash is spaced 10 ticks apart
  * - Pulls enemies hit along with the user's movement
  * - Each spin hits multiple times (high DPS)
  * - User stays grounded throughout
@@ -38,9 +38,9 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
     private final Set<LivingEntity> caughtEnemies = new HashSet<>();
     private final List<LivingEntity> draggedEnemies = new ArrayList<>();
     private int dashSegment = 0;
-    private final int TOTAL_SEGMENTS = 4; // 4 segments of 4 blocks each
-    private final int SEGMENT_LENGTH = 4;
-    private final int DASH_SPACING = 14; // 14 ticks between dashes
+    private final int TOTAL_SEGMENTS = 6; // 6 segments of 3 blocks each = 18 blocks total
+    private final int SEGMENT_LENGTH = 3;
+    private final int DASH_SPACING = 10; // 10 ticks between dashes
     private int hitCounter = 0;
     private int lastDashTick = 0;
     private boolean finaleExecuted = false;
@@ -82,7 +82,7 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
             lastDashTick = tickCount;
         }
 
-        // Perform subsequent dashes every 14 ticks
+        // Perform subsequent dashes every 10 ticks
         if (dashStarted && tickCount > windup) {
             int ticksSinceLastDash = tickCount - lastDashTick;
 
@@ -97,7 +97,11 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
             keepUserGrounded();
             performSpinningSlashes();
             catchAndDragEnemies();
-            createStringTrailEffect();
+
+            // Only create trail effect if within move duration
+            if (tickCount < windup + duration) {
+                createStringTrailEffect();
+            }
         }
 
         // Final explosion when all dashes are complete
@@ -310,10 +314,12 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
         for (double d = 0; d <= distance; d += 0.5) {
             Vec3 trailPos = startPos.add(normalized.scale(d));
 
-            // Main dash trail
-            serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
-                    trailPos.x, trailPos.y + 0.5, trailPos.z,
-                    2, 0.3, 0.3, 0.3, 0.1);
+            // Main dash trail - only show SOUND particles during move duration
+            if (tickCount < windup + duration) {
+                serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
+                        trailPos.x, trailPos.y + 0.5, trailPos.z,
+                        2, 0.3, 0.3, 0.3, 0.1);
+            }
 
             serverLevel.sendParticles(NichirinParticleRegistry.FLASH2.get(),
                     trailPos.x, trailPos.y + 1, trailPos.z,
@@ -331,7 +337,7 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
-        // Chain formation particles
+        // Chain formation particles - only show SOUND particles during move duration
         for (int i = 0; i < 20; i++) {
             double angle = (i / 20.0) * 2 * Math.PI;
             double radius = 2.0;
@@ -341,9 +347,11 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
                     Math.sin(angle) * radius
             );
 
-            serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
-                    chainPos.x, chainPos.y, chainPos.z,
-                    1, 0.1, 0.1, 0.1, 0.02);
+            if (tickCount < windup + duration) {
+                serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
+                        chainPos.x, chainPos.y, chainPos.z,
+                        1, 0.1, 0.1, 0.1, 0.02);
+            }
         }
     }
 
@@ -353,11 +361,11 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         double spinAngle = (tickCount * 0.8) % (2 * Math.PI);
 
-        // Spinning chain trails - reduced particles
+        // Spinning chain trails - only show SOUND particles during move duration
         for (int chain = 0; chain < 2; chain++) { // Twin chains
             double chainAngle = spinAngle + (chain * Math.PI);
 
-            for (double r = 1.0; r <= 2.5; r += 0.6) { // Reduced range and increased spacing
+            for (double r = 1.0; r <= 2.5; r += 0.6) {
                 double x = userPos.x + Math.cos(chainAngle) * r;
                 double z = userPos.z + Math.sin(chainAngle) * r;
                 double y = userPos.y + Math.sin(r + tickCount * 0.2) * 0.3;
@@ -371,10 +379,12 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
     private void createChainStrikeEffect(Vec3 targetPos) {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
-        // Chain impact effect
-        serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
-                targetPos.x, targetPos.y + 0.5, targetPos.z,
-                3, 0.3, 0.3, 0.3, 0.1); // Reduced particles
+        // Chain impact effect - only show SOUND particles during move duration
+        if (tickCount < windup + duration) {
+            serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
+                    targetPos.x, targetPos.y + 0.5, targetPos.z,
+                    3, 0.3, 0.3, 0.3, 0.1);
+        }
 
         serverLevel.sendParticles(ParticleTypes.CRIT,
                 targetPos.x, targetPos.y + 0.5, targetPos.z,
@@ -389,7 +399,7 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
         // Segment burst effect
         serverLevel.sendParticles(NichirinParticleRegistry.FLASH2.get(),
                 userPos.x, userPos.y, userPos.z,
-                8, 1.0, 1.0, 1.0, 0.2); // Reduced particles
+                8, 1.0, 1.0, 1.0, 0.2);
 
         serverLevel.sendParticles(NichirinParticleRegistry.SHOCKWAVE.get(),
                 userPos.x, userPos.y, userPos.z,
@@ -399,10 +409,12 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
     private void createChainCatchEffect(Vec3 enemyPos) {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
-        // Chain wrapping effect
-        serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
-                enemyPos.x, enemyPos.y + 1, enemyPos.z,
-                5, 0.5, 0.5, 0.5, 0.2); // Reduced particles
+        // Chain wrapping effect - only show SOUND particles during move duration
+        if (tickCount < windup + duration) {
+            serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
+                    enemyPos.x, enemyPos.y + 1, enemyPos.z,
+                    5, 0.5, 0.5, 0.5, 0.2);
+        }
 
         serverLevel.sendParticles(ParticleTypes.CRIT,
                 enemyPos.x, enemyPos.y + 1, enemyPos.z,
@@ -412,12 +424,14 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
     private void createChainDragEffect(Vec3 enemyPos, Vec3 userPos) {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
-        // Chain connection line - much simpler
+        // Chain connection line - only show SOUND particles during move duration
         Vec3 midPoint = enemyPos.add(userPos).scale(0.5);
 
-        serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
-                midPoint.x, midPoint.y, midPoint.z,
-                1, 0.1, 0.1, 0.1, 0.02);
+        if (tickCount < windup + duration) {
+            serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
+                    midPoint.x, midPoint.y, midPoint.z,
+                    1, 0.1, 0.1, 0.1, 0.02);
+        }
     }
 
     private void createStringFinaleExplosion(Vec3 center) {
@@ -428,30 +442,32 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
                 center.x, center.y, center.z,
                 2, 1.0, 1.0, 1.0, 0);
 
-        // Huge shockwave - much more spread out
-        createSoundShockwave(center, range * 2.0f, 16); // Reduced from 48 particles
+        // Huge shockwave
+        createSoundShockwave(center, range * 2.0f, 16);
 
-        // Massive particle burst - much more spread out and fewer particles
-        serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
-                center.x, center.y, center.z,
-                20, range * 1.5, 5.0, range * 1.5, 0.4); // Much wider spread
+        // Massive particle burst - only show SOUND particles during move duration
+        if (tickCount < windup + duration) {
+            serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
+                    center.x, center.y, center.z,
+                    20, range * 1.5, 5.0, range * 1.5, 0.4);
+        }
 
         serverLevel.sendParticles(NichirinParticleRegistry.SHOCKWAVE.get(),
                 center.x, center.y, center.z,
-                15, range * 1.2, 4.0, range * 1.2, 0.3); // Much wider spread
+                15, range * 1.2, 4.0, range * 1.2, 0.3);
 
         serverLevel.sendParticles(NichirinParticleRegistry.FLASH1.get(),
                 center.x, center.y, center.z,
-                10, range * 0.8, 3.0, range * 0.8, 0.25); // Much wider spread
+                10, range * 0.8, 3.0, range * 0.8, 0.25);
 
         serverLevel.sendParticles(NichirinParticleRegistry.FLASH2.get(),
                 center.x, center.y, center.z,
-                10, range * 0.8, 3.0, range * 0.8, 0.25); // Much wider spread
+                10, range * 0.8, 3.0, range * 0.8, 0.25);
 
-        // Sonic boom finale - reduced
+        // Sonic boom finale
         serverLevel.sendParticles(ParticleTypes.SONIC_BOOM,
                 center.x, center.y, center.z,
-                3, 3.0, 3.0, 3.0, 0); // Wider spread
+                3, 3.0, 3.0, 3.0, 0);
     }
 
     @Override

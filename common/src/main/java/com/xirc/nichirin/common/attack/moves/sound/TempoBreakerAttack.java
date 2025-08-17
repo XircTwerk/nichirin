@@ -1,4 +1,6 @@
-package com.xirc.nichirin.common.attack.moves.sound;
+/**
+ * Create a TNT-like explosion at the target position
+ */package com.xirc.nichirin.common.attack.moves.sound;
 
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import net.minecraft.core.particles.ParticleTypes;
@@ -8,44 +10,28 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Tempo Breaker (Right Click Attack)
- * Basic slash, knocks enemies back far and deals good damage.
- * Particle explosion at the hit entity's position 2 seconds after the attack.
- *
- * Mechanics:
- * - 6 block knockback
- * - Large sweep
- * - Delayed explosion effect
- *
- * All configuration comes from the moveset builder.
- * This class handles only the behavior and visual/audio effects.
+ * Creates TNT-like explosions at hit entities 2 seconds after impact
  */
 public class TempoBreakerAttack extends SoundBreathingAttackBase {
 
     private boolean hasExecuted = false;
-    private final Map<LivingEntity, Long> delayedExplosions = new HashMap<>();
-    private static final int EXPLOSION_DELAY = 40; // 2 seconds (40 ticks)
 
     public TempoBreakerAttack() {
-        // No configuration here - everything comes from moveset
-        // All values will be set via configure() method
+        // Configuration comes from moveset
     }
 
     @Override
     protected void onStart() {
         hasExecuted = false;
-        delayedExplosions.clear();
 
         // Tempo buildup sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.WARDEN_SONIC_CHARGE, SoundSource.PLAYERS, 0.8f, 1.3f);
 
-        // Create initial particle buildup
         createSoundParticles();
     }
 
@@ -58,118 +44,137 @@ public class TempoBreakerAttack extends SoundBreathingAttackBase {
             executeTempoBreaker();
             hasExecuted = true;
         }
-
-        // ALWAYS check for delayed explosions every tick during the entire attack duration
-        if (tickCount > windup) {
-            checkDelayedExplosions();
-        }
     }
 
     private void executeTempoBreaker() {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDir = user.getLookAngle();
 
-        // Create wide sweep effect
         createTempoSweepEffect();
 
-        // Hit enemies in a wide arc in front of the user
-        List<LivingEntity> targets = getTargetsInCone(userPos, lookDir, range, 90); // 90-degree cone
+        // Hit enemies in a wide arc
+        List<LivingEntity> targets = getTargetsInCone(userPos, lookDir, range, 90);
 
         for (LivingEntity target : targets) {
             hitTarget(target);
-
             applyDisorientedEffect(target);
 
-
-            // Massive knockback (6 blocks) - this was missing proper implementation
+            // Massive knockback
             Vec3 knockbackDir = target.position().subtract(userPos).normalize();
-            Vec3 massiveKnockback = knockbackDir.scale(2.5); // 6 block knockback
-            target.setDeltaMovement(massiveKnockback.x, 0.4, massiveKnockback.z); // Set velocity directly
+            Vec3 massiveKnockback = knockbackDir.scale(2.5);
+            target.setDeltaMovement(massiveKnockback.x, 0.4, massiveKnockback.z);
             target.hurtMarked = true;
             target.hasImpulse = true;
 
-            // Schedule delayed explosion for this target ONLY
-            long explosionTime = world.getGameTime() + EXPLOSION_DELAY;
-            delayedExplosions.put(target, explosionTime);
+            // Schedule explosion using server scheduler with proper delay
+            world.getServer().execute(() -> {
+                // Schedule a task to run after 40 ticks
+                scheduleDelayedExplosion(target, 40);
+            });
 
             // Hit sound
             world.playSound(null, target.getX(), target.getY(), target.getZ(),
                     SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.PLAYERS, 1.0f, 1.2f);
         }
 
-        // Only play sweep sounds if we actually hit something
         if (!targets.isEmpty()) {
-            // Main slash sound
             world.playSound(null, user.getX(), user.getY(), user.getZ(),
                     SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.2f, 0.8f);
-
-            // Tempo break sound effect
             world.playSound(null, user.getX(), user.getY(), user.getZ(),
                     SoundEvents.WARDEN_ATTACK_IMPACT, SoundSource.PLAYERS, 1.0f, 1.5f);
         }
     }
 
-    private void checkDelayedExplosions() {
-        long currentTime = world.getGameTime();
-
-        // Check each scheduled explosion
-        delayedExplosions.entrySet().removeIf(entry -> {
-            LivingEntity target = entry.getKey();
-            long explosionTime = entry.getValue();
-
-            if (currentTime >= explosionTime) {
-                if (target.isAlive() && target.getTags().contains("tempo_breaker_marked")) {
-                    // Remove the tag
-                    target.removeTag("tempo_breaker_marked");
-
-                    // Use target's CURRENT position for explosion
-                    Vec3 explosionPos = target.position();
-                    executeDelayedExplosion(explosionPos);
-
-                    // Deal additional explosion damage
-                    target.hurt(world.damageSources().explosion(null, user), damage * 0.5f);
-                }
-                return true; // Remove this entry
+    /**
+     * Schedule a delayed explosion using a simple countdown
+     */
+    private void scheduleDelayedExplosion(LivingEntity target, int delay) {
+        if (delay <= 0) {
+            // Time to explode!
+            if (target.isAlive()) {
+                createTNTExplosion(target.position());
             }
-            return false; // Keep this entry
-        });
+        } else {
+            // Wait one more tick and schedule again with delay-1
+            world.getServer().execute(() -> {
+                try {
+                    Thread.sleep(50); // Wait 1 tick (50ms)
+                    scheduleDelayedExplosion(target, delay - 1);
+                } catch (InterruptedException e) {
+                    // If interrupted, just explode now
+                    if (target.isAlive()) {
+                        createTNTExplosion(target.position());
+                    }
+                }
+            });
+        }
     }
+    private void createTNTExplosion(Vec3 position) {
+        if (world.isClientSide) return;
 
-    private void executeDelayedExplosion(Vec3 position) {
-        if (!(world instanceof ServerLevel serverLevel)) return;
+        // Create actual explosion like TNT
+        world.explode(null, position.x, position.y, position.z, 3.0f, net.minecraft.world.level.Level.ExplosionInteraction.NONE);
 
-        // Delayed explosion effect - much fewer particles
-        serverLevel.sendParticles(ParticleTypes.EXPLOSION,
-                position.x, position.y + 1, position.z,
-                1, 0, 0, 0, 0);
+        // Additional visual effects with mod particles
+        if (world instanceof ServerLevel serverLevel) {
+            // Large explosion emitter
+            serverLevel.sendParticles(ParticleTypes.EXPLOSION_EMITTER,
+                    position.x, position.y + 0.5, position.z,
+                    1, 0.0, 0.0, 0.0, 0.0);
 
-        // Sound particle explosion - greatly reduced
-        serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
-                position.x, position.y + 1, position.z,
-                6, 2.0, 2.0, 2.0, 0.2);
+            // Shockwave particles in a ring
+            for (int i = 0; i < 16; i++) {
+                double angle = (i / 16.0) * 2 * Math.PI;
+                double radius = 3.0;
+                double x = position.x + Math.cos(angle) * radius;
+                double z = position.z + Math.sin(angle) * radius;
+                double y = position.y;
 
-        serverLevel.sendParticles(NichirinParticleRegistry.SHOCKWAVE.get(),
-                position.x, position.y + 0.5, position.z,
-                4, 1.5, 1.5, 1.5, 0.15);
+                serverLevel.sendParticles(NichirinParticleRegistry.SHOCKWAVE.get(),
+                        x, y, z, 3, 0.1, 0.1, 0.1, 0.1);
+            }
 
-        serverLevel.sendParticles(NichirinParticleRegistry.FLASH1.get(),
-                position.x, position.y + 1, position.z,
-                3, 1.0, 1.0, 1.0, 0.1);
+            // Flash particles for the explosion burst
+            serverLevel.sendParticles(NichirinParticleRegistry.FLASH1.get(),
+                    position.x, position.y + 1, position.z,
+                    8, 1.0, 1.0, 1.0, 0.2);
 
-        serverLevel.sendParticles(NichirinParticleRegistry.FLASH2.get(),
-                position.x, position.y + 1, position.z,
-                3, 1.0, 1.0, 1.0, 0.1);
+            serverLevel.sendParticles(NichirinParticleRegistry.FLASH2.get(),
+                    position.x, position.y + 1, position.z,
+                    8, 1.0, 1.0, 1.0, 0.2);
 
-        // Delayed explosion sound
+            // Sound particles radiating outward
+            for (int i = 0; i < 12; i++) {
+                double angle = (i / 12.0) * 2 * Math.PI;
+                double radius = 2.5;
+                double x = position.x + Math.cos(angle) * radius;
+                double z = position.z + Math.sin(angle) * radius;
+                double y = position.y + 0.5;
+
+                serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
+                        x, y, z, 2, 0.3, 0.3, 0.3, 0.1);
+            }
+
+            // Blue flash particles for extra impact
+            serverLevel.sendParticles(NichirinParticleRegistry.BLUE_FLASH1.get(),
+                    position.x, position.y + 1, position.z,
+                    6, 0.8, 0.8, 0.8, 0.15);
+
+            serverLevel.sendParticles(NichirinParticleRegistry.BLUE_FLASH2.get(),
+                    position.x, position.y + 1, position.z,
+                    6, 0.8, 0.8, 0.8, 0.15);
+        }
+
+        // Explosion sounds
         world.playSound(null, position.x, position.y, position.z,
-                SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 1.0f, 1.2f);
+                SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 1.5f, 1.0f);
 
         world.playSound(null, position.x, position.y, position.z,
-                SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 0.8f, 1.0f);
+                SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 1.0f, 0.8f);
     }
 
     /**
-     * Create the wide tempo-breaking sweep effect - slash pattern in front of player
+     * Create the wide tempo-breaking sweep effect
      */
     private void createTempoSweepEffect() {
         if (!(world instanceof ServerLevel serverLevel)) return;
@@ -177,49 +182,31 @@ public class TempoBreakerAttack extends SoundBreathingAttackBase {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDir = user.getLookAngle();
         Vec3 rightDir = lookDir.cross(new Vec3(0, 1, 0)).normalize();
+        Vec3 slashCenter = userPos.add(lookDir.scale(2.5));
 
-        // Create slash effect starting in front of the player
-        Vec3 slashCenter = userPos.add(lookDir.scale(2.5)); // Start 2.5 blocks in front of player
-
-        // Create wide sweep arc - particles form a slash pattern
-        for (int i = -45; i <= 45; i += 10) { // Every 10 degrees for good coverage
+        // Create sweep arc
+        for (int i = -45; i <= 45; i += 10) {
             double angle = Math.toRadians(i);
             Vec3 sweepDir = lookDir.scale(Math.cos(angle)).add(rightDir.scale(Math.sin(angle)));
 
-            // Create particles along the slash arc at varying distances
-            for (double r = 0.5; r <= range - 2.0; r += 0.8) { // Start from slash center, not player
+            for (double r = 0.5; r <= range - 2.0; r += 0.8) {
                 Vec3 sweepPos = slashCenter.add(sweepDir.scale(r));
 
-                serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
-                        sweepPos.x, sweepPos.y, sweepPos.z,
-                        1, 0.1, 0.1, 0.1, 0.03);
+                if (tickCount < windup + duration) {
+                    serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
+                            sweepPos.x, sweepPos.y, sweepPos.z,
+                            1, 0.1, 0.1, 0.1, 0.03);
+                }
             }
         }
 
-        // Create horizontal slash trail effect
-        for (double t = -2.0; t <= 2.0; t += 0.4) { // Horizontal slash line
+        // Slash trail
+        for (double t = -2.0; t <= 2.0; t += 0.4) {
             Vec3 slashPos = slashCenter.add(rightDir.scale(t));
-
             serverLevel.sendParticles(NichirinParticleRegistry.FLASH1.get(),
                     slashPos.x, slashPos.y, slashPos.z,
                     2, 0.2, 0.2, 0.2, 0.1);
         }
-
-        // Add some depth to the slash with a second layer
-        Vec3 slashCenter2 = userPos.add(lookDir.scale(3.5)); // Slightly further out
-        for (double t = -1.5; t <= 1.5; t += 0.5) {
-            Vec3 slashPos = slashCenter2.add(rightDir.scale(t));
-
-            serverLevel.sendParticles(NichirinParticleRegistry.SHOCKWAVE.get(),
-                    slashPos.x, slashPos.y, slashPos.z,
-                    1, 0.3, 0.3, 0.3, 0.05);
-        }
-
-        // Ground impact effect at the end of the slash
-        Vec3 groundImpact = slashCenter.add(lookDir.scale(1.5)).add(0, -1, 0);
-        serverLevel.sendParticles(ParticleTypes.POOF,
-                groundImpact.x, groundImpact.y, groundImpact.z,
-                3, 0.8, 0.1, 0.8, 0.15);
     }
 
     /**
@@ -243,13 +230,8 @@ public class TempoBreakerAttack extends SoundBreathingAttackBase {
 
     @Override
     protected void onStop() {
-        // Reset state
         hasExecuted = false;
 
-        // Note: We don't clear delayedExplosions here because they should continue
-        // to trigger even after the attack ends
-
-        // Final tempo echo
         if (world != null && user != null) {
             world.playSound(null, user.getX(), user.getY(), user.getZ(),
                     SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 0.6f, 0.8f);

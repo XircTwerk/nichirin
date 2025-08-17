@@ -131,7 +131,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
         MoveConfiguration tempConfig = new MoveBuilder("tempo_breaker", "Tempo Breaker")
                 .withAnimation("nichirin:tempo_breaker", 8)
                 .withTiming(0, 8, 60) // Extended duration to allow delayed explosions
-                .withDamage(10.0f) // Good damage
+                .withDamage(0f) //explosion is what deals the damage
                 .withRange(5.0f) // Wide sweep range
                 .withKnockback(0.8f) // Reduced from 1.2f - still too strong
                 .withBreathCost(20.0f) // Moderate cost
