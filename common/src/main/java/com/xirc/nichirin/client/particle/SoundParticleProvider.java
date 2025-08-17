@@ -29,7 +29,7 @@ public class SoundParticleProvider implements ParticleProvider<SimpleParticleTyp
             this.yd = ySpeed;
             this.zd = zSpeed;
 
-            this.lifetime = 40 + this.random.nextInt(20); // 2-3 seconds
+            this.lifetime = 10 + this.random.nextInt(5); // 2-3 seconds
             this.hasPhysics = false;
             this.friction = 0.98f;
             this.gravity = -0.03f;

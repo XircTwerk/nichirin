@@ -31,7 +31,7 @@ public class BlueFlash1ParticleProvider implements ParticleProvider<SimplePartic
             this.yd = ySpeed;
             this.zd = zSpeed;
 
-            this.lifetime = 5; //Lifespan in ticks
+            this.lifetime = 10; //Lifespan in ticks
             this.hasPhysics = false;
             this.friction = 1.0f;
             this.gravity = 0.0f;
