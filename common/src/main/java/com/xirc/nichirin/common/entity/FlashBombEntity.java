@@ -253,7 +253,7 @@ public class FlashBombEntity extends ThrowableItemProjectile {
                 entity.hurt(entity.damageSources().explosion(null, this.getOwner()), damage);
 
                 // Add knockback effect
-                double knockbackStrength = 1.5 * (1.0 - (distance / DAMAGE_RADIUS));
+                double knockbackStrength = 5;
                 double deltaX = entity.getX() - position.x;
                 double deltaY = entity.getY() - position.y;
                 double deltaZ = entity.getZ() - position.z;
@@ -267,7 +267,7 @@ public class FlashBombEntity extends ThrowableItemProjectile {
                     entity.setDeltaMovement(
                             entity.getDeltaMovement().add(
                                     deltaX * knockbackStrength,
-                                    Math.max(deltaY * knockbackStrength, 0.3), // Minimum upward knockback
+                                    Math.max(deltaY * knockbackStrength, 0.4), // Minimum upward knockback
                                     deltaZ * knockbackStrength
                             )
                     );
