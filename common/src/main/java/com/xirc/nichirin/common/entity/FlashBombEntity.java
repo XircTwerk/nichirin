@@ -244,9 +244,9 @@ public class FlashBombEntity extends ThrowableItemProjectile {
             );
             if (distance <= DAMAGE_RADIUS) {
                 // Calculate damage based on distance (closer = more damage)
-                float maxDamage = 24.0f; // 12 hearts max damage
+                float maxDamage = 6.0f;
                 float damage = (float) (maxDamage * (1.0 - (distance / DAMAGE_RADIUS)));
-                damage = Math.max(damage, 8.0f); // Minimum 4 hearts damage
+                damage = Math.max(damage, 2.0f);
 
                 // Apply explosion damage WITHOUT immunity frames
                 entity.invulnerableTime = 0; // Remove immunity frames
