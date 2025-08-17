@@ -34,6 +34,9 @@ public interface NichirinParticleRegistry {
     RegistrySupplier<BlueShockwaveParticleType> BLUE_SHOCKWAVE =
             PARTICLES.register("blue_shockwave", BlueShockwaveParticleType::new);
 
+    RegistrySupplier<ButterflyParticleType> BUTTERFLY =
+            PARTICLES.register("butterfly", ButterflyParticleType::new);
+
     static void init() {
         PARTICLES.register();
     }

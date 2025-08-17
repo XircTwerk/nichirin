@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.attack.moves.insect;
 
+import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -112,7 +113,7 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
         // Hit enemies along path
         hitEnemiesAlongPath();
 
-        // Zigzag effects
+        // Zigzag effects with butterfly particles
         createZigzagTrail(zigzagsExecuted);
 
         // Sounds
@@ -168,7 +169,7 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
                 draggedEnemy.hurtMarked = true;
                 draggedEnemy.hasImpulse = true;
 
-                // Drag trail effect
+                // Drag trail effect with butterfly particles
                 createDragTrailEffect(draggedEnemy.position());
             } else {
                 draggedEnemies.remove(draggedEnemy);
@@ -273,7 +274,9 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
             double z = userPos.z + Math.sin(angle) * radius;
             double y = userPos.y + height;
 
-            serverLevel.sendParticles(ParticleTypes.WITCH, x, y, z, 1, 0.05, 0.05, 0.05, 0.02);
+            // Use butterfly particles like Bee Sting
+            serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(),
+                    x, y, z, 1, 0.05, 0.05, 0.05, 0.02);
             if (i % 3 == 0) {
                 serverLevel.sendParticles(ParticleTypes.PORTAL, x, y, z, 1, 0.02, 0.02, 0.02, 0.01);
             }
@@ -288,7 +291,8 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
         for (int i = 1; i <= 6; i++) {
             Vec3 trailPos = userPos.subtract(baseDirection.scale(i * 0.13)); // 1/3 of 0.4
 
-            serverLevel.sendParticles(ParticleTypes.WITCH,
+            // Butterfly trail particles like Bee Sting
+            serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(),
                     trailPos.x, trailPos.y, trailPos.z, 3, 0.2, 0.2, 0.2, 0.1);
             serverLevel.sendParticles(ParticleTypes.PORTAL,
                     trailPos.x, trailPos.y, trailPos.z, 2, 0.15, 0.15, 0.15, 0.08);
@@ -302,7 +306,8 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
     private void createCatchEffect(Vec3 enemyPos) {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
-        serverLevel.sendParticles(ParticleTypes.WITCH,
+        // Butterfly catch effect
+        serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(),
                 enemyPos.x, enemyPos.y + 1, enemyPos.z, 10, 0.5, 0.5, 0.5, 0.2);
         serverLevel.sendParticles(ParticleTypes.PORTAL,
                 enemyPos.x, enemyPos.y + 1, enemyPos.z, 8, 0.4, 0.4, 0.4, 0.15);
@@ -311,7 +316,8 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
     private void createDragTrailEffect(Vec3 enemyPos) {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
-        serverLevel.sendParticles(ParticleTypes.WITCH,
+        // Butterfly drag trail
+        serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(),
                 enemyPos.x, enemyPos.y + 0.5, enemyPos.z, 2, 0.3, 0.3, 0.3, 0.1);
         if (tickCount % 3 == 0) {
             serverLevel.sendParticles(ParticleTypes.PORTAL,
@@ -325,7 +331,8 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
         Vec3 targetPos = impactPos.add(0, 1, 0);
         serverLevel.sendParticles(ParticleTypes.CRIT,
                 targetPos.x, targetPos.y, targetPos.z, 5, 0.2, 0.2, 0.2, 0.1);
-        serverLevel.sendParticles(ParticleTypes.WITCH,
+        // Butterfly impact particles
+        serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(),
                 targetPos.x, targetPos.y, targetPos.z, 8, 0.3, 0.3, 0.3, 0.12);
     }
 
@@ -336,7 +343,8 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
         serverLevel.sendParticles(ParticleTypes.CRIT,
                 targetPos.x, targetPos.y, targetPos.z, 20, 0.6, 0.6, 0.6, 0.3);
         createPoisonBurst(targetPos, 0.67f); // 1/3 of 2.0f
-        serverLevel.sendParticles(ParticleTypes.WITCH,
+        // Butterfly finisher particles
+        serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(),
                 targetPos.x, targetPos.y, targetPos.z, 25, 0.8, 0.8, 0.8, 0.4);
     }
 
@@ -344,12 +352,14 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
-        serverLevel.sendParticles(ParticleTypes.WITCH,
+
+        // Butterfly venom burst
+        serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(),
                 userPos.x, userPos.y, userPos.z, 60, 0.83, 0.83, 0.83, 0.17); // 1/3 of 2.5
         serverLevel.sendParticles(ParticleTypes.PORTAL,
                 userPos.x, userPos.y, userPos.z, 40, 0.67, 0.67, 0.67, 0.13); // 1/3 of 2.0
 
-        // Centipede dissipation effect
+        // Centipede dissipation effect with butterflies
         for (int i = 0; i < 30; i++) {
             double angle = (i / 30.0) * 2 * Math.PI;
             double radius = 1.67; // 1/3 of 5.0
@@ -357,7 +367,8 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
             double z = userPos.z + Math.sin(angle) * radius;
             double y = userPos.y;
 
-            serverLevel.sendParticles(ParticleTypes.WITCH, x, y, z, 8, 0.2, 0.4, 0.2, 0.1); // 1/3 of 0.6, 1.2, 0.6, 0.3
+            serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(),
+                    x, y, z, 8, 0.2, 0.4, 0.2, 0.1); // 1/3 of 0.6, 1.2, 0.6, 0.3
         }
     }
 

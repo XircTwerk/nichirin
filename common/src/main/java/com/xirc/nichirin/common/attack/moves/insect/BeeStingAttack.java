@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.attack.moves.insect;
 
+import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -193,23 +194,16 @@ public class BeeStingAttack extends InsectBreathingAttackBase {
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
-        // Dense bee trail behind user with varying intensity
-        for (int i = 1; i <= 8; i++) {
-            Vec3 trailPos = userPos.subtract(dashDirection.scale(i * 0.3));
+        for (int i = 1; i <= 6; i++) {
+            Vec3 trailPos = userPos.subtract(dashDirection.scale(i * 0.4));
 
-            // Intensity decreases with distance
-            int particleCount = Math.max(1, 4 - i / 2);
-
-            serverLevel.sendParticles(ParticleTypes.WITCH,
+            serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(),
                     trailPos.x, trailPos.y, trailPos.z,
-                    particleCount, 0.2, 0.2, 0.2, 0.08);
+                    2, 0.3, 0.3, 0.3, 0.1);
 
-            // Butterfly particles for flutter effect
-            if (i <= 4) {
-                serverLevel.sendParticles(ParticleTypes.PORTAL,
-                        trailPos.x, trailPos.y, trailPos.z,
-                        2, 0.3, 0.3, 0.3, 0.1);
-            }
+            serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(),
+                    trailPos.x, trailPos.y, trailPos.z,
+                    1, 0.2, 0.2, 0.2, 0.08);
         }
 
         // Side bee particles for width effect

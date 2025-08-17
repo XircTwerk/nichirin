@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.attack.moves.insect;
 
+import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -111,7 +112,8 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
             double z = userPos.z + Math.sin(angle) * radius;
             double y = userPos.y + Math.sin(angle * 2) * 0.5;
 
-            serverLevel.sendParticles(ParticleTypes.WITCH,
+            // Use butterfly particles like Bee Sting
+            serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(),
                     x, y, z, 1, 0.05, 0.05, 0.05, 0.02);
 
             if (i % 3 == 0) {
@@ -178,9 +180,9 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
             serverPlayer.connection.send(new net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket(user));
         }
 
-        // Dash effects
+        // Dash effects - using butterfly particles like Bee Sting
         createDashEffect();
-        createInsectTrail(startPosition, user.position());
+        createButterflyTrail(startPosition, user.position());
 
         // Additional dash sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
@@ -218,7 +220,7 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
         // Use ServerLevel's random instead of world.random to avoid threading issues
         net.minecraft.util.RandomSource random = serverLevel.getRandom();
 
-        // Butterfly burst at arrival
+        // Butterfly burst at arrival - using butterfly particles like Bee Sting
         for (int i = 0; i < 20; i++) {
             double angle = (i / 20.0) * 2 * Math.PI;
             double radius = 1.5;
@@ -228,7 +230,8 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
             double z = userPos.z + Math.sin(angle) * radius;
             double y = userPos.y + random.nextDouble() * 2;
 
-            serverLevel.sendParticles(ParticleTypes.WITCH,
+            // Primary butterfly particles
+            serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(),
                     x, y, z, 1, speed, speed, speed, 0.1);
 
             if (i % 4 == 0) {
@@ -241,6 +244,33 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
         serverLevel.sendParticles(ParticleTypes.ENCHANT,
                 userPos.x, userPos.y, userPos.z,
                 25, 1.0, 1.0, 1.0, 0.2);
+    }
+
+    /**
+     * Create butterfly trail between two points (like Bee Sting trail)
+     */
+    private void createButterflyTrail(Vec3 start, Vec3 end) {
+        if (!(world instanceof ServerLevel serverLevel)) return;
+
+        Vec3 direction = end.subtract(start);
+        double distance = direction.length();
+        Vec3 normalized = direction.normalize();
+
+        // Create butterfly particles along the trail (similar to Bee Sting)
+        for (double d = 0; d <= distance; d += 0.4) {
+            Vec3 particlePos = start.add(normalized.scale(d));
+
+            // Butterfly trail particles
+            serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(),
+                    particlePos.x, particlePos.y, particlePos.z,
+                    2, 0.3, 0.3, 0.3, 0.1);
+
+            if (d % 0.8 < 0.1) { // Every other particle position
+                serverLevel.sendParticles(ParticleTypes.PORTAL,
+                        particlePos.x, particlePos.y, particlePos.z,
+                        1, 0.05, 0.05, 0.05, 0.03);
+            }
+        }
     }
 
     private void createThrustImpactEffect(LivingEntity thrustTarget) {
@@ -256,8 +286,8 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
         // Poison burst
         createPoisonBurst(targetPos, 1.5f);
 
-        // Magical sparkles for venom
-        serverLevel.sendParticles(ParticleTypes.WITCH,
+        // Butterfly particles for venom effect
+        serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(),
                 targetPos.x, targetPos.y, targetPos.z,
                 20, 0.5, 0.5, 0.5, 0.25);
 
@@ -270,7 +300,7 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
             double z = targetPos.z + Math.sin(angle) * distance;
             double y = targetPos.y + 1;
 
-            serverLevel.sendParticles(ParticleTypes.PORTAL,
+            serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(),
                     x, y, z, 2, 0.2, 0.2, 0.2, 0.1);
         }
     }
