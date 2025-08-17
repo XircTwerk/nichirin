@@ -33,6 +33,7 @@ public interface NichirinCreativeTabRegistry {
 
                         //functional items
                         entries.accept(NichirinItemRegistry.SMOKE_BOMB.get());
+                        entries.accept(NichirinItemRegistry.FLASH_BOMB.get());
                         entries.accept(NichirinItemRegistry.BENTO_BOX.get());
 
                     })
