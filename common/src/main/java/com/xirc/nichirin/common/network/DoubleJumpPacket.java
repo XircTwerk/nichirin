@@ -1,7 +1,7 @@
 package com.xirc.nichirin.common.network;
 
 import com.xirc.nichirin.common.system.movement.MovementContext;
-import com.xirc.nichirin.common.system.slayerabilities.PlayerDoubleJump;
+import com.xirc.nichirin.common.system.abilities.PlayerDoubleJump;
 import com.xirc.nichirin.common.util.StaminaManager;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;

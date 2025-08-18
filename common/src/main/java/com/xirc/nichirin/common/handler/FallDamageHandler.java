@@ -1,6 +1,6 @@
 package com.xirc.nichirin.common.handler;
 
-import com.xirc.nichirin.common.system.slayerabilities.PlayerDoubleJump;
+import com.xirc.nichirin.common.system.abilities.PlayerDoubleJump;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.EntityEvent;
 import net.minecraft.world.damagesource.DamageSource;

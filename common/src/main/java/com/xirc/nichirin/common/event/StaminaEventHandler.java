@@ -3,10 +3,9 @@ package com.xirc.nichirin.common.event;
 import com.xirc.nichirin.common.system.StanceManager;
 import com.xirc.nichirin.common.system.blocking.KatanaBlock;
 import com.xirc.nichirin.common.util.StaminaManager;
-import com.xirc.nichirin.common.system.slayerabilities.PlayerDoubleJump;
+import com.xirc.nichirin.common.system.abilities.PlayerDoubleJump;
 import dev.architectury.event.events.common.TickEvent;
 import dev.architectury.event.events.common.PlayerEvent;
-import net.minecraft.world.entity.player.Player;
 
 /**
  * Stamina system integration with proper server-side handling

@@ -2,7 +2,7 @@ package com.xirc.nichirin.common.handler;
 
 import com.xirc.nichirin.common.system.movement.Dash;
 import com.xirc.nichirin.common.system.movement.Dodge;
-import com.xirc.nichirin.common.system.slayerabilities.PlayerDoubleJump;
+import com.xirc.nichirin.common.system.abilities.PlayerDoubleJump;
 import dev.architectury.event.events.common.TickEvent;
 import net.minecraft.world.entity.player.Player;
 

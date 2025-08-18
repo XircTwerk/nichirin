@@ -1,4 +1,4 @@
-package com.xirc.nichirin.common.system.slayerabilities;
+package com.xirc.nichirin.common.system.abilities;
 
 import com.xirc.nichirin.common.system.movement.MovementContext;
 import com.xirc.nichirin.common.util.StaminaManager;
