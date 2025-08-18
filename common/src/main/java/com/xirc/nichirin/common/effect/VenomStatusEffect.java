@@ -15,12 +15,14 @@ import java.util.UUID;
 /**
  * Venom Status Effect - Stackable poison that bypasses immunity
  * - Always 33% speed reduction regardless of stack level
- * - Damage scales with stacks: 1 + amplifier damage per tick
+ * - Damage scales with stacks: 1 base damage + 10% more per tier
  * - Purple butterfly aura that gets more intense with stacks
  */
 public class VenomStatusEffect extends MobEffect {
 
     private static final UUID MOVEMENT_MODIFIER_UUID = UUID.fromString("9107DE5E-9CE8-5030-941E-514C1F160892");
+    private static final float BASE_DAMAGE = 1.0f;
+    private static final float DAMAGE_MULTIPLIER_PER_TIER = 0.1f; // 10% more damage per tier
 
     public VenomStatusEffect() {
         super(MobEffectCategory.HARMFUL, 0x9932CC); // Purple color
@@ -41,8 +43,14 @@ public class VenomStatusEffect extends MobEffect {
             return;
         }
 
-        // Damage scales with stacks: 1 base + amplifier stacks
-        float damage = 1.0f + amplifier;
+        // Calculate damage: Base damage * (1 + 10% per tier)
+        // Tier 0 (amplifier 0): 1.0 * (1 + 0.0) = 1.0 damage
+        // Tier 1 (amplifier 1): 1.0 * (1 + 0.1) = 1.1 damage
+        // Tier 2 (amplifier 2): 1.0 * (1 + 0.2) = 1.2 damage
+        // Tier 3 (amplifier 3): 1.0 * (1 + 0.3) = 1.3 damage
+        // etc.
+        float damageMultiplier = 1.0f + (amplifier * DAMAGE_MULTIPLIER_PER_TIER);
+        float damage = BASE_DAMAGE * damageMultiplier;
 
         // Apply magic damage (bypasses armor like poison)
         entity.hurt(entity.damageSources().magic(), damage);
