@@ -2,6 +2,7 @@ package com.xirc.nichirin.common.system.abilities;
 
 import com.xirc.nichirin.common.system.movement.MovementContext;
 import com.xirc.nichirin.common.util.StaminaManager;
+import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerLevel;
@@ -96,6 +97,12 @@ public class PlayerDoubleJump {
             return false;
         }
 
+        // Check if player is stunned or disoriented - prevent double jump
+        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get()) ||
+                player.hasEffect(NichirinEffectRegistry.DISORIENTED.get())) {
+            return false;
+        }
+
         // Check stamina requirement
         if (!StaminaManager.hasStamina(player, STAMINA_COST)) {
             return false;
@@ -108,10 +115,10 @@ public class PlayerDoubleJump {
         // 2. Haven't used double jump yet (hasDoubleJumped = false)
         // 3. Player has been in air for at least 5 ticks (prevents immediate double jump)
         // 4. Has enough stamina (checked above)
+        // 5. Not stunned or disoriented (checked above)
         boolean canJump = state.hasLeftGround && !state.hasDoubleJumped && state.airTicks >= 5;
         return canJump;
     }
-
     /**
      * Perform the double jump WITHOUT consuming stamina (for server-side use after stamina is already consumed)
      */

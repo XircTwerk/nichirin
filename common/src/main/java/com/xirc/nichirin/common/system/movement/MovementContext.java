@@ -49,8 +49,22 @@ public class MovementContext {
             return; // Server-side only
         }
 
-        // Check if player is stunned
-        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+        // Check if player is stunned or disoriented
+        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get()) ||
+                player.hasEffect(NichirinEffectRegistry.DISORIENTED.get())) {
+
+            // Different messages for different effects
+            if (player.hasEffect(NichirinEffectRegistry.DISORIENTED.get())) {
+                player.displayClientMessage(
+                        Component.literal("You are too disoriented to use movement abilities!").withStyle(style -> style.withColor(0x9932CC)),
+                        true
+                );
+            } else {
+                player.displayClientMessage(
+                        Component.literal("You are stunned and cannot move!").withStyle(style -> style.withColor(0xFF0000)),
+                        true
+                );
+            }
             return;
         }
 
