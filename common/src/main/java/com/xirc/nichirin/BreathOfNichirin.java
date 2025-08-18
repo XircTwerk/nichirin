@@ -47,6 +47,8 @@ public final class BreathOfNichirin {
         FlameBreathingUnlockHandler.register();
         InsectBreathingUnlockHandler.register();
         ThunderBreathingUnlockHandler.register();
+        SoundBreathingUnlockHandler.register();
+
 
         // SERVER-SIDE handlers only
         KatanaInputHandler.register();

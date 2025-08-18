@@ -58,6 +58,11 @@ public class ProgressionHelper {
                         NichirinCriteriaTriggers.INSECT_BREATHING_TRIGGER.trigger(serverPlayer);
                     }
                 }
+                case "sound_breathing" -> {
+                    if (NichirinCriteriaTriggers.SOUND_BREATHING_TRIGGER != null) {
+                        NichirinCriteriaTriggers.SOUND_BREATHING_TRIGGER.trigger(serverPlayer);
+                    }
+                }
             }
 
             // Trigger First Breath advancement if this was their first breathing style

@@ -112,6 +112,20 @@ public class NichirinAdvancementProvider extends FabricAdvancementProvider {
                         com.xirc.nichirin.common.advancement.InsectBreathingTrigger.TriggerInstance.insectBreathingUnlock())
                 .build(BreathOfNichirin.id("insect_breathing"));
 
+        final Advancement soundBreathing = Advancement.Builder.advancement()
+                .parent(firstBreath)
+                .display(new ItemStack(Items.MUSIC_DISC_CAT), // Music disc icon
+                        Component.literal("Harmonic Resonance"),
+                        Component.literal("Play a music disc in a jukebox to obtain Sound Breathing"),
+                        null,
+                        FrameType.CHALLENGE,
+                        true,
+                        true,
+                        false) // Not hidden
+                .addCriterion("has_sound_breathing",
+                        com.xirc.nichirin.common.advancement.SoundBreathingTrigger.TriggerInstance.soundBreathingUnlock())
+                .build(BreathOfNichirin.id("sound_breathing"));
+
 
         consumer.accept(root);
         consumer.accept(obtainKatana);
@@ -121,5 +135,6 @@ public class NichirinAdvancementProvider extends FabricAdvancementProvider {
         consumer.accept(thunderBreathing);
         consumer.accept(flameBreathing);
         consumer.accept(insectBreathing);
+        consumer.accept(soundBreathing);
     }
 }
