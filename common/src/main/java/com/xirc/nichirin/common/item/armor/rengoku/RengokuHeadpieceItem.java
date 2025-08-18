@@ -5,6 +5,6 @@ import net.minecraft.world.item.ArmorMaterial;
 
 public class RengokuHeadpieceItem extends NichirinArmorItem {
     public RengokuHeadpieceItem(ArmorMaterial material, Properties properties) {
-        super(material, Type.LEGGINGS, properties);
+        super(material, Type.HELMET, properties);
     }
 }

@@ -5,6 +5,6 @@ import net.minecraft.world.item.ArmorMaterial;
 
 public class RengokuCapeItem extends NichirinArmorItem {
     public RengokuCapeItem(ArmorMaterial material, Properties properties) {
-        super(material, Type.LEGGINGS, properties);
+        super(material, Type.CHESTPLATE, properties);
     }
 }
