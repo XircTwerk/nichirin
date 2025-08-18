@@ -98,10 +98,28 @@ public class NichirinAdvancementProvider extends FabricAdvancementProvider {
                         com.xirc.nichirin.common.advancement.FlameBreathingTrigger.TriggerInstance.flameBreathingUnlock())
                 .build(BreathOfNichirin.id("flame_breathing"));
 
+        final Advancement insectBreathing = Advancement.Builder.advancement()
+                .parent(firstBreath)
+                .display(new ItemStack(Items.SPIDER_EYE), // Insect/poison related icon
+                        Component.literal("Toxic Elegance"),
+                        Component.literal("Throw a poison potion to obtain Insect Breathing"),
+                        null,
+                        FrameType.CHALLENGE,
+                        true,
+                        true,
+                        false) // Not hidden
+                .addCriterion("has_insect_breathing",
+                        com.xirc.nichirin.common.advancement.InsectBreathingTrigger.TriggerInstance.insectBreathingUnlock())
+                .build(BreathOfNichirin.id("insect_breathing"));
+
+
         consumer.accept(root);
         consumer.accept(obtainKatana);
+
+        //breathing triggers
         consumer.accept(firstBreath);
         consumer.accept(thunderBreathing);
         consumer.accept(flameBreathing);
+        consumer.accept(insectBreathing);
     }
 }

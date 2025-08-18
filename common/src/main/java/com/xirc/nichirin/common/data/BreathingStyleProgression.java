@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.data;
 
+import lombok.Getter;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
@@ -15,10 +16,15 @@ public class BreathingStyleProgression {
     // Set of unlocked breathing style IDs
     private final Set<String> unlockedStyles = new HashSet<>();
 
+    // Getters
     // Player stats
+    @Getter
     private int demonsSlain = 0;
+    @Getter
     private int totalDamageDealt = 0;
+    @Getter
     private int breathingExperience = 0;
+    @Getter
     private int slayerRank = 0;
 
     public BreathingStyleProgression() {
@@ -62,6 +68,7 @@ public class BreathingStyleProgression {
         return switch (styleId) {
             case "thunder_breathing" -> "Get struck by lightning while wearing no armor";
             case "flame_breathing" -> "Survive being on fire for 15 seconds";
+            case "insect_breathing" -> "Throw a poison potion";
             default -> "Unknown requirement";
         };
     }
@@ -71,11 +78,9 @@ public class BreathingStyleProgression {
      * Note: Thunder Breathing and Flame Breathing unlocks are handled by their respective handlers
      */
     public boolean meetsRequirements(String styleId) {
-        return switch (styleId) {
-            case "thunder_breathing" -> false; // Handled by lightning strike event
-            case "flame_breathing" -> false; // Handled by burning duration event
-            default -> false;
-        };
+        // Handled by lightning strike event
+        // Handled by burning duration event
+        return false;
     }
 
     /**
@@ -122,12 +127,6 @@ public class BreathingStyleProgression {
             slayerRank = Math.max(slayerRank, 1);
         }
     }
-
-    // Getters
-    public int getDemonsSlain() { return demonsSlain; }
-    public int getTotalDamageDealt() { return totalDamageDealt; }
-    public int getBreathingExperience() { return breathingExperience; }
-    public int getSlayerRank() { return slayerRank; }
 
     public String getSlayerRankName() {
         return switch (slayerRank) {
