@@ -1,0 +1,99 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "walk_start": {
+      "animation_length": 0.5,
+      "bones": {
+        "Lowerparts": {
+          "rotation": {
+            "0.0": {
+              "vector": [0, 0, 0],
+              "easing": "linear"
+            },
+            "0.1667": {
+              "vector": [15, 0, 0],
+              "easing": "easeInElastic",
+              "easingArgs": []
+            }
+          }
+        },
+        "Cape": {
+          "rotation": {
+            "0.0": {
+              "vector": [0, 0, 0],
+              "easing": "linear"
+            },
+            "0.25": {
+              "vector": [30, 0, 0],
+              "easing": "easeInElastic",
+              "easingArgs": []
+            }
+          }
+        }
+      }
+    },
+    "walk_stop": {
+      "animation_length": 0.5,
+      "bones": {
+        "Lowerparts": {
+          "rotation": {
+            "0.0": {
+              "vector": [15, 0, 0],
+              "easing": "easeInElastic",
+              "easingArgs": []
+            },
+            "0.1667": {
+              "vector": [0, 0, 0],
+              "easing": "easeInElastic",
+              "easingArgs": []
+            }
+          }
+        },
+        "Cape": {
+          "rotation": {
+            "0.0": {
+              "vector": [30, 0, 0],
+              "easing": "easeInElastic",
+              "easingArgs": []
+            },
+            "0.25": {
+              "vector": [0, 0, 0],
+              "easing": "easeInElastic",
+              "easingArgs": []
+            }
+          }
+        }
+      }
+    },
+    "walking": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "Cape": {
+          "rotation": {
+            "0.0": {
+              "vector": [30, 0, 0],
+              "easing": "easeInElastic",
+              "easingArgs": []
+            },
+            "0.5": {
+              "vector": [37.5, 0, 0],
+              "easing": "linear"
+            },
+            "1.0": {
+              "vector": [30, 0, 0],
+              "easing": "linear"
+            }
+          }
+        },
+        "Lowerparts": {
+          "rotation": {
+            "vector": [15, 0, 0],
+            "easing": "easeInQuad"
+          }
+        }
+      }
+    }
+  },
+  "azurelib_format_version": 2
+}

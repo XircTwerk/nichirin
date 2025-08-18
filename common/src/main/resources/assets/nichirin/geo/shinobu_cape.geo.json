@@ -35,7 +35,7 @@
 					]
 				},
 				{
-					"name": "Lower parts",
+					"name": "Lowerparts",
 					"parent": "Cape",
 					"pivot": [0, 14.45, 1.7],
 					"cubes": [

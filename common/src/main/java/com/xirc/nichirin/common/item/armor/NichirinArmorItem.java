@@ -37,23 +37,62 @@ public class NichirinArmorItem extends ArmorItem implements GeoItem {
     private final AnimatableInstanceCache cache = AzureLibUtil.createInstanceCache(this);
     private final Supplier<Object> renderProvider = GeoItem.makeRenderer(this);
 
+    // Animation constants
+    private static final RawAnimation WALK_START = RawAnimation.begin().thenPlay("walk_start").thenLoop("walking");
+    private static final RawAnimation WALK_STOP = RawAnimation.begin().thenPlay("walk_stop");
+    private static final RawAnimation WALKING_LOOP = RawAnimation.begin().thenLoop("walking");
+
+    // Fallback animation in case the main animations aren't found
+    private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("idle");
+
+    // Movement state tracking
+    private boolean wasMovingLastTick = false;
+
     public NichirinArmorItem(ArmorMaterial material, Type armorType, Properties properties) {
         super(material, armorType, properties);
     }
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>(this, "movement_controller", 10, this::handleMovementAnimation));
+        controllers.add(new AnimationController<>(this, "movement_controller", 5, this::handleMovementAnimation));
     }
 
     private PlayState handleMovementAnimation(AnimationState<NichirinArmorItem> animationState) {
         Entity wearer = animationState.getData(DataTickets.ENTITY);
+        if (wearer == null) {
+            return PlayState.CONTINUE;
+        }
+
         boolean isMoving = determineMovementState(wearer);
 
-        if (isMoving) {
-            animationState.getController().setAnimation(RawAnimation.begin().thenLoop("Walking"));
-        } else {
-            animationState.getController().stop();
+        try {
+            // Check for movement state changes
+            if (isMoving && !wasMovingLastTick) {
+                // Player just started moving - play walk_start then loop walking
+                animationState.getController().setAnimation(WALK_START);
+                wasMovingLastTick = true;
+            } else if (!isMoving && wasMovingLastTick) {
+                // Player just stopped moving - play walk_stop animation
+                animationState.getController().setAnimation(WALK_STOP);
+                wasMovingLastTick = false;
+            } else if (isMoving && wasMovingLastTick) {
+                // Player is continuing to move - ensure we're in walking loop
+                // Only set if not already playing the correct animation to avoid interrupting walk_start
+                mod.azure.azurelib.core.animation.AnimationProcessor.QueuedAnimation currentAnim = animationState.getController().getCurrentAnimation();
+                if (currentAnim != null && currentAnim.animation() != null) {
+                    String currentAnimName = currentAnim.animation().name();
+                    if (!currentAnimName.equals("walk_start") && !currentAnimName.equals("walking")) {
+                        animationState.getController().setAnimation(WALKING_LOOP);
+                    }
+                } else {
+                    // If no animation is playing, start the walking loop
+                    animationState.getController().setAnimation(WALKING_LOOP);
+                }
+            }
+            // If not moving and wasn't moving last tick, do nothing (stay in idle/stopped state)
+        } catch (Exception e) {
+            // Fallback to prevent crashes - just continue without setting animations
+            System.out.println("Animation error in NichirinArmorItem: " + e.getMessage());
         }
 
         return PlayState.CONTINUE;
@@ -61,10 +100,13 @@ public class NichirinArmorItem extends ArmorItem implements GeoItem {
 
     private boolean determineMovementState(Entity entity) {
         if (entity instanceof Player player) {
-            return player.walkDist != player.walkDistO;
-        } else {
-            return entity.getDeltaMovement().horizontalDistanceSqr() > 0.01;
+            // More sensitive movement detection
+            return Math.abs(player.walkDist - player.walkDistO) > 0.001f;
+        } else if (entity instanceof LivingEntity livingEntity) {
+            // For other living entities, check velocity
+            return livingEntity.getDeltaMovement().horizontalDistanceSqr() > 0.001;
         }
+        return false;
     }
 
     @Override
