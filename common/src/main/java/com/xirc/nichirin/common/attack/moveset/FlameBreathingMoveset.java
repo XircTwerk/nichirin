@@ -57,7 +57,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withKnockback(0.8f) // Strong upward knockback
                         .withBreathCost(20.0f)
                         .withHitStun(20)
-                        .withHitboxSize(2.5f) // Larger for arc
+                        .withHitboxSize(5f) // Larger for arc
                         .withAction(player -> {
                             RisingScorchingSunAttack attack = new RisingScorchingSunAttack();
                             FlameBreathingMoveset moveset = getCurrentMoveset();
@@ -77,7 +77,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withKnockback(0.6f)
                         .withBreathCost(30.0f) // Expensive for heavy attack
                         .withHitStun(35)
-                        .withHitboxSize(4.0f) // Large explosion hitbox
+                        .withHitboxSize(6.0f) // Large explosion hitbox
                         .withAction(player -> {
                             BlazingUniverseAttack attack = new BlazingUniverseAttack();
                             FlameBreathingMoveset moveset = getCurrentMoveset();
