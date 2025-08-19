@@ -55,30 +55,41 @@ public class RengokuCapeRenderer extends NichirinArmorRenderer<NichirinArmorItem
                 PlayerModel<AbstractClientPlayer> playerModel = playerRenderer.getModel();
                 boolean isSlim = ((PlayerModelAccessor) playerModel).isSlim();
 
+                GeoBone cape = this.model.getBone("Cape").orElse(null);
                 GeoBone capeLeft = this.model.getBone("capeLeft").orElse(null);
                 GeoBone capeRight = this.model.getBone("capeRight").orElse(null);
 
                 if (isSlim) {
+                    if (cape != null) {
+                        cape.setScaleX(1.15f);
+                        cape.setScaleY(1.1f);
+                        cape.setScaleZ(1.2f);
+                    }
                     if (capeLeft != null) {
-                        capeLeft.setScaleX(1.35f);
-                        capeLeft.setScaleY(1.15f);
+                        capeLeft.setScaleX(1.175f);
+                        capeLeft.setScaleY(1.075f);
+                        capeLeft.setScaleZ(1.075f);
+                    }
+                    if (capeRight != null) {
+                        capeRight.setScaleX(1.175f);
+                        capeRight.setScaleY(1.075f);
+                        capeRight.setScaleZ(1.075f);
+                    }
+                } else {
+                    if (cape != null) {
+                        cape.setScaleX(1.3f);
+                        cape.setScaleY(1.1f);
+                        cape.setScaleZ(1.2f);
+                    }
+                    if (capeLeft != null) {
+                        capeLeft.setScaleX(1.25f);
+                        capeLeft.setScaleY(1.075f);
                         capeLeft.setScaleZ(1.15f);
                     }
                     if (capeRight != null) {
-                        capeRight.setScaleX(1.35f);
-                        capeRight.setScaleY(1.15f);
+                        capeRight.setScaleX(1.25f);
+                        capeRight.setScaleY(1.075f);
                         capeRight.setScaleZ(1.15f);
-                    }
-                } else {
-                    if (capeLeft != null) {
-                        capeLeft.setScaleX(1.5f);
-                        capeLeft.setScaleY(1.15f);
-                        capeLeft.setScaleZ(1.3f);
-                    }
-                    if (capeRight != null) {
-                        capeRight.setScaleX(1.5f);
-                        capeRight.setScaleY(1.15f);
-                        capeRight.setScaleZ(1.3f);
                     }
                 }
             }
@@ -96,19 +107,19 @@ public class RengokuCapeRenderer extends NichirinArmorRenderer<NichirinArmorItem
         if (cape != null) {
             ModelPart bodyPart = baseModel.body;
             RenderUtils.matchModelPartRot(bodyPart, cape);
-            cape.updatePosition(bodyPart.x, -bodyPart.y + 0.1875f, bodyPart.z);
+            cape.updatePosition(bodyPart.x, -bodyPart.y + 0.5f, bodyPart.z -1);
         }
 
         if (capeLeft != null) {
             ModelPart leftArmPart = baseModel.leftArm;
             RenderUtils.matchModelPartRot(leftArmPart, capeLeft);
-            capeLeft.updatePosition(leftArmPart.x - 5f, 2f - leftArmPart.y + 0.1875f, leftArmPart.z);
+            capeLeft.updatePosition(leftArmPart.x - 5f, 1.5f - leftArmPart.y, leftArmPart.z);
         }
 
         if (capeRight != null) {
             ModelPart rightArmPart = baseModel.rightArm;
             RenderUtils.matchModelPartRot(rightArmPart, capeRight);
-            capeRight.updatePosition(rightArmPart.x + 5f, 2f - rightArmPart.y + 0.1875f, rightArmPart.z);
+            capeRight.updatePosition(rightArmPart.x + 5f, 1.5f - rightArmPart.y, rightArmPart.z);
         }
     }
 

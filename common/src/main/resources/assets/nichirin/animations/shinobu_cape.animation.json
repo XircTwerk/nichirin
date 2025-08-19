@@ -10,10 +10,20 @@
 							"vector": [0, 0, 0],
 							"easing": "linear"
 						},
-						"0.1667": {
+						"0.0833": {
 							"vector": [15, 0, 0],
 							"easing": "easeInElastic",
 							"easingArgs": []
+						}
+					},
+					"position": {
+						"0.0": {
+							"vector": [0, 0, 0],
+							"easing": "linear"
+						},
+						"0.0833": {
+							"vector": [0, 0, -0.35],
+							"easing": "linear"
 						}
 					}
 				},
@@ -23,10 +33,20 @@
 							"vector": [0, 0, 0],
 							"easing": "linear"
 						},
-						"0.25": {
+						"0.0833": {
 							"vector": [30, 0, 0],
 							"easing": "easeInElastic",
 							"easingArgs": []
+						}
+					},
+					"position": {
+						"0.0": {
+							"vector": [0, 0, 0],
+							"easing": "linear"
+						},
+						"0.0833": {
+							"vector": [0, -1, 0],
+							"easing": "linear"
 						}
 					}
 				}
@@ -38,14 +58,24 @@
 				"Lowerparts": {
 					"rotation": {
 						"0.0": {
-							"vector": [15, 0, 0],
+							"vector": [15, 0, -0.35],
 							"easing": "easeInElastic",
 							"easingArgs": []
 						},
-						"0.1667": {
+						"0.0833": {
 							"vector": [0, 0, 0],
 							"easing": "easeInElastic",
 							"easingArgs": []
+						}
+					},
+					"position": {
+						"0.0": {
+							"vector": [0, 0, -0.5],
+							"easing": "linear"
+						},
+						"0.1667": {
+							"vector": [0, 0, 0],
+							"easing": "linear"
 						}
 					}
 				},
@@ -56,10 +86,20 @@
 							"easing": "easeInElastic",
 							"easingArgs": []
 						},
-						"0.25": {
+						"0.0833": {
 							"vector": [0, 0, 0],
 							"easing": "easeInElastic",
 							"easingArgs": []
+						}
+					},
+					"position": {
+						"0.0": {
+							"vector": [0, 0, 0],
+							"easing": "linear"
+						},
+						"0.0833": {
+							"vector": [0, 1, 0],
+							"easing": "linear"
 						}
 					}
 				}
@@ -77,19 +117,27 @@
 							"easingArgs": []
 						},
 						"0.5": {
-							"vector": [37.5, 0, 0],
-							"easing": "linear"
+							"vector": [47.5, 0, 0],
+							"easing": "easeInSine"
 						},
 						"1.0": {
 							"vector": [30, 0, 0],
-							"easing": "linear"
+							"easing": "easeOutSine"
 						}
+					},
+					"position": {
+						"vector": [0, -1, 0],
+						"easing": "linear"
 					}
 				},
 				"Lowerparts": {
 					"rotation": {
-						"vector": [15, 0, 0],
-						"easing": "easeInQuad"
+						"vector": ["easeInQuad", "easeInQuad", "easeInQuad"],
+						"easing": "linear"
+					},
+					"position": {
+						"vector": [0, 0, -0.5],
+						"easing": "linear"
 					}
 				}
 			}
