@@ -16,9 +16,10 @@ import java.util.List;
  * with a venom-laced blade in one fluid motion.
  *
  * Mechanics:
- * - Instant dash (8-10 blocks)
+ * - Initial leap (8 blocks up) then forward dash (8-10 blocks) - NOW AIMABLE
  * - Single-target high-damage thrust
- * - No AoE — locks onto the enemy and teleports to them
+ * - No AoE — precision attack with leap-dash timing
+ * - Total duration: windup + 35 ticks
  *
  * All configuration comes from the moveset builder.
  * This class handles only the behavior and visual/audio effects.
@@ -27,7 +28,7 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
 
     private boolean dashStarted = false;
     private boolean secondDashExecuted = false;
-    private Vec3 dashDirection;
+    private Vec3 dashDirection; // NOW CAPTURED AT START LIKE BEE STING
     private Vec3 startPosition;
 
     // Invulnerability during dash
@@ -44,9 +45,9 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
         secondDashExecuted = false;
         startPosition = user.position();
 
-        // DON'T set dash direction here - we'll capture it when the dash actually executes
-        // This allows player to adjust aim during the leap phase
-        System.out.println("DEBUG: Attack started, dash direction will be captured later");
+        // FIXED: Capture dash direction immediately like BeeStingAttack
+        // This makes it aimable while keeping the leap-dash timing
+        dashDirection = user.getLookAngle().normalize();
 
         // Make user invulnerable during attack
         wasInvulnerable = user.isInvulnerable();
@@ -62,7 +63,7 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.ENCHANTMENT_TABLE_USE, SoundSource.PLAYERS, 0.8f, 1.5f);
 
-        // Create charging effect
+        // Create charging effect with direction preview
         createDashChargeEffect();
     }
 
@@ -70,19 +71,19 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
     protected void perform() {
         if (world.isClientSide) return; // Only run on server
 
-        // Execute initial leap after windup
+        // Execute initial leap after windup (tick windup + 1)
         if (!dashStarted && tickCount == windup + 1) {
             executeInitialLeap();
             dashStarted = true;
         }
 
-        // Execute forward dash 1 second (20 ticks) after the leap
+        // Execute forward dash 1 second (20 ticks) after the leap (tick windup + 21)
         if (dashStarted && !secondDashExecuted && tickCount == windup + 21) {
             executeForwardDash();
             secondDashExecuted = true;
         }
 
-        // Hit enemies during the dash phase (after forward dash)
+        // Hit enemies during the dash phase (windup + 21 to windup + 35 = 14 ticks)
         if (secondDashExecuted && tickCount > windup + 21 && tickCount <= windup + 35) {
             List<LivingEntity> dashTargets = getTargetsInCustomHitbox(
                     user.position().add(0, user.getBbHeight() / 2, 0),
@@ -122,25 +123,26 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
             }
         }
 
-        // FIXED: Remove direction indicator from charging since direction isn't set yet
-        // Player can aim during the leap phase
+        // ADDED: Direction indicator showing where the dash will go (like BeeStingAttack)
+        for (int i = 1; i <= 6; i++) {
+            Vec3 dirPos = userPos.add(dashDirection.scale(i * 0.5));
+            serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(),
+                    dirPos.x, dirPos.y, dirPos.z,
+                    2, 0.1, 0.1, 0.1, 0.05);
+        }
     }
 
     private void executeInitialLeap() {
-        System.out.println("DEBUG: executeInitialLeap() called");
 
-        // For the leap, just go straight up with minimal forward movement
-        // Don't commit to a direction yet - player can still aim during leap
+        // For the leap, go straight up with minimal forward movement in the aimed direction
         double upwardVelocity = 0.8; // Perfect height as tested
         double initialForwardVelocity = 0.1; // Very minimal forward momentum during leap
 
-        // Use current look direction for minimal forward movement during leap
-        Vec3 currentLookDirection = user.getLookAngle();
-        Vec3 horizontalDirection = new Vec3(currentLookDirection.x, 0, currentLookDirection.z).normalize();
+        // Use the pre-captured dash direction for consistent aiming
+        Vec3 horizontalDirection = new Vec3(dashDirection.x, 0, dashDirection.z).normalize();
 
         Vec3 forwardComponent = horizontalDirection.scale(initialForwardVelocity);
         user.setDeltaMovement(forwardComponent.x, upwardVelocity, forwardComponent.z);
-        System.out.println("DEBUG: Leap velocity set: " + user.getDeltaMovement());
 
         // Mark for client sync
         user.hurtMarked = true;
@@ -156,24 +158,15 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
     }
 
     private void executeForwardDash() {
-        System.out.println("DEBUG: executeForwardDash() called");
-
-        // CAPTURE DASH DIRECTION NOW - when the dash actually executes
-        // This allows player to aim during the leap phase
-        Vec3 currentLookDirection = user.getLookAngle();
-        dashDirection = new Vec3(currentLookDirection.x, 0, currentLookDirection.z).normalize();
-        System.out.println("DEBUG: Dash direction captured at dash time: " + dashDirection);
 
         // Use teleportDistance as dash speed (like the builder config shows)
         float actualDashSpeed = (dashSpeed != null) ? dashSpeed : 3.0f;
-        System.out.println("DEBUG: dashSpeed = " + dashSpeed + ", using actualDashSpeed = " + actualDashSpeed);
 
         Vec3 dashVelocity = dashDirection.scale(actualDashSpeed);
         user.setDeltaMovement(dashVelocity);
         user.hurtMarked = true;
         user.hasImpulse = true;
 
-        System.out.println("DEBUG: Dash velocity set: " + user.getDeltaMovement());
 
         // Sync to client
         if (user instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
