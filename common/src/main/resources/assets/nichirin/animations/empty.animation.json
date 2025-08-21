@@ -1,5 +1,18 @@
 {
   "format_version": "1.8.0",
-  "animations": {},
+  "animations": {
+    "idle": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+      }
+    },
+    "walking": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+      }
+    }
+  },
   "azurelib_format_version": 2
 }

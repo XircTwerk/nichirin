@@ -30,13 +30,20 @@
 					"pivot": [0, 24, -2],
 					"cubes": [
 						{"origin": [-2, 23.25, -2], "size": [4, 2, 4], "inflate": 0.1, "uv": [66, 94]},
-						{"origin": [-4, 13.95, -2.8], "size": [8, 10, 5], "inflate": 0.55, "uv": [65, 104]},
-						{"origin": [-3.89, 13.94, -1.91], "size": [7.75, 10, 4], "inflate": 0.55, "uv": [98, 82]}
+						{"origin": [-3.89, 20.94, -1.91], "size": [7.75, 3, 4], "inflate": 0.55, "uv": [98, 82]}
 					]
 				},
 				{
-					"name": "Lowerparts",
+					"name": "CapeMiddle",
 					"parent": "Cape",
+					"pivot": [0, 19.945, 3],
+					"cubes": [
+						{"origin": [-4, 13.95, -1.8], "size": [8, 6, 4], "inflate": 0.55, "uv": [66, 105]}
+					]
+				},
+				{
+					"name": "Capelower",
+					"parent": "CapeMiddle",
 					"pivot": [0, 14.45, 1.7],
 					"cubes": [
 						{"origin": [-4, 4.95, -1.8], "size": [8, 9, 4], "inflate": 0.65, "uv": [98, 96]},
