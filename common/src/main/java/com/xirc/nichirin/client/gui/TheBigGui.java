@@ -11,6 +11,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,14 +51,23 @@ public class TheBigGui extends Screen {
     private final BreathingStylesSection breathingStylesSection = new BreathingStylesSection();
     private final SkillsSection skillsSection = new SkillsSection();
     private final BestiarySection bestiarySection = new BestiarySection();
-    private final PerksSection perksSection = new PerksSection();
     private final QuestsSection questsSection = new QuestsSection();
     private final ReputationSection reputationSection = new ReputationSection();
     private final MovesetSection movesetSection = new MovesetSection();
     private final ConfigSection configSection = new ConfigSection();
 
+    /**
+     * -- GETTER --
+     *  Get scaled width for use by sections
+     */
     // Scaled dimensions
+    @Getter
     private int scaledWidth;
+    /**
+     * -- GETTER --
+     *  Get scaled height for use by sections
+     */
+    @Getter
     private int scaledHeight;
 
     public TheBigGui(Player player) {
@@ -146,6 +156,7 @@ public class TheBigGui extends Screen {
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         // Get the current GUI scale factor
+        assert minecraft != null;
         double currentScale = minecraft.getWindow().getGuiScale();
         double scaleRatio = FIXED_GUI_SCALE / currentScale;
 
@@ -178,7 +189,6 @@ public class TheBigGui extends Screen {
             case BREATHING_STYLES -> breathingStylesSection.render(graphics, player, contentWidth, contentHeight, this.font, adjustedMouseX, adjustedMouseY);
             case SKILLS -> skillsSection.render(graphics, player, this.font);
             case BESTIARY -> bestiarySection.render(graphics, player, this.font);
-            case PERKS -> perksSection.render(graphics, player, this.font);
             case QUESTS -> questsSection.render(graphics, player, this.font);
             case REPUTATION -> reputationSection.render(graphics, player, this.font);
             case MOVESET -> movesetSection.render(graphics, player, this.font);
@@ -231,6 +241,7 @@ public class TheBigGui extends Screen {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         // Adjust mouse coordinates for our fixed scaling
+        assert minecraft != null;
         double currentScale = minecraft.getWindow().getGuiScale();
         double scaleRatio = FIXED_GUI_SCALE / currentScale;
 
@@ -246,7 +257,6 @@ public class TheBigGui extends Screen {
             case HOME -> homeSection.handleClick(adjustedMouseX, adjustedMouseY, player);
             case SKILLS -> skillsSection.handleClick(adjustedMouseX, adjustedMouseY, player);
             case BESTIARY -> bestiarySection.handleClick(adjustedMouseX, adjustedMouseY, player);
-            case PERKS -> perksSection.handleClick(adjustedMouseX, adjustedMouseY, player);
             case QUESTS -> questsSection.handleClick(adjustedMouseX, adjustedMouseY, player);
             case REPUTATION -> reputationSection.handleClick(adjustedMouseX, adjustedMouseY, player);
             case MOVESET -> movesetSection.handleClick(adjustedMouseX, adjustedMouseY, player);
@@ -260,23 +270,6 @@ public class TheBigGui extends Screen {
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
-    /**
-     * Get scaled width for use by sections
-     */
-    public int getScaledWidth() {
-        return scaledWidth;
-    }
-
-    /**
-     * Get scaled height for use by sections
-     */
-    public int getScaledHeight() {
-        return scaledHeight;
-    }
-
-    /**
-     * Custom button for sections with fixed scaling support
-     */
     @Getter
     private static class SectionButton extends Button {
         private final GuiSection section;
@@ -287,7 +280,7 @@ public class TheBigGui extends Screen {
         }
 
         @Override
-        public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        public void renderWidget(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
             // Custom rendering to match vanilla style
             if (!this.active) {
                 // Highlight active section
@@ -335,7 +328,6 @@ public class TheBigGui extends Screen {
         BREATHING_STYLES("gui.nichirin.section.breathing_styles"),
         SKILLS("gui.nichirin.section.skills"),
         BESTIARY("gui.nichirin.section.bestiary"),
-        PERKS("gui.nichirin.section.perks"),
         QUESTS("gui.nichirin.section.quests"),
         REPUTATION("gui.nichirin.section.reputation"),
         MOVESET("gui.nichirin.section.moveset"),
