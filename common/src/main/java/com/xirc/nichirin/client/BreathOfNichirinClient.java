@@ -24,6 +24,7 @@ import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import com.xirc.nichirin.registry.NichirinShaderRegistry;
 import dev.architectury.event.events.client.ClientTickEvent;
 import dev.architectury.registry.client.particle.ParticleProviderRegistry;
+import dev.architectury.utils.Env;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;

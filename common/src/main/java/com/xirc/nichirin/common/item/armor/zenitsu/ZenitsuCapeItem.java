@@ -5,6 +5,6 @@ import net.minecraft.world.item.ArmorMaterial;
 
 public class ZenitsuCapeItem extends NichirinArmorItem {
     public ZenitsuCapeItem(ArmorMaterial material, Properties properties) {
-        super(material, Type.LEGGINGS, properties);
+        super(material, Type.CHESTPLATE, properties);
     }
 }
