@@ -11,7 +11,13 @@ public class ItemPropertiesHelperImpl {
         ItemProperties.register(
                 NichirinItemRegistry.BENTO_BOX.get(),
                 new ResourceLocation("nichirin", "filled"),
-                BentoBoxItem.getFilledPropertyFunction()
+                (stack, level, entity, seed) -> {
+                    if (!(stack.getItem() instanceof BentoBoxItem)) {
+                        return 0.0f;
+                    }
+                    int foodCount = BentoBoxItem.getFoodCount(stack);
+                    return foodCount > 0 ? 1.0f : 0.0f;
+                }
         );
     }
 }

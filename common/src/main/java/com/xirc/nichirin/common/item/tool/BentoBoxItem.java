@@ -1,6 +1,5 @@
 package com.xirc.nichirin.common.item.tool;
 
-import net.minecraft.client.renderer.item.ClampedItemPropertyFunction;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -80,21 +79,7 @@ public class BentoBoxItem extends Item {
         return nbtList.size();
     }
 
-    /**
-     * Item property function for determining texture based on contents
-     * Returns 0.0f for empty (use empty texture)
-     * Returns 1.0f for full (use full texture)
-     */
-    public static ClampedItemPropertyFunction getFilledPropertyFunction() {
-        return (stack, level, entity, seed) -> {
-            if (!(stack.getItem() instanceof BentoBoxItem)) {
-                return 0.0f;
-            }
-
-            int foodCount = getFoodCount(stack);
-            return foodCount > 0 ? 1.0f : 0.0f;
-        };
-    }
+    // Removed getFilledPropertyFunction() method - now handled by platform-specific implementations
 
     private static class BentoBoxMenuProvider implements MenuProvider {
         private final ItemStack bentoBoxStack;

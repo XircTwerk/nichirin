@@ -8,20 +8,12 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ModelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 
 @Mod.EventBusSubscriber(modid = "nichirin", bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class ItemPropertiesHelperImpl {
 
     public static void registerBentoBoxProperty() {
-        // This gets called from FMLClientSetupEvent, but we'll also register in ModelEvent for safety
-    }
-
-    @SubscribeEvent
-    public static void onClientSetup(FMLClientSetupEvent event) {
-        event.enqueueWork(() -> {
-            registerProperty();
-        });
+        registerProperty();
     }
 
     @SubscribeEvent
@@ -34,7 +26,13 @@ public class ItemPropertiesHelperImpl {
             ItemProperties.register(
                     NichirinItemRegistry.BENTO_BOX.get(),
                     new ResourceLocation("nichirin", "filled"),
-                    BentoBoxItem.getFilledPropertyFunction()
+                    (stack, level, entity, seed) -> {
+                        if (!(stack.getItem() instanceof BentoBoxItem)) {
+                            return 0.0f;
+                        }
+                        int foodCount = BentoBoxItem.getFoodCount(stack);
+                        return foodCount > 0 ? 1.0f : 0.0f;
+                    }
             );
             System.out.println("BENTO BOX PROPERTY REGISTERED!");
         } catch (Exception e) {

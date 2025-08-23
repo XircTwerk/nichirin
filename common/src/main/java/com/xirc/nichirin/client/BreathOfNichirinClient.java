@@ -13,6 +13,7 @@ import com.xirc.nichirin.client.renderer.StanceBarRenderer;
 import com.xirc.nichirin.client.util.ClientInputTracker;
 import com.xirc.nichirin.client.util.ItemPropertiesHelper;
 import com.xirc.nichirin.common.attack.MoveExecutor;
+import com.xirc.nichirin.common.event.CooldownClearEventHandler;
 import com.xirc.nichirin.common.item.tool.BentoBoxItem;
 import com.xirc.nichirin.common.network.CooldownDisplayPacket;
 import com.xirc.nichirin.common.util.BlockingInputHandler;
@@ -74,6 +75,8 @@ public class BreathOfNichirinClient {
         PlayerStats.initialize();
         NichirinShaderRegistry.init();
         ItemPropertiesHelper.registerBentoBoxProperty();
+        CooldownClearEventHandler.register();
+
 
         // Register keybinds FIRST
         NichirinKeybindRegistry.register();
