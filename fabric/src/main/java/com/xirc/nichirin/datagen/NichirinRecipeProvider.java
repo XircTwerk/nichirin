@@ -80,5 +80,189 @@ public class NichirinRecipeProvider extends FabricRecipeProvider {
                 .unlockedBy("has_gunpowder", InventoryChangeTrigger.TriggerInstance.hasItems(Items.GUNPOWDER))
                 .unlockedBy("has_paper", InventoryChangeTrigger.TriggerInstance.hasItems(Items.PAPER))
                 .save(exporter);
+
+        // ===== ZENITSU ARMOR RECIPES =====
+        // Zenitsu Helmet - Yellow secondary, Orange primary
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.ZENITSU_HEADPIECE.get())
+                .define('Y', Items.YELLOW_DYE) // Secondary
+                .define('S', Items.STRING)
+                .define('O', Items.ORANGE_DYE) // Primary
+                .define('H', Items.NETHERITE_HELMET)
+                .pattern("YSY")
+                .pattern("OHO")
+                .pattern("   ")
+                .unlockedBy("has_netherite_helmet", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_HELMET))
+                .save(exporter);
+
+        // Zenitsu Cape/Chestplate - Yellow surrounding, Orange bottom corners
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.ZENITSU_CAPE.get())
+                .define('Y', Items.YELLOW_DYE)
+                .define('C', Items.NETHERITE_CHESTPLATE)
+                .define('O', Items.ORANGE_DYE)
+                .pattern("YYY")
+                .pattern("YCY")
+                .pattern("O O")
+                .unlockedBy("has_netherite_chestplate", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_CHESTPLATE))
+                .save(exporter);
+
+        // Zenitsu Leggings - Brown surrounding, Orange bottom corners
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.ZENITSU_LEGGINGS.get())
+                .define('B', Items.BROWN_DYE)
+                .define('L', Items.NETHERITE_LEGGINGS)
+                .define('O', Items.ORANGE_DYE)
+                .pattern("BBB")
+                .pattern("BLB")
+                .pattern("O O")
+                .unlockedBy("has_netherite_leggings", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_LEGGINGS))
+                .save(exporter);
+
+        // Zenitsu Boots - White on sides, Orange underneath
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.ZENITSU_BOOTS.get())
+                .define('W', Items.ORANGE_DYE)
+                .define('B', Items.NETHERITE_BOOTS)
+                .define('O', Items.WHITE_DYE)
+                .pattern("   ")
+                .pattern("WBW")
+                .pattern("O O")
+                .unlockedBy("has_netherite_boots", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_BOOTS))
+                .save(exporter);
+
+        // ===== RENGOKU ARMOR RECIPES =====
+        // Rengoku Helmet - Orange secondary, Red primary
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.RENGOKU_HEADPIECE.get())
+                .define('O', Items.ORANGE_DYE) // Secondary
+                .define('S', Items.STRING)
+                .define('R', Items.RED_DYE) // Primary
+                .define('H', Items.NETHERITE_HELMET)
+                .pattern("OSO")
+                .pattern("RHR")
+                .pattern("   ")
+                .unlockedBy("has_netherite_helmet", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_HELMET))
+                .save(exporter);
+
+        // Rengoku Cape/Chestplate - Orange surrounding, Red bottom corners
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.RENGOKU_CAPE.get())
+                .define('O', Items.WHITE_DYE)
+                .define('C', Items.NETHERITE_CHESTPLATE)
+                .define('R', Items.RED_DYE)
+                .pattern("OOO")
+                .pattern("OCO")
+                .pattern("R R")
+                .unlockedBy("has_netherite_chestplate", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_CHESTPLATE))
+                .save(exporter);
+
+        // Rengoku Leggings - Brown surrounding, Red bottom corners
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.RENGOKU_LEGGINGS.get())
+                .define('B', Items.BROWN_DYE)
+                .define('L', Items.NETHERITE_LEGGINGS)
+                .define('R', Items.RED_DYE)
+                .pattern("BBB")
+                .pattern("BLB")
+                .pattern("R R")
+                .unlockedBy("has_netherite_leggings", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_LEGGINGS))
+                .save(exporter);
+
+        // Rengoku Boots - White on sides, Red underneath
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.RENGOKU_BOOTS.get())
+                .define('W', Items.RED_DYE)
+                .define('B', Items.NETHERITE_BOOTS)
+                .define('R', Items.WHITE_DYE)
+                .pattern("   ")
+                .pattern("WBW")
+                .pattern("R R")
+                .unlockedBy("has_netherite_boots", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_BOOTS))
+                .save(exporter);
+
+        // ===== TENGEN ARMOR RECIPES =====
+        // Tengen Helmet - White secondary, Chain (Iron Nugget) primary
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.TENGEN_HEADPIECE.get())
+                .define('W', Items.WHITE_DYE) // Secondary
+                .define('S', Items.STRING)
+                .define('I', Items.IRON_NUGGET) // Primary (representing chains)
+                .define('H', Items.NETHERITE_HELMET)
+                .pattern("WSW")
+                .pattern("IHI")
+                .pattern("   ")
+                .unlockedBy("has_netherite_helmet", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_HELMET))
+                .save(exporter);
+
+        // Tengen Accessories/Chestplate - White surrounding, Chain bottom corners
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.TENGEN_ACCESSORIES.get())
+                .define('W', Items.WHITE_DYE)
+                .define('C', Items.NETHERITE_CHESTPLATE)
+                .define('I', Items.IRON_NUGGET)
+                .pattern("WWW")
+                .pattern("WCW")
+                .pattern("I I")
+                .unlockedBy("has_netherite_chestplate", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_CHESTPLATE))
+                .save(exporter);
+
+        // Tengen Leggings - Brown surrounding, Chain bottom corners
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.TENGEN_LEGGINGS.get())
+                .define('B', Items.BROWN_DYE)
+                .define('L', Items.NETHERITE_LEGGINGS)
+                .define('I', Items.IRON_NUGGET)
+                .pattern("BBB")
+                .pattern("BLB")
+                .pattern("I I")
+                .unlockedBy("has_netherite_leggings", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_LEGGINGS))
+                .save(exporter);
+
+        // Tengen Boots - White on sides, Chain underneath
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.TENGEN_BOOTS.get())
+                .define('W', Items.WHITE_DYE)
+                .define('B', Items.NETHERITE_BOOTS)
+                .define('I', Items.IRON_NUGGET)
+                .pattern("   ")
+                .pattern("WBW")
+                .pattern("I I")
+                .unlockedBy("has_netherite_boots", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_BOOTS))
+                .save(exporter);
+
+        // ===== SHINOBU ARMOR RECIPES =====
+        // Shinobu Helmet - Purple secondary, Black primary
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.SHINOBU_HEADPIECE.get())
+                .define('P', Items.PURPLE_DYE) // Secondary
+                .define('S', Items.STRING)
+                .define('B', Items.BLACK_DYE) // Primary
+                .define('H', Items.NETHERITE_HELMET)
+                .pattern("PSP")
+                .pattern("BHB")
+                .pattern("   ")
+                .unlockedBy("has_netherite_helmet", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_HELMET))
+                .save(exporter);
+
+        // Shinobu Cape/Chestplate - Purple surrounding, Black bottom corners
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.SHINOBU_CAPE.get())
+                .define('P', Items.WHITE_DYE)
+                .define('C', Items.NETHERITE_CHESTPLATE)
+                .define('B', Items.PINK_DYE)
+                .pattern("PPP")
+                .pattern("PCP")
+                .pattern("B B")
+                .unlockedBy("has_netherite_chestplate", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_CHESTPLATE))
+                .save(exporter);
+
+        // Shinobu Leggings - Brown surrounding, Black bottom corners
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.SHINOBU_LEGGINGS.get())
+                .define('B', Items.PURPLE_DYE)
+                .define('L', Items.NETHERITE_LEGGINGS)
+                .define('K', Items.BLACK_DYE)
+                .pattern("BBB")
+                .pattern("BLB")
+                .pattern("K K")
+                .unlockedBy("has_netherite_leggings", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_LEGGINGS))
+                .save(exporter);
+
+        // Shinobu Boots - White on sides, Black underneath
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.SHINOBU_BOOTS.get())
+                .define('W', Items.PURPLE_DYE)
+                .define('B', Items.NETHERITE_BOOTS)
+                .define('K', Items.WHITE_DYE)
+                .pattern("   ")
+                .pattern("WBW")
+                .pattern("K K")
+                .unlockedBy("has_netherite_boots", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_BOOTS))
+                .save(exporter);
     }
 }

@@ -50,7 +50,7 @@ public interface NichirinItemRegistry {
             () -> new BentoBoxItem(settings().stacksTo(1)));
 
 
-    // Tengen Armor Set
+    //Armors
     RegistrySupplier<Item> ZENITSU_HEADPIECE = register("zenitsu_headpiece",
             () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.HELMET, settings().stacksTo(1)));
 
@@ -62,6 +62,7 @@ public interface NichirinItemRegistry {
 
     RegistrySupplier<Item> ZENITSU_BOOTS = register("zenitsu_boots",
             () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.BOOTS, settings().stacksTo(1)));
+
 
     RegistrySupplier<Item> RENGOKU_HEADPIECE = register("rengoku_headpiece",
             () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.HELMET, settings().stacksTo(1)));
@@ -75,6 +76,7 @@ public interface NichirinItemRegistry {
     RegistrySupplier<Item> RENGOKU_BOOTS = register("rengoku_boots",
             () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.BOOTS, settings().stacksTo(1)));
 
+
     RegistrySupplier<Item> TENGEN_HEADPIECE = register("tengen_headpiece",
             () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.HELMET, settings().stacksTo(1)));
 
@@ -86,6 +88,7 @@ public interface NichirinItemRegistry {
 
     RegistrySupplier<Item> TENGEN_BOOTS = register("tengen_boots",
             () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.BOOTS, settings().stacksTo(1)));
+
 
     RegistrySupplier<Item> SHINOBU_HEADPIECE = register("shinobu_headpiece",
             () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.HELMET, settings().stacksTo(1)));
