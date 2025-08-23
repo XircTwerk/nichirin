@@ -19,6 +19,8 @@ import com.xirc.nichirin.client.renderer.armor.ZenitsuUniformRenderer;
 import com.xirc.nichirin.client.renderer.armor.ZenitsuCapeRenderer;
 import com.xirc.nichirin.client.renderer.armor.RengokuCapeRenderer;
 import com.xirc.nichirin.client.renderer.armor.RengokuUniformRenderer;
+import com.xirc.nichirin.client.renderer.armor.TengenAccessoriesRenderer;
+import com.xirc.nichirin.client.renderer.armor.TengenUniformRenderer;
 import com.xirc.nichirin.client.model.NichirinArmorModel;
 import com.xirc.nichirin.registry.NichirinItemRegistry;
 import net.minecraft.client.model.HumanoidModel;
@@ -172,6 +174,19 @@ public class NichirinArmorItem extends ArmorItem implements GeoItem {
         }
         else if (armorStack.is(NichirinItemRegistry.RENGOKU_BOOTS.get())) {
             return new RengokuUniformRenderer();
+        }
+
+        if (armorStack.is(NichirinItemRegistry.TENGEN_HEADPIECE.get())) {
+            return new TengenUniformRenderer();
+        }
+        else if (armorStack.is(NichirinItemRegistry.TENGEN_ACCESSORIES.get())) {
+            return new TengenAccessoriesRenderer();
+        }
+        else if (armorStack.is(NichirinItemRegistry.TENGEN_LEGGINGS.get())) {
+            return new TengenUniformRenderer();
+        }
+        else if (armorStack.is(NichirinItemRegistry.TENGEN_BOOTS.get())) {
+            return new TengenUniformRenderer();
         }
 
         return new NichirinArmorRenderer<>(new NichirinArmorModel<>("default_armor"));
