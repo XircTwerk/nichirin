@@ -61,12 +61,12 @@ public class RengokuCapeRenderer extends NichirinArmorRenderer<NichirinArmorItem
                 cape.setScaleZ(1.6f);
             }
             if (capeLeft != null) {
-                capeLeft.setScaleX(1.6f);
+                capeLeft.setScaleX(1.7f);
                 capeLeft.setScaleY(1.1f);
                 capeLeft.setScaleZ(1.2f);
             }
             if (capeRight != null) {
-                capeRight.setScaleX(1.6f);
+                capeRight.setScaleX(1.7f);
                 capeRight.setScaleY(1.1f);
                 capeRight.setScaleZ(1.2f);
             }
@@ -84,12 +84,12 @@ public class RengokuCapeRenderer extends NichirinArmorRenderer<NichirinArmorItem
                     }
                     if (capeLeft != null) {
                         capeLeft.setScaleX(1.3f);
-                        capeLeft.setScaleY(1.075f);
+                        capeLeft.setScaleY(1.2f);
                         capeLeft.setScaleZ(1.4f);
                     }
                     if (capeRight != null) {
                         capeRight.setScaleX(1.35f);
-                        capeRight.setScaleY(1.075f);
+                        capeRight.setScaleY(1.2f);
                         capeRight.setScaleZ(1.4f);
                     }
                 } else {
@@ -100,13 +100,13 @@ public class RengokuCapeRenderer extends NichirinArmorRenderer<NichirinArmorItem
                     }
                     if (capeLeft != null) {
                         capeLeft.setScaleX(1.55f);
-                        capeLeft.setScaleY(1.175f);
-                        capeLeft.setScaleZ(1.15f);
+                        capeLeft.setScaleY(1.2f);
+                        capeLeft.setScaleZ(1.4f);
                     }
                     if (capeRight != null) {
                         capeRight.setScaleX(1.55f);
-                        capeRight.setScaleY(1.175f);
-                        capeRight.setScaleZ(1.15f);
+                        capeRight.setScaleY(1.2f);
+                        capeRight.setScaleZ(1.4f);
                     }
                 }
             }
