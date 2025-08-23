@@ -15,11 +15,11 @@ public class BreathOfNichirinFabricClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        // Initialize all client-side systems first
-        BreathOfNichirinClient.init();
-
-        // Register item properties (client-only)
+        // Register item properties first (client-only)
         ItemPropertiesHelperImpl.registerBentoBoxProperty();
+
+        // Initialize all client-side systems (this includes keybind registration)
+        BreathOfNichirinClient.init();
 
         // Register client tick event to detect attack key press
         ClientTickEvents.END_CLIENT_TICK.register(client -> {

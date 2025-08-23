@@ -79,7 +79,7 @@ public class BreathOfNichirinClient {
 
 
         // Register keybinds FIRST
-        NichirinKeybindRegistry.register();
+       // NichirinKeybindRegistry.register();
 
         //Registries
         NichirinEntityRendererRegistry.init();
