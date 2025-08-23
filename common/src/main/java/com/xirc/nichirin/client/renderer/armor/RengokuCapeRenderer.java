@@ -14,6 +14,7 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,46 +50,62 @@ public class RengokuCapeRenderer extends NichirinArmorRenderer<NichirinArmorItem
     public void prepForRender(@Nullable Entity entity, ItemStack stack, @Nullable EquipmentSlot slot, @Nullable HumanoidModel<?> baseModel) {
         super.prepForRender(entity, stack, slot, baseModel);
 
-        if (entity instanceof AbstractClientPlayer player) {
+        GeoBone cape = this.model.getBone("Cape").orElse(null);
+        GeoBone capeLeft = this.model.getBone("capeLeft").orElse(null);
+        GeoBone capeRight = this.model.getBone("capeRight").orElse(null);
+
+        if (entity instanceof ArmorStand) {
+            if (cape != null) {
+                cape.setScaleX(1.4f);
+                cape.setScaleY(1.4f);
+                cape.setScaleZ(1.6f);
+            }
+            if (capeLeft != null) {
+                capeLeft.setScaleX(1.6f);
+                capeLeft.setScaleY(1.1f);
+                capeLeft.setScaleZ(1.2f);
+            }
+            if (capeRight != null) {
+                capeRight.setScaleX(1.6f);
+                capeRight.setScaleY(1.1f);
+                capeRight.setScaleZ(1.2f);
+            }
+        } else if (entity instanceof AbstractClientPlayer player) {
             EntityRenderer<? super AbstractClientPlayer> renderer = Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(player);
             if (renderer instanceof PlayerRenderer playerRenderer) {
                 PlayerModel<AbstractClientPlayer> playerModel = playerRenderer.getModel();
                 boolean isSlim = ((PlayerModelAccessor) playerModel).isSlim();
 
-                GeoBone cape = this.model.getBone("Cape").orElse(null);
-                GeoBone capeLeft = this.model.getBone("capeLeft").orElse(null);
-                GeoBone capeRight = this.model.getBone("capeRight").orElse(null);
-
                 if (isSlim) {
                     if (cape != null) {
                         cape.setScaleX(1.15f);
-                        cape.setScaleY(1.1f);
-                        cape.setScaleZ(1.2f);
+                        cape.setScaleY(1.425f);
+                        cape.setScaleZ(1.8f);
                     }
                     if (capeLeft != null) {
-                        capeLeft.setScaleX(1.175f);
+                        capeLeft.setScaleX(1.3f);
                         capeLeft.setScaleY(1.075f);
-                        capeLeft.setScaleZ(1.075f);
+                        capeLeft.setScaleZ(1.4f);
                     }
                     if (capeRight != null) {
-                        capeRight.setScaleX(1.175f);
+                        capeRight.setScaleX(1.35f);
                         capeRight.setScaleY(1.075f);
-                        capeRight.setScaleZ(1.075f);
+                        capeRight.setScaleZ(1.4f);
                     }
                 } else {
                     if (cape != null) {
                         cape.setScaleX(1.3f);
-                        cape.setScaleY(1.1f);
-                        cape.setScaleZ(1.2f);
+                        cape.setScaleY(1.425f);
+                        cape.setScaleZ(1.8f);
                     }
                     if (capeLeft != null) {
-                        capeLeft.setScaleX(1.25f);
-                        capeLeft.setScaleY(1.075f);
+                        capeLeft.setScaleX(1.55f);
+                        capeLeft.setScaleY(1.175f);
                         capeLeft.setScaleZ(1.15f);
                     }
                     if (capeRight != null) {
-                        capeRight.setScaleX(1.25f);
-                        capeRight.setScaleY(1.075f);
+                        capeRight.setScaleX(1.55f);
+                        capeRight.setScaleY(1.175f);
                         capeRight.setScaleZ(1.15f);
                     }
                 }
@@ -104,22 +121,42 @@ public class RengokuCapeRenderer extends NichirinArmorRenderer<NichirinArmorItem
         GeoBone capeLeft = this.model.getBone("capeLeft").orElse(null);
         GeoBone capeRight = this.model.getBone("capeRight").orElse(null);
 
-        if (cape != null) {
-            ModelPart bodyPart = baseModel.body;
-            RenderUtils.matchModelPartRot(bodyPart, cape);
-            cape.updatePosition(bodyPart.x, -bodyPart.y + 0.5f, bodyPart.z -1);
-        }
+        if (this.currentEntity instanceof ArmorStand) {
+            if (cape != null) {
+                ModelPart bodyPart = baseModel.body;
+                RenderUtils.matchModelPartRot(bodyPart, cape);
+                cape.updatePosition(bodyPart.x, -bodyPart.y + 1.5f, bodyPart.z - 1f);
+            }
 
-        if (capeLeft != null) {
-            ModelPart leftArmPart = baseModel.leftArm;
-            RenderUtils.matchModelPartRot(leftArmPart, capeLeft);
-            capeLeft.updatePosition(leftArmPart.x - 5f, 1.5f - leftArmPart.y, leftArmPart.z);
-        }
+            if (capeLeft != null) {
+                ModelPart leftArmPart = baseModel.leftArm;
+                RenderUtils.matchModelPartRot(leftArmPart, capeLeft);
+                capeLeft.updatePosition(leftArmPart.x - 5.7f, 2.32f - leftArmPart.y, leftArmPart.z);
+            }
 
-        if (capeRight != null) {
-            ModelPart rightArmPart = baseModel.rightArm;
-            RenderUtils.matchModelPartRot(rightArmPart, capeRight);
-            capeRight.updatePosition(rightArmPart.x + 5f, 1.5f - rightArmPart.y, rightArmPart.z);
+            if (capeRight != null) {
+                ModelPart rightArmPart = baseModel.rightArm;
+                RenderUtils.matchModelPartRot(rightArmPart, capeRight);
+                capeRight.updatePosition(rightArmPart.x + 5.7f, 2.32f - rightArmPart.y, rightArmPart.z);
+            }
+        } else {
+            if (cape != null) {
+                ModelPart bodyPart = baseModel.body;
+                RenderUtils.matchModelPartRot(bodyPart, cape);
+                cape.updatePosition(bodyPart.x, -bodyPart.y + 1.125f, bodyPart.z - 1f);
+            }
+
+            if (capeLeft != null) {
+                ModelPart leftArmPart = baseModel.leftArm;
+                RenderUtils.matchModelPartRot(leftArmPart, capeLeft);
+                capeLeft.updatePosition(leftArmPart.x - 5f, 2f - leftArmPart.y, leftArmPart.z);
+            }
+
+            if (capeRight != null) {
+                ModelPart rightArmPart = baseModel.rightArm;
+                RenderUtils.matchModelPartRot(rightArmPart, capeRight);
+                capeRight.updatePosition(rightArmPart.x + 5f, 2f - rightArmPart.y, rightArmPart.z);
+            }
         }
     }
 
@@ -129,11 +166,10 @@ public class RengokuCapeRenderer extends NichirinArmorRenderer<NichirinArmorItem
 
         if (currentSlot == EquipmentSlot.CHEST) {
             setBoneVisible(this.model.getBone("Cape").orElse(null), true);
+            setBoneVisible(this.model.getBone("CapeMiddle").orElse(null), true);
+            setBoneVisible(this.model.getBone("CapeLower").orElse(null), true);
             setBoneVisible(this.model.getBone("capeLeft").orElse(null), true);
             setBoneVisible(this.model.getBone("capeRight").orElse(null), true);
-            setBoneVisible(this.model.getBone("Lower parts").orElse(null), true);
-            setBoneVisible(this.model.getBone("Main part").orElse(null),true);
-
         }
     }
 }

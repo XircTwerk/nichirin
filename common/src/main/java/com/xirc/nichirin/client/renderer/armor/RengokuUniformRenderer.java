@@ -73,6 +73,13 @@ public class RengokuUniformRenderer extends NichirinArmorRenderer<NichirinArmorI
     public void prepForRender(@Nullable Entity entity, ItemStack stack, @Nullable EquipmentSlot slot, @Nullable HumanoidModel<?> baseModel) {
         super.prepForRender(entity, stack, slot, baseModel);
 
+        GeoBone headBone = this.model.getBone("Head").orElse(null);
+        if (headBone != null) {
+            headBone.setScaleX(1.05f);
+            headBone.setScaleY(1f);
+            headBone.setScaleZ(1.05f);
+        }
+
         if (entity instanceof AbstractClientPlayer player) {
             EntityRenderer<? super AbstractClientPlayer> renderer = Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(player);
             if (renderer instanceof PlayerRenderer playerRenderer) {
@@ -157,11 +164,7 @@ public class RengokuUniformRenderer extends NichirinArmorRenderer<NichirinArmorI
         setAllVisible(false);
 
         switch (currentSlot) {
-            case HEAD -> {
-                setBoneVisible(this.model.getBone("Head").orElse(null), true);
-                setBoneVisible(this.model.getBone("Butterfly").orElse(null), true);
-                setBoneVisible(this.model.getBone("Butterfly2").orElse(null), true);
-            }
+            case HEAD -> setBoneVisible(this.model.getBone("Head").orElse(null), true);
             case LEGS -> {
                 setBoneVisible(this.model.getBone("chestplate").orElse(null), true);
                 setBoneVisible(this.model.getBone("leftArm").orElse(null), true);

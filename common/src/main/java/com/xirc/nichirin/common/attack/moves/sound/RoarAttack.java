@@ -1,6 +1,5 @@
 package com.xirc.nichirin.common.attack.moves.sound;
 
-import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -43,8 +42,8 @@ public class RoarAttack extends SoundBreathingAttackBase {
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 1.0f, 0.8f);
 
-        // Create initial particle buildup
-        createSoundParticles();
+        // Create initial particle buildup with explosion particles
+        createRoarSoundParticles();
     }
 
     @Override
@@ -85,10 +84,6 @@ public class RoarAttack extends SoundBreathingAttackBase {
                     height,
                     (Math.random() - 0.5) * 0.5
             );
-
-            serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
-                    particlePos.x, particlePos.y, particlePos.z,
-                    1, 0.1, 0.1, 0.1, 0.02);
         }
     }
 
@@ -115,7 +110,7 @@ public class RoarAttack extends SoundBreathingAttackBase {
             target.hurtMarked = true;
 
             // Extra particle burst at each hit target
-            createSoundHitParticles(target.position());
+            createRoarSoundHitParticles(target.position());
         }
 
         // Thunder-like slam sound
@@ -125,6 +120,84 @@ public class RoarAttack extends SoundBreathingAttackBase {
         // Impact sound
         world.playSound(null, slamPoint.x, slamPoint.y, slamPoint.z,
                 SoundEvents.ANVIL_LAND, SoundSource.PLAYERS, 1.5f, 0.8f);
+    }
+
+    /**
+     * Override to use explosion particles instead of Nichirin particles
+     */
+    protected void createRoarSoundParticles() {
+        if (!(world instanceof ServerLevel serverLevel) || user == null) return;
+
+        Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
+
+        // Create explosion particles around the user
+        for (int i = 0; i < 8; i++) {
+            double offsetX = (Math.random() - 0.5) * 3.0;
+            double offsetY = Math.random() * 3.0;
+            double offsetZ = (Math.random() - 0.5) * 3.0;
+
+            Vec3 particlePos = userPos.add(offsetX, offsetY, offsetZ);
+
+            serverLevel.sendParticles(ParticleTypes.EXPLOSION,
+                    particlePos.x, particlePos.y, particlePos.z,
+                    1, 0.1, 0.1, 0.1, 0.05);
+
+            if (i % 2 == 0) {
+                serverLevel.sendParticles(ParticleTypes.POOF,
+                        particlePos.x, particlePos.y, particlePos.z,
+                        1, 0.1, 0.1, 0.1, 0.05);
+            }
+
+            if (i % 3 == 0) {
+                serverLevel.sendParticles(ParticleTypes.EXPLOSION,
+                        particlePos.x, particlePos.y, particlePos.z,
+                        1, 0.1, 0.1, 0.1, 0.05);
+            }
+        }
+    }
+
+    /**
+     * Override to use explosion particles instead of Nichirin particles
+     */
+    protected void createRoarSoundHitParticles(Vec3 hitPosition) {
+        if (!(world instanceof ServerLevel serverLevel)) return;
+
+        // Explosion particles at hit location
+        serverLevel.sendParticles(ParticleTypes.EXPLOSION,
+                hitPosition.x, hitPosition.y + 1, hitPosition.z,
+                2, 1.0, 1.0, 1.0, 0.2);
+
+        // Poof particles for dust effect
+        serverLevel.sendParticles(ParticleTypes.POOF,
+                hitPosition.x, hitPosition.y + 0.5, hitPosition.z,
+                2, 0.8, 0.8, 0.8, 0.1);
+
+        // Sonic boom for impact
+        serverLevel.sendParticles(ParticleTypes.EXPLOSION,
+                hitPosition.x, hitPosition.y + 0.5, hitPosition.z,
+                1, 0.5, 0.5, 0.5, 0.1);
+    }
+
+    /**
+     * Override to use explosion particles for shockwave
+     */
+    protected void createRoarSoundShockwave(Vec3 center, float radius, int particleCount) {
+        if (!(world instanceof ServerLevel serverLevel)) return;
+
+        for (int i = 0; i < particleCount; i++) {
+            double angle = (2 * Math.PI * i) / particleCount;
+            double x = center.x + Math.cos(angle) * radius;
+            double z = center.z + Math.sin(angle) * radius;
+            double y = center.y;
+
+            serverLevel.sendParticles(ParticleTypes.POOF,
+                    x, y, z, 3, 0.1, 0.1, 0.1, 0.1);
+
+            if (i % 2 == 0) {
+                serverLevel.sendParticles(ParticleTypes.EXPLOSION,
+                        x, y + 0.5, z, 1, 0.05, 0.1, 0.05, 0.05);
+            }
+        }
     }
 
     /**
@@ -143,25 +216,25 @@ public class RoarAttack extends SoundBreathingAttackBase {
         }
 
         // Large shockwave ring - much bigger
-        createSoundShockwave(center, range, 64); // More particles for bigger boom
+        createRoarSoundShockwave(center, range, 64); // More particles for bigger boom
 
         // Massive upward particle burst - much more spread out and more particles
-        serverLevel.sendParticles(NichirinParticleRegistry.SOUND.get(),
+        serverLevel.sendParticles(ParticleTypes.EXPLOSION,
                 center.x, center.y + 1, center.z,
-                30, range * 2.0, 6.0, range * 2.0, 0.5); // Much bigger spread and more particles
+                15, range * 0.8, 3.0, range * 0.8, 0.2);
 
-        serverLevel.sendParticles(NichirinParticleRegistry.SHOCKWAVE.get(),
-                center.x, center.y + 0.5, center.z,
-                25, range * 1.8, 5.0, range * 1.8, 0.4); // Much bigger spread
+        serverLevel.sendParticles(ParticleTypes.EXPLOSION,
+                center.x, center.y + 1, center.z,
+                15, range * 0.8, 3.0, range * 0.8, 0.2);
 
         // Flash effects - bigger and more
-        serverLevel.sendParticles(NichirinParticleRegistry.FLASH1.get(),
+        serverLevel.sendParticles(ParticleTypes.EXPLOSION,
                 center.x, center.y + 1, center.z,
-                20, range * 1.2, 4.0, range * 1.2, 0.3); // Much bigger spread
+                15, range * 0.8, 3.0, range * 0.8, 0.2);
 
-        serverLevel.sendParticles(NichirinParticleRegistry.FLASH2.get(),
+        serverLevel.sendParticles(ParticleTypes.EXPLOSION,
                 center.x, center.y + 1, center.z,
-                20, range * 1.2, 4.0, range * 1.2, 0.3); // Much bigger spread
+                15, range * 0.8, 3.0, range * 0.8, 0.2);
 
         // Multiple ground impact rings for more boom boom
         for (int ring = 1; ring <= 4; ring++) {
@@ -179,7 +252,7 @@ public class RoarAttack extends SoundBreathingAttackBase {
 
         // Sonic boom effect - multiple for more boom boom
         for (int i = 0; i < 5; i++) {
-            serverLevel.sendParticles(ParticleTypes.SONIC_BOOM,
+            serverLevel.sendParticles(ParticleTypes.EXPLOSION_EMITTER,
                     center.x + (Math.random() - 0.5) * 4,
                     center.y + 1 + (Math.random() - 0.5) * 4,
                     center.z + (Math.random() - 0.5) * 4,
