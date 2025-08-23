@@ -1,96 +1,124 @@
 {
-  "format_version": "1.8.0",
-  "animations": {
-    "walking": {
-      "loop": true,
-      "animation_length": 1,
-      "bones": {
-        "CapeMiddle": {
-          "rotation": {
-            "0.0": {
-              "vector": [27.5, 0, 0],
-              "easing": "easeInOutSine"
-            },
-            "0.5": {
-              "vector": [25, 0, 0],
-              "easing": "linear"
-            },
-            "1.0": {
-              "vector": [27.5, 0, 0],
-              "easing": "linear"
-            }
-          }
-        },
-        "Capelower": {
-          "rotation": {
-            "0.0": {
-              "vector": [22.5, 0, 0],
-              "easing": "easeInOutSine"
-            },
-            "0.5": {
-              "vector": [17.5, 0, 0],
-              "easing": "linear"
-            },
-            "1.0": {
-              "vector": [22.5, 0, 0],
-              "easing": "easeInOutSine"
-            }
-          },
-          "position": {
-            "0.0": {
-              "vector": [0, -0.1, 0.25],
-              "easing": "linear"
-            },
-            "0.5": {
-              "vector": [0, 0, 0],
-              "easing": "linear"
-            },
-            "1.0": {
-              "vector": [0, -0.1, 0.25],
-              "easing": "linear"
-            }
-          }
-        }
-      }
-    },
-    "idle": {
-      "loop": true,
-      "animation_length": 2.88,
-      "bones": {
-        "CapeMiddle": {
-          "rotation": {
-            "0.0": {
-              "vector": [2.5, 0, 0],
-              "easing": "linear"
-            },
-            "1.48": {
-              "vector": [15, 0, 0],
-              "easing": "easeInOutSine"
-            },
-            "2.88": {
-              "vector": [2.5, 0, 0],
-              "easing": "easeInOutSine"
-            }
-          }
-        },
-        "Capelower": {
-          "rotation": {
-            "0.0": {
-              "vector": [5, 0, 0],
-              "easing": "linear"
-            },
-            "1.48": {
-              "vector": [-2.5, 0, 0],
-              "easing": "easeInOutSine"
-            },
-            "2.88": {
-              "vector": [5, 0, 0],
-              "easing": "easeInOutSine"
-            }
-          }
-        }
-      }
-    }
-  },
-  "azurelib_format_version": 2
+	"format_version": "1.8.0",
+	"animations": {
+		"walking": {
+			"loop": true,
+			"animation_length": 1,
+			"bones": {
+				"CapeMiddle": {
+					"rotation": {
+						"0.0": {
+							"vector": [60, 0, 0],
+							"easing": "easeInOutSine"
+						},
+						"0.5": {
+							"vector": [25, 0, 0],
+							"easing": "easeInSine"
+						},
+						"1.0": {
+							"vector": [60, 0, 0],
+							"easing": "easeOutSine"
+						}
+					},
+					"position": {
+						"0.0": {
+							"vector": [0, 2.125, 0.025],
+							"easing": "linear"
+						},
+						"0.5": {
+							"vector": [0, 1.675, 0],
+							"easing": "linear"
+						},
+						"1.0": {
+							"vector": [0, 2.125, 0.025],
+							"easing": "linear"
+						}
+					}
+				},
+				"Capelower": {
+					"rotation": {
+						"0.0": {
+							"vector": [27.5, 0, 0],
+							"easing": "easeInOutSine"
+						},
+						"0.5": {
+							"vector": [17.5, 0, 0],
+							"easing": "linear"
+						},
+						"1.0": {
+							"vector": [27.5, 0, 0],
+							"easing": "easeInOutSine"
+						}
+					},
+					"position": {
+						"0.0": {
+							"vector": [0, -0.1, -0.025],
+							"easing": "linear"
+						},
+						"0.5": {
+							"vector": [0, 0.45, -0.025],
+							"easing": "linear"
+						},
+						"0.8": {
+							"vector": [0, -0.1, -0.025],
+							"easing": "linear"
+						}
+					}
+				}
+			}
+		},
+		"idle": {
+			"loop": true,
+			"animation_length": 2.88,
+			"bones": {
+				"CapeMiddle": {
+					"rotation": {
+						"0.0": {
+							"vector": [2.5, 0, 0],
+							"easing": "linear"
+						},
+						"1.48": {
+							"vector": [15, 0, 0],
+							"easing": "easeInOutSine"
+						},
+						"2.88": {
+							"vector": [2.5, 0, 0],
+							"easing": "easeInOutSine"
+						}
+					},
+					"position": {
+						"0.0": {
+							"vector": [0, 0.15, 0],
+							"easing": "linear"
+						},
+						"1.48": {
+							"vector": [0, 1, 0],
+							"easing": "linear"
+						},
+						"2.88": {
+							"vector": [0, 0.15, 0],
+							"easing": "linear"
+						}
+					}
+				},
+				"Capelower": {
+					"rotation": {
+						"0.0": {
+							"vector": [5, 0, 0],
+							"easing": "linear"
+						},
+						"1.48": {
+							"vector": [-2.5, 0, 0],
+							"easing": "easeInOutSine"
+						},
+						"2.88": {
+							"vector": [5, 0, 0],
+							"easing": "easeInOutSine"
+						}
+					}
+				}
+			}
+		}
+	},
+	"azurelib_format_version": 2
 }
