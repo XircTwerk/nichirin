@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "minecraft:block/stripped_oak_log"
+    },
+    "facing=south": {
+      "model": "minecraft:block/stripped_oak_log",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "minecraft:block/stripped_oak_log",
+      "y": 270
+    },
+    "facing=east": {
+      "model": "minecraft:block/stripped_oak_log",
+      "y": 90
+    }
+  }
+}

@@ -29,7 +29,15 @@ public interface NichirinBlockRegistry {
                     .mapColor(MapColor.WOOD)
                     .strength(2.5F)
                     .sound(SoundType.WOOD)
-                    .noOcclusion()));
+                    .noOcclusion()) {
+
+                // Override to use stripped oak log particles
+                @Override
+                public String getDescriptionId() {
+                    return "block.minecraft.stripped_oak_log"; // Use stripped oak log for particles
+                }
+            });
+
 
 
     // Block Item Registration
