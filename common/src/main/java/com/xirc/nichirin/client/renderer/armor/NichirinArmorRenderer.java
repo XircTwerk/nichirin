@@ -71,31 +71,32 @@ public class NichirinArmorRenderer<T extends Item & GeoItem> extends GeoArmorRen
     }
 
     @Override
-    public void prepForRender(@Nullable Entity entity, ItemStack stack, @Nullable EquipmentSlot slot, @Nullable HumanoidModel<?> baseModel) {
-        super.prepForRender(entity, stack, slot, baseModel);
+    protected void applyBaseTransformations(HumanoidModel<?> baseModel) {
+        // FIRST: Apply base transformations
+        super.applyBaseTransformations(baseModel);
 
-        if (!(entity instanceof AbstractClientPlayer player)) return;
-        EntityRenderer<? super AbstractClientPlayer> renderer = Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(player);
+        // THEN: Apply slim scaling (this won't get overridden)
+        if (this.currentEntity instanceof AbstractClientPlayer player) {
+            EntityRenderer<? super AbstractClientPlayer> renderer = Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(player);
+            if (renderer instanceof PlayerRenderer playerRenderer) {
+                PlayerModel<AbstractClientPlayer> playerModel = playerRenderer.getModel();
+                boolean isSlim = ((PlayerModelAccessor) playerModel).isSlim();
 
-        if (!(renderer instanceof PlayerRenderer playerRenderer)) return;
-        PlayerModel<AbstractClientPlayer> playerModel = playerRenderer.getModel();
+                if (isSlim) {
+                    GeoBone leftArm = getLeftArmBone();
+                    GeoBone rightArm = getRightArmBone();
 
-        if (!((PlayerModelAccessor) playerModel).isSlim())
-            return;
+                    if (leftArm != null) leftArm.setScaleX(0.75f);
+                    if (rightArm != null) rightArm.setScaleX(0.75f);
 
-        GeoBone leftArm = getLeftArmBone();
-        GeoBone rightArm = getRightArmBone();
+                    // Also scale cape arms if they exist
+                    GeoBone capeLeft = this.model.getBone("capeLeft").orElse(null);
+                    GeoBone capeRight = this.model.getBone("capeRight").orElse(null);
 
-        if (leftArm != null && rightArm != null) {
-            leftArm.setScaleX(0.75f);
-            rightArm.setScaleX(0.75f);
+                    if (capeLeft != null) capeLeft.setScaleX(0.75f);
+                    if (capeRight != null) capeRight.setScaleX(0.75f);
+                }
+            }
         }
-
-        // Also scale cape arms if they exist
-        GeoBone capeLeft = this.model.getBone("capeLeft").orElse(null);
-        GeoBone capeRight = this.model.getBone("capeRight").orElse(null);
-
-        if (capeLeft != null) capeLeft.setScaleX(0.75f);
-        if (capeRight != null) capeRight.setScaleX(0.75f);
     }
 }

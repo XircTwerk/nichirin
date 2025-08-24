@@ -1,5 +1,8 @@
 package com.xirc.nichirin.common.item.armor;
 
+import com.xirc.nichirin.client.renderer.armor.ArmorRendererManager;
+import dev.architectury.platform.Platform;
+import dev.architectury.utils.Env;
 import mod.azure.azurelib.animatable.GeoItem;
 import mod.azure.azurelib.constant.DataTickets;
 import mod.azure.azurelib.core.animatable.instance.AnimatableInstanceCache;
@@ -54,9 +57,8 @@ public class NichirinArmorItem extends ArmorItem implements GeoItem {
 
     @Override
     public void createRenderer(Consumer<Object> consumer) {
-        // Only create renderer on client side
-        if (dev.architectury.platform.Platform.getEnvironment() == dev.architectury.utils.Env.CLIENT) {
-            consumer.accept(com.xirc.nichirin.client.renderer.armor.ArmorRendererManager.createRenderProvider());
+        if (Platform.getEnvironment() == Env.CLIENT) {
+            consumer.accept(ArmorRendererManager.createRenderProvider());
         }
     }
 

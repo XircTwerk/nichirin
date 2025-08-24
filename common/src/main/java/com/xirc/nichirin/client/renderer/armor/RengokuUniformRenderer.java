@@ -72,7 +72,15 @@ public class RengokuUniformRenderer extends NichirinArmorRenderer<NichirinArmorI
     @Override
     public void prepForRender(@Nullable Entity entity, ItemStack stack, @Nullable EquipmentSlot slot, @Nullable HumanoidModel<?> baseModel) {
         super.prepForRender(entity, stack, slot, baseModel);
+        // Removed all scaling from here - it was getting overridden by applyBaseTransformations
+    }
 
+    @Override
+    protected void applyBaseTransformations(HumanoidModel<?> baseModel) {
+        // FIRST: Apply base transformations
+        super.applyBaseTransformations(baseModel);
+
+        // THEN: Apply all scaling and positioning
         GeoBone headBone = this.model.getBone("Head").orElse(null);
         if (headBone != null) {
             headBone.setScaleX(1.05f);
@@ -80,14 +88,17 @@ public class RengokuUniformRenderer extends NichirinArmorRenderer<NichirinArmorI
             headBone.setScaleZ(1.05f);
         }
 
-        if (entity instanceof AbstractClientPlayer player) {
+        if (this.currentEntity instanceof AbstractClientPlayer player) {
             EntityRenderer<? super AbstractClientPlayer> renderer = Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(player);
             if (renderer instanceof PlayerRenderer playerRenderer) {
                 PlayerModel<AbstractClientPlayer> playerModel = playerRenderer.getModel();
                 boolean isSlim = ((PlayerModelAccessor) playerModel).isSlim();
 
+                GeoBone chestplate = this.model.getBone("chestplate").orElse(null);
                 GeoBone baseLeftArm = this.model.getBone("leftArm").orElse(null);
                 GeoBone baseRightArm = this.model.getBone("rightArm").orElse(null);
+
+                if (chestplate != null) chestplate.setScaleX(0.98f);
 
                 if (isSlim) {
                     if (baseLeftArm != null) {
@@ -110,26 +121,8 @@ public class RengokuUniformRenderer extends NichirinArmorRenderer<NichirinArmorI
                         baseRightArm.setScaleZ(1.2f);
                     }
                 }
-            }
-        }
-    }
 
-    @Override
-    protected void applyBaseTransformations(HumanoidModel<?> baseModel) {
-        super.applyBaseTransformations(baseModel);
-
-        if (this.currentEntity instanceof AbstractClientPlayer player) {
-            EntityRenderer<? super AbstractClientPlayer> renderer = Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(player);
-            if (renderer instanceof PlayerRenderer playerRenderer) {
-                PlayerModel<AbstractClientPlayer> playerModel = playerRenderer.getModel();
-                boolean isSlim = ((PlayerModelAccessor) playerModel).isSlim();
-
-                GeoBone chestplate = this.model.getBone("chestplate").orElse(null);
-                GeoBone baseLeftArm = this.model.getBone("leftArm").orElse(null);
-                GeoBone baseRightArm = this.model.getBone("rightArm").orElse(null);
-
-                if (chestplate != null) chestplate.setScaleX(0.98f);
-
+                // Apply positioning
                 if (isSlim) {
                     if (baseLeftArm != null) {
                         ModelPart leftArmPart = baseModel.leftArm;

@@ -49,12 +49,20 @@ public class RengokuCapeRenderer extends NichirinArmorRenderer<NichirinArmorItem
     @Override
     public void prepForRender(@Nullable Entity entity, ItemStack stack, @Nullable EquipmentSlot slot, @Nullable HumanoidModel<?> baseModel) {
         super.prepForRender(entity, stack, slot, baseModel);
+        // Removed all scaling from here - it was getting overridden by applyBaseTransformations
+    }
+
+    @Override
+    protected void applyBaseTransformations(HumanoidModel<?> baseModel) {
+        // FIRST: Apply base transformations
+        super.applyBaseTransformations(baseModel);
 
         GeoBone cape = this.model.getBone("Cape").orElse(null);
         GeoBone capeLeft = this.model.getBone("capeLeft").orElse(null);
         GeoBone capeRight = this.model.getBone("capeRight").orElse(null);
 
-        if (entity instanceof ArmorStand) {
+        // Apply scaling based on entity type and player model
+        if (this.currentEntity instanceof ArmorStand) {
             if (cape != null) {
                 cape.setScaleX(1.4f);
                 cape.setScaleY(1.4f);
@@ -70,58 +78,8 @@ public class RengokuCapeRenderer extends NichirinArmorRenderer<NichirinArmorItem
                 capeRight.setScaleY(1.1f);
                 capeRight.setScaleZ(1.2f);
             }
-        } else if (entity instanceof AbstractClientPlayer player) {
-            EntityRenderer<? super AbstractClientPlayer> renderer = Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(player);
-            if (renderer instanceof PlayerRenderer playerRenderer) {
-                PlayerModel<AbstractClientPlayer> playerModel = playerRenderer.getModel();
-                boolean isSlim = ((PlayerModelAccessor) playerModel).isSlim();
 
-                if (isSlim) {
-                    if (cape != null) {
-                        cape.setScaleX(1.15f);
-                        cape.setScaleY(1.425f);
-                        cape.setScaleZ(1.8f);
-                    }
-                    if (capeLeft != null) {
-                        capeLeft.setScaleX(1.3f);
-                        capeLeft.setScaleY(1.2f);
-                        capeLeft.setScaleZ(1.4f);
-                    }
-                    if (capeRight != null) {
-                        capeRight.setScaleX(1.35f);
-                        capeRight.setScaleY(1.2f);
-                        capeRight.setScaleZ(1.4f);
-                    }
-                } else {
-                    if (cape != null) {
-                        cape.setScaleX(1.3f);
-                        cape.setScaleY(1.425f);
-                        cape.setScaleZ(1.8f);
-                    }
-                    if (capeLeft != null) {
-                        capeLeft.setScaleX(1.55f);
-                        capeLeft.setScaleY(1.2f);
-                        capeLeft.setScaleZ(1.4f);
-                    }
-                    if (capeRight != null) {
-                        capeRight.setScaleX(1.55f);
-                        capeRight.setScaleY(1.2f);
-                        capeRight.setScaleZ(1.4f);
-                    }
-                }
-            }
-        }
-    }
-
-    @Override
-    protected void applyBaseTransformations(HumanoidModel<?> baseModel) {
-        super.applyBaseTransformations(baseModel);
-
-        GeoBone cape = this.model.getBone("Cape").orElse(null);
-        GeoBone capeLeft = this.model.getBone("capeLeft").orElse(null);
-        GeoBone capeRight = this.model.getBone("capeRight").orElse(null);
-
-        if (this.currentEntity instanceof ArmorStand) {
+            // Apply positioning for armor stands
             if (cape != null) {
                 ModelPart bodyPart = baseModel.body;
                 RenderUtils.matchModelPartRot(bodyPart, cape);
@@ -139,11 +97,53 @@ public class RengokuCapeRenderer extends NichirinArmorRenderer<NichirinArmorItem
                 RenderUtils.matchModelPartRot(rightArmPart, capeRight);
                 capeRight.updatePosition(rightArmPart.x + 5.7f, 2.32f - rightArmPart.y, rightArmPart.z);
             }
-        } else {
+        } else if (this.currentEntity instanceof AbstractClientPlayer player) {
+            EntityRenderer<? super AbstractClientPlayer> renderer = Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(player);
+            if (renderer instanceof PlayerRenderer playerRenderer) {
+                PlayerModel<AbstractClientPlayer> playerModel = playerRenderer.getModel();
+                boolean isSlim = ((PlayerModelAccessor) playerModel).isSlim();
+
+                // Apply scaling based on player model type
+                if (isSlim) {
+                    if (cape != null) {
+                        cape.setScaleX(1.5f);
+                        cape.setScaleY(1.425f);
+                        cape.setScaleZ(1.8f);
+                    }
+                    if (capeLeft != null) {
+                        capeLeft.setScaleX(1.6f);
+                        capeLeft.setScaleY(1.35f);
+                        capeLeft.setScaleZ(1.6f);
+                    }
+                    if (capeRight != null) {
+                        capeRight.setScaleX(1.6f);
+                        capeRight.setScaleY(1.35f);
+                        capeRight.setScaleZ(1.6f);
+                    }
+                } else {
+                    if (cape != null) {
+                        cape.setScaleX(1.5f);
+                        cape.setScaleY(1.425f);
+                        cape.setScaleZ(1.8f);
+                    }
+                    if (capeLeft != null) {
+                        capeLeft.setScaleX(2f);
+                        capeLeft.setScaleY(1.5f);
+                        capeLeft.setScaleZ(1.6f);
+                    }
+                    if (capeRight != null) {
+                        capeRight.setScaleX(2f);
+                        capeRight.setScaleY(1.5f);
+                        capeRight.setScaleZ(1.6f);
+                    }
+                }
+            }
+
+            // Apply positioning for players
             if (cape != null) {
                 ModelPart bodyPart = baseModel.body;
                 RenderUtils.matchModelPartRot(bodyPart, cape);
-                cape.updatePosition(bodyPart.x, -bodyPart.y + 1.125f, bodyPart.z - 1f);
+                cape.updatePosition(bodyPart.x, -bodyPart.y + 1.65f, bodyPart.z - 1f);
             }
 
             if (capeLeft != null) {

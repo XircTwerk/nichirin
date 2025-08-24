@@ -48,15 +48,43 @@ public class ShinobuCapeRenderer extends NichirinArmorRenderer<NichirinArmorItem
     @Override
     public void prepForRender(@Nullable Entity entity, ItemStack stack, @Nullable EquipmentSlot slot, @Nullable HumanoidModel<?> baseModel) {
         super.prepForRender(entity, stack, slot, baseModel);
+        // Removed all scaling from here - it was getting overridden by applyBaseTransformations
+    }
 
-        if (entity instanceof AbstractClientPlayer player) {
+    @Override
+    protected void applyBaseTransformations(HumanoidModel<?> baseModel) {
+        // FIRST: Apply base transformations
+        super.applyBaseTransformations(baseModel);
+
+        GeoBone cape = this.model.getBone("Cape").orElse(null);
+        GeoBone capeLeft = this.model.getBone("capeLeft").orElse(null);
+        GeoBone capeRight = this.model.getBone("capeRight").orElse(null);
+
+        // Apply positioning for all entities
+        if (cape != null) {
+            ModelPart bodyPart = baseModel.body;
+            RenderUtils.matchModelPartRot(bodyPart, cape);
+            cape.updatePosition(bodyPart.x, -bodyPart.y + 0.1875f, bodyPart.z);
+        }
+
+        if (capeLeft != null) {
+            ModelPart leftArmPart = baseModel.leftArm;
+            RenderUtils.matchModelPartRot(leftArmPart, capeLeft);
+            capeLeft.updatePosition(leftArmPart.x - 5f, 2f - leftArmPart.y + 0.1875f, leftArmPart.z);
+        }
+
+        if (capeRight != null) {
+            ModelPart rightArmPart = baseModel.rightArm;
+            RenderUtils.matchModelPartRot(rightArmPart, capeRight);
+            capeRight.updatePosition(rightArmPart.x + 5f, 2f - rightArmPart.y + 0.1875f, rightArmPart.z);
+        }
+
+        // Apply scaling based on player model type
+        if (this.currentEntity instanceof AbstractClientPlayer player) {
             EntityRenderer<? super AbstractClientPlayer> renderer = Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(player);
             if (renderer instanceof PlayerRenderer playerRenderer) {
                 PlayerModel<AbstractClientPlayer> playerModel = playerRenderer.getModel();
                 boolean isSlim = ((PlayerModelAccessor) playerModel).isSlim();
-
-                GeoBone capeLeft = this.model.getBone("capeLeft").orElse(null);
-                GeoBone capeRight = this.model.getBone("capeRight").orElse(null);
 
                 if (isSlim) {
                     if (capeLeft != null) {
@@ -82,33 +110,6 @@ public class ShinobuCapeRenderer extends NichirinArmorRenderer<NichirinArmorItem
                     }
                 }
             }
-        }
-    }
-
-    @Override
-    protected void applyBaseTransformations(HumanoidModel<?> baseModel) {
-        super.applyBaseTransformations(baseModel);
-
-        GeoBone cape = this.model.getBone("Cape").orElse(null);
-        GeoBone capeLeft = this.model.getBone("capeLeft").orElse(null);
-        GeoBone capeRight = this.model.getBone("capeRight").orElse(null);
-
-        if (cape != null) {
-            ModelPart bodyPart = baseModel.body;
-            RenderUtils.matchModelPartRot(bodyPart, cape);
-            cape.updatePosition(bodyPart.x, -bodyPart.y + 0.1875f, bodyPart.z);
-        }
-
-        if (capeLeft != null) {
-            ModelPart leftArmPart = baseModel.leftArm;
-            RenderUtils.matchModelPartRot(leftArmPart, capeLeft);
-            capeLeft.updatePosition(leftArmPart.x - 5f, 2f - leftArmPart.y + 0.1875f, leftArmPart.z);
-        }
-
-        if (capeRight != null) {
-            ModelPart rightArmPart = baseModel.rightArm;
-            RenderUtils.matchModelPartRot(rightArmPart, capeRight);
-            capeRight.updatePosition(rightArmPart.x + 5f, 2f - rightArmPart.y + 0.1875f, rightArmPart.z);
         }
     }
 
