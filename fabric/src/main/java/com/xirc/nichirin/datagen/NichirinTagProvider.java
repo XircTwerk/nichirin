@@ -1,13 +1,12 @@
 package com.xirc.nichirin.datagen;
 
-import com.xirc.nichirin.registry.NichirinOreRegistry;
+import com.xirc.nichirin.registry.NichirinBlockRegistry;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricTagProvider;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
-import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
@@ -27,16 +26,16 @@ public class NichirinTagProvider extends FabricTagProvider.BlockTagProvider {
     protected void addTags(HolderLookup.Provider arg) {
         // Add blocks that need iron tools
         getOrCreateTagBuilder(BlockTags.NEEDS_IRON_TOOL)
-                .add(NichirinOreRegistry.SCARLET_CRIMSON_IRON_SAND.get())
-                .add(NichirinOreRegistry.SCARLET_ORE.get());
+                .add(NichirinBlockRegistry.SCARLET_CRIMSON_IRON_SAND.get())
+                .add(NichirinBlockRegistry.SCARLET_ORE.get());
 
         // Add blocks mineable with shovel
         getOrCreateTagBuilder(BlockTags.MINEABLE_WITH_SHOVEL)
-                .add(NichirinOreRegistry.SCARLET_CRIMSON_IRON_SAND.get());
+                .add(NichirinBlockRegistry.SCARLET_CRIMSON_IRON_SAND.get());
 
         // Add blocks mineable with pickaxe
         getOrCreateTagBuilder(BlockTags.MINEABLE_WITH_PICKAXE)
-                .add(NichirinOreRegistry.SCARLET_ORE.get());
+                .add(NichirinBlockRegistry.SCARLET_ORE.get());
     }
 
     // Add ItemTagProvider as nested class for item tags

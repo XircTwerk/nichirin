@@ -18,6 +18,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import static com.xirc.nichirin.registry.NichirinBlockRegistry.SCARLET_CRIMSON_IRON_SAND;
+import static com.xirc.nichirin.registry.NichirinBlockRegistry.SCARLET_ORE;
+
 public interface NichirinItemRegistry {
     Logger LOGGER = LoggerFactory.getLogger("ModItemRegistry");
 
@@ -47,7 +50,7 @@ public interface NichirinItemRegistry {
             () -> new FlashBombItem(settings().stacksTo(16)));
 
     RegistrySupplier<Item> BENTO_BOX = register("bento_box",
-            () -> new BentoBoxItem(settings().stacksTo(1)));
+            () -> new BentoBoxItem(NichirinBlockRegistry.BENTO_BOX_BLOCK.get(), settings().stacksTo(1)));
 
 
     //Armors

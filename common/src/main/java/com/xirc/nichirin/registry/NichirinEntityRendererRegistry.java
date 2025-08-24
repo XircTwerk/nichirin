@@ -1,15 +1,20 @@
 package com.xirc.nichirin.registry;
 
+import com.xirc.nichirin.client.renderer.BentoBoxBlockRenderer;
 import com.xirc.nichirin.client.renderer.entity.FlashBombRenderer;
 import com.xirc.nichirin.client.renderer.entity.SmokeBombRenderer;
 import com.xirc.nichirin.client.renderer.entity.ThunderBallRenderer;
 import dev.architectury.registry.client.level.entity.EntityRendererRegistry;
+import dev.architectury.registry.client.rendering.BlockEntityRendererRegistry;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 
 import java.util.function.Consumer;
 
@@ -22,17 +27,32 @@ public interface NichirinEntityRendererRegistry {
         }
     }
 
+    record BlockEntityRendererData<T extends BlockEntity>(RegistrySupplier<? extends BlockEntityType<? extends T>> supplier, BlockEntityRendererProvider<T> provider) {
+        public void registerFabric() {
+            BlockEntityRendererRegistry.register(supplier.get(), provider);
+        }
+    }
+
     RendererData<?>[] entries = {
             new RendererData<>(NichirinEntityRegistry.THUNDER_BALL, ThunderBallRenderer::new),
             new RendererData<>(NichirinEntityRegistry.SMOKE_BOMB, SmokeBombRenderer::new),
             new RendererData<>(NichirinEntityRegistry.FLASH_BOMB, FlashBombRenderer::new)
     };
 
+    BlockEntityRendererData<?>[] blockEntityEntries = {
+            new BlockEntityRendererData<>(NichirinBlockEntityRegistry.BENTO_BOX_BLOCK_ENTITY, BentoBoxBlockRenderer::new)
+    };
+
     static void registerEntityRenderers(Consumer<RendererData<?>> consumer) {
         for (RendererData<?> entry : entries) consumer.accept(entry);
     }
 
+    static void registerBlockEntityRenderers(Consumer<BlockEntityRendererData<?>> consumer) {
+        for (BlockEntityRendererData<?> entry : blockEntityEntries) consumer.accept(entry);
+    }
+
     static void init() {
         registerEntityRenderers(RendererData::registerFabric);
+        registerBlockEntityRenderers(BlockEntityRendererData::registerFabric);
     }
 }

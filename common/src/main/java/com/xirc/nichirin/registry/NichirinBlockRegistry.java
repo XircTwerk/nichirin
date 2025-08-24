@@ -1,5 +1,6 @@
 package com.xirc.nichirin.registry;
 
+import com.xirc.nichirin.common.blocks.BentoBoxBlock;
 import com.xirc.nichirin.common.blocks.ScarletCrimsonIronSandBlock;
 import com.xirc.nichirin.common.blocks.ScarletOreBlock;
 import dev.architectury.registry.registries.DeferredRegister;
@@ -8,8 +9,11 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.material.MapColor;
 
-public interface NichirinOreRegistry {
+public interface NichirinBlockRegistry {
     DeferredRegister<Block> BLOCKS = DeferredRegister.create("nichirin", Registries.BLOCK);
     DeferredRegister<Item> ITEMS = DeferredRegister.create("nichirin", Registries.ITEM);
 
@@ -19,6 +23,14 @@ public interface NichirinOreRegistry {
 
     RegistrySupplier<Block> SCARLET_ORE = BLOCKS.register("scarlet_ore",
             ScarletOreBlock::new);
+
+    RegistrySupplier<Block> BENTO_BOX_BLOCK = BLOCKS.register("bento_box_block",
+            () -> new BentoBoxBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.WOOD)
+                    .strength(2.5F)
+                    .sound(SoundType.WOOD)
+                    .noOcclusion()));
+
 
     // Block Item Registration
     RegistrySupplier<Item> SCARLET_CRIMSON_IRON_SAND_ITEM = ITEMS.register("scarlet_crimson_iron_sand",

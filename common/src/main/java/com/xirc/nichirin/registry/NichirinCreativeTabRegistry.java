@@ -4,7 +4,6 @@ import com.xirc.nichirin.BreathOfNichirin;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,8 +23,8 @@ public interface NichirinCreativeTabRegistry {
                     .displayItems((displayContext, entries) -> {
 
                         // Add ore blocks
-                        entries.accept(NichirinOreRegistry.SCARLET_ORE_ITEM.get());
-                        entries.accept(NichirinOreRegistry.SCARLET_CRIMSON_IRON_SAND_ITEM.get());
+                        entries.accept(NichirinBlockRegistry.SCARLET_ORE_ITEM.get());
+                        entries.accept(NichirinBlockRegistry.SCARLET_CRIMSON_IRON_SAND_ITEM.get());
 
                         //gems/ingots
                         entries.accept(NichirinItemRegistry.SCARLET_CRIMSON_IRON_GEM.get());

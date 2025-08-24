@@ -30,7 +30,8 @@ public final class BreathOfNichirin {
         // Initialize common registries first
         NichirinItemRegistry.init();
         NichirinCreativeTabRegistry.init();
-        NichirinOreRegistry.register();
+        NichirinBlockRegistry.register();
+        NichirinBlockEntityRegistry.register();
         NichirinMoveRegistry.init();
         NichirinEntityRegistry.init();
         NichirinPacketRegistry.init();

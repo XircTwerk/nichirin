@@ -1,22 +1,30 @@
 package com.xirc.nichirin.common.item.tool;
 
+import com.xirc.nichirin.common.blocks.BentoBoxBlock;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.Container;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.*;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.MenuProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,13 +32,30 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class BentoBoxItem extends Item {
+public class BentoBoxItem extends BlockItem {
     private static final Logger LOGGER = LoggerFactory.getLogger(BentoBoxItem.class);
     private static final int BENTO_SIZE = 9;
     private static final String ITEMS_TAG = "Items";
 
-    public BentoBoxItem(Properties properties) {
-        super(properties.stacksTo(1));
+    public BentoBoxItem(Block block, Properties properties) {
+        super(block, properties.stacksTo(1));
+    }
+
+    @Override
+    public InteractionResult useOn(UseOnContext context) {
+        // Try to place the block first
+        InteractionResult placeResult = super.useOn(context);
+
+        // If placement was successful, play placement sound
+        if (placeResult.consumesAction()) {
+            Level level = context.getLevel();
+            if (!level.isClientSide) {
+                level.playSound(null, context.getClickedPos(), SoundEvents.WOOD_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
+                LOGGER.info("Placed bento box block at {}", context.getClickedPos());
+            }
+        }
+
+        return placeResult;
     }
 
     @Override
@@ -47,8 +72,12 @@ public class BentoBoxItem extends Item {
             return InteractionResultHolder.fail(stack);
         }
 
-        LOGGER.info("" +
-                "Box use() - Hand: {}, Player: {}", hand, player.getName().getString());
+        // Check if player is sneaking - if so, allow normal block placement behavior
+        if (player.isShiftKeyDown()) {
+            return InteractionResultHolder.pass(stack);
+        }
+
+        LOGGER.info("Bento box use() - Hand: {}, Player: {}", hand, player.getName().getString());
 
         if (level.isClientSide) {
             return InteractionResultHolder.success(stack);
@@ -79,7 +108,49 @@ public class BentoBoxItem extends Item {
         return nbtList.size();
     }
 
-    // Removed getFilledPropertyFunction() method - now handled by platform-specific implementations
+    // Public methods for use by BentoBoxBlock
+    public static AbstractContainerMenu createMenu(int syncId, Inventory playerInventory, Container inventory, int bentoBoxSlotIndex) {
+        return new BentoBoxMenu(syncId, playerInventory, inventory, bentoBoxSlotIndex);
+    }
+
+    // Overloaded method for block entity form
+    public static AbstractContainerMenu createBlockMenu(int syncId, Inventory playerInventory, Container inventory, BlockPos pos) {
+        return new BentoBoxMenu(syncId, playerInventory, inventory, pos);
+    }
+
+    public static void loadItemsFromNbt(CompoundTag nbt, Container inventory) {
+        if (!nbt.contains(ITEMS_TAG)) {
+            return;
+        }
+
+        ListTag nbtList = nbt.getList(ITEMS_TAG, 10);
+        for (int i = 0; i < nbtList.size(); i++) {
+            CompoundTag itemTag = nbtList.getCompound(i);
+            int slot = itemTag.getInt("Slot");
+
+            if (slot >= 0 && slot < BENTO_SIZE) {
+                ItemStack loadedStack = ItemStack.of(itemTag);
+                inventory.setItem(slot, loadedStack);
+            }
+        }
+    }
+
+    public static void saveItemsToNbt(CompoundTag nbt, Container inventory) {
+        ListTag nbtList = new ListTag();
+
+        for (int i = 0; i < BENTO_SIZE; i++) {
+            ItemStack slotStack = inventory.getItem(i);
+
+            if (!slotStack.isEmpty() && canStoreItem(slotStack)) {
+                CompoundTag itemTag = new CompoundTag();
+                itemTag.putInt("Slot", i);
+                slotStack.save(itemTag);
+                nbtList.add(itemTag);
+            }
+        }
+
+        nbt.put(ITEMS_TAG, nbtList);
+    }
 
     private static class BentoBoxMenuProvider implements MenuProvider {
         private final ItemStack bentoBoxStack;
@@ -98,7 +169,7 @@ public class BentoBoxItem extends Item {
         @Override
         public AbstractContainerMenu createMenu(int syncId, Inventory playerInventory, Player player) {
             SimpleContainer inventory = new SimpleContainer(BENTO_SIZE);
-            loadItemsFromNbt(bentoBoxStack, inventory);
+            loadItemsFromNbt(bentoBoxStack.getOrCreateTag(), inventory);
 
             return new BentoBoxMenu(syncId, playerInventory, inventory, bentoBoxSlotIndex);
         }
@@ -106,10 +177,12 @@ public class BentoBoxItem extends Item {
 
     private static class BentoBoxMenu extends ChestMenu {
         private final int bentoBoxSlotIndex;
+        private final BlockPos blockPos; // Add position for block entity validation
 
-        public BentoBoxMenu(int syncId, Inventory playerInventory, SimpleContainer inventory, int bentoBoxSlotIndex) {
+        public BentoBoxMenu(int syncId, Inventory playerInventory, Container inventory, int bentoBoxSlotIndex) {
             super(MenuType.GENERIC_9x1, syncId, playerInventory, inventory, 1);
             this.bentoBoxSlotIndex = bentoBoxSlotIndex;
+            this.blockPos = null; // Item form - no block position
 
             // Replace the container slots with food-only slots
             for (int i = 0; i < BENTO_SIZE; i++) {
@@ -118,12 +191,28 @@ public class BentoBoxItem extends Item {
                 this.slots.set(i, newSlot);
             }
 
-            // Replace the bento box slot with a disabled slot
-            // ChestMenu creates slots in this order: container slots, then player inventory, then hotbar
-            // For GENERIC_9x1: slots 0-8 are container, 9-35 are player inventory, 36-44 are hotbar
-            replaceBentoBoxSlotWithDisabled(playerInventory);
+            // Replace the bento box slot with a disabled slot (only if it's in player inventory)
+            if (bentoBoxSlotIndex >= 0) {
+                replaceBentoBoxSlotWithDisabled(playerInventory);
+            }
 
             LOGGER.info("Created bento box menu with {} slots", BENTO_SIZE);
+        }
+
+        // Constructor for block entity form
+        public BentoBoxMenu(int syncId, Inventory playerInventory, Container inventory, BlockPos pos) {
+            super(MenuType.GENERIC_9x1, syncId, playerInventory, inventory, 1);
+            this.bentoBoxSlotIndex = -1; // Not in player inventory
+            this.blockPos = pos; // Block form - has block position
+
+            // Replace the container slots with food-only slots
+            for (int i = 0; i < BENTO_SIZE; i++) {
+                Slot oldSlot = this.slots.get(i);
+                Slot newSlot = new FoodOnlySlot(inventory, i, oldSlot.x, oldSlot.y);
+                this.slots.set(i, newSlot);
+            }
+
+            LOGGER.info("Created bento box block menu with {} slots at {}", BENTO_SIZE, pos);
         }
 
         private void replaceBentoBoxSlotWithDisabled(Inventory playerInventory) {
@@ -157,17 +246,27 @@ public class BentoBoxItem extends Item {
         @Override
         public void removed(Player player) {
             super.removed(player);
-            // Save items back to the bento box in player's inventory
-            ItemStack bentoBoxStack = player.getInventory().items.get(bentoBoxSlotIndex);
-            if (bentoBoxStack.getItem() instanceof BentoBoxItem) {
-                saveItemsToNbt(bentoBoxStack, (SimpleContainer) this.getContainer());
-                LOGGER.info("Saved bento box for player: {}", player.getName().getString());
+            // Save items back to the bento box (only if it's in player inventory)
+            if (bentoBoxSlotIndex >= 0 && bentoBoxSlotIndex < player.getInventory().items.size()) {
+                ItemStack bentoBoxStack = player.getInventory().items.get(bentoBoxSlotIndex);
+                if (bentoBoxStack.getItem() instanceof BentoBoxItem) {
+                    saveItemsToNbt(bentoBoxStack.getOrCreateTag(), (Container) this.getContainer());
+                    LOGGER.info("Saved bento box for player: {}", player.getName().getString());
+                }
             }
         }
 
         @Override
         public boolean stillValid(Player player) {
-            // Check if the bento box is still in the correct slot
+            // Block entity form - check if block still exists and player is in range
+            if (blockPos != null) {
+                if (player.level().getBlockEntity(blockPos) instanceof BentoBoxBlock.BentoBoxBlockEntity) {
+                    return player.distanceToSqr(blockPos.getX() + 0.5D, blockPos.getY() + 0.5D, blockPos.getZ() + 0.5D) <= 64.0D;
+                }
+                return false;
+            }
+
+            // Item form - check if the bento box is still in the correct slot
             if (bentoBoxSlotIndex >= 0 && bentoBoxSlotIndex < player.getInventory().items.size()) {
                 ItemStack stack = player.getInventory().items.get(bentoBoxSlotIndex);
                 return stack.getItem() instanceof BentoBoxItem;
@@ -186,41 +285,6 @@ public class BentoBoxItem extends Item {
         public boolean mayPickup(Player player) {
             return false;
         }
-    }
-
-    private static void loadItemsFromNbt(ItemStack bentoBox, SimpleContainer inventory) {
-        if (!bentoBox.hasTag() || !bentoBox.getTag().contains(ITEMS_TAG)) {
-            return;
-        }
-
-        ListTag nbtList = bentoBox.getTag().getList(ITEMS_TAG, 10);
-        for (int i = 0; i < nbtList.size(); i++) {
-            CompoundTag itemTag = nbtList.getCompound(i);
-            int slot = itemTag.getInt("Slot");
-
-            if (slot >= 0 && slot < BENTO_SIZE) {
-                ItemStack loadedStack = ItemStack.of(itemTag);
-                inventory.setItem(slot, loadedStack);
-            }
-        }
-    }
-
-    private static void saveItemsToNbt(ItemStack bentoBox, SimpleContainer inventory) {
-        ListTag nbtList = new ListTag();
-
-        for (int i = 0; i < BENTO_SIZE; i++) {
-            ItemStack slotStack = inventory.getItem(i);
-
-            if (!slotStack.isEmpty() && canStoreItem(slotStack)) {
-                CompoundTag itemTag = new CompoundTag();
-                itemTag.putInt("Slot", i);
-                slotStack.save(itemTag);
-                nbtList.add(itemTag);
-            }
-        }
-
-        CompoundTag nbt = bentoBox.getOrCreateTag();
-        nbt.put(ITEMS_TAG, nbtList);
     }
 
     public static boolean canStoreItem(ItemStack item) {
@@ -248,6 +312,7 @@ public class BentoBoxItem extends Item {
 
         tooltip.add(Component.literal("§6Food Items: §f" + foodCount + "/" + BENTO_SIZE));
         tooltip.add(Component.literal("§7Right-click to open"));
+        tooltip.add(Component.literal("§7Right-click on block to place"));
 
         if (foodCount > 0) {
             tooltip.add(Component.literal("§8Contains food items"));
@@ -255,7 +320,7 @@ public class BentoBoxItem extends Item {
     }
 
     private static class FoodOnlySlot extends Slot {
-        public FoodOnlySlot(SimpleContainer container, int slot, int x, int y) {
+        public FoodOnlySlot(Container container, int slot, int x, int y) {
             super(container, slot, x, y);
         }
 
