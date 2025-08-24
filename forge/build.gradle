@@ -57,10 +57,15 @@ processResources {
 }
 
 sourcesJar {
-    duplicatesStrategy DuplicatesStrategy.EXCLUDE
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     def commonSources = project(":common").sourcesJar
     dependsOn commonSources
     from commonSources.archiveFile.map { zipTree(it) }
+}
+
+remapSourcesJar {
+    dependsOn ':common:processResources'
+    dependsOn sourcesJar
 }
 
 jar {
