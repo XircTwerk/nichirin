@@ -1,6 +1,7 @@
 package com.xirc.nichirin;
 
 import com.xirc.nichirin.client.BreathOfNichirinClient;
+import com.xirc.nichirin.client.registry.NichirinKeybindRegistry;
 import com.xirc.nichirin.common.advancement.NichirinCriteriaTriggers;
 import com.xirc.nichirin.registry.MovesetRegistry;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
@@ -39,6 +40,7 @@ public final class BreathOfNichirin {
         NicirinSoundRegistry.init();
         NichirinEffectRegistry.init();
         NichirinCommandRegistry.init();
+        NichirinKeybindRegistry.register();
 
         // Register the registries themselves
         NichirinItemRegistry.ITEM_REGISTRY.register();
