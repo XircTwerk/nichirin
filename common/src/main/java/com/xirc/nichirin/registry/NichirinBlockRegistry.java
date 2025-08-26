@@ -1,6 +1,7 @@
 package com.xirc.nichirin.registry;
 
 import com.xirc.nichirin.common.blocks.BentoBoxBlock;
+import com.xirc.nichirin.common.blocks.KatanaHolderBlock;
 import com.xirc.nichirin.common.blocks.ScarletCrimsonIronSandBlock;
 import com.xirc.nichirin.common.blocks.ScarletOreBlock;
 import dev.architectury.registry.registries.DeferredRegister;
@@ -29,23 +30,24 @@ public interface NichirinBlockRegistry {
                     .mapColor(MapColor.WOOD)
                     .strength(2.5F)
                     .sound(SoundType.WOOD)
-                    .noOcclusion()) {
+                    .noOcclusion()));
 
-                // Override to use stripped oak log particles
-                @Override
-                public String getDescriptionId() {
-                    return "block.minecraft.stripped_oak_log"; // Use stripped oak log for particles
-                }
-            });
-
-
-
+    RegistrySupplier<Block> KATANA_HOLDER_BLOCK = BLOCKS.register("katana_holder_block",
+            () -> new KatanaHolderBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.WOOD)
+                    .strength(1.5F)
+                    .sound(SoundType.WOOD)
+                    .noOcclusion()));
+    
     // Block Item Registration
     RegistrySupplier<Item> SCARLET_CRIMSON_IRON_SAND_ITEM = ITEMS.register("scarlet_crimson_iron_sand",
             () -> new BlockItem(SCARLET_CRIMSON_IRON_SAND.get(), new Item.Properties()));
 
     RegistrySupplier<Item> SCARLET_ORE_ITEM = ITEMS.register("scarlet_ore",
             () -> new BlockItem(SCARLET_ORE.get(), new Item.Properties()));
+
+    RegistrySupplier<Item> KATANA_HOLDER_ITEM = ITEMS.register("katana_holder",
+            () -> new BlockItem(KATANA_HOLDER_BLOCK.get(), new Item.Properties()));
 
     static void register() {
         BLOCKS.register();

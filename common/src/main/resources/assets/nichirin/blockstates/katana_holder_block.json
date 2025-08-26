@@ -1,0 +1,22 @@
+{
+  "variants": {
+    "facing=up": {
+      "model": "nichirin:block/katana_holder_block"
+    },
+    "facing=down": {
+      "model": "nichirin:block/katana_holder_block"
+    },
+    "facing=north": {
+      "model": "nichirin:block/katana_holder_block"
+    },
+    "facing=south": {
+      "model": "nichirin:block/katana_holder_block"
+    },
+    "facing=west": {
+      "model": "nichirin:block/katana_holder_block"
+    },
+    "facing=east": {
+      "model": "nichirin:block/katana_holder_block"
+    }
+  }
+}

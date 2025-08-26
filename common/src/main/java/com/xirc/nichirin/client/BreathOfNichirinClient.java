@@ -33,76 +33,106 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.client.renderer.item.ItemPropertyFunction;
 import net.minecraft.resources.ResourceLocation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Environment(EnvType.CLIENT)
 public class BreathOfNichirinClient {
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(BreathOfNichirinClient.class);
     private static boolean initialized = false;
 
     private static void registerParticles() {
-        ParticleProviderRegistry.register(NichirinParticleRegistry.THUNDER, ThunderParticleProvider::new);
-        ParticleProviderRegistry.register(NichirinParticleRegistry.SHOCKWAVE, ShockwaveParticleProvider::new);
-        ParticleProviderRegistry.register(NichirinParticleRegistry.SOUND, SoundParticleProvider::new);
-        ParticleProviderRegistry.register(NichirinParticleRegistry.FLASH1, Flash1ParticleProvider::new);
-        ParticleProviderRegistry.register(NichirinParticleRegistry.FLASH2, Flash2ParticleProvider::new);
-        ParticleProviderRegistry.register(NichirinParticleRegistry.BLUE_FLASH1, BlueFlash1ParticleProvider::new);
-        ParticleProviderRegistry.register(NichirinParticleRegistry.BLUE_FLASH2, BlueFlash2ParticleProvider::new);
-        ParticleProviderRegistry.register(NichirinParticleRegistry.BLUE_SHOCKWAVE, BlueShockwaveParticleProvider::new);
-        ParticleProviderRegistry.register(NichirinParticleRegistry.BUTTERFLY, ButterflyParticleProvider::new);
+        try {
+            ParticleProviderRegistry.register(NichirinParticleRegistry.THUNDER, ThunderParticleProvider::new);
+            ParticleProviderRegistry.register(NichirinParticleRegistry.SHOCKWAVE, ShockwaveParticleProvider::new);
+            ParticleProviderRegistry.register(NichirinParticleRegistry.SOUND, SoundParticleProvider::new);
+            ParticleProviderRegistry.register(NichirinParticleRegistry.FLASH1, Flash1ParticleProvider::new);
+            ParticleProviderRegistry.register(NichirinParticleRegistry.FLASH2, Flash2ParticleProvider::new);
+            ParticleProviderRegistry.register(NichirinParticleRegistry.BLUE_FLASH1, BlueFlash1ParticleProvider::new);
+            ParticleProviderRegistry.register(NichirinParticleRegistry.BLUE_FLASH2, BlueFlash2ParticleProvider::new);
+            ParticleProviderRegistry.register(NichirinParticleRegistry.BLUE_SHOCKWAVE, BlueShockwaveParticleProvider::new);
+            ParticleProviderRegistry.register(NichirinParticleRegistry.BUTTERFLY, ButterflyParticleProvider::new);
+            LOGGER.info("Particles registered successfully");
+        } catch (Exception e) {
+            LOGGER.error("Failed to register particles: {}", e.getMessage());
+        }
     }
 
     public static void init() {
-        System.out.println("DEBUG: BreathOfNichirinClient.init() called");
+        LOGGER.info("DEBUG: BreathOfNichirinClient.init() called");
 
-        // Register client tick event to monitor player state
-        ClientTickEvent.CLIENT_POST.register(minecraft -> {
-            if (minecraft.level != null) {
-                // Add input tracking
-                ClientInputTracker.tick();
+        try {
+            // Register client tick event to monitor player state
+            ClientTickEvent.CLIENT_POST.register(minecraft -> {
+                if (minecraft.level != null) {
+                    // Add input tracking
+                    ClientInputTracker.tick();
 
-                if (minecraft.level.getGameTime() % 100 == 0) {
-                    LocalPlayer player = minecraft.player;
+                    if (minecraft.level.getGameTime() % 100 == 0) {
+                        LocalPlayer player = minecraft.player;
+                    }
                 }
+            });
+
+            // Register all client handlers and components
+            ClientEventHandler.register();
+            LOGGER.info("DEBUG: About to register katana client handler");
+            KatanaInputHandler.registerClient();
+            LOGGER.info("DEBUG: Katana client handler registered");
+
+            // Initialize shaders early
+            NichirinShaderRegistry.init();
+            LOGGER.info("Initialized Nichirin shaders");
+
+            // Register critical systems first
+            BlockingInputHandler.register();
+            PlayerStats.initialize();
+            ItemPropertiesHelper.registerBentoBoxProperty();
+            CooldownClearEventHandler.register();
+
+            // Register renderers AFTER block entities are fully registered
+            try {
+                LOGGER.info("About to register entity renderers...");
+                NichirinEntityRendererRegistry.init();
+                LOGGER.info("Entity renderers registered successfully");
+            } catch (Exception e) {
+                LOGGER.error("ERROR: Failed to initialize renderers", e);
+                // Don't rethrow - continue with other initialization
             }
-        });
 
-        // Register all client handlers and components
-        ClientEventHandler.register();
-        System.out.println("DEBUG: About to register katana client handler");
-        KatanaInputHandler.registerClient();
-        System.out.println("DEBUG: Katana client handler registered");
-        BlockingInputHandler.register();
-        PlayerStats.initialize();
-        NichirinShaderRegistry.init();
-        ItemPropertiesHelper.registerBentoBoxProperty();
-        CooldownClearEventHandler.register();
+            // Register keybinds
+            // NichirinKeybindRegistry.register();
 
+            // Register handlers AFTER keybinds
+            BigGuiKeyHandler.register();
+            LOGGER.info("DEBUG: AttackWheelHandler.register() called");
+            AttackWheelHandler.register();
+            ClientDoubleJumpHandler.register();
+            CooldownDisplayPacket.registerClient();
 
-        // Register keybinds FIRST
-       // NichirinKeybindRegistry.register();
+            // Register animations
+            NichirinAnimations.init();
+            AnimationRegistryHelper.preloadAnimations();
 
-        //Registries
-        NichirinEntityRendererRegistry.init();
+            // Register other client components
+            MoveExecutor.registerClientHandler();
 
-        // Register handlers AFTER keybinds
-        BigGuiKeyHandler.register();
-        com.xirc.nichirin.client.handler.AttackWheelHandler.register();
-        ClientDoubleJumpHandler.register();
-        CooldownDisplayPacket.registerClient();
+            // Register particles (this might be causing the late registration warnings)
+            registerParticles();
 
-        // Register animations
-        NichirinAnimations.init();
-        AnimationRegistryHelper.preloadAnimations();
+            // Register UI renderers
+            BreathingBarRenderer.register();
+            StaminaBarRenderer.register();
+            StanceBarRenderer.register();
 
-        // Register other client components
-        MoveExecutor.registerClientHandler();
-        registerParticles();
-        BreathingBarRenderer.register();
-        StaminaBarRenderer.register();
-        StanceBarRenderer.register();
+            LOGGER.info("DEBUG: Client initialization complete");
+            initialized = true;
 
-        System.out.println("DEBUG: Client initialization complete");
-        initialized = true;
+        } catch (Exception e) {
+            LOGGER.error("ERROR: Failed to initialize client", e);
+            // Set initialized to true anyway to prevent complete failure
+            initialized = true;
+        }
     }
 
     public static boolean isClientReady() {

@@ -2,6 +2,7 @@ package com.xirc.nichirin.registry;
 
 import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.common.blocks.BentoBoxBlock;
+import com.xirc.nichirin.common.blocks.KatanaHolderBlock;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.minecraft.core.registries.Registries;
@@ -12,6 +13,9 @@ public interface NichirinBlockEntityRegistry {
 
     RegistrySupplier<BlockEntityType<BentoBoxBlock.BentoBoxBlockEntity>> BENTO_BOX_BLOCK_ENTITY = BLOCK_ENTITIES.register("bento_box_block_entity",
             () -> BlockEntityType.Builder.of(BentoBoxBlock.BentoBoxBlockEntity::new, NichirinBlockRegistry.BENTO_BOX_BLOCK.get()).build(null));
+
+    RegistrySupplier<BlockEntityType<KatanaHolderBlock.KatanaHolderBlockEntity>> KATANA_HOLDER_BLOCK_ENTITY = BLOCK_ENTITIES.register("katana_holder_block_entity",
+            () -> BlockEntityType.Builder.of(KatanaHolderBlock.KatanaHolderBlockEntity::new, NichirinBlockRegistry.KATANA_HOLDER_BLOCK.get()).build(null));
 
     static void register() {
         BLOCK_ENTITIES.register();
