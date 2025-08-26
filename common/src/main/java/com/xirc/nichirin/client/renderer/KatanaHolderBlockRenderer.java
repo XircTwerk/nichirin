@@ -75,16 +75,9 @@ public class KatanaHolderBlockRenderer extends GeoBlockRenderer<KatanaHolderBloc
             boolean shouldRender = animatable.shouldRenderKatana();
             ItemStack katana = animatable.getStoredKatana();
 
-            System.out.println("RENDER at " + animatable.getBlockPos() + ":");
-            System.out.println("  KATANA: " + (katana.isEmpty() ? "EMPTY" : katana.getDisplayName().getString()));
-            System.out.println("  SHOULD RENDER: " + shouldRender);
 
             if (shouldRender) {
-                System.out.println("  DECISION: RENDERING KATANA");
                 renderKatana(poseStack, katana, facing, bufferSource, packedLight);
-            } else {
-                System.out.println("  DECISION: NOT RENDERING (dirty flag or empty)");
-                // Render nothing - katana disappears
             }
         }
     }
