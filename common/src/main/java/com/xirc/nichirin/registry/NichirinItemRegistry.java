@@ -37,6 +37,10 @@ public interface NichirinItemRegistry {
             () -> new SimpleKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
     RegistrySupplier<Item> INSECT_KATANA = register("insect_katana",
             () -> new SimpleKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
+    //sound bs
+    RegistrySupplier<Item> RIGHT_SOUND_KATANA = register("right_sound_katana", () -> new SimpleKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
+    RegistrySupplier<Item> LEFT_SOUND_KATANA = register("left_sound_katana", () -> new SimpleKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
+    RegistrySupplier<Item> SOUND_KATANAS = register("sound_katanas", () -> new Item(settings().rarity(Rarity.RARE).stacksTo(1)));
 
     //Ores and Ingots
     RegistrySupplier<Item> SCARLET_CRIMSON_IRON_GEM = register("scarlet_crimson_iron_gem", () -> new Item(settings()));
