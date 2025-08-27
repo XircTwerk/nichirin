@@ -101,7 +101,7 @@ public class BreathOfNichirinClient {
             }
 
             // Register keybinds
-            // NichirinKeybindRegistry.register();
+            NichirinKeybindRegistry.register();
 
             // Register handlers AFTER keybinds
             BigGuiKeyHandler.register();
