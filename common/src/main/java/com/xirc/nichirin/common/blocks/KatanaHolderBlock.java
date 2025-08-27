@@ -34,11 +34,8 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class KatanaHolderBlock extends BaseEntityBlock {
-    private static final Logger LOGGER = LoggerFactory.getLogger(KatanaHolderBlock.class);
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
 
     // Different shapes based on facing direction - updated to match your model
@@ -125,7 +122,6 @@ public class KatanaHolderBlock extends BaseEntityBlock {
                 ItemStack katana = holderEntity.removeKatana();
                 player.setItemInHand(hand, katana);
                 level.playSound(null, pos, SoundEvents.ITEM_PICKUP, SoundSource.BLOCKS, 0.8f, 1.0f);
-                LOGGER.info("Player {} picked up katana from holder at {}", player.getName().getString(), pos);
             }
             return InteractionResult.SUCCESS;
         }
@@ -137,7 +133,6 @@ public class KatanaHolderBlock extends BaseEntityBlock {
             holderEntity.setKatana(katanaToPlace);
             handItem.shrink(1);
             level.playSound(null, pos, SoundEvents.ARMOR_EQUIP_GENERIC, SoundSource.BLOCKS, 0.8f, 1.2f);
-            LOGGER.info("Player {} placed katana in holder at {}", player.getName().getString(), pos);
         }
 
         return InteractionResult.SUCCESS;
@@ -196,11 +191,9 @@ public class KatanaHolderBlock extends BaseEntityBlock {
                     this.storedKatana.setCount(1);
                     // Reset dirty flag when placing a new katana
                     isDirty = false;
-                    LOGGER.info("Set katana and reset dirty flag at {}", worldPosition);
                 } else {
                     // Setting empty katana means removal
                     isDirty = true;
-                    LOGGER.info("Set empty katana and marked dirty at {}", worldPosition);
                 }
                 setChanged();
 
@@ -221,7 +214,6 @@ public class KatanaHolderBlock extends BaseEntityBlock {
                 BlockState state = getBlockState();
                 level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_ALL);
                 setChanged();
-                LOGGER.info("SERVER: removeKatana() - marked dirty at {}", worldPosition);
             }
 
             return result;
@@ -272,11 +264,6 @@ public class KatanaHolderBlock extends BaseEntityBlock {
             } else {
                 isDirty = false; // Default to clean on first load
             }
-
-            LOGGER.info("CLIENT LOAD at {}: katana={}, dirty={}",
-                    worldPosition,
-                    storedKatana.isEmpty() ? "EMPTY" : storedKatana.getDisplayName().getString(),
-                    isDirty);
         }
 
         @Override

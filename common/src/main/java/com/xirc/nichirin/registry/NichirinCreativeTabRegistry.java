@@ -26,6 +26,9 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinBlockRegistry.SCARLET_ORE_ITEM.get());
                         entries.accept(NichirinBlockRegistry.SCARLET_CRIMSON_IRON_SAND_ITEM.get());
 
+                        //regular blocks
+                        entries.accept(NichirinBlockRegistry.KATANA_HOLDER_BLOCK.get());
+
                         //gems/ingots
                         entries.accept(NichirinItemRegistry.SCARLET_CRIMSON_IRON_GEM.get());
                         entries.accept(NichirinItemRegistry.SCARLET_GEM.get());

@@ -1,22 +1,22 @@
 {
   "variants": {
     "facing=up": {
-      "model": "nichirin:block/katana_holder_block"
+      "model": "minecraft:block/anvil"
     },
     "facing=down": {
-      "model": "nichirin:block/katana_holder_block"
+      "model": "minecraft:block/anvil"
     },
     "facing=north": {
-      "model": "nichirin:block/katana_holder_block"
+      "model": "minecraft:block/anvil"
     },
     "facing=south": {
-      "model": "nichirin:block/katana_holder_block"
+      "model": "minecraft:block/anvil"
     },
     "facing=west": {
-      "model": "nichirin:block/katana_holder_block"
+      "model": "minecraft:block/anvil"
     },
     "facing=east": {
-      "model": "nichirin:block/katana_holder_block"
+      "model": "minecraft:block/anvil"
     }
   }
 }

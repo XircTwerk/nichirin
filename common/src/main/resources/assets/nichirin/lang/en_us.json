@@ -1,5 +1,6 @@
 {
   "block.nichirin.bento_box_block": "Bento Box",
+  "block.nichirin.katana_holder_block": "Katana Holder",
   "block.nichirin.scarlet_ore": "Scarlet Ore",
   "block.nichirin.scarlet_crimson_iron_sand": "Scarlet Crimson Iron Sand",
 
@@ -81,6 +82,7 @@
   "item.nichirin.shinobu_boots": "Shinobu Geta",
   "item.nichirin.smoke_bomb": "Smoke Bomb",
   "item.nichirin.bento_box": "Bento Box",
+
   "item.nichirin.zenitsu_headpiece": "Zenitsu Wig",
   "item.nichirin.zenitsu_cape": "Zenitsu Haori",
   "item.nichirin.zenitsu_leggings": "Zenitsu Leggings",

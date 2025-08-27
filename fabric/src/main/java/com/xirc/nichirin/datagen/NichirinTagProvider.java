@@ -27,7 +27,8 @@ public class NichirinTagProvider extends FabricTagProvider.BlockTagProvider {
         // Add blocks that need iron tools
         getOrCreateTagBuilder(BlockTags.NEEDS_IRON_TOOL)
                 .add(NichirinBlockRegistry.SCARLET_CRIMSON_IRON_SAND.get())
-                .add(NichirinBlockRegistry.SCARLET_ORE.get());
+                .add(NichirinBlockRegistry.SCARLET_ORE.get())
+                .add(NichirinBlockRegistry.KATANA_HOLDER_BLOCK.get());
 
         // Add blocks mineable with shovel
         getOrCreateTagBuilder(BlockTags.MINEABLE_WITH_SHOVEL)
@@ -35,7 +36,8 @@ public class NichirinTagProvider extends FabricTagProvider.BlockTagProvider {
 
         // Add blocks mineable with pickaxe
         getOrCreateTagBuilder(BlockTags.MINEABLE_WITH_PICKAXE)
-                .add(NichirinBlockRegistry.SCARLET_ORE.get());
+                .add(NichirinBlockRegistry.SCARLET_ORE.get())
+                .add(NichirinBlockRegistry.KATANA_HOLDER_BLOCK.get());
     }
 
     // Add ItemTagProvider as nested class for item tags
