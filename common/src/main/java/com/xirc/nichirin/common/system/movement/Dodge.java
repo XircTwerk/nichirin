@@ -137,8 +137,6 @@ public class Dodge {
         player.setDeltaMovement(airDodgeVelocity);
         player.fallDistance = 0; // Prevent fall damage
         player.hurtMarked = true; // Force client sync
-
-        System.out.println("DEBUG: Air dodge - direction: " + dodgeDirection + ", velocity: " + airDodgeVelocity);
     }
 
     /**

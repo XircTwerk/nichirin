@@ -262,7 +262,6 @@ public class SimpleKatana extends SwordItem {
             state.currentRisingSlash.start(player);
             state.risingSlashCooldownUntil = currentTime + state.currentRisingSlash.getCooldown();
 
-            System.out.println("DEBUG: Trying to play sword_vertical animation");
             AnimationUtils.playAnimation(player, "sword_vertical");
 
         } else {
@@ -270,7 +269,6 @@ public class SimpleKatana extends SwordItem {
             state.currentDoubleSlash.start(player);
             state.doubleSlashCooldownUntil = currentTime + state.currentDoubleSlash.getCooldown();
 
-            System.out.println("DEBUG: Trying to play sword_doubleslash animation");
             AnimationUtils.playAnimation(player, "sword_doubleslash");
         }
 

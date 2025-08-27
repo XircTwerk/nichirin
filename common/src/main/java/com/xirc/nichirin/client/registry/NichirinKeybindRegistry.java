@@ -74,8 +74,6 @@ public interface NichirinKeybindRegistry {
         // Send movement input packet to server
         MovementInputPacket packet = new MovementInputPacket();
         NichirinPacketRegistry.sendToServer(packet);
-
-        System.out.println("DEBUG: Movement key (MB5) pressed, packet sent to server");
     }
 
     /**

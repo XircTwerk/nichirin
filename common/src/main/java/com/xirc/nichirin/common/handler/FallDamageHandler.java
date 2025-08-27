@@ -22,8 +22,6 @@ public class FallDamageHandler {
             if (PlayerDoubleJump.hasDoubleJumped(player)) {
                 float reducedDamage = Math.max(0, damage - 6.0f);
 
-                System.out.println("DEBUG: Reducing fall damage from " + damage + " to " + reducedDamage);
-
                 // Reset the double jump state after using the benefit
                 PlayerDoubleJump.resetDoubleJump(player);
 

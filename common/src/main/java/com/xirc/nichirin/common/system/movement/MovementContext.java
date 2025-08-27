@@ -94,11 +94,8 @@ public class MovementContext {
         // Determine movement type based on input and player state
         MovementType movementType = determineMovementType(player, input);
 
-        System.out.println("DEBUG: Determined movement type: " + movementType + " for player " + player.getName().getString());
-        System.out.println("DEBUG: Input state - W:" + input.forward + " S:" + input.backward + " A:" + input.left + " D:" + input.right + " Space:" + input.jump);
 
         if (movementType == MovementType.NONE) {
-            System.out.println("DEBUG: No valid movement context");
             return;
         }
 
