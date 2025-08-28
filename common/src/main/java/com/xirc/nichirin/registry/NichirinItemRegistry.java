@@ -2,7 +2,9 @@ package com.xirc.nichirin.registry;
 
 import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.common.item.armor.NichirinArmorItem;
+import com.xirc.nichirin.common.item.katana.IndividualSoundKatana;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.common.item.katana.SoundKatana;
 import com.xirc.nichirin.common.item.throwable.FlashBombItem;
 import com.xirc.nichirin.common.item.throwable.SmokeBombItem;
 import com.xirc.nichirin.common.item.tool.BentoBoxItem;
@@ -18,8 +20,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import static com.xirc.nichirin.registry.NichirinBlockRegistry.SCARLET_CRIMSON_IRON_SAND;
-import static com.xirc.nichirin.registry.NichirinBlockRegistry.SCARLET_ORE;
 
 public interface NichirinItemRegistry {
     Logger LOGGER = LoggerFactory.getLogger("ModItemRegistry");
@@ -37,10 +37,10 @@ public interface NichirinItemRegistry {
             () -> new SimpleKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
     RegistrySupplier<Item> INSECT_KATANA = register("insect_katana",
             () -> new SimpleKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
-    //sound bs
-    RegistrySupplier<Item> RIGHT_SOUND_KATANA = register("right_sound_katana", () -> new SimpleKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
-    RegistrySupplier<Item> LEFT_SOUND_KATANA = register("left_sound_katana", () -> new SimpleKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
-    RegistrySupplier<Item> SOUND_KATANAS = register("sound_katanas", () -> new Item(settings().rarity(Rarity.RARE).stacksTo(1)));
+
+    RegistrySupplier<Item> SOUND_KATANAS = register("sound_katanas", () -> new SoundKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
+    RegistrySupplier<Item> RIGHT_SOUND_KATANA = register("right_sound_katana", () -> new IndividualSoundKatana(settings().rarity(Rarity.RARE).stacksTo(1), true));
+    RegistrySupplier<Item> LEFT_SOUND_KATANA = register("left_sound_katana", () -> new IndividualSoundKatana(settings().rarity(Rarity.RARE).stacksTo(1), false));
 
     //Ores and Ingots
     RegistrySupplier<Item> SCARLET_CRIMSON_IRON_GEM = register("scarlet_crimson_iron_gem", () -> new Item(settings()));

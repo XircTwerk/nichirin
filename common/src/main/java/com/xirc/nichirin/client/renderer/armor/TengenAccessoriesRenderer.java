@@ -2,6 +2,7 @@ package com.xirc.nichirin.client.renderer.armor;
 
 import com.xirc.nichirin.client.model.NichirinArmorModel;
 import com.xirc.nichirin.common.item.armor.NichirinArmorItem;
+import com.xirc.nichirin.common.item.katana.SoundKatana;
 import mod.azure.azurelib.cache.object.GeoBone;
 import mod.azure.azurelib.util.RenderUtils;
 import net.minecraft.client.model.HumanoidModel;
@@ -9,6 +10,7 @@ import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,6 +56,16 @@ public class TengenAccessoriesRenderer extends NichirinArmorRenderer<NichirinArm
         GeoBone capeLeft = this.model.getBone("CapeLeft").orElse(null);
         GeoBone capeRight = this.model.getBone("CapeRight").orElse(null);
 
+        // Get sword bones for visibility control
+        GeoBone sword1 = this.model.getBone("Sword").orElse(null);
+        GeoBone sword2 = this.model.getBone("Sword2").orElse(null);
+
+        // Check if player is dual-wielding sound katanas to hide swords
+        boolean hideSwords = false;
+        if (this.currentEntity instanceof Player player) {
+            hideSwords = SoundKatana.isPlayerDualWieldingSoundKatanas(player);
+        }
+
         // Apply positioning for all entities
         if (cape != null) {
             ModelPart bodyPart = baseModel.body;
@@ -71,6 +83,32 @@ public class TengenAccessoriesRenderer extends NichirinArmorRenderer<NichirinArm
             ModelPart rightArmPart = baseModel.rightArm;
             RenderUtils.matchModelPartRot(rightArmPart, capeRight);
             capeRight.updatePosition(rightArmPart.x + 5f, 2f - rightArmPart.y + 0.1875f, rightArmPart.z);
+        }
+
+        // Hide swords if player is dual-wielding sound katanas
+        if (hideSwords) {
+            if (sword1 != null) {
+                sword1.setScaleX(0f);
+                sword1.setScaleY(0f);
+                sword1.setScaleZ(0f);
+            }
+            if (sword2 != null) {
+                sword2.setScaleX(0f);
+                sword2.setScaleY(0f);
+                sword2.setScaleZ(0f);
+            }
+        } else {
+            // Restore normal sword scaling
+            if (sword1 != null) {
+                sword1.setScaleX(1f);
+                sword1.setScaleY(1f);
+                sword1.setScaleZ(1f);
+            }
+            if (sword2 != null) {
+                sword2.setScaleX(1f);
+                sword2.setScaleY(1f);
+                sword2.setScaleZ(1f);
+            }
         }
 
         // Apply scaling based on player model type
@@ -112,6 +150,10 @@ public class TengenAccessoriesRenderer extends NichirinArmorRenderer<NichirinArm
             setBoneVisible(this.model.getBone("CapeLeft").orElse(null), true);
             setBoneVisible(this.model.getBone("CapeRight").orElse(null), true);
             setBoneVisible(this.model.getBone("Lower parts").orElse(null), true);
+
+            // Always make sword bones visible by default - scaling handles the hiding
+            setBoneVisible(this.model.getBone("Sword").orElse(null), true);
+            setBoneVisible(this.model.getBone("Sword2").orElse(null), true);
         }
     }
 }
