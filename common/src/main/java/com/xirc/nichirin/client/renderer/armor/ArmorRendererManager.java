@@ -1,5 +1,6 @@
 package com.xirc.nichirin.client.renderer.armor;
 
+import com.xirc.nichirin.client.model.NichirinArmorModel;
 import com.xirc.nichirin.client.renderer.armor.*;
 import com.xirc.nichirin.registry.NichirinItemRegistry;
 import mod.azure.azurelib.animatable.client.RenderProvider;
@@ -7,11 +8,28 @@ import mod.azure.azurelib.renderer.GeoArmorRenderer;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class ArmorRendererManager {
 
+    // Cache renderer instances to prevent constant recreation
+    private static final Map<Item, GeoArmorRenderer<?>> RENDERER_CACHE = new HashMap<>();
+
+    // Singleton render provider to prevent multiple instances
+    private static RenderProvider RENDER_PROVIDER_INSTANCE = null;
+
     public static RenderProvider createRenderProvider() {
+        if (RENDER_PROVIDER_INSTANCE == null) {
+            RENDER_PROVIDER_INSTANCE = createNewRenderProvider();
+        }
+        return RENDER_PROVIDER_INSTANCE;
+    }
+
+    private static RenderProvider createNewRenderProvider() {
         return new RenderProvider() {
             @Override
             public HumanoidModel<LivingEntity> getHumanoidArmorModel(
@@ -20,7 +38,7 @@ public class ArmorRendererManager {
                     EquipmentSlot slot,
                     HumanoidModel<LivingEntity> baseModel) {
 
-                GeoArmorRenderer<?> renderer = createRendererForArmor(armorStack);
+                GeoArmorRenderer<?> renderer = getRendererForArmor(armorStack);
                 if (renderer != null) {
                     renderer.prepForRender(entity, armorStack, slot, baseModel);
                     return renderer;
@@ -32,64 +50,71 @@ public class ArmorRendererManager {
         };
     }
 
-    private static GeoArmorRenderer<?> createRendererForArmor(ItemStack armorStack) {
+    private static GeoArmorRenderer<?> getRendererForArmor(ItemStack armorStack) {
+        Item item = armorStack.getItem();
+
+        // Return cached renderer or create new one if not cached
+        return RENDERER_CACHE.computeIfAbsent(item, key -> createNewRendererForItem(key));
+    }
+
+    private static GeoArmorRenderer<?> createNewRendererForItem(Item item) {
         // Shinobu armor - each piece gets its own renderer instance
-        if (armorStack.is(NichirinItemRegistry.SHINOBU_HEADPIECE.get())) {
+        if (item == NichirinItemRegistry.SHINOBU_HEADPIECE.get()) {
             return new ShinobuUniformRenderer();
         }
-        if (armorStack.is(NichirinItemRegistry.SHINOBU_CAPE.get())) {
+        if (item == NichirinItemRegistry.SHINOBU_CAPE.get()) {
             return new ShinobuCapeRenderer();
         }
-        if (armorStack.is(NichirinItemRegistry.SHINOBU_LEGGINGS.get())) {
+        if (item == NichirinItemRegistry.SHINOBU_LEGGINGS.get()) {
             return new ShinobuUniformRenderer();
         }
-        if (armorStack.is(NichirinItemRegistry.SHINOBU_BOOTS.get())) {
+        if (item == NichirinItemRegistry.SHINOBU_BOOTS.get()) {
             return new ShinobuUniformRenderer();
         }
 
         // Zenitsu armor - each piece gets its own renderer instance
-        if (armorStack.is(NichirinItemRegistry.ZENITSU_HEADPIECE.get())) {
+        if (item == NichirinItemRegistry.ZENITSU_HEADPIECE.get()) {
             return new ZenitsuUniformRenderer();
         }
-        if (armorStack.is(NichirinItemRegistry.ZENITSU_CAPE.get())) {
+        if (item == NichirinItemRegistry.ZENITSU_CAPE.get()) {
             return new ZenitsuCapeRenderer();
         }
-        if (armorStack.is(NichirinItemRegistry.ZENITSU_LEGGINGS.get())) {
+        if (item == NichirinItemRegistry.ZENITSU_LEGGINGS.get()) {
             return new ZenitsuUniformRenderer();
         }
-        if (armorStack.is(NichirinItemRegistry.ZENITSU_BOOTS.get())) {
+        if (item == NichirinItemRegistry.ZENITSU_BOOTS.get()) {
             return new ZenitsuUniformRenderer();
         }
 
         // Rengoku armor - each piece gets its own renderer instance
-        if (armorStack.is(NichirinItemRegistry.RENGOKU_HEADPIECE.get())) {
+        if (item == NichirinItemRegistry.RENGOKU_HEADPIECE.get()) {
             return new RengokuUniformRenderer();
         }
-        if (armorStack.is(NichirinItemRegistry.RENGOKU_CAPE.get())) {
+        if (item == NichirinItemRegistry.RENGOKU_CAPE.get()) {
             return new RengokuCapeRenderer();
         }
-        if (armorStack.is(NichirinItemRegistry.RENGOKU_LEGGINGS.get())) {
+        if (item == NichirinItemRegistry.RENGOKU_LEGGINGS.get()) {
             return new RengokuUniformRenderer();
         }
-        if (armorStack.is(NichirinItemRegistry.RENGOKU_BOOTS.get())) {
+        if (item == NichirinItemRegistry.RENGOKU_BOOTS.get()) {
             return new RengokuUniformRenderer();
         }
 
         // Tengen armor - each piece gets its own renderer instance
-        if (armorStack.is(NichirinItemRegistry.TENGEN_HEADPIECE.get())) {
+        if (item == NichirinItemRegistry.TENGEN_HEADPIECE.get()) {
             return new TengenUniformRenderer();
         }
-        if (armorStack.is(NichirinItemRegistry.TENGEN_ACCESSORIES.get())) {
+        if (item == NichirinItemRegistry.TENGEN_ACCESSORIES.get()) {
             return new TengenAccessoriesRenderer();
         }
-        if (armorStack.is(NichirinItemRegistry.TENGEN_LEGGINGS.get())) {
+        if (item == NichirinItemRegistry.TENGEN_LEGGINGS.get()) {
             return new TengenUniformRenderer();
         }
-        if (armorStack.is(NichirinItemRegistry.TENGEN_BOOTS.get())) {
+        if (item == NichirinItemRegistry.TENGEN_BOOTS.get()) {
             return new TengenUniformRenderer();
         }
 
         // Default fallback - using the base renderer
-        return new NichirinArmorRenderer<>(new com.xirc.nichirin.client.model.NichirinArmorModel<>("default_armor"));
+        return new NichirinArmorRenderer<>(new NichirinArmorModel<>("default_armor"));
     }
 }
