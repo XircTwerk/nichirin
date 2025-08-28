@@ -119,9 +119,15 @@ public class SimpleKatana extends SwordItem {
 
     /**
      * SERVER ONLY: Called by MultiplayerInputHandler after validation
+     * Uses offhand when dual wielding, main hand when solo
      */
     public void performAttack(Player player) {
         if (player.level().isClientSide) {
+            return;
+        }
+
+        // FIRST: Check attack priority before any other logic
+        if (!canPerformAttack(player)) {
             return;
         }
 
@@ -151,6 +157,11 @@ public class SimpleKatana extends SwordItem {
         // Check if moveset wants to override left-click
         AbstractMoveset moveset = BreathingStyleHelper.getMoveset(player);
         if (moveset != null && moveset.handleLeftClick(player)) {
+            // IMPORTANT: Only proceed if THIS katana instance should handle the attack
+            // This prevents offhand katana from responding when main hand should have priority
+            if (!canPerformAttack(player)) {
+                return;
+            }
             return; // Moveset handled it
         }
 
@@ -196,6 +207,7 @@ public class SimpleKatana extends SwordItem {
 
     /**
      * SERVER ONLY: Called by MultiplayerInputHandler after validation
+     * Uses offhand when dual wielding, main hand when solo
      */
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
@@ -203,10 +215,14 @@ public class SimpleKatana extends SwordItem {
             return InteractionResultHolder.pass(player.getItemInHand(hand));
         }
 
-        if (player.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.STUNNED.get())) {
+        // FIRST: Check attack priority before any other logic
+        if (!canPerformAttack(player)) {
             return InteractionResultHolder.pass(player.getItemInHand(hand));
         }
 
+        if (player.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.STUNNED.get())) {
+            return InteractionResultHolder.pass(player.getItemInHand(hand));
+        }
 
         // Check if player has blocking effect - CAN'T ATTACK
         if (player.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.BLOCKING.get())) {
@@ -242,7 +258,13 @@ public class SimpleKatana extends SwordItem {
         // Check if moveset wants to override right-click
         AbstractMoveset moveset = BreathingStyleHelper.getMoveset(player);
         if (moveset != null && moveset.handleRightClick(player, isCrouching)) {
-            return InteractionResultHolder.success(player.getItemInHand(hand));
+            // IMPORTANT: Only proceed if THIS katana instance should handle the attack
+            // This prevents offhand katana from responding when main hand should have priority
+            if (!canPerformAttack(player)) {
+                return InteractionResultHolder.pass(player.getItemInHand(hand));
+            }
+            // Return the item from the active hand (determined by attack priority)
+            return InteractionResultHolder.success(getActiveHandItem(player));
         }
 
         // Default special attacks
@@ -275,7 +297,70 @@ public class SimpleKatana extends SwordItem {
         state.comboCount = 0;
         state.lastAttackTime = 0;
 
-        return InteractionResultHolder.success(player.getItemInHand(hand));
+        // Return the item from the active hand (determined by attack priority)
+        return InteractionResultHolder.success(getActiveHandItem(player));
+    }
+
+    /**
+     * Check if this katana instance can perform attacks based on hand priority rules
+     * Rules:
+     * - When dual wielding: Only main hand katana can attack (main hand overrides)
+     * - When only in main hand: Main hand katana can attack
+     * - When only in offhand: Offhand katana can attack
+     */
+    private boolean canPerformAttack(Player player) {
+        ItemStack mainHand = player.getMainHandItem();
+        ItemStack offHand = player.getOffhandItem();
+
+        boolean mainHandKatana = mainHand.getItem() instanceof SimpleKatana;
+        boolean offHandKatana = offHand.getItem() instanceof SimpleKatana;
+
+        // Case 1: Dual wielding - only main hand katana can attack (main hand overrides)
+        if (mainHandKatana && offHandKatana) {
+            return mainHand.getItem() == this;
+        }
+
+        // Case 2: Only main hand has katana - can attack
+        if (mainHandKatana && !offHandKatana) {
+            return mainHand.getItem() == this;
+        }
+
+        // Case 3: Only offhand has katana - can attack
+        if (!mainHandKatana && offHandKatana) {
+            return offHand.getItem() == this;
+        }
+
+        // Case 4: No katanas - can't attack
+        return false;
+    }
+
+    /**
+     * Get the item from the currently active hand based on priority rules
+     */
+    private ItemStack getActiveHandItem(Player player) {
+        ItemStack mainHand = player.getMainHandItem();
+        ItemStack offHand = player.getOffhandItem();
+
+        boolean mainHandKatana = mainHand.getItem() instanceof SimpleKatana;
+        boolean offHandKatana = offHand.getItem() instanceof SimpleKatana;
+
+        // When dual wielding, active hand is main hand (main hand overrides)
+        if (mainHandKatana && offHandKatana) {
+            return mainHand;
+        }
+
+        // When only main hand, active hand is main hand
+        if (mainHandKatana && !offHandKatana) {
+            return mainHand;
+        }
+
+        // When only offhand, active hand is offhand
+        if (!mainHandKatana && offHandKatana) {
+            return offHand;
+        }
+
+        // Default fallback
+        return mainHand;
     }
 
     /**

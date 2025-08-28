@@ -111,6 +111,7 @@ public class KatanaInputHandler {
             return;
         }
 
+        // Always use main hand for casting
         ItemStack item = player.getMainHandItem();
         if (item.getItem() instanceof SimpleKatana katana) {
             SimpleKatana instance = getKatanaInstance(player, katana);
@@ -126,6 +127,7 @@ public class KatanaInputHandler {
             return;
         }
 
+        // Always use main hand for casting
         ItemStack item = player.getMainHandItem();
         if (item.getItem() instanceof SimpleKatana katana) {
             SimpleKatana instance = getKatanaInstance(player, katana);
@@ -150,7 +152,7 @@ public class KatanaInputHandler {
                 }
             }
 
-            // Execute
+            // Execute with main hand
             instance.use(player.level(), player, InteractionHand.MAIN_HAND);
 
             // Send feedback
