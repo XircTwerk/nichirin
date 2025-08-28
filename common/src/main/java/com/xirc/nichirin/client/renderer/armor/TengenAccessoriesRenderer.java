@@ -119,23 +119,23 @@ public class TengenAccessoriesRenderer extends NichirinArmorRenderer<NichirinArm
                 if (capeLeft != null) {
                     capeLeft.setScaleX(0.8f);
                     capeLeft.setScaleY(1.15f);
-                    capeLeft.setScaleZ(1.15f);
+                    capeLeft.setScaleZ(1f);
                 }
                 if (capeRight != null) {
                     capeRight.setScaleX(0.8f);
                     capeRight.setScaleY(1.15f);
-                    capeRight.setScaleZ(1.15f);
+                    capeRight.setScaleZ(1f);
                 }
             } else {
                 if (capeLeft != null) {
                     capeLeft.setScaleX(1f);
                     capeLeft.setScaleY(1.15f);
-                    capeLeft.setScaleZ(1.3f);
+                    capeLeft.setScaleZ(1f);
                 }
                 if (capeRight != null) {
                     capeRight.setScaleX(1f);
                     capeRight.setScaleY(1.15f);
-                    capeRight.setScaleZ(1.3f);
+                    capeRight.setScaleZ(1f);
                 }
             }
         }

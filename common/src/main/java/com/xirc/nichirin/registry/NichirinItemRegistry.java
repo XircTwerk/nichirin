@@ -37,7 +37,7 @@ public interface NichirinItemRegistry {
             () -> new SimpleKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
     RegistrySupplier<Item> INSECT_KATANA = register("insect_katana",
             () -> new SimpleKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
-
+//sound katanas
     RegistrySupplier<Item> SOUND_KATANAS = register("sound_katanas", () -> new SoundKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
     RegistrySupplier<Item> RIGHT_SOUND_KATANA = register("right_sound_katana", () -> new IndividualSoundKatana(settings().rarity(Rarity.RARE).stacksTo(1), true));
     RegistrySupplier<Item> LEFT_SOUND_KATANA = register("left_sound_katana", () -> new IndividualSoundKatana(settings().rarity(Rarity.RARE).stacksTo(1), false));

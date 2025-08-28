@@ -27,6 +27,11 @@ public class IndividualSoundKatana extends SimpleKatana {
     }
 
     @Override
+    public boolean canFitInsideContainerItems() {
+        return false; // Prevent moving to containers
+    }
+
+    @Override
     public void inventoryTick(ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {
         super.inventoryTick(stack, level, entity, slotId, isSelected);
 
@@ -37,7 +42,10 @@ public class IndividualSoundKatana extends SimpleKatana {
         ItemStack mainHand = player.getMainHandItem();
         ItemStack offHand = player.getOffhandItem();
 
-        boolean properPair = isRightSoundKatana(mainHand) && isLeftSoundKatana(offHand);
+        // Check if we have any pair of individual katanas (regardless of which is in which hand)
+        boolean properPair = (isRightSoundKatana(mainHand) || isLeftSoundKatana(mainHand)) &&
+                (isRightSoundKatana(offHand) || isLeftSoundKatana(offHand)) &&
+                !mainHand.equals(offHand); // Make sure they're different items
 
         if (properPair) {
             // We have a proper pair, increment ticks
@@ -51,15 +59,6 @@ public class IndividualSoundKatana extends SimpleKatana {
                 handlePairLoss(player, stack, slotId);
             }
 
-            activePairTicks.put(playerId, 0);
-        }
-
-        // Prevent wrong placement - immediate fix
-        if ((isRightKatana && isRightSoundKatana(offHand)) ||
-                (!isRightKatana && isLeftSoundKatana(mainHand))) {
-
-            player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(NichirinItemRegistry.SOUND_KATANAS.get()));
-            SoundKatana.restorePlayerOffhand(player);
             activePairTicks.put(playerId, 0);
         }
     }
@@ -93,10 +92,10 @@ public class IndividualSoundKatana extends SimpleKatana {
         }
 
         // Always remove the other katana and restore offhand
-        if (isRightSoundKatana(mainHand)) {
+        if (isRightSoundKatana(mainHand) || isLeftSoundKatana(mainHand)) {
             player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
         }
-        if (isLeftSoundKatana(offHand)) {
+        if (isRightSoundKatana(offHand) || isLeftSoundKatana(offHand)) {
             player.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
         }
 
