@@ -32,6 +32,11 @@ public class SoundKatana extends Item {
         if (!(entity instanceof Player player)) return;
         if (level.isClientSide) return; // Server-side only
 
+        // MUTUAL EXCLUSION: Check if player has any individual katanas and remove them
+        if (hasIndividualKatanas(player)) {
+            removeAllIndividualKatanas(player);
+        }
+
         UUID playerId = player.getUUID();
         ItemStack mainHand = player.getMainHandItem();
         ItemStack offHand = player.getOffhandItem();
@@ -53,6 +58,27 @@ public class SoundKatana extends Item {
             // Convert back to sound katanas
             player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(NichirinItemRegistry.SOUND_KATANAS.get()));
             restoreOffhand(player);
+        }
+    }
+
+    private boolean hasIndividualKatanas(Player player) {
+        // Check all inventory slots for individual katanas
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+            ItemStack slotStack = player.getInventory().getItem(i);
+            if (isRightSoundKatana(slotStack) || isLeftSoundKatana(slotStack)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void removeAllIndividualKatanas(Player player) {
+        // Remove all individual katanas from inventory
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+            ItemStack slotStack = player.getInventory().getItem(i);
+            if (isRightSoundKatana(slotStack) || isLeftSoundKatana(slotStack)) {
+                player.getInventory().setItem(i, ItemStack.EMPTY);
+            }
         }
     }
 

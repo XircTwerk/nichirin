@@ -32,11 +32,36 @@ public class IndividualSoundKatana extends SimpleKatana {
     }
 
     @Override
+    public boolean isValidRepairItem(ItemStack stack, ItemStack repairCandidate) {
+        return false; // Prevent use in anvils/smithing tables
+    }
+
+    @Override
     public void inventoryTick(ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {
         super.inventoryTick(stack, level, entity, slotId, isSelected);
 
         if (!(entity instanceof Player player)) return;
         if (level.isClientSide) return;
+
+        // Additional check: If individual katana is found in any non-player inventory slot, convert to sound katanas
+        if (slotId < 0 || slotId > 40) {
+            // This indicates the item is in a non-standard inventory (chest, hopper, etc.)
+            // Convert to sound katanas and drop it
+            ItemStack soundKatanas = new ItemStack(NichirinItemRegistry.SOUND_KATANAS.get());
+            if (entity.level().getBlockEntity(entity.blockPosition()) != null) {
+                // If there's a block entity at this position, try to place the sound katanas there
+                entity.spawnAtLocation(soundKatanas);
+            }
+            stack.shrink(stack.getCount()); // Remove the individual katana
+            return;
+        }
+
+        // MUTUAL EXCLUSION: Check if player has sound_katanas item
+        if (hasSoundKatanasItem(player)) {
+            // Convert this individual katana back to air since player already has sound_katanas
+            stack.shrink(stack.getCount());
+            return;
+        }
 
         UUID playerId = player.getUUID();
         ItemStack mainHand = player.getMainHandItem();
@@ -113,6 +138,17 @@ public class IndividualSoundKatana extends SimpleKatana {
 
     private boolean isLeftSoundKatana(ItemStack stack) {
         return stack.getItem() == NichirinItemRegistry.LEFT_SOUND_KATANA.get();
+    }
+
+    private boolean hasSoundKatanasItem(Player player) {
+        // Check all inventory slots for sound_katanas item
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+            ItemStack slotStack = player.getInventory().getItem(i);
+            if (slotStack.getItem() == NichirinItemRegistry.SOUND_KATANAS.get()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
