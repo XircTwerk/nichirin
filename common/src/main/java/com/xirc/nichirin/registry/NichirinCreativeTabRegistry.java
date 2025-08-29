@@ -85,9 +85,9 @@ public interface NichirinCreativeTabRegistry {
 
                         entries.accept(NichirinItemRegistry.TENGEN_HEADPIECE.get());
                         entries.accept(NichirinItemRegistry.TENGEN_ACCESSORIES.get());
-                        entries.accept(NichirinItemRegistry.TENGEN_BOOTS.get());
                         entries.accept(NichirinItemRegistry.TENGEN_LEGGINGS.get());
-                        
+                        entries.accept(NichirinItemRegistry.TENGEN_BOOTS.get());
+
 
 
                     })
