@@ -52,6 +52,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withRange(5.0f) // Medium range
                         .withKnockback(0.2f)
                         .withBreathCost(25.0f)
+                        .withHitStun(15)
                         .withHitboxSize(1.8f)
                         .withAction(player -> {
                             RiceSpiritAttack attack = new RiceSpiritAttack();
@@ -71,6 +72,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withRange(7.0f) // Large area around player
                         .withKnockback(0.4f)
                         .withBreathCost(35.0f) // Higher cost for AOE
+                        .withHitStun(20)
                         .withHitboxSize(2.5f) // Large hitbox for AOE
                         .withAction(player -> {
                             ThunderSwarmAttack attack = new ThunderSwarmAttack();
@@ -90,6 +92,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withRange(15.0f) // Large AOE radius
                         .withKnockback(0.3f)
                         .withBreathCost(45.0f) // High cost for area denial
+                        .withHitStun(25)
                         .withAction(player -> {
                             DistantThunderAttack attack = new DistantThunderAttack();
                             ThunderBreathingMoveset moveset = getCurrentMoveset();
@@ -108,6 +111,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withRange(8.0f)
                         .withKnockback(0.1f) // Minimal horizontal, focuses on launch
                         .withBreathCost(30.0f)
+                        .withHitStun(30) // Good combo potential
                         .withHitboxSize(2.0f)
                         .withAction(player -> {
                             HeatLightningAttack attack = new HeatLightningAttack();
@@ -127,6 +131,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withRange(20.0f) // Very long range
                         .withKnockback(0.6f)
                         .withBreathCost(40.0f) // High cost for range and damage
+                        .withHitStun(35) // Good stun for follow-up
                         .withAction(player -> {
                             RumbleFlashAttack attack = new RumbleFlashAttack();
                             ThunderBreathingMoveset moveset = getCurrentMoveset();
@@ -145,6 +150,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withTeleportDistance(20.0f) // Long dash
                         .withKnockback(2.0f) // High knockback
                         .withBreathCost(70.0f) // Very expensive ultimate
+                        .withHitStun(60) // 3 second stun
                         .withHitboxSize(3.0f) // Large hitbox for ultimate
                         .withAction(player -> {
                             HonoikazuchiNoKamiAttack attack = new HonoikazuchiNoKamiAttack();
@@ -177,6 +183,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 .withTeleportDistance(12.0f)
                 .withKnockback(0.2f)
                 .withBreathCost(15.0f)
+                .withHitStun(10)
                 .withHitboxSize(1.5f)
                 .build();
 

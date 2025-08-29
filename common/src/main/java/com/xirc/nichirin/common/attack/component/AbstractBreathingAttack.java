@@ -79,7 +79,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         this.damage = config.getDamageOrDefault(10.0f);
         this.range = config.getRangeOrDefault(3.0f);
         this.knockback = config.getKnockbackOrDefault(0f);
-        this.hitStun = config.getHitStunOrDefault(0);
+        this.hitStun = config.getHitStunOrDefault(8);
         this.hitboxSize = config.getHitboxSizeOrDefault(2.0f);
 
         // Timing
