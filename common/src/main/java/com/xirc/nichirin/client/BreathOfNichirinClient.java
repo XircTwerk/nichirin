@@ -5,6 +5,7 @@ import com.xirc.nichirin.client.animation.NichirinAnimations;
 import com.xirc.nichirin.client.handler.AttackWheelHandler;
 import com.xirc.nichirin.client.handler.BigGuiKeyHandler;
 import com.xirc.nichirin.client.handler.ClientDoubleJumpHandler;
+import com.xirc.nichirin.client.handler.ComboClientHandler;
 import com.xirc.nichirin.client.particle.*;
 import com.xirc.nichirin.client.registry.NichirinKeybindRegistry;
 import com.xirc.nichirin.client.renderer.BreathingBarRenderer;
@@ -89,6 +90,7 @@ public class BreathOfNichirinClient {
             PlayerStats.initialize();
             ItemPropertiesHelper.registerBentoBoxProperty();
             CooldownClearEventHandler.register();
+            ComboClientHandler.register();
 
             // Register renderers AFTER block entities are fully registered
             try {

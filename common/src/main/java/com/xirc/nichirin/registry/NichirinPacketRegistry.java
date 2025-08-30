@@ -35,6 +35,7 @@ public interface NichirinPacketRegistry {
     ResourceLocation MOVEMENT_INPUT_SYNC_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "movement_input_sync");
     ResourceLocation SYNC_BREATHING_STYLE = new ResourceLocation(BreathOfNichirin.MOD_ID, "sync_breathing_style");
     ResourceLocation REQUEST_STYLE_CHANGE = new ResourceLocation(BreathOfNichirin.MOD_ID, "request_style_change");
+    ResourceLocation COMBO_COUNTER_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "combo_counter");
 
     // Packet class mappings
     Map<Class<?>, ResourceLocation> PACKET_IDS = new HashMap<>();
@@ -52,6 +53,7 @@ public interface NichirinPacketRegistry {
         PACKET_IDS.put(PlayerAnimationPacket.class, PLAYER_ANIMATION_ID);
         PACKET_IDS.put(MovementInputPacket.class, MOVEMENT_INPUT_ID);
         PACKET_IDS.put(MovementInputSyncPacket.class, MOVEMENT_INPUT_SYNC_ID);
+        PACKET_IDS.put(ComboCounterPacket.class, COMBO_COUNTER_ID);
 
         // Register packets with error handling
         registerPackets();
@@ -172,6 +174,11 @@ public interface NichirinPacketRegistry {
 
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, PLAYER_ANIMATION_ID, (buf, context) -> {
                 PlayerAnimationPacket packet = new PlayerAnimationPacket(buf);
+                context.queue(() -> packet.handleClient());
+            });
+
+            NetworkManager.registerReceiver(NetworkManager.Side.S2C, COMBO_COUNTER_ID, (buf, context) -> {
+                ComboCounterPacket packet = new ComboCounterPacket(buf);
                 context.queue(() -> packet.handleClient());
             });
 
