@@ -51,7 +51,7 @@ public abstract class AbstractAttack<T extends AbstractAttack<T>> {
     private int hitCount = 0;
 
     // Configuration tracking
-    public boolean configured = false;
+    private boolean configured = false;
 
     /**
      * Configure this attack with values from a moveset

@@ -1,47 +1,38 @@
 package com.xirc.nichirin.common.item.katana;
 
 import com.xirc.nichirin.client.gui.CooldownHUD;
+import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.data.BreathingStyleHelper;
 import com.xirc.nichirin.common.util.AnimationUtils;
 import com.xirc.nichirin.common.util.StaminaManager;
 import com.xirc.nichirin.common.util.MultiplayerInputHandler;
-import com.xirc.nichirin.common.util.ComboIntegration;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.item.Tiers;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.network.chat.Component;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 /**
- * Simple katana using existing attack classes with combo integration
+ * Clean katana that works with MultiplayerInputHandler
  */
 public class SimpleKatana extends SwordItem {
 
     private static final int COMBO_WINDOW = 20; // ticks to chain attacks
     private static final float LIGHT_ATTACK_STAMINA_COST = 5.0f;
     private static final float SPECIAL_ATTACK_STAMINA_COST = 15.0f;
-
-    // Base stun durations for different attack types
-    private static final int LIGHT_ATTACK_STUN = 15; // ticks
-    private static final int COMBO_ATTACK_STUN = 20; // ticks
-    private static final int DOUBLE_SLASH_STUN = 25; // ticks
-    private static final int RISING_SLASH_STUN = 30; // ticks
 
     private final Map<UUID, PlayerAttackState> playerStates = new HashMap<>();
 
@@ -122,17 +113,20 @@ public class SimpleKatana extends SwordItem {
 
         if (entity instanceof Player player && isSelected) {
             tick(player);
+            MoveExecutor.tickAttacks(player);
         }
     }
 
     /**
      * SERVER ONLY: Called by MultiplayerInputHandler after validation
+     * Uses offhand when dual wielding, main hand when solo
      */
     public void performAttack(Player player) {
         if (player.level().isClientSide) {
             return;
         }
 
+        // FIRST: Check attack priority before any other logic
         if (!canPerformAttack(player)) {
             return;
         }
@@ -141,6 +135,7 @@ public class SimpleKatana extends SwordItem {
             return;
         }
 
+        // Check if player has blocking effect - CAN'T ATTACK
         if (player.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.BLOCKING.get())) {
             return;
         }
@@ -155,16 +150,15 @@ public class SimpleKatana extends SwordItem {
         if (state.currentSlash != null && state.currentSlash.isActive()) {
             return;
         }
-        if (state.currentDoubleSlash != null && state.currentDoubleSlash.isActive()) {
-            return;
-        }
-        if (state.currentRisingSlash != null && state.currentRisingSlash.isActive()) {
+        if (state.currentSlice != null && state.currentSlice.isActive()) {
             return;
         }
 
         // Check if moveset wants to override left-click
         AbstractMoveset moveset = BreathingStyleHelper.getMoveset(player);
         if (moveset != null && moveset.handleLeftClick(player)) {
+            // IMPORTANT: Only proceed if THIS katana instance should handle the attack
+            // This prevents offhand katana from responding when main hand should have priority
             if (!canPerformAttack(player)) {
                 return;
             }
@@ -193,32 +187,19 @@ public class SimpleKatana extends SwordItem {
             return;
         }
 
-        // Find targets in range before executing attack
-        List<LivingEntity> targets = findTargetsInRange(player, 2.5f);
-
-        // Execute combo attacks with proper combo integration
+        // Execute combo attacks
         if (isCombo && state.comboCount == 1) {
             state.currentSlash = createLightSlash2();
             state.currentSlash.start(player);
             state.comboCount = 2;
             state.slash2CooldownUntil = currentTime + state.currentSlash.getCooldown();
             AnimationUtils.playAnimation(player, "sword_slash");
-
-            // Apply combo tracking with damage to all hit targets
-            for (LivingEntity target : targets) {
-                ComboIntegration.handleKatanaHit(player, target, COMBO_ATTACK_STUN, 5.0f);
-            }
         } else {
             state.currentSlash = createLightSlash1();
             state.currentSlash.start(player);
             state.comboCount = 1;
             state.slash1CooldownUntil = currentTime + state.currentSlash.getCooldown();
             AnimationUtils.playAnimation(player, "sword_slash");
-
-            // Apply combo tracking with damage to all hit targets
-            for (LivingEntity target : targets) {
-                ComboIntegration.handleKatanaHit(player, target, LIGHT_ATTACK_STUN, 4.0f);
-            }
         }
 
         state.lastAttackTime = currentTime;
@@ -226,6 +207,7 @@ public class SimpleKatana extends SwordItem {
 
     /**
      * SERVER ONLY: Called by MultiplayerInputHandler after validation
+     * Uses offhand when dual wielding, main hand when solo
      */
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
@@ -233,6 +215,7 @@ public class SimpleKatana extends SwordItem {
             return InteractionResultHolder.pass(player.getItemInHand(hand));
         }
 
+        // FIRST: Check attack priority before any other logic
         if (!canPerformAttack(player)) {
             return InteractionResultHolder.pass(player.getItemInHand(hand));
         }
@@ -241,6 +224,7 @@ public class SimpleKatana extends SwordItem {
             return InteractionResultHolder.pass(player.getItemInHand(hand));
         }
 
+        // Check if player has blocking effect - CAN'T ATTACK
         if (player.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.BLOCKING.get())) {
             return InteractionResultHolder.pass(player.getItemInHand(hand));
         }
@@ -249,6 +233,9 @@ public class SimpleKatana extends SwordItem {
 
         // Check if any attack is currently active
         if (state.currentSlash != null && state.currentSlash.isActive()) {
+            return InteractionResultHolder.pass(player.getItemInHand(hand));
+        }
+        if (state.currentSlice != null && state.currentSlice.isActive()) {
             return InteractionResultHolder.pass(player.getItemInHand(hand));
         }
         if (state.currentDoubleSlash != null && state.currentDoubleSlash.isActive()) {
@@ -271,9 +258,12 @@ public class SimpleKatana extends SwordItem {
         // Check if moveset wants to override right-click
         AbstractMoveset moveset = BreathingStyleHelper.getMoveset(player);
         if (moveset != null && moveset.handleRightClick(player, isCrouching)) {
+            // IMPORTANT: Only proceed if THIS katana instance should handle the attack
+            // This prevents offhand katana from responding when main hand should have priority
             if (!canPerformAttack(player)) {
                 return InteractionResultHolder.pass(player.getItemInHand(hand));
             }
+            // Return the item from the active hand (determined by attack priority)
             return InteractionResultHolder.success(getActiveHandItem(player));
         }
 
@@ -289,9 +279,6 @@ public class SimpleKatana extends SwordItem {
             return InteractionResultHolder.pass(player.getItemInHand(hand));
         }
 
-        // Find targets for special attacks
-        List<LivingEntity> targets;
-
         if (isCrouching) {
             state.currentRisingSlash = createRisingSlashAttack();
             state.currentRisingSlash.start(player);
@@ -299,48 +286,27 @@ public class SimpleKatana extends SwordItem {
 
             AnimationUtils.playAnimation(player, "sword_vertical");
 
-            // Rising slash targets
-            targets = findTargetsInRange(player, 2.5f);
-            for (LivingEntity target : targets) {
-                ComboIntegration.handleKatanaHit(player, target, RISING_SLASH_STUN, 4.0f);
-            }
-
         } else {
             state.currentDoubleSlash = createDoubleSlashAttack();
             state.currentDoubleSlash.start(player);
             state.doubleSlashCooldownUntil = currentTime + state.currentDoubleSlash.getCooldown();
 
             AnimationUtils.playAnimation(player, "sword_doubleslash");
-
-            // Double slash targets
-            targets = findTargetsInRange(player, 2.8f);
-            for (LivingEntity target : targets) {
-                ComboIntegration.handleKatanaHit(player, target, DOUBLE_SLASH_STUN, 3.5f);
-            }
         }
 
         state.comboCount = 0;
         state.lastAttackTime = 0;
 
+        // Return the item from the active hand (determined by attack priority)
         return InteractionResultHolder.success(getActiveHandItem(player));
     }
 
     /**
-     * Find living entities in range of the player for attacks
-     */
-    private List<LivingEntity> findTargetsInRange(Player player, float range) {
-        AABB searchBox = new AABB(
-                player.getX() - range, player.getY() - range, player.getZ() - range,
-                player.getX() + range, player.getY() + range, player.getZ() + range
-        );
-
-        return player.level().getEntitiesOfClass(LivingEntity.class, searchBox,
-                entity -> entity != player && entity.isAlive() && !entity.isSpectator()
-        );
-    }
-
-    /**
      * Check if this katana instance can perform attacks based on hand priority rules
+     * Rules:
+     * - When dual wielding: Only main hand katana can attack (main hand overrides)
+     * - When only in main hand: Main hand katana can attack
+     * - When only in offhand: Offhand katana can attack
      */
     private boolean canPerformAttack(Player player) {
         ItemStack mainHand = player.getMainHandItem();
@@ -443,6 +409,9 @@ public class SimpleKatana extends SwordItem {
         if (state.currentSlash != null && state.currentSlash.isActive()) {
             state.currentSlash.tick(player);
         }
+        if (state.currentSlice != null && state.currentSlice.isActive()) {
+            state.currentSlice.tick(player);
+        }
         if (state.currentDoubleSlash != null && state.currentDoubleSlash.isActive()) {
             state.currentDoubleSlash.tick(player);
         }
@@ -470,9 +439,10 @@ public class SimpleKatana extends SwordItem {
         playerStates.entrySet().removeIf(entry -> {
             PlayerAttackState state = entry.getValue();
             boolean slashInactive = state.currentSlash == null || !state.currentSlash.isActive();
+            boolean sliceInactive = state.currentSlice == null || !state.currentSlice.isActive();
             boolean doubleSlashInactive = state.currentDoubleSlash == null || !state.currentDoubleSlash.isActive();
             boolean risingSlashInactive = state.currentRisingSlash == null || !state.currentRisingSlash.isActive();
-            return slashInactive && doubleSlashInactive && risingSlashInactive && state.comboCount == 0;
+            return slashInactive && sliceInactive && doubleSlashInactive && risingSlashInactive && state.comboCount == 0;
         });
     }
 
@@ -480,6 +450,7 @@ public class SimpleKatana extends SwordItem {
         long lastAttackTime = 0;
         int comboCount = 0;
         SimpleSlashAttack currentSlash = null;
+        SimpleSliceAttack currentSlice = null;
         DoubleSlashAttack currentDoubleSlash = null;
         RisingSlashAttack currentRisingSlash = null;
 
