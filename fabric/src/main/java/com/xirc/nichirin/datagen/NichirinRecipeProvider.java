@@ -1,5 +1,6 @@
 package com.xirc.nichirin.datagen;
 
+import com.xirc.nichirin.registry.NichirinBlockRegistry;
 import com.xirc.nichirin.registry.NichirinItemRegistry;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricRecipeProvider;
@@ -8,6 +9,8 @@ import net.minecraft.data.recipes.FinishedRecipe;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.data.recipes.ShapelessRecipeBuilder;
+import net.minecraft.nbt.Tag;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.Items;
 
 import java.util.function.Consumer;
@@ -57,6 +60,14 @@ public class NichirinRecipeProvider extends FabricRecipeProvider {
                 .unlockedBy("has_magenta_dye", InventoryChangeTrigger.TriggerInstance.hasItems(Items.MAGENTA_DYE))
                 .save(exporter);
 
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.COMBAT, NichirinItemRegistry.SOUND_KATANAS.get())
+                .requires(NichirinItemRegistry.KATANA.get())
+                .requires(NichirinItemRegistry.KATANA.get())
+                .requires(Items.WHITE_DYE)
+                .unlockedBy("has_katana", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinItemRegistry.KATANA.get()))
+                .unlockedBy("has_white_dye", InventoryChangeTrigger.TriggerInstance.hasItems(Items.WHITE_DYE))
+                .save(exporter);
+
         // Smoke bomb recipe
         ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.SMOKE_BOMB.get(), 4)
                 .define('G', Items.GUNPOWDER)
@@ -79,6 +90,22 @@ public class NichirinRecipeProvider extends FabricRecipeProvider {
                 .pattern("PG")
                 .unlockedBy("has_gunpowder", InventoryChangeTrigger.TriggerInstance.hasItems(Items.GUNPOWDER))
                 .unlockedBy("has_paper", InventoryChangeTrigger.TriggerInstance.hasItems(Items.PAPER))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.FOOD, NichirinItemRegistry.BENTO_BOX.get())
+                .define('W', ItemTags.WOODEN_SLABS)
+                .pattern("WWW")
+                .pattern("W W")
+                .pattern("WWW")
+                .unlockedBy("has_oak_slab", InventoryChangeTrigger.TriggerInstance.hasItems(Items.OAK_SLAB))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, NichirinBlockRegistry.KATANA_HOLDER_ITEM.get())
+                .define('I', Items.IRON_INGOT)
+                .define('N', Items.IRON_NUGGET)
+                .pattern("N N")
+                .pattern("III")
+                .unlockedBy("has_iron_ingot", InventoryChangeTrigger.TriggerInstance.hasItems(Items.IRON_INGOT))
                 .save(exporter);
 
         // ===== ZENITSU ARMOR RECIPES =====
