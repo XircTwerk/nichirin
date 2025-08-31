@@ -113,11 +113,11 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
             return;
         }
 
-        // Validate critical values - allow 0 for some properties
-        if (damage <= 0 || duration <= 0) {
+        // Validate only that duration exists (attacks need to run for some time)
+        if (duration <= 0) {
             System.err.println("ERROR: " + this.getClass().getSimpleName() + " has invalid configuration values!");
-            System.err.println("  Damage: " + damage + ", Duration: " + duration + " (these must be > 0)");
-            System.err.println("  Range: " + range + ", HitboxSize: " + hitboxSize + " (these can be 0 for special attacks)");
+            System.err.println("  Duration: " + duration + " (must be > 0)");
+            System.err.println("  All other values can be 0 for special attack types");
             return;
         }
 
@@ -273,6 +273,11 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
 
         System.out.println("DEBUG: Damage applied: " + damaged + ", damage value: " + damage);
 
+        if (damaged) {
+            // Add combo tracking for breathing attacks
+            com.xirc.nichirin.common.util.ComboIntegration.handleSuccessfulHit(user, target, hitStun, damage);
+        }
+
         // Apply hit stun if configured
         if (hitStun > 0) {
             target.invulnerableTime = hitStun;
@@ -318,6 +323,11 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         boolean damaged = target.hurt(source, damage);
 
         System.out.println("DEBUG: No-immunity damage applied: " + damaged + ", damage value: " + damage);
+
+        if (damaged) {
+            // Add combo tracking for breathing attacks (no immunity version)
+            com.xirc.nichirin.common.util.ComboIntegration.handleSuccessfulHit(user, target, hitStun, damage);
+        }
 
         // Apply hit stun
         if (hitStun > 0) {
@@ -386,7 +396,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     /**
      * Get entities in a line between two points
      */
-    protected List<LivingEntity> getTargetsInLine(Vec3 start, Vec3 end, double  thickness) {
+    protected List<LivingEntity> getTargetsInLine(Vec3 start, Vec3 end, double thickness) {
         AABB lineBounds = new AABB(
                 Math.min(start.x, end.x) - thickness,
                 Math.min(start.y, end.y) - thickness,

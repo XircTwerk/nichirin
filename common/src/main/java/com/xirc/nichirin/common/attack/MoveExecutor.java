@@ -77,9 +77,9 @@ public class MoveExecutor {
      */
     private static boolean isAttackConfigured(AbstractBreathingAttack<?, ?> attack) {
         try {
-            // Check if any core values are set (damage OR duration > 0)
-            // Some attacks might legitimately have 0 damage (utility attacks)
-            return attack.getDamage() >= 0 && attack.getDuration() > 0;
+            // Check if duration > 0 as the only required value
+            // All other values (damage, range, hitboxSize) can be 0 for special attacks
+            return attack.getDuration() > 0;
         } catch (Exception e) {
             return false;
         }
