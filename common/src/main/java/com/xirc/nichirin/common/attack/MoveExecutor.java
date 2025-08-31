@@ -29,19 +29,35 @@ public class MoveExecutor {
     private static final ResourceLocation COOLDOWN_PACKET_ID = new ResourceLocation("nichirin", "cooldown_display");
 
     /**
-     * Execute any breathing attack with metadata lookup and automatic configuration
+     * Execute any breathing attack - handles both pre-configured and auto-configured attacks
      */
     public static void executeAttack(Player player, Object attack, String movesetId, String moveId) {
+        System.out.println("DEBUG: ExecuteAttack called for " + attack.getClass().getSimpleName());
+
         // Handle all breathing attacks through the unified interface
         if (attack instanceof AbstractBreathingAttack<?, ?> breathingAttack) {
-            // Get the moveset for configuration
-            AbstractMoveset moveset = MovesetRegistry.getMoveset(movesetId);
-            if (moveset != null) {
-                // Find the move configuration
-                AbstractMoveset.MoveConfiguration config = findMoveConfig(moveset, moveId);
-                if (config != null) {
-                    breathingAttack.configure(config);
+            // Check if attack is already configured (via moveset manual config)
+            boolean alreadyConfigured = isAttackConfigured(breathingAttack);
+
+            if (!alreadyConfigured) {
+                System.out.println("DEBUG: Attack not configured, looking up config for " + moveId);
+                // Get the moveset for configuration
+                AbstractMoveset moveset = MovesetRegistry.getMoveset(movesetId);
+                if (moveset != null) {
+                    // Find the move configuration
+                    AbstractMoveset.MoveConfiguration config = findMoveConfig(moveset, moveId);
+                    if (config != null) {
+                        breathingAttack.configure(config);
+                    } else {
+                        System.err.println("ERROR: Could not find move config for " + moveId + " and attack not pre-configured");
+                        return;
+                    }
+                } else {
+                    System.err.println("ERROR: Could not find moveset " + movesetId);
+                    return;
                 }
+            } else {
+                System.out.println("DEBUG: Attack already configured, using existing configuration");
             }
         }
 
@@ -57,6 +73,19 @@ public class MoveExecutor {
     }
 
     /**
+     * Check if a breathing attack is already configured
+     */
+    private static boolean isAttackConfigured(AbstractBreathingAttack<?, ?> attack) {
+        try {
+            // Check if any core values are set (damage OR duration > 0)
+            // Some attacks might legitimately have 0 damage (utility attacks)
+            return attack.getDamage() >= 0 && attack.getDuration() > 0;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
      * Execute an attack with explicit name and cooldown
      */
     public static void executeAttackWithInfo(Player player, Object attack, String displayName, int cooldown) {
@@ -67,14 +96,26 @@ public class MoveExecutor {
      * Internal execution method
      */
     private static void executeAttackInternal(Player player, Object attack, String displayName, int cooldown) {
-        if (!isAttackActive(attack)) {
-            startAttack(player, attack);
-            trackAttack(player, attack);
+        System.out.println("DEBUG: ExecuteAttackInternal - checking if attack is active");
 
-            // Send cooldown to client if on server
-            if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer && cooldown > 0) {
-                sendCooldownToClient(serverPlayer, displayName, cooldown);
+        if (!isAttackActive(attack)) {
+            System.out.println("DEBUG: Attack not active, starting attack");
+            startAttack(player, attack);
+
+            // Only track if attack actually started successfully
+            if (isAttackActive(attack)) {
+                System.out.println("DEBUG: Attack started successfully, tracking it");
+                trackAttack(player, attack);
+
+                // Send cooldown to client if on server
+                if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer && cooldown > 0) {
+                    sendCooldownToClient(serverPlayer, displayName, cooldown);
+                }
+            } else {
+                System.out.println("DEBUG: Attack failed to start, not tracking");
             }
+        } else {
+            System.out.println("DEBUG: Attack already active, ignoring");
         }
     }
 
@@ -113,6 +154,8 @@ public class MoveExecutor {
      * Generic method to start an attack
      */
     private static void startAttack(Player player, Object attack) {
+        System.out.println("DEBUG: Starting attack " + attack.getClass().getSimpleName());
+
         // Handle AbstractBreathingAttack directly
         if (attack instanceof AbstractBreathingAttack<?, ?> breathingAttack) {
             breathingAttack.start(player, player.level());
@@ -199,45 +242,47 @@ public class MoveExecutor {
 
     /**
      * Tick all active attacks for a player
+     * THIS METHOD MUST BE CALLED EVERY TICK FROM YOUR MAIN TICK HANDLER
      */
     public static void tickAttacks(Player player) {
         var attacks = activeAttacks.get(player);
-        if (attacks != null && !attacks.isEmpty()) {  // Add !attacks.isEmpty() check
-            // Create a copy to avoid concurrent modification - with null safety
-            List<Object> attacksCopy;
-            List<Object> toRemove = new ArrayList<>();
+        if (attacks == null || attacks.isEmpty()) {
+            return;
+        }
 
-            // Thread-safe copy creation
-            synchronized (attacks) {
-                if (attacks.isEmpty()) {
-                    return; // Exit early if empty
-                }
-                attacksCopy = new ArrayList<>(attacks);
-            }
+        System.out.println("DEBUG: Ticking " + attacks.size() + " attacks for " + player.getName().getString());
 
-            for (Object attack : attacksCopy) {
-                try {
-                    boolean shouldRemove = !tickAndCheckActive(player, attack);
+        List<Object> toRemove = new ArrayList<>();
 
-                    if (shouldRemove) {
-                        toRemove.add(attack);
-                    }
-                } catch (Exception e) {
-                    // Remove if we can't tick it
-                    System.err.println("Error ticking attack: " + e.getMessage());
+        // Create a copy to avoid concurrent modification
+        List<Object> attacksCopy;
+        synchronized (attacks) {
+            attacksCopy = new ArrayList<>(attacks);
+        }
+
+        for (Object attack : attacksCopy) {
+            try {
+                boolean stillActive = tickAndCheckActive(player, attack);
+
+                if (!stillActive) {
+                    System.out.println("DEBUG: Attack " + attack.getClass().getSimpleName() + " is no longer active, removing");
                     toRemove.add(attack);
                 }
+            } catch (Exception e) {
+                System.err.println("Error ticking attack " + attack.getClass().getSimpleName() + ": " + e.getMessage());
+                e.printStackTrace();
+                toRemove.add(attack);
             }
+        }
 
-            // Remove all inactive attacks - with synchronization
-            if (!toRemove.isEmpty()) {
-                synchronized (attacks) {
-                    attacks.removeAll(toRemove);
+        // Remove all inactive attacks
+        if (!toRemove.isEmpty()) {
+            synchronized (attacks) {
+                attacks.removeAll(toRemove);
 
-                    // Clean up empty lists
-                    if (attacks.isEmpty()) {
-                        activeAttacks.remove(player);
-                    }
+                // Clean up empty lists
+                if (attacks.isEmpty()) {
+                    activeAttacks.remove(player);
                 }
             }
         }
@@ -286,6 +331,7 @@ public class MoveExecutor {
      */
     private static void trackAttack(Player player, Object attack) {
         activeAttacks.computeIfAbsent(player, k -> new ArrayList<>()).add(attack);
+        System.out.println("DEBUG: Now tracking " + activeAttacks.get(player).size() + " attacks for " + player.getName().getString());
     }
 
     /**
@@ -294,6 +340,8 @@ public class MoveExecutor {
     public static void clearAttacks(Player player) {
         var attacks = activeAttacks.remove(player);
         if (attacks != null) {
+            System.out.println("DEBUG: Clearing " + attacks.size() + " attacks for " + player.getName().getString());
+
             // Stop all attacks gracefully
             for (Object attack : attacks) {
                 try {
@@ -394,5 +442,20 @@ public class MoveExecutor {
         }
 
         return stopped;
+    }
+
+    /**
+     * Tick all active attacks for all players - CALL THIS FROM YOUR MAIN SERVER TICK HANDLER
+     */
+    public static void tickAllAttacks(net.minecraft.server.MinecraftServer server) {
+        if (server == null) return;
+
+        // Tick all tracked attacks via the executor system
+        for (var player : server.getPlayerList().getPlayers()) {
+            tickAttacks(player);
+        }
+
+        // Also tick self-managed attacks
+        AbstractBreathingAttack.tickAllActiveAttacks(server);
     }
 }

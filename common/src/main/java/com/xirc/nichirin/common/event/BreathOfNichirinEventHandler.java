@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.event;
 
+import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.sound.TempoBreakerAttack;
 import dev.architectury.event.events.common.*;
 import net.minecraft.server.MinecraftServer;
@@ -33,7 +34,8 @@ public class BreathOfNichirinEventHandler {
      */
     private static void onServerTick(MinecraftServer server) {
         if (server != null) {
-            TempoBreakerAttack.processPendingExplosionsGlobal(server);
+            // CRITICAL: Tick all breathing attacks
+            MoveExecutor.tickAllAttacks(server);
         }
     }
 }

@@ -2,7 +2,6 @@ package com.xirc.nichirin.common.attack.component;
 
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset.MoveConfiguration;
 import com.xirc.nichirin.common.util.BreathingManager;
-import com.xirc.nichirin.common.util.ComboIntegration;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import lombok.Getter;
 import lombok.Setter;
@@ -30,8 +29,7 @@ import java.util.UUID;
 @SuppressWarnings("rawtypes")
 public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack, A extends IBreathingAttacker> {
 
-    // Configuration from moveset - NO DEFAULT VALUES
-    // These are set via configure() method called by the moveset
+    // Configuration from moveset - NO DEFAULT VALUES - MUST be configured
     protected float damage;
     protected float range;
     protected float knockback;
@@ -53,6 +51,9 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     protected Player user;
     protected Level world;
 
+    // Self-ticking system - attacks register themselves for automatic ticking
+    private static final java.util.concurrent.ConcurrentHashMap<Player, java.util.List<AbstractBreathingAttack<?, ?>>> selfTickingAttacks = new java.util.concurrent.ConcurrentHashMap<>();
+
     // Hit tracking
     @Setter
     private Set<UUID> hitEntities = new HashSet<>();
@@ -63,10 +64,6 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     private boolean configured = false;
     private boolean breathConsumed = false;
 
-    // Legacy builder pattern support (for backward compatibility)
-    // These will be overridden by configure() if called
-    protected boolean builderConfigured = false;
-
     /**
      * Configure this attack with values from the moveset
      * This MUST be called by the moveset before starting the attack
@@ -76,20 +73,20 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
             return; // Prevent double-configuration
         }
 
-        // Combat Stats - use sensible defaults if not configured
-        this.damage = config.getDamageOrDefault(10.0f);
-        this.range = config.getRangeOrDefault(3.0f);
+        // Combat Stats - REMOVED defaults - these MUST be provided by moveset
+        this.damage = config.getDamageOrDefault(0f);
+        this.range = config.getRangeOrDefault(0f);
         this.knockback = config.getKnockbackOrDefault(0f);
-        this.hitStun = config.getHitStunOrDefault(8);
-        this.hitboxSize = config.getHitboxSizeOrDefault(2.0f);
+        this.hitStun = config.getHitStunOrDefault(0);
+        this.hitboxSize = config.getHitboxSizeOrDefault(0f);
 
         // Timing
-        this.cooldown = config.getCooldownOrDefault(40);
-        this.windup = config.getWindupOrDefault(5);
-        this.duration = config.getDurationOrDefault(20);
+        this.cooldown = config.getCooldownOrDefault(0);
+        this.windup = config.getWindupOrDefault(0);
+        this.duration = config.getDurationOrDefault(0);
 
         // Resources
-        this.breathCost = config.getBreathCostOrDefault(15.0f);
+        this.breathCost = config.getBreathCostOrDefault(0f);
 
         // Movement (nullable - only set if configured in moveset)
         this.teleportDistance = config.getTeleportDistance();
@@ -97,66 +94,31 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         this.teleportWindup = config.getTeleportWindup();
 
         this.configured = true;
-        this.builderConfigured = false; // Moveset config overrides builder
+
+        System.out.println("DEBUG: Attack " + this.getClass().getSimpleName() + " configured with:");
+        System.out.println("  Damage: " + this.damage);
+        System.out.println("  Range: " + this.range);
+        System.out.println("  Hitbox Size: " + this.hitboxSize);
+        System.out.println("  Duration: " + this.duration);
+        System.out.println("  Windup: " + this.windup);
     }
 
     /**
-     * Legacy builder method support - will be overridden by configure() if called
-     */
-    @SuppressWarnings("unchecked")
-    public T withTiming(int cooldown, int windup, int duration) {
-        if (!configured) {
-            this.cooldown = cooldown;
-            this.windup = windup;
-            this.duration = duration;
-            this.builderConfigured = true;
-        }
-        return (T) this;
-    }
-
-    @SuppressWarnings("unchecked")
-    public T withDamage(float damage) {
-        if (!configured) {
-            this.damage = damage;
-            this.builderConfigured = true;
-        }
-        return (T) this;
-    }
-
-    @SuppressWarnings("unchecked")
-    public T withRange(float range) {
-        if (!configured) {
-            this.range = range;
-            this.builderConfigured = true;
-        }
-        return (T) this;
-    }
-
-    @SuppressWarnings("unchecked")
-    public T withKnockback(float knockback) {
-        if (!configured) {
-            this.knockback = knockback;
-            this.builderConfigured = true;
-        }
-        return (T) this;
-    }
-
-    @SuppressWarnings("unchecked")
-    public T withBreathCost(float cost) {
-        if (!configured) {
-            this.breathCost = cost;
-            this.builderConfigured = true;
-        }
-        return (T) this;
-    }
-
-    /**
-     * Start the attack - unified interface
+     * Start the attack - unified interface (legacy compatibility)
      */
     public void start(Player user, Level world) {
-        if (!configured && !builderConfigured) {
-            System.err.println("Warning: " + this.getClass().getSimpleName() + " started without configuration!");
-            setEmergencyDefaults();
+        // CRITICAL: Check configuration first
+        if (!configured) {
+            System.err.println("ERROR: " + this.getClass().getSimpleName() + " cannot start - not configured!");
+            return;
+        }
+
+        // Validate critical values - allow 0 for some properties
+        if (damage <= 0 || duration <= 0) {
+            System.err.println("ERROR: " + this.getClass().getSimpleName() + " has invalid configuration values!");
+            System.err.println("  Damage: " + damage + ", Duration: " + duration + " (these must be > 0)");
+            System.err.println("  Range: " + range + ", HitboxSize: " + hitboxSize + " (these can be 0 for special attacks)");
+            return;
         }
 
         this.user = user;
@@ -193,10 +155,27 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         // Mark as active AFTER breath consumption
         this.isActive = true;
 
-        // Call onStart() - if this calls stop(), the attack will be cancelled
-        onStart();
+        // Register for self-ticking
+        registerForTicking();
 
-        // If onStart() called stop(), we need to refund the breath
+        System.out.println("DEBUG: Attack " + this.getClass().getSimpleName() + " starting with active=true");
+
+        // Call onStart() - if this calls stop(), we'll handle it
+        try {
+            onStart();
+        } catch (Exception e) {
+            System.err.println("ERROR in onStart(): " + e.getMessage());
+            e.printStackTrace();
+            // Clean up on error
+            this.isActive = false;
+            if (breathConsumed) {
+                BreathingManager.restore(user, breathCost);
+                breathConsumed = false;
+            }
+            return;
+        }
+
+        // If onStart() called stop(), refund breath
         if (!isActive && breathConsumed) {
             BreathingManager.restore(user, breathCost);
             breathConsumed = false;
@@ -228,9 +207,17 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
 
         tickCount++;
 
+        System.out.println("DEBUG: " + this.getClass().getSimpleName() + " tick " + tickCount +
+                " (windup=" + windup + ", duration=" + duration + ", active=" + isActive + ")");
+
         // Check if we're past windup phase
         if (tickCount > windup) {
-            perform();
+            try {
+                perform();
+            } catch (Exception e) {
+                System.err.println("ERROR in perform(): " + e.getMessage());
+                e.printStackTrace();
+            }
         }
 
         // Check if attack duration is complete
@@ -252,7 +239,17 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     public void stop() {
         if (isActive) {
             isActive = false;
-            onStop();
+
+            // Unregister from self-ticking
+            unregisterFromTicking();
+
+            System.out.println("DEBUG: Attack " + this.getClass().getSimpleName() + " stopped");
+            try {
+                onStop();
+            } catch (Exception e) {
+                System.err.println("ERROR in onStop(): " + e.getMessage());
+                e.printStackTrace();
+            }
         }
     }
 
@@ -262,8 +259,11 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     protected void hitTarget(LivingEntity target) {
         if (world.isClientSide) return;
 
+        System.out.println("DEBUG: Hitting target " + target.getName().getString() + " with damage " + damage);
+
         // Check if already hit (for non-multi-hit attacks)
         if (hitEntities.contains(target.getUUID())) {
+            System.out.println("DEBUG: Target already hit, skipping");
             return;
         }
 
@@ -271,17 +271,29 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         DamageSource source = user.damageSources().playerAttack(user);
         boolean damaged = target.hurt(source, damage);
 
-        if (damaged && user instanceof Player) {
-            Player player = (Player) user;
-            // FIXED: Call combo integration AFTER successful damage
-            int stunTicks = hitStun > 0 ? hitStun : 20; // Use move's hitStun or default
-            ComboIntegration.handleSuccessfulHit(player, target, stunTicks, damage);
+        System.out.println("DEBUG: Damage applied: " + damaged + ", damage value: " + damage);
+
+        // Apply hit stun if configured
+        if (hitStun > 0) {
+            target.invulnerableTime = hitStun;
+
+            // Apply actual stun effect
+            MobEffectInstance stunInstance = new MobEffectInstance(
+                    NichirinEffectRegistry.STUNNED.get(),
+                    hitStun, // Duration in ticks
+                    0, // Amplifier
+                    false, // Ambient
+                    true, // Show particles
+                    true // Show icon
+            );
+            target.addEffect(stunInstance);
         }
 
         // Apply knockback if configured
         if (knockback > 0) {
             Vec3 knockbackDir = target.position().subtract(user.position()).normalize();
             target.push(knockbackDir.x * knockback, 0.1, knockbackDir.z * knockback);
+            System.out.println("DEBUG: Applied knockback: " + knockback);
         }
 
         // Track hit
@@ -295,6 +307,8 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     protected void hitTargetNoImmunity(LivingEntity target) {
         if (world.isClientSide) return;
 
+        System.out.println("DEBUG: Hitting target (no immunity) " + target.getName().getString() + " with damage " + damage);
+
         // Reset invulnerability to allow immediate damage
         target.invulnerableTime = 0;
         target.hurtTime = 0;
@@ -303,11 +317,22 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         DamageSource source = user.damageSources().playerAttack(user);
         boolean damaged = target.hurt(source, damage);
 
-        if (damaged && user instanceof Player) {
-            Player player = (Player) user;
-            // FIXED: Call combo integration AFTER successful damage
-            int stunTicks = hitStun > 0 ? hitStun : 20;
-            ComboIntegration.handleSuccessfulHit(player, target, stunTicks, damage);
+        System.out.println("DEBUG: No-immunity damage applied: " + damaged + ", damage value: " + damage);
+
+        // Apply hit stun
+        if (hitStun > 0) {
+            target.invulnerableTime = hitStun;
+
+            // Apply actual stun effect
+            MobEffectInstance stunInstance = new MobEffectInstance(
+                    NichirinEffectRegistry.STUNNED.get(),
+                    hitStun, // Duration in ticks
+                    0, // Amplifier
+                    false, // Ambient
+                    true, // Show particles
+                    true // Show icon
+            );
+            target.addEffect(stunInstance);
         }
 
         // Apply knockback
@@ -329,8 +354,14 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
                 center.x + hitboxSize/2, center.y + hitboxSize/2, center.z + hitboxSize/2
         );
 
-        return world.getEntitiesOfClass(LivingEntity.class, hitbox,
+        System.out.println("DEBUG: Checking hitbox at " + center + " with size " + hitboxSize);
+        System.out.println("DEBUG: Hitbox bounds: " + hitbox);
+
+        List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
                 entity -> entity != user && entity.isAlive());
+
+        System.out.println("DEBUG: Found " + targets.size() + " targets in hitbox");
+        return targets;
     }
 
     /**
@@ -342,14 +373,20 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
                 center.x + width/2, center.y + height/2, center.z + depth/2
         );
 
-        return world.getEntitiesOfClass(LivingEntity.class, hitbox,
+        System.out.println("DEBUG: Custom hitbox at " + center + " dimensions: " + width + "x" + height + "x" + depth);
+        System.out.println("DEBUG: Custom hitbox bounds: " + hitbox);
+
+        List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
                 entity -> entity != user && entity.isAlive());
+
+        System.out.println("DEBUG: Found " + targets.size() + " targets in custom hitbox");
+        return targets;
     }
 
     /**
      * Get entities in a line between two points
      */
-    protected List<LivingEntity> getTargetsInLine(Vec3 start, Vec3 end, double thickness) {
+    protected List<LivingEntity> getTargetsInLine(Vec3 start, Vec3 end, double  thickness) {
         AABB lineBounds = new AABB(
                 Math.min(start.x, end.x) - thickness,
                 Math.min(start.y, end.y) - thickness,
@@ -387,22 +424,6 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
 
         Vec3 closestPoint = lineStart.add(lineVec.scale(projection));
         return point.distanceTo(closestPoint);
-    }
-
-    /**
-     * Set emergency default values if attack wasn't properly configured
-     */
-    private void setEmergencyDefaults() {
-        this.damage = 10.0f;
-        this.range = 5.0f;
-        this.knockback = 0.3f;
-        this.breathCost = 15.0f;
-        this.hitStun = 20;
-        this.hitboxSize = 2.0f;
-        this.cooldown = 40;
-        this.windup = 5;
-        this.duration = 20;
-        this.configured = true;
     }
 
     // Abstract methods that must be implemented by subclasses
@@ -468,5 +489,94 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
      */
     public void onRegister(com.xirc.nichirin.common.util.enums.MoveClass moveClass) {
         // Override if needed - default implementation does nothing
+    }
+
+    /**
+     * Register this attack for automatic ticking
+     */
+    private void registerForTicking() {
+        if (user != null) {
+            selfTickingAttacks.computeIfAbsent(user, k -> new java.util.ArrayList<>()).add(this);
+            System.out.println("DEBUG: Registered " + this.getClass().getSimpleName() + " for self-ticking");
+        }
+    }
+
+    /**
+     * Unregister this attack from automatic ticking
+     */
+    private void unregisterFromTicking() {
+        if (user != null) {
+            var attacks = selfTickingAttacks.get(user);
+            if (attacks != null) {
+                attacks.remove(this);
+                if (attacks.isEmpty()) {
+                    selfTickingAttacks.remove(user);
+                }
+                System.out.println("DEBUG: Unregistered " + this.getClass().getSimpleName() + " from self-ticking");
+            }
+        }
+    }
+
+    /**
+     * Tick all self-registered attacks - CALL THIS FROM YOUR MAIN TICK HANDLER
+     */
+    public static void tickAllActiveAttacks(net.minecraft.server.MinecraftServer server) {
+        if (selfTickingAttacks.isEmpty()) {
+            return;
+        }
+
+        java.util.List<Player> playersToClean = new java.util.ArrayList<>();
+
+        for (var entry : selfTickingAttacks.entrySet()) {
+            Player player = entry.getKey();
+            var attacks = entry.getValue();
+
+            if (player == null || !player.isAlive()) {
+                playersToClean.add(player);
+                continue;
+            }
+
+            java.util.List<AbstractBreathingAttack<?, ?>> toRemove = new java.util.ArrayList<>();
+
+            synchronized (attacks) {
+                for (var attack : new java.util.ArrayList<>(attacks)) {
+                    try {
+                        if (attack.isActive()) {
+                            attack.tick();
+                        } else {
+                            toRemove.add(attack);
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Error ticking self-managed attack: " + e.getMessage());
+                        toRemove.add(attack);
+                    }
+                }
+
+                // Remove inactive attacks
+                attacks.removeAll(toRemove);
+            }
+        }
+
+        // Clean up disconnected players
+        for (Player player : playersToClean) {
+            selfTickingAttacks.remove(player);
+        }
+    }
+
+    /**
+     * Clear all self-ticking attacks for a player (on disconnect, death, etc.)
+     */
+    public static void clearSelfTickingAttacks(Player player) {
+        var attacks = selfTickingAttacks.remove(player);
+        if (attacks != null) {
+            System.out.println("DEBUG: Clearing " + attacks.size() + " self-ticking attacks for " + player.getName().getString());
+            for (var attack : attacks) {
+                try {
+                    attack.stop();
+                } catch (Exception e) {
+                    System.err.println("Error stopping self-ticking attack: " + e.getMessage());
+                }
+            }
+        }
     }
 }

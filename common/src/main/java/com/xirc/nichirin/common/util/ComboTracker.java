@@ -7,10 +7,16 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 
+import java.util.*;
+
 /**
- * Central combo tracking logic
+ * Central combo tracking logic with automatic reset when stun expires
  */
 public class ComboTracker {
+
+    // Track which players are combo-ing which entities
+    // Map: Victim UUID -> Set of Player UUIDs who are combo-ing this victim
+    private static final Map<UUID, Set<UUID>> victimToAttackers = new HashMap<>();
 
     /**
      * Handle combo logic when a player hits an entity
@@ -59,6 +65,9 @@ public class ComboTracker {
             // Update last attacked regardless
             comboCounter.nichirin$setLastAttacked(victim);
         }
+
+        // Track this attacker-victim relationship for automatic reset
+        registerAttackerVictimPair(attacker.getUUID(), victim.getUUID());
 
         // Send combo update to client using packet registry
         int comboCount = comboCounter.nichirin$getComboCount();
@@ -130,6 +139,9 @@ public class ComboTracker {
         if (player instanceof IComboCounter comboCounter) {
             comboCounter.nichirin$resetCombo();
 
+            // Remove from tracking maps
+            unregisterPlayerFromAllVictims(player.getUUID());
+
             // Send reset to client if server player
             if (player instanceof ServerPlayer serverPlayer) {
                 ComboCounterPacket packet = new ComboCounterPacket(0, 0, 0.0f);
@@ -146,8 +158,8 @@ public class ComboTracker {
     }
 
     /**
-     * Called when a victim's stun effect ends
-     * Should reset combos of all players who were attacking this victim
+     * NEW METHOD: Called when a victim's stun effect ends
+     * This automatically resets combos of all players who were attacking this victim
      *
      * @param victim The entity whose stun ended
      */
@@ -156,14 +168,42 @@ public class ComboTracker {
             return;
         }
 
-        // Find all players who were combo-ing this victim and reset them
-        victim.level().players().forEach(player -> {
-            if (player instanceof IComboCounter comboCounter) {
-                if (comboCounter.nichirin$getLastAttacked() == victim) {
-                    resetCombo(player);
+        UUID victimUUID = victim.getUUID();
+        Set<UUID> attackerUUIDs = victimToAttackers.get(victimUUID);
+
+        if (attackerUUIDs != null && !attackerUUIDs.isEmpty()) {
+            // Reset combo for all players who were combo-ing this victim
+            for (UUID attackerUUID : new HashSet<>(attackerUUIDs)) { // Copy to avoid concurrent modification
+                Player attacker = victim.level().getPlayerByUUID(attackerUUID);
+                if (attacker != null && attacker instanceof IComboCounter comboCounter) {
+                    // Only reset if this victim is their current target
+                    if (comboCounter.nichirin$getLastAttacked() == victim) {
+                        System.out.println("Stun expired for " + victim.getName().getString() +
+                                " - resetting combo for " + attacker.getName().getString());
+
+                        // Reset combo to 0
+                        comboCounter.nichirin$setComboCount(0);
+                        comboCounter.nichirin$setLastAttacked(null);
+
+                        // Send reset packet to client
+                        if (attacker instanceof ServerPlayer serverPlayer) {
+                            ComboCounterPacket packet = new ComboCounterPacket(0, 0, 0.0f);
+                            try {
+                                net.minecraft.network.FriendlyByteBuf buf = new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());
+                                packet.toBytes(buf);
+                                dev.architectury.networking.NetworkManager.sendToPlayer(serverPlayer,
+                                        com.xirc.nichirin.registry.NichirinPacketRegistry.COMBO_COUNTER_ID, buf);
+                            } catch (Exception e) {
+                                System.err.println("Failed to send combo reset packet: " + e.getMessage());
+                            }
+                        }
+                    }
                 }
             }
-        });
+
+            // Clean up tracking for this victim
+            victimToAttackers.remove(victimUUID);
+        }
     }
 
     /**
@@ -179,5 +219,31 @@ public class ComboTracker {
 
         MobEffectInstance stunEffect = entity.getEffect(NichirinEffectRegistry.STUNNED.get());
         return stunEffect != null ? stunEffect.getDuration() : 0;
+    }
+
+    /**
+     * Register an attacker-victim pair for tracking
+     */
+    private static void registerAttackerVictimPair(UUID attackerUUID, UUID victimUUID) {
+        victimToAttackers.computeIfAbsent(victimUUID, k -> new HashSet<>()).add(attackerUUID);
+    }
+
+    /**
+     * Remove a player from all victim tracking
+     */
+    private static void unregisterPlayerFromAllVictims(UUID playerUUID) {
+        victimToAttackers.values().forEach(attackerSet -> attackerSet.remove(playerUUID));
+        // Clean up empty sets
+        victimToAttackers.entrySet().removeIf(entry -> entry.getValue().isEmpty());
+    }
+
+    /**
+     * Clean up tracking for dead/invalid entities (call this periodically)
+     */
+    public static void cleanupTracking() {
+        victimToAttackers.entrySet().removeIf(entry -> {
+            Set<UUID> attackers = entry.getValue();
+            return attackers.isEmpty();
+        });
     }
 }

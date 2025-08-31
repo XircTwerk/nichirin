@@ -9,6 +9,7 @@
     "client.PlayerModelAccessor"
   ],
   "mixins": [
+    "LivingEntityMixin",
     "PlayerMixin"
   ],
   "injectors": {

@@ -52,6 +52,7 @@ public final class BreathOfNichirin {
 
 
         // SERVER-SIDE handlers only
+        BreathOfNichirinEventHandler.init();
         KatanaInputHandler.register();
         PlayerTickHandler.register();
         FallDamageHandler.register();
