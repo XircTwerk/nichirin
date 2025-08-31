@@ -15,8 +15,19 @@ import java.util.UUID;
  */
 public class BlockingStatusEffect extends MobEffect {
 
+    // UUIDs for attribute modifiers
+    private static final UUID MOVEMENT_MODIFIER_UUID = UUID.fromString("8207DE5E-8CE8-4030-941E-514C1F160891");
+
     public BlockingStatusEffect() {
         super(MobEffectCategory.NEUTRAL, 0x4169E1); // Steel blue color for blocking
+
+        // Add movement speed reduction (40% slower)
+        this.addAttributeModifier(
+                Attributes.MOVEMENT_SPEED,
+                MOVEMENT_MODIFIER_UUID.toString(),
+                -0.10, // 40% reduction
+                AttributeModifier.Operation.MULTIPLY_TOTAL
+        );
     }
 
     @Override
