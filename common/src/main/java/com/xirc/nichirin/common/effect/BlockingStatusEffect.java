@@ -15,19 +15,8 @@ import java.util.UUID;
  */
 public class BlockingStatusEffect extends MobEffect {
 
-    // UUIDs for attribute modifiers
-    private static final UUID MOVEMENT_MODIFIER_UUID = UUID.fromString("8207DE5E-8CE8-4030-941E-514C1F160891");
-
     public BlockingStatusEffect() {
         super(MobEffectCategory.NEUTRAL, 0x4169E1); // Steel blue color for blocking
-
-        // Add movement speed reduction (40% slower)
-        this.addAttributeModifier(
-                Attributes.MOVEMENT_SPEED,
-                MOVEMENT_MODIFIER_UUID.toString(),
-                -0.40, // 40% reduction
-                AttributeModifier.Operation.MULTIPLY_TOTAL
-        );
     }
 
     @Override
@@ -38,18 +27,6 @@ public class BlockingStatusEffect extends MobEffect {
 
     @Override
     public void applyEffectTick(LivingEntity entity, int amplifier) {
-        // Additional movement restriction for players
-        if (entity instanceof Player player) {
-            // Prevent sprinting while blocking
-            if (player.isSprinting()) {
-                player.setSprinting(false);
-            }
-
-            // Prevent flying (creative/spectator exempted elsewhere)
-            if (!player.isCreative() && !player.isSpectator() && player.getAbilities().flying) {
-                player.getAbilities().flying = false;
-            }
-        }
     }
 
     @Override
