@@ -26,8 +26,9 @@ public class ComboTracker {
      * @param victim The entity being attacked
      * @param stunDurationTicks Duration of stun applied to victim
      * @param damage Damage dealt by this hit
+     * @param wasAlreadyStunned Whether the victim was stunned before this hit
      */
-    public static void handleHit(Player attacker, LivingEntity victim, int stunDurationTicks, float damage) {
+    public static void handleHit(Player attacker, LivingEntity victim, int stunDurationTicks, float damage, boolean wasAlreadyStunned) {
         if (!(attacker instanceof ServerPlayer serverPlayer)) {
             return; // Server-side only
         }
@@ -46,19 +47,25 @@ public class ComboTracker {
         IComboCounter comboCounter = (IComboCounter) attacker;
         LivingEntity lastAttacked = comboCounter.nichirin$getLastAttacked();
 
+        System.out.println("DEBUG: ComboTracker.handleHit - attacker: " + attacker.getName().getString() +
+                ", victim: " + victim.getName().getString() +
+                ", wasAlreadyStunned: " + wasAlreadyStunned +
+                ", lastAttacked: " + (lastAttacked != null ? lastAttacked.getName().getString() : "null"));
+
         if (lastAttacked != victim) {
             // New target - reset combo to 1
+            System.out.println("DEBUG: New target - resetting combo to 1");
             comboCounter.nichirin$setComboCount(1);
             comboCounter.nichirin$setLastAttacked(victim);
         } else {
-            // Same target - check if they're still stunned from previous hit
-            MobEffectInstance stunEffect = victim.getEffect(NichirinEffectRegistry.STUNNED.get());
-
-            if (stunEffect != null && stunEffect.getDuration() > 0) {
-                // Target is still stunned - increment combo
+            // Same target - check if they were already stunned from previous hit
+            if (wasAlreadyStunned) {
+                // Target was still stunned - increment combo
+                System.out.println("DEBUG: Target was stunned - incrementing combo from " + comboCounter.nichirin$getComboCount());
                 comboCounter.nichirin$incrementComboCount();
             } else {
                 // Target broke free from stun - reset combo
+                System.out.println("DEBUG: Target broke free from stun - resetting combo to 1");
                 comboCounter.nichirin$setComboCount(1);
             }
 
@@ -85,10 +92,17 @@ public class ComboTracker {
     }
 
     /**
+     * Overloaded method for backward compatibility (assumes not previously stunned)
+     */
+    public static void handleHit(Player attacker, LivingEntity victim, int stunDurationTicks, float damage) {
+        handleHit(attacker, victim, stunDurationTicks, damage, false);
+    }
+
+    /**
      * Overloaded method for backward compatibility (no damage tracking)
      */
     public static void handleHit(Player attacker, LivingEntity victim, int stunDurationTicks) {
-        handleHit(attacker, victim, stunDurationTicks, 0.0f);
+        handleHit(attacker, victim, stunDurationTicks, 0.0f, false);
     }
 
     /**

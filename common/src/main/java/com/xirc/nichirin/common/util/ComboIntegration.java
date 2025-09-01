@@ -12,7 +12,7 @@ import net.minecraft.world.entity.player.Player;
 public class ComboIntegration {
 
     /**
-     * Call this after any successful hit that should contribute to combos
+     * Call this ONLY after a successful hit that dealt damage
      * Handles both stun application and combo tracking with damage
      *
      * @param attacker The player performing the attack
@@ -25,11 +25,18 @@ public class ComboIntegration {
             return; // Server-side only
         }
 
-        // Apply stun effect first
+        // Check for existing stun BEFORE applying new stun
+        boolean wasAlreadyStunned = ComboTracker.canContinueCombo(victim);
+
+        System.out.println("DEBUG: Hit on " + victim.getName().getString() +
+                " - was already stunned: " + wasAlreadyStunned +
+                " - applying " + hitStunTicks + " ticks stun");
+
+        // Apply new stun effect
         ComboTracker.applyStun(victim, hitStunTicks);
 
-        // Then handle combo tracking with damage
-        ComboTracker.handleHit(attacker, victim, hitStunTicks, damage);
+        // Handle combo tracking with the previous stun status
+        ComboTracker.handleHit(attacker, victim, hitStunTicks, damage, wasAlreadyStunned);
     }
 
     /**
@@ -41,9 +48,10 @@ public class ComboIntegration {
 
     /**
      * For katana basic attacks - use default stun duration with damage
+     * ONLY CALL THIS WHEN AN ATTACK ACTUALLY HITS A TARGET
      *
      * @param attacker Player performing katana attack
-     * @param victim Target entity
+     * @param victim Target entity that was actually hit
      * @param baseStunTicks Base stun duration for this attack type
      * @param damage Damage dealt
      */

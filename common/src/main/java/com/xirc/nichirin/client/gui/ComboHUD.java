@@ -7,19 +7,22 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.util.Mth;
 
 /**
- * Demon Slayer style combo counter HUD with simple, clean effects
- * Features large white numbers with black outline and golden timer bar underneath
+ * Simplified Demon Slayer style combo counter HUD
+ * Server is the authority on combo logic, client just displays with smooth visuals
  */
 public class ComboHUD {
 
     private static int currentCombo = 0;
+    private static int lastValidCombo = 0;
     private static float totalDamage = 0.0f;
-    private static long stunEndTime = 0; // When the stun effect should end
+    private static long stunEndTime = 0;
     private static long comboStartTime = 0;
 
     // Animation states
     private static float numberScale = 1.0f;
     private static float barFlashIntensity = 0.0f;
+    private static float fadeOutAlpha = 1.0f;
+    private static boolean shouldFadeOut = false;
 
     // Visual constants
     private static final int BAR_WIDTH = 120;
@@ -35,24 +38,36 @@ public class ComboHUD {
     private static final int DAMAGE_TEXT_COLOR = 0xFFFF6B35; // Orange for damage
 
     /**
-     * Update combo display - called when a hit lands
-     * Handles both extending existing combos and starting fresh ones
+     * Update combo display - called when server sends new combo data
+     * Simple logic: trust the server completely
      */
     public static void updateCombo(int comboCount, int stunDurationTicks) {
         long currentTime = System.currentTimeMillis();
 
-        // Check if we have an active combo that can be extended
-        boolean hasActiveCombo = currentCombo > 0 && currentTime < stunEndTime && stunEndTime > 0;
-
-        if (hasActiveCombo) {
-            // Extend existing combo - increment by 1
-            currentCombo++;
-            System.out.println("Combo extended! Now at: " + currentCombo + " (server sent: " + comboCount + ")");
+        // If server sends combo count 1, it's always a fresh start
+        if (comboCount == 1) {
+            System.out.println("New combo! Server sent: " + comboCount);
+            currentCombo = comboCount;
+            lastValidCombo = currentCombo;
+            shouldFadeOut = false;
+            fadeOutAlpha = 1.0f;
+            totalDamage = 0.0f; // Reset damage on fresh start
+        } else if (comboCount > currentCombo) {
+            // Server says combo is progressing - keep accumulating damage
+            System.out.println("Combo progressing! " + currentCombo + " -> " + comboCount);
+            currentCombo = comboCount;
+            lastValidCombo = currentCombo;
+            shouldFadeOut = false;
+            fadeOutAlpha = 1.0f;
+            // Don't reset totalDamage - let it accumulate
         } else {
-            // Start new combo - use server's count or default to 1
-            currentCombo = Math.max(1, comboCount);
-            totalDamage = 0.0f; // Reset damage on new combo start
-            System.out.println("New combo started! Count: " + currentCombo + " (server sent: " + comboCount + ")");
+            // Same count or other cases - just update
+            System.out.println("Combo update! Count: " + comboCount);
+            currentCombo = comboCount;
+            lastValidCombo = currentCombo;
+            shouldFadeOut = false;
+            fadeOutAlpha = 1.0f;
+            // Don't reset totalDamage
         }
 
         // Always refill timer bar to full on any hit
@@ -63,12 +78,10 @@ public class ComboHUD {
         // Trigger visual effects
         numberScale = 1.3f;
         barFlashIntensity = 1.0f;
-
-        System.out.println("Timer refilled for " + durationMs + "ms - bar should be 100% full");
     }
 
     /**
-     * Add damage to the combo - called for every hit including light katana attacks
+     * Add damage to the combo - called for every hit
      */
     public static void addDamage(float damage) {
         if (damage > 0) {
@@ -85,6 +98,9 @@ public class ComboHUD {
 
         if (comboCount > 0) {
             currentCombo = comboCount;
+            lastValidCombo = currentCombo;
+            shouldFadeOut = false;
+            fadeOutAlpha = 1.0f;
 
             // Refill timer bar to full
             long durationMs = stunDurationTicks * 50;
@@ -94,8 +110,6 @@ public class ComboHUD {
             // Trigger visual effects
             numberScale = 1.3f;
             barFlashIntensity = 1.0f;
-
-            System.out.println("Combo set to: " + comboCount + ", Timer refilled");
         } else {
             resetCombo();
         }
@@ -105,8 +119,8 @@ public class ComboHUD {
      * Main render method
      */
     public static void render(GuiGraphics guiGraphics) {
-        // Only render if we have an active combo (combo > 0)
-        if (currentCombo <= 0) {
+        // Skip rendering if no combo and not fading out
+        if (currentCombo <= 0 && !shouldFadeOut) {
             return;
         }
 
@@ -117,13 +131,26 @@ public class ComboHUD {
 
         updateAnimations();
 
-        // Check if combo timer has expired (bar ran out)
+        // Calculate timer bar fill percentage
         long currentTime = System.currentTimeMillis();
-        if (currentTime >= stunEndTime && stunEndTime > 0) {
-            // Timer ran out - combo ends completely
-            System.out.println("Combo timer expired - combo ended");
+        long timeRemaining = Math.max(0, stunEndTime - currentTime);
+        long originalDuration = stunEndTime - comboStartTime;
+
+        float fillPercentage = 0f;
+        if (originalDuration > 0 && stunEndTime > 0) {
+            fillPercentage = (float)timeRemaining / originalDuration;
+        }
+        fillPercentage = Mth.clamp(fillPercentage, 0f, 1f);
+
+        // If bar is completely empty and we have a combo, start fade-out
+        if (fillPercentage <= 0f && stunEndTime > 0 && currentCombo > 0 && !shouldFadeOut) {
+            shouldFadeOut = true;
+        }
+
+        // If we're fading out and fade is complete, stop rendering entirely
+        if (shouldFadeOut && fadeOutAlpha <= 0f) {
             resetCombo();
-            return; // Stop rendering when combo ends
+            return;
         }
 
         // Position on screen - center right area
@@ -133,7 +160,7 @@ public class ComboHUD {
         int comboX = screenWidth - 100;
         int comboY = (screenHeight / 2) - 20;
 
-        renderComboDisplay(guiGraphics, comboX, comboY, mc.font, currentTime);
+        renderComboDisplay(guiGraphics, comboX, comboY, mc.font, fillPercentage);
     }
 
     /**
@@ -149,37 +176,33 @@ public class ComboHUD {
         if (barFlashIntensity > 0.0f) {
             barFlashIntensity = Math.max(0.0f, barFlashIntensity - 0.1f);
         }
+
+        // Fade-out animation
+        if (shouldFadeOut) {
+            fadeOutAlpha = Math.max(0.0f, fadeOutAlpha - 0.08f);
+        }
     }
 
     /**
-     * Render the combo display - Demon Slayer style
+     * Render the combo display
      */
-    private static void renderComboDisplay(GuiGraphics guiGraphics, int centerX, int centerY, Font font, long currentTime) {
+    private static void renderComboDisplay(GuiGraphics guiGraphics, int centerX, int centerY, Font font, float fillPercentage) {
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
 
-        // Calculate bar fill percentage (starts at 100% when hit lands, drains to 0%)
-        long timeRemaining = Math.max(0, stunEndTime - currentTime);
-        long originalDuration = stunEndTime - comboStartTime; // Duration set when timer was reset
-
-        float fillPercentage;
-        if (originalDuration > 0 && stunEndTime > 0) {
-            fillPercentage = (float)timeRemaining / originalDuration;
-        } else {
-            fillPercentage = 0f;
+        // Draw combo number
+        if (currentCombo > 0 || shouldFadeOut) {
+            int displayCombo = shouldFadeOut ? lastValidCombo : currentCombo;
+            renderComboNumber(guiGraphics, font, centerX, centerY, displayCombo);
         }
-        fillPercentage = Mth.clamp(fillPercentage, 0f, 1f);
-
-        System.out.println("Bar fill: " + (fillPercentage * 100) + "% (remaining: " + timeRemaining + "ms, total: " + originalDuration + "ms)");
-
-        // Draw combo number with scaling
-        renderComboNumber(guiGraphics, font, centerX, centerY);
 
         // Draw combo bar underneath the number
-        renderComboBar(guiGraphics, centerX, centerY + 20, fillPercentage);
+        if (!shouldFadeOut && fillPercentage > 0) {
+            renderComboBar(guiGraphics, centerX, centerY + 20, fillPercentage);
+        }
 
-        // Always draw damage if any (lower threshold for light attacks)
-        if (totalDamage > 0.001f) { // Very low threshold to catch even light katana attacks
+        // Draw damage if any
+        if (totalDamage > 0.001f) {
             renderDamage(guiGraphics, font, centerX, centerY + 35);
         }
 
@@ -187,15 +210,15 @@ public class ComboHUD {
     }
 
     /**
-     * Render large combo number with simple black outline
+     * Render large combo number with scaling and fade support
      */
-    private static void renderComboNumber(GuiGraphics guiGraphics, Font font, int centerX, int centerY) {
-        String comboText = String.valueOf(currentCombo);
+    private static void renderComboNumber(GuiGraphics guiGraphics, Font font, int centerX, int centerY, int comboToShow) {
+        String comboText = String.valueOf(comboToShow);
 
         guiGraphics.pose().pushPose();
 
         // Apply scaling animation
-        float finalScale = numberScale * 2.5f; // Large scale
+        float finalScale = numberScale * 2.5f;
         guiGraphics.pose().scale(finalScale, finalScale, 1.0f);
 
         // Calculate scaled position
@@ -203,25 +226,28 @@ public class ComboHUD {
         int scaledX = (int)((centerX - textWidth / 2) / finalScale);
         int scaledY = (int)((centerY - 5) / finalScale);
 
-        // Draw simple black outline (8 directions, single layer only)
-        guiGraphics.drawString(font, comboText, scaledX - 1, scaledY - 1, COMBO_OUTLINE_COLOR);
-        guiGraphics.drawString(font, comboText, scaledX, scaledY - 1, COMBO_OUTLINE_COLOR);
-        guiGraphics.drawString(font, comboText, scaledX + 1, scaledY - 1, COMBO_OUTLINE_COLOR);
-        guiGraphics.drawString(font, comboText, scaledX - 1, scaledY, COMBO_OUTLINE_COLOR);
-        guiGraphics.drawString(font, comboText, scaledX + 1, scaledY, COMBO_OUTLINE_COLOR);
-        guiGraphics.drawString(font, comboText, scaledX - 1, scaledY + 1, COMBO_OUTLINE_COLOR);
-        guiGraphics.drawString(font, comboText, scaledX, scaledY + 1, COMBO_OUTLINE_COLOR);
-        guiGraphics.drawString(font, comboText, scaledX + 1, scaledY + 1, COMBO_OUTLINE_COLOR);
+        // Apply fade-out alpha to colors
+        int fadeOutlineColor = applyAlpha(COMBO_OUTLINE_COLOR, fadeOutAlpha);
+        int fadeTextColor = applyAlpha(COMBO_TEXT_COLOR, fadeOutAlpha);
 
-        // Main white text
-        guiGraphics.drawString(font, comboText, scaledX, scaledY, COMBO_TEXT_COLOR);
+        // Draw black outline
+        guiGraphics.drawString(font, comboText, scaledX - 1, scaledY - 1, fadeOutlineColor);
+        guiGraphics.drawString(font, comboText, scaledX, scaledY - 1, fadeOutlineColor);
+        guiGraphics.drawString(font, comboText, scaledX + 1, scaledY - 1, fadeOutlineColor);
+        guiGraphics.drawString(font, comboText, scaledX - 1, scaledY, fadeOutlineColor);
+        guiGraphics.drawString(font, comboText, scaledX + 1, scaledY, fadeOutlineColor);
+        guiGraphics.drawString(font, comboText, scaledX - 1, scaledY + 1, fadeOutlineColor);
+        guiGraphics.drawString(font, comboText, scaledX, scaledY + 1, fadeOutlineColor);
+        guiGraphics.drawString(font, comboText, scaledX + 1, scaledY + 1, fadeOutlineColor);
+
+        // Main white text with fade
+        guiGraphics.drawString(font, comboText, scaledX, scaledY, fadeTextColor);
 
         guiGraphics.pose().popPose();
     }
 
     /**
-     * Render horizontal combo bar with outline - combo extension timer
-     * Shows time remaining to land next hit and extend combo
+     * Render horizontal combo bar
      */
     private static void renderComboBar(GuiGraphics guiGraphics, int centerX, int barY, float fillPercentage) {
         int barLeft = centerX - BAR_WIDTH / 2;
@@ -236,24 +262,23 @@ public class ComboHUD {
         guiGraphics.fill(barLeft, barTop, barRight, barBottom, BAR_BACKGROUND);
 
         if (fillPercentage > 0) {
-            // Calculate fill width (drains from right to left as time runs out)
+            // Calculate fill width
             int fillWidth = (int)(BAR_WIDTH * fillPercentage);
 
-            // Active bar color - always golden yellow when active
+            // Active bar color
             int barColor = BAR_ACTIVE_COLOR;
 
-            // Add flash effect when combo extends (bar refills)
+            // Add flash effect when combo extends
             if (barFlashIntensity > 0) {
                 int flashAmount = (int)(255 * barFlashIntensity);
                 barColor = blendColors(barColor, BAR_FLASH_COLOR, flashAmount);
             }
 
-            // Draw filled portion (full width when recently hit, shrinks over time)
+            // Draw filled portion
             guiGraphics.fill(barLeft, barTop, barLeft + fillWidth, barBottom, barColor);
 
-            // Add subtle glow on active edge
+            // Add edge glow
             if (fillWidth > 2) {
-                // Right edge glow (the draining edge)
                 int edgeX = barLeft + fillWidth;
                 guiGraphics.fill(edgeX, barTop - 1, edgeX + 1, barBottom + 1, 0x80FFD700);
             }
@@ -261,28 +286,32 @@ public class ComboHUD {
     }
 
     /**
-     * Render damage counter
+     * Render damage counter with fade support
      */
     private static void renderDamage(GuiGraphics guiGraphics, Font font, int centerX, int damageY) {
         String damageText = String.format("%.1f", totalDamage);
         int damageWidth = font.width(damageText);
         int damageX = centerX - damageWidth / 2;
 
-        // Simple black outline for damage text
-        guiGraphics.drawString(font, damageText, damageX - 1, damageY - 1, COMBO_OUTLINE_COLOR);
-        guiGraphics.drawString(font, damageText, damageX, damageY - 1, COMBO_OUTLINE_COLOR);
-        guiGraphics.drawString(font, damageText, damageX + 1, damageY - 1, COMBO_OUTLINE_COLOR);
-        guiGraphics.drawString(font, damageText, damageX - 1, damageY, COMBO_OUTLINE_COLOR);
-        guiGraphics.drawString(font, damageText, damageX + 1, damageY, COMBO_OUTLINE_COLOR);
-        guiGraphics.drawString(font, damageText, damageX - 1, damageY + 1, COMBO_OUTLINE_COLOR);
-        guiGraphics.drawString(font, damageText, damageX, damageY + 1, COMBO_OUTLINE_COLOR);
-        guiGraphics.drawString(font, damageText, damageX + 1, damageY + 1, COMBO_OUTLINE_COLOR);
+        // Apply fade-out alpha to damage colors
+        int fadeOutlineColor = applyAlpha(COMBO_OUTLINE_COLOR, fadeOutAlpha);
+        int fadeDamageColor = applyAlpha(DAMAGE_TEXT_COLOR, fadeOutAlpha);
 
-        // Main damage text
-        guiGraphics.drawString(font, damageText, damageX, damageY, DAMAGE_TEXT_COLOR);
+        // Black outline for damage text
+        guiGraphics.drawString(font, damageText, damageX - 1, damageY - 1, fadeOutlineColor);
+        guiGraphics.drawString(font, damageText, damageX, damageY - 1, fadeOutlineColor);
+        guiGraphics.drawString(font, damageText, damageX + 1, damageY - 1, fadeOutlineColor);
+        guiGraphics.drawString(font, damageText, damageX - 1, damageY, fadeOutlineColor);
+        guiGraphics.drawString(font, damageText, damageX + 1, damageY, fadeOutlineColor);
+        guiGraphics.drawString(font, damageText, damageX - 1, damageY + 1, fadeOutlineColor);
+        guiGraphics.drawString(font, damageText, damageX, damageY + 1, fadeOutlineColor);
+        guiGraphics.drawString(font, damageText, damageX + 1, damageY + 1, fadeOutlineColor);
+
+        // Main damage text with fade
+        guiGraphics.drawString(font, damageText, damageX, damageY, fadeDamageColor);
     }
 
-    // Utility method for color blending
+    // Utility methods
     private static int blendColors(int color1, int color2, int blend) {
         blend = Math.min(255, Math.max(0, blend));
 
@@ -304,14 +333,30 @@ public class ComboHUD {
         return (a << 24) | (r << 16) | (g << 8) | b;
     }
 
+    private static int applyAlpha(int color, float alpha) {
+        alpha = Mth.clamp(alpha, 0.0f, 1.0f);
+
+        int r = (color >> 16) & 0xFF;
+        int g = (color >> 8) & 0xFF;
+        int b = color & 0xFF;
+        int originalAlpha = (color >> 24) & 0xFF;
+
+        int newAlpha = (int)(originalAlpha * alpha);
+
+        return (newAlpha << 24) | (r << 16) | (g << 8) | b;
+    }
+
     // Reset and utility methods
     private static void resetCombo() {
         currentCombo = 0;
+        lastValidCombo = 0;
         totalDamage = 0.0f;
         stunEndTime = 0;
         comboStartTime = 0;
         numberScale = 1.0f;
         barFlashIntensity = 0.0f;
+        shouldFadeOut = false;
+        fadeOutAlpha = 1.0f;
     }
 
     public static boolean isComboActive() {
