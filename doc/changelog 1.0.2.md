@@ -1,7 +1,7 @@
 CHANGELOG FOR BREATH OF NICHIRIN V1.0.2
 
 **_NEW FEATURES:_**
-* nothing crazy, just lots of other stuff
+* Added a combo system
 
 
 **_BREATHING STYLES:_**
@@ -10,8 +10,10 @@ CHANGELOG FOR BREATH OF NICHIRIN V1.0.2
 * Insect Breathing
 
 **_ITEMS:_**
-* Bento box - stores 9 items with nutritional value. if you want to add items that can be put in the bento box, find the tag "can_be_bento_boxed" and add your item there
+* Bento box - stores 9 items with nutritional value. if you want to add items that can be put in the bento box,
+find the tag "can_be_bento_boxed" and add your item there. Placeable
 * Flash bomb - 3 explosions that knock you back
+* Katana holder block (Holds katanas)
 
 **_ARMOR:_**
 * Shinobu's outfit

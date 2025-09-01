@@ -11,12 +11,38 @@ import java.util.*;
 
 /**
  * Central combo tracking logic with automatic reset when stun expires
+ * Now includes anti-spam detection for repeated moves
  */
 public class ComboTracker {
 
     // Track which players are combo-ing which entities
     // Map: Victim UUID -> Set of Player UUIDs who are combo-ing this victim
     private static final Map<UUID, Set<UUID>> victimToAttackers = new HashMap<>();
+
+    // Track last move used by each player for anti-spam detection
+    // Map: Player UUID -> Last move ID used
+    private static final Map<UUID, String> playerLastMove = new HashMap<>();
+
+    /**
+     * Check if a move should have reduced hitstun due to spam detection
+     * Call this before executing a move to modify hitstun accordingly
+     *
+     * @param player The player performing the move
+     * @param moveId The ID of the move being performed
+     * @param originalHitStun The original hitstun value
+     * @return Modified hitstun value (0 if spamming same move)
+     */
+    public static int getModifiedHitStun(Player player, String moveId, int originalHitStun) {
+        String lastMove = playerLastMove.get(player.getUUID());
+
+        if (moveId != null && moveId.equals(lastMove)) {
+            return 0;
+        }
+
+        // Update last move
+        playerLastMove.put(player.getUUID(), moveId);
+        return originalHitStun; // Normal hitstun for non-repeated moves
+    }
 
     /**
      * Handle combo logic when a player hits an entity
@@ -26,8 +52,9 @@ public class ComboTracker {
      * @param victim The entity being attacked
      * @param stunDurationTicks Duration of stun applied to victim
      * @param damage Damage dealt by this hit
+     * @param wasAlreadyStunned Whether the victim was stunned before this hit
      */
-    public static void handleHit(Player attacker, LivingEntity victim, int stunDurationTicks, float damage) {
+    public static void handleHit(Player attacker, LivingEntity victim, int stunDurationTicks, float damage, boolean wasAlreadyStunned) {
         if (!(attacker instanceof ServerPlayer serverPlayer)) {
             return; // Server-side only
         }
@@ -38,8 +65,6 @@ public class ComboTracker {
 
         // Safety check - make sure mixin is applied
         if (!(attacker instanceof IComboCounter)) {
-            System.err.println("ERROR: PlayerMixin not applied! Player cannot be cast to IComboCounter");
-            System.err.println("Make sure PlayerMixin is registered in your mixins.nichirin.json file");
             return;
         }
 
@@ -51,14 +76,12 @@ public class ComboTracker {
             comboCounter.nichirin$setComboCount(1);
             comboCounter.nichirin$setLastAttacked(victim);
         } else {
-            // Same target - check if they're still stunned from previous hit
-            MobEffectInstance stunEffect = victim.getEffect(NichirinEffectRegistry.STUNNED.get());
-
-            if (stunEffect != null && stunEffect.getDuration() > 0) {
-                // Target is still stunned - increment combo
+            // Same target - check if they were already stunned from previous hit AND if this hit actually applies stun
+            if (wasAlreadyStunned && stunDurationTicks > 0) {
+                // Target was still stunned AND this hit applies stun - increment combo
                 comboCounter.nichirin$incrementComboCount();
             } else {
-                // Target broke free from stun - reset combo
+                // Target broke free from stun OR this hit has no stun (spam detection) - reset combo
                 comboCounter.nichirin$setComboCount(1);
             }
 
@@ -80,15 +103,21 @@ public class ComboTracker {
             dev.architectury.networking.NetworkManager.sendToPlayer(serverPlayer,
                     com.xirc.nichirin.registry.NichirinPacketRegistry.COMBO_COUNTER_ID, buf);
         } catch (Exception e) {
-            System.err.println("Failed to send combo counter packet: " + e.getMessage());
         }
+    }
+
+    /**
+     * Overloaded method for backward compatibility (assumes not previously stunned)
+     */
+    public static void handleHit(Player attacker, LivingEntity victim, int stunDurationTicks, float damage) {
+        handleHit(attacker, victim, stunDurationTicks, damage, false);
     }
 
     /**
      * Overloaded method for backward compatibility (no damage tracking)
      */
     public static void handleHit(Player attacker, LivingEntity victim, int stunDurationTicks) {
-        handleHit(attacker, victim, stunDurationTicks, 0.0f);
+        handleHit(attacker, victim, stunDurationTicks, 0.0f, false);
     }
 
     /**
@@ -142,6 +171,9 @@ public class ComboTracker {
             // Remove from tracking maps
             unregisterPlayerFromAllVictims(player.getUUID());
 
+            // Clear spam tracking
+            playerLastMove.remove(player.getUUID());
+
             // Send reset to client if server player
             if (player instanceof ServerPlayer serverPlayer) {
                 ComboCounterPacket packet = new ComboCounterPacket(0, 0, 0.0f);
@@ -151,7 +183,6 @@ public class ComboTracker {
                     dev.architectury.networking.NetworkManager.sendToPlayer(serverPlayer,
                             com.xirc.nichirin.registry.NichirinPacketRegistry.COMBO_COUNTER_ID, buf);
                 } catch (Exception e) {
-                    System.err.println("Failed to send combo reset packet: " + e.getMessage());
                 }
             }
         }
@@ -177,9 +208,7 @@ public class ComboTracker {
                 Player attacker = victim.level().getPlayerByUUID(attackerUUID);
                 if (attacker != null && attacker instanceof IComboCounter comboCounter) {
                     // Only reset if this victim is their current target
-                    if (comboCounter.nichirin$getLastAttacked() == victim) {
-                        System.out.println("Stun expired for " + victim.getName().getString() +
-                                " - resetting combo for " + attacker.getName().getString());
+                    if (comboCounter.nichirin$getLastAttacked() == victim) {  
 
                         // Reset combo to 0
                         comboCounter.nichirin$setComboCount(0);
@@ -194,7 +223,6 @@ public class ComboTracker {
                                 dev.architectury.networking.NetworkManager.sendToPlayer(serverPlayer,
                                         com.xirc.nichirin.registry.NichirinPacketRegistry.COMBO_COUNTER_ID, buf);
                             } catch (Exception e) {
-                                System.err.println("Failed to send combo reset packet: " + e.getMessage());
                             }
                         }
                     }
