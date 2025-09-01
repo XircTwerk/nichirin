@@ -1,6 +1,5 @@
 package com.xirc.nichirin;
 
-import com.xirc.nichirin.client.BreathOfNichirinClient;
 import com.xirc.nichirin.common.advancement.NichirinCriteriaTriggers;
 import com.xirc.nichirin.registry.MovesetRegistry;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
@@ -67,18 +66,6 @@ public final class BreathOfNichirin {
         NichirinCriteriaTriggers.init();
 
         LOGGER.info("=== NICHIRIN COMMON INITIALIZATION COMPLETE ===");
-
-        // Client-side initialization
-        if (Platform.getEnvironment() == Env.CLIENT) {
-            System.out.println("DEBUG: Initializing client side");
-            try {
-                BreathOfNichirinClient.init();
-                System.out.println("DEBUG: Client initialization complete");
-            } catch (Exception e) {
-                LOGGER.error("ERROR: Failed to initialize client", e);
-                e.printStackTrace();
-            }
-        }
     }
 
     public static ResourceLocation id(String name) {
