@@ -28,10 +28,6 @@ public class ComboIntegration {
         // Check for existing stun BEFORE applying new stun
         boolean wasAlreadyStunned = ComboTracker.canContinueCombo(victim);
 
-        System.out.println("DEBUG: Hit on " + victim.getName().getString() +
-                " - was already stunned: " + wasAlreadyStunned +
-                " - applying " + hitStunTicks + " ticks stun");
-
         // Apply new stun effect
         ComboTracker.applyStun(victim, hitStunTicks);
 

@@ -38,10 +38,10 @@ public class SimpleKatana extends SwordItem {
     private static final float SPECIAL_ATTACK_STAMINA_COST = 15.0f;
 
     // Base stun durations for different attack types
-    private static final int LIGHT_ATTACK_STUN = 15; // ticks
-    private static final int COMBO_ATTACK_STUN = 20; // ticks
-    private static final int DOUBLE_SLASH_STUN = 25; // ticks
-    private static final int RISING_SLASH_STUN = 30; // ticks
+    private static final int LIGHT_ATTACK_STUN = 5; // ticks
+    private static final int COMBO_ATTACK_STUN = 5; // ticks
+    private static final int DOUBLE_SLASH_STUN = 7; // ticks
+    private static final int RISING_SLASH_STUN = 10; // ticks
 
     private final Map<UUID, PlayerAttackState> playerStates = new HashMap<>();
 
@@ -70,7 +70,7 @@ public class SimpleKatana extends SwordItem {
                 .withRange(2.5f)
                 .withKnockback(0.3f)
                 .withHitbox(1.5f, new Vec3(0, 0, 1.0))
-                .withHitStun(15)
+                .withHitStun(5)
                 .withSounds(SoundEvents.PLAYER_ATTACK_SWEEP, SoundEvents.PLAYER_ATTACK_STRONG)
                 .build();
     }
@@ -83,7 +83,7 @@ public class SimpleKatana extends SwordItem {
                 .withRange(2.5f)
                 .withKnockback(0.5f)
                 .withHitbox(1.5f, new Vec3(0, 0, 1.0))
-                .withHitStun(20)
+                .withHitStun(5)
                 .withSounds(SoundEvents.PLAYER_ATTACK_SWEEP, SoundEvents.PLAYER_ATTACK_STRONG)
                 .build();
     }
@@ -96,7 +96,7 @@ public class SimpleKatana extends SwordItem {
                 .withRange(2.8f)
                 .withKnockback(0.4f)
                 .withHitbox(1.6f, new Vec3(0, 0, 1.0))
-                .withHitStun(12)
+                .withHitStun(7)
                 .withSlashDelay(2)
                 .withSounds(SoundEvents.PLAYER_ATTACK_SWEEP, SoundEvents.PLAYER_ATTACK_STRONG)
                 .build();
@@ -111,7 +111,7 @@ public class SimpleKatana extends SwordItem {
                 .withLaunchPower(1.5f)
                 .withKnockback(0.2f)
                 .withHitbox(1.5f, new Vec3(0, 0.5, 1.0))
-                .withHitStun(20)
+                .withHitStun(10)
                 .withSounds(SoundEvents.PLAYER_ATTACK_SWEEP, SoundEvents.PLAYER_ATTACK_CRIT)
                 .build();
     }

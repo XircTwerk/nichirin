@@ -46,7 +46,6 @@ public class ComboHUD {
 
         // If server sends combo count 1, it's always a fresh start
         if (comboCount == 1) {
-            System.out.println("New combo! Server sent: " + comboCount);
             currentCombo = comboCount;
             lastValidCombo = currentCombo;
             shouldFadeOut = false;
@@ -54,7 +53,6 @@ public class ComboHUD {
             totalDamage = 0.0f; // Reset damage on fresh start
         } else if (comboCount > currentCombo) {
             // Server says combo is progressing - keep accumulating damage
-            System.out.println("Combo progressing! " + currentCombo + " -> " + comboCount);
             currentCombo = comboCount;
             lastValidCombo = currentCombo;
             shouldFadeOut = false;
@@ -62,7 +60,6 @@ public class ComboHUD {
             // Don't reset totalDamage - let it accumulate
         } else {
             // Same count or other cases - just update
-            System.out.println("Combo update! Count: " + comboCount);
             currentCombo = comboCount;
             lastValidCombo = currentCombo;
             shouldFadeOut = false;
@@ -86,7 +83,6 @@ public class ComboHUD {
     public static void addDamage(float damage) {
         if (damage > 0) {
             totalDamage += damage;
-            System.out.println("Damage added: " + damage + ", Total: " + totalDamage);
         }
     }
 
