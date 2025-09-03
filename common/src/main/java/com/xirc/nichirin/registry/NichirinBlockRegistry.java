@@ -7,12 +7,11 @@ import com.xirc.nichirin.common.blocks.ScarletOreBlock;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
 
 public interface NichirinBlockRegistry {
     DeferredRegister<Block> BLOCKS = DeferredRegister.create("nichirin", Registries.BLOCK);
@@ -38,7 +37,57 @@ public interface NichirinBlockRegistry {
                     .strength(1.5F)
                     .sound(SoundType.WOOD)
                     .noOcclusion()));
-    
+
+    // NEW: Wysteria Wood Set
+    RegistrySupplier<Block> WYSTERIA_LOG = BLOCKS.register("wysteria_log",
+            () -> new RotatedPillarBlock(BlockBehaviour.Properties.copy(Blocks.OAK_LOG).mapColor(MapColor.COLOR_PURPLE)));
+
+    RegistrySupplier<Block> STRIPPED_WYSTERIA_LOG = BLOCKS.register("stripped_wysteria_log",
+            () -> new RotatedPillarBlock(BlockBehaviour.Properties.copy(Blocks.STRIPPED_OAK_LOG).mapColor(MapColor.COLOR_PURPLE)));
+
+    RegistrySupplier<Block> WYSTERIA_WOOD = BLOCKS.register("wysteria_wood",
+            () -> new RotatedPillarBlock(BlockBehaviour.Properties.copy(Blocks.OAK_WOOD).mapColor(MapColor.COLOR_PURPLE)));
+
+    RegistrySupplier<Block> STRIPPED_WYSTERIA_WOOD = BLOCKS.register("stripped_wysteria_wood",
+            () -> new RotatedPillarBlock(BlockBehaviour.Properties.copy(Blocks.STRIPPED_OAK_WOOD).mapColor(MapColor.COLOR_PURPLE)));
+
+    RegistrySupplier<Block> WYSTERIA_PLANKS = BLOCKS.register("wysteria_planks",
+            () -> new Block(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS).mapColor(MapColor.COLOR_PURPLE)));
+
+    RegistrySupplier<Block> WYSTERIA_LEAVES = BLOCKS.register("wysteria_leaves",
+            () -> new LeavesBlock(BlockBehaviour.Properties.copy(Blocks.OAK_LEAVES).mapColor(MapColor.COLOR_PURPLE)));
+
+    RegistrySupplier<Block> WYSTERIA_STAIRS = BLOCKS.register("wysteria_stairs",
+            () -> new StairBlock(WYSTERIA_PLANKS.get().defaultBlockState(),
+                    BlockBehaviour.Properties.copy(Blocks.OAK_STAIRS).mapColor(MapColor.COLOR_PURPLE)));
+
+    RegistrySupplier<Block> WYSTERIA_SLAB = BLOCKS.register("wysteria_slab",
+            () -> new SlabBlock(BlockBehaviour.Properties.copy(Blocks.OAK_SLAB).mapColor(MapColor.COLOR_PURPLE)));
+
+    RegistrySupplier<Block> WYSTERIA_FENCE = BLOCKS.register("wysteria_fence",
+            () -> new FenceBlock(BlockBehaviour.Properties.copy(Blocks.OAK_FENCE).mapColor(MapColor.COLOR_PURPLE)));
+
+    RegistrySupplier<Block> WYSTERIA_FENCE_GATE = BLOCKS.register("wysteria_fence_gate",
+            () -> new FenceGateBlock(BlockBehaviour.Properties.copy(Blocks.OAK_FENCE_GATE).mapColor(MapColor.COLOR_PURPLE),
+                    NichirinWoodTypes.WYSTERIA));
+
+    RegistrySupplier<Block> WYSTERIA_DOOR = BLOCKS.register("wysteria_door",
+            () -> new DoorBlock(BlockBehaviour.Properties.copy(Blocks.OAK_DOOR).mapColor(MapColor.COLOR_PURPLE),
+                    NichirinBlockSetTypes.WYSTERIA));
+
+    RegistrySupplier<Block> WYSTERIA_TRAPDOOR = BLOCKS.register("wysteria_trapdoor",
+            () -> new TrapDoorBlock(BlockBehaviour.Properties.copy(Blocks.OAK_TRAPDOOR).mapColor(MapColor.COLOR_PURPLE),
+                    NichirinBlockSetTypes.WYSTERIA));
+
+    RegistrySupplier<Block> WYSTERIA_PRESSURE_PLATE = BLOCKS.register("wysteria_pressure_plate",
+            () -> new PressurePlateBlock(PressurePlateBlock.Sensitivity.EVERYTHING,
+                    BlockBehaviour.Properties.copy(Blocks.OAK_PRESSURE_PLATE).mapColor(MapColor.COLOR_PURPLE),
+                    NichirinBlockSetTypes.WYSTERIA));
+
+    RegistrySupplier<Block> WYSTERIA_BUTTON = BLOCKS.register("wysteria_button",
+            () -> new ButtonBlock(BlockBehaviour.Properties.copy(Blocks.OAK_BUTTON).mapColor(MapColor.COLOR_PURPLE),
+                    NichirinBlockSetTypes.WYSTERIA, 30, true));
+
     // Block Item Registration
     RegistrySupplier<Item> SCARLET_CRIMSON_IRON_SAND_ITEM = ITEMS.register("scarlet_crimson_iron_sand",
             () -> new BlockItem(SCARLET_CRIMSON_IRON_SAND.get(), new Item.Properties()));
@@ -48,6 +97,49 @@ public interface NichirinBlockRegistry {
 
     RegistrySupplier<Item> KATANA_HOLDER_ITEM = ITEMS.register("katana_holder",
             () -> new BlockItem(KATANA_HOLDER_BLOCK.get(), new Item.Properties()));
+
+    // NEW: Wysteria Wood Block Items
+    RegistrySupplier<Item> WYSTERIA_LOG_ITEM = ITEMS.register("wysteria_log",
+            () -> new BlockItem(WYSTERIA_LOG.get(), new Item.Properties()));
+
+    RegistrySupplier<Item> STRIPPED_WYSTERIA_LOG_ITEM = ITEMS.register("stripped_wysteria_log",
+            () -> new BlockItem(STRIPPED_WYSTERIA_LOG.get(), new Item.Properties()));
+
+    RegistrySupplier<Item> WYSTERIA_WOOD_ITEM = ITEMS.register("wysteria_wood",
+            () -> new BlockItem(WYSTERIA_WOOD.get(), new Item.Properties()));
+
+    RegistrySupplier<Item> STRIPPED_WYSTERIA_WOOD_ITEM = ITEMS.register("stripped_wysteria_wood",
+            () -> new BlockItem(STRIPPED_WYSTERIA_WOOD.get(), new Item.Properties()));
+
+    RegistrySupplier<Item> WYSTERIA_PLANKS_ITEM = ITEMS.register("wysteria_planks",
+            () -> new BlockItem(WYSTERIA_PLANKS.get(), new Item.Properties()));
+
+    RegistrySupplier<Item> WYSTERIA_LEAVES_ITEM = ITEMS.register("wysteria_leaves",
+            () -> new BlockItem(WYSTERIA_LEAVES.get(), new Item.Properties()));
+
+    RegistrySupplier<Item> WYSTERIA_STAIRS_ITEM = ITEMS.register("wysteria_stairs",
+            () -> new BlockItem(WYSTERIA_STAIRS.get(), new Item.Properties()));
+
+    RegistrySupplier<Item> WYSTERIA_SLAB_ITEM = ITEMS.register("wysteria_slab",
+            () -> new BlockItem(WYSTERIA_SLAB.get(), new Item.Properties()));
+
+    RegistrySupplier<Item> WYSTERIA_FENCE_ITEM = ITEMS.register("wysteria_fence",
+            () -> new BlockItem(WYSTERIA_FENCE.get(), new Item.Properties()));
+
+    RegistrySupplier<Item> WYSTERIA_FENCE_GATE_ITEM = ITEMS.register("wysteria_fence_gate",
+            () -> new BlockItem(WYSTERIA_FENCE_GATE.get(), new Item.Properties()));
+
+    RegistrySupplier<Item> WYSTERIA_DOOR_ITEM = ITEMS.register("wysteria_door",
+            () -> new BlockItem(WYSTERIA_DOOR.get(), new Item.Properties()));
+
+    RegistrySupplier<Item> WYSTERIA_TRAPDOOR_ITEM = ITEMS.register("wysteria_trapdoor",
+            () -> new BlockItem(WYSTERIA_TRAPDOOR.get(), new Item.Properties()));
+
+    RegistrySupplier<Item> WYSTERIA_PRESSURE_PLATE_ITEM = ITEMS.register("wysteria_pressure_plate",
+            () -> new BlockItem(WYSTERIA_PRESSURE_PLATE.get(), new Item.Properties()));
+
+    RegistrySupplier<Item> WYSTERIA_BUTTON_ITEM = ITEMS.register("wysteria_button",
+            () -> new BlockItem(WYSTERIA_BUTTON.get(), new Item.Properties()));
 
     static void register() {
         BLOCKS.register();

@@ -27,85 +27,63 @@ public interface NichirinItemRegistry {
     DeferredRegister<Item> ITEM_REGISTRY = DeferredRegister.create(BreathOfNichirin.MOD_ID, Registries.ITEM);
     Map<RegistrySupplier<? extends Item>, ResourceLocation> ITEMS = new LinkedHashMap<>();
 
-    // Simple katana
+    // Your existing items - unchanged
     RegistrySupplier<Item> KATANA = register("katana",
             () -> new SimpleKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
-    //thunder katana
     RegistrySupplier<Item> THUNDER_KATANA = register("thunder_katana",
             () -> new SimpleKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
     RegistrySupplier<Item> FLAME_KATANA = register("flame_katana",
             () -> new SimpleKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
     RegistrySupplier<Item> INSECT_KATANA = register("insect_katana",
             () -> new SimpleKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
-//sound katanas
     RegistrySupplier<Item> SOUND_KATANAS = register("sound_katanas", () -> new SoundKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
     RegistrySupplier<Item> RIGHT_SOUND_KATANA = register("right_sound_katana", () -> new IndividualSoundKatana(settings().rarity(Rarity.RARE).stacksTo(1), true));
     RegistrySupplier<Item> LEFT_SOUND_KATANA = register("left_sound_katana", () -> new IndividualSoundKatana(settings().rarity(Rarity.RARE).stacksTo(1), false));
 
-    //Ores and Ingots
     RegistrySupplier<Item> SCARLET_CRIMSON_IRON_GEM = register("scarlet_crimson_iron_gem", () -> new Item(settings()));
     RegistrySupplier<Item> SCARLET_GEM = register("scarlet_gem", () -> new Item(settings()));
 
-    //functional items
     RegistrySupplier<Item> SMOKE_BOMB = register("smoke_bomb",
             () -> new SmokeBombItem(settings().stacksTo(16)));
-
     RegistrySupplier<Item> FLASH_BOMB = register("flash_bomb",
             () -> new FlashBombItem(settings().stacksTo(16)));
-
     RegistrySupplier<Item> BENTO_BOX = register("bento_box",
             () -> new BentoBoxItem(NichirinBlockRegistry.BENTO_BOX_BLOCK.get(), settings().stacksTo(1)));
 
-
-    //Armors
+    // Armor
     RegistrySupplier<Item> ZENITSU_HEADPIECE = register("zenitsu_headpiece",
             () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.HELMET, settings().stacksTo(1)));
-
     RegistrySupplier<Item> ZENITSU_CAPE = register("zenitsu_cape",
             () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.CHESTPLATE, settings().stacksTo(1)));
-
     RegistrySupplier<Item> ZENITSU_LEGGINGS = register("zenitsu_leggings",
             () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.LEGGINGS, settings().stacksTo(1)));
-
     RegistrySupplier<Item> ZENITSU_BOOTS = register("zenitsu_boots",
             () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.BOOTS, settings().stacksTo(1)));
 
-
     RegistrySupplier<Item> RENGOKU_HEADPIECE = register("rengoku_headpiece",
             () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.HELMET, settings().stacksTo(1)));
-
     RegistrySupplier<Item> RENGOKU_CAPE = register("rengoku_cape",
             () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.CHESTPLATE, settings().stacksTo(1)));
-
     RegistrySupplier<Item> RENGOKU_LEGGINGS = register("rengoku_leggings",
             () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.LEGGINGS, settings().stacksTo(1)));
-
     RegistrySupplier<Item> RENGOKU_BOOTS = register("rengoku_boots",
             () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.BOOTS, settings().stacksTo(1)));
 
-
     RegistrySupplier<Item> TENGEN_HEADPIECE = register("tengen_headpiece",
             () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.HELMET, settings().stacksTo(1)));
-
     RegistrySupplier<Item> TENGEN_ACCESSORIES = register("tengen_accessories",
             () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.CHESTPLATE, settings().stacksTo(1)));
-
     RegistrySupplier<Item> TENGEN_LEGGINGS = register("tengen_leggings",
             () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.LEGGINGS, settings().stacksTo(1)));
-
     RegistrySupplier<Item> TENGEN_BOOTS = register("tengen_boots",
             () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.BOOTS, settings().stacksTo(1)));
 
-
     RegistrySupplier<Item> SHINOBU_HEADPIECE = register("shinobu_headpiece",
             () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.HELMET, settings().stacksTo(1)));
-
     RegistrySupplier<Item> SHINOBU_CAPE = register("shinobu_cape",
             () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.CHESTPLATE, settings().stacksTo(1)));
-
     RegistrySupplier<Item> SHINOBU_LEGGINGS = register("shinobu_leggings",
             () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.LEGGINGS, settings().stacksTo(1)));
-
     RegistrySupplier<Item> SHINOBU_BOOTS = register("shinobu_boots",
             () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.BOOTS, settings().stacksTo(1)));
 
@@ -122,6 +100,6 @@ public interface NichirinItemRegistry {
     }
 
     static void init() {
-        LOGGER.info("NichirintemRegistry.init() called - Total items to register: {}", ITEMS.size());
+        LOGGER.info("NichirinItemRegistry.init() called - Total items to register: {}", ITEMS.size());
     }
 }

@@ -22,18 +22,30 @@ public interface NichirinCreativeTabRegistry {
                     })
                     .displayItems((displayContext, entries) -> {
 
-                        // Add ore blocks
+                        // Your existing blocks - unchanged
                         entries.accept(NichirinBlockRegistry.SCARLET_ORE_ITEM.get());
                         entries.accept(NichirinBlockRegistry.SCARLET_CRIMSON_IRON_SAND_ITEM.get());
-
-                        //regular blocks
                         entries.accept(NichirinBlockRegistry.KATANA_HOLDER_BLOCK.get());
 
-                        //gems/ingots
+                        // NEW: Wysteria wood blocks
+                        entries.accept(NichirinBlockRegistry.WYSTERIA_LOG.get());
+                        entries.accept(NichirinBlockRegistry.STRIPPED_WYSTERIA_LOG.get());
+                        entries.accept(NichirinBlockRegistry.WYSTERIA_WOOD.get());
+                        entries.accept(NichirinBlockRegistry.STRIPPED_WYSTERIA_WOOD.get());
+                        entries.accept(NichirinBlockRegistry.WYSTERIA_PLANKS.get());
+                        entries.accept(NichirinBlockRegistry.WYSTERIA_LEAVES.get());
+                        entries.accept(NichirinBlockRegistry.WYSTERIA_STAIRS.get());
+                        entries.accept(NichirinBlockRegistry.WYSTERIA_SLAB.get());
+                        entries.accept(NichirinBlockRegistry.WYSTERIA_FENCE.get());
+                        entries.accept(NichirinBlockRegistry.WYSTERIA_FENCE_GATE.get());
+                        entries.accept(NichirinBlockRegistry.WYSTERIA_DOOR.get());
+                        entries.accept(NichirinBlockRegistry.WYSTERIA_TRAPDOOR.get());
+                        entries.accept(NichirinBlockRegistry.WYSTERIA_PRESSURE_PLATE.get());
+                        entries.accept(NichirinBlockRegistry.WYSTERIA_BUTTON.get());
+
+                        // Your existing items - unchanged
                         entries.accept(NichirinItemRegistry.SCARLET_CRIMSON_IRON_GEM.get());
                         entries.accept(NichirinItemRegistry.SCARLET_GEM.get());
-
-                        //functional items
                         entries.accept(NichirinItemRegistry.SMOKE_BOMB.get());
                         entries.accept(NichirinItemRegistry.FLASH_BOMB.get());
                         entries.accept(NichirinItemRegistry.BENTO_BOX.get());
@@ -41,6 +53,7 @@ public interface NichirinCreativeTabRegistry {
                     })
                     .build();
         });
+
         BreathOfNichirin.CREATIVE_TAB_REGISTRY.register("katanas", () -> {
             LOGGER.info("Creating katana creative tab...");
             return CreativeModeTab.builder(CreativeModeTab.Row.TOP , 1 )
@@ -49,7 +62,7 @@ public interface NichirinCreativeTabRegistry {
                         return new ItemStack(NichirinItemRegistry.KATANA.get());
                     })
                     .displayItems((displayContext, entries) -> {
-                        // Add katana
+                        // Your existing katanas - unchanged
                         entries.accept(NichirinItemRegistry.KATANA.get());
                         entries.accept(NichirinItemRegistry.THUNDER_KATANA.get());
                         entries.accept(NichirinItemRegistry.FLAME_KATANA.get());
@@ -67,7 +80,7 @@ public interface NichirinCreativeTabRegistry {
                         return new ItemStack(NichirinItemRegistry.SHINOBU_CAPE.get());
                     })
                     .displayItems((displayContext, entries) -> {
-                        // Add armor
+                        // Your existing armor - unchanged
                         entries.accept(NichirinItemRegistry.SHINOBU_HEADPIECE.get());
                         entries.accept(NichirinItemRegistry.SHINOBU_CAPE.get());
                         entries.accept(NichirinItemRegistry.SHINOBU_LEGGINGS.get());
@@ -87,8 +100,6 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinItemRegistry.TENGEN_ACCESSORIES.get());
                         entries.accept(NichirinItemRegistry.TENGEN_LEGGINGS.get());
                         entries.accept(NichirinItemRegistry.TENGEN_BOOTS.get());
-
-
 
                     })
                     .build();

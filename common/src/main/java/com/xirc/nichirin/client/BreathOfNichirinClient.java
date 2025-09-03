@@ -20,17 +20,16 @@ import com.xirc.nichirin.common.network.CooldownDisplayPacket;
 import com.xirc.nichirin.common.util.BlockingInputHandler;
 import com.xirc.nichirin.common.util.KatanaInputHandler;
 import com.xirc.nichirin.common.util.PlayerStats;
-import com.xirc.nichirin.registry.NichirinEntityRendererRegistry;
-import com.xirc.nichirin.registry.NichirinItemRegistry;
-import com.xirc.nichirin.registry.NichirinParticleRegistry;
-import com.xirc.nichirin.registry.NichirinShaderRegistry;
+import com.xirc.nichirin.registry.*;
 import dev.architectury.event.events.client.ClientTickEvent;
 import dev.architectury.registry.client.particle.ParticleProviderRegistry;
+import dev.architectury.registry.client.rendering.RenderTypeRegistry;
 import dev.architectury.utils.Env;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.client.renderer.item.ItemPropertyFunction;
 import net.minecraft.resources.ResourceLocation;
@@ -126,6 +125,10 @@ public class BreathOfNichirinClient {
             BreathingBarRenderer.register();
             StaminaBarRenderer.register();
             StanceBarRenderer.register();
+
+            RenderTypeRegistry.register(RenderType.cutout(),
+                    NichirinBlockRegistry.WYSTERIA_DOOR.get(),
+                    NichirinBlockRegistry.WYSTERIA_TRAPDOOR.get());
 
             LOGGER.info("DEBUG: Client initialization complete");
             initialized = true;

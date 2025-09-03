@@ -65,6 +65,9 @@ public final class BreathOfNichirin {
         PlayerDataProvider.register();
         NichirinCriteriaTriggers.init();
 
+        var blockSetType = NichirinBlockSetTypes.WYSTERIA;
+        var woodType = NichirinWoodTypes.WYSTERIA;
+
         LOGGER.info("=== NICHIRIN COMMON INITIALIZATION COMPLETE ===");
     }
 

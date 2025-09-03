@@ -1,4 +1,4 @@
-package com.xirc.nichirin.datagen;
+package com.xirc.nichirin.datagen.providers.data;
 
 import com.xirc.nichirin.registry.NichirinBlockRegistry;
 import com.xirc.nichirin.registry.NichirinItemRegistry;
@@ -9,7 +9,6 @@ import net.minecraft.data.recipes.FinishedRecipe;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.data.recipes.ShapelessRecipeBuilder;
-import net.minecraft.nbt.Tag;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.Items;
 
@@ -92,7 +91,7 @@ public class NichirinRecipeProvider extends FabricRecipeProvider {
                 .unlockedBy("has_paper", InventoryChangeTrigger.TriggerInstance.hasItems(Items.PAPER))
                 .save(exporter);
 
-        ShapedRecipeBuilder.shaped(RecipeCategory.FOOD, NichirinItemRegistry.BENTO_BOX.get())
+        ShapedRecipeBuilder.shaped(RecipeCategory.FOOD, NichirinBlockRegistry.BENTO_BOX_BLOCK.get())
                 .define('W', ItemTags.WOODEN_SLABS)
                 .pattern("WWW")
                 .pattern("W W")
@@ -100,7 +99,7 @@ public class NichirinRecipeProvider extends FabricRecipeProvider {
                 .unlockedBy("has_oak_slab", InventoryChangeTrigger.TriggerInstance.hasItems(Items.OAK_SLAB))
                 .save(exporter);
 
-        ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, NichirinBlockRegistry.KATANA_HOLDER_ITEM.get())
+        ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, NichirinBlockRegistry.KATANA_HOLDER_BLOCK.get())
                 .define('I', Items.IRON_INGOT)
                 .define('N', Items.IRON_NUGGET)
                 .pattern("N N")

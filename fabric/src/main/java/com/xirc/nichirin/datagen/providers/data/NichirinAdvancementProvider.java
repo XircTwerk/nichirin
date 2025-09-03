@@ -1,4 +1,4 @@
-package com.xirc.nichirin.datagen;
+package com.xirc.nichirin.datagen.providers.data;
 
 import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.registry.NichirinItemRegistry;
@@ -7,9 +7,6 @@ import net.fabricmc.fabric.api.datagen.v1.provider.FabricAdvancementProvider;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.FrameType;
 import net.minecraft.advancements.critereon.InventoryChangeTrigger;
-import net.minecraft.advancements.critereon.LightningStrikeTrigger;
-import net.minecraft.advancements.critereon.EntityPredicate;
-import net.minecraft.advancements.critereon.EntityEquipmentPredicate;
 import net.minecraft.advancements.critereon.ItemPredicate;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
