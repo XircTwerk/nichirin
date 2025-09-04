@@ -4,19 +4,25 @@ import lombok.Getter;
 import net.minecraft.nbt.CompoundTag;
 
 /**
- * Complete player data container including breathing styles and progression
+ * Complete player data container including breathing styles, progression, and statistics
  */
 @Getter
 public class PlayerData {
 
     /**
-     *  Gets breathing style data
+     * Gets breathing style data
      */
     private final BreathingStyleData breathingStyleData = new BreathingStyleData();
+
     /**
-     *  Gets progression data
+     * Gets progression data
      */
     private final BreathingStyleProgression progression = new BreathingStyleProgression();
+
+    /**
+     * Gets statistics tracking data
+     */
+    private final BreathingStyleStatistics statistics = new BreathingStyleStatistics();
 
     public PlayerData() {
         // Constructor
@@ -28,6 +34,7 @@ public class PlayerData {
     public void copyFrom(PlayerData other) {
         this.breathingStyleData.copyFrom(other.breathingStyleData);
         this.progression.copyFrom(other.progression);
+        this.statistics.copyFrom(other.statistics);
     }
 
     /**
@@ -37,6 +44,7 @@ public class PlayerData {
         CompoundTag tag = new CompoundTag();
         tag.put("BreathingStyle", breathingStyleData.save());
         tag.put("Progression", progression.save());
+        tag.put("Statistics", statistics.save());
         return tag;
     }
 
@@ -49,6 +57,9 @@ public class PlayerData {
         }
         if (tag.contains("Progression")) {
             progression.load(tag.getCompound("Progression"));
+        }
+        if (tag.contains("Statistics")) {
+            statistics.load(tag.getCompound("Statistics"));
         }
     }
 }

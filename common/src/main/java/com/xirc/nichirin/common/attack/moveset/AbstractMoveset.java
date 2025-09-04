@@ -21,7 +21,7 @@ import java.util.function.Consumer;
 @Getter
 public abstract class AbstractMoveset {
 
-    // UUID for the movement speed modifier - unique per moveset
+    // UUID for the movement speed modifier
     private static final UUID SPEED_MODIFIER_UUID = UUID.fromString("A1B2C3D4-E5F6-7890-ABCD-EF1234567890");
 
     private final String movesetId;
@@ -33,18 +33,42 @@ public abstract class AbstractMoveset {
     // Optional moveset-wide properties
     @Nullable
     protected final ResourceLocation idleAnimation;
-    protected final float damageMultiplier;
+
+    // Only the modifiers you actually need
     protected final float speedMultiplier;
+    protected final float fallDamageMultiplier;    // 0.5 = half damage, 0.0 = no damage
+    protected final float healthRegenMultiplier;   // 2.0 = double regen rate
+    protected final float staminaCostMultiplier;   // 0.5 = half stamina cost
 
     protected AbstractMoveset(String movesetId, String displayName, MovesetBuilder builder) {
         this.movesetId = movesetId;
         this.displayName = displayName;
         this.idleAnimation = builder.idleAnimation;
-        this.damageMultiplier = builder.damageMultiplier;
         this.speedMultiplier = builder.speedMultiplier;
+        this.fallDamageMultiplier = builder.fallDamageMultiplier;
+        this.healthRegenMultiplier = builder.healthRegenMultiplier;
+        this.staminaCostMultiplier = builder.staminaCostMultiplier;
 
         // Add all configured moves
         moves.addAll(builder.moveConfigs);
+    }
+
+    /**
+     * Apply all moveset modifiers to a player
+     */
+    public void applyAllModifiers(Player player) {
+        applySpeedModifier(player);
+        // Note: Fall damage, health regen, and stamina cost are handled differently
+        // as they require event-based implementations rather than attribute modifiers
+        System.out.println("DEBUG: Applied all modifiers for " + movesetId);
+    }
+
+    /**
+     * Remove all moveset modifiers from a player
+     */
+    public void removeAllModifiers(Player player) {
+        removeSpeedModifier(player);
+        System.out.println("DEBUG: Removed all modifiers for " + movesetId);
     }
 
     /**
@@ -56,9 +80,6 @@ public abstract class AbstractMoveset {
             removeSpeedModifier(player);
 
             // Calculate the modifier value (convert multiplier to additive modifier)
-            // For MULTIPLY_TOTAL: final_value = base_value * (1 + modifier_value)
-            // So if we want 2x speed: modifier_value = 1.0 (base * (1 + 1) = base * 2)
-            // If we want 1.5x speed: modifier_value = 0.5 (base * (1 + 0.5) = base * 1.5)
             double modifierValue = speedMultiplier - 1.0;
 
             // Clamp the modifier to reasonable values to prevent issues
@@ -69,7 +90,7 @@ public abstract class AbstractMoveset {
             // Create and apply the attribute modifier
             AttributeModifier modifier = new AttributeModifier(
                     SPEED_MODIFIER_UUID,
-                    "moveset_speed_modifier", // Modifier name
+                    "moveset_speed_modifier",
                     modifierValue,
                     AttributeModifier.Operation.MULTIPLY_TOTAL
             );
@@ -163,6 +184,11 @@ public abstract class AbstractMoveset {
             config.startAction.accept(player);
         }
     }
+
+    // Getter methods for the modifiers
+    public float getFallDamageMultiplier() { return fallDamageMultiplier; }
+    public float getHealthRegenMultiplier() { return healthRegenMultiplier; }
+    public float getStaminaCostMultiplier() { return staminaCostMultiplier; }
 
     /**
      * Complete configuration for a moveset move
@@ -437,8 +463,10 @@ public abstract class AbstractMoveset {
      */
     public static class MovesetBuilder {
         private ResourceLocation idleAnimation;
-        private float damageMultiplier = 1.0f;
         private float speedMultiplier = 1.0f;
+        private float fallDamageMultiplier = 1.0f;
+        private float healthRegenMultiplier = 1.0f;
+        private float staminaCostMultiplier = 1.0f;
 
         final List<MoveConfiguration> moveConfigs = new ArrayList<>();
 
@@ -447,13 +475,23 @@ public abstract class AbstractMoveset {
             return this;
         }
 
-        public MovesetBuilder withDamageMultiplier(float multiplier) {
-            this.damageMultiplier = multiplier;
+        public MovesetBuilder withSpeedMultiplier(float multiplier) {
+            this.speedMultiplier = multiplier;
             return this;
         }
 
-        public MovesetBuilder withSpeedMultiplier(float multiplier) {
-            this.speedMultiplier = multiplier;
+        public MovesetBuilder withFallDamageMultiplier(float multiplier) {
+            this.fallDamageMultiplier = multiplier;
+            return this;
+        }
+
+        public MovesetBuilder withHealthRegenMultiplier(float multiplier) {
+            this.healthRegenMultiplier = multiplier;
+            return this;
+        }
+
+        public MovesetBuilder withStaminaCostMultiplier(float multiplier) {
+            this.staminaCostMultiplier = multiplier;
             return this;
         }
 

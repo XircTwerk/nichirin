@@ -43,7 +43,6 @@ public class InsectBreathingMoveset extends AbstractMoveset {
     private static MovesetBuilder createBuilder() {
         return new MovesetBuilder()
                 .withIdleAnimation("nichirin:insect_idle")
-                .withDamageMultiplier(0.9f) // Slightly less raw damage, compensated by poison
                 .withSpeedMultiplier(1.3f) // Very fast and agile
 
                 // First Form: Butterfly - Precision dash strike (INDEX 0 in wheel)

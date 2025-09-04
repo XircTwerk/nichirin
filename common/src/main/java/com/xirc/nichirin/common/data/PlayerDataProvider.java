@@ -11,20 +11,19 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Provides and manages player data including breathing styles and progression
+ * Provides and manages player data including breathing styles, progression, and statistics
  * Uses Architectury events for cross-platform compatibility
  */
 public class PlayerDataProvider {
 
     private static final Map<UUID, PlayerData> PLAYER_DATA = new HashMap<>();
-    private static final String PERSISTENT_TAG_KEY = "NichirinPlayerData";
 
     /**
      * Gets or creates player data for a player
      */
     public static PlayerData getData(Player player) {
         PlayerData data = PLAYER_DATA.computeIfAbsent(player.getUUID(), k -> new PlayerData());
-        // Set player reference for speed modifiers
+        // Set player reference for modifiers and statistics
         data.getBreathingStyleData().setPlayer(player);
         return data;
     }
@@ -50,15 +49,17 @@ public class PlayerDataProvider {
                 // Load data from custom storage
                 PlayerDataStorage.loadPlayerData(serverPlayer);
 
-                // Set player reference and apply speed modifiers
+                // Set player reference and apply modifiers
                 PlayerData data = getData(serverPlayer);
                 data.getBreathingStyleData().setPlayer(serverPlayer);
 
-                // Re-apply speed modifier after loading (in case it was lost)
+                // Re-apply all modifiers after loading
                 var moveset = data.getBreathingStyleData().getMoveset();
                 if (moveset != null) {
-                    moveset.applySpeedModifier(serverPlayer);
-                    System.out.println("DEBUG: Re-applied speed modifier on player join");
+                    moveset.applyAllModifiers(serverPlayer);
+                    // Record style as equipped for time tracking
+                    data.getStatistics().onStyleEquipped(moveset.getMovesetId());
+                    System.out.println("DEBUG: Re-applied all modifiers on player join");
                 }
 
                 // Sync to client
@@ -71,9 +72,10 @@ public class PlayerDataProvider {
             if (player instanceof ServerPlayer) {
                 ServerPlayer serverPlayer = (ServerPlayer) player;
 
-                // Cleanup speed modifiers before saving
+                // Update time tracking and cleanup modifiers before saving
                 PlayerData data = PLAYER_DATA.get(player.getUUID());
                 if (data != null) {
+                    data.getStatistics().updateTimeTracking();
                     data.getBreathingStyleData().cleanup();
                 }
 
@@ -89,12 +91,14 @@ public class PlayerDataProvider {
                 ServerPlayer serverPlayer = (ServerPlayer) newPlayer;
                 // Data should persist through respawn automatically
 
-                // Re-apply speed modifiers after respawn
+                // Re-apply all modifiers after respawn
                 PlayerData data = getData(serverPlayer);
                 var moveset = data.getBreathingStyleData().getMoveset();
                 if (moveset != null) {
-                    moveset.applySpeedModifier(serverPlayer);
-                    System.out.println("DEBUG: Re-applied speed modifier on player respawn");
+                    moveset.applyAllModifiers(serverPlayer);
+                    // Re-record style as equipped
+                    data.getStatistics().onStyleEquipped(moveset.getMovesetId());
+                    System.out.println("DEBUG: Re-applied all modifiers on player respawn");
                 }
 
                 syncToClient(serverPlayer);
@@ -108,16 +112,18 @@ public class PlayerDataProvider {
                 PlayerData oldData = getData(oldPlayer);
                 PlayerData newData = getData(newPlayer);
 
-                // Cleanup old player's speed modifiers
+                // Update time tracking and cleanup old player's modifiers
+                oldData.getStatistics().updateTimeTracking();
                 oldData.getBreathingStyleData().cleanup();
 
                 newData.copyFrom(oldData);
 
-                // Apply speed modifiers to new player
+                // Apply modifiers to new player
                 var moveset = newData.getBreathingStyleData().getMoveset();
                 if (moveset != null) {
-                    moveset.applySpeedModifier(newPlayer);
-                    System.out.println("DEBUG: Applied speed modifier on player clone");
+                    moveset.applyAllModifiers(newPlayer);
+                    newData.getStatistics().onStyleEquipped(moveset.getMovesetId());
+                    System.out.println("DEBUG: Applied all modifiers on player clone");
                 }
 
                 // Save to persistent data
@@ -128,10 +134,15 @@ public class PlayerDataProvider {
             }
         });
 
-        // Save data periodically for safety using server tick
+        // Save data periodically and update time tracking
         TickEvent.SERVER_POST.register((server) -> {
             if (server.getTickCount() % 1200 == 0) { // Every minute
                 for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+                    PlayerData data = PLAYER_DATA.get(player.getUUID());
+                    if (data != null) {
+                        // Update time tracking for equipped styles
+                        data.getStatistics().updateTimeTracking();
+                    }
                     savePlayerData(player);
                 }
             }
@@ -147,17 +158,19 @@ public class PlayerDataProvider {
     }
 
     public static void clearData(Player player) {
-        // Cleanup speed modifiers before clearing
+        // Cleanup modifiers and update time tracking before clearing
         PlayerData data = PLAYER_DATA.get(player.getUUID());
         if (data != null) {
+            data.getStatistics().updateTimeTracking();
             data.getBreathingStyleData().cleanup();
         }
         PLAYER_DATA.remove(player.getUUID());
     }
 
     public static void clearAll() {
-        // Cleanup all speed modifiers
+        // Cleanup all modifiers and update time tracking
         for (PlayerData data : PLAYER_DATA.values()) {
+            data.getStatistics().updateTimeTracking();
             data.getBreathingStyleData().cleanup();
         }
         PLAYER_DATA.clear();
@@ -183,11 +196,54 @@ public class PlayerDataProvider {
     }
 
     /**
+     * Records technique usage for statistics
+     */
+    public static void recordTechniqueUsage(Player player, String styleId) {
+        getData(player).getStatistics().recordTechniqueUsage(styleId);
+    }
+
+    /**
+     * Records damage dealt for statistics
+     */
+    public static void recordDamageDealt(Player player, String styleId, int damage) {
+        getData(player).getStatistics().recordDamageDealt(styleId, damage);
+    }
+
+    /**
+     * Updates combo tracking
+     */
+    public static void updateComboChain(Player player, String styleId, int comboLength) {
+        getData(player).getStatistics().updateComboChain(styleId, comboLength);
+    }
+
+    /**
+     * Resets combo chain
+     */
+    public static void resetComboChain(Player player) {
+        getData(player).getStatistics().resetComboChain();
+    }
+
+    /**
+     * Records successful dodge
+     */
+    public static void recordSuccessfulDodge(Player player) {
+        getData(player).getStatistics().recordSuccessfulDodge();
+    }
+
+    /**
+     * Records successful block
+     */
+    public static void recordSuccessfulBlock(Player player) {
+        getData(player).getStatistics().recordSuccessfulBlock();
+    }
+
+    /**
      * Clears all cached data (for mod reload/testing)
      */
     public static void clearCache() {
-        // Cleanup all speed modifiers
+        // Cleanup all modifiers and update time tracking
         for (PlayerData data : PLAYER_DATA.values()) {
+            data.getStatistics().updateTimeTracking();
             data.getBreathingStyleData().cleanup();
         }
         PLAYER_DATA.clear();

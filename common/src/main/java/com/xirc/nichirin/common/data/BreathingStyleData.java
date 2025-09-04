@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Data class for storing player's selected breathing style
- * Uses Architectury's platform-agnostic approach
+ * Handles modifiers and statistics tracking automatically
  */
 public class BreathingStyleData {
 
@@ -18,7 +18,7 @@ public class BreathingStyleData {
     @Nullable
     private String movesetId;
 
-    // Keep track of the player for speed modifiers
+    // Keep track of the player for modifiers and statistics
     @Nullable
     private Player player;
 
@@ -39,18 +39,32 @@ public class BreathingStyleData {
      * Sets the current breathing style moveset
      */
     public void setMoveset(@Nullable AbstractMoveset moveset) {
-        // Remove old speed modifier if we had one
+        // Handle statistics tracking and modifiers for old style
         if (this.currentMoveset != null && this.player != null) {
-            this.currentMoveset.removeSpeedModifier(this.player);
+            // Record unequip time for old style
+            var statistics = getStatistics();
+            if (statistics != null) {
+                statistics.onStyleUnequipped(this.currentMoveset.getMovesetId());
+            }
+
+            // Remove old modifiers
+            this.currentMoveset.removeAllModifiers(this.player);
         }
 
         this.currentMoveset = moveset;
         this.movesetId = moveset != null ? moveset.getMovesetId() : null;
 
-        // Apply new speed modifier if we have one
+        // Handle statistics tracking and modifiers for new style
         if (this.currentMoveset != null && this.player != null) {
-            this.currentMoveset.applySpeedModifier(this.player);
-            System.out.println("DEBUG: Applied speed modifier for moveset: " + movesetId);
+            // Record equip time for new style
+            var statistics = getStatistics();
+            if (statistics != null) {
+                statistics.onStyleEquipped(this.currentMoveset.getMovesetId());
+            }
+
+            // Apply new modifiers
+            this.currentMoveset.applyAllModifiers(this.player);
+            System.out.println("DEBUG: Applied all modifiers for moveset: " + movesetId);
         }
     }
 
@@ -62,10 +76,14 @@ public class BreathingStyleData {
         // If we only have an ID but no moveset instance, try to load it
         if (currentMoveset == null && movesetId != null) {
             currentMoveset = MovesetRegistry.getMoveset(movesetId);
-            // Apply speed modifier when loading
+            // Apply modifiers when loading
             if (currentMoveset != null && player != null) {
-                currentMoveset.applySpeedModifier(player);
-                System.out.println("DEBUG: Applied speed modifier for loaded moveset: " + movesetId);
+                currentMoveset.applyAllModifiers(player);
+                var statistics = getStatistics();
+                if (statistics != null) {
+                    statistics.onStyleEquipped(movesetId);
+                }
+                System.out.println("DEBUG: Applied all modifiers for loaded moveset: " + movesetId);
             }
         }
         return currentMoveset;
@@ -75,9 +93,13 @@ public class BreathingStyleData {
      * Sets the moveset by its ID
      */
     public void setMovesetId(@Nullable String movesetId) {
-        // Remove old speed modifier
+        // Handle old style cleanup
         if (this.currentMoveset != null && this.player != null) {
-            this.currentMoveset.removeSpeedModifier(this.player);
+            var statistics = getStatistics();
+            if (statistics != null) {
+                statistics.onStyleUnequipped(this.currentMoveset.getMovesetId());
+            }
+            this.currentMoveset.removeAllModifiers(this.player);
         }
 
         this.movesetId = movesetId;
@@ -85,7 +107,7 @@ public class BreathingStyleData {
         this.currentMoveset = null;
 
         // Load and apply new moveset
-        getMoveset(); // This will trigger loading and speed modifier application
+        getMoveset(); // This will trigger loading and modifier application
     }
 
     /**
@@ -107,10 +129,14 @@ public class BreathingStyleData {
      * Clears the current moveset
      */
     public void clearMoveset() {
-        // Remove speed modifier before clearing
+        // Handle statistics and modifiers before clearing
         if (this.currentMoveset != null && this.player != null) {
-            this.currentMoveset.removeSpeedModifier(this.player);
-            System.out.println("DEBUG: Removed speed modifier for cleared moveset");
+            var statistics = getStatistics();
+            if (statistics != null) {
+                statistics.onStyleUnequipped(this.currentMoveset.getMovesetId());
+            }
+            this.currentMoveset.removeAllModifiers(this.player);
+            System.out.println("DEBUG: Removed all modifiers for cleared moveset");
         }
 
         this.currentMoveset = null;
@@ -121,17 +147,25 @@ public class BreathingStyleData {
      * Copies data from another instance
      */
     public void copyFrom(BreathingStyleData other) {
-        // Remove old speed modifier
+        // Remove old modifiers
         if (this.currentMoveset != null && this.player != null) {
-            this.currentMoveset.removeSpeedModifier(this.player);
+            var statistics = getStatistics();
+            if (statistics != null) {
+                statistics.onStyleUnequipped(this.currentMoveset.getMovesetId());
+            }
+            this.currentMoveset.removeAllModifiers(this.player);
         }
 
         this.movesetId = other.getMovesetId();
         this.currentMoveset = other.getMoveset();
 
-        // Apply new speed modifier
+        // Apply new modifiers
         if (this.currentMoveset != null && this.player != null) {
-            this.currentMoveset.applySpeedModifier(this.player);
+            this.currentMoveset.applyAllModifiers(this.player);
+            var statistics = getStatistics();
+            if (statistics != null) {
+                statistics.onStyleEquipped(this.currentMoveset.getMovesetId());
+            }
         }
     }
 
@@ -161,11 +195,26 @@ public class BreathingStyleData {
     }
 
     /**
-     * Called when player disconnects/dies to clean up speed modifiers
+     * Gets the statistics tracking system (requires PlayerDataProvider access)
+     */
+    private BreathingStyleStatistics getStatistics() {
+        if (player != null) {
+            // Access statistics through PlayerDataProvider
+            return com.xirc.nichirin.common.data.PlayerDataProvider.getData(player).getStatistics();
+        }
+        return null;
+    }
+
+    /**
+     * Called when player disconnects/dies to clean up modifiers
      */
     public void cleanup() {
         if (this.currentMoveset != null && this.player != null) {
-            this.currentMoveset.removeSpeedModifier(this.player);
+            var statistics = getStatistics();
+            if (statistics != null) {
+                statistics.onStyleUnequipped(this.currentMoveset.getMovesetId());
+            }
+            this.currentMoveset.removeAllModifiers(this.player);
         }
     }
 }

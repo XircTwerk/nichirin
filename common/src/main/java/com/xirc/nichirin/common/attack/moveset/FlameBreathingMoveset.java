@@ -43,8 +43,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
     private static MovesetBuilder createBuilder() {
         return new MovesetBuilder()
                 .withIdleAnimation("nichirin:flame_idle")
-                .withDamageMultiplier(1.1f) // Slight damage boost for slugger style
-                .withSpeedMultiplier(0.9f) // Slightly slower but more powerful
+                .withSpeedMultiplier(0.95f) // Slightly slower but more powerful
 
                 //skip unknowing fire (index 0)
 

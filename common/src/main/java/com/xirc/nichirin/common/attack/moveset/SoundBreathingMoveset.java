@@ -43,7 +43,6 @@ public class SoundBreathingMoveset extends AbstractMoveset {
     private static MovesetBuilder createBuilder() {
         return new MovesetBuilder()
                 .withIdleAnimation("nichirin:sound_idle")
-                .withDamageMultiplier(1.0f) // Balanced base damage
                 .withSpeedMultiplier(1.1f) // Slightly faster for combo building
 
                 // First Form: Roar - AOE slam (INDEX 0 in wheel)
