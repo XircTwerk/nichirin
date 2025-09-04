@@ -15,7 +15,8 @@ import java.util.UUID;
 
 /**
  * Stunned Status Effect - Prevents movement and actions but allows knockback
- * Prevents player input and mob AI but preserves physics-based movement
+ * Level 0 (amplifier 0): No movement reduction
+ * Level 1+ (amplifier 1+): 95% movement reduction
  */
 public class StunnedStatusEffect extends MobEffect {
 
@@ -29,13 +30,8 @@ public class StunnedStatusEffect extends MobEffect {
     public StunnedStatusEffect() {
         super(MobEffectCategory.NEUTRAL, 0xFFD700); // Golden color for stun
 
-        // Reduce movement speed significantly but don't eliminate it completely
-        this.addAttributeModifier(
-                Attributes.MOVEMENT_SPEED,
-                MOVEMENT_MODIFIER_UUID.toString(),
-                -0.95, // 95% reduction instead of 100%
-                AttributeModifier.Operation.MULTIPLY_TOTAL
-        );
+        // Note: We don't add attribute modifiers in constructor anymore
+        // since we need to handle them dynamically based on amplifier level
     }
 
     /**
@@ -63,6 +59,31 @@ public class StunnedStatusEffect extends MobEffect {
     }
 
     @Override
+    public void addAttributeModifiers(LivingEntity entity, net.minecraft.world.entity.ai.attributes.AttributeMap attributeMap, int amplifier) {
+        // Only apply movement reduction for amplifier 1+ (Level 2+)
+        if (amplifier >= 1) {
+            var attribute = entity.getAttribute(Attributes.MOVEMENT_SPEED);
+            if (attribute != null) {
+                AttributeModifier modifier = new AttributeModifier(
+                        MOVEMENT_MODIFIER_UUID,
+                        "Stunned movement reduction",
+                        -0.95, // 95% reduction
+                        AttributeModifier.Operation.MULTIPLY_TOTAL
+                );
+                attribute.addTransientModifier(modifier);
+            }
+        }
+    }
+
+    @Override
+    public void removeAttributeModifiers(LivingEntity entity, net.minecraft.world.entity.ai.attributes.AttributeMap attributeMap, int amplifier) {
+        var attribute = entity.getAttribute(Attributes.MOVEMENT_SPEED);
+        if (attribute != null) {
+            attribute.removeModifier(MOVEMENT_MODIFIER_UUID);
+        }
+    }
+
+    @Override
     public boolean isDurationEffectTick(int duration, int amplifier) {
         return true; // Apply every tick
     }
@@ -79,8 +100,8 @@ public class StunnedStatusEffect extends MobEffect {
             inGracePeriod = false;
         }
 
-        // If not in grace period, restrict movement
-        if (!inGracePeriod) {
+        // Only restrict movement for amplifier 1+ (Level 2+) and when not in grace period
+        if (amplifier >= 1 && !inGracePeriod) {
             Vec3 currentMovement = entity.getDeltaMovement();
 
             // Only restrict horizontal movement that's likely from input/AI
@@ -93,13 +114,14 @@ public class StunnedStatusEffect extends MobEffect {
             entity.setDeltaMovement(newX, currentMovement.y, newZ);
         }
 
-        // Player-specific restrictions
+        // Player-specific restrictions (apply regardless of amplifier level)
         if (entity instanceof Player player && !player.isCreative() && !player.isSpectator()) {
-            // Prevent flying
-            player.getAbilities().flying = false;
+            // Prevent flying and building
+            player.getAbilities().mayfly = false;
+            player.getAbilities().mayBuild = false;
         }
 
-        // Mob-specific restrictions
+        // Mob-specific restrictions (apply regardless of amplifier level)
         if (entity instanceof Mob mob) {
             // Disable AI but don't interfere with physics
             mob.setTarget(null);

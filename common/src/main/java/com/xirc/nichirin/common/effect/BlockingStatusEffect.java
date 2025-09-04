@@ -25,7 +25,7 @@ public class BlockingStatusEffect extends MobEffect {
         this.addAttributeModifier(
                 Attributes.MOVEMENT_SPEED,
                 MOVEMENT_MODIFIER_UUID.toString(),
-                -0.10, // 40% reduction
+                -0.40, // 40% reduction
                 AttributeModifier.Operation.MULTIPLY_TOTAL
         );
     }
