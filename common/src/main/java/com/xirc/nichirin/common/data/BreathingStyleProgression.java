@@ -10,14 +10,14 @@ import java.util.Set;
 
 /**
  * Tracks player progression and unlocked breathing styles
+ * Cleaned up unused methods and simplified
  */
 public class BreathingStyleProgression {
 
     // Set of unlocked breathing style IDs
     private final Set<String> unlockedStyles = new HashSet<>();
 
-    // Getters
-    // Player stats
+    // Player stats - keeping only the ones that are actually used
     @Getter
     private int demonsSlain = 0;
     @Getter
@@ -29,8 +29,7 @@ public class BreathingStyleProgression {
 
     public BreathingStyleProgression() {
         // Everyone starts with no breathing styles unlocked
-        // Thunder Breathing is unlocked via lightning strike (handled elsewhere)
-        // Flame Breathing is unlocked via being on fire for 15 seconds (handled elsewhere)
+        // Breathing styles are unlocked via specific events/commands
     }
 
     /**
@@ -45,13 +44,6 @@ public class BreathingStyleProgression {
      */
     public boolean isStyleUnlocked(String styleId) {
         return unlockedStyles.contains(styleId);
-    }
-
-    /**
-     * Gets all unlocked breathing styles
-     */
-    public Set<String> getUnlockedStyles() {
-        return new HashSet<>(unlockedStyles);
     }
 
     /**
@@ -72,33 +64,6 @@ public class BreathingStyleProgression {
             case "sound_breathing" -> "Play a music disc in a jukebox";
             default -> "Unknown requirement";
         };
-    }
-
-    /**
-     * Checks if requirements are met for a breathing style
-     * Note: Thunder Breathing and Flame Breathing unlocks are handled by their respective handlers
-     */
-    public boolean meetsRequirements(String styleId) {
-        // Handled by lightning strike event
-        // Handled by burning duration event
-        return false;
-    }
-
-    /**
-     * Attempts to unlock a style if requirements are met
-     * @return true if successfully unlocked, false if requirements not met
-     */
-    public boolean tryUnlockStyle(String styleId) {
-        if (isStyleUnlocked(styleId)) {
-            return true; // Already unlocked
-        }
-
-        if (meetsRequirements(styleId)) {
-            unlockStyle(styleId);
-            return true;
-        }
-
-        return false;
     }
 
     // Player stat methods
@@ -127,18 +92,6 @@ public class BreathingStyleProgression {
         } else if (demonsSlain >= 3) {
             slayerRank = Math.max(slayerRank, 1);
         }
-    }
-
-    public String getSlayerRankName() {
-        return switch (slayerRank) {
-            case 0 -> "Novice";
-            case 1 -> "Apprentice";
-            case 2 -> "Slayer";
-            case 3 -> "Veteran";
-            case 4 -> "Elite";
-            case 5 -> "Master";
-            default -> "Unknown";
-        };
     }
 
     /**

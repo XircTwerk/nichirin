@@ -23,14 +23,20 @@ public class PlayerDataProvider {
      * Gets or creates player data for a player
      */
     public static PlayerData getData(Player player) {
-        return PLAYER_DATA.computeIfAbsent(player.getUUID(), k -> new PlayerData());
+        PlayerData data = PLAYER_DATA.computeIfAbsent(player.getUUID(), k -> new PlayerData());
+        // Set player reference for speed modifiers
+        data.getBreathingStyleData().setPlayer(player);
+        return data;
     }
 
     /**
      * Gets breathing style data for a player (for backwards compatibility)
      */
     public static BreathingStyleData getBreathingStyleData(Player player) {
-        return getData(player).getBreathingStyleData();
+        PlayerData data = getData(player);
+        // Ensure player reference is set
+        data.getBreathingStyleData().setPlayer(player);
+        return data.getBreathingStyleData();
     }
 
     /**
@@ -44,15 +50,33 @@ public class PlayerDataProvider {
                 // Load data from custom storage
                 PlayerDataStorage.loadPlayerData(serverPlayer);
 
+                // Set player reference and apply speed modifiers
+                PlayerData data = getData(serverPlayer);
+                data.getBreathingStyleData().setPlayer(serverPlayer);
+
+                // Re-apply speed modifier after loading (in case it was lost)
+                var moveset = data.getBreathingStyleData().getMoveset();
+                if (moveset != null) {
+                    moveset.applySpeedModifier(serverPlayer);
+                    System.out.println("DEBUG: Re-applied speed modifier on player join");
+                }
+
                 // Sync to client
                 syncToClient(serverPlayer);
             }
         });
 
-        // Handle player quit - save data
+        // Handle player quit - save data and cleanup
         PlayerEvent.PLAYER_QUIT.register(player -> {
             if (player instanceof ServerPlayer) {
                 ServerPlayer serverPlayer = (ServerPlayer) player;
+
+                // Cleanup speed modifiers before saving
+                PlayerData data = PLAYER_DATA.get(player.getUUID());
+                if (data != null) {
+                    data.getBreathingStyleData().cleanup();
+                }
+
                 savePlayerData(serverPlayer);
                 // Clean up memory
                 PLAYER_DATA.remove(player.getUUID());
@@ -64,6 +88,15 @@ public class PlayerDataProvider {
             if (newPlayer instanceof ServerPlayer) {
                 ServerPlayer serverPlayer = (ServerPlayer) newPlayer;
                 // Data should persist through respawn automatically
+
+                // Re-apply speed modifiers after respawn
+                PlayerData data = getData(serverPlayer);
+                var moveset = data.getBreathingStyleData().getMoveset();
+                if (moveset != null) {
+                    moveset.applySpeedModifier(serverPlayer);
+                    System.out.println("DEBUG: Re-applied speed modifier on player respawn");
+                }
+
                 syncToClient(serverPlayer);
             }
         });
@@ -74,7 +107,18 @@ public class PlayerDataProvider {
                 // Copy data from old player to new player
                 PlayerData oldData = getData(oldPlayer);
                 PlayerData newData = getData(newPlayer);
+
+                // Cleanup old player's speed modifiers
+                oldData.getBreathingStyleData().cleanup();
+
                 newData.copyFrom(oldData);
+
+                // Apply speed modifiers to new player
+                var moveset = newData.getBreathingStyleData().getMoveset();
+                if (moveset != null) {
+                    moveset.applySpeedModifier(newPlayer);
+                    System.out.println("DEBUG: Applied speed modifier on player clone");
+                }
 
                 // Save to persistent data
                 if (newPlayer instanceof ServerPlayer) {
@@ -103,10 +147,19 @@ public class PlayerDataProvider {
     }
 
     public static void clearData(Player player) {
+        // Cleanup speed modifiers before clearing
+        PlayerData data = PLAYER_DATA.get(player.getUUID());
+        if (data != null) {
+            data.getBreathingStyleData().cleanup();
+        }
         PLAYER_DATA.remove(player.getUUID());
     }
 
     public static void clearAll() {
+        // Cleanup all speed modifiers
+        for (PlayerData data : PLAYER_DATA.values()) {
+            data.getBreathingStyleData().cleanup();
+        }
         PLAYER_DATA.clear();
     }
 
@@ -133,6 +186,10 @@ public class PlayerDataProvider {
      * Clears all cached data (for mod reload/testing)
      */
     public static void clearCache() {
+        // Cleanup all speed modifiers
+        for (PlayerData data : PLAYER_DATA.values()) {
+            data.getBreathingStyleData().cleanup();
+        }
         PLAYER_DATA.clear();
     }
 }

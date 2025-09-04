@@ -40,7 +40,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
     private static MovesetBuilder createBuilder() {
         return new MovesetBuilder()
                 .withIdleAnimation("nichirin:thunder_idle")
-                .withSpeedMultiplier(1.2f) // Slight speed boost for Thunder Breathing
+                .withSpeedMultiplier(1.5f) // Slight speed boost for Thunder Breathing
 
                 // SKIP INDEX 0 - Thunder Clap Flash is right-click only, not in attack wheel
 
@@ -48,11 +48,11 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("rice_spirit", "Rice Spirit")
                         .withAnimation("nichirin:rice_spirit", 8)
                         .withTiming(100, 8, 25) // 5 second cooldown, quick windup, duration
-                        .withDamage(4.5f) // 5 slashes = 22.5 total damage (was 6.0f = 30 total)
-                        .withRange(5.0f) // Medium range
+                        .withDamage(4.5f)
+                        .withRange(10.0f) // Medium range
                         .withKnockback(0.2f)
                         .withBreathCost(25.0f)
-                        .withHitStun(15)
+                        .withHitStun(20)
                         .withHitboxSize(1.8f)
                         .withAction(player -> {
                             RiceSpiritAttack attack = new RiceSpiritAttack();
@@ -111,7 +111,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withRange(8.0f)
                         .withKnockback(0.1f) // Minimal horizontal, focuses on launch
                         .withBreathCost(30.0f)
-                        .withHitStun(30) // Good combo potential
+                        .withHitStun(50) // Good combo potential
                         .withHitboxSize(2.0f)
                         .withAction(player -> {
                             HeatLightningAttack attack = new HeatLightningAttack();

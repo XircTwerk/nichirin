@@ -3,11 +3,14 @@ package com.xirc.nichirin.common.attack.moveset;
 import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
 import lombok.Getter;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
@@ -17,6 +20,9 @@ import java.util.function.Consumer;
  */
 @Getter
 public abstract class AbstractMoveset {
+
+    // UUID for the movement speed modifier - unique per moveset
+    private static final UUID SPEED_MODIFIER_UUID = UUID.fromString("A1B2C3D4-E5F6-7890-ABCD-EF1234567890");
 
     private final String movesetId;
     private final String displayName;
@@ -39,6 +45,48 @@ public abstract class AbstractMoveset {
 
         // Add all configured moves
         moves.addAll(builder.moveConfigs);
+    }
+
+    /**
+     * Apply the moveset's speed modifier to a player
+     */
+    public void applySpeedModifier(Player player) {
+        if (speedMultiplier != 1.0f) {
+            // Remove any existing speed modifier first
+            removeSpeedModifier(player);
+
+            // Calculate the modifier value (convert multiplier to additive modifier)
+            // For MULTIPLY_TOTAL: final_value = base_value * (1 + modifier_value)
+            // So if we want 2x speed: modifier_value = 1.0 (base * (1 + 1) = base * 2)
+            // If we want 1.5x speed: modifier_value = 0.5 (base * (1 + 0.5) = base * 1.5)
+            double modifierValue = speedMultiplier - 1.0;
+
+            // Clamp the modifier to reasonable values to prevent issues
+            modifierValue = Math.max(-0.95, Math.min(modifierValue, 10.0)); // Max 11x speed, min 5% speed
+
+            System.out.println("DEBUG: Applying speed modifier: " + modifierValue + " (from multiplier: " + speedMultiplier + ")");
+
+            // Create and apply the attribute modifier
+            AttributeModifier modifier = new AttributeModifier(
+                    SPEED_MODIFIER_UUID,
+                    "moveset_speed_modifier", // Modifier name
+                    modifierValue,
+                    AttributeModifier.Operation.MULTIPLY_TOTAL
+            );
+
+            player.getAttribute(Attributes.MOVEMENT_SPEED).addTransientModifier(modifier);
+
+            // Debug: Check the actual speed value
+            double currentSpeed = player.getAttribute(Attributes.MOVEMENT_SPEED).getValue();
+            System.out.println("DEBUG: Player speed after modifier: " + currentSpeed);
+        }
+    }
+
+    /**
+     * Remove the moveset's speed modifier from a player
+     */
+    public void removeSpeedModifier(Player player) {
+        player.getAttribute(Attributes.MOVEMENT_SPEED).removeModifier(SPEED_MODIFIER_UUID);
     }
 
     /**
@@ -124,8 +172,8 @@ public abstract class AbstractMoveset {
     public static class MoveConfiguration {
 
         /**
-        * Gets the move ID
-        */
+         * Gets the move ID
+         */
         public String getMoveId() {
             return moveId;
         }
