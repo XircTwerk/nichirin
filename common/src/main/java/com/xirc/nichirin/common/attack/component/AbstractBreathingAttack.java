@@ -286,7 +286,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
             MobEffectInstance stunInstance = new MobEffectInstance(
                     NichirinEffectRegistry.STUNNED.get(),
                     hitStun, // Duration in ticks
-                    0, // Amplifier
+                    2, // Amplifier
                     false, // Ambient
                     true, // Show particles
                     true // Show icon
@@ -337,7 +337,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
             MobEffectInstance stunInstance = new MobEffectInstance(
                     NichirinEffectRegistry.STUNNED.get(),
                     hitStun, // Duration in ticks
-                    0, // Amplifier
+                    2, // Amplifier
                     false, // Ambient
                     true, // Show particles
                     true // Show icon

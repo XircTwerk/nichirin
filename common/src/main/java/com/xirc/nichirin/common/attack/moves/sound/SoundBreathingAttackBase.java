@@ -12,6 +12,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -69,7 +70,7 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
         }
 
         // Apply stun effect AFTER knockback with a slight delay
-        world.getServer().execute(() -> {
+        Objects.requireNonNull(world.getServer()).execute(() -> {
             if (target.isAlive() && hitStun > 0) {
                 target.invulnerableTime = hitStun;
 
@@ -77,7 +78,7 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
                 target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
                         com.xirc.nichirin.registry.NichirinEffectRegistry.STUNNED.get(),
                         hitStun, // Duration in ticks
-                        0, // Amplifier
+                        2, // Amplifier
                         false, // Ambient
                         true, // Show particles
                         true // Show icon
@@ -130,7 +131,7 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
         }
 
         // Apply stun effect AFTER knockback with a slight delay
-        world.getServer().execute(() -> {
+        Objects.requireNonNull(world.getServer()).execute(() -> {
             if (target.isAlive() && hitStun > 0) {
                 target.invulnerableTime = hitStun;
 
@@ -138,7 +139,7 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
                 target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
                         com.xirc.nichirin.registry.NichirinEffectRegistry.STUNNED.get(),
                         hitStun, // Duration in ticks
-                        0, // Amplifier
+                        2, // Amplifier
                         false, // Ambient
                         true, // Show particles
                         true // Show icon
@@ -190,7 +191,7 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
         }
 
         // Apply stun effect AFTER knockback with delay
-        world.getServer().execute(() -> {
+        Objects.requireNonNull(world.getServer()).execute(() -> {
             if (target.isAlive() && hitStun > 0) {
                 target.invulnerableTime = hitStun;
 
@@ -198,7 +199,7 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
                 target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
                         com.xirc.nichirin.registry.NichirinEffectRegistry.STUNNED.get(),
                         hitStun, // Duration in ticks
-                        0, // Amplifier
+                        2, // Amplifier
                         false, // Ambient
                         true, // Show particles
                         true // Show icon
@@ -251,7 +252,7 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
         }
 
         // Apply stun effect with a 5-tick delay to allow knockback to take effect first
-        world.getServer().execute(() -> {
+        Objects.requireNonNull(world.getServer()).execute(() -> {
             if (target.isAlive()) {
                 target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
                         net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN,
