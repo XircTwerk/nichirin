@@ -1,9 +1,6 @@
 package com.xirc.nichirin.registry;
 
-import com.xirc.nichirin.common.blocks.BentoBoxBlock;
-import com.xirc.nichirin.common.blocks.KatanaHolderBlock;
-import com.xirc.nichirin.common.blocks.ScarletCrimsonIronSandBlock;
-import com.xirc.nichirin.common.blocks.ScarletOreBlock;
+import com.xirc.nichirin.common.blocks.*;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.minecraft.core.registries.Registries;
@@ -55,7 +52,7 @@ public interface NichirinBlockRegistry {
             () -> new Block(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS).mapColor(MapColor.COLOR_PURPLE)));
 
     RegistrySupplier<Block> WYSTERIA_LEAVES = BLOCKS.register("wysteria_leaves",
-            () -> new LeavesBlock(BlockBehaviour.Properties.copy(Blocks.OAK_LEAVES).mapColor(MapColor.COLOR_PURPLE)));
+            () -> new WysteriaLeavesBlock(BlockBehaviour.Properties.copy(Blocks.OAK_LEAVES).mapColor(MapColor.COLOR_PURPLE)));
 
     RegistrySupplier<Block> WYSTERIA_STAIRS = BLOCKS.register("wysteria_stairs",
             () -> new StairBlock(WYSTERIA_PLANKS.get().defaultBlockState(),
