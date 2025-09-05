@@ -6,6 +6,7 @@ import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.util.ComboTracker;
 import com.xirc.nichirin.registry.NichirinMoveRegistry;
 import com.xirc.nichirin.registry.MovesetRegistry;
+import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
@@ -13,6 +14,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.effect.MobEffectInstance;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Generic attack executor - handles all types of breathing attacks with automatic configuration
  * Now includes anti-spam detection that reduces hitstun on repeated moves
+ * Includes stun prevention system to prevent move stacking
  */
 public class MoveExecutor {
 
@@ -32,10 +35,16 @@ public class MoveExecutor {
 
     /**
      * Execute any breathing attack - handles both pre-configured and auto-configured attacks
-     * Now includes anti-spam detection for hitstun modification
+     * Now includes anti-spam detection for hitstun modification and stun prevention
      */
     public static void executeAttack(Player player, Object attack, String movesetId, String moveId) {
         System.out.println("DEBUG: ExecuteAttack called for " + attack.getClass().getSimpleName());
+
+        // Check if player is currently stunned (prevents move stacking)
+        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+            System.out.println("DEBUG: Player is stunned, cannot execute move");
+            return;
+        }
 
         // Handle all breathing attacks through the unified interface
         if (attack instanceof AbstractBreathingAttack<?, ?> breathingAttack) {
@@ -60,6 +69,9 @@ public class MoveExecutor {
                             System.out.println("DEBUG: Modified hitstun from " + originalHitStun + " to " + modifiedHitStun + " due to spam detection");
                         }
 
+                        // Apply stun effect during windup + duration to prevent move stacking
+                        applyMoveStun(player, config);
+
                         breathingAttack.configure(config);
                     } else {
                         System.err.println("ERROR: Could not find move config for " + moveId + " and attack not pre-configured");
@@ -71,7 +83,7 @@ public class MoveExecutor {
                 }
             } else {
                 System.out.println("DEBUG: Attack already configured, checking for spam detection");
-                // Even if pre-configured, we still need to apply spam detection
+                // Even if pre-configured, we still need to apply spam detection and stun
                 int originalHitStun = breathingAttack.getHitStun();
                 int modifiedHitStun = ComboTracker.getModifiedHitStun(player, moveId, originalHitStun);
 
@@ -82,6 +94,9 @@ public class MoveExecutor {
                     // For now, we'll need to add a setHitStun method to AbstractBreathingAttack
                     // breathingAttack.setHitStun(modifiedHitStun);
                 }
+
+                // Apply stun effect for pre-configured attacks too
+                applyPreConfiguredMoveStun(player, breathingAttack);
             }
         }
 
@@ -94,6 +109,91 @@ public class MoveExecutor {
 
         // Execute with proper display name
         executeAttackInternal(player, attack, displayName, cooldown);
+    }
+
+    /**
+     * Apply stun after attack starts successfully
+     */
+    private static void applyStunAfterAttackStart(Player player, Object attack) {
+        if (attack instanceof AbstractBreathingAttack<?, ?> breathingAttack) {
+            // Try to get windup from the configured attack
+            int windupTicks = 0;
+            try {
+                var getWindupMethod = attack.getClass().getMethod("getWindup");
+                windupTicks = (int) getWindupMethod.invoke(attack);
+            } catch (Exception e) {
+                // No windup method, check if we can get it from stored config
+                // For now, use 0
+            }
+
+            if (windupTicks > 0) {
+                MobEffectInstance stunEffect = new MobEffectInstance(
+                        NichirinEffectRegistry.STUNNED.get(),
+                        windupTicks,
+                        0,
+                        false,
+                        false,
+                        false
+                );
+
+                player.addEffect(stunEffect);
+                System.out.println("DEBUG: Applied delayed stun for " + windupTicks + " ticks after attack started");
+            }
+        }
+    }
+
+    /**
+     * Apply stun effect during move execution to prevent stacking
+     */
+    private static void applyMoveStun(Player player, AbstractMoveset.MoveConfiguration config) {
+        int windupTicks = config.getWindupOrDefault(0);
+        int durationTicks = config.getDurationOrDefault(0);
+        int totalStunTicks = windupTicks + durationTicks;
+
+        if (totalStunTicks > 0) {
+            // Apply stunned effect (amplifier 0)
+            MobEffectInstance stunEffect = new MobEffectInstance(
+                    NichirinEffectRegistry.STUNNED.get(),
+                    totalStunTicks,
+                    0, // Amplifier 0
+                    false, // Not ambient
+                    false, // Don't show particles
+                    false  // Don't show icon in inventory
+            );
+
+            player.addEffect(stunEffect);
+            System.out.println("DEBUG: Applied move stun for " + totalStunTicks + " ticks (windup: " + windupTicks + ", duration: " + durationTicks + ")");
+        }
+    }
+
+    /**
+     * Apply stun effect for pre-configured attacks
+     */
+    private static void applyPreConfiguredMoveStun(Player player, AbstractBreathingAttack<?, ?> attack) {
+        // For pre-configured attacks, we need to get the timing info differently
+        int windupTicks = 0;
+
+        // Try to get windup if the attack has it
+        try {
+            var getWindupMethod = attack.getClass().getMethod("getWindup");
+            windupTicks = (int) getWindupMethod.invoke(attack);
+        } catch (Exception e) {
+            // No windup method, use 0
+        }
+
+        if (windupTicks > 0) {
+            MobEffectInstance stunEffect = new MobEffectInstance(
+                    NichirinEffectRegistry.STUNNED.get(),
+                    windupTicks,
+                    0,
+                    false,
+                    false,
+                    false
+            );
+
+            player.addEffect(stunEffect);
+            System.out.println("DEBUG: Applied pre-configured move stun for " + windupTicks + " ticks (windup only)");
+        }
     }
 
     /**
@@ -126,6 +226,12 @@ public class MoveExecutor {
      * Execute an attack with explicit name and cooldown
      */
     public static void executeAttackWithInfo(Player player, Object attack, String displayName, int cooldown) {
+        // Check if player is stunned
+        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+            System.out.println("DEBUG: Player is stunned, cannot execute attack");
+            return;
+        }
+
         executeAttackInternal(player, attack, displayName, cooldown);
     }
 
@@ -239,12 +345,32 @@ public class MoveExecutor {
     }
 
     /**
-     * Execute a move by name with cooldown
+     * Execute a move by name with cooldown and stun prevention
      */
-    public static void executeMove(Player player, String moveName, Runnable moveExecution, int cooldownTicks) {
+    public static void executeMove(Player player, String moveName, Runnable moveExecution, int cooldownTicks, int stunDurationTicks) {
+        // Check if player is currently stunned
+        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+            System.out.println("DEBUG: Player is stunned, cannot execute move: " + moveName);
+            return;
+        }
+
+        // Apply stun effect to prevent move stacking
+        if (stunDurationTicks > 0) {
+            MobEffectInstance stunEffect = new MobEffectInstance(
+                    NichirinEffectRegistry.STUNNED.get(),
+                    stunDurationTicks,
+                    0,
+                    false,
+                    false,
+                    false
+            );
+
+            player.addEffect(stunEffect);
+            System.out.println("DEBUG: Applied move stun for " + moveName + " for " + stunDurationTicks + " ticks");
+        }
+
         // Apply anti-spam detection to move execution
-        // For non-attack moves, we can still track spam but may not modify behavior
-        ComboTracker.getModifiedHitStun(player, moveName, 0); // Just track the move, don't care about return value
+        ComboTracker.getModifiedHitStun(player, moveName, 0);
 
         // Execute the move
         moveExecution.run();
@@ -253,6 +379,37 @@ public class MoveExecutor {
         if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer && cooldownTicks > 0) {
             sendCooldownToClient(serverPlayer, moveName, cooldownTicks);
         }
+    }
+
+    /**
+     * Overloaded method for backward compatibility
+     */
+    public static void executeMove(Player player, String moveName, Runnable moveExecution, int cooldownTicks) {
+        // Default stun duration of 20 ticks (1 second) if not specified
+        executeMove(player, moveName, moveExecution, cooldownTicks, 20);
+    }
+
+    /**
+     * Check if a player can execute a move (not stunned)
+     */
+    public static boolean canExecuteMove(Player player) {
+        return !player.hasEffect(NichirinEffectRegistry.STUNNED.get());
+    }
+
+    /**
+     * Force remove move stun (for canceling moves or emergency situations)
+     */
+    public static void removeMoveStun(Player player) {
+        player.removeEffect(NichirinEffectRegistry.STUNNED.get());
+        System.out.println("DEBUG: Force removed move stun for " + player.getName().getString());
+    }
+
+    /**
+     * Get remaining stun duration in ticks
+     */
+    public static int getRemainingStunTicks(Player player) {
+        MobEffectInstance stunEffect = player.getEffect(NichirinEffectRegistry.STUNNED.get());
+        return stunEffect != null ? stunEffect.getDuration() : 0;
     }
 
     /**

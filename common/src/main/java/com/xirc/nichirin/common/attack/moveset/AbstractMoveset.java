@@ -1,11 +1,13 @@
 package com.xirc.nichirin.common.attack.moveset;
 
 import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
+import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import lombok.Getter;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.effect.MobEffectInstance;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -17,6 +19,7 @@ import java.util.function.Consumer;
  * AbstractMoveset that works with any attack type
  * Flexible system supporting any number of moves with full configuration
  * Icons are handled by the MoveIcon system, not stored in move configs
+ * Includes stun prevention system to prevent move stacking
  */
 @Getter
 public abstract class AbstractMoveset {
@@ -125,19 +128,31 @@ public abstract class AbstractMoveset {
     }
 
     /**
-     * Override the left-click (M1) behavior for SimpleKatana
+     * Override the left-click (M1) behavior for SimpleKatana with stun checking
      * Return true to override default behavior, false to use default
      */
     public boolean handleLeftClick(Player player) {
+        // Check if player is stunned before allowing any move
+        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+            System.out.println("DEBUG: Player stunned, blocking left-click move");
+            return true; // Block the move by overriding
+        }
+
         // Default: don't override - use SimpleKatana's default combo system
         return false;
     }
 
     /**
-     * Override the right-click (M2) behavior for SimpleKatana
+     * Override the right-click (M2) behavior for SimpleKatana with stun checking
      * Return true to override default behavior, false to use default
      */
     public boolean handleRightClick(Player player, boolean isCrouching) {
+        // Check if player is stunned before allowing any move
+        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+            System.out.println("DEBUG: Player stunned, blocking right-click move");
+            return true; // Block the move by overriding
+        }
+
         // Default: don't override - use SimpleKatana's default special attacks
         return false;
     }
@@ -176,13 +191,64 @@ public abstract class AbstractMoveset {
     }
 
     /**
-     * Performs a move by index
+     * Performs a move by index with stun prevention
      */
     public void performMove(Player player, int moveIndex) {
-        MoveConfiguration config = getMove(moveIndex);
-        if (config != null && config.startAction != null) {
-            config.startAction.accept(player);
+        // Check if player is stunned
+        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+            System.out.println("DEBUG: Player stunned, cannot perform move " + moveIndex);
+            return;
         }
+
+        MoveConfiguration config = getMove(moveIndex);
+        if (config != null) {
+            // DON'T apply stun here - let MoveExecutor handle it after attack starts
+            // Execute the move action
+            if (config.startAction != null) {
+                config.startAction.accept(player);
+            }
+        }
+    }
+
+    /**
+     * Apply stun effect for a move configuration
+     */
+    protected void applyMoveStun(Player player, MoveConfiguration config) {
+        int windupTicks = config.getWindupOrDefault(0);
+        int durationTicks = config.getDurationOrDefault(0);
+        int totalStunTicks = windupTicks + durationTicks;
+
+        if (totalStunTicks > 0) {
+            MobEffectInstance stunEffect = new MobEffectInstance(
+                    NichirinEffectRegistry.STUNNED.get(),
+                    totalStunTicks,
+                    0, // Amplifier 0
+                    false, // Not ambient
+                    false, // Don't show particles
+                    false  // Don't show icon
+            );
+
+            player.addEffect(stunEffect);
+            System.out.println("DEBUG: Applied moveset stun for " + totalStunTicks + " ticks");
+        }
+    }
+
+    /**
+     * Check if the player can perform moves (not stunned)
+     */
+    public boolean canPerformMoves(Player player) {
+        return !player.hasEffect(NichirinEffectRegistry.STUNNED.get());
+    }
+
+    /**
+     * Get the total stun duration for a move (windup + duration)
+     */
+    public int getMoveStunDuration(int moveIndex) {
+        MoveConfiguration config = getMove(moveIndex);
+        if (config != null) {
+            return config.getWindupOrDefault(0) + config.getDurationOrDefault(0);
+        }
+        return 0;
     }
 
     // Getter methods for the modifiers
@@ -197,19 +263,6 @@ public abstract class AbstractMoveset {
     @Getter
     public static class MoveConfiguration {
 
-        /**
-         * Gets the move ID
-         */
-        public String getMoveId() {
-            return moveId;
-        }
-
-        /**
-         * Gets the display name
-         */
-        public String getDisplayName() {
-            return displayName;
-        }
         // Basic properties
         public final String moveId;
         public final String displayName;
@@ -272,6 +325,20 @@ public abstract class AbstractMoveset {
             this.teleportWindup = builder.teleportWindup;
         }
 
+        /**
+         * Gets the move ID
+         */
+        public String getMoveId() {
+            return moveId;
+        }
+
+        /**
+         * Gets the display name
+         */
+        public String getDisplayName() {
+            return displayName;
+        }
+
         // Convenience methods for checking if properties are configured
         public boolean hasDamage() { return damage != null; }
         public boolean hasRange() { return range != null; }
@@ -305,6 +372,20 @@ public abstract class AbstractMoveset {
         public float getTeleportDistanceOrDefault(float defaultValue) { return teleportDistance != null ? teleportDistance : defaultValue; }
         public float getDashSpeedOrDefault(float defaultValue) { return dashSpeed != null ? dashSpeed : defaultValue; }
         public int getTeleportWindupOrDefault(int defaultValue) { return teleportWindup != null ? teleportWindup : defaultValue; }
+
+        /**
+         * Get the total stun duration (windup only)
+         */
+        public int getStunDuration() {
+            return getWindupOrDefault(0);
+        }
+
+        /**
+         * Check if this move will cause stun
+         */
+        public boolean causesStun() {
+            return getStunDuration() > 0;
+        }
     }
 
     /**
