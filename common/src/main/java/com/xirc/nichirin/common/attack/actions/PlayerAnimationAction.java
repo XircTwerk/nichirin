@@ -2,11 +2,13 @@ package com.xirc.nichirin.common.attack.actions;
 
 import com.xirc.nichirin.common.attack.component.IPhysicalAttacker;
 import com.xirc.nichirin.common.util.AnimationUtils;
+import lombok.Getter;
 import net.minecraft.world.entity.player.Player;
 
 /**
  * Action that plays a player animation when triggered
  */
+@Getter
 public class PlayerAnimationAction {
 
     private final String animationName;
@@ -43,15 +45,7 @@ public class PlayerAnimationAction {
 
         if (forcePlay || !AnimationUtils.isAnimationPlaying(player, animationName)) {
             AnimationUtils.playAnimation(player, animationName);
-        } else {
         }
     }
 
-    public String getAnimationName() {
-        return animationName;
-    }
-
-    public boolean isForcePlay() {
-        return forcePlay;
-    }
 }
