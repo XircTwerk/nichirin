@@ -1,6 +1,5 @@
 package com.xirc.nichirin.common.attack.moveset;
 
-import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import lombok.Getter;
 import net.minecraft.resources.ResourceLocation;
@@ -12,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -27,7 +27,15 @@ public abstract class AbstractMoveset {
     // UUID for the movement speed modifier
     private static final UUID SPEED_MODIFIER_UUID = UUID.fromString("A1B2C3D4-E5F6-7890-ABCD-EF1234567890");
 
+    /**
+     * -- GETTER --
+     *  Gets the moveset ID
+     */
     private final String movesetId;
+    /**
+     * -- GETTER --
+     *  Gets the display name
+     */
     private final String displayName;
 
     // List of moves - flexible for any count
@@ -39,6 +47,7 @@ public abstract class AbstractMoveset {
 
     // Only the modifiers you actually need
     protected final float speedMultiplier;
+    // Getter methods for the modifiers
     protected final float fallDamageMultiplier;    // 0.5 = half damage, 0.0 = no damage
     protected final float healthRegenMultiplier;   // 2.0 = double regen rate
     protected final float staminaCostMultiplier;   // 0.5 = half stamina cost
@@ -98,10 +107,10 @@ public abstract class AbstractMoveset {
                     AttributeModifier.Operation.MULTIPLY_TOTAL
             );
 
-            player.getAttribute(Attributes.MOVEMENT_SPEED).addTransientModifier(modifier);
+            Objects.requireNonNull(player.getAttribute(Attributes.MOVEMENT_SPEED)).addTransientModifier(modifier);
 
             // Debug: Check the actual speed value
-            double currentSpeed = player.getAttribute(Attributes.MOVEMENT_SPEED).getValue();
+            double currentSpeed = Objects.requireNonNull(player.getAttribute(Attributes.MOVEMENT_SPEED)).getValue();
             System.out.println("DEBUG: Player speed after modifier: " + currentSpeed);
         }
     }
@@ -110,21 +119,7 @@ public abstract class AbstractMoveset {
      * Remove the moveset's speed modifier from a player
      */
     public void removeSpeedModifier(Player player) {
-        player.getAttribute(Attributes.MOVEMENT_SPEED).removeModifier(SPEED_MODIFIER_UUID);
-    }
-
-    /**
-     * Gets the moveset ID
-     */
-    public String getMovesetId() {
-        return movesetId;
-    }
-
-    /**
-     * Gets the display name
-     */
-    public String getDisplayName() {
-        return displayName;
+        Objects.requireNonNull(player.getAttribute(Attributes.MOVEMENT_SPEED)).removeModifier(SPEED_MODIFIER_UUID);
     }
 
     /**
@@ -251,11 +246,6 @@ public abstract class AbstractMoveset {
         return 0;
     }
 
-    // Getter methods for the modifiers
-    public float getFallDamageMultiplier() { return fallDamageMultiplier; }
-    public float getHealthRegenMultiplier() { return healthRegenMultiplier; }
-    public float getStaminaCostMultiplier() { return staminaCostMultiplier; }
-
     /**
      * Complete configuration for a moveset move
      * Icons are handled by the MoveIcon system using moveId and movesetId
@@ -323,20 +313,6 @@ public abstract class AbstractMoveset {
             this.teleportDistance = builder.teleportDistance;
             this.dashSpeed = builder.dashSpeed;
             this.teleportWindup = builder.teleportWindup;
-        }
-
-        /**
-         * Gets the move ID
-         */
-        public String getMoveId() {
-            return moveId;
-        }
-
-        /**
-         * Gets the display name
-         */
-        public String getDisplayName() {
-            return displayName;
         }
 
         // Convenience methods for checking if properties are configured
