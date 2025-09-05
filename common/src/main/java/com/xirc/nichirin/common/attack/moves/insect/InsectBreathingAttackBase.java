@@ -23,7 +23,7 @@ import net.minecraft.world.phys.Vec3;
 public abstract class InsectBreathingAttackBase extends AbstractBreathingAttack<InsectBreathingAttackBase, IBreathingAttacker> {
 
     // Insect-specific properties
-    private static final int DEFAULT_POISON_DURATION = 60; // 3 seconds of poison (60 ticks)
+    private static final int DEFAULT_POISON_DURATION = 80;
     private static final int INSECT_PARTICLE_COUNT = 12;
     private static final float INSECT_PARTICLE_SPREAD = 1.0f;
 

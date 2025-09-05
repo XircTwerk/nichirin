@@ -130,7 +130,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
 
         MoveConfiguration tempConfig = new MoveBuilder("quick_sting", "Quick Sting")
                 .withAnimation("nichirin:quick_sting", 6)
-                .withTiming(0, 3, 12)
+                .withTiming(5, 3, 20)
                 .withDamage(9.0f)
                 .withRange(4.0f)
                 .withKnockback(0f)
