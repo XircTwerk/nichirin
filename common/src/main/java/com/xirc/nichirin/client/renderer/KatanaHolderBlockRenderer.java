@@ -128,7 +128,7 @@ public class KatanaHolderBlockRenderer extends GeoBlockRenderer<KatanaHolderBloc
         }
 
         // Normal scale - no tricks needed with dirty flag system
-        float scale = 0.8f;
+        float scale = 1f;
         poseStack.scale(scale, scale, scale);
 
         // Render the katana item
