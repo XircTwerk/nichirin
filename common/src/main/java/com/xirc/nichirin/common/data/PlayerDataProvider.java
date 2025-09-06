@@ -13,6 +13,7 @@ import java.util.UUID;
 /**
  * Provides and manages player data including breathing styles, progression, and statistics
  * Uses Architectury events for cross-platform compatibility
+ * FIXED: All instanceof ServerPlayer checks removed to prevent compiler warnings
  */
 public class PlayerDataProvider {
 
@@ -44,93 +45,117 @@ public class PlayerDataProvider {
     public static void register() {
         // Handle player join
         PlayerEvent.PLAYER_JOIN.register(player -> {
-            if (player instanceof ServerPlayer) {
-                ServerPlayer serverPlayer = (ServerPlayer) player;
-                // Load data from custom storage
-                PlayerDataStorage.loadPlayerData(serverPlayer);
+            // Only process server players
+            if (player.level().isClientSide()) return;
 
-                // Set player reference and apply modifiers
-                PlayerData data = getData(serverPlayer);
-                data.getBreathingStyleData().setPlayer(serverPlayer);
+            ServerPlayer serverPlayer = (ServerPlayer) player;
 
-                // Re-apply all modifiers after loading
-                var moveset = data.getBreathingStyleData().getMoveset();
-                if (moveset != null) {
-                    moveset.applyAllModifiers(serverPlayer);
-                    // Record style as equipped for time tracking
-                    data.getStatistics().onStyleEquipped(moveset.getMovesetId());
-                    System.out.println("DEBUG: Re-applied all modifiers on player join");
-                }
+            // Load data from custom storage FIRST
+            PlayerDataStorage.loadPlayerData(serverPlayer);
 
-                // Sync to client
-                syncToClient(serverPlayer);
+            // Get the loaded data and set player reference
+            PlayerData data = getData(serverPlayer);
+            data.getBreathingStyleData().setPlayer(serverPlayer);
+
+            // Re-apply all modifiers after loading
+            var moveset = data.getBreathingStyleData().getMoveset();
+            if (moveset != null) {
+                moveset.applyAllModifiers(serverPlayer);
+                // Record style as equipped for time tracking
+                data.getStatistics().onStyleEquipped(moveset.getMovesetId());
+                System.out.println("DEBUG: Re-applied all modifiers on player join for " + serverPlayer.getName().getString());
             }
+
+            // CRITICAL: Sync to client AFTER data is loaded and applied
+            syncToClient(serverPlayer);
         });
 
         // Handle player quit - save data and cleanup
         PlayerEvent.PLAYER_QUIT.register(player -> {
-            if (player instanceof ServerPlayer) {
-                ServerPlayer serverPlayer = (ServerPlayer) player;
+            // Only process server players
+            if (player.level().isClientSide()) return;
 
-                // Update time tracking and cleanup modifiers before saving
-                PlayerData data = PLAYER_DATA.get(player.getUUID());
-                if (data != null) {
-                    data.getStatistics().updateTimeTracking();
-                    data.getBreathingStyleData().cleanup();
-                }
+            ServerPlayer serverPlayer = (ServerPlayer) player;
 
+            // Update time tracking and cleanup modifiers before saving
+            PlayerData data = PLAYER_DATA.get(serverPlayer.getUUID());
+            if (data != null) {
+                data.getStatistics().updateTimeTracking();
+                data.getBreathingStyleData().cleanup();
+
+                // Save data before removing from memory
                 savePlayerData(serverPlayer);
-                // Clean up memory
-                PLAYER_DATA.remove(player.getUUID());
             }
+
+            // Clean up memory AFTER saving
+            PLAYER_DATA.remove(serverPlayer.getUUID());
         });
 
-        // Handle player respawn
+        // Handle player respawn - FIXED: Proper data handling
         PlayerEvent.PLAYER_RESPAWN.register((newPlayer, conqueredEnd) -> {
-            if (newPlayer instanceof ServerPlayer) {
-                ServerPlayer serverPlayer = (ServerPlayer) newPlayer;
-                // Data should persist through respawn automatically
+            // Only process server players
+            if (newPlayer.level().isClientSide()) return;
 
-                // Re-apply all modifiers after respawn
-                PlayerData data = getData(serverPlayer);
-                var moveset = data.getBreathingStyleData().getMoveset();
-                if (moveset != null) {
-                    moveset.applyAllModifiers(serverPlayer);
-                    // Re-record style as equipped
-                    data.getStatistics().onStyleEquipped(moveset.getMovesetId());
-                    System.out.println("DEBUG: Re-applied all modifiers on player respawn");
-                }
+            ServerPlayer serverPlayer = (ServerPlayer) newPlayer;
 
-                syncToClient(serverPlayer);
+            // IMPORTANT: Don't reload from disk, data should persist in memory
+            // Just ensure player reference is correct and reapply modifiers
+            PlayerData data = getData(serverPlayer);
+            data.getBreathingStyleData().setPlayer(serverPlayer);
+
+            var moveset = data.getBreathingStyleData().getMoveset();
+            if (moveset != null) {
+                moveset.applyAllModifiers(serverPlayer);
+                data.getStatistics().onStyleEquipped(moveset.getMovesetId());
+                System.out.println("DEBUG: Re-applied all modifiers on player respawn for " + serverPlayer.getName().getString());
             }
+
+            // Sync to client
+            syncToClient(serverPlayer);
         });
 
-        // Handle player clone (dimension change)
+        // Handle player clone (dimension change) - FIXED: Better data copying
         PlayerEvent.PLAYER_CLONE.register((oldPlayer, newPlayer, wasDeath) -> {
-            if (wasDeath) {
-                // Copy data from old player to new player
-                PlayerData oldData = getData(oldPlayer);
-                PlayerData newData = getData(newPlayer);
+            // Only process server players
+            if (newPlayer.level().isClientSide()) return;
 
+            ServerPlayer serverPlayer = (ServerPlayer) newPlayer;
+
+            PlayerData oldData = PLAYER_DATA.get(oldPlayer.getUUID());
+
+            if (oldData != null) {
                 // Update time tracking and cleanup old player's modifiers
                 oldData.getStatistics().updateTimeTracking();
                 oldData.getBreathingStyleData().cleanup();
 
+                // Create new data for new player and copy from old
+                PlayerData newData = new PlayerData();
                 newData.copyFrom(oldData);
+
+                // Set the new player reference
+                newData.getBreathingStyleData().setPlayer(serverPlayer);
+
+                // Store the new data
+                PLAYER_DATA.put(serverPlayer.getUUID(), newData);
 
                 // Apply modifiers to new player
                 var moveset = newData.getBreathingStyleData().getMoveset();
                 if (moveset != null) {
-                    moveset.applyAllModifiers(newPlayer);
+                    moveset.applyAllModifiers(serverPlayer);
                     newData.getStatistics().onStyleEquipped(moveset.getMovesetId());
-                    System.out.println("DEBUG: Applied all modifiers on player clone");
+                    System.out.println("DEBUG: Applied all modifiers on player clone for " + serverPlayer.getName().getString());
                 }
 
                 // Save to persistent data
-                if (newPlayer instanceof ServerPlayer) {
-                    ServerPlayer serverPlayer = (ServerPlayer) newPlayer;
-                    savePlayerData(serverPlayer);
-                }
+                savePlayerData(serverPlayer);
+
+                // Sync to client
+                syncToClient(serverPlayer);
+            }
+
+            // Clean up old player data if it was a death
+            if (wasDeath) {
+                PLAYER_DATA.remove(oldPlayer.getUUID());
             }
         });
 
@@ -142,8 +167,9 @@ public class PlayerDataProvider {
                     if (data != null) {
                         // Update time tracking for equipped styles
                         data.getStatistics().updateTimeTracking();
+                        // Save periodically
+                        savePlayerData(player);
                     }
-                    savePlayerData(player);
                 }
             }
         });
@@ -153,8 +179,12 @@ public class PlayerDataProvider {
      * Saves player data to persistent storage
      */
     private static void savePlayerData(ServerPlayer player) {
-        // Use custom storage system
-        PlayerDataStorage.savePlayerData(player);
+        try {
+            PlayerDataStorage.savePlayerData(player);
+        } catch (Exception e) {
+            System.err.println("Failed to save player data for " + player.getName().getString() + ": " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     public static void clearData(Player player) {
@@ -177,64 +207,105 @@ public class PlayerDataProvider {
     }
 
     /**
-     * Syncs breathing style data to client
+     * Syncs breathing style data to client - IMPROVED with null checks
      */
     private static void syncToClient(ServerPlayer player) {
-        PlayerData data = getData(player);
-        // Send sync packet (only breathing style data for now, progression is server-side)
-        BreathingStyleSyncPacket.sendToPlayer(player, data.getBreathingStyleData().getMovesetId());
+        try {
+            PlayerData data = getData(player);
+            String movesetId = data.getBreathingStyleData().getMovesetId();
+
+            // Send sync packet (only breathing style data for now, progression is server-side)
+            BreathingStyleSyncPacket.sendToPlayer(player, movesetId);
+            System.out.println("DEBUG: Synced moveset '" + movesetId + "' to client for " + player.getName().getString());
+        } catch (Exception e) {
+            System.err.println("Failed to sync data to client for " + player.getName().getString() + ": " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     /**
-     * Updates player breathing style data and syncs to client
+     * Updates player breathing style data and syncs to client - IMPROVED with validation
      */
     public static void updateAndSync(ServerPlayer player, String movesetId) {
-        PlayerData data = getData(player);
-        data.getBreathingStyleData().setMovesetId(movesetId);
-        savePlayerData(player);
-        syncToClient(player);
+        try {
+            PlayerData data = getData(player);
+            String previousMoveset = data.getBreathingStyleData().getMovesetId();
+
+            data.getBreathingStyleData().setMovesetId(movesetId);
+            savePlayerData(player);
+            syncToClient(player);
+
+            System.out.println("DEBUG: Updated moveset from '" + previousMoveset + "' to '" + movesetId + "' for " + player.getName().getString());
+        } catch (Exception e) {
+            System.err.println("Failed to update and sync for " + player.getName().getString() + ": " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     /**
      * Records technique usage for statistics
      */
     public static void recordTechniqueUsage(Player player, String styleId) {
-        getData(player).getStatistics().recordTechniqueUsage(styleId);
+        try {
+            getData(player).getStatistics().recordTechniqueUsage(styleId);
+        } catch (Exception e) {
+            System.err.println("Failed to record technique usage: " + e.getMessage());
+        }
     }
 
     /**
      * Records damage dealt for statistics
      */
     public static void recordDamageDealt(Player player, String styleId, int damage) {
-        getData(player).getStatistics().recordDamageDealt(styleId, damage);
+        try {
+            getData(player).getStatistics().recordDamageDealt(styleId, damage);
+        } catch (Exception e) {
+            System.err.println("Failed to record damage dealt: " + e.getMessage());
+        }
     }
 
     /**
      * Updates combo tracking
      */
     public static void updateComboChain(Player player, String styleId, int comboLength) {
-        getData(player).getStatistics().updateComboChain(styleId, comboLength);
+        try {
+            getData(player).getStatistics().updateComboChain(styleId, comboLength);
+        } catch (Exception e) {
+            System.err.println("Failed to update combo chain: " + e.getMessage());
+        }
     }
 
     /**
      * Resets combo chain
      */
     public static void resetComboChain(Player player) {
-        getData(player).getStatistics().resetComboChain();
+        try {
+            getData(player).getStatistics().resetComboChain();
+        } catch (Exception e) {
+            System.err.println("Failed to reset combo chain: " + e.getMessage());
+        }
     }
 
     /**
      * Records successful dodge
      */
     public static void recordSuccessfulDodge(Player player) {
-        getData(player).getStatistics().recordSuccessfulDodge();
+        try {
+            getData(player).getStatistics().recordSuccessfulDodge();
+        } catch (Exception e) {
+            System.err.println("Failed to record successful dodge: " + e.getMessage());
+        }
     }
 
     /**
      * Records successful block
      */
     public static void recordSuccessfulBlock(Player player) {
-        getData(player).getStatistics().recordSuccessfulBlock();
+        try {
+            getData(player).getStatistics().recordSuccessfulBlock();
+        } catch (Exception e) {
+            System.err.println("Failed to record successful block: " + e.getMessage());
+        }
     }
 
     /**
@@ -247,5 +318,16 @@ public class PlayerDataProvider {
             data.getBreathingStyleData().cleanup();
         }
         PLAYER_DATA.clear();
+        System.out.println("DEBUG: Cleared all player data cache");
+    }
+
+    /**
+     * Forces a sync for all online players (useful for debugging)
+     */
+    public static void forceSync(net.minecraft.server.MinecraftServer server) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            syncToClient(player);
+        }
+        System.out.println("DEBUG: Forced sync for all online players");
     }
 }
