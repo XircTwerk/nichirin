@@ -92,35 +92,35 @@ public class KatanaHolderBlockRenderer extends GeoBlockRenderer<KatanaHolderBloc
         // Position and orient katana based on facing direction
         switch (facing) {
             case UP -> {
-                poseStack.translate(0.05, -0.075, 0.03);
+                poseStack.translate(0.15, -0.075, 0.03);
                 poseStack.mulPose(Axis.XP.rotationDegrees(0));
                 poseStack.mulPose(Axis.ZP.rotationDegrees(-45));
             }
             case DOWN -> {
-                poseStack.translate(-0.05, 0.075, 0.03);
+                poseStack.translate(-0.15, 0.075, 0.03);
                 poseStack.mulPose(Axis.XP.rotationDegrees(180));
                 poseStack.mulPose(Axis.ZP.rotationDegrees(45));
                 poseStack.mulPose(Axis.YP.rotationDegrees(180));
             }
             case NORTH -> {
-                poseStack.translate(-0.05, 0.025, 0.125);
+                poseStack.translate(-0.15, 0.025, 0.125);
                 poseStack.mulPose(Axis.XP.rotationDegrees(-270));
                 poseStack.mulPose(Axis.ZP.rotationDegrees(-225));
                 poseStack.mulPose(Axis.YP.rotationDegrees(0));
             }
             case SOUTH -> {
-                poseStack.translate(0.05, 0.025, -0.125);
+                poseStack.translate(0.15, 0.025, -0.125);
                 poseStack.mulPose(Axis.XP.rotationDegrees(270));
                 poseStack.mulPose(Axis.ZP.rotationDegrees(225));
                 poseStack.mulPose(Axis.YP.rotationDegrees(180));
             }
             case WEST -> {
-                poseStack.translate(0.1, 0.025, 0.05);
+                poseStack.translate(0.1, 0.025, 0.15);
                 poseStack.mulPose(Axis.XP.rotationDegrees(90));
                 poseStack.mulPose(Axis.ZP.rotationDegrees(45));
             }
             case EAST -> {
-                poseStack.translate(-0.1, 0.025, -0.05);
+                poseStack.translate(-0.1, 0.025, -0.15);
                 poseStack.mulPose(Axis.XP.rotationDegrees(-90));
                 poseStack.mulPose(Axis.ZP.rotationDegrees(-45));
                 poseStack.mulPose(Axis.YP.rotationDegrees(-180));
