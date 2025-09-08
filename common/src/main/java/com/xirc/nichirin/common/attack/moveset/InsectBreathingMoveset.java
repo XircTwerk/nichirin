@@ -49,11 +49,11 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("butterfly", "Butterfly")
                         .withAnimation("nichirin:butterfly", 8)
                         .withTiming(120, 8, 40) // 6 second cooldown, quick windup, LONGER duration for 2-phase attack
-                        .withDamage(18.0f) // High single-target damage
+                        .withDamage(24.0f) // High single-target damage
                         .withDashSpeed(5.0f) // Dash speed (changed from withTeleportDistance)
                         .withRange(10.0f) // Lock-on range
                         .withKnockback(0.3f) // Light knockback
-                        .withBreathCost(25.0f)
+                        .withBreathCost(20.0f)
                         .withHitStun(25) // Good stun for precision strike
                         .withHitboxSize(1.5f) // Small precise hitbox
                         .withAction(player -> {
@@ -73,7 +73,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                         .withDamage(6.0f) // 6 hits = 36 total damage
                         .withRange(6.0f) // Lock-on range
                         .withKnockback(0.05f) // Minimal knockback to keep target close
-                        .withBreathCost(35.0f) // Higher cost for multi-hit
+                        .withBreathCost(30.0f) // Higher cost for multi-hit
                         .withHitStun(5) // Very short per hit, final hit has more
                         .withHitboxSize(2.0f) // Target lock area
                         .withAction(player -> {
@@ -156,7 +156,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                 .withDashSpeed(6.0f)
                 .withRange(6.0f)
                 .withKnockback(0.1f)
-                .withBreathCost(40.0f)
+                .withBreathCost(20.0f)
                 .withHitStun(10)
                 .withHitboxSize(2.0f)
                 .build();

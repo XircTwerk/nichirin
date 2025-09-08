@@ -91,7 +91,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withDamage(9.0f) // 3 strikes = 27 damage over time (was 12.0f = 36 total)
                         .withRange(15.0f) // Large AOE radius
                         .withKnockback(0.3f)
-                        .withBreathCost(45.0f) // High cost for area denial
+                        .withBreathCost(35.0f) // High cost for area denial
                         .withHitStun(25)
                         .withAction(player -> {
                             DistantThunderAttack attack = new DistantThunderAttack();
@@ -107,7 +107,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("heat_lightning", "Heat Lightning")
                         .withAnimation("nichirin:heat_lightning", 9)
                         .withTiming(100, 10, 20)
-                        .withDamage(13.5f) // Single hit + lightning follow-up (was 18.0f)
+                        .withDamage(8.5f) // Single hit + lightning follow-up (was 18.0f)
                         .withRange(8.0f)
                         .withKnockback(0.1f) // Minimal horizontal, focuses on launch
                         .withBreathCost(30.0f)
@@ -146,7 +146,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("honoikazuchi_no_kami", "Honoikazuchi no Kami")
                         .withAnimation("nichirin:honoikazuchi_no_kami", 15)
                         .withTiming(600, 60, 40) // 30 second cooldown, long windup, execution
-                        .withDamage(100.0f) // Very high damage ultimate
+                        .withDamage(50.0f) // Very high damage ultimate
                         .withTeleportDistance(20.0f) // Long dash
                         .withKnockback(2.0f) // High knockback
                         .withBreathCost(70.0f) // Very expensive ultimate

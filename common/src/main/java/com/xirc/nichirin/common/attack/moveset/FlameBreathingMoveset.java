@@ -111,7 +111,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("flame_tiger", "Flame Tiger")
                         .withAnimation("nichirin:flame_tiger", 11)
                         .withTiming(120, 10, 40) // 6 second cooldown, dash duration
-                        .withDamage(24.0f)
+                        .withDamage(18.0f)
                         .withDashSpeed(8.0f) // 8 block dash
                         .withRange(8.0f) // Dash distance
                         .withKnockback(0.2f) // Light knockback to keep enemies close
@@ -132,7 +132,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("rengoku", "Rengoku")
                         .withAnimation("nichirin:rengoku", 20)
                         .withTiming(600, 80, 60) // 30 second cooldown, 4s windup, dragon dash
-                        .withDamage(100.0f) // Massive damage
+                        .withDamage(50.0f) // Massive damage
                         .withDashSpeed(25.0f) // Very fast dash
                         .withRange(20.0f) // Long range dash
                         .withKnockback(0f) // Massive knockback
@@ -173,7 +173,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
         MoveConfiguration tempConfig = new MoveBuilder("pommel_slash", "Pommel Slash")
                 .withAnimation("nichirin:pommel_slash", 8)
                 .withTiming(0, 5, 18)
-                .withDamage(6.0f)
+                .withDamage(3.0f)
                 .withRange(4.0f)
                 .withKnockback(0f)
                 .withBreathCost(15.0f) // System will consume this automatically (was 7.5f)
