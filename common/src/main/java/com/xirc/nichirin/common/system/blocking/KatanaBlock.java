@@ -3,8 +3,14 @@ package com.xirc.nichirin.common.system.blocking;
 import com.xirc.nichirin.common.effect.BlockingStatusEffect;
 import com.xirc.nichirin.common.system.StanceManager;
 import com.xirc.nichirin.common.util.KatanaInputHandler;
+import com.xirc.nichirin.common.attack.MoveExecutor;
+import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
+import dev.architectury.networking.NetworkManager;
+import io.netty.buffer.Unpooled;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -20,6 +26,7 @@ import java.util.UUID;
 /**
  * Complete katana blocking and parrying system using STANCE instead of stamina
  * NEW: 0.75 second cooldown between blocking attempts, early release punishment
+ * ENHANCED: Parried attacks are immediately stopped and put on cooldown
  */
 public class KatanaBlock {
 
@@ -33,6 +40,10 @@ public class KatanaBlock {
     private static final int BLOCK_COOLDOWN_TICKS = 15; // 0.75 seconds (15 ticks)
     private static final int EARLY_RELEASE_STUN_TICKS = 4; // 0.2 seconds (4 ticks)
     private static final float BACKSTAB_ANGLE = 90.0f; // Degrees for backstab detection
+    private static final int PARRIED_ATTACK_COOLDOWN = 100; // 5 seconds default cooldown for parried attacks
+
+    // Packet ID for cooldown display
+    private static final ResourceLocation COOLDOWN_PACKET_ID = new ResourceLocation("nichirin", "cooldown_display");
 
     /**
      * Blocking stance enum
@@ -348,7 +359,7 @@ public class KatanaBlock {
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.ANVIL_LAND, SoundSource.PLAYERS, 0.6f, 2.0f);
 
-        // Stun ANY living entity that attacked (players AND mobs)
+        // Stun the attacker and interrupt their attacks
         if (attacker instanceof ServerPlayer serverPlayer) {
             // Apply 1-second stun to player
             MobEffectInstance stunEffect = new MobEffectInstance(
@@ -360,9 +371,66 @@ public class KatanaBlock {
                     true   // Show icon
             );
             serverPlayer.addEffect(stunEffect);
+
+            // NEW: Interrupt the attacker's active attacks and apply cooldown
+            interruptAttackerMoves(serverPlayer);
         }
 
         return true; // Damage completely negated
+    }
+
+    /**
+     * Interrupt the attacker's moves when they get parried
+     */
+    private static void interruptAttackerMoves(ServerPlayer attacker) {
+        try {
+            // Stop all active attacks via MoveExecutor
+            MoveExecutor.clearAttacks(attacker);
+
+            // Clear any self-ticking attacks from AbstractBreathingAttack system
+            AbstractBreathingAttack.clearSelfTickingAttacks(attacker);
+
+            // Apply default cooldown for parried attacks
+            sendParriedCooldown(attacker, "Move (Parried)", PARRIED_ATTACK_COOLDOWN);
+
+            // Notify attacker
+            attacker.displayClientMessage(
+                    Component.literal("Your attack was parried! Move on cooldown!")
+                            .withStyle(style -> style.withColor(0xFF5555)),
+                    true
+            );
+
+            // Play punishment sound for attacker
+            attacker.level().playSound(null, attacker.getX(), attacker.getY(), attacker.getZ(),
+                    SoundEvents.SHIELD_BREAK, SoundSource.PLAYERS, 0.8f, 0.8f);
+
+            System.out.println("DEBUG: Interrupted " + attacker.getName().getString() + "'s attacks due to parry");
+
+        } catch (Exception e) {
+            System.err.println("Error interrupting attacker moves: " + e.getMessage());
+            e.printStackTrace();
+
+            // Fallback: at least send a cooldown message
+            sendParriedCooldown(attacker, "Move (Parried)", PARRIED_ATTACK_COOLDOWN);
+        }
+    }
+
+    /**
+     * Send cooldown info to client for parried attacks
+     */
+    private static void sendParriedCooldown(ServerPlayer player, String moveName, int cooldownTicks) {
+        try {
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+            buf.writeUtf(moveName);
+            buf.writeInt(cooldownTicks);
+
+            NetworkManager.sendToPlayer(player, COOLDOWN_PACKET_ID, buf);
+
+            System.out.println("DEBUG: Sent parried cooldown to " + player.getName().getString() +
+                    " - " + moveName + " for " + cooldownTicks + " ticks");
+        } catch (Exception e) {
+            System.err.println("Error sending parried cooldown: " + e.getMessage());
+        }
     }
 
     private static boolean handleSuccessfulBlock(Player player, BlockingState state, float damage) {
