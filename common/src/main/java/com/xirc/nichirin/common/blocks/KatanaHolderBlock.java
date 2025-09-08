@@ -29,6 +29,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -37,8 +38,9 @@ import org.jetbrains.annotations.Nullable;
 
 public class KatanaHolderBlock extends BaseEntityBlock {
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
+    public static final BooleanProperty ROTATED = BooleanProperty.create("rotated");
 
-    // Different shapes based on facing direction - updated to match your model
+    // Original shapes exactly as you sent them
     private static final VoxelShape FLOOR_SHAPE = Block.box(0.0D, 0.0D, 7.0D, 16.0D, 8.0D, 10.0D);
     private static final VoxelShape CEILING_SHAPE = Block.box(0.0D, 8.0D, 7.0D, 16.0D, 16.0D, 10.0D);
     private static final VoxelShape NORTH_SHAPE = Block.box(0.0D, 0.0D, 8.0D, 16.0D, 8.0D, 16.0D);
@@ -46,26 +48,49 @@ public class KatanaHolderBlock extends BaseEntityBlock {
     private static final VoxelShape WEST_SHAPE = Block.box(8.0D, 0.0D, 0.0D, 16.0D, 8.0D, 16.0D);
     private static final VoxelShape EAST_SHAPE = Block.box(0.0D, 0.0D, 0.0D, 8.0D, 8.0D, 16.0D);
 
+    // Rotated shapes - properly rotated 90 degrees
+    private static final VoxelShape FLOOR_SHAPE_ROTATED = Block.box(7.0D, 0.0D, 0.0D, 10.0D, 8.0D, 16.0D);
+    private static final VoxelShape CEILING_SHAPE_ROTATED = Block.box(7.0D, 8.0D, 0.0D, 10.0D, 16.0D, 16.0D);
+    private static final VoxelShape NORTH_SHAPE_ROTATED = Block.box(0.0D, 0.0D, 0.0D, 8.0D, 8.0D, 16.0D);
+    private static final VoxelShape SOUTH_SHAPE_ROTATED = Block.box(8.0D, 0.0D, 0.0D, 16.0D, 8.0D, 16.0D);
+    private static final VoxelShape WEST_SHAPE_ROTATED = Block.box(0.0D, 0.0D, 8.0D, 16.0D, 8.0D, 16.0D);
+    private static final VoxelShape EAST_SHAPE_ROTATED = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 8.0D, 8.0D);
+
     public KatanaHolderBlock(Properties properties) {
         super(properties);
-        this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.UP));
+        this.registerDefaultState(this.stateDefinition.any()
+                .setValue(FACING, Direction.UP)
+                .setValue(ROTATED, false));
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
+        builder.add(FACING, ROTATED);
     }
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return switch (state.getValue(FACING)) {
-            case UP -> FLOOR_SHAPE;
-            case DOWN -> CEILING_SHAPE;
-            case NORTH -> NORTH_SHAPE;
-            case SOUTH -> SOUTH_SHAPE;
-            case WEST -> WEST_SHAPE;
-            case EAST -> EAST_SHAPE;
-        };
+        boolean rotated = state.getValue(ROTATED);
+
+        if (rotated) {
+            return switch (state.getValue(FACING)) {
+                case UP -> FLOOR_SHAPE_ROTATED;
+                case DOWN -> CEILING_SHAPE_ROTATED;
+                case NORTH -> NORTH_SHAPE_ROTATED;
+                case SOUTH -> SOUTH_SHAPE_ROTATED;
+                case WEST -> WEST_SHAPE_ROTATED;
+                case EAST -> EAST_SHAPE_ROTATED;
+            };
+        } else {
+            return switch (state.getValue(FACING)) {
+                case UP -> FLOOR_SHAPE;
+                case DOWN -> CEILING_SHAPE;
+                case NORTH -> NORTH_SHAPE;
+                case SOUTH -> SOUTH_SHAPE;
+                case WEST -> WEST_SHAPE;
+                case EAST -> EAST_SHAPE;
+            };
+        }
     }
 
     @Override
@@ -81,7 +106,7 @@ public class KatanaHolderBlock extends BaseEntityBlock {
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         Direction clickedFace = context.getClickedFace();
-        return this.defaultBlockState().setValue(FACING, clickedFace);
+        return this.defaultBlockState().setValue(FACING, clickedFace).setValue(ROTATED, false);
     }
 
     @Override
@@ -115,6 +140,15 @@ public class KatanaHolderBlock extends BaseEntityBlock {
         }
 
         ItemStack handItem = player.getItemInHand(hand);
+
+        // Crouch + right click = rotate 90 degrees
+        if (player.isShiftKeyDown()) {
+            boolean currentRotated = state.getValue(ROTATED);
+            BlockState newState = state.setValue(ROTATED, !currentRotated);
+            level.setBlock(pos, newState, Block.UPDATE_ALL);
+            level.playSound(null, pos, SoundEvents.WOOD_STEP, SoundSource.BLOCKS, 0.6f, 1.0f);
+            return InteractionResult.SUCCESS;
+        }
 
         // If holder has a katana, try to pick it up
         if (!holderEntity.getStoredKatana().isEmpty()) {
@@ -165,15 +199,13 @@ public class KatanaHolderBlock extends BaseEntityBlock {
         return null;
     }
 
-    // Block Entity Implementation
+    // Block Entity - exactly as you sent it
     public static class KatanaHolderBlockEntity extends BlockEntity implements GeoBlockEntity {
         private static final String KATANA_TAG = "StoredKatana";
         private static final String DIRTY_FLAG_TAG = "DirtyFlag";
 
         private ItemStack storedKatana = ItemStack.EMPTY;
         private final AnimatableInstanceCache cache = AzureLibUtil.createInstanceCache(this);
-
-        // Flag to control rendering - once interacted with, stop rendering until new katana placed
         private boolean isDirty = false;
 
         public KatanaHolderBlockEntity(BlockPos pos, BlockState blockState) {
@@ -189,14 +221,11 @@ public class KatanaHolderBlock extends BaseEntityBlock {
                 this.storedKatana = katana.copy();
                 if (!katana.isEmpty()) {
                     this.storedKatana.setCount(1);
-                    // Reset dirty flag when placing a new katana
                     isDirty = false;
                 } else {
-                    // Setting empty katana means removal
                     isDirty = true;
                 }
                 setChanged();
-
                 if (level != null && !level.isClientSide) {
                     syncToClient();
                 }
@@ -206,22 +235,17 @@ public class KatanaHolderBlock extends BaseEntityBlock {
         public ItemStack removeKatana() {
             ItemStack result = storedKatana.copy();
             storedKatana = ItemStack.EMPTY;
-            // Mark as dirty when removing katana
             isDirty = true;
             setChanged();
-
             if (level != null && !level.isClientSide) {
                 BlockState state = getBlockState();
                 level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_ALL);
                 setChanged();
             }
-
             return result;
         }
 
-        // Method for renderer to check if it should render
         public boolean shouldRenderKatana() {
-            // Only render if we have a katana AND we're not dirty
             return !storedKatana.isEmpty() && !isDirty;
         }
 
@@ -233,7 +257,9 @@ public class KatanaHolderBlock extends BaseEntityBlock {
             return getBlockState().getValue(FACING);
         }
 
-        // Cache busting methods - removed since we're using dirty flag approach
+        public boolean isRotated() {
+            return getBlockState().getValue(ROTATED);
+        }
 
         private void syncToClient() {
             if (level != null && !level.isClientSide) {
@@ -246,7 +272,6 @@ public class KatanaHolderBlock extends BaseEntityBlock {
         @Override
         public void load(CompoundTag tag) {
             super.load(tag);
-
             if (tag.contains(KATANA_TAG)) {
                 ItemStack loaded = ItemStack.of(tag.getCompound(KATANA_TAG));
                 if (loaded.isEmpty() || loaded.getItem() instanceof SimpleKatana) {
@@ -257,12 +282,10 @@ public class KatanaHolderBlock extends BaseEntityBlock {
             } else {
                 storedKatana = ItemStack.EMPTY;
             }
-
-            // Load dirty flag
             if (tag.contains(DIRTY_FLAG_TAG)) {
                 isDirty = tag.getBoolean(DIRTY_FLAG_TAG);
             } else {
-                isDirty = false; // Default to clean on first load
+                isDirty = false;
             }
         }
 
@@ -272,7 +295,6 @@ public class KatanaHolderBlock extends BaseEntityBlock {
             if (!storedKatana.isEmpty()) {
                 tag.put(KATANA_TAG, storedKatana.save(new CompoundTag()));
             }
-            // Always save dirty flag
             tag.putBoolean(DIRTY_FLAG_TAG, isDirty);
         }
 
@@ -282,7 +304,6 @@ public class KatanaHolderBlock extends BaseEntityBlock {
             if (!storedKatana.isEmpty()) {
                 tag.put(KATANA_TAG, storedKatana.save(new CompoundTag()));
             }
-            // Always include dirty flag in sync
             tag.putBoolean(DIRTY_FLAG_TAG, isDirty);
             return tag;
         }
@@ -294,7 +315,6 @@ public class KatanaHolderBlock extends BaseEntityBlock {
 
         @Override
         public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-            // No animation controllers needed
         }
 
         @Override

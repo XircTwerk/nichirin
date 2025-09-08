@@ -29,67 +29,86 @@ public class KatanaHolderBlockRenderer extends GeoBlockRenderer<KatanaHolderBloc
                                VertexConsumer buffer, boolean isReRender, float partialTick, int packedLight,
                                int packedOverlay, float red, float green, float blue, float alpha) {
 
-        // Apply rotation based on facing direction for the block model
+        // YOUR ORIGINAL BLOCK RENDERING + simple 90 degree rotation
         Direction facing = animatable.getFacing();
+        boolean isRotated = animatable.isRotated();
         poseStack.pushPose();
 
-        // Center the model for rotation
         poseStack.translate(0.5, 0.5, 0.5);
 
-        // Apply rotation based on facing direction
         switch (facing) {
             case UP -> {
                 poseStack.translate(0, -0.5, 0.5625);
                 poseStack.mulPose(Axis.XP.rotationDegrees(90));
                 poseStack.mulPose(Axis.YP.rotationDegrees(180));
+                // UP: rotate around Z-axis, keep same position when rotated
+                if (isRotated) {
+                    poseStack.mulPose(Axis.ZP.rotationDegrees(90));
+                }
             }
             case DOWN -> {
                 poseStack.translate(0, 0.5, -0.435);
                 poseStack.mulPose(Axis.XP.rotationDegrees(-90));
+                // DOWN: rotate around Z-axis, keep same position when rotated
+                if (isRotated) {
+                    poseStack.mulPose(Axis.ZP.rotationDegrees(90));
+                }
             }
             case NORTH -> {
                 poseStack.mulPose(Axis.XP.rotationDegrees(-90));
+                // Walls: Y-axis rotation
+                if (isRotated) {
+                    poseStack.mulPose(Axis.YP.rotationDegrees(-90));
+                }
             }
             case SOUTH -> {
                 poseStack.mulPose(Axis.XP.rotationDegrees(90));
+                // Walls: Y-axis rotation
+                if (isRotated) {
+                    poseStack.mulPose(Axis.YP.rotationDegrees(-90));
+                }
             }
             case WEST -> {
                 poseStack.mulPose(Axis.ZP.rotationDegrees(90));
+                // Walls: Y-axis rotation
+                if (isRotated) {
+                    poseStack.mulPose(Axis.YP.rotationDegrees(-90));
+                }
             }
             case EAST -> {
                 poseStack.mulPose(Axis.ZP.rotationDegrees(-90));
+                // Walls: Y-axis rotation
+                if (isRotated) {
+                    poseStack.mulPose(Axis.YP.rotationDegrees(-90));
+                }
             }
         }
 
         poseStack.translate(-0.5, -0.5, -0.5);
 
-        // Call super to render the block model
         super.actuallyRender(poseStack, animatable, model, renderType, bufferSource, buffer,
                 isReRender, partialTick, packedLight, packedOverlay, red, green, blue, alpha);
 
         poseStack.popPose();
 
-        // Render katana using dirty flag system
+        // YOUR ORIGINAL KATANA RENDERING
         if (!isReRender && animatable.getLevel() != null && animatable.getLevel().isClientSide()) {
-            // Check if we should render using the dirty flag system
             boolean shouldRender = animatable.shouldRenderKatana();
             ItemStack katana = animatable.getStoredKatana();
 
-
             if (shouldRender) {
-                renderKatana(poseStack, katana, facing, bufferSource, packedLight);
+                renderKatana(poseStack, katana, facing, isRotated, bufferSource, packedLight);
             }
         }
     }
 
-    private void renderKatana(PoseStack poseStack, ItemStack katana, Direction facing,
+    private void renderKatana(PoseStack poseStack, ItemStack katana, Direction facing, boolean isRotated,
                               MultiBufferSource bufferSource, int packedLight) {
         poseStack.pushPose();
 
-        // Center to block
         poseStack.translate(0.5, 0.5, 0.5);
 
-        // Position and orient katana based on facing direction
+        // YOUR ORIGINAL KATANA POSITIONING
         switch (facing) {
             case UP -> {
                 poseStack.translate(0.15, -0.075, 0.03);
@@ -127,11 +146,14 @@ public class KatanaHolderBlockRenderer extends GeoBlockRenderer<KatanaHolderBloc
             }
         }
 
-        // Normal scale - no tricks needed with dirty flag system
+        // Add 90 degree rotation if rotated
+        if (isRotated) {
+            poseStack.mulPose(Axis.YP.rotationDegrees(90));
+        }
+
         float scale = 1f;
         poseStack.scale(scale, scale, scale);
 
-        // Render the katana item
         ItemRenderer itemRenderer = Minecraft.getInstance().getItemRenderer();
         itemRenderer.renderStatic(katana, ItemDisplayContext.FIXED, packedLight,
                 OverlayTexture.NO_OVERLAY, poseStack, bufferSource,
