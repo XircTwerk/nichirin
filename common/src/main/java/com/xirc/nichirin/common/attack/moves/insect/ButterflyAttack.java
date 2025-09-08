@@ -28,7 +28,8 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
 
     private boolean dashStarted = false;
     private boolean secondDashExecuted = false;
-    private Vec3 dashDirection; // NOW CAPTURED AT START LIKE BEE STING
+    private Vec3 leapDirection; // Direction for the initial leap
+    private Vec3 dashDirection; // Direction for the forward dash (captured later)
     private Vec3 startPosition;
 
     // Invulnerability during dash
@@ -45,9 +46,11 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
         secondDashExecuted = false;
         startPosition = user.position();
 
-        // FIXED: Capture dash direction immediately like BeeStingAttack
-        // This makes it aimable while keeping the leap-dash timing
-        dashDirection = user.getLookAngle().normalize();
+        // Capture leap direction at start (for the initial upward leap)
+        leapDirection = user.getLookAngle().normalize();
+
+        // Don't capture dash direction yet - we'll do that right before the dash!
+        dashDirection = null;
 
         // Make user invulnerable during attack
         wasInvulnerable = user.isInvulnerable();
@@ -63,8 +66,8 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.ENCHANTMENT_TABLE_USE, SoundSource.PLAYERS, 0.8f, 1.5f);
 
-        // Create charging effect with direction preview
-        createDashChargeEffect();
+        // Create charging effect with leap direction preview
+        createLeapChargeEffect();
     }
 
     @Override
@@ -79,6 +82,8 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
 
         // Execute forward dash 1 second (20 ticks) after the leap (tick windup + 21)
         if (dashStarted && !secondDashExecuted && tickCount == windup + 21) {
+            // FIXED: Capture dash direction right before executing the dash!
+            dashDirection = user.getLookAngle().normalize();
             executeForwardDash();
             secondDashExecuted = true;
         }
@@ -96,7 +101,7 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
         }
     }
 
-    private void createDashChargeEffect() {
+    private void createLeapChargeEffect() {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
@@ -123,23 +128,22 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
             }
         }
 
-        // ADDED: Direction indicator showing where the dash will go (like BeeStingAttack)
-        for (int i = 1; i <= 6; i++) {
-            Vec3 dirPos = userPos.add(dashDirection.scale(i * 0.5));
+        // Direction indicator showing where the leap will go (upward with slight forward)
+        for (int i = 1; i <= 3; i++) {
+            Vec3 leapPreview = userPos.add(leapDirection.scale(i * 0.3)).add(0, i * 0.4, 0);
             serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(),
-                    dirPos.x, dirPos.y, dirPos.z,
-                    2, 0.1, 0.1, 0.1, 0.05);
+                    leapPreview.x, leapPreview.y, leapPreview.z,
+                    1, 0.05, 0.05, 0.05, 0.02);
         }
     }
 
     private void executeInitialLeap() {
-
         // For the leap, go straight up with minimal forward movement in the aimed direction
         double upwardVelocity = 0.8; // Perfect height as tested
         double initialForwardVelocity = 0.1; // Very minimal forward momentum during leap
 
-        // Use the pre-captured dash direction for consistent aiming
-        Vec3 horizontalDirection = new Vec3(dashDirection.x, 0, dashDirection.z).normalize();
+        // Use the leap direction for consistent aiming
+        Vec3 horizontalDirection = new Vec3(leapDirection.x, 0, leapDirection.z).normalize();
 
         Vec3 forwardComponent = horizontalDirection.scale(initialForwardVelocity);
         user.setDeltaMovement(forwardComponent.x, upwardVelocity, forwardComponent.z);
@@ -158,15 +162,14 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
     }
 
     private void executeForwardDash() {
-
         // Use teleportDistance as dash speed (like the builder config shows)
         float actualDashSpeed = (dashSpeed != null) ? dashSpeed : 3.0f;
 
+        // Use the freshly captured dash direction
         Vec3 dashVelocity = dashDirection.scale(actualDashSpeed);
         user.setDeltaMovement(dashVelocity);
         user.hurtMarked = true;
         user.hasImpulse = true;
-
 
         // Sync to client
         if (user instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
