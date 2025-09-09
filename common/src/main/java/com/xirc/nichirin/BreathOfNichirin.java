@@ -8,9 +8,7 @@ import com.xirc.nichirin.common.handler.FallDamageHandler;
 import com.xirc.nichirin.common.handler.PlayerTickHandler;
 import com.xirc.nichirin.common.util.KatanaInputHandler;
 import com.xirc.nichirin.registry.*;
-import dev.architectury.platform.Platform;
 import dev.architectury.registry.registries.DeferredRegister;
-import dev.architectury.utils.Env;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;
@@ -22,7 +20,6 @@ public final class BreathOfNichirin {
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
     public static final DeferredRegister<CreativeModeTab> CREATIVE_TAB_REGISTRY = DeferredRegister.create(MOD_ID, Registries.CREATIVE_MODE_TAB);
 
-    @SuppressWarnings("CallToPrintStackTrace")
     public static void init() {
         LOGGER.info("=== STARTING NICHIRIN COMMON INITIALIZATION ===");
 
@@ -64,9 +61,6 @@ public final class BreathOfNichirin {
         MovesetRegistry.init();
         PlayerDataProvider.register();
         NichirinCriteriaTriggers.init();
-
-        var blockSetType = NichirinBlockSetTypes.WYSTERIA;
-        var woodType = NichirinWoodTypes.WYSTERIA;
 
         LOGGER.info("=== NICHIRIN COMMON INITIALIZATION COMPLETE ===");
     }

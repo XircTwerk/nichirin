@@ -29,57 +29,67 @@ public class KatanaHolderBlockRenderer extends GeoBlockRenderer<KatanaHolderBloc
                                VertexConsumer buffer, boolean isReRender, float partialTick, int packedLight,
                                int packedOverlay, float red, float green, float blue, float alpha) {
 
-        // YOUR ORIGINAL BLOCK RENDERING + simple 90 degree rotation
+        // Block rendering with manual rotations
         Direction facing = animatable.getFacing();
         boolean isRotated = animatable.isRotated();
         poseStack.pushPose();
 
         poseStack.translate(0.5, 0.5, 0.5);
 
-        switch (facing) {
-            case UP -> {
-                poseStack.translate(0, -0.5, 0.5625);
-                poseStack.mulPose(Axis.XP.rotationDegrees(90));
-                poseStack.mulPose(Axis.YP.rotationDegrees(180));
-                // UP: rotate around Z-axis, keep same position when rotated
-                if (isRotated) {
+        if (isRotated) {
+            // Rotated block orientations
+            switch (facing) {
+                case UP -> {
+                    poseStack.translate(0.5625, -0.5, 0);
+                    poseStack.mulPose(Axis.XP.rotationDegrees(90));
+                    poseStack.mulPose(Axis.YP.rotationDegrees(180));
                     poseStack.mulPose(Axis.ZP.rotationDegrees(90));
                 }
-            }
-            case DOWN -> {
-                poseStack.translate(0, 0.5, -0.435);
-                poseStack.mulPose(Axis.XP.rotationDegrees(-90));
-                // DOWN: rotate around Z-axis, keep same position when rotated
-                if (isRotated) {
+                case DOWN -> {
+                    poseStack.translate(-0.435, 0.5, 0);
+                    poseStack.mulPose(Axis.XP.rotationDegrees(-90));
                     poseStack.mulPose(Axis.ZP.rotationDegrees(90));
                 }
-            }
-            case NORTH -> {
-                poseStack.mulPose(Axis.XP.rotationDegrees(-90));
-                // Walls: Y-axis rotation
-                if (isRotated) {
+                case NORTH -> {
+                    poseStack.mulPose(Axis.XP.rotationDegrees(-90));
+                    poseStack.mulPose(Axis.YP.rotationDegrees(-90));
+                }
+                case SOUTH -> {
+                    poseStack.mulPose(Axis.XP.rotationDegrees(90));
+                    poseStack.mulPose(Axis.YP.rotationDegrees(-90));
+                }
+                case WEST -> {
+                    poseStack.mulPose(Axis.ZP.rotationDegrees(90));
+                    poseStack.mulPose(Axis.YP.rotationDegrees(-90));
+                }
+                case EAST -> {
+                    poseStack.mulPose(Axis.ZP.rotationDegrees(-90));
                     poseStack.mulPose(Axis.YP.rotationDegrees(-90));
                 }
             }
-            case SOUTH -> {
-                poseStack.mulPose(Axis.XP.rotationDegrees(90));
-                // Walls: Y-axis rotation
-                if (isRotated) {
-                    poseStack.mulPose(Axis.YP.rotationDegrees(-90));
+        } else {
+            // Normal block orientations
+            switch (facing) {
+                case UP -> {
+                    poseStack.translate(0, -0.5, 0.5625);
+                    poseStack.mulPose(Axis.XP.rotationDegrees(90));
+                    poseStack.mulPose(Axis.YP.rotationDegrees(180));
                 }
-            }
-            case WEST -> {
-                poseStack.mulPose(Axis.ZP.rotationDegrees(90));
-                // Walls: Y-axis rotation
-                if (isRotated) {
-                    poseStack.mulPose(Axis.YP.rotationDegrees(-90));
+                case DOWN -> {
+                    poseStack.translate(0, 0.5, -0.435);
+                    poseStack.mulPose(Axis.XP.rotationDegrees(-90));
                 }
-            }
-            case EAST -> {
-                poseStack.mulPose(Axis.ZP.rotationDegrees(-90));
-                // Walls: Y-axis rotation
-                if (isRotated) {
-                    poseStack.mulPose(Axis.YP.rotationDegrees(-90));
+                case NORTH -> {
+                    poseStack.mulPose(Axis.XP.rotationDegrees(-90));
+                }
+                case SOUTH -> {
+                    poseStack.mulPose(Axis.XP.rotationDegrees(90));
+                }
+                case WEST -> {
+                    poseStack.mulPose(Axis.ZP.rotationDegrees(90));
+                }
+                case EAST -> {
+                    poseStack.mulPose(Axis.ZP.rotationDegrees(-90));
                 }
             }
         }
@@ -91,7 +101,7 @@ public class KatanaHolderBlockRenderer extends GeoBlockRenderer<KatanaHolderBloc
 
         poseStack.popPose();
 
-        // YOUR ORIGINAL KATANA RENDERING
+        // Katana rendering with manual rotations
         if (!isReRender && animatable.getLevel() != null && animatable.getLevel().isClientSide()) {
             boolean shouldRender = animatable.shouldRenderKatana();
             ItemStack katana = animatable.getStoredKatana();
@@ -108,47 +118,84 @@ public class KatanaHolderBlockRenderer extends GeoBlockRenderer<KatanaHolderBloc
 
         poseStack.translate(0.5, 0.5, 0.5);
 
-        // YOUR ORIGINAL KATANA POSITIONING
-        switch (facing) {
-            case UP -> {
-                poseStack.translate(0.15, -0.075, 0.03);
-                poseStack.mulPose(Axis.XP.rotationDegrees(0));
-                poseStack.mulPose(Axis.ZP.rotationDegrees(-45));
-            }
-            case DOWN -> {
-                poseStack.translate(-0.15, 0.075, 0.03);
-                poseStack.mulPose(Axis.XP.rotationDegrees(180));
-                poseStack.mulPose(Axis.ZP.rotationDegrees(45));
-                poseStack.mulPose(Axis.YP.rotationDegrees(180));
-            }
-            case NORTH -> {
-                poseStack.translate(-0.15, 0.025, 0.125);
-                poseStack.mulPose(Axis.XP.rotationDegrees(-270));
-                poseStack.mulPose(Axis.ZP.rotationDegrees(-225));
-                poseStack.mulPose(Axis.YP.rotationDegrees(0));
-            }
-            case SOUTH -> {
-                poseStack.translate(0.15, 0.025, -0.125);
-                poseStack.mulPose(Axis.XP.rotationDegrees(270));
-                poseStack.mulPose(Axis.ZP.rotationDegrees(225));
-                poseStack.mulPose(Axis.YP.rotationDegrees(180));
-            }
-            case WEST -> {
-                poseStack.translate(0.1, 0.025, 0.15);
-                poseStack.mulPose(Axis.XP.rotationDegrees(90));
-                poseStack.mulPose(Axis.ZP.rotationDegrees(45));
-            }
-            case EAST -> {
-                poseStack.translate(-0.1, 0.025, -0.15);
-                poseStack.mulPose(Axis.XP.rotationDegrees(-90));
-                poseStack.mulPose(Axis.ZP.rotationDegrees(-45));
-                poseStack.mulPose(Axis.YP.rotationDegrees(-180));
-            }
-        }
-
-        // Add 90 degree rotation if rotated
         if (isRotated) {
-            poseStack.mulPose(Axis.YP.rotationDegrees(90));
+            // Rotated katana positions
+            switch (facing) {
+                case UP -> {
+                    poseStack.translate(0.03, -0.075, -0.15);
+                    poseStack.mulPose(Axis.XP.rotationDegrees(-45));
+                    poseStack.mulPose(Axis.YP.rotationDegrees(90));
+                    poseStack.mulPose(Axis.ZP.rotationDegrees(0));
+                }
+                case DOWN -> {
+                    poseStack.translate(-0.03, 0.075, 0.03);
+                    poseStack.mulPose(Axis.XP.rotationDegrees(135));
+                    poseStack.mulPose(Axis.YP.rotationDegrees(270));
+                    poseStack.mulPose(Axis.ZP.rotationDegrees(90));
+                }
+                case NORTH -> {
+                    poseStack.translate(-0.025, -0.15, 0.05);
+                    poseStack.mulPose(Axis.XP.rotationDegrees(-315));
+                    poseStack.mulPose(Axis.YP.rotationDegrees(90));
+                    poseStack.mulPose(Axis.ZP.rotationDegrees(-180));
+                }
+                case SOUTH -> {
+                    poseStack.translate(0.025, -0.15, -0.05);
+                    poseStack.mulPose(Axis.XP.rotationDegrees(315));
+                    poseStack.mulPose(Axis.YP.rotationDegrees(-90));
+                    poseStack.mulPose(Axis.ZP.rotationDegrees(180));
+                }
+                case WEST -> {
+                    poseStack.translate(0.025, -0.15, -0.05);
+                    poseStack.mulPose(Axis.XP.rotationDegrees(225));
+                    poseStack.mulPose(Axis.YP.rotationDegrees(-45));
+                    poseStack.mulPose(Axis.ZP.rotationDegrees(180));
+                }
+                case EAST -> {
+                    poseStack.translate(0.025, -0.15, -0.05);
+                    poseStack.mulPose(Axis.XP.rotationDegrees(315));
+                    poseStack.mulPose(Axis.YP.rotationDegrees(90));
+                    poseStack.mulPose(Axis.ZP.rotationDegrees(-180));
+                }
+            }
+        } else {
+            // Normal katana positions (your original code)
+            switch (facing) {
+                case UP -> {
+                    poseStack.translate(0.15, -0.075, 0.03);
+                    poseStack.mulPose(Axis.XP.rotationDegrees(0));
+                    poseStack.mulPose(Axis.ZP.rotationDegrees(-45));
+                }
+                case DOWN -> {
+                    poseStack.translate(-0.15, 0.075, 0.03);
+                    poseStack.mulPose(Axis.XP.rotationDegrees(180));
+                    poseStack.mulPose(Axis.ZP.rotationDegrees(45));
+                    poseStack.mulPose(Axis.YP.rotationDegrees(180));
+                }
+                case NORTH -> {
+                    poseStack.translate(-0.15, 0.025, 0.125);
+                    poseStack.mulPose(Axis.XP.rotationDegrees(-270));
+                    poseStack.mulPose(Axis.ZP.rotationDegrees(-225));
+                    poseStack.mulPose(Axis.YP.rotationDegrees(0));
+                }
+                case SOUTH -> {
+                    poseStack.translate(0.15, 0.025, -0.125);
+                    poseStack.mulPose(Axis.XP.rotationDegrees(270));
+                    poseStack.mulPose(Axis.ZP.rotationDegrees(225));
+                    poseStack.mulPose(Axis.YP.rotationDegrees(180));
+                }
+                case WEST -> {
+                    poseStack.translate(0.1, 0.025, 0.15);
+                    poseStack.mulPose(Axis.XP.rotationDegrees(90));
+                    poseStack.mulPose(Axis.ZP.rotationDegrees(45));
+                }
+                case EAST -> {
+                    poseStack.translate(-0.1, 0.025, -0.15);
+                    poseStack.mulPose(Axis.XP.rotationDegrees(-90));
+                    poseStack.mulPose(Axis.ZP.rotationDegrees(-45));
+                    poseStack.mulPose(Axis.YP.rotationDegrees(-180));
+                }
+            }
         }
 
         float scale = 1f;
