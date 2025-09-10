@@ -128,7 +128,7 @@ public class KatanaHolderBlockRenderer extends GeoBlockRenderer<KatanaHolderBloc
                     poseStack.mulPose(Axis.ZP.rotationDegrees(0));
                 }
                 case DOWN -> {
-                    poseStack.translate(-0.03, 0.075, 0.03);
+                    poseStack.translate(0.035, 0.05, 0.15);
                     poseStack.mulPose(Axis.XP.rotationDegrees(135));
                     poseStack.mulPose(Axis.YP.rotationDegrees(270));
                     poseStack.mulPose(Axis.ZP.rotationDegrees(90));
@@ -146,16 +146,16 @@ public class KatanaHolderBlockRenderer extends GeoBlockRenderer<KatanaHolderBloc
                     poseStack.mulPose(Axis.ZP.rotationDegrees(180));
                 }
                 case WEST -> {
-                    poseStack.translate(0.025, -0.15, -0.05);
-                    poseStack.mulPose(Axis.XP.rotationDegrees(225));
-                    poseStack.mulPose(Axis.YP.rotationDegrees(-45));
-                    poseStack.mulPose(Axis.ZP.rotationDegrees(180));
+                    poseStack.translate(0.1, 0.175, 0.03);
+                    poseStack.mulPose(Axis.XP.rotationDegrees(0));
+                    poseStack.mulPose(Axis.YP.rotationDegrees(0));
+                    poseStack.mulPose(Axis.ZP.rotationDegrees(45));
                 }
                 case EAST -> {
-                    poseStack.translate(0.025, -0.15, -0.05);
-                    poseStack.mulPose(Axis.XP.rotationDegrees(315));
-                    poseStack.mulPose(Axis.YP.rotationDegrees(90));
-                    poseStack.mulPose(Axis.ZP.rotationDegrees(-180));
+                    poseStack.translate(-0.1, 0.175, -0.03);
+                    poseStack.mulPose(Axis.XP.rotationDegrees(0));
+                    poseStack.mulPose(Axis.YP.rotationDegrees(180));
+                    poseStack.mulPose(Axis.ZP.rotationDegrees(45));
                 }
             }
         } else {
