@@ -38,11 +38,9 @@ public class MoveExecutor {
      * Now includes anti-spam detection for hitstun modification and stun prevention
      */
     public static void executeAttack(Player player, Object attack, String movesetId, String moveId) {
-        System.out.println("DEBUG: ExecuteAttack called for " + attack.getClass().getSimpleName());
 
         // Check if player is currently stunned (prevents move stacking)
         if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
-            System.out.println("DEBUG: Player is stunned, cannot execute move");
             return;
         }
 
@@ -52,7 +50,6 @@ public class MoveExecutor {
             boolean alreadyConfigured = isAttackConfigured(breathingAttack);
 
             if (!alreadyConfigured) {
-                System.out.println("DEBUG: Attack not configured, looking up config for " + moveId);
                 // Get the moveset for configuration
                 AbstractMoveset moveset = MovesetRegistry.getMoveset(movesetId);
                 if (moveset != null) {
@@ -66,7 +63,6 @@ public class MoveExecutor {
                         if (modifiedHitStun != originalHitStun) {
                             // Create modified config with reduced hitstun
                             config = createModifiedConfig(config, modifiedHitStun);
-                            System.out.println("DEBUG: Modified hitstun from " + originalHitStun + " to " + modifiedHitStun + " due to spam detection");
                         }
 
                         // Apply stun effect during windup + duration to prevent move stacking
@@ -74,15 +70,12 @@ public class MoveExecutor {
 
                         breathingAttack.configure(config);
                     } else {
-                        System.err.println("ERROR: Could not find move config for " + moveId + " and attack not pre-configured");
                         return;
                     }
                 } else {
-                    System.err.println("ERROR: Could not find moveset " + movesetId);
                     return;
                 }
             } else {
-                System.out.println("DEBUG: Attack already configured, checking for spam detection");
                 // Even if pre-configured, we still need to apply spam detection and stun
                 int originalHitStun = breathingAttack.getHitStun();
                 int modifiedHitStun = ComboTracker.getModifiedHitStun(player, moveId, originalHitStun);
@@ -90,7 +83,6 @@ public class MoveExecutor {
                 if (modifiedHitStun != originalHitStun) {
                     // We need to modify the hitstun on the already configured attack
                     // This would require adding a method to AbstractBreathingAttack to modify hitstun
-                    System.out.println("DEBUG: Would modify pre-configured attack hitstun from " + originalHitStun + " to " + modifiedHitStun);
                     // For now, we'll need to add a setHitStun method to AbstractBreathingAttack
                     // breathingAttack.setHitStun(modifiedHitStun);
                 }
@@ -137,7 +129,6 @@ public class MoveExecutor {
                 );
 
                 player.addEffect(stunEffect);
-                System.out.println("DEBUG: Applied delayed stun for " + windupTicks + " ticks after attack started");
             }
         }
     }
@@ -162,7 +153,6 @@ public class MoveExecutor {
             );
 
             player.addEffect(stunEffect);
-            System.out.println("DEBUG: Applied move stun for " + totalStunTicks + " ticks (windup: " + windupTicks + ", duration: " + durationTicks + ")");
         }
     }
 
@@ -192,7 +182,6 @@ public class MoveExecutor {
             );
 
             player.addEffect(stunEffect);
-            System.out.println("DEBUG: Applied pre-configured move stun for " + windupTicks + " ticks (windup only)");
         }
     }
 
@@ -228,7 +217,6 @@ public class MoveExecutor {
     public static void executeAttackWithInfo(Player player, Object attack, String displayName, int cooldown) {
         // Check if player is stunned
         if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
-            System.out.println("DEBUG: Player is stunned, cannot execute attack");
             return;
         }
 
@@ -239,15 +227,12 @@ public class MoveExecutor {
      * Internal execution method
      */
     private static void executeAttackInternal(Player player, Object attack, String displayName, int cooldown) {
-        System.out.println("DEBUG: ExecuteAttackInternal - checking if attack is active");
 
         if (!isAttackActive(attack)) {
-            System.out.println("DEBUG: Attack not active, starting attack");
             startAttack(player, attack);
 
             // Only track if attack actually started successfully
             if (isAttackActive(attack)) {
-                System.out.println("DEBUG: Attack started successfully, tracking it");
                 trackAttack(player, attack);
 
                 // Send cooldown to client if on server
@@ -255,10 +240,8 @@ public class MoveExecutor {
                     sendCooldownToClient(serverPlayer, displayName, cooldown);
                 }
             } else {
-                System.out.println("DEBUG: Attack failed to start, not tracking");
             }
         } else {
-            System.out.println("DEBUG: Attack already active, ignoring");
         }
     }
 
@@ -297,7 +280,6 @@ public class MoveExecutor {
      * Generic method to start an attack
      */
     private static void startAttack(Player player, Object attack) {
-        System.out.println("DEBUG: Starting attack " + attack.getClass().getSimpleName());
 
         // Handle AbstractBreathingAttack directly
         if (attack instanceof AbstractBreathingAttack<?, ?> breathingAttack) {
@@ -322,7 +304,6 @@ public class MoveExecutor {
                 }
             }
         } catch (Exception e) {
-            System.err.println("Could not start attack: " + attack.getClass().getName() + " - " + e.getMessage());
         }
     }
 
@@ -350,7 +331,6 @@ public class MoveExecutor {
     public static void executeMove(Player player, String moveName, Runnable moveExecution, int cooldownTicks, int stunDurationTicks) {
         // Check if player is currently stunned
         if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
-            System.out.println("DEBUG: Player is stunned, cannot execute move: " + moveName);
             return;
         }
 
@@ -366,7 +346,6 @@ public class MoveExecutor {
             );
 
             player.addEffect(stunEffect);
-            System.out.println("DEBUG: Applied move stun for " + moveName + " for " + stunDurationTicks + " ticks");
         }
 
         // Apply anti-spam detection to move execution
@@ -401,7 +380,6 @@ public class MoveExecutor {
      */
     public static void removeMoveStun(Player player) {
         player.removeEffect(NichirinEffectRegistry.STUNNED.get());
-        System.out.println("DEBUG: Force removed move stun for " + player.getName().getString());
     }
 
     /**
@@ -448,8 +426,6 @@ public class MoveExecutor {
             return;
         }
 
-        System.out.println("DEBUG: Ticking " + attacks.size() + " attacks for " + player.getName().getString());
-
         List<Object> toRemove = new ArrayList<>();
 
         // Create a copy to avoid concurrent modification
@@ -463,11 +439,9 @@ public class MoveExecutor {
                 boolean stillActive = tickAndCheckActive(player, attack);
 
                 if (!stillActive) {
-                    System.out.println("DEBUG: Attack " + attack.getClass().getSimpleName() + " is no longer active, removing");
                     toRemove.add(attack);
                 }
             } catch (Exception e) {
-                System.err.println("Error ticking attack " + attack.getClass().getSimpleName() + ": " + e.getMessage());
                 e.printStackTrace();
                 toRemove.add(attack);
             }
@@ -529,7 +503,6 @@ public class MoveExecutor {
      */
     private static void trackAttack(Player player, Object attack) {
         activeAttacks.computeIfAbsent(player, k -> new ArrayList<>()).add(attack);
-        System.out.println("DEBUG: Now tracking " + activeAttacks.get(player).size() + " attacks for " + player.getName().getString());
     }
 
     /**
@@ -538,7 +511,6 @@ public class MoveExecutor {
     public static void clearAttacks(Player player) {
         var attacks = activeAttacks.remove(player);
         if (attacks != null) {
-            System.out.println("DEBUG: Clearing " + attacks.size() + " attacks for " + player.getName().getString());
 
             // Stop all attacks gracefully
             for (Object attack : attacks) {
@@ -555,7 +527,6 @@ public class MoveExecutor {
                         }
                     }
                 } catch (Exception e) {
-                    System.err.println("Error stopping attack on clear: " + e.getMessage());
                 }
             }
         }
@@ -607,7 +578,6 @@ public class MoveExecutor {
                 }
                 return true;
             } catch (Exception e) {
-                System.err.println("Error force stopping attack: " + e.getMessage());
                 // Remove it anyway
                 attacks.remove(attack);
                 return false;

@@ -40,8 +40,6 @@ public class KatanaHolderBlock extends BaseEntityBlock {
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
     public static final BooleanProperty ROTATED = BooleanProperty.create("rotated");
 
-    // Shapes with 8-pixel height extending from attachment surface, covering full block area
-// Normal orientation shapes
     private static final VoxelShape FLOOR_SHAPE = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 8.0D, 16.0D);
     private static final VoxelShape CEILING_SHAPE = Block.box(0.0D, 8.0D, 0.0D, 16.0D, 16.0D, 16.0D);
     private static final VoxelShape NORTH_SHAPE = Block.box(0.0D, 0.0D, 8.0D, 16.0D, 16.0D, 16.0D);
@@ -49,13 +47,12 @@ public class KatanaHolderBlock extends BaseEntityBlock {
     private static final VoxelShape WEST_SHAPE = Block.box(8.0D, 0.0D, 0.0D, 16.0D, 16.0D, 16.0D);
     private static final VoxelShape EAST_SHAPE = Block.box(0.0D, 0.0D, 0.0D, 8.0D, 16.0D, 16.0D);
 
-    // Rotated shapes (90 degrees rotated) - same thickness from attachment surface
-    private static final VoxelShape FLOOR_SHAPE_ROTATED = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 8.0D, 16.0D);    // Same as normal floor
-    private static final VoxelShape CEILING_SHAPE_ROTATED = Block.box(0.0D, 8.0D, 0.0D, 16.0D, 16.0D, 16.0D);  // Same as normal ceiling
-    private static final VoxelShape NORTH_SHAPE_ROTATED = Block.box(0.0D, 0.0D, 8.0D, 16.0D, 16.0D, 16.0D);    // Same as normal north
-    private static final VoxelShape SOUTH_SHAPE_ROTATED = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 16.0D, 8.0D);     // Same as normal south
-    private static final VoxelShape WEST_SHAPE_ROTATED = Block.box(8.0D, 0.0D, 0.0D, 16.0D, 16.0D, 16.0D);     // Same as normal west
-    private static final VoxelShape EAST_SHAPE_ROTATED = Block.box(0.0D, 0.0D, 0.0D, 8.0D, 16.0D, 16.0D);      // Same as normal east
+    private static final VoxelShape FLOOR_SHAPE_ROTATED = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 8.0D, 16.0D);
+    private static final VoxelShape CEILING_SHAPE_ROTATED = Block.box(0.0D, 8.0D, 0.0D, 16.0D, 16.0D, 16.0D);
+    private static final VoxelShape NORTH_SHAPE_ROTATED = Block.box(0.0D, 0.0D, 8.0D, 16.0D, 16.0D, 16.0D);
+    private static final VoxelShape SOUTH_SHAPE_ROTATED = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 16.0D, 8.0D);
+    private static final VoxelShape WEST_SHAPE_ROTATED = Block.box(8.0D, 0.0D, 0.0D, 16.0D, 16.0D, 16.0D);
+    private static final VoxelShape EAST_SHAPE_ROTATED = Block.box(0.0D, 0.0D, 0.0D, 8.0D, 16.0D, 16.0D);
 
     public KatanaHolderBlock(Properties properties) {
         super(properties);

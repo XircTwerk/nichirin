@@ -94,13 +94,6 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         this.teleportWindup = config.getTeleportWindup();
 
         this.configured = true;
-
-        System.out.println("DEBUG: Attack " + this.getClass().getSimpleName() + " configured with:");
-        System.out.println("  Damage: " + this.damage);
-        System.out.println("  Range: " + this.range);
-        System.out.println("  Hitbox Size: " + this.hitboxSize);
-        System.out.println("  Duration: " + this.duration);
-        System.out.println("  Windup: " + this.windup);
     }
 
     /**
@@ -109,15 +102,11 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     public void start(Player user, Level world) {
         // CRITICAL: Check configuration first
         if (!configured) {
-            System.err.println("ERROR: " + this.getClass().getSimpleName() + " cannot start - not configured!");
             return;
         }
 
         // Validate only that duration exists (attacks need to run for some time)
         if (duration <= 0) {
-            System.err.println("ERROR: " + this.getClass().getSimpleName() + " has invalid configuration values!");
-            System.err.println("  Duration: " + duration + " (must be > 0)");
-            System.err.println("  All other values can be 0 for special attack types");
             return;
         }
 
@@ -158,13 +147,10 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         // Register for self-ticking
         registerForTicking();
 
-        System.out.println("DEBUG: Attack " + this.getClass().getSimpleName() + " starting with active=true");
-
         // Call onStart() - if this calls stop(), we'll handle it
         try {
             onStart();
         } catch (Exception e) {
-            System.err.println("ERROR in onStart(): " + e.getMessage());
             e.printStackTrace();
             // Clean up on error
             this.isActive = false;
@@ -207,15 +193,11 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
 
         tickCount++;
 
-        System.out.println("DEBUG: " + this.getClass().getSimpleName() + " tick " + tickCount +
-                " (windup=" + windup + ", duration=" + duration + ", active=" + isActive + ")");
-
         // Check if we're past windup phase
         if (tickCount > windup) {
             try {
                 perform();
             } catch (Exception e) {
-                System.err.println("ERROR in perform(): " + e.getMessage());
                 e.printStackTrace();
             }
         }
@@ -243,11 +225,9 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
             // Unregister from self-ticking
             unregisterFromTicking();
 
-            System.out.println("DEBUG: Attack " + this.getClass().getSimpleName() + " stopped");
             try {
                 onStop();
             } catch (Exception e) {
-                System.err.println("ERROR in onStop(): " + e.getMessage());
                 e.printStackTrace();
             }
         }
@@ -259,11 +239,9 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     protected void hitTarget(LivingEntity target) {
         if (world.isClientSide) return;
 
-        System.out.println("DEBUG: Hitting target " + target.getName().getString() + " with damage " + damage);
 
         // Check if already hit (for non-multi-hit attacks)
         if (hitEntities.contains(target.getUUID())) {
-            System.out.println("DEBUG: Target already hit, skipping");
             return;
         }
 
@@ -271,7 +249,6 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         DamageSource source = user.damageSources().playerAttack(user);
         boolean damaged = target.hurt(source, damage);
 
-        System.out.println("DEBUG: Damage applied: " + damaged + ", damage value: " + damage);
 
         if (damaged) {
             // Add combo tracking for breathing attacks
@@ -298,7 +275,6 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         if (knockback > 0) {
             Vec3 knockbackDir = target.position().subtract(user.position()).normalize();
             target.push(knockbackDir.x * knockback, 0.1, knockbackDir.z * knockback);
-            System.out.println("DEBUG: Applied knockback: " + knockback);
         }
 
         // Track hit
@@ -312,8 +288,6 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     protected void hitTargetNoImmunity(LivingEntity target) {
         if (world.isClientSide) return;
 
-        System.out.println("DEBUG: Hitting target (no immunity) " + target.getName().getString() + " with damage " + damage);
-
         // Reset invulnerability to allow immediate damage
         target.invulnerableTime = 0;
         target.hurtTime = 0;
@@ -322,7 +296,6 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         DamageSource source = user.damageSources().playerAttack(user);
         boolean damaged = target.hurt(source, damage);
 
-        System.out.println("DEBUG: No-immunity damage applied: " + damaged + ", damage value: " + damage);
 
         if (damaged) {
             // Add combo tracking for breathing attacks (no immunity version)
@@ -364,13 +337,9 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
                 center.x + hitboxSize/2, center.y + hitboxSize/2, center.z + hitboxSize/2
         );
 
-        System.out.println("DEBUG: Checking hitbox at " + center + " with size " + hitboxSize);
-        System.out.println("DEBUG: Hitbox bounds: " + hitbox);
-
         List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
                 entity -> entity != user && entity.isAlive());
 
-        System.out.println("DEBUG: Found " + targets.size() + " targets in hitbox");
         return targets;
     }
 
@@ -383,13 +352,9 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
                 center.x + width/2, center.y + height/2, center.z + depth/2
         );
 
-        System.out.println("DEBUG: Custom hitbox at " + center + " dimensions: " + width + "x" + height + "x" + depth);
-        System.out.println("DEBUG: Custom hitbox bounds: " + hitbox);
-
         List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
                 entity -> entity != user && entity.isAlive());
 
-        System.out.println("DEBUG: Found " + targets.size() + " targets in custom hitbox");
         return targets;
     }
 
@@ -507,7 +472,6 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     private void registerForTicking() {
         if (user != null) {
             selfTickingAttacks.computeIfAbsent(user, k -> new java.util.ArrayList<>()).add(this);
-            System.out.println("DEBUG: Registered " + this.getClass().getSimpleName() + " for self-ticking");
         }
     }
 
@@ -522,7 +486,6 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
                 if (attacks.isEmpty()) {
                     selfTickingAttacks.remove(user);
                 }
-                System.out.println("DEBUG: Unregistered " + this.getClass().getSimpleName() + " from self-ticking");
             }
         }
     }
@@ -557,7 +520,6 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
                             toRemove.add(attack);
                         }
                     } catch (Exception e) {
-                        System.err.println("Error ticking self-managed attack: " + e.getMessage());
                         toRemove.add(attack);
                     }
                 }
@@ -579,12 +541,10 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     public static void clearSelfTickingAttacks(Player player) {
         var attacks = selfTickingAttacks.remove(player);
         if (attacks != null) {
-            System.out.println("DEBUG: Clearing " + attacks.size() + " self-ticking attacks for " + player.getName().getString());
             for (var attack : attacks) {
                 try {
                     attack.stop();
                 } catch (Exception e) {
-                    System.err.println("Error stopping self-ticking attack: " + e.getMessage());
                 }
             }
         }
