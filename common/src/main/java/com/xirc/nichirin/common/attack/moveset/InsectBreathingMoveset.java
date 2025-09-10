@@ -49,7 +49,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("butterfly", "Butterfly")
                         .withAnimation("nichirin:butterfly", 8)
                         .withTiming(120, 8, 40) // 6 second cooldown, quick windup, LONGER duration for 2-phase attack
-                        .withDamage(24.0f) // High single-target damage
+                        .withDamage(18.0f) // High single-target damage
                         .withDashSpeed(5.0f) // Dash speed (changed from withTeleportDistance)
                         .withRange(10.0f) // Lock-on range
                         .withKnockback(0.3f) // Light knockback
