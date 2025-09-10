@@ -2,20 +2,19 @@ package com.xirc.nichirin.client.gui.biggui;
 
 import com.xirc.nichirin.common.data.BreathingStyleHelper;
 import com.xirc.nichirin.common.data.ProgressionHelper;
+import com.xirc.nichirin.registry.MovesetRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.advancements.Advancement;
-import net.minecraft.advancements.AdvancementProgress;
-import net.minecraft.resources.ResourceLocation;
 
 import static com.xirc.nichirin.common.data.ProgressionHelper.getUnlockRequirement;
 
 /**
- * Breathing Styles section with all 4 breathing styles and fixed "none" button
+ * Breathing Styles section that uses the same data sources as the BreathingCommand
+ * Now properly checks MovesetRegistry for available styles and ProgressionHelper for unlocks
  */
 public class BreathingStylesSection {
 
@@ -32,7 +31,7 @@ public class BreathingStylesSection {
                 centerX - font.width(title) / 2, contentY, 0xFFFFFF);
         contentY += 30;
 
-        // Current style
+        // Current style - use same data source as command
         String currentStyle = BreathingStyleHelper.getMovesetId(player);
         if (currentStyle != null) {
             Component current = Component.translatable("gui.nichirin.breathing_styles.current",
@@ -47,77 +46,66 @@ public class BreathingStylesSection {
         graphics.drawString(font, instructions, contentX, contentY, 0xAAAAAA);
         contentY += 20;
 
-        // Style grid - 2x2 grid for 4 breathing styles
+        // Get all registered breathing styles from MovesetRegistry (same as command)
+        var allStyles = MovesetRegistry.getAllMovesetIds();
+
+        // Filter to only breathing styles (assuming they follow naming convention)
+        var breathingStyles = allStyles.stream()
+                .filter(styleId -> styleId.contains("breathing"))
+                .limit(4) // Show max 4 for now
+                .toArray(String[]::new);
+
+        if (breathingStyles.length == 0) {
+            Component noStyles = Component.literal("No breathing styles registered").withStyle(style -> style.withColor(0xFF5555));
+            graphics.drawString(font, noStyles, centerX - font.width(noStyles) / 2, contentY + 50, 0xFF5555);
+            return;
+        }
+
+        // Style grid - dynamic based on available styles
         int gridY = contentY + 10;
         int boxWidth = 140;
         int boxHeight = 80;
         int spacing = 20;
 
-        // Calculate starting X to center the 2x2 grid
-        int totalWidth = (boxWidth * 2) + spacing;
+        // Calculate grid layout
+        int cols = Math.min(2, breathingStyles.length);
+        int rows = (int) Math.ceil((double) breathingStyles.length / cols);
+        int totalWidth = (boxWidth * cols) + (spacing * (cols - 1));
         int startX = centerX - totalWidth / 2;
 
         // Check what's being hovered
         String hoveredLockedStyle = null;
 
-        // Top row - Thunder and Flame
-        if (mouseX >= startX && mouseX <= startX + boxWidth && mouseY >= gridY && mouseY <= gridY + boxHeight) {
-            if (!isStyleUnlockedWithFallback(player, "thunder_breathing")) {
-                hoveredLockedStyle = "thunder_breathing";
-            }
-        }
+        // Render style boxes dynamically
+        for (int i = 0; i < breathingStyles.length; i++) {
+            String styleId = breathingStyles[i];
+            int row = i / cols;
+            int col = i % cols;
 
-        int flameX = startX + boxWidth + spacing;
-        if (mouseX >= flameX && mouseX <= flameX + boxWidth && mouseY >= gridY && mouseY <= gridY + boxHeight) {
-            if (!isStyleUnlockedWithFallback(player, "flame_breathing")) {
-                hoveredLockedStyle = "flame_breathing";
-            }
-        }
+            int x = startX + col * (boxWidth + spacing);
+            int y = gridY + row * (boxHeight + spacing);
 
-        // Bottom row - Insect and Sound
-        int bottomRowY = gridY + boxHeight + spacing;
-        if (mouseX >= startX && mouseX <= startX + boxWidth && mouseY >= bottomRowY && mouseY <= bottomRowY + boxHeight) {
-            if (!isStyleUnlockedWithFallback(player, "insect_breathing")) {
-                hoveredLockedStyle = "insect_breathing";
+            // Check if this box is being hovered and is locked
+            if (mouseX >= x && mouseX <= x + boxWidth && mouseY >= y && mouseY <= y + boxHeight) {
+                if (!isStyleUnlocked(player, styleId)) {
+                    hoveredLockedStyle = styleId;
+                }
             }
-        }
 
-        int soundX = startX + boxWidth + spacing;
-        if (mouseX >= soundX && mouseX <= soundX + boxWidth && mouseY >= bottomRowY && mouseY <= bottomRowY + boxHeight) {
-            if (!isStyleUnlockedWithFallback(player, "sound_breathing")) {
-                hoveredLockedStyle = "sound_breathing";
-            }
+            renderBreathingStyleBox(graphics, font, player, currentStyle, styleId, x, y, boxWidth, boxHeight);
         }
 
         // Show tooltip at top if hovering over locked style
         if (hoveredLockedStyle != null) {
             String requirement = getUnlockRequirement(hoveredLockedStyle);
             Component tooltip = Component.literal(requirement).withStyle(style -> style.withColor(0xFFAA00).withBold(true));
-            int tooltipY = 50; // Lower position
+            int tooltipY = 50;
             graphics.drawString(font, tooltip, centerX - font.width(tooltip) / 2, tooltipY, 0xFFAA00);
         }
 
-        // Render all 4 breathing style boxes
-        // Top row
-        renderBreathingStyleBox(graphics, font, player, currentStyle,
-                "thunder_breathing",
-                startX, gridY, boxWidth, boxHeight);
-
-        renderBreathingStyleBox(graphics, font, player, currentStyle,
-                "flame_breathing",
-                flameX, gridY, boxWidth, boxHeight);
-
-        // Bottom row
-        renderBreathingStyleBox(graphics, font, player, currentStyle,
-                "insect_breathing",
-                startX, bottomRowY, boxWidth, boxHeight);
-
-        renderBreathingStyleBox(graphics, font, player, currentStyle,
-                "sound_breathing",
-                soundX, bottomRowY, boxWidth, boxHeight);
-
         // "None" button - positioned below the grid
-        int noneButtonY = bottomRowY + boxHeight + 20;
+        int lastRow = (breathingStyles.length - 1) / cols;
+        int noneButtonY = gridY + (lastRow + 1) * (boxHeight + spacing) + 20;
         int noneButtonX = centerX - 75;
         int noneButtonWidth = 150;
         int noneButtonHeight = 20;
@@ -144,7 +132,8 @@ public class BreathingStylesSection {
     private void renderBreathingStyleBox(GuiGraphics graphics, Font font, Player player, String currentStyle,
                                          String styleName, int x, int y, int width, int height) {
 
-        boolean isUnlocked = isStyleUnlockedWithFallback(player, styleName);
+        // Use same unlock check as command
+        boolean isUnlocked = isStyleUnlocked(player, styleName);
         boolean isSelected = styleName.equals(currentStyle);
 
         // Draw box with different colors based on unlock status
@@ -167,8 +156,8 @@ public class BreathingStylesSection {
         // Background
         graphics.fill(x, y, x + width, y + height, bgColor);
 
-        // Style name
-        Component displayName = Component.translatable("breathing_style." + styleName);
+        // Style name - format same as command
+        Component displayName = Component.literal(formatStyleName(styleName));
         int nameColor = isUnlocked ? 0xFFFFFF : 0x888888;
         graphics.drawString(font, displayName,
                 x + (width - font.width(displayName)) / 2,
@@ -201,10 +190,29 @@ public class BreathingStylesSection {
     }
 
     /**
-     * Check if a style is unlocked
+     * Check if a style is unlocked - uses same method as command
      */
-    private boolean isStyleUnlockedWithFallback(Player player, String styleId) {
+    private boolean isStyleUnlocked(Player player, String styleId) {
+        // First check if the style is even registered
+        if (!MovesetRegistry.isRegistered(styleId)) {
+            return false;
+        }
+
+        // Then check if player has unlocked it
         return ProgressionHelper.isStyleUnlocked(player, styleId);
+    }
+
+    /**
+     * Format style name same as command
+     */
+    private String formatStyleName(String styleId) {
+        String[] parts = styleId.split("_");
+        StringBuilder formatted = new StringBuilder();
+        for (String part : parts) {
+            if (formatted.length() > 0) formatted.append(" ");
+            formatted.append(part.substring(0, 1).toUpperCase()).append(part.substring(1));
+        }
+        return formatted.toString();
     }
 
     private static long lastClickTime = 0;
@@ -220,39 +228,43 @@ public class BreathingStylesSection {
         String currentStyle = BreathingStyleHelper.getMovesetId(player);
         int centerX = (contentWidth - 20) / 2;
 
-        // Calculate click areas for all 4 breathing style boxes
+        // Get all registered breathing styles (same as render method)
+        var allStyles = MovesetRegistry.getAllMovesetIds();
+        var breathingStyles = allStyles.stream()
+                .filter(styleId -> styleId.contains("breathing"))
+                .limit(4)
+                .toArray(String[]::new);
+
+        if (breathingStyles.length == 0) {
+            return false;
+        }
+
+        // Calculate click areas dynamically
         int boxWidth = 140;
         int boxHeight = 80;
         int spacing = 20;
-        int totalWidth = (boxWidth * 2) + spacing;
+        int cols = Math.min(2, breathingStyles.length);
+        int totalWidth = (boxWidth * cols) + (spacing * (cols - 1));
         int startX = centerX - totalWidth / 2;
         int topRowY = TOP_MARGIN + 10 + 30 + 25 + 20 + 10;
-        int bottomRowY = topRowY + boxHeight + spacing;
 
-        // Top row - Thunder Breathing (left)
-        if (mouseX >= startX && mouseX <= startX + boxWidth && mouseY >= topRowY && mouseY <= topRowY + boxHeight) {
-            return handleStyleClick(player, "thunder_breathing", currentStyle, currentTime);
+        // Check clicks on style boxes
+        for (int i = 0; i < breathingStyles.length; i++) {
+            String styleId = breathingStyles[i];
+            int row = i / cols;
+            int col = i % cols;
+
+            int x = startX + col * (boxWidth + spacing);
+            int y = topRowY + row * (boxHeight + spacing);
+
+            if (mouseX >= x && mouseX <= x + boxWidth && mouseY >= y && mouseY <= y + boxHeight) {
+                return handleStyleClick(player, styleId, currentStyle, currentTime);
+            }
         }
 
-        // Top row - Flame Breathing (right)
-        int flameX = startX + boxWidth + spacing;
-        if (mouseX >= flameX && mouseX <= flameX + boxWidth && mouseY >= topRowY && mouseY <= topRowY + boxHeight) {
-            return handleStyleClick(player, "flame_breathing", currentStyle, currentTime);
-        }
-
-        // Bottom row - Insect Breathing (left)
-        if (mouseX >= startX && mouseX <= startX + boxWidth && mouseY >= bottomRowY && mouseY <= bottomRowY + boxHeight) {
-            return handleStyleClick(player, "insect_breathing", currentStyle, currentTime);
-        }
-
-        // Bottom row - Sound Breathing (right)
-        int soundX = startX + boxWidth + spacing;
-        if (mouseX >= soundX && mouseX <= soundX + boxWidth && mouseY >= bottomRowY && mouseY <= bottomRowY + boxHeight) {
-            return handleStyleClick(player, "sound_breathing", currentStyle, currentTime);
-        }
-
-        // Check for "None" button click - FIXED positioning
-        int noneButtonY = bottomRowY + boxHeight + 20;
+        // Check for "None" button click
+        int lastRow = (breathingStyles.length - 1) / cols;
+        int noneButtonY = topRowY + (lastRow + 1) * (boxHeight + spacing) + 20;
         int noneButtonX = centerX - 75;
         int noneButtonWidth = 150;
         int noneButtonHeight = 20;
@@ -281,8 +293,8 @@ public class BreathingStylesSection {
      * Handle clicking on a breathing style
      */
     private boolean handleStyleClick(Player player, String styleName, String currentStyle, long currentTime) {
-        // Check if the style is unlocked
-        if (!isStyleUnlockedWithFallback(player, styleName)) {
+        // Check if the style is unlocked (same as command logic)
+        if (!isStyleUnlocked(player, styleName)) {
             // Style is locked - just play error sound
             Minecraft.getInstance().getSoundManager().play(
                     net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(

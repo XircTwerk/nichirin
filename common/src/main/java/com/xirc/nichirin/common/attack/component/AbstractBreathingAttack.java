@@ -96,24 +96,20 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         this.teleportWindup = config.getTeleportWindup();
 
         this.configured = true;
-        System.out.println("DEBUG: Attack configured - damage: " + damage + " range: " + range + " hitboxSize: " + hitboxSize + " windup: " + windup + " duration: " + duration);
     }
 
     /**
      * Start the attack - unified interface (legacy compatibility)
      */
     public void start(Player user, Level world) {
-        System.out.println("DEBUG: start() called - configured: " + configured + " duration: " + duration);
 
         // CRITICAL: Check configuration first
         if (!configured) {
-            System.out.println("DEBUG: Attack not configured, returning");
             return;
         }
 
         // Validate only that duration exists (attacks need to run for some time)
         if (duration <= 0) {
-            System.out.println("DEBUG: Invalid duration: " + duration + ", returning");
             return;
         }
 
@@ -131,7 +127,6 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
                             .withStyle(style -> style.withColor(0xFF5555)),
                     true
             );
-            System.out.println("DEBUG: Not enough breath, returning");
             return;
         }
 
@@ -139,14 +134,12 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         if (breathCost > 0) {
             if (BreathingManager.consume(user, breathCost)) {
                 breathConsumed = true;
-                System.out.println("DEBUG: Consumed " + breathCost + " breath");
             } else {
                 user.displayClientMessage(
                         Component.literal("Failed to consume breath!")
                                 .withStyle(style -> style.withColor(0xFF5555)),
                         true
                 );
-                System.out.println("DEBUG: Failed to consume breath, returning");
                 return;
             }
         }
@@ -160,7 +153,6 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         // Call onStart() - if this calls stop(), we'll handle it
         try {
             onStart();
-            System.out.println("DEBUG: onStart() completed");
         } catch (Exception e) {
             e.printStackTrace();
             // Clean up on error
@@ -178,7 +170,6 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
             breathConsumed = false;
         }
 
-        System.out.println("DEBUG: Attack started successfully - isActive: " + isActive);
     }
 
     /**
@@ -205,11 +196,9 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         }
 
         tickCount++;
-        System.out.println("DEBUG: tick() called - tickCount: " + tickCount + " windup: " + windup + " duration: " + duration);
 
         // Check if we're past windup phase
         if (tickCount > windup) {
-            System.out.println("DEBUG: Past windup, calling perform()");
             try {
                 perform();
             } catch (Exception e) {
@@ -219,7 +208,6 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
 
         // Check if attack duration is complete
         if (tickCount >= windup + duration) {
-            System.out.println("DEBUG: Attack duration complete, stopping");
             stop();
         }
     }
@@ -247,7 +235,6 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
                 e.printStackTrace();
             }
 
-            System.out.println("DEBUG: Attack stopped");
         }
     }
 
@@ -297,7 +284,6 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         hitEntities.add(target.getUUID());
         hitCount++;
 
-        System.out.println("DEBUG: Hit target: " + target.getName().getString() + " damage: " + damage);
     }
 
     /**
@@ -350,17 +336,14 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
      * NOW INTERNALLY USES: Visual debugging and new hitbox system
      */
     protected List<LivingEntity> getTargetsInHitbox(Vec3 center) {
-        System.out.println("DEBUG: getTargetsInHitbox called at position: " + center + " hitboxSize: " + hitboxSize);
 
         AABB hitbox = new HitboxData(hitboxSize).createAABB(center);
 
         // Add to visual debugger if on client
         if (user.level().isClientSide) {
-            System.out.println("DEBUG: Client side - adding to renderer");
             AttackHitboxRenderer.addHitbox(hitbox);
         } else {
             // Server side - send packet to client for visual debugging
-            System.out.println("DEBUG: Server side - sending packet");
             if (user instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
                 com.xirc.nichirin.registry.NichirinPacketRegistry.sendHitboxToClient(
                         serverPlayer, hitbox, 2500L
@@ -371,7 +354,6 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
                 entity -> entity != user && entity.isAlive());
 
-        System.out.println("DEBUG: Found " + targets.size() + " targets in hitbox");
         return targets;
     }
 
@@ -461,12 +443,10 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
      * NEW METHOD: Uses range properly as distance from player to hitbox center
      */
     protected List<LivingEntity> getTargetsAtRange() {
-        System.out.println("DEBUG: getTargetsAtRange() called - range: " + range);
         Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDirection = user.getLookAngle();
         Vec3 hitboxCenter = playerPos.add(lookDirection.scale(range));
 
-        System.out.println("DEBUG: Player pos: " + playerPos + " hitbox center: " + hitboxCenter);
 
         return getTargetsInHitbox(hitboxCenter);
     }
@@ -586,10 +566,8 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
      * Override this for custom attack patterns
      */
     protected void perform() {
-        System.out.println("DEBUG: Default perform() called - about to get targets at range");
         // Default implementation for simple attacks
         List<LivingEntity> targets = getTargetsAtRange();
-        System.out.println("DEBUG: Found " + targets.size() + " targets");
         for (LivingEntity target : targets) {
             hitTarget(target);
         }
@@ -651,7 +629,6 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     private void registerForTicking() {
         if (user != null) {
             selfTickingAttacks.computeIfAbsent(user, k -> new java.util.ArrayList<>()).add(this);
-            System.out.println("DEBUG: Registered attack for ticking. Total attacks for player: " + selfTickingAttacks.get(user).size());
         }
     }
 
@@ -666,7 +643,6 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
                 if (attacks.isEmpty()) {
                     selfTickingAttacks.remove(user);
                 }
-                System.out.println("DEBUG: Unregistered attack from ticking");
             }
         }
     }

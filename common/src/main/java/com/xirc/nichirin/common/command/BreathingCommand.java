@@ -2,11 +2,14 @@ package com.xirc.nichirin.common.command;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.xirc.nichirin.registry.MovesetRegistry;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
+import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
+import com.xirc.nichirin.common.network.CooldownDisplayPacket;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -18,11 +21,9 @@ import net.minecraft.server.level.ServerPlayer;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Improved command for managing player breathing styles with proper validation
- * Usage: /breathing give <player> <style> - Give a breathing style (unlocks and sets it)
- *        /breathing set <player> <style> - Set active style (only if unlocked)
- *        /breathing get <player> - Get current style
- *        /breathing list <player> - List all unlocked styles
+ * Breathing commands for managing player breathing styles
+ * Usage: /breathing give <player> <style> [set] - Give a breathing style with optional set flag
+ *        /breathing cooldown <player> - Reset all breathing move cooldowns
  */
 public class BreathingCommand {
 
@@ -30,7 +31,7 @@ public class BreathingCommand {
         dispatcher.register(Commands.literal("breathing")
                 .requires(source -> source.hasPermission(2)) // Requires op level 2
 
-                // /breathing give <player> <style> - Force unlock and set
+                // /breathing give <player> <style> [set] - Give style with optional set flag (default true)
                 .then(Commands.literal("give")
                         .then(Commands.argument("player", EntityArgument.player())
                                 .then(Commands.argument("style", StringArgumentType.string())
@@ -38,40 +39,25 @@ public class BreathingCommand {
                                         .executes(context -> giveBreathingStyle(
                                                 context,
                                                 EntityArgument.getPlayer(context, "player"),
-                                                StringArgumentType.getString(context, "style")
+                                                StringArgumentType.getString(context, "style"),
+                                                true // Default: set active
                                         ))
+                                        .then(Commands.argument("set", BoolArgumentType.bool())
+                                                .executes(context -> giveBreathingStyle(
+                                                        context,
+                                                        EntityArgument.getPlayer(context, "player"),
+                                                        StringArgumentType.getString(context, "style"),
+                                                        BoolArgumentType.getBool(context, "set")
+                                                ))
+                                        )
                                 )
                         )
                 )
 
-                // /breathing set <player> <style> - Set active style (only if unlocked)
-                .then(Commands.literal("set")
+                // /breathing cooldown <player> - Reset all cooldowns (like CooldownClearEventHandler)
+                .then(Commands.literal("cooldown")
                         .then(Commands.argument("player", EntityArgument.player())
-                                .then(Commands.argument("style", StringArgumentType.string())
-                                        .suggests((context, builder) -> suggestUnlockedStyles(context, builder, EntityArgument.getPlayer(context, "player")))
-                                        .executes(context -> setBreathingStyle(
-                                                context,
-                                                EntityArgument.getPlayer(context, "player"),
-                                                StringArgumentType.getString(context, "style")
-                                        ))
-                                )
-                        )
-                )
-
-                // /breathing get <player>
-                .then(Commands.literal("get")
-                        .then(Commands.argument("player", EntityArgument.player())
-                                .executes(context -> getBreathingStyle(
-                                        context,
-                                        EntityArgument.getPlayer(context, "player")
-                                ))
-                        )
-                )
-
-                // /breathing list <player> - List all unlocked styles
-                .then(Commands.literal("list")
-                        .then(Commands.argument("player", EntityArgument.player())
-                                .executes(context -> listUnlockedStyles(
+                                .executes(context -> resetAllCooldowns(
                                         context,
                                         EntityArgument.getPlayer(context, "player")
                                 ))
@@ -81,10 +67,12 @@ public class BreathingCommand {
     }
 
     /**
-     * Gives (unlocks and sets) a breathing style to a player
+     * Gives (unlocks and optionally sets) a breathing style to a player
      */
-    private static int giveBreathingStyle(CommandContext<CommandSourceStack> context, ServerPlayer player, String style) {
+    private static int giveBreathingStyle(CommandContext<CommandSourceStack> context, ServerPlayer player, String style, boolean setActive) {
         CommandSourceStack source = context.getSource();
+        final String playerName = player.getName().getString();
+        final String formattedStyleName = formatStyleName(style);
 
         // Check if the style exists
         if (!MovesetRegistry.isRegistered(style)) {
@@ -93,130 +81,87 @@ public class BreathingCommand {
             return 0;
         }
 
-        // Check if player already has this breathing style active
-        String currentStyle = PlayerDataProvider.getData(player).getBreathingStyleData().getMovesetId();
-        if (style.equals(currentStyle)) {
-            source.sendFailure(Component.literal(player.getName().getString() + " already has " + formatStyleName(style) + " active")
+        // Check if player already has this style unlocked
+        if (ProgressionHelper.isStyleUnlocked(player, style)) {
+            source.sendFailure(Component.literal(playerName + " already has " + formattedStyleName + " unlocked")
                     .withStyle(s -> s.withColor(0xFFAA00)));
             return 0;
+        }
+
+        // If setActive is true, also check if it's currently active (additional check)
+        if (setActive) {
+            String currentStyle = PlayerDataProvider.getData(player).getBreathingStyleData().getMovesetId();
+            if (style.equals(currentStyle)) {
+                source.sendFailure(Component.literal(playerName + " already has " + formattedStyleName + " active")
+                        .withStyle(s -> s.withColor(0xFFAA00)));
+                return 0;
+            }
         }
 
         // Unlock the style (this will trigger advancement if applicable)
         ProgressionHelper.unlockStyle(player, style);
 
-        // Set it as active
-        PlayerDataProvider.updateAndSync(player, style);
+        // Set it as active if requested
+        if (setActive) {
+            PlayerDataProvider.updateAndSync(player, style);
 
-        // Send success message
-        source.sendSuccess(() -> Component.literal("Gave " + formatStyleName(style) + " to " + player.getName().getString())
-                .withStyle(s -> s.withColor(0x55FF55)), true);
+            // Send success message for give + set
+            source.sendSuccess(() -> Component.literal("Gave and activated " + formattedStyleName + " for " + playerName)
+                    .withStyle(s -> s.withColor(0x55FF55)), true);
 
-        // Notify the player
-        player.displayClientMessage(
-                Component.literal("You have been granted " + formatStyleName(style) + "!")
-                        .withStyle(s -> s.withColor(0x55FFFF)),
-                false
-        );
-
-        return 1;
-    }
-
-    /**
-     * Sets a breathing style for a player (only if unlocked)
-     */
-    private static int setBreathingStyle(CommandContext<CommandSourceStack> context, ServerPlayer player, String style) {
-        CommandSourceStack source = context.getSource();
-
-        // Check if the style exists
-        if (!MovesetRegistry.isRegistered(style)) {
-            source.sendFailure(Component.literal("Unknown breathing style: " + style)
-                    .withStyle(s -> s.withColor(0xFF5555)));
-            return 0;
-        }
-
-        // Check if player has unlocked this style
-        if (!ProgressionHelper.isStyleUnlocked(player, style)) {
-            source.sendFailure(Component.literal(player.getName().getString() + " has not unlocked " + formatStyleName(style))
-                    .withStyle(s -> s.withColor(0xFF5555)));
-            return 0;
-        }
-
-        // Check if already active
-        String currentStyle = PlayerDataProvider.getData(player).getBreathingStyleData().getMovesetId();
-        if (style.equals(currentStyle)) {
-            source.sendFailure(Component.literal(player.getName().getString() + " already has " + formatStyleName(style) + " active")
-                    .withStyle(s -> s.withColor(0xFFAA00)));
-            return 0;
-        }
-
-        // Set it as active
-        PlayerDataProvider.updateAndSync(player, style);
-
-        // Send success message
-        source.sendSuccess(() -> Component.literal("Set " + player.getName().getString() + "'s breathing style to " + formatStyleName(style))
-                .withStyle(s -> s.withColor(0x55FF55)), true);
-
-        // Notify the player
-        player.displayClientMessage(
-                Component.literal("Your breathing style is now " + formatStyleName(style))
-                        .withStyle(s -> s.withColor(0x55FFFF)),
-                false
-        );
-
-        return 1;
-    }
-
-    /**
-     * Gets a player's current breathing style
-     */
-    private static int getBreathingStyle(CommandContext<CommandSourceStack> context, ServerPlayer player) {
-        CommandSourceStack source = context.getSource();
-
-        String currentStyle = PlayerDataProvider.getData(player).getBreathingStyleData().getMovesetId();
-
-        if (currentStyle != null) {
-            source.sendSuccess(() -> Component.literal(player.getName().getString() + " has " + formatStyleName(currentStyle) + " active")
-                    .withStyle(s -> s.withColor(0x55FFFF)), false);
+            // Notify the player
+            player.displayClientMessage(
+                    Component.literal("You have been granted " + formattedStyleName + "!")
+                            .withStyle(s -> s.withColor(0x55FFFF)),
+                    false
+            );
         } else {
-            source.sendSuccess(() -> Component.literal(player.getName().getString() + " has no breathing style active")
-                    .withStyle(s -> s.withColor(0xAAAAAA)), false);
+            // Send success message for unlock only
+            source.sendSuccess(() -> Component.literal("Unlocked " + formattedStyleName + " for " + playerName + " (not set as active)")
+                    .withStyle(s -> s.withColor(0x55FF55)), true);
+
+            // Notify the player
+            player.displayClientMessage(
+                    Component.literal("You have unlocked " + formattedStyleName + "! Use the GUI to set it active.")
+                            .withStyle(s -> s.withColor(0x55FFFF)),
+                    false
+            );
         }
 
         return 1;
     }
 
     /**
-     * Lists all unlocked breathing styles for a player
+     * Resets all breathing move cooldowns for a player
+     * Uses the exact same approach as CooldownClearEventHandler
      */
-    private static int listUnlockedStyles(CommandContext<CommandSourceStack> context, ServerPlayer player) {
+    private static int resetAllCooldowns(CommandContext<CommandSourceStack> context, ServerPlayer player) {
         CommandSourceStack source = context.getSource();
+        final String playerName = player.getName().getString();
 
-        var progression = PlayerDataProvider.getData(player).getProgression();
-
-        if (!progression.hasAnyBreathingStyle()) {
-            source.sendSuccess(() -> Component.literal(player.getName().getString() + " has not unlocked any breathing styles")
-                    .withStyle(s -> s.withColor(0xAAAAAA)), false);
-            return 1;
-        }
-
-        StringBuilder styles = new StringBuilder();
+        // Get the player's current breathing style
         String currentStyle = PlayerDataProvider.getData(player).getBreathingStyleData().getMovesetId();
 
-        for (String styleId : MovesetRegistry.getAllMovesetIds()) {
-            if (progression.isStyleUnlocked(styleId)) {
-                if (styles.length() > 0) {
-                    styles.append(", ");
-                }
-                String styleName = formatStyleName(styleId);
-                if (styleId.equals(currentStyle)) {
-                    styleName += " (active)";
-                }
-                styles.append(styleName);
-            }
+        if (currentStyle == null) {
+            source.sendFailure(Component.literal(playerName + " has no active breathing style")
+                    .withStyle(s -> s.withColor(0xFF5555)));
+            return 0;
         }
 
-        source.sendSuccess(() -> Component.literal(player.getName().getString() + "'s unlocked breathing styles: " + styles)
-                .withStyle(s -> s.withColor(0x55FFFF)), false);
+        final String formattedStyleName = formatStyleName(currentStyle);
+
+        // Use the same approach as CooldownClearEventHandler - send packet with breathing style name
+        CooldownDisplayPacket.sendToClient(player, formattedStyleName, 0);
+
+        source.sendSuccess(() -> Component.literal("Reset all cooldowns for " + formattedStyleName + " for " + playerName)
+                .withStyle(s -> s.withColor(0x55FF55)), true);
+
+        // Notify the player
+        player.displayClientMessage(
+                Component.literal("All your " + formattedStyleName + " cooldowns have been reset!")
+                        .withStyle(s -> s.withColor(0x55FFFF)),
+                false
+        );
 
         return 1;
     }
@@ -229,22 +174,6 @@ public class BreathingCommand {
 
         for (String style : MovesetRegistry.getAllMovesetIds()) {
             if (style.toLowerCase().startsWith(input)) {
-                builder.suggest(style);
-            }
-        }
-
-        return builder.buildFuture();
-    }
-
-    /**
-     * Suggests only unlocked breathing styles for a specific player
-     */
-    private static CompletableFuture<Suggestions> suggestUnlockedStyles(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder, ServerPlayer player) {
-        String input = builder.getRemaining().toLowerCase();
-        var progression = PlayerDataProvider.getData(player).getProgression();
-
-        for (String style : MovesetRegistry.getAllMovesetIds()) {
-            if (progression.isStyleUnlocked(style) && style.toLowerCase().startsWith(input)) {
                 builder.suggest(style);
             }
         }
