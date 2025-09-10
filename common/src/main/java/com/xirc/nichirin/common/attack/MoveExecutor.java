@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.attack;
 
 import com.xirc.nichirin.client.gui.CooldownHUD;
+import com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer;
 import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.util.ComboTracker;
@@ -9,12 +10,16 @@ import com.xirc.nichirin.registry.MovesetRegistry;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.phys.Vec3;
+import com.mojang.blaze3d.vertex.PoseStack;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Generic attack executor - handles all types of breathing attacks with automatic configuration
  * Now includes anti-spam detection that reduces hitstun on repeated moves
  * Includes stun prevention system to prevent move stacking
+ * Enhanced with hitbox visual debugging system
  */
 public class MoveExecutor {
 
@@ -32,6 +38,9 @@ public class MoveExecutor {
 
     // Packet ID for cooldown display
     private static final ResourceLocation COOLDOWN_PACKET_ID = new ResourceLocation("nichirin", "cooldown_display");
+
+    // Hitbox debugging state
+    private static boolean hitboxDebuggingEnabled = false;
 
     /**
      * Execute any breathing attack - handles both pre-configured and auto-configured attacks
@@ -101,6 +110,25 @@ public class MoveExecutor {
 
         // Execute with proper display name
         executeAttackInternal(player, attack, displayName, cooldown);
+    }
+
+    /**
+     * Execute attack with visual hitbox debugging
+     * Enhanced version of executeAttack that includes hitbox visualization
+     */
+    public static void executeAttackWithVisuals(Player player, Object attack, String movesetId, String moveId) {
+        // Check if player is currently stunned (prevents move stacking)
+        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+            return;
+        }
+
+        // Clear any existing hitboxes for clean visuals
+        if (player.level().isClientSide) {
+            AttackHitboxRenderer.clearAll();
+        }
+
+        // Execute the attack normally
+        executeAttack(player, attack, movesetId, moveId);
     }
 
     /**
@@ -414,6 +442,14 @@ public class MoveExecutor {
                 CooldownHUD.setCooldown(moveName, cooldownTicks);
             });
         });
+    }
+
+    /**
+     * Render hitboxes - call this from your client render event handler
+     */
+    public static void renderHitboxes(PoseStack poseStack, MultiBufferSource bufferSource,
+                                      LevelRenderer levelRenderer, Vec3 cameraPosition) {
+        AttackHitboxRenderer.render(poseStack, cameraPosition, levelRenderer, bufferSource);
     }
 
     /**

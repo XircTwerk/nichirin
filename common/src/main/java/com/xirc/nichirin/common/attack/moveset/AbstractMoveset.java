@@ -72,7 +72,6 @@ public abstract class AbstractMoveset {
         applySpeedModifier(player);
         // Note: Fall damage, health regen, and stamina cost are handled differently
         // as they require event-based implementations rather than attribute modifiers
-        System.out.println("DEBUG: Applied all modifiers for " + movesetId);
     }
 
     /**
@@ -80,7 +79,6 @@ public abstract class AbstractMoveset {
      */
     public void removeAllModifiers(Player player) {
         removeSpeedModifier(player);
-        System.out.println("DEBUG: Removed all modifiers for " + movesetId);
     }
 
     /**
@@ -97,8 +95,6 @@ public abstract class AbstractMoveset {
             // Clamp the modifier to reasonable values to prevent issues
             modifierValue = Math.max(-0.95, Math.min(modifierValue, 10.0)); // Max 11x speed, min 5% speed
 
-            System.out.println("DEBUG: Applying speed modifier: " + modifierValue + " (from multiplier: " + speedMultiplier + ")");
-
             // Create and apply the attribute modifier
             AttributeModifier modifier = new AttributeModifier(
                     SPEED_MODIFIER_UUID,
@@ -111,7 +107,6 @@ public abstract class AbstractMoveset {
 
             // Debug: Check the actual speed value
             double currentSpeed = Objects.requireNonNull(player.getAttribute(Attributes.MOVEMENT_SPEED)).getValue();
-            System.out.println("DEBUG: Player speed after modifier: " + currentSpeed);
         }
     }
 
@@ -129,7 +124,6 @@ public abstract class AbstractMoveset {
     public boolean handleLeftClick(Player player) {
         // Check if player is stunned before allowing any move
         if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
-            System.out.println("DEBUG: Player stunned, blocking left-click move");
             return true; // Block the move by overriding
         }
 
@@ -144,7 +138,6 @@ public abstract class AbstractMoveset {
     public boolean handleRightClick(Player player, boolean isCrouching) {
         // Check if player is stunned before allowing any move
         if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
-            System.out.println("DEBUG: Player stunned, blocking right-click move");
             return true; // Block the move by overriding
         }
 
@@ -191,7 +184,6 @@ public abstract class AbstractMoveset {
     public void performMove(Player player, int moveIndex) {
         // Check if player is stunned
         if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
-            System.out.println("DEBUG: Player stunned, cannot perform move " + moveIndex);
             return;
         }
 
@@ -224,7 +216,6 @@ public abstract class AbstractMoveset {
             );
 
             player.addEffect(stunEffect);
-            System.out.println("DEBUG: Applied moveset stun for " + totalStunTicks + " ticks");
         }
     }
 

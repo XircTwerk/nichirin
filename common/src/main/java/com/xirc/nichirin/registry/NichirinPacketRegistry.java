@@ -10,6 +10,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.AABB;
 import io.netty.buffer.Unpooled;
 
 import java.util.HashMap;
@@ -36,6 +37,7 @@ public interface NichirinPacketRegistry {
     ResourceLocation SYNC_BREATHING_STYLE = new ResourceLocation(BreathOfNichirin.MOD_ID, "sync_breathing_style");
     ResourceLocation REQUEST_STYLE_CHANGE = new ResourceLocation(BreathOfNichirin.MOD_ID, "request_style_change");
     ResourceLocation COMBO_COUNTER_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "combo_counter");
+    ResourceLocation HITBOX_PACKET_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "hitbox_data");
 
     // Packet class mappings
     Map<Class<?>, ResourceLocation> PACKET_IDS = new HashMap<>();
@@ -194,6 +196,40 @@ public interface NichirinPacketRegistry {
                 });
             });
 
+            // HITBOX PACKET (S2C)
+            NetworkManager.registerReceiver(NetworkManager.Side.S2C, HITBOX_PACKET_ID, (buf, context) -> {
+                // Read hitbox data OUTSIDE the queue - buffer will be invalid inside the lambda
+                int hitboxCount = buf.readInt();
+
+                // Read all hitbox data into local variables first
+                java.util.List<AABB> hitboxesToAdd = new java.util.ArrayList<>();
+                long duration = 0;
+
+                for (int i = 0; i < hitboxCount; i++) {
+                    double minX = buf.readDouble();
+                    double minY = buf.readDouble();
+                    double minZ = buf.readDouble();
+                    double maxX = buf.readDouble();
+                    double maxY = buf.readDouble();
+                    double maxZ = buf.readDouble();
+                    duration = buf.readLong();
+
+                    AABB hitbox = new AABB(minX, minY, minZ, maxX, maxY, maxZ);
+                    hitboxesToAdd.add(hitbox);
+                }
+
+                // THEN queue the action with the local data
+                final long finalDuration = duration;
+                context.queue(() -> {
+                    System.out.println("DEBUG: Processing " + hitboxesToAdd.size() + " hitboxes on client");
+
+                    for (AABB hitbox : hitboxesToAdd) {
+                        com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer.addHitbox(hitbox, finalDuration, false);
+                        System.out.println("DEBUG: Added hitbox to renderer: " + hitbox);
+                    }
+                });
+            });
+
             BreathOfNichirin.LOGGER.info("S2C packets registered successfully");
 
         } catch (NoSuchMethodError e) {
@@ -202,6 +238,30 @@ public interface NichirinPacketRegistry {
             BreathOfNichirin.LOGGER.warn("Consider downgrading to architectury_api_version = 9.1.12 for full compatibility");
         } catch (Exception e) {
             BreathOfNichirin.LOGGER.error("Unexpected error during S2C packet registration: {}", e.getMessage(), e);
+        }
+    }
+
+    // Hitbox packet sending methods
+    static void sendHitboxToClient(ServerPlayer player, AABB hitbox, long durationMs) {
+        try {
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+
+            // Write hitbox count (1)
+            buf.writeInt(1);
+
+            // Write hitbox data
+            buf.writeDouble(hitbox.minX);
+            buf.writeDouble(hitbox.minY);
+            buf.writeDouble(hitbox.minZ);
+            buf.writeDouble(hitbox.maxX);
+            buf.writeDouble(hitbox.maxY);
+            buf.writeDouble(hitbox.maxZ);
+            buf.writeLong(durationMs);
+
+            NetworkManager.sendToPlayer(player, HITBOX_PACKET_ID, buf);
+            System.out.println("DEBUG: Sent hitbox packet to client: " + hitbox);
+        } catch (Exception e) {
+            BreathOfNichirin.LOGGER.error("Failed to send hitbox packet: {}", e.getMessage());
         }
     }
 

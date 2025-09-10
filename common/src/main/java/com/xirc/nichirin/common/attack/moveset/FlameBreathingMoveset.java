@@ -180,8 +180,10 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                 .withHitStun(8)
                 .withHitboxSize(2.0f)
                 .build();
-
         attack.configure(tempConfig);
+        System.out.println("DEBUG: About to execute attack");
+        MoveExecutor.executeAttack(player, attack, "flame_breathing", "pommel_slash");
+        System.out.println("DEBUG: Attack executed");
         MoveExecutor.executeAttack(player, attack, "flame_breathing", "pommel_slash");
         onMovePerformed(player, -1, false);
         return true;

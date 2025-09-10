@@ -2,12 +2,13 @@ package com.xirc.nichirin.common.attack.component;
 
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset.MoveConfiguration;
 import com.xirc.nichirin.common.util.BreathingManager;
+import com.xirc.nichirin.common.util.HitboxData;
+import com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -19,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.UUID;
 
 /**
@@ -94,19 +96,24 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         this.teleportWindup = config.getTeleportWindup();
 
         this.configured = true;
+        System.out.println("DEBUG: Attack configured - damage: " + damage + " range: " + range + " hitboxSize: " + hitboxSize + " windup: " + windup + " duration: " + duration);
     }
 
     /**
      * Start the attack - unified interface (legacy compatibility)
      */
     public void start(Player user, Level world) {
+        System.out.println("DEBUG: start() called - configured: " + configured + " duration: " + duration);
+
         // CRITICAL: Check configuration first
         if (!configured) {
+            System.out.println("DEBUG: Attack not configured, returning");
             return;
         }
 
         // Validate only that duration exists (attacks need to run for some time)
         if (duration <= 0) {
+            System.out.println("DEBUG: Invalid duration: " + duration + ", returning");
             return;
         }
 
@@ -124,6 +131,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
                             .withStyle(style -> style.withColor(0xFF5555)),
                     true
             );
+            System.out.println("DEBUG: Not enough breath, returning");
             return;
         }
 
@@ -131,12 +139,14 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         if (breathCost > 0) {
             if (BreathingManager.consume(user, breathCost)) {
                 breathConsumed = true;
+                System.out.println("DEBUG: Consumed " + breathCost + " breath");
             } else {
                 user.displayClientMessage(
                         Component.literal("Failed to consume breath!")
                                 .withStyle(style -> style.withColor(0xFF5555)),
                         true
                 );
+                System.out.println("DEBUG: Failed to consume breath, returning");
                 return;
             }
         }
@@ -150,6 +160,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         // Call onStart() - if this calls stop(), we'll handle it
         try {
             onStart();
+            System.out.println("DEBUG: onStart() completed");
         } catch (Exception e) {
             e.printStackTrace();
             // Clean up on error
@@ -166,6 +177,8 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
             BreathingManager.restore(user, breathCost);
             breathConsumed = false;
         }
+
+        System.out.println("DEBUG: Attack started successfully - isActive: " + isActive);
     }
 
     /**
@@ -192,9 +205,11 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         }
 
         tickCount++;
+        System.out.println("DEBUG: tick() called - tickCount: " + tickCount + " windup: " + windup + " duration: " + duration);
 
         // Check if we're past windup phase
         if (tickCount > windup) {
+            System.out.println("DEBUG: Past windup, calling perform()");
             try {
                 perform();
             } catch (Exception e) {
@@ -204,6 +219,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
 
         // Check if attack duration is complete
         if (tickCount >= windup + duration) {
+            System.out.println("DEBUG: Attack duration complete, stopping");
             stop();
         }
     }
@@ -230,6 +246,8 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
             } catch (Exception e) {
                 e.printStackTrace();
             }
+
+            System.out.println("DEBUG: Attack stopped");
         }
     }
 
@@ -239,7 +257,6 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     protected void hitTarget(LivingEntity target) {
         if (world.isClientSide) return;
 
-
         // Check if already hit (for non-multi-hit attacks)
         if (hitEntities.contains(target.getUUID())) {
             return;
@@ -248,7 +265,6 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         // Apply damage using configured values
         DamageSource source = user.damageSources().playerAttack(user);
         boolean damaged = target.hurt(source, damage);
-
 
         if (damaged) {
             // Add combo tracking for breathing attacks
@@ -280,6 +296,8 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         // Track hit
         hitEntities.add(target.getUUID());
         hitCount++;
+
+        System.out.println("DEBUG: Hit target: " + target.getName().getString() + " damage: " + damage);
     }
 
     /**
@@ -295,7 +313,6 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         // Apply damage
         DamageSource source = user.damageSources().playerAttack(user);
         boolean damaged = target.hurt(source, damage);
-
 
         if (damaged) {
             // Add combo tracking for breathing attacks (no immunity version)
@@ -330,27 +347,67 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
 
     /**
      * Get entities in a hitbox centered at the given position
+     * NOW INTERNALLY USES: Visual debugging and new hitbox system
      */
     protected List<LivingEntity> getTargetsInHitbox(Vec3 center) {
-        AABB hitbox = new AABB(
-                center.x - hitboxSize/2, center.y - hitboxSize/2, center.z - hitboxSize/2,
-                center.x + hitboxSize/2, center.y + hitboxSize/2, center.z + hitboxSize/2
-        );
+        System.out.println("DEBUG: getTargetsInHitbox called at position: " + center + " hitboxSize: " + hitboxSize);
+
+        AABB hitbox = new HitboxData(hitboxSize).createAABB(center);
+
+        // Add to visual debugger if on client
+        if (user.level().isClientSide) {
+            System.out.println("DEBUG: Client side - adding to renderer");
+            AttackHitboxRenderer.addHitbox(hitbox);
+        } else {
+            // Server side - send packet to client for visual debugging
+            System.out.println("DEBUG: Server side - sending packet");
+            if (user instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+                com.xirc.nichirin.registry.NichirinPacketRegistry.sendHitboxToClient(
+                        serverPlayer, hitbox, 2500L
+                );
+            }
+        }
 
         List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
                 entity -> entity != user && entity.isAlive());
 
+        System.out.println("DEBUG: Found " + targets.size() + " targets in hitbox");
         return targets;
     }
 
     /**
      * Get entities in a custom hitbox with specified dimensions
+     * NOW INTERNALLY USES: New HitboxData system for better shapes
      */
     protected List<LivingEntity> getTargetsInCustomHitbox(Vec3 center, double width, double height, double depth) {
-        AABB hitbox = new AABB(
-                center.x - width/2, center.y - height/2, center.z - depth/2,
-                center.x + width/2, center.y + height/2, center.z + depth/2
-        );
+        // Convert dimensions to our new system
+        float size = (float) Math.max(width, Math.max(height, depth));
+
+        // Determine best shape based on dimensions
+        HitboxData.HitboxShape shape;
+        if (width > height && width > depth) {
+            shape = HitboxData.HitboxShape.WIDE;
+        } else if (height > width && height > depth) {
+            shape = HitboxData.HitboxShape.TALL;
+        } else if (depth > width && depth > height) {
+            shape = HitboxData.HitboxShape.LONG;
+        } else {
+            shape = HitboxData.HitboxShape.CUBE;
+        }
+
+        AABB hitbox = new HitboxData(size, shape).createAABB(center);
+
+        // Add to visual debugger if on client
+        if (user.level().isClientSide) {
+            AttackHitboxRenderer.addHitbox(hitbox);
+        } else {
+            // Server side - send packet to client
+            if (user instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+                com.xirc.nichirin.registry.NichirinPacketRegistry.sendHitboxToClient(
+                        serverPlayer, hitbox, 2500L
+                );
+            }
+        }
 
         List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
                 entity -> entity != user && entity.isAlive());
@@ -360,45 +417,156 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
 
     /**
      * Get entities in a line between two points
+     * NOW INTERNALLY USES: Proper line hitbox calculation with visual debugging
      */
     protected List<LivingEntity> getTargetsInLine(Vec3 start, Vec3 end, double thickness) {
-        AABB lineBounds = new AABB(
-                Math.min(start.x, end.x) - thickness,
-                Math.min(start.y, end.y) - thickness,
-                Math.min(start.z, end.z) - thickness,
-                Math.max(start.x, end.x) + thickness,
-                Math.max(start.y, end.y) + thickness,
-                Math.max(start.z, end.z) + thickness
-        );
+        // Calculate the distance and create multiple hitboxes along the line
+        double distance = start.distanceTo(end);
+        int hitboxCount = Math.max(1, (int) Math.ceil(distance / thickness));
 
-        return world.getEntitiesOfClass(LivingEntity.class, lineBounds, entity -> {
-            if (entity == user || !entity.isAlive()) {
-                return false;
+        Set<LivingEntity> allTargets = new HashSet<>();
+        Set<AABB> lineHitboxes = new HashSet<>();
+
+        for (int i = 0; i <= hitboxCount; i++) {
+            double progress = hitboxCount > 0 ? (double) i / hitboxCount : 0;
+            Vec3 hitboxCenter = start.lerp(end, progress);
+
+            AABB hitbox = new HitboxData((float) thickness).createAABB(hitboxCenter);
+            lineHitboxes.add(hitbox);
+
+            List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
+                    entity -> entity != user && entity.isAlive());
+            allTargets.addAll(targets);
+        }
+
+        // Add all hitboxes to visual debugger if on client
+        if (user.level().isClientSide) {
+            AttackHitboxRenderer.addHitboxes(lineHitboxes);
+        } else {
+            // Server side - send packets for each hitbox
+            if (user instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+                for (AABB hitbox : lineHitboxes) {
+                    com.xirc.nichirin.registry.NichirinPacketRegistry.sendHitboxToClient(
+                            serverPlayer, hitbox, 2500L
+                    );
+                }
             }
+        }
 
-            Vec3 entityPos = entity.position().add(0, entity.getBbHeight()/2, 0);
-            double distanceToLine = distancePointToLine(entityPos, start, end);
-            return distanceToLine <= thickness;
-        });
+        return new ArrayList<>(allTargets);
     }
 
     /**
-     * Calculate distance from a point to a line segment
+     * Create a hitbox at the configured range from the player
+     * NEW METHOD: Uses range properly as distance from player to hitbox center
      */
-    private double distancePointToLine(Vec3 point, Vec3 lineStart, Vec3 lineEnd) {
-        Vec3 lineVec = lineEnd.subtract(lineStart);
-        Vec3 pointVec = point.subtract(lineStart);
+    protected List<LivingEntity> getTargetsAtRange() {
+        System.out.println("DEBUG: getTargetsAtRange() called - range: " + range);
+        Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);
+        Vec3 lookDirection = user.getLookAngle();
+        Vec3 hitboxCenter = playerPos.add(lookDirection.scale(range));
 
-        double lineLength = lineVec.length();
-        if (lineLength == 0) {
-            return point.distanceTo(lineStart);
+        System.out.println("DEBUG: Player pos: " + playerPos + " hitbox center: " + hitboxCenter);
+
+        return getTargetsInHitbox(hitboxCenter);
+    }
+
+    /**
+     * Create a hitbox at the configured range with custom shape
+     * NEW METHOD: Uses range with custom hitbox shapes
+     */
+    protected List<LivingEntity> getTargetsAtRange(HitboxData.HitboxShape shape) {
+        Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);
+        Vec3 lookDirection = user.getLookAngle();
+        Vec3 hitboxCenter = playerPos.add(lookDirection.scale(range));
+
+        AABB hitbox = new HitboxData(hitboxSize, shape).createAABB(hitboxCenter);
+
+        // Add to visual debugger if on client
+        if (user.level().isClientSide) {
+            AttackHitboxRenderer.addHitbox(hitbox);
+        } else {
+            // Server side - send packet to client
+            if (user instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+                com.xirc.nichirin.registry.NichirinPacketRegistry.sendHitboxToClient(
+                        serverPlayer, hitbox, 2500L
+                );
+            }
         }
 
-        double projection = pointVec.dot(lineVec) / (lineLength * lineLength);
-        projection = Math.max(0, Math.min(1, projection));
+        List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
+                entity -> entity != user && entity.isAlive());
 
-        Vec3 closestPoint = lineStart.add(lineVec.scale(projection));
-        return point.distanceTo(closestPoint);
+        return targets;
+    }
+
+    /**
+     * Create multiple hitboxes from player to max range
+     * NEW METHOD: Creates a line of hitboxes using proper range
+     */
+    protected List<LivingEntity> getTargetsInRangeLine(float spacing) {
+        Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);
+        Vec3 lookDirection = user.getLookAngle();
+        Vec3 endPos = playerPos.add(lookDirection.scale(range));
+
+        return getTargetsInLine(playerPos, endPos, spacing);
+    }
+
+    /**
+     * Create a cone of hitboxes at the configured range
+     * NEW METHOD: Creates cone pattern at range distance
+     */
+    protected List<LivingEntity> getTargetsInCone(float coneAngle, int hitboxCount) {
+        Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);
+        Vec3 lookDirection = user.getLookAngle();
+
+        Set<LivingEntity> allTargets = new HashSet<>();
+        Set<AABB> coneHitboxes = new HashSet<>();
+
+        float angleStep = coneAngle / (hitboxCount - 1);
+        float startAngle = -coneAngle / 2;
+
+        for (int i = 0; i < hitboxCount; i++) {
+            float angle = startAngle + (i * angleStep);
+            Vec3 rotatedDirection = rotateVectorY(lookDirection, Math.toRadians(angle));
+            Vec3 hitboxCenter = playerPos.add(rotatedDirection.scale(range));
+
+            AABB hitbox = new HitboxData(hitboxSize).createAABB(hitboxCenter);
+            coneHitboxes.add(hitbox);
+
+            List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
+                    entity -> entity != user && entity.isAlive());
+            allTargets.addAll(targets);
+        }
+
+        // Add all hitboxes to visual debugger if on client
+        if (user.level().isClientSide) {
+            AttackHitboxRenderer.addHitboxes(coneHitboxes);
+        } else {
+            // Server side - send packets
+            if (user instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+                for (AABB hitbox : coneHitboxes) {
+                    com.xirc.nichirin.registry.NichirinPacketRegistry.sendHitboxToClient(
+                            serverPlayer, hitbox, 2500L
+                    );
+                }
+            }
+        }
+
+        return new ArrayList<>(allTargets);
+    }
+
+    /**
+     * Utility method to rotate a vector around the Y axis
+     */
+    private Vec3 rotateVectorY(Vec3 vector, double angleRadians) {
+        double cos = Math.cos(angleRadians);
+        double sin = Math.sin(angleRadians);
+
+        double newX = vector.x * cos - vector.z * sin;
+        double newZ = vector.x * sin + vector.z * cos;
+
+        return new Vec3(newX, vector.y, newZ);
     }
 
     // Abstract methods that must be implemented by subclasses
@@ -413,8 +581,19 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     /**
      * Called every tick during the attack (after windup period)
      * Implement the main attack logic here
+     *
+     * Default implementation: Creates a single hitbox at range and processes targets
+     * Override this for custom attack patterns
      */
-    protected abstract void perform();
+    protected void perform() {
+        System.out.println("DEBUG: Default perform() called - about to get targets at range");
+        // Default implementation for simple attacks
+        List<LivingEntity> targets = getTargetsAtRange();
+        System.out.println("DEBUG: Found " + targets.size() + " targets");
+        for (LivingEntity target : targets) {
+            hitTarget(target);
+        }
+    }
 
     /**
      * Called when attack ends
@@ -472,6 +651,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     private void registerForTicking() {
         if (user != null) {
             selfTickingAttacks.computeIfAbsent(user, k -> new java.util.ArrayList<>()).add(this);
+            System.out.println("DEBUG: Registered attack for ticking. Total attacks for player: " + selfTickingAttacks.get(user).size());
         }
     }
 
@@ -486,6 +666,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
                 if (attacks.isEmpty()) {
                     selfTickingAttacks.remove(user);
                 }
+                System.out.println("DEBUG: Unregistered attack from ticking");
             }
         }
     }

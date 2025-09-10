@@ -1,25 +1,15 @@
 package com.xirc.nichirin.common.util;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.With;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 /**
  * Data class for configuring attack hitboxes
  */
-@Getter
-@AllArgsConstructor
-@With
-public class HitboxData {
-    private final float size;
-    private final Vec3 offset;
-    private final HitboxShape shape;
-    private final float duration; // How long the hitbox stays active
+public record HitboxData(float size, Vec3 offset, HitboxShape shape, float duration) {
 
     /**
-     * Creates a basic cubic hitbox
+     * Creates a basic cubic hitbox with 1 tick duration
      */
     public HitboxData(float size, Vec3 offset) {
         this(size, offset, HitboxShape.CUBE, 1.0f);
@@ -29,7 +19,21 @@ public class HitboxData {
      * Creates a basic cubic hitbox with offset components
      */
     public HitboxData(float size, double offsetX, double offsetY, double offsetZ) {
-        this(size, new Vec3(offsetX, offsetY, offsetZ));
+        this(size, new Vec3(offsetX, offsetY, offsetZ), HitboxShape.CUBE, 1.0f);
+    }
+
+    /**
+     * Creates a basic cubic hitbox at origin
+     */
+    public HitboxData(float size) {
+        this(size, Vec3.ZERO, HitboxShape.CUBE, 1.0f);
+    }
+
+    /**
+     * Creates a hitbox with specified shape
+     */
+    public HitboxData(float size, HitboxShape shape) {
+        this(size, Vec3.ZERO, shape, 1.0f);
     }
 
     /**
@@ -37,51 +41,73 @@ public class HitboxData {
      */
     public AABB createAABB(Vec3 center) {
         Vec3 finalCenter = center.add(offset);
+        float halfSize = size / 2.0f;
 
-        switch (shape) {
-            case CUBE:
-                return new AABB(
-                        finalCenter.x - size,
-                        finalCenter.y - size,
-                        finalCenter.z - size,
-                        finalCenter.x + size,
-                        finalCenter.y + size,
-                        finalCenter.z + size
-                );
+        return switch (shape) {
+            case CUBE -> new AABB(
+                    finalCenter.x - halfSize,
+                    finalCenter.y - halfSize,
+                    finalCenter.z - halfSize,
+                    finalCenter.x + halfSize,
+                    finalCenter.y + halfSize,
+                    finalCenter.z + halfSize
+            );
 
-            case WIDE:
-                return new AABB(
-                        finalCenter.x - size * 1.5,
-                        finalCenter.y - size * 0.5,
-                        finalCenter.z - size,
-                        finalCenter.x + size * 1.5,
-                        finalCenter.y + size * 0.5,
-                        finalCenter.z + size
-                );
+            case WIDE -> new AABB(
+                    finalCenter.x - halfSize * 1.5,
+                    finalCenter.y - halfSize * 0.5,
+                    finalCenter.z - halfSize,
+                    finalCenter.x + halfSize * 1.5,
+                    finalCenter.y + halfSize * 0.5,
+                    finalCenter.z + halfSize
+            );
 
-            case TALL:
-                return new AABB(
-                        finalCenter.x - size * 0.5,
-                        finalCenter.y - size * 1.5,
-                        finalCenter.z - size * 0.5,
-                        finalCenter.x + size * 0.5,
-                        finalCenter.y + size * 1.5,
-                        finalCenter.z + size * 0.5
-                );
+            case TALL -> new AABB(
+                    finalCenter.x - halfSize * 0.5,
+                    finalCenter.y - halfSize * 1.5,
+                    finalCenter.z - halfSize * 0.5,
+                    finalCenter.x + halfSize * 0.5,
+                    finalCenter.y + halfSize * 1.5,
+                    finalCenter.z + halfSize * 0.5
+            );
 
-            case LONG:
-                return new AABB(
-                        finalCenter.x - size * 0.5,
-                        finalCenter.y - size * 0.5,
-                        finalCenter.z - size * 1.5,
-                        finalCenter.x + size * 0.5,
-                        finalCenter.y + size * 0.5,
-                        finalCenter.z + size * 1.5
-                );
+            case LONG -> new AABB(
+                    finalCenter.x - halfSize * 0.5,
+                    finalCenter.y - halfSize * 0.5,
+                    finalCenter.z - halfSize * 1.5,
+                    finalCenter.x + halfSize * 0.5,
+                    finalCenter.y + halfSize * 0.5,
+                    finalCenter.z + halfSize * 1.5
+            );
+        };
+    }
 
-            default:
-                return createAABB(center); // Fallback to cube
-        }
+    /**
+     * Create a new HitboxData with modified size
+     */
+    public HitboxData withSize(float newSize) {
+        return new HitboxData(newSize, offset, shape, duration);
+    }
+
+    /**
+     * Create a new HitboxData with modified offset
+     */
+    public HitboxData withOffset(Vec3 newOffset) {
+        return new HitboxData(size, newOffset, shape, duration);
+    }
+
+    /**
+     * Create a new HitboxData with modified shape
+     */
+    public HitboxData withShape(HitboxShape newShape) {
+        return new HitboxData(size, offset, newShape, duration);
+    }
+
+    /**
+     * Create a new HitboxData with modified duration
+     */
+    public HitboxData withDuration(float newDuration) {
+        return new HitboxData(size, offset, shape, newDuration);
     }
 
     /**

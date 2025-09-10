@@ -6,6 +6,7 @@
   "client": [
     "client.KeyboardInputMixin",
     "client.MouseHandlerMixin",
+    "client.LevelRendererMixin",
     "client.PlayerModelAccessor"
   ],
   "mixins": [

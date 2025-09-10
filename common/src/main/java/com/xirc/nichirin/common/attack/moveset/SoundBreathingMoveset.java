@@ -70,11 +70,11 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                         .withAnimation("nichirin:constant_resounding_slashes", 12)
                         .withTiming(140, 10, 30) // 7 second cooldown, 1.5s duration
                         .withDamage(20.0f)
-                        .withRange(32.5f) // Increased from 5.5f (1.5x = 8.25f)
+                        .withRange(0f) // Increased from 5.5f (1.5x = 8.25f)
                         .withKnockback(0f) // Light knockback to keep enemies close
                         .withBreathCost(30.0f)
                         .withHitStun(5) // Brief stun per hit
-                        .withHitboxSize(8.25f) // Full 360° radius
+                        .withHitboxSize(12.25f) // Full 360° radius
                         .withAction(player -> {
                             ConstantResoundingSlashesAttack attack = new ConstantResoundingSlashesAttack();
                             SoundBreathingMoveset moveset = getCurrentMoveset();

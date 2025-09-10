@@ -11,6 +11,7 @@ import com.xirc.nichirin.client.registry.NichirinKeybindRegistry;
 import com.xirc.nichirin.client.renderer.BreathingBarRenderer;
 import com.xirc.nichirin.client.renderer.StaminaBarRenderer;
 import com.xirc.nichirin.client.renderer.StanceBarRenderer;
+import com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer;
 import com.xirc.nichirin.client.util.ClientInputTracker;
 import com.xirc.nichirin.client.util.ItemPropertiesHelper;
 import com.xirc.nichirin.common.attack.MoveExecutor;
@@ -125,6 +126,7 @@ public class BreathOfNichirinClient {
             BreathingBarRenderer.register();
             StaminaBarRenderer.register();
             StanceBarRenderer.register();
+            AttackHitboxRenderer.init();
 
             RenderTypeRegistry.register(RenderType.cutout(),
                     NichirinBlockRegistry.WYSTERIA_DOOR.get(),
