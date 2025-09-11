@@ -145,7 +145,7 @@ public class RengokuCapeRenderer extends NichirinArmorRenderer<NichirinArmorItem
             // Apply scaling based on player model type
             if (isSlim) {
                 if (cape != null) {
-                    cape.setScaleX(1.4f);
+                    cape.setScaleX(1.2f);
                     cape.setScaleY(1.425f);
                     cape.setScaleZ(1.8f);
                 }
@@ -161,7 +161,7 @@ public class RengokuCapeRenderer extends NichirinArmorRenderer<NichirinArmorItem
                 }
             } else {
                 if (cape != null) {
-                    cape.setScaleX(1.5f);
+                    cape.setScaleX(1.3f);
                     cape.setScaleY(1.425f);
                     cape.setScaleZ(1.8f);
                 }
