@@ -1,4 +1,4 @@
-package com.xirc.nichirin.common.network;
+package com.xirc.nichirin.common.network.util;
 
 import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.common.data.BreathingStyleData;

@@ -1,6 +1,6 @@
 package com.xirc.nichirin.common.system;
 
-import com.xirc.nichirin.common.network.StanceSyncPacket;
+import com.xirc.nichirin.common.network.s2c.StanceSyncPacket;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.server.level.ServerPlayer;

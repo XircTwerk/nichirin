@@ -1,4 +1,4 @@
-package com.xirc.nichirin.common.network;
+package com.xirc.nichirin.common.network.s2c;
 
 import com.xirc.nichirin.client.gui.StaminaBarHUD;
 import net.fabricmc.api.EnvType;

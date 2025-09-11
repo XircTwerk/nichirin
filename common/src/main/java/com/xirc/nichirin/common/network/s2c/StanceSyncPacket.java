@@ -1,6 +1,6 @@
-package com.xirc.nichirin.common.network;
+package com.xirc.nichirin.common.network.s2c;
 
-import com.xirc.nichirin.client.gui.BreathingBarHUD;
+import com.xirc.nichirin.client.gui.StanceBarHUD;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -9,29 +9,29 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 
 /**
- * Syncs breathing power level to clients
+ * Syncs stance level to clients for the orange stance bar
  */
-public class SyncBreathPacket {
+public class StanceSyncPacket {
     private final int playerId;
-    private final float currentBreath;
-    private final float maxBreath;
+    private final float currentStance;
+    private final float maxStance;
 
-    public SyncBreathPacket(int playerId, float currentBreath, float maxBreath) {
+    public StanceSyncPacket(int playerId, float currentStance, float maxStance) {
         this.playerId = playerId;
-        this.currentBreath = currentBreath;
-        this.maxBreath = maxBreath;
+        this.currentStance = currentStance;
+        this.maxStance = maxStance;
     }
 
-    public SyncBreathPacket(FriendlyByteBuf buf) {
+    public StanceSyncPacket(FriendlyByteBuf buf) {
         this.playerId = buf.readInt();
-        this.currentBreath = buf.readFloat();
-        this.maxBreath = buf.readFloat();
+        this.currentStance = buf.readFloat();
+        this.maxStance = buf.readFloat();
     }
 
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeInt(playerId);
-        buf.writeFloat(currentBreath);
-        buf.writeFloat(maxBreath);
+        buf.writeFloat(currentStance);
+        buf.writeFloat(maxStance);
     }
 
     @Environment(EnvType.CLIENT)
@@ -40,8 +40,8 @@ public class SyncBreathPacket {
         if (mc.level != null) {
             Entity entity = mc.level.getEntity(playerId);
             if (entity instanceof Player player && player == mc.player) {
-                // Update the breathing HUD for the local player
-                BreathingBarHUD.updateBreath(currentBreath, maxBreath);
+                // Update the stance HUD for the local player
+                StanceBarHUD.updateStance(currentStance, maxStance);
             }
         }
     }

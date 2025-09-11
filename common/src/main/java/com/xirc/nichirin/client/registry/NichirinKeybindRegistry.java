@@ -1,7 +1,7 @@
 package com.xirc.nichirin.client.registry;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import com.xirc.nichirin.common.network.MovementInputPacket;
+import com.xirc.nichirin.common.network.c2s.MovementInputPacket;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.registry.client.keymappings.KeyMappingRegistry;
 import dev.architectury.event.events.client.ClientTickEvent;

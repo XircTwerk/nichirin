@@ -1,6 +1,6 @@
 package com.xirc.nichirin.common.util;
 
-import com.xirc.nichirin.common.network.StaminaSyncPacket;
+import com.xirc.nichirin.common.network.s2c.StaminaSyncPacket;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.server.level.ServerPlayer;

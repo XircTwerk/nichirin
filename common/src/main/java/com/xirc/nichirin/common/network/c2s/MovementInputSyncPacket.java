@@ -1,4 +1,4 @@
-package com.xirc.nichirin.common.network;
+package com.xirc.nichirin.common.network.c2s;
 
 import com.xirc.nichirin.common.system.movement.MovementContext;
 import net.minecraft.network.FriendlyByteBuf;

@@ -1,10 +1,8 @@
 package com.xirc.nichirin.common.attack.moves.thunder;
 
-import com.xirc.nichirin.common.network.CooldownDisplayPacket;
 import com.xirc.nichirin.common.util.TeleportUtil;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;

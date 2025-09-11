@@ -1,9 +1,8 @@
 package com.xirc.nichirin.common.util;
 
 import com.xirc.nichirin.client.BreathOfNichirinClient;
-import com.xirc.nichirin.client.animation.AnimationRegistryHelper;
 import com.xirc.nichirin.client.animation.NichirinAnimations;
-import com.xirc.nichirin.common.network.PlayerAnimationPacket;
+import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;

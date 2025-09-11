@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.util;
 
+import com.xirc.nichirin.common.network.c2s.BreathingMovePacket;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
@@ -119,7 +120,7 @@ public class MultiplayerInputHandler {
     public static void sendBreathingMove(int moveIndex, Player player) {
         if (player.level().isClientSide) {
             // Use the existing BreathingMovePacket system that already works
-            var packet = new com.xirc.nichirin.common.network.BreathingMovePacket(moveIndex, true);
+            var packet = new BreathingMovePacket(moveIndex, true);
             com.xirc.nichirin.registry.NichirinPacketRegistry.sendToServer(packet);
         }
     }

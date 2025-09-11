@@ -1,6 +1,6 @@
 package com.xirc.nichirin.client.util;
 
-import com.xirc.nichirin.common.network.MovementInputSyncPacket;
+import com.xirc.nichirin.common.network.c2s.MovementInputSyncPacket;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;

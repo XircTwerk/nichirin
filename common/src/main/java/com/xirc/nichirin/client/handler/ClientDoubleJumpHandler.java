@@ -2,7 +2,7 @@ package com.xirc.nichirin.client.handler;
 
 import com.xirc.nichirin.common.system.abilities.PlayerDoubleJump;
 import com.xirc.nichirin.common.util.StaminaManager;
-import com.xirc.nichirin.common.network.DoubleJumpPacket;
+import com.xirc.nichirin.common.network.c2s.DoubleJumpPacket;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.event.events.client.ClientTickEvent;
 import net.minecraft.client.Minecraft;

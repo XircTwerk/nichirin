@@ -1,8 +1,7 @@
-package com.xirc.nichirin.common.network;
+package com.xirc.nichirin.common.network.s2c;
 
 import lombok.Getter;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.level.ServerPlayer;
 
 /**
  * S2C packet to sync combo counter data to client for display

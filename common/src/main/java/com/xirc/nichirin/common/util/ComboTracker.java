@@ -1,6 +1,6 @@
 package com.xirc.nichirin.common.util;
 
-import com.xirc.nichirin.common.network.ComboCounterPacket;
+import com.xirc.nichirin.common.network.s2c.ComboCounterPacket;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;

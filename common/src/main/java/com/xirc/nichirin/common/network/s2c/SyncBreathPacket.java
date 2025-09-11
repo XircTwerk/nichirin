@@ -1,4 +1,4 @@
-package com.xirc.nichirin.common.network;
+package com.xirc.nichirin.common.network.s2c;
 
 import com.xirc.nichirin.client.gui.BreathingBarHUD;
 import net.fabricmc.api.EnvType;
@@ -11,18 +11,18 @@ import net.minecraft.world.entity.player.Player;
 /**
  * Syncs breathing power level to clients
  */
-public class BreathingSyncPacket {
+public class SyncBreathPacket {
     private final int playerId;
     private final float currentBreath;
     private final float maxBreath;
 
-    public BreathingSyncPacket(int playerId, float currentBreath, float maxBreath) {
+    public SyncBreathPacket(int playerId, float currentBreath, float maxBreath) {
         this.playerId = playerId;
         this.currentBreath = currentBreath;
         this.maxBreath = maxBreath;
     }
 
-    public BreathingSyncPacket(FriendlyByteBuf buf) {
+    public SyncBreathPacket(FriendlyByteBuf buf) {
         this.playerId = buf.readInt();
         this.currentBreath = buf.readFloat();
         this.maxBreath = buf.readFloat();

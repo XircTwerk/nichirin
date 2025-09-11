@@ -1,7 +1,11 @@
 package com.xirc.nichirin.registry;
 
 import com.xirc.nichirin.BreathOfNichirin;
-import com.xirc.nichirin.common.network.*;
+import com.xirc.nichirin.common.network.c2s.BreathingMovePacket;
+import com.xirc.nichirin.common.network.c2s.DoubleJumpPacket;
+import com.xirc.nichirin.common.network.c2s.MovementInputPacket;
+import com.xirc.nichirin.common.network.c2s.MovementInputSyncPacket;
+import com.xirc.nichirin.common.network.s2c.*;
 import com.xirc.nichirin.common.system.blocking.KatanaBlock;
 import com.xirc.nichirin.common.data.*;
 import dev.architectury.networking.NetworkManager;
@@ -96,7 +100,6 @@ public interface NichirinPacketRegistry {
             }
         });
 
-        // CRITICAL: Blocking packets
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, BLOCK_START_ID, (buf, context) -> {
             if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
                 context.queue(() -> {
@@ -153,7 +156,6 @@ public interface NichirinPacketRegistry {
         BreathOfNichirin.LOGGER.info("Attempting to register S2C packets...");
 
         try {
-            // Try the standard Architectury way first
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, BREATHING_EFFECT_ID, (buf, context) -> {
                 BreathingEffectPacket packet = new BreathingEffectPacket(buf);
                 context.queue(() -> packet.handleClient());
