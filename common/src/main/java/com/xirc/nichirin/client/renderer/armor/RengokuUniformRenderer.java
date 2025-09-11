@@ -102,11 +102,11 @@ public class RengokuUniformRenderer extends NichirinArmorRenderer<NichirinArmorI
 
                 if (isSlim) {
                     if (baseLeftArm != null) {
-                        baseLeftArm.setScaleX(1.35f);
+                        baseLeftArm.setScaleX(1.15f);
                         baseLeftArm.setScaleZ(1.1f);
                     }
                     if (baseRightArm != null) {
-                        baseRightArm.setScaleX(1.35f);
+                        baseRightArm.setScaleX(1.15f);
                         baseRightArm.setScaleZ(1.1f);
                     }
                 } else {
