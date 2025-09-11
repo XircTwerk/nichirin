@@ -2,21 +2,24 @@ package com.xirc.nichirin.common.blocks;
 
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.registry.NichirinBlockEntityRegistry;
+import lombok.Getter;
 import mod.azure.azurelib.animatable.GeoBlockEntity;
 import mod.azure.azurelib.core.animatable.instance.AnimatableInstanceCache;
 import mod.azure.azurelib.core.animation.AnimatableManager;
 import mod.azure.azurelib.util.AzureLibUtil;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -34,7 +37,10 @@ import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class KatanaHolderBlock extends BaseEntityBlock {
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
@@ -67,7 +73,7 @@ public class KatanaHolderBlock extends BaseEntityBlock {
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+    public @NotNull VoxelShape getShape(BlockState state, @NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull CollisionContext context) {
         boolean rotated = state.getValue(ROTATED);
 
         if (rotated) {
@@ -92,12 +98,12 @@ public class KatanaHolderBlock extends BaseEntityBlock {
     }
 
     @Override
-    public RenderShape getRenderShape(BlockState state) {
+    public @NotNull RenderShape getRenderShape(@NotNull BlockState state) {
         return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
     @Override
-    public ItemStack getCloneItemStack(BlockGetter level, BlockPos pos, BlockState state) {
+    public @NotNull ItemStack getCloneItemStack(@NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull BlockState state) {
         return new ItemStack(this);
     }
 
@@ -118,7 +124,12 @@ public class KatanaHolderBlock extends BaseEntityBlock {
     }
 
     @Override
-    public BlockState updateShape(BlockState state, Direction direction, BlockState neighborState, LevelAccessor level, BlockPos currentPos, BlockPos neighborPos) {
+    public void appendHoverText(@NotNull ItemStack stack, @javax.annotation.Nullable BlockGetter level, List<Component> tooltip, @NotNull TooltipFlag flag) {
+        tooltip.add(Component.literal("Crouch Right click the block to rotate by 90°").withStyle(ChatFormatting.GRAY));
+    }
+
+    @Override
+    public @NotNull BlockState updateShape(BlockState state, @NotNull Direction direction, @NotNull BlockState neighborState, @NotNull LevelAccessor level, @NotNull BlockPos currentPos, @NotNull BlockPos neighborPos) {
         Direction facing = state.getValue(FACING);
         if (direction == facing.getOpposite() && !this.canSurvive(state, level, currentPos)) {
             return Blocks.AIR.defaultBlockState();
@@ -127,7 +138,7 @@ public class KatanaHolderBlock extends BaseEntityBlock {
     }
 
     @Override
-    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+    public @NotNull InteractionResult use(@NotNull BlockState state, Level level, @NotNull BlockPos pos, @NotNull Player player, @NotNull InteractionHand hand, @NotNull BlockHitResult hit) {
         if (level.isClientSide) {
             return InteractionResult.SUCCESS;
         }
@@ -171,7 +182,7 @@ public class KatanaHolderBlock extends BaseEntityBlock {
     }
 
     @Override
-    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+    public void onRemove(BlockState state, @NotNull Level level, @NotNull BlockPos pos, BlockState newState, boolean isMoving) {
         if (!state.is(newState.getBlock())) {
             BlockEntity blockEntity = level.getBlockEntity(pos);
             if (blockEntity instanceof KatanaHolderBlockEntity holderEntity) {
@@ -187,31 +198,27 @@ public class KatanaHolderBlock extends BaseEntityBlock {
 
     @Nullable
     @Override
-    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+    public BlockEntity newBlockEntity(@NotNull BlockPos pos, @NotNull BlockState state) {
         return new KatanaHolderBlockEntity(pos, state);
     }
 
     @Nullable
     @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(@NotNull Level level, @NotNull BlockState state, @NotNull BlockEntityType<T> blockEntityType) {
         return null;
     }
 
-    // Block Entity - exactly as you sent it
     public static class KatanaHolderBlockEntity extends BlockEntity implements GeoBlockEntity {
         private static final String KATANA_TAG = "StoredKatana";
         private static final String DIRTY_FLAG_TAG = "DirtyFlag";
 
+        @Getter
         private ItemStack storedKatana = ItemStack.EMPTY;
         private final AnimatableInstanceCache cache = AzureLibUtil.createInstanceCache(this);
         private boolean isDirty = false;
 
         public KatanaHolderBlockEntity(BlockPos pos, BlockState blockState) {
             super(NichirinBlockEntityRegistry.KATANA_HOLDER_BLOCK_ENTITY.get(), pos, blockState);
-        }
-
-        public ItemStack getStoredKatana() {
-            return storedKatana;
         }
 
         public void setKatana(ItemStack katana) {
@@ -268,7 +275,7 @@ public class KatanaHolderBlock extends BaseEntityBlock {
         }
 
         @Override
-        public void load(CompoundTag tag) {
+        public void load(@NotNull CompoundTag tag) {
             super.load(tag);
             if (tag.contains(KATANA_TAG)) {
                 ItemStack loaded = ItemStack.of(tag.getCompound(KATANA_TAG));
@@ -288,7 +295,7 @@ public class KatanaHolderBlock extends BaseEntityBlock {
         }
 
         @Override
-        protected void saveAdditional(CompoundTag tag) {
+        protected void saveAdditional(@NotNull CompoundTag tag) {
             super.saveAdditional(tag);
             if (!storedKatana.isEmpty()) {
                 tag.put(KATANA_TAG, storedKatana.save(new CompoundTag()));
@@ -297,7 +304,7 @@ public class KatanaHolderBlock extends BaseEntityBlock {
         }
 
         @Override
-        public CompoundTag getUpdateTag() {
+        public @NotNull CompoundTag getUpdateTag() {
             CompoundTag tag = super.getUpdateTag();
             if (!storedKatana.isEmpty()) {
                 tag.put(KATANA_TAG, storedKatana.save(new CompoundTag()));
