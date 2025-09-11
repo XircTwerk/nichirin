@@ -52,7 +52,7 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
         // Thunder sound on start
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.LIGHTNING_BOLT_THUNDER, net.minecraft.sounds.SoundSource.PLAYERS,
-                0.5f, 2.0f);
+                1f, 2.0f);
     }
 
     @Override
@@ -117,7 +117,7 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
                 });
 
         // Set custom sound properties
-        options.soundVolume = 0.5f;
+        options.soundVolume = 1f;
         options.soundPitch = 2.0f;
 
         // Perform the teleport dash
