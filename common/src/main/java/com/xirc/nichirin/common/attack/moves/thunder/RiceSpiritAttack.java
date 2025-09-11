@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.attack.moves.thunder;
 
+import dev.kosmx.playerAnim.api.IPlayer;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -154,6 +155,11 @@ public class RiceSpiritAttack extends ThunderBreathingAttackBase {
 
         if (entities.isEmpty()) {
             return null;
+        } else {
+            // Play init ding sound
+            world.playSound(null, user,
+                    SoundEvents.NOTE_BLOCK_BELL.value(), SoundSource.PLAYERS,
+                    0.8f,1.5f);
         }
 
         // Sort by distance and return closest
