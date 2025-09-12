@@ -2,7 +2,7 @@ package com.xirc.nichirin.client.handler;
 
 import com.xirc.nichirin.client.gui.AttackWheelOverlay;
 import com.xirc.nichirin.client.gui.CooldownHUD;
-import com.xirc.nichirin.client.registry.NichirinKeybindRegistry;
+import com.xirc.nichirin.registry.NichirinKeybindRegistry;
 import com.xirc.nichirin.common.data.BreathingStyleHelper;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.util.BreathingManager;

@@ -2,7 +2,7 @@ package com.xirc.nichirin.client.gui;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.xirc.nichirin.client.gui.biggui.*;
-import com.xirc.nichirin.client.registry.NichirinKeybindRegistry;
+import com.xirc.nichirin.registry.NichirinKeybindRegistry;
 import com.xirc.nichirin.common.util.PlayerStats;
 import lombok.Getter;
 import net.minecraft.client.Minecraft;

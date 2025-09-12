@@ -1,7 +1,7 @@
 package com.xirc.nichirin.client.handler;
 
 import com.xirc.nichirin.client.gui.TheBigGui;
-import com.xirc.nichirin.client.registry.NichirinKeybindRegistry;
+import com.xirc.nichirin.registry.NichirinKeybindRegistry;
 import dev.architectury.event.events.client.ClientTickEvent;
 import net.minecraft.client.Minecraft;
 

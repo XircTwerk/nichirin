@@ -7,7 +7,7 @@ import com.xirc.nichirin.client.handler.BigGuiKeyHandler;
 import com.xirc.nichirin.client.handler.ClientDoubleJumpHandler;
 import com.xirc.nichirin.client.handler.ComboClientHandler;
 import com.xirc.nichirin.client.particle.*;
-import com.xirc.nichirin.client.registry.NichirinKeybindRegistry;
+import com.xirc.nichirin.registry.NichirinKeybindRegistry;
 import com.xirc.nichirin.client.renderer.BreathingBarRenderer;
 import com.xirc.nichirin.client.renderer.StaminaBarRenderer;
 import com.xirc.nichirin.client.renderer.StanceBarRenderer;

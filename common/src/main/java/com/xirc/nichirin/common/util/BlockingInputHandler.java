@@ -1,6 +1,6 @@
 package com.xirc.nichirin.common.util;
 
-import com.xirc.nichirin.client.registry.NichirinKeybindRegistry;
+import com.xirc.nichirin.registry.NichirinKeybindRegistry;
 import dev.architectury.event.events.client.ClientTickEvent;
 import dev.architectury.networking.NetworkManager;
 import dev.architectury.platform.Platform;
@@ -12,7 +12,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
-import net.fabricmc.api.EnvType;
 
 /**
  * Handles blocking input with V key
