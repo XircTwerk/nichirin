@@ -33,7 +33,6 @@ public class AttackHitboxRenderer {
      * Initialize the renderer
      */
     public static void init() {
-        System.out.println("DEBUG: AttackHitboxRenderer.init() called");
     }
 
     /**
@@ -47,7 +46,6 @@ public class AttackHitboxRenderer {
      * Add multiple hitboxes at once
      */
     public static void addHitboxes(final Collection<AABB> boxes) {
-        System.out.println("DEBUG: Adding " + boxes.size() + " hitboxes");
         for (AABB box : boxes) {
             addHitbox(box);
         }
@@ -57,7 +55,6 @@ public class AttackHitboxRenderer {
      * Add hitboxes from an array
      */
     public static void addHitboxes(final AABB[] boxes) {
-        System.out.println("DEBUG: Adding " + boxes.length + " hitboxes from array");
         for (AABB box : boxes) {
             addHitbox(box);
         }
@@ -67,7 +64,6 @@ public class AttackHitboxRenderer {
      * Add a hitbox with custom duration and priority
      */
     public static synchronized void addHitbox(final AABB box, final long durationMs, final boolean highPriority) {
-        System.out.println("DEBUG: Adding hitbox: " + box + " duration: " + durationMs + " highPriority: " + highPriority);
         var hitboxEntry = Pair.of(LongLongPair.of(Util.getEpochMillis(), durationMs), box);
 
         if (highPriority) {
@@ -75,11 +71,10 @@ public class AttackHitboxRenderer {
         } else {
             hitboxes.add(hitboxEntry);
         }
-        System.out.println("DEBUG: Total hitboxes: " + getHitboxCount());
     }
 
     /**
-     * Main rendering method called every frame
+     * Main renderingrendering method called every frame
      */
     public static synchronized void render(final PoseStack matrices, final Vec3 camPos,
                                            final LevelRenderer worldRenderer, final MultiBufferSource consumerProvider) {
@@ -93,8 +88,6 @@ public class AttackHitboxRenderer {
             return;
         }
 
-        System.out.println("DEBUG: Rendering " + getHitboxCount() + " hitboxes");
-
         try {
             RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
 
@@ -105,7 +98,6 @@ public class AttackHitboxRenderer {
 
             matrices.popPose();
         } catch (Exception e) {
-            System.out.println("DEBUG: Error rendering hitboxes: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -132,12 +124,9 @@ public class AttackHitboxRenderer {
             long duration = pair.left().rightLong();
 
             if (currentTime - creationTime > duration) {
-                System.out.println("DEBUG: Removing expired hitbox");
                 iterator.remove();
             }
         }
-
-        System.out.println("DEBUG: Rendered " + renderedCount + " hitboxes from collection");
     }
 
     /**
@@ -145,8 +134,6 @@ public class AttackHitboxRenderer {
      */
     private static void renderSingleBox(final MultiBufferSource consumerProvider, final AABB box,
                                         final PoseStack matrices, final Vec3 camPos) {
-
-        System.out.println("DEBUG: Rendering single box: " + box);
 
         // Semi-transparent red faces
         renderBoxFaces(box, matrices, camPos, 0x54FF0000);
@@ -159,7 +146,6 @@ public class AttackHitboxRenderer {
      * Render filled faces of the hitbox
      */
     private static void renderBoxFaces(final AABB box, final PoseStack matrices, final Vec3 camPos, final int color) {
-        System.out.println("DEBUG: Rendering box faces");
 
         final Tesselator tesselator = Tesselator.getInstance();
         final BufferBuilder buffer = tesselator.getBuilder();
@@ -230,8 +216,6 @@ public class AttackHitboxRenderer {
     private static void renderBoxWireframe(final MultiBufferSource consumerProvider, final AABB box,
                                            final PoseStack matrices, final Vec3 camPos) {
 
-        System.out.println("DEBUG: Rendering box wireframe");
-
         final VertexConsumer lineConsumer = consumerProvider.getBuffer(RenderType.LINES);
 
         // Convert to camera-relative coordinates
@@ -252,7 +236,6 @@ public class AttackHitboxRenderer {
      * Clear all hitboxes (useful for cleanup)
      */
     public static synchronized void clearAll() {
-        System.out.println("DEBUG: Clearing all hitboxes");
         hitboxes.clear();
         highPriorityBoxes.clear();
     }
