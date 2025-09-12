@@ -392,9 +392,7 @@ public class ConstantFluxAttack extends WaterBreathingAttackBase {
             }
         }
 
-        // Final dragon roar
-        world.playSound(null, user.getX(), user.getY(), user.getZ(),
-                SoundEvents.ENDER_DRAGON_DEATH, SoundSource.PLAYERS, 0.8f, 1.3f);
+
 
         // Clear state
         draggedEntities.clear();
