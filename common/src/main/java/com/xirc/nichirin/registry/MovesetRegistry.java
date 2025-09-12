@@ -120,5 +120,6 @@ public interface MovesetRegistry {
         registerMoveset("flame_breathing", FlameBreathingMoveset::new);
         registerMoveset("insect_breathing", InsectBreathingMoveset::new);
         registerMoveset("sound_breathing", SoundBreathingMoveset::new);
+        registerMoveset("water_breathing", WaterBreathingMoveset::new);
     }
 }
