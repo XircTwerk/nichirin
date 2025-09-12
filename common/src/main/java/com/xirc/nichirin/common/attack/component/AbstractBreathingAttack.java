@@ -268,7 +268,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
                     hitStun, // Duration in ticks
                     2, // Amplifier
                     false, // Ambient
-                    true, // Show particles
+                    false, // Show particles
                     true // Show icon
             );
             target.addEffect(stunInstance);
@@ -315,7 +315,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
                     hitStun, // Duration in ticks
                     2, // Amplifier
                     false, // Ambient
-                    true, // Show particles
+                    false, // Show particles
                     true // Show icon
             );
             target.addEffect(stunInstance);

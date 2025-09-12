@@ -2,6 +2,7 @@ package com.xirc.nichirin.client.registry;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.xirc.nichirin.common.network.c2s.MovementInputPacket;
+import com.xirc.nichirin.common.network.c2s.MoveHotkeyPacket;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.registry.client.keymappings.KeyMappingRegistry;
 import dev.architectury.event.events.client.ClientTickEvent;
@@ -11,8 +12,11 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
- * Extended keybind registry with movement system
+ * Extended keybind registry with movement system and move index hotkeys
  */
 @Environment(EnvType.CLIENT)
 public interface NichirinKeybindRegistry {
@@ -42,14 +46,40 @@ public interface NichirinKeybindRegistry {
             "key.categories.nichirin"
     );
 
+    // Dynamic move index hotkeys - will be populated during registration
+    Map<Integer, KeyMapping> MOVE_HOTKEYS = new HashMap<>();
+
+    // Maximum number of move slots to support (covers all movesets)
+    int MAX_MOVE_SLOTS = 12;
+
     static void register() {
         KeyMappingRegistry.register(ATTACK_WHEEL_KEY);
         KeyMappingRegistry.register(OPEN_GUI_KEY);
         KeyMappingRegistry.register(BLOCK_KEY);
         KeyMappingRegistry.register(MOVEMENT_KEY);
 
-        // Register tick event for movement input - ARCHITECTURY WAY
+        // Register move index hotkeys
+        registerMoveHotkeys();
+
+        // Register tick event for input handling - ARCHITECTURY WAY
         ClientTickEvent.CLIENT_POST.register(NichirinKeybindRegistry::onClientTick);
+    }
+
+    /**
+     * Register hotkeys for move indexes 0-11 (supports up to 12 moves per moveset)
+     * All default to NOT_BOUND and are in "Nichirin Hotkeys" category
+     */
+    private static void registerMoveHotkeys() {
+        for (int i = 0; i < MAX_MOVE_SLOTS; i++) {
+            KeyMapping moveHotkey = new KeyMapping(
+                    "key.nichirin.move_" + i,
+                    InputConstants.UNKNOWN.getValue(), // NOT_BOUND by default
+                    "key.categories.nichirin_hotkeys"
+            );
+
+            MOVE_HOTKEYS.put(i, moveHotkey);
+            KeyMappingRegistry.register(moveHotkey);
+        }
     }
 
     /**
@@ -61,6 +91,16 @@ public interface NichirinKeybindRegistry {
         // Check if movement key was pressed
         while (MOVEMENT_KEY.consumeClick()) {
             handleMovementKeyPress();
+        }
+
+        // Check move hotkeys
+        for (Map.Entry<Integer, KeyMapping> entry : MOVE_HOTKEYS.entrySet()) {
+            int moveIndex = entry.getKey();
+            KeyMapping hotkey = entry.getValue();
+
+            while (hotkey.consumeClick()) {
+                handleMoveHotkeyPress(moveIndex);
+            }
         }
     }
 
@@ -77,9 +117,35 @@ public interface NichirinKeybindRegistry {
     }
 
     /**
+     * Handle move hotkey press
+     */
+    private static void handleMoveHotkeyPress(int moveIndex) {
+        Minecraft client = Minecraft.getInstance();
+        if (client.player == null) return;
+
+        // Send move hotkey packet to server
+        MoveHotkeyPacket packet = new MoveHotkeyPacket(moveIndex);
+        NichirinPacketRegistry.sendToServer(packet);
+    }
+
+    /**
      * Get the movement key mapping (for UI display, etc.)
      */
     static KeyMapping getMovementKey() {
         return MOVEMENT_KEY;
+    }
+
+    /**
+     * Get a move hotkey by index
+     */
+    static KeyMapping getMoveHotkey(int index) {
+        return MOVE_HOTKEYS.get(index);
+    }
+
+    /**
+     * Get all move hotkeys
+     */
+    static Map<Integer, KeyMapping> getAllMoveHotkeys() {
+        return new HashMap<>(MOVE_HOTKEYS);
     }
 }

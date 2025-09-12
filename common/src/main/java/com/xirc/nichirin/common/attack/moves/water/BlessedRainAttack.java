@@ -161,7 +161,7 @@ public class BlessedRainAttack extends WaterBreathingAttackBase {
         );
 
         for (LivingEntity target : targets) {
-            // MASSIVE damage - drops half a healthbar
+
             hitTarget(target);
 
             // Strong knockback

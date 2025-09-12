@@ -1,10 +1,7 @@
 package com.xirc.nichirin.registry;
 
 import com.xirc.nichirin.BreathOfNichirin;
-import com.xirc.nichirin.common.network.c2s.BreathingMovePacket;
-import com.xirc.nichirin.common.network.c2s.DoubleJumpPacket;
-import com.xirc.nichirin.common.network.c2s.MovementInputPacket;
-import com.xirc.nichirin.common.network.c2s.MovementInputSyncPacket;
+import com.xirc.nichirin.common.network.c2s.*;
 import com.xirc.nichirin.common.network.s2c.*;
 import com.xirc.nichirin.common.system.blocking.KatanaBlock;
 import com.xirc.nichirin.common.data.*;
@@ -42,6 +39,7 @@ public interface NichirinPacketRegistry {
     ResourceLocation REQUEST_STYLE_CHANGE = new ResourceLocation(BreathOfNichirin.MOD_ID, "request_style_change");
     ResourceLocation COMBO_COUNTER_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "combo_counter");
     ResourceLocation HITBOX_PACKET_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "hitbox_data");
+    ResourceLocation MOVE_HOTKEY_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "move_hotkey");
 
     // Packet class mappings
     Map<Class<?>, ResourceLocation> PACKET_IDS = new HashMap<>();
@@ -60,6 +58,7 @@ public interface NichirinPacketRegistry {
         PACKET_IDS.put(MovementInputPacket.class, MOVEMENT_INPUT_ID);
         PACKET_IDS.put(MovementInputSyncPacket.class, MOVEMENT_INPUT_SYNC_ID);
         PACKET_IDS.put(ComboCounterPacket.class, COMBO_COUNTER_ID);
+        PACKET_IDS.put(MoveHotkeyPacket.class, MOVE_HOTKEY_ID);
 
         // Register packets with error handling
         registerPackets();
@@ -149,6 +148,13 @@ public interface NichirinPacketRegistry {
             }
         });
 
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, MOVE_HOTKEY_ID, (buf, context) -> {
+            MoveHotkeyPacket packet = new MoveHotkeyPacket(buf);
+            if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
+                context.queue(() -> packet.handle(context));
+            }
+        });
+
         BreathOfNichirin.LOGGER.info("C2S packets registered successfully");
     }
 
@@ -223,11 +229,8 @@ public interface NichirinPacketRegistry {
                 // THEN queue the action with the local data
                 final long finalDuration = duration;
                 context.queue(() -> {
-                    System.out.println("DEBUG: Processing " + hitboxesToAdd.size() + " hitboxes on client");
-
                     for (AABB hitbox : hitboxesToAdd) {
                         com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer.addHitbox(hitbox, finalDuration, false);
-                        System.out.println("DEBUG: Added hitbox to renderer: " + hitbox);
                     }
                 });
             });
@@ -261,9 +264,7 @@ public interface NichirinPacketRegistry {
             buf.writeLong(durationMs);
 
             NetworkManager.sendToPlayer(player, HITBOX_PACKET_ID, buf);
-            System.out.println("DEBUG: Sent hitbox packet to client: " + hitbox);
         } catch (Exception e) {
-            BreathOfNichirin.LOGGER.error("Failed to send hitbox packet: {}", e.getMessage());
         }
     }
 
@@ -401,6 +402,8 @@ public interface NichirinPacketRegistry {
         } else if (packet instanceof MovementInputPacket p) {
             p.toBytes(buf);
         } else if (packet instanceof MovementInputSyncPacket p) {
+            p.toBytes(buf);
+        } else if (packet instanceof MoveHotkeyPacket p) {
             p.toBytes(buf);
         }
 
