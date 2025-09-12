@@ -49,7 +49,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 // Third Form: Flowing Dance - Empowerment and trail attack (INDEX 0)
                 .withMove(new MoveBuilder("flowing_dance", "Flowing Dance")
                         .withAnimation("nichirin:flowing_dance", 12)
-                        .withTiming(120, 15, 60) // 6 second cooldown, 0.75s windup, 3s duration
+                        .withTiming(240, 15, 60) // 6 second cooldown, 0.75s windup, 3s duration
                         .withDamage(4.0f) // Continuous damage
                         .withRange(3.0f) // Close range continuous
                         .withKnockback(0.05f) // Very light knockback
@@ -69,11 +69,11 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 // Fourth Form: Striking Tide - Omnidirectional slashes (INDEX 1)
                 .withMove(new MoveBuilder("striking_tide", "Striking Tide")
                         .withAnimation("nichirin:striking_tide", 14)
-                        .withTiming(140, 25, 40) // 7 second cooldown, 1.25s windup, 2s execution
-                        .withDamage(12.0f) // Good damage for 360° attack
+                        .withTiming(280, 25, 40) // 7 second cooldown, 1.25s windup, 2s execution
+                        .withDamage(14.0f) // Good damage for 360° attack
                         .withRange(4.5f) // Large omnidirectional range
                         .withKnockback(0.4f)
-                        .withBreathCost(35.0f)
+                        .withBreathCost(25.0f)
                         .withHitStun(15)
                         .withHitboxSize(4.5f) // Full radius
                         .withAction(player -> {
@@ -89,7 +89,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 // Fifth Form: Blessed Rain After the Drought - Ultimate precision dash (INDEX 2)
                 .withMove(new MoveBuilder("blessed_rain", "Blessed Rain")
                         .withAnimation("nichirin:blessed_rain", 18)
-                        .withTiming(200, 15, 25) // 10 second cooldown, 0.75s windup, 1.25s duration
+                        .withTiming(400, 15, 25) // 10 second cooldown, 0.75s windup, 1.25s duration
                         .withDamage(20.0f) // Drops half a health bar
                         .withRange(8.0f) // Long dash range
                         .withKnockback(0.8f)
@@ -110,11 +110,11 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 // Sixth Form: Whirlpool - Rising whirlpool attack (INDEX 3)
                 .withMove(new MoveBuilder("whirlpool", "Whirlpool")
                         .withAnimation("nichirin:whirlpool", 15)
-                        .withTiming(160, 20, 50) // 8 second cooldown, 1s windup, 2.5s duration
+                        .withTiming(240, 20, 50) // 8 second cooldown, 1s windup, 2.5s duration
                         .withDamage(8.0f) // Multi-hit spinning damage
                         .withRange(3.0f) // Whirlpool radius
                         .withKnockback(0.1f) // Light knockback, enemies spin around
-                        .withBreathCost(40.0f)
+                        .withBreathCost(20.0f)
                         .withHitStun(5) // Short for spinning effect
                         .withHitboxSize(3.0f)
                         .withAction(player -> {
@@ -130,11 +130,11 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 // Seventh Form: Drop Ripple Thrust - Shield and thrust attack (INDEX 4)
                 .withMove(new MoveBuilder("drop_ripple_thrust", "Drop Ripple Thrust")
                         .withAnimation("nichirin:drop_ripple_thrust", 13)
-                        .withTiming(100, 10, 35) // 5 second cooldown, 0.5s windup, 1.75s duration
+                        .withTiming(200, 10, 35) // 5 second cooldown, 0.5s windup, 1.75s duration
                         .withDamage(10.0f) // Good thrust damage
                         .withRange(5.0f) // Thrust range
                         .withKnockback(0.3f)
-                        .withBreathCost(30.0f)
+                        .withBreathCost(15.0f)
                         .withHitStun(20)
                         .withHitboxSize(4.0f) // Wall of ripples
                         .withAction(player -> {
@@ -150,11 +150,11 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 // Eighth Form: Waterfall Basin - BIG ASS MULTIHIT (INDEX 5)
                 .withMove(new MoveBuilder("waterfall_basin", "Waterfall Basin")
                         .withAnimation("nichirin:waterfall_basin", 16)
-                        .withTiming(180, 30, 60) // 9 second cooldown, 1.5s windup, 3s duration
+                        .withTiming(300, 30, 60) // 9 second cooldown, 1.5s windup, 3s duration
                         .withDamage(7.0f) // High DPS multi-hit
                         .withRange(6.0f) // Large waterfall area
                         .withKnockback(0.15f) // Light knockback to keep enemies in waterfall
-                        .withBreathCost(50.0f)
+                        .withBreathCost(35.0f)
                         .withHitStun(8) // Medium stun for multi-hit
                         .withHitboxSize(6.0f) // BIG ASS HITBOX
                         .withAction(player -> {
@@ -170,11 +170,11 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 // Ninth Form: Splashing Water Flow - Zigzag dash attack (INDEX 6)
                 .withMove(new MoveBuilder("splashing_water_flow", "Splashing Water Flow")
                         .withAnimation("nichirin:splashing_water_flow", 14)
-                        .withTiming(140, 10, 40) // 7 second cooldown, 0.5s windup, 2s duration
+                        .withTiming(240, 10, 40) // 7 second cooldown, 0.5s windup, 2s duration
                         .withDamage(11.0f) // Good dash damage
                         .withRange(10.0f) // 10 block zigzag range
                         .withKnockback(0.4f)
-                        .withBreathCost(35.0f)
+                        .withBreathCost(25.0f)
                         .withHitStun(18)
                         .withHitboxSize(2.5f)
                         .withDashSpeed(8.0f) // Fast zigzag speed
@@ -191,11 +191,11 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 // Tenth Form: Constant Flux - 5-hit combo with dragon finisher (INDEX 7)
                 .withMove(new MoveBuilder("constant_flux", "Constant Flux")
                         .withAnimation("nichirin:constant_flux", 20)
-                        .withTiming(300, 20, 80) // 15 second cooldown, 1s windup, 4s duration
-                        .withDamage(14.0f) // Strong combo damage
+                        .withTiming(360, 20, 80) // 15 second cooldown, 1s windup, 4s duration
+                        .withDamage(18.0f) // Strong combo damage
                         .withRange(5.0f) // Drag range
                         .withKnockback(0.2f) // Light knockback for dragging
-                        .withBreathCost(60.0f)
+                        .withBreathCost(50.0f)
                         .withHitStun(12)
                         .withHitboxSize(4.0f)
                         .withAction(player -> {
@@ -211,7 +211,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 // Eleventh Form: Dead Calm - Auto-target AoE field (INDEX 8)
                 .withMove(new MoveBuilder("dead_calm", "Dead Calm")
                         .withAnimation("nichirin:dead_calm", 17)
-                        .withTiming(220, 5, 100) // 11 second cooldown, 1.25s windup, 5s duration
+                        .withTiming(360, 5, 100) // 11 second cooldown, 1.25s windup, 5s duration
                         .withDamage(9.0f) // Persistent area damage
                         .withRange(6.0f) // Large persistent area
                         .withKnockback(0f)
