@@ -22,6 +22,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Breathing commands for managing player breathing styles
  * Usage: /breathing give <player> <style> [set] - Give a breathing style with optional set flag
+ *        /breathing set <player> <style> - Set active style (only if unlocked)
  *        /breathing cooldown <player> - Reset all breathing move cooldowns
  */
 public class BreathingCommand {
@@ -49,6 +50,20 @@ public class BreathingCommand {
                                                         BoolArgumentType.getBool(context, "set")
                                                 ))
                                         )
+                                )
+                        )
+                )
+
+                // /breathing set <player> <style> - Set active style (only if unlocked)
+                .then(Commands.literal("set")
+                        .then(Commands.argument("player", EntityArgument.player())
+                                .then(Commands.argument("style", StringArgumentType.string())
+                                        .suggests((context, builder) -> suggestUnlockedStyles(context, builder, EntityArgument.getPlayer(context, "player")))
+                                        .executes(context -> setBreathingStyle(
+                                                context,
+                                                EntityArgument.getPlayer(context, "player"),
+                                                StringArgumentType.getString(context, "style")
+                                        ))
                                 )
                         )
                 )
@@ -131,6 +146,51 @@ public class BreathingCommand {
     }
 
     /**
+     * Sets a breathing style for a player (only if unlocked)
+     */
+    private static int setBreathingStyle(CommandContext<CommandSourceStack> context, ServerPlayer player, String style) {
+        CommandSourceStack source = context.getSource();
+
+        // Check if the style exists
+        if (!MovesetRegistry.isRegistered(style)) {
+            source.sendFailure(Component.literal("Unknown breathing style: " + style)
+                    .withStyle(s -> s.withColor(0xFF5555)));
+            return 0;
+        }
+
+        // Check if player has unlocked this style
+        if (!ProgressionHelper.isStyleUnlocked(player, style)) {
+            source.sendFailure(Component.literal(player.getName().getString() + " has not unlocked " + formatStyleName(style))
+                    .withStyle(s -> s.withColor(0xFF5555)));
+            return 0;
+        }
+
+        // Check if already active
+        String currentStyle = PlayerDataProvider.getData(player).getBreathingStyleData().getMovesetId();
+        if (style.equals(currentStyle)) {
+            source.sendFailure(Component.literal(player.getName().getString() + " already has " + formatStyleName(style) + " active")
+                    .withStyle(s -> s.withColor(0xFFAA00)));
+            return 0;
+        }
+
+        // Set it as active
+        PlayerDataProvider.updateAndSync(player, style);
+
+        // Send success message
+        source.sendSuccess(() -> Component.literal("Set " + player.getName().getString() + "'s breathing style to " + formatStyleName(style))
+                .withStyle(s -> s.withColor(0x55FF55)), true);
+
+        // Notify the player
+        player.displayClientMessage(
+                Component.literal("Your breathing style is now " + formatStyleName(style))
+                        .withStyle(s -> s.withColor(0x55FFFF)),
+                false
+        );
+
+        return 1;
+    }
+
+    /**
      * Resets all breathing move cooldowns for a player
      * Uses the exact same approach as CooldownClearEventHandler
      */
@@ -173,6 +233,22 @@ public class BreathingCommand {
 
         for (String style : MovesetRegistry.getAllMovesetIds()) {
             if (style.toLowerCase().startsWith(input)) {
+                builder.suggest(style);
+            }
+        }
+
+        return builder.buildFuture();
+    }
+
+    /**
+     * Suggests only unlocked breathing styles for a specific player
+     */
+    private static CompletableFuture<Suggestions> suggestUnlockedStyles(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder, ServerPlayer player) {
+        String input = builder.getRemaining().toLowerCase();
+        var progression = PlayerDataProvider.getData(player).getProgression();
+
+        for (String style : MovesetRegistry.getAllMovesetIds()) {
+            if (progression.isStyleUnlocked(style) && style.toLowerCase().startsWith(input)) {
                 builder.suggest(style);
             }
         }
