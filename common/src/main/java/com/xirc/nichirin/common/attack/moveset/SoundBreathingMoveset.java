@@ -48,8 +48,8 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                 // First Form: Roar - AOE slam (INDEX 0 in wheel)
                 .withMove(new MoveBuilder("roar", "Roar")
                         .withAnimation("nichirin:roar", 10)
-                        .withTiming(100, 15, 20) // 5 second cooldown, moderate windup
-                        .withDamage(18.0f) // Good AOE damage
+                        .withTiming(100, 50, 20) // 5 second cooldown, moderate windup
+                        .withDamage(23.0f) // Good AOE damage
                         .withRange(13.5f) // Tripled from 4.5f (4.5 * 3 = 13.5)
                         .withKnockback(1.0f) // Strong knockback
                         .withBreathCost(25.0f)
@@ -69,10 +69,10 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("constant_resounding_slashes", "Constant Resounding Slashes")
                         .withAnimation("nichirin:constant_resounding_slashes", 12)
                         .withTiming(140, 10, 30) // 7 second cooldown, 1.5s duration
-                        .withDamage(20.0f)
-                        .withRange(20f) // Increased from 5.5f (1.5x = 8.25f)
+                        .withDamage(12.0f)
+                        .withRange(20.0f) // Increased from 5.5f (1.5x = 8.25f)
                         .withKnockback(0f) // Light knockback to keep enemies close
-                        .withBreathCost(30.0f)
+                        .withBreathCost(25.0f)
                         .withHitStun(5) // Brief stun per hit
                         .withHitboxSize(12.25f) // Full 360° radius
                         .withAction(player -> {
@@ -93,9 +93,9 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                         .withDashSpeed(16.0f) // 16 block total dash
                         .withRange(16.0f) // Dash distance
                         .withKnockback(0f) // Light knockback during dash
-                        .withBreathCost(45.0f) // Expensive ultimate-style move
+                        .withBreathCost(40.0f) // Expensive ultimate-style move
                         .withHitStun(15) // Good stun
-                        .withHitboxSize(3.0f) // Wide chain hitbox
+                        .withHitboxSize(3.5f) // Wide chain hitbox
                         .withAction(player -> {
                             StringPerformanceAttack attack = new StringPerformanceAttack();
                             SoundBreathingMoveset moveset = getCurrentMoveset();
