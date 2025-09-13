@@ -53,7 +53,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withTiming(100, 12, 25) // 5 second cooldown
                         .withDamage(15.0f) // Good damage + bonus vs airborne
                         .withRange(6.0f) // Upward arc range
-                        .withKnockback(0.8f) // Strong upward knockback
+                        .withKnockback(0.6f) // Strong upward knockback
                         .withBreathCost(20.0f)
                         .withHitStun(20)
                         .withHitboxSize(5f) // Larger for arc
@@ -71,12 +71,12 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("blazing_universe", "Blazing Universe")
                         .withAnimation("nichirin:blazing_universe", 12)
                         .withTiming(160, 40, 50) // 8 second cooldown, 2s windup, explosive finish
-                        .withDamage(25.0f) // Very high damage
-                        .withRange(8.0f) // Large AOE
+                        .withDamage(12.0f) // Very high damage
+                        .withRange(4.0f) // Large AOE
                         .withKnockback(0.6f)
                         .withBreathCost(30.0f) // Expensive for heavy attack
                         .withHitStun(35)
-                        .withHitboxSize(6.0f) // Large explosion hitbox
+                        .withHitboxSize(3.0f) // Large explosion hitbox
                         .withAction(player -> {
                             BlazingUniverseAttack attack = new BlazingUniverseAttack();
                             FlameBreathingMoveset moveset = getCurrentMoveset();
