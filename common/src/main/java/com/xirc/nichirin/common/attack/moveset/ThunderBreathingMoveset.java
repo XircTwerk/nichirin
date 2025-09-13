@@ -47,12 +47,12 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 // Second Form: Rice Spirit - 5 quick slashes (INDEX 0 in wheel)
                 .withMove(new MoveBuilder("rice_spirit", "Rice Spirit")
                         .withAnimation("nichirin:rice_spirit", 8)
-                        .withTiming(100, 8, 25) // 5 second cooldown, quick windup, duration
-                        .withDamage(4.5f)
+                        .withTiming(120, 12, 25) // 5 second cooldown, quick windup, duration
+                        .withDamage(3.0f)
                         .withRange(10.0f) // Medium range
                         .withKnockback(0.2f)
-                        .withBreathCost(25.0f)
-                        .withHitStun(20)
+                        .withBreathCost(30.0f)
+                        .withHitStun(4)
                         .withHitboxSize(1.8f)
                         .withAction(player -> {
                             RiceSpiritAttack attack = new RiceSpiritAttack();
@@ -72,7 +72,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withRange(7.0f) // Large area around player
                         .withKnockback(0.4f)
                         .withBreathCost(35.0f) // Higher cost for AOE
-                        .withHitStun(20)
+                        .withHitStun(14)
                         .withHitboxSize(2.5f) // Large hitbox for AOE
                         .withAction(player -> {
                             ThunderSwarmAttack attack = new ThunderSwarmAttack();
@@ -88,7 +88,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("distant_thunder", "Distant Thunder")
                         .withAnimation("nichirin:distant_thunder", 7)
                         .withTiming(200, 20, 120) // 10 second cooldown, long windup, 6 second duration
-                        .withDamage(9.0f) // 3 strikes = 27 damage over time (was 12.0f = 36 total)
+                        .withDamage(8.0f) // 3 strikes = 27 damage over time (was 12.0f = 36 total)
                         .withRange(15.0f) // Large AOE radius
                         .withKnockback(0.3f)
                         .withBreathCost(35.0f) // High cost for area denial
@@ -111,7 +111,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withRange(8.0f)
                         .withKnockback(0.1f) // Minimal horizontal, focuses on launch
                         .withBreathCost(30.0f)
-                        .withHitStun(50) // Good combo potential
+                        .withHitStun(30) // Good combo potential
                         .withHitboxSize(2.0f)
                         .withAction(player -> {
                             HeatLightningAttack attack = new HeatLightningAttack();
@@ -146,7 +146,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("honoikazuchi_no_kami", "Honoikazuchi no Kami")
                         .withAnimation("nichirin:honoikazuchi_no_kami", 15)
                         .withTiming(600, 60, 40) // 30 second cooldown, long windup, execution
-                        .withDamage(50.0f) // Very high damage ultimate
+                        .withDamage(70.0f) // Very high damage ultimate
                         .withTeleportDistance(20.0f) // Long dash
                         .withKnockback(2.0f) // High knockback
                         .withBreathCost(70.0f) // Very expensive ultimate
