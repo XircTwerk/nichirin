@@ -70,11 +70,11 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("striking_tide", "Striking Tide")
                         .withAnimation("nichirin:striking_tide", 14)
                         .withTiming(280, 25, 40) // 7 second cooldown, 1.25s windup, 2s execution
-                        .withDamage(14.0f) // Good damage for 360° attack
+                        .withDamage(10.0f) // Good damage for 360° attack
                         .withRange(4.5f) // Large omnidirectional range
                         .withKnockback(0.4f)
                         .withBreathCost(25.0f)
-                        .withHitStun(15)
+                        .withHitStun(8)
                         .withHitboxSize(4.5f) // Full radius
                         .withAction(player -> {
                             StrikingTideAttack attack = new StrikingTideAttack();
@@ -192,7 +192,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("constant_flux", "Constant Flux")
                         .withAnimation("nichirin:constant_flux", 20)
                         .withTiming(360, 20, 80) // 15 second cooldown, 1s windup, 4s duration
-                        .withDamage(18.0f) // Strong combo damage
+                        .withDamage(24.0f) // Strong combo damage
                         .withRange(5.0f) // Drag range
                         .withKnockback(0.2f) // Light knockback for dragging
                         .withBreathCost(50.0f)
@@ -211,8 +211,8 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 // Eleventh Form: Dead Calm - Auto-target AoE field (INDEX 8)
                 .withMove(new MoveBuilder("dead_calm", "Dead Calm")
                         .withAnimation("nichirin:dead_calm", 17)
-                        .withTiming(360, 5, 100) // 11 second cooldown, 1.25s windup, 5s duration
-                        .withDamage(9.0f) // Persistent area damage
+                        .withTiming(360, 12, 100) // 11 second cooldown, 1.25s windup, 5s duration
+                        .withDamage(7.0f) // Persistent area damage
                         .withRange(6.0f) // Large persistent area
                         .withKnockback(0f)
                         .withBreathCost(55.0f)
@@ -251,7 +251,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
         MoveConfiguration tempConfig = new MoveBuilder("water_surface_slash", "Water Surface Slash")
                 .withAnimation("nichirin:water_surface_slash", 6)
                 .withTiming(0, 0, 8) // No cooldown, instant, 8 ticks
-                .withDamage(8.0f)
+                .withDamage(5.0f)
                 .withRange(3.5f)
                 .withKnockback(0.2f)
                 .withBreathCost(8.0f)
@@ -277,7 +277,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 .withBreathCost(18.0f)
                 .withHitStun(5)
                 .withHitboxSize(3.5f)
-                .withDashSpeed(2.0f)
+                .withDashSpeed(4.0f)
                 .build();
 
         attack.configure(tempConfig);

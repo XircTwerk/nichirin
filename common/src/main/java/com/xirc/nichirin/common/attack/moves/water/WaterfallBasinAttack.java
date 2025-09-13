@@ -4,6 +4,8 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
@@ -101,6 +103,9 @@ public class WaterfallBasinAttack extends WaterBreathingAttackBase {
     }
 
     private void performBigAssMultihit() {
+
+        applySlowdown();
+
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDir = user.getLookAngle();
 
@@ -250,7 +255,16 @@ public class WaterfallBasinAttack extends WaterBreathingAttackBase {
                 targetPos.x, targetPos.y, targetPos.z,
                 10, 0.3, 0.3, 0.3, 0.15);
     }
-
+    private void applySlowdown() {
+        int slowDuration = 1;
+        user.addEffect(new MobEffectInstance(
+                MobEffects.MOVEMENT_SLOWDOWN,
+                slowDuration,
+                255, // Max slowness (can't move but can't be knocked back)
+                false, // Not ambient
+                false  // Don't show particles (too much visual noise)
+        ));
+    }
     @Override
     protected void onStop() {
         // Clear state
