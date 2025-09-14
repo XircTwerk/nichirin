@@ -58,6 +58,11 @@ public class SimpleKatana extends SwordItem {
         return false;
     }
 
+    @Override
+    public boolean isEnchantable(ItemStack stack) {
+        return false;
+    }
+
     public void setDamage(ItemStack stack, int damage) {
         // Do nothing - prevent any damage
     }
