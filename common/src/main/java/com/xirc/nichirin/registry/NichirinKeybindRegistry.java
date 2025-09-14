@@ -1,6 +1,9 @@
 package com.xirc.nichirin.registry;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import com.xirc.nichirin.client.gui.CooldownHUD;
+import com.xirc.nichirin.common.data.BreathingStyleHelper;
+import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.network.c2s.MovementInputPacket;
 import com.xirc.nichirin.common.network.c2s.MoveHotkeyPacket;
 import dev.architectury.registry.client.keymappings.KeyMappingRegistry;
@@ -9,6 +12,8 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.HashMap;
@@ -121,6 +126,30 @@ public interface NichirinKeybindRegistry {
     private static void handleMoveHotkeyPress(int moveIndex) {
         Minecraft client = Minecraft.getInstance();
         if (client.player == null) return;
+
+        // Check if holding katana first (same as attack wheel)
+        ItemStack mainHand = client.player.getMainHandItem();
+        if (!(mainHand.getItem() instanceof SimpleKatana)) {
+            return; // No katana - hotkey does nothing silently
+        }
+
+        // Check cooldown before sending packet
+        var moveset = BreathingStyleHelper.getMoveset(client.player);
+        if (moveset != null) {
+            var moveConfig = moveset.getMove(moveIndex);
+            if (moveConfig != null) {
+                String moveName = moveConfig.getDisplayName();
+                if (CooldownHUD.isOnCooldown(moveName)) {
+                    int remaining = CooldownHUD.getRemainingCooldown(moveName);
+                    client.player.displayClientMessage(
+                            Component.literal("Move on cooldown! " + (remaining / 20.0f) + "s remaining")
+                                    .withStyle(style -> style.withColor(0xFF5555)),
+                            true
+                    );
+                    return;
+                }
+            }
+        }
 
         // Send move hotkey packet to server
         MoveHotkeyPacket packet = new MoveHotkeyPacket(moveIndex);
