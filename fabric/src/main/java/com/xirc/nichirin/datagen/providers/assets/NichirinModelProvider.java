@@ -48,6 +48,7 @@ public class NichirinModelProvider extends FabricModelProvider {
                 .pressurePlate(NichirinBlockRegistry.WYSTERIA_PRESSURE_PLATE.get())
                 .button(NichirinBlockRegistry.WYSTERIA_BUTTON.get());
 
+
         // Door and trapdoor - these use their own textures
         generator.createDoor(NichirinBlockRegistry.WYSTERIA_DOOR.get());
         generator.createTrapdoor(NichirinBlockRegistry.WYSTERIA_TRAPDOOR.get());
@@ -55,15 +56,14 @@ public class NichirinModelProvider extends FabricModelProvider {
 
     @Override
     public void generateItemModels(ItemModelGenerators generator) {
-        // Your existing items - unchanged
         generator.generateFlatItem(NichirinItemRegistry.SCARLET_CRIMSON_IRON_GEM.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.SCARLET_GEM.get(), ModelTemplates.FLAT_ITEM);
 
         generator.generateFlatItem(NichirinItemRegistry.SMOKE_BOMB.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.FLASH_BOMB.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.BENTO_BOX.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinBlockRegistry.WYSTERIA_SAPLING_ITEM.get(), ModelTemplates.FLAT_ITEM);
 
-        // Katanas - handheld items
         generator.generateFlatItem(NichirinItemRegistry.KATANA.get(), ModelTemplates.FLAT_HANDHELD_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.THUNDER_KATANA.get(), ModelTemplates.FLAT_HANDHELD_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.FLAME_KATANA.get(), ModelTemplates.FLAT_HANDHELD_ITEM);

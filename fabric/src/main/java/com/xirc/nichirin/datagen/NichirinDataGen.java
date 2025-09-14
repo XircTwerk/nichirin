@@ -1,10 +1,12 @@
 package com.xirc.nichirin.datagen;
 
+import com.xirc.nichirin.common.worldgen.trees.wysteria.WysteriaConfiguredFeatures;
 import com.xirc.nichirin.datagen.providers.assets.NichirinModelProvider;
 import com.xirc.nichirin.datagen.providers.data.*;
 import net.fabricmc.fabric.api.datagen.v1.DataGeneratorEntrypoint;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;
 import net.minecraft.core.RegistrySetBuilder;
+import net.minecraft.core.registries.Registries;
 
 public final class NichirinDataGen implements DataGeneratorEntrypoint {
     @Override
@@ -24,5 +26,6 @@ public final class NichirinDataGen implements DataGeneratorEntrypoint {
 
     @Override
     public void buildRegistry(RegistrySetBuilder registryBuilder) {
+        registryBuilder.add(Registries.CONFIGURED_FEATURE, WysteriaConfiguredFeatures::bootstrap);
     }
 }

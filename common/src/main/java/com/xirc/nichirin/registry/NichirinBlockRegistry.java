@@ -1,6 +1,7 @@
 package com.xirc.nichirin.registry;
 
 import com.xirc.nichirin.common.blocks.*;
+import com.xirc.nichirin.common.worldgen.trees.wysteria.WysteriaTreeGrower;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.minecraft.core.registries.Registries;
@@ -85,6 +86,10 @@ public interface NichirinBlockRegistry {
             () -> new ButtonBlock(BlockBehaviour.Properties.copy(Blocks.OAK_BUTTON).mapColor(MapColor.COLOR_PURPLE),
                     NichirinBlockSetTypes.WYSTERIA, 30, true));
 
+    RegistrySupplier<Block> WYSTERIA_SAPLING = BLOCKS.register("wysteria_sapling",
+            () -> new SaplingBlock(new WysteriaTreeGrower(), BlockBehaviour.Properties.copy(Blocks.OAK_SAPLING)));
+
+
     // Block Item Registration
     RegistrySupplier<Item> SCARLET_CRIMSON_IRON_SAND_ITEM = ITEMS.register("scarlet_crimson_iron_sand",
             () -> new BlockItem(SCARLET_CRIMSON_IRON_SAND.get(), new Item.Properties()));
@@ -137,6 +142,9 @@ public interface NichirinBlockRegistry {
 
     RegistrySupplier<Item> WYSTERIA_BUTTON_ITEM = ITEMS.register("wysteria_button",
             () -> new BlockItem(WYSTERIA_BUTTON.get(), new Item.Properties()));
+
+    RegistrySupplier<Item> WYSTERIA_SAPLING_ITEM = ITEMS.register("wysteria_sapling",
+            () -> new BlockItem(WYSTERIA_SAPLING.get(), new Item.Properties()));
 
     static void register() {
         BLOCKS.register();

@@ -37,6 +37,9 @@ public final class BreathOfNichirin {
         NichirinCommandRegistry.init();
         NichirinStructureTypeRegistry.init();
         NichirinStructurePieceTypeRegistry.init();
+        NichirinFoliagePlacerTypes.register();
+        NichirinTrunkPlacerTypes.register();
+        NichirinTreeDecoratorTypes.register();
 
         // Register the registries themselves
         NichirinItemRegistry.ITEM_REGISTRY.register();
