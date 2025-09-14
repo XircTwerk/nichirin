@@ -2,6 +2,7 @@ package com.xirc.nichirin.common.effect;
 
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 
@@ -27,16 +28,22 @@ public class BurningStatusEffect extends MobEffect {
             return;
         }
 
-        // Keep the entity on fire by refreshing fire ticks
-        // Set fire for 3 seconds (60 ticks) to ensure continuous burning
-        entity.setSecondsOnFire(3);
+        // Get the effect instance to check remaining duration
+        MobEffectInstance effectInstance = entity.getEffect(this);
+        if (effectInstance != null && effectInstance.getDuration() <= 1) {
+            // This is the last tick - extinguish fire instead of setting it
+            entity.setSecondsOnFire(0);
+        } else {
+            // Normal behavior - keep entity on fire
+            entity.setSecondsOnFire(2);
+        }
     }
 
     @Override
     public boolean isDurationEffectTick(int duration, int amplifier) {
         // Apply the effect every 20 ticks (1 second) to maintain fire
-        // This ensures fire doesn't get extinguished while the effect is active
-        return duration % 20 == 0;
+        // Also apply on the last tick to handle extinguishing
+        return duration % 20 == 0 || duration == 1;
     }
 
     @Override
