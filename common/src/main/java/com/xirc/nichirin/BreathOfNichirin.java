@@ -35,6 +35,8 @@ public final class BreathOfNichirin {
         NicirinSoundRegistry.init();
         NichirinEffectRegistry.init();
         NichirinCommandRegistry.init();
+        NichirinStructureTypeRegistry.init();
+        NichirinStructurePieceTypeRegistry.init();
 
         // Register the registries themselves
         NichirinItemRegistry.ITEM_REGISTRY.register();

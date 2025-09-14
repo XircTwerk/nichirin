@@ -276,27 +276,18 @@ public class KatanaHolderBlock extends BaseEntityBlock {
 
         @Override
         public void load(@NotNull CompoundTag tag) {
-            super.load(tag);
+            super.load(tag); // CRITICAL: Must be first
             if (tag.contains(KATANA_TAG)) {
-                ItemStack loaded = ItemStack.of(tag.getCompound(KATANA_TAG));
-                if (loaded.isEmpty() || loaded.getItem() instanceof SimpleKatana) {
-                    storedKatana = loaded;
-                } else {
-                    storedKatana = ItemStack.EMPTY;
-                }
+                storedKatana = ItemStack.of(tag.getCompound(KATANA_TAG));
             } else {
                 storedKatana = ItemStack.EMPTY;
             }
-            if (tag.contains(DIRTY_FLAG_TAG)) {
-                isDirty = tag.getBoolean(DIRTY_FLAG_TAG);
-            } else {
-                isDirty = false;
-            }
         }
+
 
         @Override
         protected void saveAdditional(@NotNull CompoundTag tag) {
-            super.saveAdditional(tag);
+            super.saveAdditional(tag); // CRITICAL: Must be first
             if (!storedKatana.isEmpty()) {
                 tag.put(KATANA_TAG, storedKatana.save(new CompoundTag()));
             }

@@ -14,10 +14,7 @@ public final class NichirinDataGen implements DataGeneratorEntrypoint {
         // Add the model provider for assets generation
         pack.addProvider(NichirinModelProvider::new);
 
-        // Add the loot table provider
         pack.addProvider(NichirinLootTableProvider::new);
-
-        // Your existing providers that you already have
         pack.addProvider(NichirinWorldProvider::new);
         pack.addProvider(NichirinRecipeProvider::new);
         pack.addProvider(NichirinTagProvider::new);

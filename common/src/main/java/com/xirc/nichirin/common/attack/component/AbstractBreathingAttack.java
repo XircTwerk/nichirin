@@ -26,6 +26,7 @@ import java.util.UUID;
 /**
  * Base class for all breathing technique attacks.
  * Now follows the same pattern as ThunderBreathingAttackBase with moveset configuration.
+ * Enhanced with rotation-aware hitbox system for directional attacks.
  */
 @Getter
 @SuppressWarnings("rawtypes")
@@ -333,11 +334,18 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
 
     /**
      * Get entities in a hitbox centered at the given position
-     * NOW INTERNALLY USES: Visual debugging and new hitbox system
+     * NOW WITH ROTATION SUPPORT: Hitboxes rotate based on player's look direction
      */
     protected List<LivingEntity> getTargetsInHitbox(Vec3 center) {
+        HitboxData hitboxData = new HitboxData(hitboxSize);
+        AABB hitbox = hitboxData.createAABBFromEntity(user);
 
-        AABB hitbox = new HitboxData(hitboxSize).createAABB(center);
+        // Override center position if different from player position
+        if (!center.equals(user.position().add(0, user.getBbHeight() / 2, 0))) {
+            Vec3 lookDirection = user.getLookAngle();
+            float yaw = (float) Math.toRadians(user.getYRot());
+            hitbox = hitboxData.createAABB(center, lookDirection, yaw);
+        }
 
         // Add to visual debugger if on client
         if (user.level().isClientSide) {
@@ -358,26 +366,15 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     }
 
     /**
-     * Get entities in a custom hitbox with specified dimensions
-     * NOW INTERNALLY USES: New HitboxData system for better shapes
+     * Get entities in a custom hitbox with specified shape and size
+     * NOW WITH ROTATION SUPPORT: Custom hitboxes also rotate with player direction
      */
-    protected List<LivingEntity> getTargetsInCustomHitbox(Vec3 center, double width, double height, double depth) {
-        // Convert dimensions to our new system
-        float size = (float) Math.max(width, Math.max(height, depth));
+    protected List<LivingEntity> getTargetsInCustomHitbox(Vec3 center, float size, HitboxData.HitboxShape shape) {
+        HitboxData hitboxData = new HitboxData(size, shape);
 
-        // Determine best shape based on dimensions
-        HitboxData.HitboxShape shape;
-        if (width > height && width > depth) {
-            shape = HitboxData.HitboxShape.WIDE;
-        } else if (height > width && height > depth) {
-            shape = HitboxData.HitboxShape.TALL;
-        } else if (depth > width && depth > height) {
-            shape = HitboxData.HitboxShape.LONG;
-        } else {
-            shape = HitboxData.HitboxShape.CUBE;
-        }
-
-        AABB hitbox = new HitboxData(size, shape).createAABB(center);
+        Vec3 lookDirection = user.getLookAngle();
+        float yaw = (float) Math.toRadians(user.getYRot());
+        AABB hitbox = hitboxData.createAABB(center, lookDirection, yaw);
 
         // Add to visual debugger if on client
         if (user.level().isClientSide) {
@@ -398,8 +395,30 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     }
 
     /**
+     * Legacy method for backward compatibility - converts old parameters to new system
+     */
+    protected List<LivingEntity> getTargetsInCustomHitbox(Vec3 center, double width, double height, double depth) {
+        // Convert dimensions to our new system
+        float size = (float) Math.max(width, Math.max(height, depth));
+
+        // Determine best shape based on dimensions
+        HitboxData.HitboxShape shape;
+        if (width > height && width > depth) {
+            shape = HitboxData.HitboxShape.WIDE;
+        } else if (height > width && height > depth) {
+            shape = HitboxData.HitboxShape.TALL;
+        } else if (depth > width && depth > height) {
+            shape = HitboxData.HitboxShape.LONG;
+        } else {
+            shape = HitboxData.HitboxShape.CUBE;
+        }
+
+        return getTargetsInCustomHitbox(center, size, shape);
+    }
+
+    /**
      * Get entities in a line between two points
-     * NOW INTERNALLY USES: Proper line hitbox calculation with visual debugging
+     * NOW WITH ROTATION SUPPORT: Line hitboxes can be rotated based on the line direction
      */
     protected List<LivingEntity> getTargetsInLine(Vec3 start, Vec3 end, double thickness) {
         // Calculate the distance and create multiple hitboxes along the line
@@ -409,11 +428,17 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         Set<LivingEntity> allTargets = new HashSet<>();
         Set<AABB> lineHitboxes = new HashSet<>();
 
+        // Calculate the direction of the line for rotation
+        Vec3 lineDirection = end.subtract(start).normalize();
+        float lineYaw = (float) Math.atan2(-lineDirection.x, lineDirection.z);
+
         for (int i = 0; i <= hitboxCount; i++) {
             double progress = hitboxCount > 0 ? (double) i / hitboxCount : 0;
             Vec3 hitboxCenter = start.lerp(end, progress);
 
-            AABB hitbox = new HitboxData((float) thickness).createAABB(hitboxCenter);
+            // Create a LONG shaped hitbox oriented along the line direction
+            HitboxData hitboxData = new HitboxData((float) thickness, HitboxData.HitboxShape.LONG);
+            AABB hitbox = hitboxData.createAABB(hitboxCenter, lineDirection, lineYaw);
             lineHitboxes.add(hitbox);
 
             List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
@@ -440,27 +465,19 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
 
     /**
      * Create a hitbox at the configured range from the player
-     * NEW METHOD: Uses range properly as distance from player to hitbox center
+     * NOW WITH ROTATION SUPPORT: Range hitboxes are positioned and oriented correctly
      */
     protected List<LivingEntity> getTargetsAtRange() {
         Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDirection = user.getLookAngle();
         Vec3 hitboxCenter = playerPos.add(lookDirection.scale(range));
 
+        HitboxData hitboxData = new HitboxData(hitboxSize);
+        AABB hitbox = hitboxData.createAABBFromEntity(user);
 
-        return getTargetsInHitbox(hitboxCenter);
-    }
-
-    /**
-     * Create a hitbox at the configured range with custom shape
-     * NEW METHOD: Uses range with custom hitbox shapes
-     */
-    protected List<LivingEntity> getTargetsAtRange(HitboxData.HitboxShape shape) {
-        Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);
-        Vec3 lookDirection = user.getLookAngle();
-        Vec3 hitboxCenter = playerPos.add(lookDirection.scale(range));
-
-        AABB hitbox = new HitboxData(hitboxSize, shape).createAABB(hitboxCenter);
+        // Override center to be at range distance
+        float yaw = (float) Math.toRadians(user.getYRot());
+        hitbox = hitboxData.createAABB(hitboxCenter, lookDirection, yaw);
 
         // Add to visual debugger if on client
         if (user.level().isClientSide) {
@@ -481,8 +498,20 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     }
 
     /**
+     * Create a hitbox at the configured range with custom shape
+     * NOW WITH ROTATION SUPPORT: Custom shaped hitboxes at range rotate properly
+     */
+    protected List<LivingEntity> getTargetsAtRange(HitboxData.HitboxShape shape) {
+        Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);
+        Vec3 lookDirection = user.getLookAngle();
+        Vec3 hitboxCenter = playerPos.add(lookDirection.scale(range));
+
+        return getTargetsInCustomHitbox(hitboxCenter, hitboxSize, shape);
+    }
+
+    /**
      * Create multiple hitboxes from player to max range
-     * NEW METHOD: Creates a line of hitboxes using proper range
+     * NOW WITH ROTATION SUPPORT: Range line follows player's look direction
      */
     protected List<LivingEntity> getTargetsInRangeLine(float spacing) {
         Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);
@@ -494,11 +523,12 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
 
     /**
      * Create a cone of hitboxes at the configured range
-     * NEW METHOD: Creates cone pattern at range distance
+     * NOW WITH ROTATION SUPPORT: Cone properly rotates with player direction
      */
     protected List<LivingEntity> getTargetsInCone(float coneAngle, int hitboxCount) {
         Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDirection = user.getLookAngle();
+        float playerYaw = (float) Math.toRadians(user.getYRot());
 
         Set<LivingEntity> allTargets = new HashSet<>();
         Set<AABB> coneHitboxes = new HashSet<>();
@@ -508,10 +538,17 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
 
         for (int i = 0; i < hitboxCount; i++) {
             float angle = startAngle + (i * angleStep);
+
+            // Calculate the yaw for this hitbox (player yaw + cone offset)
+            float hitboxYaw = playerYaw + (float) Math.toRadians(angle);
+
+            // Calculate direction vector for this angle
             Vec3 rotatedDirection = rotateVectorY(lookDirection, Math.toRadians(angle));
             Vec3 hitboxCenter = playerPos.add(rotatedDirection.scale(range));
 
-            AABB hitbox = new HitboxData(hitboxSize).createAABB(hitboxCenter);
+            // Create hitbox with proper rotation
+            HitboxData hitboxData = new HitboxData(hitboxSize);
+            AABB hitbox = hitboxData.createAABB(hitboxCenter, rotatedDirection, hitboxYaw);
             coneHitboxes.add(hitbox);
 
             List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
@@ -526,6 +563,140 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
             // Server side - send packets
             if (user instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
                 for (AABB hitbox : coneHitboxes) {
+                    com.xirc.nichirin.registry.NichirinPacketRegistry.sendHitboxToClient(
+                            serverPlayer, hitbox, 2500L
+                    );
+                }
+            }
+        }
+
+        return new ArrayList<>(allTargets);
+    }
+
+    /**
+     * Create a fan/sweep attack that covers an arc in front of the player
+     * NEW METHOD: Creates multiple hitboxes in an arc pattern with proper rotation
+     */
+    protected List<LivingEntity> getTargetsInSweep(float sweepAngle, float sweepRange, int hitboxCount) {
+        Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);
+        Vec3 lookDirection = user.getLookAngle();
+        float playerYaw = (float) Math.toRadians(user.getYRot());
+
+        Set<LivingEntity> allTargets = new HashSet<>();
+        Set<AABB> sweepHitboxes = new HashSet<>();
+
+        float angleStep = sweepAngle / (hitboxCount - 1);
+        float startAngle = -sweepAngle / 2;
+
+        for (int i = 0; i < hitboxCount; i++) {
+            float angle = startAngle + (i * angleStep);
+            float hitboxYaw = playerYaw + (float) Math.toRadians(angle);
+
+            // Calculate position for this hitbox
+            Vec3 rotatedDirection = rotateVectorY(lookDirection, Math.toRadians(angle));
+            Vec3 hitboxCenter = playerPos.add(rotatedDirection.scale(sweepRange));
+
+            // Create WIDE hitbox for sweep attacks
+            HitboxData hitboxData = new HitboxData(hitboxSize, HitboxData.HitboxShape.WIDE);
+            AABB hitbox = hitboxData.createAABB(hitboxCenter, rotatedDirection, hitboxYaw);
+            sweepHitboxes.add(hitbox);
+
+            List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
+                    entity -> entity != user && entity.isAlive());
+            allTargets.addAll(targets);
+        }
+
+        // Add all hitboxes to visual debugger
+        if (user.level().isClientSide) {
+            AttackHitboxRenderer.addHitboxes(sweepHitboxes);
+        } else {
+            if (user instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+                for (AABB hitbox : sweepHitboxes) {
+                    com.xirc.nichirin.registry.NichirinPacketRegistry.sendHitboxToClient(
+                            serverPlayer, hitbox, 2500L
+                    );
+                }
+            }
+        }
+
+        return new ArrayList<>(allTargets);
+    }
+
+    /**
+     * Create a thrust attack with a long hitbox extending from the player
+     * NEW METHOD: Creates a single long hitbox that follows player direction
+     */
+    protected List<LivingEntity> getTargetsInThrust() {
+        Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);
+        Vec3 lookDirection = user.getLookAngle();
+
+        // Position the thrust hitbox halfway between player and max range
+        Vec3 hitboxCenter = playerPos.add(lookDirection.scale(range / 2));
+
+        // Create a LONG hitbox with the range as the size
+        HitboxData hitboxData = new HitboxData(range, HitboxData.HitboxShape.LONG);
+        AABB hitbox = hitboxData.createAABBFromEntity(user);
+
+        // Override center position
+        float yaw = (float) Math.toRadians(user.getYRot());
+        hitbox = hitboxData.createAABB(hitboxCenter, lookDirection, yaw);
+
+        // Add to visual debugger
+        if (user.level().isClientSide) {
+            AttackHitboxRenderer.addHitbox(hitbox);
+        } else {
+            if (user instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+                com.xirc.nichirin.registry.NichirinPacketRegistry.sendHitboxToClient(
+                        serverPlayer, hitbox, 2500L
+                );
+            }
+        }
+
+        List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
+                entity -> entity != user && entity.isAlive());
+
+        return targets;
+    }
+
+    /**
+     * Create a 360-degree circular attack around the player
+     * NEW METHOD: Creates multiple hitboxes in a circle around the player
+     */
+    protected List<LivingEntity> getTargetsInCircle(float radius, int hitboxCount) {
+        Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);
+
+        Set<LivingEntity> allTargets = new HashSet<>();
+        Set<AABB> circleHitboxes = new HashSet<>();
+
+        float angleStep = 360f / hitboxCount;
+
+        for (int i = 0; i < hitboxCount; i++) {
+            float angle = i * angleStep;
+            float angleRadians = (float) Math.toRadians(angle);
+
+            // Calculate position around the circle
+            double offsetX = radius * Math.cos(angleRadians);
+            double offsetZ = radius * Math.sin(angleRadians);
+            Vec3 hitboxCenter = playerPos.add(offsetX, 0, offsetZ);
+
+            // Calculate direction from player to hitbox for rotation
+            Vec3 direction = hitboxCenter.subtract(playerPos).normalize();
+
+            HitboxData hitboxData = new HitboxData(hitboxSize);
+            AABB hitbox = hitboxData.createAABB(hitboxCenter, direction, angleRadians);
+            circleHitboxes.add(hitbox);
+
+            List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
+                    entity -> entity != user && entity.isAlive());
+            allTargets.addAll(targets);
+        }
+
+        // Add all hitboxes to visual debugger
+        if (user.level().isClientSide) {
+            AttackHitboxRenderer.addHitboxes(circleHitboxes);
+        } else {
+            if (user instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+                for (AABB hitbox : circleHitboxes) {
                     com.xirc.nichirin.registry.NichirinPacketRegistry.sendHitboxToClient(
                             serverPlayer, hitbox, 2500L
                     );
@@ -702,6 +873,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
                 try {
                     attack.stop();
                 } catch (Exception e) {
+                    // Ignore exceptions during cleanup
                 }
             }
         }
