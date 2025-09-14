@@ -64,6 +64,7 @@ public class CooldownClearEventHandler {
                 "Flame Breathing",
                 "Sound Breathing",
                 "Insect Breathing",
+                "Water Breathing"
         };
 
         for (String cooldownName : commonCooldowns) {

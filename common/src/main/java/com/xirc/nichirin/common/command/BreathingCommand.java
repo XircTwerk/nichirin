@@ -9,6 +9,7 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.xirc.nichirin.registry.MovesetRegistry;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
+import com.xirc.nichirin.registry.NichirinMoveRegistry;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -192,7 +193,7 @@ public class BreathingCommand {
 
     /**
      * Resets all breathing move cooldowns for a player
-     * Uses the exact same approach as CooldownClearEventHandler
+     * Clears ALL possible move cooldowns from all movesets
      */
     private static int resetAllCooldowns(CommandContext<CommandSourceStack> context, ServerPlayer player) {
         CommandSourceStack source = context.getSource();
@@ -207,17 +208,25 @@ public class BreathingCommand {
             return 0;
         }
 
-        final String formattedStyleName = formatStyleName(currentStyle);
+        com.xirc.nichirin.BreathOfNichirin.LOGGER.info("Command: Starting cooldown reset for player: {}", playerName);
 
-        // Use the same approach as CooldownClearEventHandler - send packet with breathing style name
-        CooldownDisplayPacket.sendToClient(player, formattedStyleName, 0);
+        // Clear cooldowns for ALL moves from ALL movesets
+        int clearedCount = 0;
+        for (NichirinMoveRegistry.MoveInfo moveInfo : NichirinMoveRegistry.getAllMoves().values()) {
+            String moveName = moveInfo.displayName;
+            com.xirc.nichirin.BreathOfNichirin.LOGGER.info("Command: Sending clear packet for move: {}", moveName);
+            CooldownDisplayPacket.sendToClient(player, moveName, 0);
+            clearedCount++;
+        }
 
-        source.sendSuccess(() -> Component.literal("Reset all cooldowns for " + formattedStyleName + " for " + playerName)
+        com.xirc.nichirin.BreathOfNichirin.LOGGER.info("Command: Sent {} clear packets for player: {}", clearedCount, playerName);
+
+        int finalClearedCount = clearedCount;
+        source.sendSuccess(() -> Component.literal("Reset all cooldowns for " + playerName + " (" + finalClearedCount + " moves cleared)")
                 .withStyle(s -> s.withColor(0x55FF55)), true);
 
-        // Notify the player
         player.displayClientMessage(
-                Component.literal("All your " + formattedStyleName + " cooldowns have been reset!")
+                Component.literal("All your cooldowns have been reset!")
                         .withStyle(s -> s.withColor(0x55FFFF)),
                 false
         );
