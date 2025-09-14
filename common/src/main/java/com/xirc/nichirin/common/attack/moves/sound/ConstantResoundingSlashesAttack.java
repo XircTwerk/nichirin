@@ -83,10 +83,8 @@ public class ConstantResoundingSlashesAttack extends SoundBreathingAttackBase {
             deflectProjectiles();
 
             // Reset hit tracking every 2 ticks for more multi-hits
-            if (tickCount % 2 == 0) {
-                hitThisCycle.clear();
-                spinCycle++;
-            }
+            hitThisCycle.clear();
+            spinCycle++;
         }
     }
 
@@ -164,9 +162,7 @@ public class ConstantResoundingSlashesAttack extends SoundBreathingAttackBase {
                 projectile.hurtMarked = true;
 
                 // Change owner to user if possible
-                if (projectile.getOwner() != null) {
-                    // Can't easily change owner, so just redirect
-                }
+                projectile.getOwner();// Can't easily change owner, so just redirect
 
                 createDeflectionEffect(projectile.position());
             }

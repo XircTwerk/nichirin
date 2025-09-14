@@ -68,12 +68,12 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                 // Fourth Form: Constant Resounding Slashes - 360° defense (INDEX 1 in wheel)
                 .withMove(new MoveBuilder("constant_resounding_slashes", "Constant Resounding Slashes")
                         .withAnimation("nichirin:constant_resounding_slashes", 12)
-                        .withTiming(180, 10, 30) // 7 second cooldown, 1.5s duration
-                        .withDamage(12.0f)
+                        .withTiming(180, 5, 50)
+                        .withDamage(10.0f)
                         .withRange(20.0f) // Increased from 5.5f (1.5x = 8.25f)
                         .withKnockback(0f) // Light knockback to keep enemies close
                         .withBreathCost(25.0f)
-                        .withHitStun(5) // Brief stun per hit
+                        .withHitStun(10) // Brief stun per hit
                         .withHitboxSize(12.25f) // Full 360° radius
                         .withAction(player -> {
                             ConstantResoundingSlashesAttack attack = new ConstantResoundingSlashesAttack();
