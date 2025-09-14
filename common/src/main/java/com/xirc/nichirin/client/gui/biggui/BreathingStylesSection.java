@@ -1,5 +1,6 @@
 package com.xirc.nichirin.client.gui.biggui;
 
+import com.xirc.nichirin.client.data.ClientProgressionCache;
 import com.xirc.nichirin.common.data.BreathingStyleHelper;
 import com.xirc.nichirin.common.data.ProgressionHelper;
 import com.xirc.nichirin.registry.MovesetRegistry;
@@ -46,14 +47,14 @@ public class BreathingStylesSection {
         graphics.drawString(font, instructions, contentX, contentY, 0xAAAAAA);
         contentY += 20;
 
-        // Get all registered breathing styles from MovesetRegistry (same as command)
-        var allStyles = MovesetRegistry.getAllMovesetIds();
-
-        // Filter to only breathing styles (assuming they follow naming convention)
-        var breathingStyles = allStyles.stream()
-                .filter(styleId -> styleId.contains("breathing"))
-                .limit(4) // Show max 4 for now
-                .toArray(String[]::new);
+        // Show all 5 breathing styles
+        String[] breathingStyles = {
+                "thunder_breathing",
+                "flame_breathing",
+                "insect_breathing",
+                "sound_breathing",
+                "water_breathing"
+        };
 
         if (breathingStyles.length == 0) {
             Component noStyles = Component.literal("No breathing styles registered").withStyle(style -> style.withColor(0xFF5555));
@@ -193,15 +194,16 @@ public class BreathingStylesSection {
      * Check if a style is unlocked - uses same method as command
      */
     private boolean isStyleUnlocked(Player player, String styleId) {
-        // First check if the style is even registered
+        if (player.level().isClientSide()) {
+            return ClientProgressionCache.isUnlocked(styleId);
+        }
+
+        // Server side
         if (!MovesetRegistry.isRegistered(styleId)) {
             return false;
         }
-
-        // Then check if player has unlocked it
         return ProgressionHelper.isStyleUnlocked(player, styleId);
     }
-
     /**
      * Format style name same as command
      */
@@ -228,12 +230,14 @@ public class BreathingStylesSection {
         String currentStyle = BreathingStyleHelper.getMovesetId(player);
         int centerX = (contentWidth - 20) / 2;
 
-        // Get all registered breathing styles (same as render method)
-        var allStyles = MovesetRegistry.getAllMovesetIds();
-        var breathingStyles = allStyles.stream()
-                .filter(styleId -> styleId.contains("breathing"))
-                .limit(4)
-                .toArray(String[]::new);
+        // Use the same 5 breathing styles
+        String[] breathingStyles = {
+                "thunder_breathing",
+                "flame_breathing",
+                "insect_breathing",
+                "sound_breathing",
+                "water_breathing"
+        };
 
         if (breathingStyles.length == 0) {
             return false;

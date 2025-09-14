@@ -15,7 +15,9 @@ import net.minecraft.world.phys.AABB;
 import io.netty.buffer.Unpooled;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * FIXED: Architectury networking with version compatibility and fallback
@@ -40,6 +42,8 @@ public interface NichirinPacketRegistry {
     ResourceLocation COMBO_COUNTER_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "combo_counter");
     ResourceLocation HITBOX_PACKET_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "hitbox_data");
     ResourceLocation MOVE_HOTKEY_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "move_hotkey");
+    ResourceLocation SYNC_PROGRESSION_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "sync_progression");
+
 
     // Packet class mappings
     Map<Class<?>, ResourceLocation> PACKET_IDS = new HashMap<>();
@@ -192,7 +196,6 @@ public interface NichirinPacketRegistry {
                 context.queue(() -> packet.handleClient());
             });
 
-            // FIXED: Add the missing SYNC_BREATHING_STYLE S2C packet!
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, SYNC_BREATHING_STYLE, (buf, context) -> {
                 String movesetId = buf.readBoolean() ? buf.readUtf() : null;
                 context.queue(() -> {
@@ -201,6 +204,19 @@ public interface NichirinPacketRegistry {
                         PlayerDataProvider.getBreathingStyleData(player).setMovesetId(movesetId);
                         BreathOfNichirin.LOGGER.debug("Client received breathing style sync: {}", movesetId);
                     }
+                });
+            });
+
+            NetworkManager.registerReceiver(NetworkManager.Side.S2C, SYNC_PROGRESSION_ID, (buf, context) -> {
+                int count = buf.readInt();
+                Set<String> unlockedStyles = new HashSet<>();
+
+                for (int i = 0; i < count; i++) {
+                    unlockedStyles.add(buf.readUtf());
+                }
+
+                context.queue(() -> {
+                    com.xirc.nichirin.client.data.ClientProgressionCache.setUnlockedStyles(unlockedStyles);
                 });
             });
 

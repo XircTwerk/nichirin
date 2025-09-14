@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.data;
 
+import com.xirc.nichirin.common.network.s2c.ProgressionSyncPacket;
 import com.xirc.nichirin.common.network.util.BreathingStyleSyncPacket;
 import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.event.events.common.TickEvent;
@@ -214,8 +215,11 @@ public class PlayerDataProvider {
             PlayerData data = getData(player);
             String movesetId = data.getBreathingStyleData().getMovesetId();
 
-            // Send sync packet (only breathing style data for now, progression is server-side)
+            // Send breathing style sync
             BreathingStyleSyncPacket.sendToPlayer(player, movesetId);
+
+            ProgressionSyncPacket.sendToPlayer(player);
+
             System.out.println("DEBUG: Synced moveset '" + movesetId + "' to client for " + player.getName().getString());
         } catch (Exception e) {
             System.err.println("Failed to sync data to client for " + player.getName().getString() + ": " + e.getMessage());
