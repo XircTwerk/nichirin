@@ -48,7 +48,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                 // First Form: Roar - AOE slam (INDEX 0 in wheel)
                 .withMove(new MoveBuilder("roar", "Roar")
                         .withAnimation("nichirin:roar", 10)
-                        .withTiming(100, 50, 20) // 5 second cooldown, moderate windup
+                        .withTiming(160, 50, 20) // 5 second cooldown, moderate windup
                         .withDamage(23.0f) // Good AOE damage
                         .withRange(13.5f) // Tripled from 4.5f (4.5 * 3 = 13.5)
                         .withKnockback(1.0f) // Strong knockback
@@ -68,7 +68,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                 // Fourth Form: Constant Resounding Slashes - 360° defense (INDEX 1 in wheel)
                 .withMove(new MoveBuilder("constant_resounding_slashes", "Constant Resounding Slashes")
                         .withAnimation("nichirin:constant_resounding_slashes", 12)
-                        .withTiming(140, 10, 30) // 7 second cooldown, 1.5s duration
+                        .withTiming(180, 10, 30) // 7 second cooldown, 1.5s duration
                         .withDamage(12.0f)
                         .withRange(20.0f) // Increased from 5.5f (1.5x = 8.25f)
                         .withKnockback(0f) // Light knockback to keep enemies close

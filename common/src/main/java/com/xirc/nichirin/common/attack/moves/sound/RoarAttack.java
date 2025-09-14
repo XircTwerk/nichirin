@@ -41,6 +41,8 @@ public class RoarAttack extends SoundBreathingAttackBase {
         // Initial sword raising sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 1.0f, 0.8f);
+        world.playSound(null, user.getX(), user.getY(), user.getZ(),
+                SoundEvents.WITHER_SHOOT, SoundSource.PLAYERS, 1.0f, 0.8f);
 
         // Create initial particle buildup with explosion particles
         createRoarSoundParticles();
