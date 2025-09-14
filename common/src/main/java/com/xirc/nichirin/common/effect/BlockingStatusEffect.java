@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.effect;
 
+import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.LivingEntity;
@@ -12,6 +13,7 @@ import java.util.UUID;
 /**
  * Blocking Status Effect - Applied when a player is blocking with a katana
  * Only handles movement speed reduction - damage reduction is handled by vanilla Resistance IV
+ * ENHANCED: Removes stun effects when applied while blocking
  */
 public class BlockingStatusEffect extends MobEffect {
 
@@ -32,12 +34,24 @@ public class BlockingStatusEffect extends MobEffect {
 
     @Override
     public boolean isDurationEffectTick(int duration, int amplifier) {
-        // Apply effect every few ticks for movement restriction
-        return duration % 5 == 0;
+        // Apply effect every tick to check for and remove stun effects
+        return true;
     }
 
     @Override
     public void applyEffectTick(LivingEntity entity, int amplifier) {
+        // If entity has blocking effect and gets stunned, remove the stun
+        if (entity.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+            entity.removeEffect(NichirinEffectRegistry.STUNNED.get());
+
+            if (entity instanceof Player player) {
+                player.displayClientMessage(
+                        net.minecraft.network.chat.Component.literal("Blocking protects you from stun!")
+                                .withStyle(style -> style.withColor(0x55FF55)),
+                        true
+                );
+            }
+        }
     }
 
     @Override

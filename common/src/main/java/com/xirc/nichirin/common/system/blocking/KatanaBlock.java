@@ -359,20 +359,18 @@ public class KatanaBlock {
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.ANVIL_LAND, SoundSource.PLAYERS, 0.6f, 2.0f);
 
-        // Stun the attacker and interrupt their attacks
-        if (attacker instanceof ServerPlayer serverPlayer) {
-            // Apply 1-second stun to player
-            MobEffectInstance stunEffect = new MobEffectInstance(
-                    NichirinEffectRegistry.STUNNED.get(),
-                    20, // 1 second (20 ticks)
-                    0, // Amplifier
-                    false, // Ambient
-                    false, // Show particles - DISABLED
-                    true   // Show icon
+        // FIXED: Remove stun from the defender, don't stun the attacker
+        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+            player.removeEffect(NichirinEffectRegistry.STUNNED.get());
+            player.displayClientMessage(
+                    Component.literal("Parry removes stun!")
+                            .withStyle(style -> style.withColor(0x55FF55)),
+                    true
             );
-            serverPlayer.addEffect(stunEffect);
+        }
 
-            // NEW: Interrupt the attacker's active attacks and apply cooldown
+        // Interrupt the attacker's moves but don't stun them
+        if (attacker instanceof ServerPlayer serverPlayer) {
             interruptAttackerMoves(serverPlayer);
         }
 
@@ -393,7 +391,7 @@ public class KatanaBlock {
             // Apply default cooldown for parried attacks
             sendParriedCooldown(attacker, "Move (Parried)", PARRIED_ATTACK_COOLDOWN);
 
-            // Notify attacker
+            // Notify attacker (but don't stun them)
             attacker.displayClientMessage(
                     Component.literal("Your attack was parried! Move on cooldown!")
                             .withStyle(style -> style.withColor(0xFF5555)),
@@ -409,8 +407,6 @@ public class KatanaBlock {
         } catch (Exception e) {
             System.err.println("Error interrupting attacker moves: " + e.getMessage());
             e.printStackTrace();
-
-            // Fallback: at least send a cooldown message
             sendParriedCooldown(attacker, "Move (Parried)", PARRIED_ATTACK_COOLDOWN);
         }
     }
