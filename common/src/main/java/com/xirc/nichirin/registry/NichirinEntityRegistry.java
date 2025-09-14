@@ -1,9 +1,11 @@
 package com.xirc.nichirin.registry;
 
 import com.xirc.nichirin.BreathOfNichirin;
+import com.xirc.nichirin.common.entity.BoarEntity;
 import com.xirc.nichirin.common.entity.FlashBombEntity;
 import com.xirc.nichirin.common.entity.SmokeBombEntity;
 import com.xirc.nichirin.common.entity.ThunderBallEntity;
+import dev.architectury.registry.level.entity.EntityAttributeRegistry;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.minecraft.core.registries.Registries;
@@ -38,9 +40,21 @@ public interface NichirinEntityRegistry {
                     .updateInterval(1)
                     .build("flash_bomb"));
 
+    RegistrySupplier<EntityType<BoarEntity>> BOAR =
+            ENTITY_TYPES.register("boar", () -> EntityType.Builder.<BoarEntity>of(
+                            BoarEntity::new, MobCategory.CREATURE)
+                    .sized(1.4f, 0.9f)
+                    .clientTrackingRange(10)
+                    .updateInterval(3)
+                    .build("boar"));
 
+
+    static void registerAttributes() {
+        EntityAttributeRegistry.register(BOAR, BoarEntity::createAttributes);
+    }
 
     static void init() {
         ENTITY_TYPES.register();
+        registerAttributes();
     }
 }

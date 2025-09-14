@@ -64,7 +64,6 @@ public class PlayerDataProvider {
                 moveset.applyAllModifiers(serverPlayer);
                 // Record style as equipped for time tracking
                 data.getStatistics().onStyleEquipped(moveset.getMovesetId());
-                System.out.println("DEBUG: Re-applied all modifiers on player join for " + serverPlayer.getName().getString());
             }
 
             // CRITICAL: Sync to client AFTER data is loaded and applied
@@ -108,7 +107,6 @@ public class PlayerDataProvider {
             if (moveset != null) {
                 moveset.applyAllModifiers(serverPlayer);
                 data.getStatistics().onStyleEquipped(moveset.getMovesetId());
-                System.out.println("DEBUG: Re-applied all modifiers on player respawn for " + serverPlayer.getName().getString());
             }
 
             // Sync to client
@@ -144,7 +142,6 @@ public class PlayerDataProvider {
                 if (moveset != null) {
                     moveset.applyAllModifiers(serverPlayer);
                     newData.getStatistics().onStyleEquipped(moveset.getMovesetId());
-                    System.out.println("DEBUG: Applied all modifiers on player clone for " + serverPlayer.getName().getString());
                 }
 
                 // Save to persistent data
@@ -220,9 +217,7 @@ public class PlayerDataProvider {
 
             ProgressionSyncPacket.sendToPlayer(player);
 
-            System.out.println("DEBUG: Synced moveset '" + movesetId + "' to client for " + player.getName().getString());
         } catch (Exception e) {
-            System.err.println("Failed to sync data to client for " + player.getName().getString() + ": " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -239,9 +234,7 @@ public class PlayerDataProvider {
             savePlayerData(player);
             syncToClient(player);
 
-            System.out.println("DEBUG: Updated moveset from '" + previousMoveset + "' to '" + movesetId + "' for " + player.getName().getString());
         } catch (Exception e) {
-            System.err.println("Failed to update and sync for " + player.getName().getString() + ": " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -322,7 +315,6 @@ public class PlayerDataProvider {
             data.getBreathingStyleData().cleanup();
         }
         PLAYER_DATA.clear();
-        System.out.println("DEBUG: Cleared all player data cache");
     }
 
     /**
@@ -332,6 +324,5 @@ public class PlayerDataProvider {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             syncToClient(player);
         }
-        System.out.println("DEBUG: Forced sync for all online players");
     }
 }
