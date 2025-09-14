@@ -3,8 +3,10 @@ package com.xirc.nichirin.common.network.c2s;
 import com.xirc.nichirin.common.data.BreathingStyleHelper;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinMoveRegistry;
 import dev.architectury.networking.NetworkManager;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
@@ -45,10 +47,19 @@ public class MoveHotkeyPacket {
      * Performs the same validation checks as the attack wheel
      */
     private static void handleMoveHotkey(ServerPlayer player, int moveIndex) {
+        Minecraft mc = Minecraft.getInstance();
         // Check if holding katana in main hand - REQUIRED
         ItemStack mainHand = player.getMainHandItem();
         if (!(mainHand.getItem() instanceof SimpleKatana)) {
             return; // No katana in hand - hotkey does nothing
+        }
+
+        if (mc.player.hasEffect(NichirinEffectRegistry.BLOCKING.get())) {
+            return;
+        }
+
+        if (mc.player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+            return;
         }
 
         // Get current breathing style - if none, do nothing
