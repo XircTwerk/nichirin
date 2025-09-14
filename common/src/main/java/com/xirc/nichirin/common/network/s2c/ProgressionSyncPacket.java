@@ -18,7 +18,7 @@ import java.util.Set;
  */
 public class ProgressionSyncPacket {
 
-    public static final ResourceLocation SYNC_PROGRESSION = BreathOfNichirin.id("sync_progression");
+    public static final ResourceLocation SYNC_PROGRESSION = new ResourceLocation(BreathOfNichirin.MOD_ID, "sync_progression");
 
     public static void register() {
         // Client receives unlock status from server
