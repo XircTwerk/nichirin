@@ -114,7 +114,6 @@ public class BreathOfNichirinClient {
             // Register other client components
             MoveExecutor.registerClientHandler();
 
-            // Register particles (this might be causing the late registration warnings)
             registerParticles();
 
             // Register UI renderers
