@@ -172,7 +172,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withAnimation("nichirin:splashing_water_flow", 14)
                         .withTiming(240, 10, 40) // 7 second cooldown, 0.5s windup, 2s duration
                         .withDamage(8.0f) // Good dash damage
-                        .withRange(10.0f) // 10 block zigzag range
+                        .withRange(5.0f) // 10 block zigzag range
                         .withKnockback(0.4f)
                         .withBreathCost(25.0f)
                         .withHitStun(18)

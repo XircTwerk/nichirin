@@ -21,15 +21,15 @@ import java.util.List;
  */
 public class SplashingWaterFlowAttack extends WaterBreathingAttackBase {
 
-    private static final int JUMP_COUNT = 10; // 5 jumps across 10 blocks
+    private static final int JUMP_COUNT = 8; // 5 jumps across 10 blocks
     private static final int JUMP_DURATION = 3; // Ticks per jump
-    private static final int JUMP_INTERVAL = 1; // Ticks between jumps
+    private static final int JUMP_INTERVAL = 4; // Ticks between jumps
 
     private int jumpsExecuted = 0;
     private int nextJumpTick = 0;
     private boolean finalSlashExecuted = false;
     private Vec3 baseDirection; // Forward direction when attack starts
-    private final List<Vec3> jumpPositions = new ArrayList<>();
+    private List<Vec3> jumpPositions = new ArrayList<>();
 
     // Invulnerability tracking
     private boolean wasInvulnerable = false;
@@ -46,8 +46,10 @@ public class SplashingWaterFlowAttack extends WaterBreathingAttackBase {
         finalSlashExecuted = false;
         jumpPositions.clear();
 
-        // Set base direction from user's facing when attack starts
-        baseDirection = user.getLookAngle().normalize();
+        // Force horizontal direction only (ignore Y component)
+        Vec3 rawDirection = user.getLookAngle();
+        baseDirection = new Vec3(rawDirection.x, 0, rawDirection.z).normalize();
+
 
         // Store invulnerability state
         wasInvulnerable = user.isInvulnerable();
@@ -94,7 +96,7 @@ public class SplashingWaterFlowAttack extends WaterBreathingAttackBase {
 
         // Calculate jump distance (total 10 blocks across 5 jumps = 2 blocks per jump)
         float jumpDistance = range / JUMP_COUNT;
-        Vec3 jumpVelocity = zigzagDirection.scale(dashSpeed * 0.4).add(0, 0.3, 0); // Upward arc
+        Vec3 jumpVelocity = zigzagDirection.scale(dashSpeed * 0.4).add(0, 0, 0); // Upward arc
 
         user.setDeltaMovement(jumpVelocity);
         user.hurtMarked = true;
