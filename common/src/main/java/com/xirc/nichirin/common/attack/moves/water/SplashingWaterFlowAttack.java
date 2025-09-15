@@ -21,9 +21,9 @@ import java.util.List;
  */
 public class SplashingWaterFlowAttack extends WaterBreathingAttackBase {
 
-    private static final int JUMP_COUNT = 5; // 5 jumps across 10 blocks
-    private static final int JUMP_DURATION = 6; // Ticks per jump
-    private static final int JUMP_INTERVAL = 2; // Ticks between jumps
+    private static final int JUMP_COUNT = 10; // 5 jumps across 10 blocks
+    private static final int JUMP_DURATION = 3; // Ticks per jump
+    private static final int JUMP_INTERVAL = 1; // Ticks between jumps
 
     private int jumpsExecuted = 0;
     private int nextJumpTick = 0;
