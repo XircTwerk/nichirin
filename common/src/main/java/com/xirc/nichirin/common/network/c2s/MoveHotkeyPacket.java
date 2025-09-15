@@ -47,18 +47,17 @@ public class MoveHotkeyPacket {
      * Performs the same validation checks as the attack wheel
      */
     private static void handleMoveHotkey(ServerPlayer player, int moveIndex) {
-        Minecraft mc = Minecraft.getInstance();
         // Check if holding katana in main hand - REQUIRED
         ItemStack mainHand = player.getMainHandItem();
         if (!(mainHand.getItem() instanceof SimpleKatana)) {
             return; // No katana in hand - hotkey does nothing
         }
 
-        if (mc.player.hasEffect(NichirinEffectRegistry.BLOCKING.get())) {
+        if (player.hasEffect(NichirinEffectRegistry.BLOCKING.get())) {
             return;
         }
 
-        if (mc.player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
             return;
         }
 
