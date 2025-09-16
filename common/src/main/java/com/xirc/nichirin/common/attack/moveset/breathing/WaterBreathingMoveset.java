@@ -36,7 +36,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
     private static final ThreadLocal<WaterBreathingMoveset> CURRENT_MOVESET = new ThreadLocal<>();
 
     public WaterBreathingMoveset() {
-        super("water_breathing", "Water Breathing", createBuilder());
+        super("water_breathing", "Water Breathing", MovesetType.BREATHING, createBuilder());
     }
 
     private static MovesetBuilder createBuilder() {

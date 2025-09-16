@@ -35,7 +35,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
     private static final ThreadLocal<ThunderBreathingMoveset> CURRENT_MOVESET = new ThreadLocal<>();
 
     public ThunderBreathingMoveset() {
-        super("thunder_breathing", "Thunder Breathing", createBuilder());
+        super("thunder_breathing", "Thunder Breathing", MovesetType.BREATHING, createBuilder());
     }
 
     private static MovesetBuilder createBuilder() {

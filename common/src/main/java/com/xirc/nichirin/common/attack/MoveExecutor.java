@@ -3,6 +3,7 @@ package com.xirc.nichirin.common.attack;
 import com.xirc.nichirin.client.gui.CooldownHUD;
 import com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer;
 import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
+import com.xirc.nichirin.common.attack.component.AbstractDemonAttack;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.util.ComboTracker;
 import com.xirc.nichirin.registry.NichirinMoveRegistry;
@@ -389,6 +390,104 @@ public class MoveExecutor {
     }
 
     /**
+     * Execute any demon attack - handles both pre-configured and auto-configured attacks
+     */
+    public static void executeDemonAttack(Player player, Object attack, String movesetId, String moveId) {
+        // Check if player is currently stunned (prevents move stacking)
+        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+            return;
+        }
+
+        // Handle demon attacks through the unified interface
+        if (attack instanceof AbstractDemonAttack<?, ?> demonAttack) {
+            // Check if attack is already configured
+            boolean alreadyConfigured = isDemonAttackConfigured(demonAttack);
+
+            if (!alreadyConfigured) {
+                // Get the moveset for configuration
+                AbstractMoveset moveset = MovesetRegistry.getMoveset(movesetId);
+                if (moveset != null) {
+                    // Find the move configuration
+                    AbstractMoveset.MoveConfiguration config = findMoveConfig(moveset, moveId);
+                    if (config != null) {
+                        // Apply anti-spam detection to hitstun
+                        int originalHitStun = config.getHitStunOrDefault(0);
+                        int modifiedHitStun = ComboTracker.getModifiedHitStun(player, moveId, originalHitStun);
+
+                        if (modifiedHitStun != originalHitStun) {
+                            // Create modified config with reduced hitstun
+                            config = createModifiedConfig(config, modifiedHitStun);
+                        }
+
+                        // Apply stun effect during windup + duration to prevent move stacking
+                        applyMoveStun(player, config);
+
+                        demonAttack.configure(config);
+                    } else {
+                        return;
+                    }
+                } else {
+                    return;
+                }
+            } else {
+                // Apply stun effect for pre-configured attacks too
+                applyPreConfiguredDemonMoveStun(player, demonAttack);
+            }
+        }
+
+        // Get move info from registry for the display name
+        NichirinMoveRegistry.MoveInfo moveInfo = NichirinMoveRegistry.getMove(movesetId, moveId);
+        String displayName = moveInfo != null ? moveInfo.displayName : attack.getClass().getSimpleName();
+
+        // Get cooldown from the attack object
+        int cooldown = getCooldownForAttack(attack);
+
+        // Execute with proper display name
+        executeAttackInternal(player, attack, displayName, cooldown);
+    }
+
+    /**
+     * Check if a demon attack is already configured
+     */
+    private static boolean isDemonAttackConfigured(AbstractDemonAttack<?, ?> attack) {
+        try {
+            // Check if duration > 0 as the only required value
+            return attack.getDuration() > 0;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Apply stun effect for pre-configured demon attacks
+     */
+    private static void applyPreConfiguredDemonMoveStun(Player player, AbstractDemonAttack<?, ?> attack) {
+        // For pre-configured attacks, we need to get the timing info differently
+        int windupTicks = 0;
+
+        // Try to get windup if the attack has it
+        try {
+            var getWindupMethod = attack.getClass().getMethod("getWindup");
+            windupTicks = (int) getWindupMethod.invoke(attack);
+        } catch (Exception e) {
+            // No windup method, use 0
+        }
+
+        if (windupTicks > 0) {
+            MobEffectInstance stunEffect = new MobEffectInstance(
+                    NichirinEffectRegistry.STUNNED.get(),
+                    windupTicks,
+                    0,
+                    false,
+                    false,
+                    false
+            );
+
+            player.addEffect(stunEffect);
+        }
+    }
+
+    /**
      * Overloaded method for backward compatibility
      */
     public static void executeMove(Player player, String moveName, Runnable moveExecution, int cooldownTicks) {
@@ -661,5 +760,6 @@ public class MoveExecutor {
 
         // Also tick self-managed attacks
         AbstractBreathingAttack.tickAllActiveAttacks(server);
+        AbstractDemonAttack.tickAllActiveAttacks(server);
     }
 }

@@ -38,7 +38,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
     private static final ThreadLocal<FlameBreathingMoveset> CURRENT_MOVESET = new ThreadLocal<>();
 
     public FlameBreathingMoveset() {
-        super("flame_breathing", "Flame Breathing", createBuilder());
+        super("flame_breathing", "Flame Breathing", MovesetType.BREATHING, createBuilder());
     }
 
     private static MovesetBuilder createBuilder() {

@@ -16,7 +16,7 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
- * AbstractMoveset that works with any attack type
+ * AbstractMoveset that works with any attack type - breathing techniques and demon arts
  * Flexible system supporting any number of moves with full configuration
  * Icons are handled by the MoveIcon system, not stored in move configs
  * Includes stun prevention system to prevent move stacking
@@ -38,6 +38,12 @@ public abstract class AbstractMoveset {
      */
     private final String displayName;
 
+    /**
+     * -- GETTER --
+     *  Gets the moveset type (breathing or demon)
+     */
+    private final MovesetType movesetType;
+
     // List of moves - flexible for any count
     protected final List<MoveConfiguration> moves = new ArrayList<>();
 
@@ -52,9 +58,10 @@ public abstract class AbstractMoveset {
     protected final float healthRegenMultiplier;   // 2.0 = double regen rate
     protected final float staminaCostMultiplier;   // 0.5 = half stamina cost
 
-    protected AbstractMoveset(String movesetId, String displayName, MovesetBuilder builder) {
+    protected AbstractMoveset(String movesetId, String displayName, MovesetType movesetType, MovesetBuilder builder) {
         this.movesetId = movesetId;
         this.displayName = displayName;
+        this.movesetType = movesetType;
         this.idleAnimation = builder.idleAnimation;
         this.speedMultiplier = builder.speedMultiplier;
         this.fallDamageMultiplier = builder.fallDamageMultiplier;
@@ -63,6 +70,14 @@ public abstract class AbstractMoveset {
 
         // Add all configured moves
         moves.addAll(builder.moveConfigs);
+    }
+
+    /**
+     * Enum to distinguish between breathing and demon movesets
+     */
+    public enum MovesetType {
+        BREATHING,
+        DEMON
     }
 
     /**
@@ -238,8 +253,23 @@ public abstract class AbstractMoveset {
     }
 
     /**
+     * Check if this is a breathing technique moveset
+     */
+    public boolean isBreathingMoveset() {
+        return movesetType == MovesetType.BREATHING;
+    }
+
+    /**
+     * Check if this is a demon art moveset
+     */
+    public boolean isDemonMoveset() {
+        return movesetType == MovesetType.DEMON;
+    }
+
+    /**
      * Complete configuration for a moveset move
      * Icons are handled by the MoveIcon system using moveId and movesetId
+     * Now supports both breathing and demon movesets
      */
     @Getter
     public static class MoveConfiguration {
@@ -265,7 +295,7 @@ public abstract class AbstractMoveset {
         public final Integer activeFrames;
         public final Integer recovery;
 
-        // Resources
+        // Resources (breathing techniques only)
         public final Float breathCost;
         public final Float staminaCost;
 
@@ -296,7 +326,7 @@ public abstract class AbstractMoveset {
             this.activeFrames = builder.activeFrames;
             this.recovery = builder.recovery;
 
-            // Resources
+            // Resources (may be null for demon arts)
             this.breathCost = builder.breathCost;
             this.staminaCost = builder.staminaCost;
 
@@ -352,6 +382,13 @@ public abstract class AbstractMoveset {
          */
         public boolean causesStun() {
             return getStunDuration() > 0;
+        }
+
+        /**
+         * Check if this is a resource-free move (demon art)
+         */
+        public boolean isResourceFree() {
+            return !hasBreathCost() && !hasStaminaCost();
         }
     }
 
@@ -467,7 +504,7 @@ public abstract class AbstractMoveset {
             return this;
         }
 
-        // Resources
+        // Resources - Note: For demon arts, simply don't call these methods
         public MoveBuilder withBreathCost(float breathCost) {
             this.breathCost = breathCost;
             return this;
@@ -556,7 +593,7 @@ public abstract class AbstractMoveset {
      * Get the name of the right-click move for cooldown display
      */
     public String getRightClickMoveName() {
-        // Override in each breathing style moveset
+        // Override in each moveset
         return "Special Move";
     }
 
@@ -564,7 +601,7 @@ public abstract class AbstractMoveset {
      * Get the name of the crouch right-click move for cooldown display
      */
     public String getCrouchRightClickMoveName() {
-        // Override in each breathing style moveset
+        // Override in each moveset
         return "Crouch Special Move";
     }
 }

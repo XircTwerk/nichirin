@@ -38,7 +38,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
     private static final ThreadLocal<InsectBreathingMoveset> CURRENT_MOVESET = new ThreadLocal<>();
 
     public InsectBreathingMoveset() {
-        super("insect_breathing", "Insect Breathing", createBuilder());
+        super("insect_breathing", "Insect Breathing", MovesetType.BREATHING, createBuilder());
     }
 
     private static MovesetBuilder createBuilder() {

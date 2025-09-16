@@ -38,7 +38,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
     private static final ThreadLocal<SoundBreathingMoveset> CURRENT_MOVESET = new ThreadLocal<>();
 
     public SoundBreathingMoveset() {
-        super("sound_breathing", "Sound Breathing", createBuilder());
+        super("sound_breathing", "Sound Breathing", MovesetType.BREATHING, createBuilder());
     }
 
     private static MovesetBuilder createBuilder() {
