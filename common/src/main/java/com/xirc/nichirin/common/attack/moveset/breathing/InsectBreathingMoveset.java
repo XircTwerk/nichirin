@@ -56,7 +56,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                         .withKnockback(0.3f) // Light knockback
                         .withBreathCost(20.0f)
                         .withHitStun(25) // Good stun for precision strike
-                        .withHitboxSize(1.5f) // Small precise hitbox
+                        .withHitboxSize(2f) // Small precise hitbox
                         .withAction(player -> {
                             ButterflyAttack attack = new ButterflyAttack();
                             InsectBreathingMoveset moveset = getCurrentMoveset();
@@ -71,10 +71,10 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("dragonfly", "Dragonfly")
                         .withAnimation("nichirin:dragonfly", 12)
                         .withTiming(180, 15, 30) // 9 second cooldown, root during windup
-                        .withDamage(6.0f) // 6 hits = 36 total damage
+                        .withDamage(2.0f) // 6 hits = 36 total damage
                         .withRange(6.0f) // Lock-on range
-                        .withKnockback(0.01f) // Minimal knockback to keep target close
-                        .withBreathCost(30.0f) // Higher cost for multi-hit
+                        .withKnockback(0.0f) // Minimal knockback to keep target close
+                        .withBreathCost(25.0f) // Higher cost for multi-hit
                         .withHitStun(5) // Very short per hit, final hit has more
                         .withHitboxSize(2.0f) // Target lock area
                         .withAction(player -> {
@@ -132,7 +132,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
         MoveConfiguration tempConfig = new MoveBuilder("quick_sting", "Quick Sting")
                 .withAnimation("nichirin:quick_sting", 6)
                 .withTiming(5, 3, 20)
-                .withDamage(9.0f)
+                .withDamage(2.0f)
                 .withRange(4.0f)
                 .withKnockback(0f)
                 .withBreathCost(10.0f)

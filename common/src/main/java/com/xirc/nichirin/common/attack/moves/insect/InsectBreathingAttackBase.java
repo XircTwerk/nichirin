@@ -23,7 +23,7 @@ import net.minecraft.world.phys.Vec3;
 public abstract class InsectBreathingAttackBase extends AbstractBreathingAttack<InsectBreathingAttackBase, IBreathingAttacker> {
 
     // Insect-specific properties
-    private static final int DEFAULT_POISON_DURATION = 80;
+    private static final int DEFAULT_POISON_DURATION = 200;
     private static final int INSECT_PARTICLE_COUNT = 12;
     private static final float INSECT_PARTICLE_SPREAD = 1.0f;
 
@@ -146,7 +146,7 @@ public abstract class InsectBreathingAttackBase extends AbstractBreathingAttack<
 
         if (existingVenom != null) {
             // Stack the effect - increase amplifier up to max of 9 (10 stacks total)
-            newAmplifier = Math.min(existingVenom.getAmplifier() + 1, 9);
+            newAmplifier = Math.min(existingVenom.getAmplifier() + 1, 99);
             // Refresh duration to full duration
             newDuration = baseDuration;
         }
