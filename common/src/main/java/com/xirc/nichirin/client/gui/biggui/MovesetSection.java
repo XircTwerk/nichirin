@@ -1,6 +1,6 @@
 package com.xirc.nichirin.client.gui.biggui;
 
-import com.xirc.nichirin.common.data.BreathingStyleHelper;
+import com.xirc.nichirin.common.data.MovesetHelper;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
@@ -22,7 +22,7 @@ public class MovesetSection {
         contentY += 20;
 
         // Show current breathing style moveset
-        String currentStyle = BreathingStyleHelper.getMovesetId(player);
+        String currentStyle = MovesetHelper.getMovesetId(player);
         if (currentStyle != null) {
             Component styleLabel = Component.translatable("gui.nichirin.moveset.current_style",
                     Component.translatable("breathing_style." + currentStyle));

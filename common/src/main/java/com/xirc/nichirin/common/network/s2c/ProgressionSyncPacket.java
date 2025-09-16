@@ -14,7 +14,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Packet for syncing breathing style unlock status to client
+ * Packet for syncing moveset unlock status to client (breathing techniques and demon arts)
  */
 public class ProgressionSyncPacket {
 
@@ -24,16 +24,15 @@ public class ProgressionSyncPacket {
         // Client receives unlock status from server
         NetworkManager.registerReceiver(NetworkManager.Side.S2C, SYNC_PROGRESSION, (buf, context) -> {
             int count = buf.readInt();
-            Set<String> unlockedStyles = new HashSet<>();
+            Set<String> unlockedMovesets = new HashSet<>();
 
             for (int i = 0; i < count; i++) {
-                unlockedStyles.add(buf.readUtf());
+                unlockedMovesets.add(buf.readUtf());
             }
 
             context.queue(() -> {
-                // Store this on the client somehow - maybe in a static map keyed by player UUID
-                // or extend your client-side data storage
-                ClientProgressionCache.setUnlockedStyles(unlockedStyles);
+                // Store this on the client - updated method name
+                ClientProgressionCache.setUnlockedMovesets(unlockedMovesets);
             });
         });
     }
@@ -43,19 +42,19 @@ public class ProgressionSyncPacket {
      */
     public static void sendToPlayer(ServerPlayer player) {
         var progression = PlayerDataProvider.getData(player).getProgression();
-        Set<String> unlockedStyles = new HashSet<>();
+        Set<String> unlockedMovesets = new HashSet<>();
 
-        // Get all unlocked styles
-        for (String styleId : MovesetRegistry.getAllMovesetIds()) {
-            if (progression.isStyleUnlocked(styleId)) {
-                unlockedStyles.add(styleId);
+        // Get all unlocked movesets
+        for (String movesetId : MovesetRegistry.getAllMovesetIds()) {
+            if (progression.isMovesetUnlocked(movesetId)) {
+                unlockedMovesets.add(movesetId);
             }
         }
 
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-        buf.writeInt(unlockedStyles.size());
-        for (String style : unlockedStyles) {
-            buf.writeUtf(style);
+        buf.writeInt(unlockedMovesets.size());
+        for (String moveset : unlockedMovesets) {
+            buf.writeUtf(moveset);
         }
 
         NetworkManager.sendToPlayer(player, SYNC_PROGRESSION, buf);

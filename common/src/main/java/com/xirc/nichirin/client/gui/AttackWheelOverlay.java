@@ -3,7 +3,7 @@ package com.xirc.nichirin.client.gui;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
-import com.xirc.nichirin.common.data.BreathingStyleHelper;
+import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.registry.MovesetRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -92,7 +92,7 @@ public class AttackWheelOverlay {
         }
 
         Player player = minecraft.player;
-        String movesetId = BreathingStyleHelper.getMovesetId(player);
+        String movesetId = MovesetHelper.getMovesetId(player);
 
         if (movesetId == null || movesetId.isEmpty()) {
             return;
@@ -324,7 +324,7 @@ public class AttackWheelOverlay {
 
         // Get the breathing style and move name for the icon using MoveIcon system only
         if (minecraft.player != null && segment.config != null) {
-            String movesetId = BreathingStyleHelper.getMovesetId(minecraft.player);
+            String movesetId = MovesetHelper.getMovesetId(minecraft.player);
             if (movesetId != null) {
                 String moveName = segment.config.getMoveId();
                 if (moveName != null) {

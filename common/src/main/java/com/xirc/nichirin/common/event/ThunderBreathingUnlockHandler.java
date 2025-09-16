@@ -1,8 +1,5 @@
 package com.xirc.nichirin.common.event;
 
-import com.xirc.nichirin.BreathOfNichirin;
-import com.xirc.nichirin.common.advancement.NichirinCriteriaTriggers;
-import com.xirc.nichirin.common.data.BreathingStyleHelper;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.data.ProgressionHelper;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
@@ -10,11 +7,9 @@ import dev.architectury.event.events.common.EntityEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 
 /**
  * Handles unlocking Thunder Breathing when struck by lightning

@@ -1,12 +1,11 @@
 package com.xirc.nichirin.common.network.c2s;
 
-import com.xirc.nichirin.common.data.BreathingStyleHelper;
+import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinMoveRegistry;
 import dev.architectury.networking.NetworkManager;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
@@ -62,7 +61,7 @@ public class MoveHotkeyPacket {
         }
 
         // Get current breathing style - if none, do nothing
-        String currentBreathingStyle = BreathingStyleHelper.getMovesetId(player);
+        String currentBreathingStyle = MovesetHelper.getMovesetId(player);
         if (currentBreathingStyle == null || currentBreathingStyle.isEmpty()) {
             return; // No breathing style equipped - hotkey does nothing
         }

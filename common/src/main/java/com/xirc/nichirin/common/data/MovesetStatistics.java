@@ -8,12 +8,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Tracks detailed statistics for breathing style usage
+ * Tracks detailed statistics for moveset usage (breathing techniques and demon arts)
  */
-public class BreathingStyleStatistics {
+public class MovesetStatistics {
 
-    // Per-style statistics
-    private final Map<String, StyleStats> styleStats = new HashMap<>();
+    // Per-moveset statistics
+    private final Map<String, MovesetStats> movesetStats = new HashMap<>();
 
     // Global statistics
     private int totalDamageDealt = 0;
@@ -26,9 +26,9 @@ public class BreathingStyleStatistics {
     private transient int currentComboChain = 0;
 
     /**
-     * Individual style statistics container
+     * Individual moveset statistics container
      */
-    public static class StyleStats {
+    public static class MovesetStats {
         private int usageCount = 0;
         private int damageDealt = 0;
         private int longestCombo = 0;
@@ -77,27 +77,27 @@ public class BreathingStyleStatistics {
     }
 
     /**
-     * Records usage of a breathing technique
+     * Records usage of a technique (breathing or demon)
      */
-    public void recordTechniqueUsage(String styleId) {
-        getOrCreateStyleStats(styleId).addUsage();
+    public void recordTechniqueUsage(String movesetId) {
+        getOrCreateMovesetStats(movesetId).addUsage();
     }
 
     /**
-     * Records damage dealt with a breathing style
+     * Records damage dealt with a moveset
      */
-    public void recordDamageDealt(String styleId, int damage) {
-        getOrCreateStyleStats(styleId).addDamage(damage);
+    public void recordDamageDealt(String movesetId, int damage) {
+        getOrCreateMovesetStats(movesetId).addDamage(damage);
         totalDamageDealt += damage;
     }
 
     /**
      * Updates combo chain tracking
      */
-    public void updateComboChain(String styleId, int comboLength) {
+    public void updateComboChain(String movesetId, int comboLength) {
         currentComboChain = comboLength;
         longestComboChain = Math.max(longestComboChain, comboLength);
-        getOrCreateStyleStats(styleId).updateCombo(comboLength);
+        getOrCreateMovesetStats(movesetId).updateCombo(comboLength);
     }
 
     /**
@@ -122,42 +122,42 @@ public class BreathingStyleStatistics {
     }
 
     /**
-     * Called when a breathing style is equipped
+     * Called when a moveset is equipped
      */
-    public void onStyleEquipped(String styleId) {
-        // End timing for any currently equipped style
-        for (StyleStats stats : styleStats.values()) {
+    public void onMovesetEquipped(String movesetId) {
+        // End timing for any currently equipped moveset
+        for (MovesetStats stats : movesetStats.values()) {
             if (stats.isCurrentlyEquipped()) {
                 stats.endEquipTime();
             }
         }
 
-        // Start timing for new style
-        getOrCreateStyleStats(styleId).startEquipTime();
+        // Start timing for new moveset
+        getOrCreateMovesetStats(movesetId).startEquipTime();
     }
 
     /**
-     * Called when a breathing style is unequipped
+     * Called when a moveset is unequipped
      */
-    public void onStyleUnequipped(String styleId) {
-        StyleStats stats = styleStats.get(styleId);
+    public void onMovesetUnequipped(String movesetId) {
+        MovesetStats stats = movesetStats.get(movesetId);
         if (stats != null) {
             stats.endEquipTime();
         }
     }
 
     /**
-     * Gets statistics for a specific breathing style
+     * Gets statistics for a specific moveset
      */
-    public StyleStats getStyleStats(String styleId) {
-        return styleStats.get(styleId);
+    public MovesetStats getMovesetStats(String movesetId) {
+        return movesetStats.get(movesetId);
     }
 
     /**
-     * Gets or creates statistics for a breathing style
+     * Gets or creates statistics for a moveset
      */
-    private StyleStats getOrCreateStyleStats(String styleId) {
-        return styleStats.computeIfAbsent(styleId, k -> new StyleStats());
+    private MovesetStats getOrCreateMovesetStats(String movesetId) {
+        return movesetStats.computeIfAbsent(movesetId, k -> new MovesetStats());
     }
 
     // Global getters
@@ -168,28 +168,28 @@ public class BreathingStyleStatistics {
     public int getCurrentComboChain() { return currentComboChain; }
 
     /**
-     * Gets all style IDs that have statistics
+     * Gets all moveset IDs that have statistics
      */
-    public java.util.Set<String> getTrackedStyles() {
-        return styleStats.keySet();
+    public java.util.Set<String> getTrackedMovesets() {
+        return movesetStats.keySet();
     }
 
     /**
      * Copies statistics from another instance
      */
-    public void copyFrom(BreathingStyleStatistics other) {
+    public void copyFrom(MovesetStatistics other) {
         // Copy global stats
         this.totalDamageDealt = other.totalDamageDealt;
         this.longestComboChain = other.longestComboChain;
         this.totalSuccessfulDodges = other.totalSuccessfulDodges;
         this.totalSuccessfulBlocks = other.totalSuccessfulBlocks;
 
-        // Copy style stats
-        this.styleStats.clear();
-        for (Map.Entry<String, StyleStats> entry : other.styleStats.entrySet()) {
-            StyleStats newStats = new StyleStats();
+        // Copy moveset stats
+        this.movesetStats.clear();
+        for (Map.Entry<String, MovesetStats> entry : other.movesetStats.entrySet()) {
+            MovesetStats newStats = new MovesetStats();
             newStats.load(entry.getValue().save()); // Copy via NBT
-            this.styleStats.put(entry.getKey(), newStats);
+            this.movesetStats.put(entry.getKey(), newStats);
         }
     }
 
@@ -205,12 +205,12 @@ public class BreathingStyleStatistics {
         tag.putInt("TotalSuccessfulDodges", totalSuccessfulDodges);
         tag.putInt("TotalSuccessfulBlocks", totalSuccessfulBlocks);
 
-        // Save per-style stats
-        CompoundTag styleStatsTag = new CompoundTag();
-        for (Map.Entry<String, StyleStats> entry : styleStats.entrySet()) {
-            styleStatsTag.put(entry.getKey(), entry.getValue().save());
+        // Save per-moveset stats
+        CompoundTag movesetStatsTag = new CompoundTag();
+        for (Map.Entry<String, MovesetStats> entry : movesetStats.entrySet()) {
+            movesetStatsTag.put(entry.getKey(), entry.getValue().save());
         }
-        tag.put("StyleStats", styleStatsTag);
+        tag.put("MovesetStats", movesetStatsTag);
 
         return tag;
     }
@@ -225,25 +225,25 @@ public class BreathingStyleStatistics {
         totalSuccessfulDodges = tag.getInt("TotalSuccessfulDodges");
         totalSuccessfulBlocks = tag.getInt("TotalSuccessfulBlocks");
 
-        // Load per-style stats
-        styleStats.clear();
-        if (tag.contains("StyleStats")) {
-            CompoundTag styleStatsTag = tag.getCompound("StyleStats");
-            for (String styleId : styleStatsTag.getAllKeys()) {
-                StyleStats stats = new StyleStats();
-                stats.load(styleStatsTag.getCompound(styleId));
-                styleStats.put(styleId, stats);
+        // Load per-moveset stats
+        movesetStats.clear();
+        if (tag.contains("MovesetStats")) {
+            CompoundTag movesetStatsTag = tag.getCompound("MovesetStats");
+            for (String movesetId : movesetStatsTag.getAllKeys()) {
+                MovesetStats stats = new MovesetStats();
+                stats.load(movesetStatsTag.getCompound(movesetId));
+                movesetStats.put(movesetId, stats);
             }
         }
     }
 
     /**
-     * Updates all currently equipped styles' time tracking
+     * Updates all currently equipped movesets' time tracking
      * Call this periodically (like every minute) to keep time tracking accurate
      */
     public void updateTimeTracking() {
         // This ensures that if the server crashes, we don't lose too much time tracking data
-        for (StyleStats stats : styleStats.values()) {
+        for (MovesetStats stats : movesetStats.values()) {
             if (stats.isCurrentlyEquipped()) {
                 long currentTime = System.currentTimeMillis();
                 stats.totalTimeEquipped += currentTime - stats.lastEquippedTime;

@@ -7,11 +7,10 @@ import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Data class for storing player's selected breathing style
+ * Unified data class for storing player's selected moveset (breathing techniques or demon arts)
  * Handles modifiers and statistics tracking automatically
- * FIXED: Race conditions and multiplayer synchronization issues
  */
-public class BreathingStyleData {
+public class MovesetData {
 
     @Nullable
     private AbstractMoveset currentMoveset;
@@ -26,7 +25,7 @@ public class BreathingStyleData {
     // Flag to prevent recursive operations during modifier application
     private boolean isApplyingModifiers = false;
 
-    public BreathingStyleData() {
+    public MovesetData() {
         this.currentMoveset = null;
         this.movesetId = null;
         this.player = null;
@@ -40,7 +39,7 @@ public class BreathingStyleData {
     }
 
     /**
-     * Sets the current breathing style moveset
+     * Sets the current moveset (breathing or demon)
      */
     public void setMoveset(@Nullable AbstractMoveset moveset) {
         // Prevent recursive calls during modifier application
@@ -51,39 +50,45 @@ public class BreathingStyleData {
         try {
             isApplyingModifiers = true;
 
-            // Handle statistics tracking and modifiers for old style
+            // Handle statistics tracking and modifiers for old moveset
             if (this.currentMoveset != null && this.player != null) {
-                // Record unequip time for old style
+                // Record unequip time for old moveset
                 var statistics = getStatistics();
                 if (statistics != null) {
-                    statistics.onStyleUnequipped(this.currentMoveset.getMovesetId());
+                    statistics.onMovesetUnequipped(this.currentMoveset.getMovesetId());
                 }
 
-                // Remove old modifiers
-                try {
-                    this.currentMoveset.removeAllModifiers(this.player);
-                } catch (Exception e) {
-                    System.err.println("Error removing modifiers for " + this.currentMoveset.getMovesetId() + ": " + e.getMessage());
+                // Remove old modifiers (only breathing techniques have modifiers)
+                if (this.currentMoveset.isBreathingMoveset()) {
+                    try {
+                        this.currentMoveset.removeAllModifiers(this.player);
+                    } catch (Exception e) {
+                        System.err.println("Error removing modifiers for " + this.currentMoveset.getMovesetId() + ": " + e.getMessage());
+                    }
                 }
             }
 
             this.currentMoveset = moveset;
             this.movesetId = moveset != null ? moveset.getMovesetId() : null;
 
-            // Handle statistics tracking and modifiers for new style
+            // Handle statistics tracking and modifiers for new moveset
             if (this.currentMoveset != null && this.player != null) {
-                // Record equip time for new style
+                // Record equip time for new moveset
                 var statistics = getStatistics();
                 if (statistics != null) {
-                    statistics.onStyleEquipped(this.currentMoveset.getMovesetId());
+                    statistics.onMovesetEquipped(this.currentMoveset.getMovesetId());
                 }
 
-                // Apply new modifiers
-                try {
-                    this.currentMoveset.applyAllModifiers(this.player);
-                    System.out.println("DEBUG: Applied all modifiers for moveset: " + movesetId + " to player " + getPlayerName());
-                } catch (Exception e) {
-                    System.err.println("Error applying modifiers for " + movesetId + ": " + e.getMessage());
+                // Apply new modifiers (only for breathing techniques)
+                if (this.currentMoveset.isBreathingMoveset()) {
+                    try {
+                        this.currentMoveset.applyAllModifiers(this.player);
+                        System.out.println("DEBUG: Applied breathing modifiers for moveset: " + movesetId + " to player " + getPlayerName());
+                    } catch (Exception e) {
+                        System.err.println("Error applying modifiers for " + movesetId + ": " + e.getMessage());
+                    }
+                } else {
+                    System.out.println("DEBUG: Equipped demon moveset (no modifiers): " + movesetId + " for player " + getPlayerName());
                 }
             }
         } finally {
@@ -92,7 +97,7 @@ public class BreathingStyleData {
     }
 
     /**
-     * Gets the current breathing style moveset
+     * Gets the current moveset
      */
     @Nullable
     public AbstractMoveset getMoveset() {
@@ -105,12 +110,18 @@ public class BreathingStyleData {
                 if (currentMoveset != null && player != null && !isApplyingModifiers) {
                     isApplyingModifiers = true;
                     try {
-                        currentMoveset.applyAllModifiers(player);
+                        // Only apply modifiers for breathing techniques
+                        if (currentMoveset.isBreathingMoveset()) {
+                            currentMoveset.applyAllModifiers(player);
+                            System.out.println("DEBUG: Applied breathing modifiers for loaded moveset: " + movesetId + " to player " + getPlayerName());
+                        } else {
+                            System.out.println("DEBUG: Loaded demon moveset (no modifiers): " + movesetId + " for player " + getPlayerName());
+                        }
+
                         var statistics = getStatistics();
                         if (statistics != null) {
-                            statistics.onStyleEquipped(movesetId);
+                            statistics.onMovesetEquipped(movesetId);
                         }
-                        System.out.println("DEBUG: Applied all modifiers for loaded moveset: " + movesetId + " to player " + getPlayerName());
                     } finally {
                         isApplyingModifiers = false;
                     }
@@ -136,16 +147,20 @@ public class BreathingStyleData {
         try {
             isApplyingModifiers = true;
 
-            // Handle old style cleanup
+            // Handle old moveset cleanup
             if (this.currentMoveset != null && this.player != null) {
                 var statistics = getStatistics();
                 if (statistics != null) {
-                    statistics.onStyleUnequipped(this.currentMoveset.getMovesetId());
+                    statistics.onMovesetUnequipped(this.currentMoveset.getMovesetId());
                 }
-                try {
-                    this.currentMoveset.removeAllModifiers(this.player);
-                } catch (Exception e) {
-                    System.err.println("Error removing modifiers during setMovesetId: " + e.getMessage());
+
+                // Only remove modifiers for breathing techniques
+                if (this.currentMoveset.isBreathingMoveset()) {
+                    try {
+                        this.currentMoveset.removeAllModifiers(this.player);
+                    } catch (Exception e) {
+                        System.err.println("Error removing modifiers during setMovesetId: " + e.getMessage());
+                    }
                 }
             }
 
@@ -177,6 +192,22 @@ public class BreathingStyleData {
     }
 
     /**
+     * Checks if the player has a breathing technique moveset
+     */
+    public boolean hasBreathingMoveset() {
+        AbstractMoveset moveset = getMoveset();
+        return moveset != null && moveset.isBreathingMoveset();
+    }
+
+    /**
+     * Checks if the player has a demon art moveset
+     */
+    public boolean hasDemonMoveset() {
+        AbstractMoveset moveset = getMoveset();
+        return moveset != null && moveset.isDemonMoveset();
+    }
+
+    /**
      * Clears the current moveset
      */
     public void clearMoveset() {
@@ -191,13 +222,19 @@ public class BreathingStyleData {
             if (this.currentMoveset != null && this.player != null) {
                 var statistics = getStatistics();
                 if (statistics != null) {
-                    statistics.onStyleUnequipped(this.currentMoveset.getMovesetId());
+                    statistics.onMovesetUnequipped(this.currentMoveset.getMovesetId());
                 }
-                try {
-                    this.currentMoveset.removeAllModifiers(this.player);
-                    System.out.println("DEBUG: Removed all modifiers for cleared moveset from player " + getPlayerName());
-                } catch (Exception e) {
-                    System.err.println("Error removing modifiers during clearMoveset: " + e.getMessage());
+
+                // Only remove modifiers for breathing techniques
+                if (this.currentMoveset.isBreathingMoveset()) {
+                    try {
+                        this.currentMoveset.removeAllModifiers(this.player);
+                        System.out.println("DEBUG: Removed breathing modifiers for cleared moveset from player " + getPlayerName());
+                    } catch (Exception e) {
+                        System.err.println("Error removing modifiers during clearMoveset: " + e.getMessage());
+                    }
+                } else {
+                    System.out.println("DEBUG: Cleared demon moveset (no modifiers) from player " + getPlayerName());
                 }
             }
 
@@ -211,7 +248,7 @@ public class BreathingStyleData {
     /**
      * Copies data from another instance
      */
-    public void copyFrom(BreathingStyleData other) {
+    public void copyFrom(MovesetData other) {
         if (isApplyingModifiers) {
             return;
         }
@@ -223,12 +260,16 @@ public class BreathingStyleData {
             if (this.currentMoveset != null && this.player != null) {
                 var statistics = getStatistics();
                 if (statistics != null) {
-                    statistics.onStyleUnequipped(this.currentMoveset.getMovesetId());
+                    statistics.onMovesetUnequipped(this.currentMoveset.getMovesetId());
                 }
-                try {
-                    this.currentMoveset.removeAllModifiers(this.player);
-                } catch (Exception e) {
-                    System.err.println("Error removing modifiers during copyFrom: " + e.getMessage());
+
+                // Only remove modifiers for breathing techniques
+                if (this.currentMoveset.isBreathingMoveset()) {
+                    try {
+                        this.currentMoveset.removeAllModifiers(this.player);
+                    } catch (Exception e) {
+                        System.err.println("Error removing modifiers during copyFrom: " + e.getMessage());
+                    }
                 }
             }
 
@@ -275,7 +316,7 @@ public class BreathingStyleData {
     /**
      * Gets the statistics tracking system (requires PlayerDataProvider access)
      */
-    private BreathingStyleStatistics getStatistics() {
+    private MovesetStatistics getStatistics() {
         if (player != null) {
             try {
                 // Access statistics through PlayerDataProvider
@@ -299,26 +340,32 @@ public class BreathingStyleData {
         if (this.currentMoveset != null && this.player != null) {
             var statistics = getStatistics();
             if (statistics != null) {
-                statistics.onStyleUnequipped(this.currentMoveset.getMovesetId());
+                statistics.onMovesetUnequipped(this.currentMoveset.getMovesetId());
             }
-            try {
-                this.currentMoveset.removeAllModifiers(this.player);
-                System.out.println("DEBUG: Cleaned up modifiers for player " + getPlayerName());
-            } catch (Exception e) {
-                System.err.println("Error during cleanup: " + e.getMessage());
+
+            // Only remove modifiers for breathing techniques
+            if (this.currentMoveset.isBreathingMoveset()) {
+                try {
+                    this.currentMoveset.removeAllModifiers(this.player);
+                    System.out.println("DEBUG: Cleaned up breathing modifiers for player " + getPlayerName());
+                } catch (Exception e) {
+                    System.err.println("Error during cleanup: " + e.getMessage());
+                }
+            } else {
+                System.out.println("DEBUG: Cleaned up demon moveset (no modifiers) for player " + getPlayerName());
             }
         }
     }
 
     /**
-     * Force reapply modifiers (useful for troubleshooting)
+     * Force reapply modifiers (useful for troubleshooting breathing techniques)
      */
     public void reapplyModifiers() {
-        if (this.currentMoveset != null && this.player != null && !isApplyingModifiers) {
+        if (this.currentMoveset != null && this.player != null && !isApplyingModifiers && this.currentMoveset.isBreathingMoveset()) {
             try {
                 isApplyingModifiers = true;
                 this.currentMoveset.applyAllModifiers(this.player);
-                System.out.println("DEBUG: Force reapplied modifiers for " + movesetId + " to player " + getPlayerName());
+                System.out.println("DEBUG: Force reapplied breathing modifiers for " + movesetId + " to player " + getPlayerName());
             } catch (Exception e) {
                 System.err.println("Error force reapplying modifiers: " + e.getMessage());
             } finally {

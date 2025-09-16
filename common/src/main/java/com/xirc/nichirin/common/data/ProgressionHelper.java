@@ -12,37 +12,37 @@ public class ProgressionHelper {
     /**
      * Gets progression data for a player
      */
-    public static BreathingStyleProgression getProgression(Player player) {
+    public static MovesetProgression getProgression(Player player) {
         return PlayerDataProvider.getData(player).getProgression();
     }
 
     /**
-     * Checks if a player has unlocked a breathing style
+     * Checks if a player has unlocked a moveset
      */
-    public static boolean isStyleUnlocked(Player player, String styleId) {
-        return getProgression(player).isStyleUnlocked(styleId);
+    public static boolean isMovesetUnlocked(Player player, String movesetId) {
+        return getProgression(player).isMovesetUnlocked(movesetId);
     }
 
     /**
-     * Checks if a player has unlocked any breathing style
+     * Checks if a player has unlocked any moveset
      */
-    public static boolean hasAnyBreathingStyle(Player player) {
-        return getProgression(player).hasAnyBreathingStyle();
+    public static boolean hasAnyMoveset(Player player) {
+        return getProgression(player).hasAnyMoveset();
     }
 
     /**
-     * Unlocks a breathing style for a player (used by unlock handlers)
+     * Unlocks a moveset for a player (used by unlock handlers)
      */
-    public static void unlockStyle(Player player, String styleId) {
-        boolean wasAlreadyUnlocked = isStyleUnlocked(player, styleId);
-        boolean wasFirstBreathingStyle = !hasAnyBreathingStyle(player);
+    public static void unlockMoveset(Player player, String movesetId) {
+        boolean wasAlreadyUnlocked = isMovesetUnlocked(player, movesetId);
+        boolean wasFirstMoveset = !hasAnyMoveset(player);
 
-        getProgression(player).unlockStyle(styleId);
+        getProgression(player).unlockMoveset(movesetId);
 
         // Trigger advancements if this is a new unlock and player is on server
         if (!wasAlreadyUnlocked && player instanceof ServerPlayer serverPlayer) {
-            // Trigger specific breathing style advancement
-            switch (styleId) {
+            // Trigger specific moveset advancement
+            switch (movesetId) {
                 case "thunder_breathing" -> {
                     if (NichirinCriteriaTriggers.THUNDER_BREATHING_TRIGGER != null) {
                         NichirinCriteriaTriggers.THUNDER_BREATHING_TRIGGER.trigger(serverPlayer);
@@ -65,8 +65,8 @@ public class ProgressionHelper {
                 }
             }
 
-            // Trigger First Breath advancement if this was their first breathing style
-            if (wasFirstBreathingStyle && NichirinCriteriaTriggers.FIRST_BREATH_TRIGGER != null) {
+            // Trigger First Technique advancement if this was their first moveset
+            if (wasFirstMoveset && NichirinCriteriaTriggers.FIRST_BREATH_TRIGGER != null) {
                 NichirinCriteriaTriggers.FIRST_BREATH_TRIGGER.trigger(serverPlayer);
             }
         }
@@ -78,11 +78,11 @@ public class ProgressionHelper {
     }
 
     /**
-     * Gets the unlock requirement for a breathing style
+     * Gets the unlock requirement for a moveset
      */
-    public static String getUnlockRequirement(String styleId) {
+    public static String getUnlockRequirement(String movesetId) {
         // We can call this statically since requirements are the same for all players
-        return new BreathingStyleProgression().getUnlockRequirement(styleId);
+        return new MovesetProgression().getUnlockRequirement(movesetId);
     }
 
     /**
@@ -90,7 +90,7 @@ public class ProgressionHelper {
      */
     public static void recordDemonKill(Player player) {
         getProgression(player).addDemonKill();
-        // Note: No auto-unlock checking since breathing styles have specific unlock requirements
+        // Note: No auto-unlock checking since movesets have specific unlock requirements
     }
 
     /**
@@ -100,16 +100,29 @@ public class ProgressionHelper {
         getProgression(player).addDamageDealt(damage);
     }
 
+    // Legacy methods for backwards compatibility
+
     /**
-     * Formats a breathing style ID for display
+     * @deprecated Use isMovesetUnlocked instead
      */
-    private static String formatStyleName(String styleId) {
-        String[] parts = styleId.split("_");
-        StringBuilder formatted = new StringBuilder();
-        for (String part : parts) {
-            if (formatted.length() > 0) formatted.append(" ");
-            formatted.append(part.substring(0, 1).toUpperCase()).append(part.substring(1));
-        }
-        return formatted.toString();
+    @Deprecated
+    public static boolean isStyleUnlocked(Player player, String styleId) {
+        return isMovesetUnlocked(player, styleId);
+    }
+
+    /**
+     * @deprecated Use hasAnyMoveset instead
+     */
+    @Deprecated
+    public static boolean hasAnyBreathingStyle(Player player) {
+        return hasAnyMoveset(player);
+    }
+
+    /**
+     * @deprecated Use unlockMoveset instead
+     */
+    @Deprecated
+    public static void unlockStyle(Player player, String styleId) {
+        unlockMoveset(player, styleId);
     }
 }

@@ -2,7 +2,7 @@ package com.xirc.nichirin.registry;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.xirc.nichirin.client.gui.CooldownHUD;
-import com.xirc.nichirin.common.data.BreathingStyleHelper;
+import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.network.c2s.MovementInputPacket;
 import com.xirc.nichirin.common.network.c2s.MoveHotkeyPacket;
@@ -134,7 +134,7 @@ public interface NichirinKeybindRegistry {
         }
 
         // Check cooldown before sending packet
-        var moveset = BreathingStyleHelper.getMoveset(client.player);
+        var moveset = MovesetHelper.getMoveset(client.player);
         if (moveset != null) {
             var moveConfig = moveset.getMove(moveIndex);
             if (moveConfig != null) {

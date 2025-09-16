@@ -1,7 +1,7 @@
 package com.xirc.nichirin.client.gui.biggui;
 
 import com.xirc.nichirin.client.data.ClientProgressionCache;
-import com.xirc.nichirin.common.data.BreathingStyleHelper;
+import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.data.ProgressionHelper;
 import com.xirc.nichirin.registry.MovesetRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
@@ -33,7 +33,7 @@ public class BreathingStylesSection {
         contentY += 30;
 
         // Current style - use same data source as command
-        String currentStyle = BreathingStyleHelper.getMovesetId(player);
+        String currentStyle = MovesetHelper.getMovesetId(player);
         if (currentStyle != null) {
             Component current = Component.translatable("gui.nichirin.breathing_styles.current",
                             Component.translatable("breathing_style." + currentStyle))
@@ -227,7 +227,7 @@ public class BreathingStylesSection {
             return false;
         }
 
-        String currentStyle = BreathingStyleHelper.getMovesetId(player);
+        String currentStyle = MovesetHelper.getMovesetId(player);
         int centerX = (contentWidth - 20) / 2;
 
         // Use the same 5 breathing styles

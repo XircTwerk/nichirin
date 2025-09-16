@@ -1,8 +1,5 @@
 package com.xirc.nichirin.common.event;
 
-import com.xirc.nichirin.BreathOfNichirin;
-import com.xirc.nichirin.common.advancement.NichirinCriteriaTriggers;
-import com.xirc.nichirin.common.data.BreathingStyleHelper;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.data.ProgressionHelper;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
@@ -12,10 +9,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.projectile.ThrownPotion;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.alchemy.PotionUtils;
 import net.minecraft.world.item.alchemy.Potions;
-import net.minecraft.world.entity.player.Player;
 
 /**
  * Handles unlocking Insect Breathing when throwing poison potions

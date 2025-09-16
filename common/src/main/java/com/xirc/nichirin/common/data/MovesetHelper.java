@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
  * Simplified helper class for breathing style data access
  * Removed unused client-side methods since breathing styles are server-controlled
  */
-public class BreathingStyleHelper {
+public class MovesetHelper {
 
     /**
      * Gets the current moveset for a player

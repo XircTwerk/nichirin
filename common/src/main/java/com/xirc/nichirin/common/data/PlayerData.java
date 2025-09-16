@@ -4,25 +4,25 @@ import lombok.Getter;
 import net.minecraft.nbt.CompoundTag;
 
 /**
- * Complete player data container including breathing styles, progression, and statistics
+ * Complete player data container including movesets, progression, and statistics
  */
 @Getter
 public class PlayerData {
 
     /**
-     * Gets breathing style data
+     * Gets unified moveset data (breathing techniques and demon arts)
      */
-    private final BreathingStyleData breathingStyleData = new BreathingStyleData();
+    private final MovesetData movesetData = new MovesetData();
 
     /**
      * Gets progression data
      */
-    private final BreathingStyleProgression progression = new BreathingStyleProgression();
+    private final MovesetProgression progression = new MovesetProgression();
 
     /**
      * Gets statistics tracking data
      */
-    private final BreathingStyleStatistics statistics = new BreathingStyleStatistics();
+    private final MovesetStatistics statistics = new MovesetStatistics();
 
     public PlayerData() {
         // Constructor
@@ -32,7 +32,7 @@ public class PlayerData {
      * Copies all data from another instance
      */
     public void copyFrom(PlayerData other) {
-        this.breathingStyleData.copyFrom(other.breathingStyleData);
+        this.movesetData.copyFrom(other.movesetData);
         this.progression.copyFrom(other.progression);
         this.statistics.copyFrom(other.statistics);
     }
@@ -42,24 +42,39 @@ public class PlayerData {
      */
     public CompoundTag save() {
         CompoundTag tag = new CompoundTag();
-        tag.put("BreathingStyle", breathingStyleData.save());
+        tag.put("MovesetData", movesetData.save());
         tag.put("Progression", progression.save());
         tag.put("Statistics", statistics.save());
         return tag;
     }
 
     /**
-     * Loads all data from NBT
+     * Loads all data from NBT with backwards compatibility
      */
     public void load(CompoundTag tag) {
-        if (tag.contains("BreathingStyle")) {
-            breathingStyleData.load(tag.getCompound("BreathingStyle"));
+        // Try new format first
+        if (tag.contains("MovesetData")) {
+            movesetData.load(tag.getCompound("MovesetData"));
         }
+        // Handle backwards compatibility with old BreathingStyleData
+        else if (tag.contains("BreathingStyle")) {
+            movesetData.load(tag.getCompound("BreathingStyle"));
+        }
+
         if (tag.contains("Progression")) {
             progression.load(tag.getCompound("Progression"));
         }
         if (tag.contains("Statistics")) {
             statistics.load(tag.getCompound("Statistics"));
         }
+    }
+
+    /**
+     * Legacy getter for backwards compatibility
+     * @deprecated Use getMovesetData() instead
+     */
+    @Deprecated
+    public MovesetData getBreathingStyleData() {
+        return movesetData;
     }
 }

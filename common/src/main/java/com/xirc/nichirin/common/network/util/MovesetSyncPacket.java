@@ -1,7 +1,7 @@
 package com.xirc.nichirin.common.network.util;
 
 import com.xirc.nichirin.BreathOfNichirin;
-import com.xirc.nichirin.common.data.BreathingStyleData;
+import com.xirc.nichirin.common.data.MovesetData;
 import com.xirc.nichirin.registry.MovesetRegistry;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.data.ProgressionHelper;
@@ -14,33 +14,33 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 
 /**
- * Packet for syncing breathing style data between client and server
- * Now includes unlock validation
+ * Packet for syncing moveset data between client and server (breathing techniques and demon arts)
+ * Includes unlock validation for both types
  */
-public class BreathingStyleSyncPacket {
+public class MovesetSyncPacket {
 
-    public static final ResourceLocation SYNC_BREATHING_STYLE = BreathOfNichirin.id("sync_breathing_style");
-    public static final ResourceLocation REQUEST_STYLE_CHANGE = BreathOfNichirin.id("request_style_change");
+    public static final ResourceLocation SYNC_MOVESET = BreathOfNichirin.id("sync_moveset");
+    public static final ResourceLocation REQUEST_MOVESET_CHANGE = BreathOfNichirin.id("request_moveset_change");
 
     /**
      * Registers the packet handlers
      */
     public static void register() {
-        // Client receives breathing style sync from server
-        NetworkManager.registerReceiver(NetworkManager.Side.S2C, SYNC_BREATHING_STYLE, (buf, context) -> {
+        // Client receives moveset sync from server
+        NetworkManager.registerReceiver(NetworkManager.Side.S2C, SYNC_MOVESET, (buf, context) -> {
             String movesetId = buf.readBoolean() ? buf.readUtf() : null;
 
             context.queue(() -> {
                 Player player = context.getPlayer();
                 if (player != null) {
-                    BreathingStyleData data = PlayerDataProvider.getBreathingStyleData(player);
+                    MovesetData data = PlayerDataProvider.getMovesetData(player);
                     data.setMovesetId(movesetId);
                 }
             });
         });
 
-        // Server receives style change request from client
-        NetworkManager.registerReceiver(NetworkManager.Side.C2S, REQUEST_STYLE_CHANGE, (buf, context) -> {
+        // Server receives moveset change request from client
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, REQUEST_MOVESET_CHANGE, (buf, context) -> {
             String movesetId = buf.readBoolean() ? buf.readUtf() : null;
 
             context.queue(() -> {
@@ -52,17 +52,17 @@ public class BreathingStyleSyncPacket {
                     if (movesetId != null && !MovesetRegistry.isRegistered(movesetId)) {
                         // Invalid moveset ID
                         serverPlayer.sendSystemMessage(Component.literal(
-                                "§cInvalid breathing style: " + movesetId
+                                "§cInvalid moveset: " + movesetId
                         ));
                         return;
                     }
 
-                    // Check if the player has unlocked this breathing style
-                    if (movesetId != null && !ProgressionHelper.isStyleUnlocked(serverPlayer, movesetId)) {
-                        // Player hasn't unlocked this style
+                    // Check if the player has unlocked this moveset
+                    if (movesetId != null && !ProgressionHelper.isMovesetUnlocked(serverPlayer, movesetId)) {
+                        // Player hasn't unlocked this moveset
                         String requirement = ProgressionHelper.getUnlockRequirement(movesetId);
                         serverPlayer.sendSystemMessage(Component.literal(
-                                "§cYou haven't unlocked this breathing style! §fRequirement: §e" + requirement
+                                "§cYou haven't unlocked this moveset! §fRequirement: §e" + requirement
                         ));
                         return;
                     }
@@ -72,13 +72,14 @@ public class BreathingStyleSyncPacket {
 
                     // Send confirmation message
                     if (movesetId != null) {
-                        String styleName = formatStyleName(movesetId);
+                        String movesetName = formatMovesetName(movesetId);
+                        String movesetType = getMovesetTypeDisplay(movesetId);
                         serverPlayer.sendSystemMessage(Component.literal(
-                                "§aSwitched to " + styleName + "."
+                                "§aSwitched to " + movesetName + " §7(" + movesetType + ")§a."
                         ));
                     } else {
                         serverPlayer.sendSystemMessage(Component.literal(
-                                "§7Cleared breathing style."
+                                "§7Cleared moveset."
                         ));
                     }
                 }
@@ -87,10 +88,10 @@ public class BreathingStyleSyncPacket {
     }
 
     /**
-     * Formats a breathing style ID for display
+     * Formats a moveset ID for display
      */
-    private static String formatStyleName(String styleId) {
-        String[] parts = styleId.split("_");
+    private static String formatMovesetName(String movesetId) {
+        String[] parts = movesetId.split("_");
         StringBuilder formatted = new StringBuilder();
         for (String part : parts) {
             if (formatted.length() > 0) formatted.append(" ");
@@ -100,7 +101,20 @@ public class BreathingStyleSyncPacket {
     }
 
     /**
-     * Sends breathing style data to a specific player
+     * Gets the display type for a moveset (Breathing Technique or Demon Art)
+     */
+    private static String getMovesetTypeDisplay(String movesetId) {
+        if (movesetId.contains("breathing")) {
+            return "Breathing Technique";
+        } else if (movesetId.contains("demon")) {
+            return "Demon Art";
+        } else {
+            return "Technique";
+        }
+    }
+
+    /**
+     * Sends moveset data to a specific player
      */
     public static void sendToPlayer(ServerPlayer player, String movesetId) {
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
@@ -109,11 +123,11 @@ public class BreathingStyleSyncPacket {
             buf.writeUtf(movesetId);
         }
 
-        NetworkManager.sendToPlayer(player, SYNC_BREATHING_STYLE, buf);
+        NetworkManager.sendToPlayer(player, SYNC_MOVESET, buf);
     }
 
     /**
-     * Sends breathing style data to all players in the same level
+     * Sends moveset data to all players in the same level
      */
     public static void sendToTracking(ServerPlayer player, String movesetId) {
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
@@ -125,19 +139,37 @@ public class BreathingStyleSyncPacket {
         // Send to all players in the same dimension
         player.server.getPlayerList().getPlayers().stream()
                 .filter(p -> p.level() == player.level())
-                .forEach(p -> NetworkManager.sendToPlayer(p, SYNC_BREATHING_STYLE, buf));
+                .forEach(p -> NetworkManager.sendToPlayer(p, SYNC_MOVESET, buf));
     }
 
     /**
-     * Client requests a breathing style change
+     * Client requests a moveset change
      */
-    public static void requestStyleChange(String movesetId) {
+    public static void requestMovesetChange(String movesetId) {
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
         buf.writeBoolean(movesetId != null);
         if (movesetId != null) {
             buf.writeUtf(movesetId);
         }
 
-        NetworkManager.sendToServer(REQUEST_STYLE_CHANGE, buf);
+        NetworkManager.sendToServer(REQUEST_MOVESET_CHANGE, buf);
+    }
+
+    // Legacy methods for backwards compatibility
+
+    /**
+     * @deprecated Use sendToPlayer instead
+     */
+    @Deprecated
+    public static void sendBreathingStyleToPlayer(ServerPlayer player, String movesetId) {
+        sendToPlayer(player, movesetId);
+    }
+
+    /**
+     * @deprecated Use requestMovesetChange instead
+     */
+    @Deprecated
+    public static void requestStyleChange(String movesetId) {
+        requestMovesetChange(movesetId);
     }
 }

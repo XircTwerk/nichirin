@@ -1,7 +1,7 @@
 package com.xirc.nichirin.common.util;
 
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
-import com.xirc.nichirin.common.data.BreathingStyleHelper;
+import com.xirc.nichirin.common.data.MovesetHelper;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 
@@ -72,7 +72,7 @@ public class ComboIntegration {
      */
     public static void handleBreathingMoveHit(Player attacker, LivingEntity victim, int moveIndex, float damage) {
         // Get the moveset and move config
-        AbstractMoveset moveset = BreathingStyleHelper.getMoveset(attacker);
+        AbstractMoveset moveset = MovesetHelper.getMoveset(attacker);
         if (moveset == null) {
             return;
         }

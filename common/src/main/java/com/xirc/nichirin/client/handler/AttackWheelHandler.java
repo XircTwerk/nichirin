@@ -2,8 +2,9 @@ package com.xirc.nichirin.client.handler;
 
 import com.xirc.nichirin.client.gui.AttackWheelOverlay;
 import com.xirc.nichirin.client.gui.CooldownHUD;
+import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.registry.NichirinKeybindRegistry;
-import com.xirc.nichirin.common.data.BreathingStyleHelper;
+import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.util.BreathingManager;
 import com.xirc.nichirin.common.util.StaminaManager;
@@ -181,7 +182,7 @@ public class AttackWheelHandler {
     }
 
     /**
-     * Open the attack wheel
+     * Open the attack wheel - now supports both breathing arts and demon arts
      */
     private static void openWheel() {
         Minecraft mc = Minecraft.getInstance();
@@ -198,14 +199,32 @@ public class AttackWheelHandler {
             return;
         }
 
-        // Check if holding katana
+        // Check held item
         ItemStack mainHand = mc.player.getMainHandItem();
-        if (!(mainHand.getItem() instanceof SimpleKatana)) {
-            return;
+        boolean holdingKatana = mainHand.getItem() instanceof SimpleKatana;
+
+        // Determine which moveset to use based on held item
+        AbstractMoveset moveset = null;
+
+        if (holdingKatana) {
+            // Holding katana - check for breathing style first
+            if (MovesetHelper.hasMoveset(mc.player)) {
+                moveset = MovesetHelper.getMoveset(mc.player);
+            }
+            // If no breathing style, it will use SimpleKatana's default moveset (handled elsewhere)
+            // We still need a moveset for the wheel though, so check for demon arts as fallback
+            if (moveset == null && MovesetHelper.hasMoveset(mc.player)) {
+                moveset = MovesetHelper.getMoveset(mc.player);
+            }
+        } else {
+            // Not holding katana - check for demon arts only
+            if (MovesetHelper.hasMoveset(mc.player)) {
+                moveset = MovesetHelper.getMoveset(mc.player);
+            }
         }
 
-        // Check if has breathing style
-        if (!BreathingStyleHelper.hasMoveset(mc.player)) {
+        // Must have some moveset to open wheel
+        if (moveset == null) {
             return;
         }
 
@@ -227,7 +246,6 @@ public class AttackWheelHandler {
             MultiplayerInputHandler.setAttackWheelOpen(true, mc.player);
 
             wasAttackDown = false;
-        } else {
         }
     }
 
@@ -265,7 +283,7 @@ public class AttackWheelHandler {
     }
 
     /**
-     * FIXED: Execute the captured selected move instead of calculating at click time
+     * Updated execute method to handle both breathing and demon arts
      */
     private static void executeWheelMove() {
         Minecraft mc = Minecraft.getInstance();
@@ -281,7 +299,30 @@ public class AttackWheelHandler {
             return;
         }
 
-        var moveset = BreathingStyleHelper.getMoveset(mc.player);
+        // Determine moveset type and get appropriate moveset
+        ItemStack mainHand = mc.player.getMainHandItem();
+        boolean holdingKatana = mainHand.getItem() instanceof SimpleKatana;
+
+        AbstractMoveset moveset = null;
+        boolean isBreathingMove = false;
+
+        if (holdingKatana) {
+            // Holding katana - prioritize breathing arts
+            if (MovesetHelper.hasMoveset(mc.player)) {
+                moveset = MovesetHelper.getMoveset(mc.player);
+                isBreathingMove = true;
+            } else if (MovesetHelper.hasMoveset(mc.player)) {
+                moveset = MovesetHelper.getMoveset(mc.player);
+                isBreathingMove = false;
+            }
+        } else {
+            // Not holding katana - demon arts only
+            if (MovesetHelper.hasMoveset(mc.player)) {
+                moveset = MovesetHelper.getMoveset(mc.player);
+                isBreathingMove = false;
+            }
+        }
+
         if (moveset == null) {
             closeWheel();
             return;
@@ -307,30 +348,38 @@ public class AttackWheelHandler {
             return;
         }
 
-        if (moveConfig.hasStaminaCost() && !StaminaManager.hasStamina(mc.player, moveConfig.getStaminaCost())) {
-            mc.player.displayClientMessage(
-                    Component.literal("Not enough stamina!")
-                            .withStyle(style -> style.withColor(0xFF5555)),
-                    true
-            );
-            closeWheel();
-            return;
+        // Only check resource costs for breathing arts
+        if (isBreathingMove) {
+            if (moveConfig.hasStaminaCost() && !StaminaManager.hasStamina(mc.player, moveConfig.getStaminaCost())) {
+                mc.player.displayClientMessage(
+                        Component.literal("Not enough stamina!")
+                                .withStyle(style -> style.withColor(0xFF5555)),
+                        true
+                );
+                closeWheel();
+                return;
+            }
+
+            if (moveConfig.hasBreathCost() && !BreathingManager.hasBreath(mc.player, moveConfig.getBreathCost())) {
+                mc.player.displayClientMessage(
+                        Component.literal("Not enough breath!")
+                                .withStyle(style -> style.withColor(0xFF5555)),
+                        true
+                );
+                closeWheel();
+                return;
+            }
         }
 
-        if (moveConfig.hasBreathCost() && !BreathingManager.hasBreath(mc.player, moveConfig.getBreathCost())) {
-            mc.player.displayClientMessage(
-                    Component.literal("Not enough breath!")
-                            .withStyle(style -> style.withColor(0xFF5555)),
-                    true
-            );
-            closeWheel();
-            return;
+        // Send move to server - same packet system for both types
+        if (isBreathingMove) {
+            MultiplayerInputHandler.sendBreathingMove(selectedMove, mc.player);
+        } else {
+            // Use the same packet system but with demon moveset identifier
+            MultiplayerInputHandler.sendDemonMove(selectedMove, mc.player);
         }
 
-        // Send breathing move to server FIRST (while wheel is still considered open)
-        MultiplayerInputHandler.sendBreathingMove(selectedMove, mc.player);
-
-        // THEN close wheel (this maintains input blocking until move is sent)
+        // THEN close wheel
         closeWheel();
     }
 

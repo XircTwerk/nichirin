@@ -1,7 +1,7 @@
 package com.xirc.nichirin.common.network.c2s;
 
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
-import com.xirc.nichirin.common.data.BreathingStyleHelper;
+import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.util.KatanaInputHandler;
 import com.xirc.nichirin.common.util.MultiplayerInputHandler;
 import net.minecraft.network.FriendlyByteBuf;
@@ -32,7 +32,7 @@ public class BreathingMovePacket {
 
     public void handle(ServerPlayer player) {
         // Get player's moveset
-        AbstractMoveset moveset = BreathingStyleHelper.getMoveset(player);
+        AbstractMoveset moveset = MovesetHelper.getMoveset(player);
         if (moveset == null) {
             player.displayClientMessage(
                     Component.literal("You need a breathing style to use moves!")

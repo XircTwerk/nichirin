@@ -1,10 +1,9 @@
 package com.xirc.nichirin.common.util;
 
 import com.xirc.nichirin.common.attack.moves.thunder.ThunderClapFlashAttack;
-import com.xirc.nichirin.common.data.BreathingStyleHelper;
+import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
-import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.event.events.common.TickEvent;
 import dev.architectury.networking.NetworkManager;
@@ -17,7 +16,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.fabricmc.api.EnvType;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -140,7 +138,7 @@ public class KatanaInputHandler {
 
             // Get move name for feedback
             String moveName = null;
-            var moveset = BreathingStyleHelper.getMoveset(player);
+            var moveset = MovesetHelper.getMoveset(player);
             if (moveset != null) {
                 if (crouch) {
                     moveName = moveset.getCrouchRightClickMoveName();

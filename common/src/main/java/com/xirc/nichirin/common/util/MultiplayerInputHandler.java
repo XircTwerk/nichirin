@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.util;
 
 import com.xirc.nichirin.common.network.c2s.BreathingMovePacket;
+import com.xirc.nichirin.common.network.c2s.DemonMovePacket;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
@@ -13,7 +14,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Handles all multiplayer input for katanas and breathing moves
+ * Handles all multiplayer input for katanas, breathing moves, and demon arts
  */
 public class MultiplayerInputHandler {
 
@@ -126,6 +127,17 @@ public class MultiplayerInputHandler {
     }
 
     /**
+     * CLIENT: Send demon move to server (use same packet system as breathing)
+     */
+    public static void sendDemonMove(int moveIndex, Player player) {
+        if (player.level().isClientSide) {
+            // Use the DemonMovePacket system (similar to BreathingMovePacket)
+            var packet = new DemonMovePacket(moveIndex, true);
+            com.xirc.nichirin.registry.NichirinPacketRegistry.sendToServer(packet);
+        }
+    }
+
+    /**
      * SERVER: Check if player inputs should be blocked
      */
     public static boolean shouldBlockInputsServer(Player player) {
@@ -148,14 +160,23 @@ public class MultiplayerInputHandler {
     }
 
     /**
-     * SERVER: Block inputs after breathing move execution
+     * SERVER: Block inputs after move execution (breathing or demon)
      */
-    public static void blockInputsAfterBreathingMove(Player player) {
+    public static void blockInputsAfterMoveExecution(Player player) {
         if (!player.level().isClientSide) {
             PlayerInputState state = getOrCreatePlayerState(player);
             state.inputBlocked = true;
             state.blockUntilTime = player.level().getGameTime() + 40; // 2 seconds (40 ticks)
         }
+    }
+
+    /**
+     * Legacy method for backwards compatibility
+     * @deprecated Use blockInputsAfterMoveExecution instead
+     */
+    @Deprecated
+    public static void blockInputsAfterBreathingMove(Player player) {
+        blockInputsAfterMoveExecution(player);
     }
 
     /**
@@ -202,8 +223,6 @@ public class MultiplayerInputHandler {
                 executeKatanaInput(player, inputType);
             });
         });
-
-        // Breathing move handling - REMOVED (use existing BreathingMovePacket system)
     }
 
     /**

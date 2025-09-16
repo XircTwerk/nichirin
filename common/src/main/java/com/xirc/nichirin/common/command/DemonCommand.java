@@ -21,33 +21,33 @@ import net.minecraft.server.level.ServerPlayer;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Breathing commands for managing player breathing techniques
- * Usage: /breathing give <player> <style> [set] - Give a breathing style with optional set flag
- *        /breathing set <player> <style> - Set active style (only if unlocked)
- *        /breathing cooldown <player> - Reset all breathing move cooldowns
+ * Demon commands for managing player demon arts
+ * Usage: /demon give <player> <art> [set] - Give a demon art with optional set flag
+ *        /demon set <player> <art> - Set active art (only if unlocked)
+ *        /demon cooldown <player> - Reset all demon art cooldowns
  */
-public class BreathingCommand {
+public class DemonCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("breathing")
+        dispatcher.register(Commands.literal("demon")
                 .requires(source -> source.hasPermission(2)) // Requires op level 2
 
-                // /breathing give <player> <style> [set] - Give style with optional set flag (default true)
+                // /demon give <player> <art> [set] - Give art with optional set flag (default true)
                 .then(Commands.literal("give")
                         .then(Commands.argument("player", EntityArgument.player())
-                                .then(Commands.argument("style", StringArgumentType.string())
-                                        .suggests(BreathingCommand::suggestBreathingStyles)
-                                        .executes(context -> giveBreathingStyle(
+                                .then(Commands.argument("art", StringArgumentType.string())
+                                        .suggests(DemonCommand::suggestDemonArts)
+                                        .executes(context -> giveDemonArt(
                                                 context,
                                                 EntityArgument.getPlayer(context, "player"),
-                                                StringArgumentType.getString(context, "style"),
+                                                StringArgumentType.getString(context, "art"),
                                                 true // Default: set active
                                         ))
                                         .then(Commands.argument("set", BoolArgumentType.bool())
-                                                .executes(context -> giveBreathingStyle(
+                                                .executes(context -> giveDemonArt(
                                                         context,
                                                         EntityArgument.getPlayer(context, "player"),
-                                                        StringArgumentType.getString(context, "style"),
+                                                        StringArgumentType.getString(context, "art"),
                                                         BoolArgumentType.getBool(context, "set")
                                                 ))
                                         )
@@ -55,21 +55,21 @@ public class BreathingCommand {
                         )
                 )
 
-                // /breathing set <player> <style> - Set active style (only if unlocked)
+                // /demon set <player> <art> - Set active art (only if unlocked)
                 .then(Commands.literal("set")
                         .then(Commands.argument("player", EntityArgument.player())
-                                .then(Commands.argument("style", StringArgumentType.string())
-                                        .suggests((context, builder) -> suggestUnlockedBreathingStyles(context, builder, EntityArgument.getPlayer(context, "player")))
-                                        .executes(context -> setBreathingStyle(
+                                .then(Commands.argument("art", StringArgumentType.string())
+                                        .suggests((context, builder) -> suggestUnlockedDemonArts(context, builder, EntityArgument.getPlayer(context, "player")))
+                                        .executes(context -> setDemonArt(
                                                 context,
                                                 EntityArgument.getPlayer(context, "player"),
-                                                StringArgumentType.getString(context, "style")
+                                                StringArgumentType.getString(context, "art")
                                         ))
                                 )
                         )
                 )
 
-                // /breathing cooldown <player> - Reset all cooldowns
+                // /demon cooldown <player> - Reset all cooldowns
                 .then(Commands.literal("cooldown")
                         .then(Commands.argument("player", EntityArgument.player())
                                 .executes(context -> resetAllCooldowns(
@@ -82,70 +82,70 @@ public class BreathingCommand {
     }
 
     /**
-     * Gives (unlocks and optionally sets) a breathing style to a player
+     * Gives (unlocks and optionally sets) a demon art to a player
      */
-    private static int giveBreathingStyle(CommandContext<CommandSourceStack> context, ServerPlayer player, String style, boolean setActive) {
+    private static int giveDemonArt(CommandContext<CommandSourceStack> context, ServerPlayer player, String art, boolean setActive) {
         CommandSourceStack source = context.getSource();
         final String playerName = player.getName().getString();
-        final String formattedStyleName = formatStyleName(style);
+        final String formattedArtName = formatArtName(art);
 
-        // Check if it's a breathing style
-        if (!isBreathingStyle(style)) {
-            source.sendFailure(Component.literal(style + " is not a breathing technique")
+        // Check if it's a demon art
+        if (!isDemonArt(art)) {
+            source.sendFailure(Component.literal(art + " is not a demon art")
                     .withStyle(s -> s.withColor(0xFF5555)));
             return 0;
         }
 
-        // Check if the style exists
-        if (!MovesetRegistry.isRegistered(style)) {
-            source.sendFailure(Component.literal("Unknown breathing style: " + style)
+        // Check if the art exists
+        if (!MovesetRegistry.isRegistered(art)) {
+            source.sendFailure(Component.literal("Unknown demon art: " + art)
                     .withStyle(s -> s.withColor(0xFF5555)));
             return 0;
         }
 
-        // Check if player already has this style unlocked
-        if (ProgressionHelper.isMovesetUnlocked(player, style)) {
-            source.sendFailure(Component.literal(playerName + " already has " + formattedStyleName + " unlocked")
+        // Check if player already has this art unlocked
+        if (ProgressionHelper.isMovesetUnlocked(player, art)) {
+            source.sendFailure(Component.literal(playerName + " already has " + formattedArtName + " unlocked")
                     .withStyle(s -> s.withColor(0xFFAA00)));
             return 0;
         }
 
         // If setActive is true, also check if it's currently active (additional check)
         if (setActive) {
-            String currentStyle = PlayerDataProvider.getData(player).getMovesetData().getMovesetId();
-            if (style.equals(currentStyle)) {
-                source.sendFailure(Component.literal(playerName + " already has " + formattedStyleName + " active")
+            String currentArt = PlayerDataProvider.getData(player).getMovesetData().getMovesetId();
+            if (art.equals(currentArt)) {
+                source.sendFailure(Component.literal(playerName + " already has " + formattedArtName + " active")
                         .withStyle(s -> s.withColor(0xFFAA00)));
                 return 0;
             }
         }
 
-        // Unlock the style (this will trigger advancement if applicable)
-        ProgressionHelper.unlockMoveset(player, style);
+        // Unlock the art (this will trigger advancement if applicable)
+        ProgressionHelper.unlockMoveset(player, art);
 
         // Set it as active if requested
         if (setActive) {
-            PlayerDataProvider.updateAndSync(player, style);
+            PlayerDataProvider.updateAndSync(player, art);
 
             // Send success message for give + set
-            source.sendSuccess(() -> Component.literal("Gave and activated " + formattedStyleName + " for " + playerName)
+            source.sendSuccess(() -> Component.literal("Gave and activated " + formattedArtName + " for " + playerName)
                     .withStyle(s -> s.withColor(0x55FF55)), true);
 
             // Notify the player
             player.displayClientMessage(
-                    Component.literal("You have been granted " + formattedStyleName + "!")
-                            .withStyle(s -> s.withColor(0x55FFFF)),
+                    Component.literal("You have been granted " + formattedArtName + "!")
+                            .withStyle(s -> s.withColor(0xFF5555)), // Red for demon
                     false
             );
         } else {
             // Send success message for unlock only
-            source.sendSuccess(() -> Component.literal("Unlocked " + formattedStyleName + " for " + playerName + " (not set as active)")
+            source.sendSuccess(() -> Component.literal("Unlocked " + formattedArtName + " for " + playerName + " (not set as active)")
                     .withStyle(s -> s.withColor(0x55FF55)), true);
 
             // Notify the player
             player.displayClientMessage(
-                    Component.literal("You have unlocked " + formattedStyleName + "! Use the GUI to set it active.")
-                            .withStyle(s -> s.withColor(0x55FFFF)),
+                    Component.literal("You have unlocked " + formattedArtName + "! Use the GUI to set it active.")
+                            .withStyle(s -> s.withColor(0xFF5555)), // Red for demon
                     false
             );
         }
@@ -154,51 +154,51 @@ public class BreathingCommand {
     }
 
     /**
-     * Sets a breathing style for a player (only if unlocked)
+     * Sets a demon art for a player (only if unlocked)
      */
-    private static int setBreathingStyle(CommandContext<CommandSourceStack> context, ServerPlayer player, String style) {
+    private static int setDemonArt(CommandContext<CommandSourceStack> context, ServerPlayer player, String art) {
         CommandSourceStack source = context.getSource();
 
-        // Check if it's a breathing style
-        if (!isBreathingStyle(style)) {
-            source.sendFailure(Component.literal(style + " is not a breathing technique")
+        // Check if it's a demon art
+        if (!isDemonArt(art)) {
+            source.sendFailure(Component.literal(art + " is not a demon art")
                     .withStyle(s -> s.withColor(0xFF5555)));
             return 0;
         }
 
-        // Check if the style exists
-        if (!MovesetRegistry.isRegistered(style)) {
-            source.sendFailure(Component.literal("Unknown breathing style: " + style)
+        // Check if the art exists
+        if (!MovesetRegistry.isRegistered(art)) {
+            source.sendFailure(Component.literal("Unknown demon art: " + art)
                     .withStyle(s -> s.withColor(0xFF5555)));
             return 0;
         }
 
-        // Check if player has unlocked this style
-        if (!ProgressionHelper.isMovesetUnlocked(player, style)) {
-            source.sendFailure(Component.literal(player.getName().getString() + " has not unlocked " + formatStyleName(style))
+        // Check if player has unlocked this art
+        if (!ProgressionHelper.isMovesetUnlocked(player, art)) {
+            source.sendFailure(Component.literal(player.getName().getString() + " has not unlocked " + formatArtName(art))
                     .withStyle(s -> s.withColor(0xFF5555)));
             return 0;
         }
 
         // Check if already active
-        String currentStyle = PlayerDataProvider.getData(player).getMovesetData().getMovesetId();
-        if (style.equals(currentStyle)) {
-            source.sendFailure(Component.literal(player.getName().getString() + " already has " + formatStyleName(style) + " active")
+        String currentArt = PlayerDataProvider.getData(player).getMovesetData().getMovesetId();
+        if (art.equals(currentArt)) {
+            source.sendFailure(Component.literal(player.getName().getString() + " already has " + formatArtName(art) + " active")
                     .withStyle(s -> s.withColor(0xFFAA00)));
             return 0;
         }
 
         // Set it as active
-        PlayerDataProvider.updateAndSync(player, style);
+        PlayerDataProvider.updateAndSync(player, art);
 
         // Send success message
-        source.sendSuccess(() -> Component.literal("Set " + player.getName().getString() + "'s breathing style to " + formatStyleName(style))
+        source.sendSuccess(() -> Component.literal("Set " + player.getName().getString() + "'s demon art to " + formatArtName(art))
                 .withStyle(s -> s.withColor(0x55FF55)), true);
 
         // Notify the player
         player.displayClientMessage(
-                Component.literal("Your breathing style is now " + formatStyleName(style))
-                        .withStyle(s -> s.withColor(0x55FFFF)),
+                Component.literal("Your demon art is now " + formatArtName(art))
+                        .withStyle(s -> s.withColor(0xFF5555)), // Red for demon
                 false
         );
 
@@ -206,7 +206,7 @@ public class BreathingCommand {
     }
 
     /**
-     * Resets all breathing move cooldowns for a player
+     * Resets all demon art cooldowns for a player
      */
     private static int resetAllCooldowns(CommandContext<CommandSourceStack> context, ServerPlayer player) {
         CommandSourceStack source = context.getSource();
@@ -235,7 +235,7 @@ public class BreathingCommand {
 
         player.displayClientMessage(
                 Component.literal("All your cooldowns have been reset!")
-                        .withStyle(s -> s.withColor(0x55FFFF)),
+                        .withStyle(s -> s.withColor(0xFF5555)), // Red for demon
                 false
         );
 
@@ -243,13 +243,13 @@ public class BreathingCommand {
     }
 
     /**
-     * Suggests only breathing styles
+     * Suggests only demon arts
      */
-    private static CompletableFuture<Suggestions> suggestBreathingStyles(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
+    private static CompletableFuture<Suggestions> suggestDemonArts(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
         String input = builder.getRemaining().toLowerCase();
 
         for (String movesetId : MovesetRegistry.getAllMovesetIds()) {
-            if (isBreathingStyle(movesetId) && movesetId.toLowerCase().startsWith(input)) {
+            if (isDemonArt(movesetId) && movesetId.toLowerCase().startsWith(input)) {
                 builder.suggest(movesetId);
             }
         }
@@ -258,14 +258,14 @@ public class BreathingCommand {
     }
 
     /**
-     * Suggests only unlocked breathing styles for a specific player
+     * Suggests only unlocked demon arts for a specific player
      */
-    private static CompletableFuture<Suggestions> suggestUnlockedBreathingStyles(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder, ServerPlayer player) {
+    private static CompletableFuture<Suggestions> suggestUnlockedDemonArts(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder, ServerPlayer player) {
         String input = builder.getRemaining().toLowerCase();
         var progression = PlayerDataProvider.getData(player).getProgression();
 
         for (String movesetId : MovesetRegistry.getAllMovesetIds()) {
-            if (isBreathingStyle(movesetId) &&
+            if (isDemonArt(movesetId) &&
                     progression.isMovesetUnlocked(movesetId) &&
                     movesetId.toLowerCase().startsWith(input)) {
                 builder.suggest(movesetId);
@@ -276,17 +276,17 @@ public class BreathingCommand {
     }
 
     /**
-     * Check if a moveset ID is a breathing style
+     * Check if a moveset ID is a demon art
      */
-    private static boolean isBreathingStyle(String movesetId) {
-        return movesetId.contains("breathing");
+    private static boolean isDemonArt(String movesetId) {
+        return movesetId.contains("demon");
     }
 
     /**
-     * Formats a breathing style ID for display
+     * Formats a demon art ID for display
      */
-    private static String formatStyleName(String styleId) {
-        String[] parts = styleId.split("_");
+    private static String formatArtName(String artId) {
+        String[] parts = artId.split("_");
         StringBuilder formatted = new StringBuilder();
         for (String part : parts) {
             if (formatted.length() > 0) formatted.append(" ");

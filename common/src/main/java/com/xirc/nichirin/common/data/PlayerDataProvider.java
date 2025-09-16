@@ -1,7 +1,7 @@
 package com.xirc.nichirin.common.data;
 
 import com.xirc.nichirin.common.network.s2c.ProgressionSyncPacket;
-import com.xirc.nichirin.common.network.util.BreathingStyleSyncPacket;
+import com.xirc.nichirin.common.network.util.MovesetSyncPacket;
 import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.event.events.common.TickEvent;
 import net.minecraft.server.level.ServerPlayer;
@@ -12,9 +12,8 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Provides and manages player data including breathing styles, progression, and statistics
+ * Provides and manages player data including movesets, progression, and statistics
  * Uses Architectury events for cross-platform compatibility
- * FIXED: All instanceof ServerPlayer checks removed to prevent compiler warnings
  */
 public class PlayerDataProvider {
 
@@ -26,18 +25,27 @@ public class PlayerDataProvider {
     public static PlayerData getData(Player player) {
         PlayerData data = PLAYER_DATA.computeIfAbsent(player.getUUID(), k -> new PlayerData());
         // Set player reference for modifiers and statistics
-        data.getBreathingStyleData().setPlayer(player);
+        data.getMovesetData().setPlayer(player);
         return data;
     }
 
     /**
-     * Gets breathing style data for a player (for backwards compatibility)
+     * Gets moveset data for a player
      */
-    public static BreathingStyleData getBreathingStyleData(Player player) {
+    public static MovesetData getMovesetData(Player player) {
         PlayerData data = getData(player);
         // Ensure player reference is set
-        data.getBreathingStyleData().setPlayer(player);
-        return data.getBreathingStyleData();
+        data.getMovesetData().setPlayer(player);
+        return data.getMovesetData();
+    }
+
+    /**
+     * Legacy getter for backwards compatibility
+     * @deprecated Use getMovesetData() instead
+     */
+    @Deprecated
+    public static MovesetData getBreathingStyleData(Player player) {
+        return getMovesetData(player);
     }
 
     /**
@@ -56,14 +64,17 @@ public class PlayerDataProvider {
 
             // Get the loaded data and set player reference
             PlayerData data = getData(serverPlayer);
-            data.getBreathingStyleData().setPlayer(serverPlayer);
+            data.getMovesetData().setPlayer(serverPlayer);
 
             // Re-apply all modifiers after loading
-            var moveset = data.getBreathingStyleData().getMoveset();
+            var moveset = data.getMovesetData().getMoveset();
             if (moveset != null) {
-                moveset.applyAllModifiers(serverPlayer);
-                // Record style as equipped for time tracking
-                data.getStatistics().onStyleEquipped(moveset.getMovesetId());
+                // Only apply modifiers for breathing techniques
+                if (moveset.isBreathingMoveset()) {
+                    moveset.applyAllModifiers(serverPlayer);
+                }
+                // Record moveset as equipped for time tracking
+                data.getStatistics().onMovesetEquipped(moveset.getMovesetId());
             }
 
             // CRITICAL: Sync to client AFTER data is loaded and applied
@@ -81,7 +92,7 @@ public class PlayerDataProvider {
             PlayerData data = PLAYER_DATA.get(serverPlayer.getUUID());
             if (data != null) {
                 data.getStatistics().updateTimeTracking();
-                data.getBreathingStyleData().cleanup();
+                data.getMovesetData().cleanup();
 
                 // Save data before removing from memory
                 savePlayerData(serverPlayer);
@@ -91,7 +102,7 @@ public class PlayerDataProvider {
             PLAYER_DATA.remove(serverPlayer.getUUID());
         });
 
-        // Handle player respawn - FIXED: Proper data handling
+        // Handle player respawn
         PlayerEvent.PLAYER_RESPAWN.register((newPlayer, conqueredEnd) -> {
             // Only process server players
             if (newPlayer.level().isClientSide()) return;
@@ -101,19 +112,22 @@ public class PlayerDataProvider {
             // IMPORTANT: Don't reload from disk, data should persist in memory
             // Just ensure player reference is correct and reapply modifiers
             PlayerData data = getData(serverPlayer);
-            data.getBreathingStyleData().setPlayer(serverPlayer);
+            data.getMovesetData().setPlayer(serverPlayer);
 
-            var moveset = data.getBreathingStyleData().getMoveset();
+            var moveset = data.getMovesetData().getMoveset();
             if (moveset != null) {
-                moveset.applyAllModifiers(serverPlayer);
-                data.getStatistics().onStyleEquipped(moveset.getMovesetId());
+                // Only apply modifiers for breathing techniques
+                if (moveset.isBreathingMoveset()) {
+                    moveset.applyAllModifiers(serverPlayer);
+                }
+                data.getStatistics().onMovesetEquipped(moveset.getMovesetId());
             }
 
             // Sync to client
             syncToClient(serverPlayer);
         });
 
-        // Handle player clone (dimension change) - FIXED: Better data copying
+        // Handle player clone (dimension change)
         PlayerEvent.PLAYER_CLONE.register((oldPlayer, newPlayer, wasDeath) -> {
             // Only process server players
             if (newPlayer.level().isClientSide()) return;
@@ -125,23 +139,26 @@ public class PlayerDataProvider {
             if (oldData != null) {
                 // Update time tracking and cleanup old player's modifiers
                 oldData.getStatistics().updateTimeTracking();
-                oldData.getBreathingStyleData().cleanup();
+                oldData.getMovesetData().cleanup();
 
                 // Create new data for new player and copy from old
                 PlayerData newData = new PlayerData();
                 newData.copyFrom(oldData);
 
                 // Set the new player reference
-                newData.getBreathingStyleData().setPlayer(serverPlayer);
+                newData.getMovesetData().setPlayer(serverPlayer);
 
                 // Store the new data
                 PLAYER_DATA.put(serverPlayer.getUUID(), newData);
 
                 // Apply modifiers to new player
-                var moveset = newData.getBreathingStyleData().getMoveset();
+                var moveset = newData.getMovesetData().getMoveset();
                 if (moveset != null) {
-                    moveset.applyAllModifiers(serverPlayer);
-                    newData.getStatistics().onStyleEquipped(moveset.getMovesetId());
+                    // Only apply modifiers for breathing techniques
+                    if (moveset.isBreathingMoveset()) {
+                        moveset.applyAllModifiers(serverPlayer);
+                    }
+                    newData.getStatistics().onMovesetEquipped(moveset.getMovesetId());
                 }
 
                 // Save to persistent data
@@ -163,7 +180,7 @@ public class PlayerDataProvider {
                 for (ServerPlayer player : server.getPlayerList().getPlayers()) {
                     PlayerData data = PLAYER_DATA.get(player.getUUID());
                     if (data != null) {
-                        // Update time tracking for equipped styles
+                        // Update time tracking for equipped movesets
                         data.getStatistics().updateTimeTracking();
                         // Save periodically
                         savePlayerData(player);
@@ -190,7 +207,7 @@ public class PlayerDataProvider {
         PlayerData data = PLAYER_DATA.get(player.getUUID());
         if (data != null) {
             data.getStatistics().updateTimeTracking();
-            data.getBreathingStyleData().cleanup();
+            data.getMovesetData().cleanup();
         }
         PLAYER_DATA.remove(player.getUUID());
     }
@@ -199,21 +216,21 @@ public class PlayerDataProvider {
         // Cleanup all modifiers and update time tracking
         for (PlayerData data : PLAYER_DATA.values()) {
             data.getStatistics().updateTimeTracking();
-            data.getBreathingStyleData().cleanup();
+            data.getMovesetData().cleanup();
         }
         PLAYER_DATA.clear();
     }
 
     /**
-     * Syncs breathing style data to client - IMPROVED with null checks
+     * Syncs moveset data to client
      */
     private static void syncToClient(ServerPlayer player) {
         try {
             PlayerData data = getData(player);
-            String movesetId = data.getBreathingStyleData().getMovesetId();
+            String movesetId = data.getMovesetData().getMovesetId();
 
-            // Send breathing style sync
-            BreathingStyleSyncPacket.sendToPlayer(player, movesetId);
+            // Send moveset sync (renamed from BreathingStyleSyncPacket)
+            MovesetSyncPacket.sendToPlayer(player, movesetId);
 
             ProgressionSyncPacket.sendToPlayer(player);
 
@@ -223,14 +240,14 @@ public class PlayerDataProvider {
     }
 
     /**
-     * Updates player breathing style data and syncs to client - IMPROVED with validation
+     * Updates player moveset data and syncs to client
      */
     public static void updateAndSync(ServerPlayer player, String movesetId) {
         try {
             PlayerData data = getData(player);
-            String previousMoveset = data.getBreathingStyleData().getMovesetId();
+            String previousMoveset = data.getMovesetData().getMovesetId();
 
-            data.getBreathingStyleData().setMovesetId(movesetId);
+            data.getMovesetData().setMovesetId(movesetId);
             savePlayerData(player);
             syncToClient(player);
 
@@ -242,9 +259,9 @@ public class PlayerDataProvider {
     /**
      * Records technique usage for statistics
      */
-    public static void recordTechniqueUsage(Player player, String styleId) {
+    public static void recordTechniqueUsage(Player player, String movesetId) {
         try {
-            getData(player).getStatistics().recordTechniqueUsage(styleId);
+            getData(player).getStatistics().recordTechniqueUsage(movesetId);
         } catch (Exception e) {
             System.err.println("Failed to record technique usage: " + e.getMessage());
         }
@@ -253,9 +270,9 @@ public class PlayerDataProvider {
     /**
      * Records damage dealt for statistics
      */
-    public static void recordDamageDealt(Player player, String styleId, int damage) {
+    public static void recordDamageDealt(Player player, String movesetId, int damage) {
         try {
-            getData(player).getStatistics().recordDamageDealt(styleId, damage);
+            getData(player).getStatistics().recordDamageDealt(movesetId, damage);
         } catch (Exception e) {
             System.err.println("Failed to record damage dealt: " + e.getMessage());
         }
@@ -264,9 +281,9 @@ public class PlayerDataProvider {
     /**
      * Updates combo tracking
      */
-    public static void updateComboChain(Player player, String styleId, int comboLength) {
+    public static void updateComboChain(Player player, String movesetId, int comboLength) {
         try {
-            getData(player).getStatistics().updateComboChain(styleId, comboLength);
+            getData(player).getStatistics().updateComboChain(movesetId, comboLength);
         } catch (Exception e) {
             System.err.println("Failed to update combo chain: " + e.getMessage());
         }
@@ -312,7 +329,7 @@ public class PlayerDataProvider {
         // Cleanup all modifiers and update time tracking
         for (PlayerData data : PLAYER_DATA.values()) {
             data.getStatistics().updateTimeTracking();
-            data.getBreathingStyleData().cleanup();
+            data.getMovesetData().cleanup();
         }
         PLAYER_DATA.clear();
     }

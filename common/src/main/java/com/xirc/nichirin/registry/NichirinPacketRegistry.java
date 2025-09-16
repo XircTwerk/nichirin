@@ -43,6 +43,8 @@ public interface NichirinPacketRegistry {
     ResourceLocation HITBOX_PACKET_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "hitbox_data");
     ResourceLocation MOVE_HOTKEY_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "move_hotkey");
     ResourceLocation SYNC_PROGRESSION_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "sync_progression");
+    ResourceLocation DEMON_MOVE_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "demon_move");
+
 
 
     // Packet class mappings
@@ -54,6 +56,7 @@ public interface NichirinPacketRegistry {
         // Map packet classes to IDs
         PACKET_IDS.put(DoubleJumpPacket.class, DOUBLE_JUMP_ID);
         PACKET_IDS.put(BreathingMovePacket.class, BREATHING_MOVE_ID);
+        PACKET_IDS.put(DemonMovePacket.class, DEMON_MOVE_ID);
         PACKET_IDS.put(BreathingEffectPacket.class, BREATHING_EFFECT_ID);
         PACKET_IDS.put(SyncBreathPacket.class, SYNC_BREATH_ID);
         PACKET_IDS.put(StaminaSyncPacket.class, SYNC_STAMINA_ID);
@@ -98,6 +101,13 @@ public interface NichirinPacketRegistry {
 
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, BREATHING_MOVE_ID, (buf, context) -> {
             BreathingMovePacket packet = new BreathingMovePacket(buf);
+            if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
+                context.queue(() -> packet.handle(serverPlayer));
+            }
+        });
+
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, DEMON_MOVE_ID, (buf, context) -> {
+            DemonMovePacket packet = new DemonMovePacket(buf);
             if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
                 context.queue(() -> packet.handle(serverPlayer));
             }
@@ -420,6 +430,8 @@ public interface NichirinPacketRegistry {
         } else if (packet instanceof MovementInputSyncPacket p) {
             p.toBytes(buf);
         } else if (packet instanceof MoveHotkeyPacket p) {
+            p.toBytes(buf);
+        } else if (packet instanceof DemonMovePacket p) {
             p.toBytes(buf);
         }
 

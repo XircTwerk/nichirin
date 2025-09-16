@@ -1,7 +1,7 @@
 package com.xirc.nichirin.client.gui.biggui;
 
-import com.xirc.nichirin.common.data.BreathingStyleHelper;
-import com.xirc.nichirin.common.data.BreathingStyleProgression;
+import com.xirc.nichirin.common.data.MovesetHelper;
+import com.xirc.nichirin.common.data.MovesetProgression;
 import com.xirc.nichirin.common.data.ProgressionHelper;
 import com.xirc.nichirin.common.util.PlayerStats;
 import net.minecraft.client.gui.Font;
@@ -40,7 +40,7 @@ public class HomeSection {
         // === Player Stats Section ===
         int statsY = contentY + 120 + modelSize + 20; // Fixed position independent of modelY
         int statLineHeight = 16;
-        BreathingStyleProgression progression = ProgressionHelper.getProgression(player);
+        MovesetProgression progression = ProgressionHelper.getProgression(player);
 
         // Title
         Component statsTitle = Component.translatable("gui.nichirin.home.player_stats").withStyle(style -> style.withBold(true));
@@ -59,7 +59,7 @@ public class HomeSection {
         statsY += statLineHeight;
 
         // Breathing style
-        String breathingStyle = BreathingStyleHelper.getMovesetId(player);
+        String breathingStyle = MovesetHelper.getMovesetId(player);
         String breathingStyleDisplay = breathingStyle != null ?
                 Component.translatable("breathing_style." + breathingStyle).getString() :
                 Component.translatable("gui.nichirin.home.none").getString();

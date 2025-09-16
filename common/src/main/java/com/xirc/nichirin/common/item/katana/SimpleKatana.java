@@ -3,7 +3,7 @@ package com.xirc.nichirin.common.item.katana;
 import com.xirc.nichirin.client.gui.CooldownHUD;
 import com.xirc.nichirin.common.attack.moves.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
-import com.xirc.nichirin.common.data.BreathingStyleHelper;
+import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.util.AnimationUtils;
 import com.xirc.nichirin.common.util.StaminaManager;
 import com.xirc.nichirin.common.util.MultiplayerInputHandler;
@@ -168,7 +168,7 @@ public class SimpleKatana extends SwordItem {
         }
 
         // Check if moveset wants to override left-click
-        AbstractMoveset moveset = BreathingStyleHelper.getMoveset(player);
+        AbstractMoveset moveset = MovesetHelper.getMoveset(player);
         if (moveset != null && moveset.handleLeftClick(player)) {
             if (!canPerformAttack(player)) {
                 return;
@@ -274,7 +274,7 @@ public class SimpleKatana extends SwordItem {
         }
 
         // Check if moveset wants to override right-click
-        AbstractMoveset moveset = BreathingStyleHelper.getMoveset(player);
+        AbstractMoveset moveset = MovesetHelper.getMoveset(player);
         if (moveset != null && moveset.handleRightClick(player, isCrouching)) {
             if (!canPerformAttack(player)) {
                 return InteractionResultHolder.pass(player.getItemInHand(hand));
@@ -425,7 +425,7 @@ public class SimpleKatana extends SwordItem {
         if (!player.level().isClientSide) return;
 
         // Check if player has a breathing style that will handle this
-        AbstractMoveset moveset = BreathingStyleHelper.getMoveset(player);
+        AbstractMoveset moveset = MovesetHelper.getMoveset(player);
         if (moveset != null) {
             // Don't display default cooldowns - let the breathing system handle it
             return;
