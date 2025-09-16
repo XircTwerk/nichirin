@@ -73,7 +73,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                         .withTiming(180, 15, 30) // 9 second cooldown, root during windup
                         .withDamage(6.0f) // 6 hits = 36 total damage
                         .withRange(6.0f) // Lock-on range
-                        .withKnockback(0.05f) // Minimal knockback to keep target close
+                        .withKnockback(0.01f) // Minimal knockback to keep target close
                         .withBreathCost(30.0f) // Higher cost for multi-hit
                         .withHitStun(5) // Very short per hit, final hit has more
                         .withHitboxSize(2.0f) // Target lock area
