@@ -4,6 +4,7 @@ import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.water.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.util.BreathingManager;
+import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
@@ -17,11 +18,11 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Water Breathing moveset implementation
+ * Water Breathing moveset implementation with manual combo system
  * Water Breathing excels at close-range pressure with high average damage and lenient hitboxes
  * Features telegraphed mobility options and continuous pressure attacks
  *
- * Right-click: Water Surface Slash (quick horizontal slash)
+ * Right-click: Water Surface Slash combo (3-stage combo system)
  * Crouch + Right-click: Water Wheel (lunging wheel attack)
  */
 public class WaterBreathingMoveset extends AbstractMoveset {
@@ -32,8 +33,36 @@ public class WaterBreathingMoveset extends AbstractMoveset {
     // Track active attacks to prevent breath consumption on failed attempts
     private static final Map<UUID, Boolean> executingMove = new HashMap<>();
 
+    // Manual combo system
+    private static final Map<UUID, ComboState> playerComboStates = new HashMap<>();
+
     // Thread-local to store current moveset instance for action access
     private static final ThreadLocal<WaterBreathingMoveset> CURRENT_MOVESET = new ThreadLocal<>();
+
+    // Combo state tracking
+    private static class ComboState {
+        int currentStage = 0;
+        long lastAttackTime = 0;
+        long comboWindow = 1000; // 1 second window to continue combo
+
+        boolean canContinueCombo() {
+            return System.currentTimeMillis() - lastAttackTime <= comboWindow;
+        }
+
+        void updateAttackTime() {
+            lastAttackTime = System.currentTimeMillis();
+        }
+
+        void reset() {
+            currentStage = 0;
+            lastAttackTime = 0;
+        }
+
+        void nextStage() {
+            currentStage++;
+            updateAttackTime();
+        }
+    }
 
     public WaterBreathingMoveset() {
         super("water_breathing", "Water Breathing", MovesetType.BREATHING, createBuilder());
@@ -234,33 +263,112 @@ public class WaterBreathingMoveset extends AbstractMoveset {
 
     @Override
     public boolean handleRightClick(Player player, boolean isCrouching) {
+        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+            return true; // Block the move by overriding
+        }
+
         if (isCrouching) {
-            // Crouch + Right-click: Water Wheel
+            // Crouch + Right-click: Water Wheel (separate from combo)
             return executeWaterWheel(player);
         } else {
-            // Regular Right-click: Water Surface Slash
-            return executeWaterSurfaceSlash(player);
+            // Regular Right-click: Water Surface Slash combo system
+            return executeWaterSurfaceSlashCombo(player);
         }
     }
 
-    private boolean executeWaterSurfaceSlash(Player player) {
+    private boolean executeWaterSurfaceSlashCombo(Player player) {
+        ComboState comboState = playerComboStates.computeIfAbsent(player.getUUID(), k -> new ComboState());
+
+        int nextStage;
+
+        if (comboState.currentStage == 0 || !comboState.canContinueCombo()) {
+            // Start new combo or restart if window expired
+            nextStage = 1;
+            comboState.reset();
+        } else {
+            // Continue existing combo
+            nextStage = comboState.currentStage + 1;
+        }
+
+        // Cap at stage 3
+        if (nextStage > 3) {
+            comboState.reset();
+            nextStage = 1;
+        }
+
+        // Execute the appropriate stage
+        boolean success = executeWaterSurfaceSlashStage(player, nextStage);
+
+        if (success) {
+            comboState.currentStage = nextStage;
+            comboState.updateAttackTime();
+
+            // Reset combo after final stage
+            if (nextStage == 3) {
+                comboState.reset();
+            }
+        } else {
+        }
+
+        return success;
+    }
+
+    private boolean executeWaterSurfaceSlashStage(Player player, int stage) {
+
         WaterSurfaceSlashAttack attack = new WaterSurfaceSlashAttack();
+        attack.setComboStage(stage);
 
-        MoveConfiguration tempConfig = new MoveBuilder("water_surface_slash", "Water Surface Slash")
-                .withAnimation("nichirin:water_surface_slash", 6)
-                .withTiming(0, 0, 8) // No cooldown, instant, 8 ticks
-                .withDamage(5.0f)
-                .withRange(3.5f)
-                .withKnockback(0.2f)
-                .withBreathCost(8.0f)
-                .withHitStun(10)
-                .withHitboxSize(3.0f)
-                .build();
+        // Different configurations for each stage
+        MoveConfiguration config = createStageConfig(stage);
 
-        attack.configure(tempConfig);
-        MoveExecutor.executeAttack(player, attack, "water_breathing", "water_surface_slash");
+        attack.configure(config);
+
+        MoveExecutor.executeAttack(player, attack, "water_breathing", "water_surface_slash_stage_" + stage);
         onMovePerformed(player, -1, false);
+
         return true;
+    }
+
+    private MoveConfiguration createStageConfig(int stage) {
+        switch (stage) {
+            case 1 -> {
+                return new MoveBuilder("water_surface_slash_1", "Water Surface Slash I")
+                        .withAnimation("nichirin:water_surface_slash", 6)
+                        .withTiming(0, 0, 18) // No cooldown, instant, 18 ticks duration
+                        .withDamage(5.0f)
+                        .withRange(3.5f)
+                        .withKnockback(0f) // No knockback for first hit
+                        .withBreathCost(8.0f)
+                        .withHitStun(20)
+                        .withHitboxSize(3.0f)
+                        .build();
+            }
+            case 2 -> {
+                return new MoveBuilder("water_surface_slash_2", "Water Surface Slash II")
+                        .withAnimation("nichirin:water_surface_slash_2", 6)
+                        .withTiming(0, 0, 18) // No windup, 18 tick duration
+                        .withDamage(6.0f) // Slightly more damage
+                        .withRange(3.5f)
+                        .withKnockback(0f) // Still no knockback
+                        .withBreathCost(10.0f) // Higher breath cost
+                        .withHitStun(22) // Slightly more stun
+                        .withHitboxSize(3.0f)
+                        .build();
+            }
+            case 3 -> {
+                return new MoveBuilder("water_slam_finisher", "Water Slam")
+                        .withAnimation("nichirin:water_slam", 10)
+                        .withTiming(0, 0, 25) // No windup, longer duration for slam impact
+                        .withDamage(12.0f) // High damage finisher
+                        .withRange(4.0f) // Larger range for slam
+                        .withKnockback(0.8f) // High knockback for finisher
+                        .withBreathCost(15.0f) // Expensive finisher
+                        .withHitStun(30) // High stun for finisher
+                        .withHitboxSize(4.0f) // Larger slam area
+                        .build();
+            }
+            default -> throw new IllegalArgumentException("Invalid stage: " + stage);
+        }
     }
 
     private boolean executeWaterWheel(Player player) {
@@ -429,5 +537,6 @@ public class WaterBreathingMoveset extends AbstractMoveset {
     public static void cleanupPlayer(Player player) {
         playerCooldowns.remove(player.getUUID());
         executingMove.remove(player.getUUID());
+        playerComboStates.remove(player.getUUID());
     }
 }

@@ -17,7 +17,7 @@ import java.util.function.Consumer;
 
 /**
  * AbstractMoveset that works with any attack type - breathing techniques and demon arts
- * Flexible system supporting any number of moves with full configuration
+ * Flexible system supporting any number of moves with full configuration and followup system
  * Icons are handled by the MoveIcon system, not stored in move configs
  * Includes stun prevention system to prevent move stacking
  */
@@ -27,21 +27,8 @@ public abstract class AbstractMoveset {
     // UUID for the movement speed modifier
     private static final UUID SPEED_MODIFIER_UUID = UUID.fromString("A1B2C3D4-E5F6-7890-ABCD-EF1234567890");
 
-    /**
-     * -- GETTER --
-     *  Gets the moveset ID
-     */
     private final String movesetId;
-    /**
-     * -- GETTER --
-     *  Gets the display name
-     */
     private final String displayName;
-
-    /**
-     * -- GETTER --
-     *  Gets the moveset type (breathing or demon)
-     */
     private final MovesetType movesetType;
 
     // List of moves - flexible for any count
@@ -51,12 +38,87 @@ public abstract class AbstractMoveset {
     @Nullable
     protected final ResourceLocation idleAnimation;
 
-    // Only the modifiers you actually need
+    // Modifiers
     protected final float speedMultiplier;
-    // Getter methods for the modifiers
     protected final float fallDamageMultiplier;    // 0.5 = half damage, 0.0 = no damage
     protected final float healthRegenMultiplier;   // 2.0 = double regen rate
-    protected final float staminaCostMultiplier;   // 0.5 = half stamina cost
+    // Static tracking for followup queues per player
+    private static final java.util.concurrent.ConcurrentHashMap<UUID, FollowupQueue> playerFollowupQueues = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /**
+     * Followup queue state for a player
+     */
+    public static class FollowupQueue {
+        private MoveConfiguration currentMove;
+        private int currentFollowupIndex = -1;
+        private boolean hasQueuedNext = false;
+        private long attackStartTime = 0;
+        private boolean canQueue = false;
+
+        public void startAttack(MoveConfiguration move) {
+            this.currentMove = move;
+            this.currentFollowupIndex = -1;
+            this.hasQueuedNext = false;
+            this.attackStartTime = System.currentTimeMillis();
+            this.canQueue = move.hasFollowups();
+        }
+
+        public void startFollowup(int followupIndex) {
+            this.currentFollowupIndex = followupIndex;
+            this.hasQueuedNext = false;
+            this.attackStartTime = System.currentTimeMillis();
+            this.canQueue = (followupIndex + 1) < currentMove.getFollowupCount();
+        }
+
+        public boolean canQueueNext() {
+            return canQueue && !hasQueuedNext;
+        }
+
+        public void queueNext() {
+            if (canQueueNext()) {
+                hasQueuedNext = true;
+            }
+        }
+
+        public boolean hasQueued() {
+            return hasQueuedNext;
+        }
+
+        public int getNextFollowupIndex() {
+            return currentFollowupIndex + 1;
+        }
+
+        public FollowupConfiguration getNextFollowup() {
+            if (currentMove != null && hasQueuedNext) {
+                return currentMove.getFollowup(getNextFollowupIndex());
+            }
+            return null;
+        }
+
+        public void clear() {
+            currentMove = null;
+            currentFollowupIndex = -1;
+            hasQueuedNext = false;
+            attackStartTime = 0;
+            canQueue = false;
+        }
+
+        public boolean isAttackActive(long currentTime) {
+            if (currentMove == null) return false;
+
+            long duration;
+            if (currentFollowupIndex == -1) {
+                // Main attack
+                duration = currentMove.getDurationOrDefault(0) * 50; // Convert ticks to ms
+            } else {
+                // Followup attack
+                FollowupConfiguration followup = currentMove.getFollowup(currentFollowupIndex);
+                duration = followup != null ? followup.getFollowupDurationOrDefault(0) * 50 : 0;
+            }
+
+            return (currentTime - attackStartTime) < duration;
+        }
+    }
 
     protected AbstractMoveset(String movesetId, String displayName, MovesetType movesetType, MovesetBuilder builder) {
         this.movesetId = movesetId;
@@ -66,7 +128,6 @@ public abstract class AbstractMoveset {
         this.speedMultiplier = builder.speedMultiplier;
         this.fallDamageMultiplier = builder.fallDamageMultiplier;
         this.healthRegenMultiplier = builder.healthRegenMultiplier;
-        this.staminaCostMultiplier = builder.staminaCostMultiplier;
 
         // Add all configured moves
         moves.addAll(builder.moveConfigs);
@@ -85,8 +146,6 @@ public abstract class AbstractMoveset {
      */
     public void applyAllModifiers(Player player) {
         applySpeedModifier(player);
-        // Note: Fall damage, health regen, and stamina cost are handled differently
-        // as they require event-based implementations rather than attribute modifiers
     }
 
     /**
@@ -101,16 +160,11 @@ public abstract class AbstractMoveset {
      */
     public void applySpeedModifier(Player player) {
         if (speedMultiplier != 1.0f) {
-            // Remove any existing speed modifier first
             removeSpeedModifier(player);
 
-            // Calculate the modifier value (convert multiplier to additive modifier)
             double modifierValue = speedMultiplier - 1.0;
+            modifierValue = Math.max(-0.95, Math.min(modifierValue, 10.0));
 
-            // Clamp the modifier to reasonable values to prevent issues
-            modifierValue = Math.max(-0.95, Math.min(modifierValue, 10.0)); // Max 11x speed, min 5% speed
-
-            // Create and apply the attribute modifier
             AttributeModifier modifier = new AttributeModifier(
                     SPEED_MODIFIER_UUID,
                     "moveset_speed_modifier",
@@ -119,9 +173,6 @@ public abstract class AbstractMoveset {
             );
 
             Objects.requireNonNull(player.getAttribute(Attributes.MOVEMENT_SPEED)).addTransientModifier(modifier);
-
-            // Debug: Check the actual speed value
-            double currentSpeed = Objects.requireNonNull(player.getAttribute(Attributes.MOVEMENT_SPEED)).getValue();
         }
     }
 
@@ -134,35 +185,38 @@ public abstract class AbstractMoveset {
 
     /**
      * Override the left-click (M1) behavior for SimpleKatana with stun checking
-     * Return true to override default behavior, false to use default
      */
     public boolean handleLeftClick(Player player) {
-        // Check if player is stunned before allowing any move
         if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
             return true; // Block the move by overriding
         }
-
-        // Default: don't override - use SimpleKatana's default combo system
         return false;
     }
 
     /**
-     * Override the right-click (M2) behavior for SimpleKatana with stun checking
-     * Return true to override default behavior, false to use default
+     * Override the right-click (M2) behavior for SimpleKatana with stun checking and followup queuing
      */
     public boolean handleRightClick(Player player, boolean isCrouching) {
-        // Check if player is stunned before allowing any move
         if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+            // Check if we should queue a followup
+            FollowupQueue queue = playerFollowupQueues.get(player.getUUID());
+            if (queue != null && queue.isAttackActive(System.currentTimeMillis()) && queue.canQueueNext()) {
+                queue.queueNext();
+
+                // Show feedback that followup was queued
+                player.displayClientMessage(
+                        net.minecraft.network.chat.Component.literal("Followup queued!")
+                                .withStyle(style -> style.withColor(0x55FF55)),
+                        true
+                );
+            }
             return true; // Block the move by overriding
         }
-
-        // Default: don't override - use SimpleKatana's default special attacks
         return false;
     }
 
     /**
      * Get the move index to use for right-click
-     * Default is move 0 (first move)
      */
     public int getRightClickMoveIndex(boolean isCrouching) {
         return 0; // First move by default
@@ -194,22 +248,119 @@ public abstract class AbstractMoveset {
     }
 
     /**
-     * Performs a move by index with stun prevention
+     * Performs a move by index with stun prevention and followup queue initialization
      */
     public void performMove(Player player, int moveIndex) {
-        // Check if player is stunned
+        System.out.println("[DEBUG] AbstractMoveset.performMove called for moveIndex: " + moveIndex);
+
         if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+            System.out.println("[DEBUG] Player is stunned, blocking move");
             return;
         }
 
         MoveConfiguration config = getMove(moveIndex);
         if (config != null) {
-            // DON'T apply stun here - let MoveExecutor handle it after attack starts
-            // Execute the move action
-            if (config.startAction != null) {
-                config.startAction.accept(player);
+            System.out.println("[DEBUG] Move config found: " + config.getDisplayName() + " with " + config.getFollowupCount() + " followups");
+
+            // Initialize followup queue for this attack
+            if (config.hasFollowups()) {
+                System.out.println("[DEBUG] Initializing followup queue for attack with " + config.getFollowupCount() + " followups");
+                FollowupQueue queue = new FollowupQueue();
+                queue.startAttack(config);
+                playerFollowupQueues.put(player.getUUID(), queue);
+
+                // Schedule followup check after attack duration
+                int duration = config.getDurationOrDefault(0);
+                System.out.println("[DEBUG] Scheduling followup check after " + duration + " ticks");
+                scheduleFollowupCheck(player, duration);
             }
+
+            if (config.startAction != null) {
+                System.out.println("[DEBUG] Executing move start action");
+                config.startAction.accept(player);
+            } else {
+                System.out.println("[DEBUG] No start action defined for this move");
+            }
+        } else {
+            System.out.println("[DEBUG] No move config found for index: " + moveIndex);
         }
+    }
+
+    /**
+     * Schedules a followup check after the specified duration
+     */
+    private void scheduleFollowupCheck(Player player, int durationTicks) {
+        // Convert ticks to milliseconds and schedule
+        long delayMs = durationTicks * 50L; // 20 ticks = 1000ms
+
+        // Use a simple delay mechanism (you might want to integrate with your mod's tick system)
+        java.util.concurrent.CompletableFuture.delayedExecutor(delayMs, java.util.concurrent.TimeUnit.MILLISECONDS)
+                .execute(() -> checkAndExecuteFollowup(player));
+    }
+
+    /**
+     * Checks if a followup should be executed and executes it
+     */
+    private void checkAndExecuteFollowup(Player player) {
+        FollowupQueue queue = playerFollowupQueues.get(player.getUUID());
+        if (queue == null || !queue.hasQueued()) {
+            // No followup queued, clear the queue
+            if (queue != null) {
+                queue.clear();
+                playerFollowupQueues.remove(player.getUUID());
+            }
+            return;
+        }
+
+        FollowupConfiguration followup = queue.getNextFollowup();
+        if (followup != null) {
+            // Execute the followup
+            executeFollowup(player, followup, queue);
+        } else {
+            // Clear queue if no valid followup
+            queue.clear();
+            playerFollowupQueues.remove(player.getUUID());
+        }
+    }
+
+    /**
+     * Executes a followup attack
+     */
+    private void executeFollowup(Player player, FollowupConfiguration followup, FollowupQueue queue) {
+        // Update queue state
+        queue.startFollowup(queue.getNextFollowupIndex());
+
+        // Execute followup action (no windup - immediate execution)
+        if (followup.followupAction != null) {
+            followup.followupAction.accept(player);
+        }
+
+        // Schedule next followup check if more followups available
+        int followupDuration = followup.getFollowupDurationOrDefault(0);
+        if (followupDuration > 0 && queue.canQueue) {
+            scheduleFollowupCheck(player, followupDuration);
+        } else {
+            // No more followups possible, clear queue after duration
+            java.util.concurrent.CompletableFuture.delayedExecutor(followupDuration * 50L, java.util.concurrent.TimeUnit.MILLISECONDS)
+                    .execute(() -> {
+                        queue.clear();
+                        playerFollowupQueues.remove(player.getUUID());
+                    });
+        }
+    }
+
+    /**
+     * Clean up followup queues when player disconnects
+     */
+    public static void cleanupPlayer(Player player) {
+        playerFollowupQueues.remove(player.getUUID());
+    }
+
+    /**
+     * Force clear all followup queues (for debugging or resets)
+     */
+    public static void clearAllFollowupQueues() {
+        playerFollowupQueues.clear();
     }
 
     /**
@@ -224,12 +375,11 @@ public abstract class AbstractMoveset {
             MobEffectInstance stunEffect = new MobEffectInstance(
                     NichirinEffectRegistry.STUNNED.get(),
                     totalStunTicks,
-                    0, // Amplifier 0
-                    false, // Not ambient
-                    false, // Don't show particles
-                    false  // Don't show icon
+                    0,
+                    false,
+                    false,
+                    false
             );
-
             player.addEffect(stunEffect);
         }
     }
@@ -267,13 +417,24 @@ public abstract class AbstractMoveset {
     }
 
     /**
-     * Complete configuration for a moveset move
-     * Icons are handled by the MoveIcon system using moveId and movesetId
-     * Now supports both breathing and demon movesets
+     * Get the name of the right-click move for cooldown display
+     */
+    public String getRightClickMoveName() {
+        return "Special Move";
+    }
+
+    /**
+     * Get the name of the crouch right-click move for cooldown display
+     */
+    public String getCrouchRightClickMoveName() {
+        return "Crouch Special Move";
+    }
+
+    /**
+     * Complete configuration for a moveset move with followup system
      */
     @Getter
     public static class MoveConfiguration {
-
         // Basic properties
         public final String moveId;
         public final String displayName;
@@ -281,7 +442,7 @@ public abstract class AbstractMoveset {
         public final ResourceLocation animationId;
         public final int animationPriority;
 
-        // Combat Stats (nullable - only present if configured)
+        // Combat Stats
         public final Float damage;
         public final Float range;
         public final Float knockback;
@@ -295,7 +456,7 @@ public abstract class AbstractMoveset {
         public final Integer activeFrames;
         public final Integer recovery;
 
-        // Resources (breathing techniques only)
+        // Resources
         public final Float breathCost;
         public final Float staminaCost;
 
@@ -304,36 +465,36 @@ public abstract class AbstractMoveset {
         public final Float dashSpeed;
         public final Integer teleportWindup;
 
+        // Followup system
+        public final List<FollowupConfiguration> followups;
+
         private MoveConfiguration(MoveBuilder builder) {
-            // Basic
             this.moveId = builder.moveId;
             this.displayName = builder.displayName;
             this.startAction = builder.startAction;
             this.animationId = builder.animationId;
             this.animationPriority = builder.animationPriority;
 
-            // Combat Stats
             this.damage = builder.damage;
             this.range = builder.range;
             this.knockback = builder.knockback;
             this.hitStun = builder.hitStun;
             this.hitboxSize = builder.hitboxSize;
 
-            // Timing
             this.cooldown = builder.cooldown;
             this.windup = builder.windup;
             this.duration = builder.duration;
             this.activeFrames = builder.activeFrames;
             this.recovery = builder.recovery;
 
-            // Resources (may be null for demon arts)
             this.breathCost = builder.breathCost;
             this.staminaCost = builder.staminaCost;
 
-            // Movement
             this.teleportDistance = builder.teleportDistance;
             this.dashSpeed = builder.dashSpeed;
             this.teleportWindup = builder.teleportWindup;
+
+            this.followups = builder.followups != null ? new ArrayList<>(builder.followups) : new ArrayList<>();
         }
 
         // Convenience methods for checking if properties are configured
@@ -370,25 +531,194 @@ public abstract class AbstractMoveset {
         public float getDashSpeedOrDefault(float defaultValue) { return dashSpeed != null ? dashSpeed : defaultValue; }
         public int getTeleportWindupOrDefault(int defaultValue) { return teleportWindup != null ? teleportWindup : defaultValue; }
 
-        /**
-         * Get the total stun duration (windup only)
-         */
         public int getStunDuration() {
             return getWindupOrDefault(0);
         }
 
-        /**
-         * Check if this move will cause stun
-         */
         public boolean causesStun() {
             return getStunDuration() > 0;
         }
 
-        /**
-         * Check if this is a resource-free move (demon art)
-         */
         public boolean isResourceFree() {
             return !hasBreathCost() && !hasStaminaCost();
+        }
+
+        // Followup methods
+        public boolean hasFollowups() {
+            return followups != null && !followups.isEmpty();
+        }
+
+        public FollowupConfiguration getFollowup(int index) {
+            if (followups != null && index >= 0 && index < followups.size()) {
+                return followups.get(index);
+            }
+            return null;
+        }
+
+        public int getFollowupCount() {
+            return followups != null ? followups.size() : 0;
+        }
+    }
+
+    /**
+     * Configuration for followup attacks (chaining moves)
+     */
+    @Getter
+    public static class FollowupConfiguration {
+        public final String followupMoveId;
+        public final String followupDisplayName;
+        public final Consumer<Player> followupAction;
+        public final ResourceLocation followupAnimationId;
+        public final int followupAnimationPriority;
+
+        public final Float followupDamage;
+        public final Float followupRange;
+        public final Float followupKnockback;
+        public final Integer followupHitStun;
+        public final Float followupHitboxSize;
+
+        public final Integer followupCooldown;
+        public final Integer followupWindup;
+        public final Integer followupDuration;
+
+        public final Float followupBreathCost;
+        public final Float followupStaminaCost;
+
+        public final Float followupTeleportDistance;
+        public final Float followupDashSpeed;
+        public final Integer followupTeleportWindup;
+
+        private FollowupConfiguration(FollowupBuilder builder) {
+            this.followupMoveId = builder.followupMoveId;
+            this.followupDisplayName = builder.followupDisplayName;
+            this.followupAction = builder.followupAction;
+            this.followupAnimationId = builder.followupAnimationId;
+            this.followupAnimationPriority = builder.followupAnimationPriority;
+
+            this.followupDamage = builder.followupDamage;
+            this.followupRange = builder.followupRange;
+            this.followupKnockback = builder.followupKnockback;
+            this.followupHitStun = builder.followupHitStun;
+            this.followupHitboxSize = builder.followupHitboxSize;
+
+            this.followupCooldown = builder.followupCooldown;
+            this.followupWindup = builder.followupWindup;
+            this.followupDuration = builder.followupDuration;
+
+            this.followupBreathCost = builder.followupBreathCost;
+            this.followupStaminaCost = builder.followupStaminaCost;
+
+            this.followupTeleportDistance = builder.followupTeleportDistance;
+            this.followupDashSpeed = builder.followupDashSpeed;
+            this.followupTeleportWindup = builder.followupTeleportWindup;
+        }
+
+        // Safe getters for followup
+        public float getFollowupDamageOrDefault(float defaultValue) { return followupDamage != null ? followupDamage : defaultValue; }
+        public float getFollowupRangeOrDefault(float defaultValue) { return followupRange != null ? followupRange : defaultValue; }
+        public float getFollowupKnockbackOrDefault(float defaultValue) { return followupKnockback != null ? followupKnockback : defaultValue; }
+        public int getFollowupHitStunOrDefault(int defaultValue) { return followupHitStun != null ? followupHitStun : defaultValue; }
+        public float getFollowupHitboxSizeOrDefault(float defaultValue) { return followupHitboxSize != null ? followupHitboxSize : defaultValue; }
+        public int getFollowupCooldownOrDefault(int defaultValue) { return followupCooldown != null ? followupCooldown : defaultValue; }
+        public int getFollowupWindupOrDefault(int defaultValue) { return followupWindup != null ? followupWindup : defaultValue; }
+        public int getFollowupDurationOrDefault(int defaultValue) { return followupDuration != null ? followupDuration : defaultValue; }
+        public float getFollowupBreathCostOrDefault(float defaultValue) { return followupBreathCost != null ? followupBreathCost : defaultValue; }
+        public float getFollowupStaminaCostOrDefault(float defaultValue) { return followupStaminaCost != null ? followupStaminaCost : defaultValue; }
+    }
+
+    /**
+     * Builder for followup configurations
+     */
+    public static class FollowupBuilder {
+        private final String followupMoveId;
+        private final String followupDisplayName;
+
+        private Consumer<Player> followupAction;
+        private ResourceLocation followupAnimationId;
+        private int followupAnimationPriority = 0;
+
+        private Float followupDamage;
+        private Float followupRange;
+        private Float followupKnockback;
+        private Integer followupHitStun;
+        private Float followupHitboxSize;
+
+        private Integer followupCooldown;
+        private Integer followupWindup;
+        private Integer followupDuration;
+
+        private Float followupBreathCost;
+        private Float followupStaminaCost;
+
+        private Float followupTeleportDistance;
+        private Float followupDashSpeed;
+        private Integer followupTeleportWindup;
+
+        public FollowupBuilder(String followupMoveId, String followupDisplayName) {
+            this.followupMoveId = followupMoveId;
+            this.followupDisplayName = followupDisplayName;
+        }
+
+        public FollowupBuilder withAction(Consumer<Player> action) {
+            this.followupAction = action;
+            return this;
+        }
+
+        public FollowupBuilder withAnimation(String animationId, int priority) {
+            this.followupAnimationId = new ResourceLocation(animationId);
+            this.followupAnimationPriority = priority;
+            return this;
+        }
+
+        public FollowupBuilder withDamage(float damage) {
+            this.followupDamage = damage;
+            return this;
+        }
+
+        public FollowupBuilder withRange(float range) {
+            this.followupRange = range;
+            return this;
+        }
+
+        public FollowupBuilder withKnockback(float knockback) {
+            this.followupKnockback = knockback;
+            return this;
+        }
+
+        public FollowupBuilder withHitStun(int hitStun) {
+            this.followupHitStun = hitStun;
+            return this;
+        }
+
+        public FollowupBuilder withHitboxSize(float hitboxSize) {
+            this.followupHitboxSize = hitboxSize;
+            return this;
+        }
+
+        public FollowupBuilder withTiming(int cooldown, int windup, int duration) {
+            this.followupCooldown = cooldown;
+            this.followupWindup = windup;
+            this.followupDuration = duration;
+            return this;
+        }
+
+        public FollowupBuilder withBreathCost(float breathCost) {
+            this.followupBreathCost = breathCost;
+            return this;
+        }
+
+        public FollowupBuilder withStaminaCost(float staminaCost) {
+            this.followupStaminaCost = staminaCost;
+            return this;
+        }
+
+        public FollowupBuilder withDashSpeed(float dashSpeed) {
+            this.followupDashSpeed = dashSpeed;
+            return this;
+        }
+
+        public FollowupConfiguration build() {
+            return new FollowupConfiguration(this);
         }
     }
 
@@ -399,40 +729,36 @@ public abstract class AbstractMoveset {
         private final String moveId;
         private final String displayName;
 
-        // Basic properties
         private Consumer<Player> startAction;
         private ResourceLocation animationId;
         private int animationPriority = 0;
 
-        // Combat Stats
         private Float damage;
         private Float range;
         private Float knockback;
         private Integer hitStun;
         private Float hitboxSize;
 
-        // Timing
         private Integer cooldown;
         private Integer windup;
         private Integer duration;
         private Integer activeFrames;
         private Integer recovery;
 
-        // Resources
         private Float breathCost;
         private Float staminaCost;
 
-        // Movement
         private Float teleportDistance;
         private Float dashSpeed;
         private Integer teleportWindup;
+
+        private List<FollowupConfiguration> followups;
 
         public MoveBuilder(String moveId, String displayName) {
             this.moveId = moveId;
             this.displayName = displayName;
         }
 
-        // Basic methods
         public MoveBuilder withAction(Consumer<Player> action) {
             this.startAction = action;
             return this;
@@ -444,7 +770,6 @@ public abstract class AbstractMoveset {
             return this;
         }
 
-        // Combat Stats
         public MoveBuilder withDamage(float damage) {
             this.damage = damage;
             return this;
@@ -470,7 +795,6 @@ public abstract class AbstractMoveset {
             return this;
         }
 
-        // Timing
         public MoveBuilder withCooldown(int cooldown) {
             this.cooldown = cooldown;
             return this;
@@ -496,7 +820,6 @@ public abstract class AbstractMoveset {
             return this;
         }
 
-        // Convenience method for timing
         public MoveBuilder withTiming(int cooldown, int windup, int duration) {
             this.cooldown = cooldown;
             this.windup = windup;
@@ -504,7 +827,6 @@ public abstract class AbstractMoveset {
             return this;
         }
 
-        // Resources - Note: For demon arts, simply don't call these methods
         public MoveBuilder withBreathCost(float breathCost) {
             this.breathCost = breathCost;
             return this;
@@ -515,7 +837,6 @@ public abstract class AbstractMoveset {
             return this;
         }
 
-        // Movement
         public MoveBuilder withTeleportDistance(float teleportDistance) {
             this.teleportDistance = teleportDistance;
             return this;
@@ -531,10 +852,28 @@ public abstract class AbstractMoveset {
             return this;
         }
 
-        // Convenience method for teleport
         public MoveBuilder withTeleport(float distance, int windup) {
             this.teleportDistance = distance;
             this.teleportWindup = windup;
+            return this;
+        }
+
+        // Followup system
+        public MoveBuilder withFollowup(FollowupBuilder followupBuilder) {
+            if (this.followups == null) {
+                this.followups = new ArrayList<>();
+            }
+            this.followups.add(followupBuilder.build());
+            return this;
+        }
+
+        public MoveBuilder withFollowups(FollowupBuilder... followupBuilders) {
+            if (this.followups == null) {
+                this.followups = new ArrayList<>();
+            }
+            for (FollowupBuilder builder : followupBuilders) {
+                this.followups.add(builder.build());
+            }
             return this;
         }
 
@@ -580,28 +919,9 @@ public abstract class AbstractMoveset {
             return this;
         }
 
-        /**
-         * Adds a move to the moveset
-         */
         public MovesetBuilder withMove(MoveBuilder moveBuilder) {
             this.moveConfigs.add(moveBuilder.build());
             return this;
         }
-    }
-
-    /**
-     * Get the name of the right-click move for cooldown display
-     */
-    public String getRightClickMoveName() {
-        // Override in each moveset
-        return "Special Move";
-    }
-
-    /**
-     * Get the name of the crouch right-click move for cooldown display
-     */
-    public String getCrouchRightClickMoveName() {
-        // Override in each moveset
-        return "Crouch Special Move";
     }
 }

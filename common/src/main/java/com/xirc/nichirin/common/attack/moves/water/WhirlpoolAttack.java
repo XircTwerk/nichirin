@@ -58,9 +58,6 @@ public class WhirlpoolAttack extends WaterBreathingAttackBase {
         // Whirlpool startup sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.WATER_AMBIENT, SoundSource.PLAYERS, 1.0f, 0.6f);
-
-        // Initial water gathering particles
-        createWaterParticles();
     }
 
     @Override

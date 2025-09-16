@@ -87,48 +87,6 @@ public abstract class WaterBreathingAttackBase extends AbstractBreathingAttack<W
     }
 
     /**
-     * Create water particles around the user
-     * Called during attack startup and execution
-     */
-    protected void createWaterParticles() {
-        if (!(world instanceof ServerLevel serverLevel) || user == null) return;
-
-        Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
-        Vec3 lookDir = user.getLookAngle();
-
-        // Use ServerLevel's random instead of world.random to avoid threading issues
-        net.minecraft.util.RandomSource random = serverLevel.getRandom();
-
-        // Create water particles around the user
-        for (int i = 0; i < WATER_PARTICLE_COUNT; i++) {
-            double offsetX = (random.nextDouble() - 0.5) * WATER_PARTICLE_SPREAD;
-            double offsetY = random.nextDouble() * WATER_PARTICLE_SPREAD;
-            double offsetZ = (random.nextDouble() - 0.5) * WATER_PARTICLE_SPREAD;
-
-            Vec3 particlePos = userPos.add(offsetX, offsetY, offsetZ);
-
-            // Mix of water splash and dripping particles
-            serverLevel.sendParticles(ParticleTypes.SPLASH,
-                    particlePos.x, particlePos.y, particlePos.z,
-                    1, 0.1, 0.1, 0.1, 0.05);
-
-            if (random.nextBoolean()) {
-                serverLevel.sendParticles(ParticleTypes.DRIPPING_WATER,
-                        particlePos.x, particlePos.y, particlePos.z,
-                        1, 0.1, 0.1, 0.1, 0.02);
-            }
-        }
-
-        // Create water trail in look direction
-        for (int i = 1; i <= 5; i++) {
-            Vec3 trailPos = userPos.add(lookDir.scale(i * 0.8));
-            serverLevel.sendParticles(ParticleTypes.SPLASH,
-                    trailPos.x, trailPos.y, trailPos.z,
-                    2, 0.2, 0.2, 0.2, 0.1);
-        }
-    }
-
-    /**
      * Create water particles at a specific hit location
      */
     protected void createWaterHitParticles(Vec3 hitPosition) {

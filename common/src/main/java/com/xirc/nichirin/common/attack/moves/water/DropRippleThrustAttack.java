@@ -46,9 +46,6 @@ public class DropRippleThrustAttack extends WaterBreathingAttackBase {
         // Drop ripple thrust startup sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.TRIDENT_THROW, SoundSource.PLAYERS, 0.8f, 1.2f);
-
-        // Initial water gathering particles
-        createWaterParticles();
     }
 
     @Override
