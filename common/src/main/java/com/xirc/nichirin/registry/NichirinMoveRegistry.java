@@ -2,6 +2,7 @@ package com.xirc.nichirin.registry;
 
 import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.common.attack.moveset.*;
+import com.xirc.nichirin.common.attack.moveset.breathing.*;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.HashMap;

@@ -1,7 +1,8 @@
-package com.xirc.nichirin.common.attack.moveset;
+package com.xirc.nichirin.common.attack.moveset.breathing;
 
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.insect.*;
+import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.util.BreathingManager;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
@@ -134,7 +135,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                 .withDamage(9.0f)
                 .withRange(4.0f)
                 .withKnockback(0f)
-                .withBreathCost(10.0f) // System will consume this automatically
+                .withBreathCost(10.0f)
                 .withHitStun(15)
                 .withHitboxSize(1.5f)
                 .build();

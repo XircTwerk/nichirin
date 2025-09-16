@@ -1,7 +1,7 @@
 package com.xirc.nichirin.registry;
 
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
-import com.xirc.nichirin.common.attack.moveset.*;
+import com.xirc.nichirin.common.attack.moveset.breathing.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;

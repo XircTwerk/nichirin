@@ -1,7 +1,8 @@
-package com.xirc.nichirin.common.attack.moveset;
+package com.xirc.nichirin.common.attack.moveset.breathing;
 
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.flame.*;
+import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.util.BreathingManager;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
