@@ -73,7 +73,7 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
         // Calm, still water gathering around user
-        for (int ring = 1; ring <= 4; ring++) {
+        for (int ring = 1; ring <= 12; ring++) {
             float radius = ring * 1.2f;
             int particlesInRing = 8 * ring;
 
@@ -154,14 +154,14 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
         entitiesInField.addAll(currentEntities);
 
         // Clear recently triggered entities periodically to allow re-triggering
-        if (calmTicks % 60 == 0) {
+        if (calmTicks % 10 == 0) {
             recentlyTriggered.clear();
         }
     }
 
     private void triggerAutoSlashes() {
         // Also trigger slashes for entities that remain in the field (every 20 ticks = 1 second)
-        if (calmTicks % 20 == 0) {
+        if (calmTicks % 2 == 0) {
             for (LivingEntity entity : entitiesInField) {
                 if (!recentlyTriggered.contains(entity)) {
                     triggerSlashSequence(entity);

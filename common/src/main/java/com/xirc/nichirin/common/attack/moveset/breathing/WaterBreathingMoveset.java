@@ -238,12 +238,12 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 // Eleventh Form: Dead Calm - Auto-target AoE field (INDEX 8)
                 .withMove(new MoveBuilder("dead_calm", "Dead Calm")
                         .withAnimation("nichirin:dead_calm", 17)
-                        .withTiming(360, 12, 100) // 11 second cooldown, 1.25s windup, 5s duration
-                        .withDamage(7.0f) // Persistent area damage
-                        .withRange(6.0f) // Large persistent area
+                        .withTiming(600, 12, 200) // 11 second cooldown, 1.25s windup, 5s duration
+                        .withDamage(1.0f) // Persistent area damage
+                        .withRange(12.0f) // Large persistent area
                         .withKnockback(0f)
                         .withBreathCost(55.0f)
-                        .withHitStun(10)
+                        .withHitStun(5)
                         .withHitboxSize(6.0f) // Large area field
                         .withAction(player -> {
                             DeadCalmAttack attack = new DeadCalmAttack();
