@@ -4,6 +4,8 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -96,6 +98,8 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
     }
 
     private void establishCalmField() {
+        applySlowdown();
+
         // Set field center slightly in front of user
         Vec3 lookDir = user.getLookAngle();
         fieldCenter = user.position().add(lookDir.scale(2.0));
@@ -106,6 +110,16 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
         // Calm field activation sound
         world.playSound(null, fieldCenter.x, fieldCenter.y, fieldCenter.z,
                 SoundEvents.ENCHANTMENT_TABLE_USE, SoundSource.PLAYERS, 0.8f, 0.8f);
+    }
+    private void applySlowdown() {
+        int slowDuration = 100;
+        user.addEffect(new MobEffectInstance(
+                MobEffects.MOVEMENT_SLOWDOWN,
+                slowDuration,
+                255, // Max slowness (can't move but can't be knocked back)
+                false, // Not ambient
+                false  // Don't show particles (too much visual noise)
+        ));
     }
 
     private void maintainCalmField() {
@@ -194,7 +208,7 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
 
         // Light knockback toward field center to keep them in the danger zone
         Vec3 centerDirection = fieldCenter.subtract(target.position()).normalize();
-        target.push(centerDirection.x * knockback * 0.2, 0.05, centerDirection.z * knockback * 0.2);
+        target.push(centerDirection.x * knockback * 0.2, 0.01, centerDirection.z * knockback * 0.2);
 
         // Create slash effect at target position
         createAutoSlashEffect(targetPos, delay);
