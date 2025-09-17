@@ -108,12 +108,12 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("heat_lightning", "Heat Lightning")
                         .withAnimation("nichirin:heat_lightning", 9)
                         .withTiming(180, 10, 20)
-                        .withDamage(8.5f) // Single hit + lightning follow-up (was 18.0f)
-                        .withRange(8.0f)
+                        .withDamage(4.0f) // Single hit + lightning follow-up (was 18.0f)
+                        .withRange(2.0f)
                         .withKnockback(0.1f) // Minimal horizontal, focuses on launch
                         .withBreathCost(30.0f)
                         .withHitStun(25) // Good combo potential
-                        .withHitboxSize(2.0f)
+                        .withHitboxSize(0.1f)
                         .withAction(player -> {
                             HeatLightningAttack attack = new HeatLightningAttack();
                             ThunderBreathingMoveset moveset = getCurrentMoveset();
@@ -180,7 +180,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
         MoveConfiguration tempConfig = new MoveBuilder("thunderclap_flash", "Thunderclap and Flash")
                 .withAnimation("nichirin:thunderclap_flash", 10)
                 .withTiming(0, 1, 15)
-                .withDamage(10.5f)
+                .withDamage(12.0f)
                 .withTeleportDistance(12.0f)
                 .withKnockback(0.2f)
                 .withBreathCost(15.0f)

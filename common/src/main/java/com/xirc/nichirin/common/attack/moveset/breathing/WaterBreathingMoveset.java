@@ -178,7 +178,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("waterfall_basin", "Waterfall Basin")
                         .withAnimation("nichirin:waterfall_basin", 16)
                         .withTiming(300, 30, 60) // 9 second cooldown, 1.5s windup, 3s duration
-                        .withDamage(7.0f) // High DPS multi-hit
+                        .withDamage(8.5f) // High DPS multi-hit
                         .withRange(6.0f) // Large waterfall area
                         .withKnockback(0.15f) // Light knockback to keep enemies in waterfall
                         .withBreathCost(35.0f)
@@ -203,7 +203,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withKnockback(0.4f)
                         .withBreathCost(25.0f)
                         .withHitStun(18)
-                        .withHitboxSize(4f)
+                        .withHitboxSize(6f)
                         .withDashSpeed(8.0f) // Fast zigzag speed
                         .withAction(player -> {
                             SplashingWaterFlowAttack attack = new SplashingWaterFlowAttack();

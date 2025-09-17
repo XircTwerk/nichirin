@@ -26,14 +26,6 @@ public class VenomStatusEffect extends MobEffect {
 
     public VenomStatusEffect() {
         super(MobEffectCategory.HARMFUL, 0x9932CC); // Purple color
-
-        // ALWAYS 33% speed reduction regardless of amplifier level
-        this.addAttributeModifier(
-                Attributes.MOVEMENT_SPEED,
-                MOVEMENT_MODIFIER_UUID.toString(),
-                -0.33,
-                AttributeModifier.Operation.MULTIPLY_TOTAL
-        );
     }
 
     @Override
@@ -64,7 +56,7 @@ public class VenomStatusEffect extends MobEffect {
     @Override
     public boolean isDurationEffectTick(int duration, int amplifier) {
         // Damage every second (20 ticks) regardless of stack level
-        return duration % 20 == 0;
+        return duration % 30 == 0;
     }
 
     private void createStackedVenomParticles(ServerLevel level, LivingEntity entity, int stacks) {
