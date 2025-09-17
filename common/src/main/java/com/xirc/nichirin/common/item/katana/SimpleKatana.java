@@ -1,13 +1,16 @@
 package com.xirc.nichirin.common.item.katana;
 
+import com.xirc.nichirin.client.animation.NichirinAnimations;
 import com.xirc.nichirin.client.gui.CooldownHUD;
 import com.xirc.nichirin.common.attack.moves.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.data.MovesetHelper;
-import com.xirc.nichirin.common.util.AnimationUtils;
+import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
 import com.xirc.nichirin.common.util.StaminaManager;
 import com.xirc.nichirin.common.util.MultiplayerInputHandler;
 import com.xirc.nichirin.common.util.ComboIntegration;
+import com.xirc.nichirin.registry.NichirinPacketRegistry;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -207,7 +210,7 @@ public class SimpleKatana extends SwordItem {
             state.currentSlash.start(player);
             state.comboCount = 2;
             state.slash2CooldownUntil = currentTime + state.currentSlash.getCooldown();
-            AnimationUtils.playAnimation(player, "sword_slash");
+            NichirinAnimations.playAnimation(player, "sword.slash");
 
             // Apply combo tracking with damage to all hit targets
             for (LivingEntity target : targets) {
@@ -218,7 +221,7 @@ public class SimpleKatana extends SwordItem {
             state.currentSlash.start(player);
             state.comboCount = 1;
             state.slash1CooldownUntil = currentTime + state.currentSlash.getCooldown();
-            AnimationUtils.playAnimation(player, "sword_slash");
+            NichirinAnimations.playAnimation(player, "sword.slash");
 
             // Apply combo tracking with damage to all hit targets
             for (LivingEntity target : targets) {
@@ -302,8 +305,10 @@ public class SimpleKatana extends SwordItem {
             state.currentRisingSlash.start(player);
             state.risingSlashCooldownUntil = currentTime + state.currentRisingSlash.getCooldown();
 
-            AnimationUtils.playAnimation(player, "sword_vertical");
-
+            if (player instanceof ServerPlayer serverPlayer) {
+                PlayerAnimationPacket packet = new PlayerAnimationPacket(serverPlayer.getId(), "sword.vertical");
+                NichirinPacketRegistry.sendToPlayer(packet, serverPlayer);
+            }
             // Rising slash targets
             targets = findTargetsInRange(player, 2.5f);
             for (LivingEntity target : targets) {
@@ -315,7 +320,10 @@ public class SimpleKatana extends SwordItem {
             state.currentDoubleSlash.start(player);
             state.doubleSlashCooldownUntil = currentTime + state.currentDoubleSlash.getCooldown();
 
-            AnimationUtils.playAnimation(player, "sword_doubleslash");
+            if (player instanceof ServerPlayer serverPlayer) {
+                PlayerAnimationPacket packet = new PlayerAnimationPacket(serverPlayer.getId(), "sword.doubleslash");
+                NichirinPacketRegistry.sendToPlayer(packet, serverPlayer);
+            }
 
             // Double slash targets
             targets = findTargetsInRange(player, 2.8f);
@@ -414,10 +422,10 @@ public class SimpleKatana extends SwordItem {
 
         if (isCombo && state.comboCount == 1) {
             CooldownHUD.setCooldown("Slash2", 0);
-            AnimationUtils.playAnimation(player, "sword_slash");
+            NichirinAnimations.playAnimation(player, "sword.slash");
         } else {
             CooldownHUD.setCooldown("Slash1", 0);
-            AnimationUtils.playAnimation(player, "sword_slash");
+            NichirinAnimations.playAnimation(player, "sword.slash");
         }
     }
 
@@ -433,10 +441,10 @@ public class SimpleKatana extends SwordItem {
 
         // ALWAYS play animations regardless of breathing style
         if (isCrouching) {
-            AnimationUtils.playAnimation(player, "sword_vertical");
+            NichirinAnimations.playAnimation(player, "sword.vertical");
             CooldownHUD.setCooldown("Rising Slash", 25);
         } else {
-            AnimationUtils.playAnimation(player, "sword_doubleslash");
+            NichirinAnimations.playAnimation(player, "sword.doubleslash");
             CooldownHUD.setCooldown("Double Slash", 20);
         }
     }

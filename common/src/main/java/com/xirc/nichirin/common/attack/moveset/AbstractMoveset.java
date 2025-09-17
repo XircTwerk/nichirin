@@ -1,8 +1,11 @@
 package com.xirc.nichirin.common.attack.moveset;
 
+import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
+import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import lombok.Getter;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
@@ -248,7 +251,7 @@ public abstract class AbstractMoveset {
     }
 
     /**
-     * Performs a move by index with stun prevention and followup queue initialization
+     * Performs a move by index with automatic animation handling, stun prevention and followup queue initialization
      */
     public void performMove(Player player, int moveIndex) {
         System.out.println("[DEBUG] AbstractMoveset.performMove called for moveIndex: " + moveIndex);
@@ -261,6 +264,14 @@ public abstract class AbstractMoveset {
         MoveConfiguration config = getMove(moveIndex);
         if (config != null) {
             System.out.println("[DEBUG] Move config found: " + config.getDisplayName() + " with " + config.getFollowupCount() + " followups");
+
+            // AUTOMATIC ANIMATION HANDLING - Send animation packet if animation is configured
+            if (config.animationId != null && player instanceof ServerPlayer serverPlayer) {
+                String animationName = config.animationId.getPath();
+                PlayerAnimationPacket packet = new PlayerAnimationPacket(serverPlayer.getId(), animationName);
+                NichirinPacketRegistry.sendToPlayer(packet, serverPlayer);
+                System.out.println("[DEBUG] Sent animation packet for: " + animationName);
+            }
 
             // Initialize followup queue for this attack
             if (config.hasFollowups()) {
@@ -324,11 +335,19 @@ public abstract class AbstractMoveset {
     }
 
     /**
-     * Executes a followup attack
+     * Executes a followup attack with automatic animation handling
      */
     private void executeFollowup(Player player, FollowupConfiguration followup, FollowupQueue queue) {
         // Update queue state
         queue.startFollowup(queue.getNextFollowupIndex());
+
+        // AUTOMATIC ANIMATION HANDLING FOR FOLLOWUPS - Send animation packet if configured
+        if (followup.followupAnimationId != null && player instanceof ServerPlayer serverPlayer) {
+            String animationName = followup.followupAnimationId.getPath();
+            PlayerAnimationPacket packet = new PlayerAnimationPacket(serverPlayer.getId(), animationName);
+            NichirinPacketRegistry.sendToPlayer(packet, serverPlayer);
+            System.out.println("[DEBUG] Sent followup animation packet for: " + animationName);
+        }
 
         // Execute followup action (no windup - immediate execution)
         if (followup.followupAction != null) {

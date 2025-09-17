@@ -1,6 +1,6 @@
 package com.xirc.nichirin.common.attack.component;
 
-import com.xirc.nichirin.common.attack.actions.PlayerAnimationAction;
+import com.xirc.nichirin.client.animation.NichirinAnimations;
 import com.xirc.nichirin.common.util.StaminaManager;
 import com.xirc.nichirin.common.util.enums.MoveClass;
 import lombok.Getter;
@@ -63,7 +63,7 @@ public abstract class AbstractSimpleAttack<T extends AbstractSimpleAttack<T, A>,
     private ResourceLocation animationId;
     private int animationPriority = 0;
     @Nullable
-    private PlayerAnimationAction startAnimation;
+    private NichirinAnimations startAnimation;
 
     // Behavior
     private boolean canBackstab = true;
@@ -184,7 +184,7 @@ public abstract class AbstractSimpleAttack<T extends AbstractSimpleAttack<T, A>,
     }
 
     @SuppressWarnings("unchecked")
-    public T withStartAnimation(PlayerAnimationAction animation) {
+    public T withStartAnimation(NichirinAnimations animation) {
         this.startAnimation = animation;
         return (T) this;
     }
@@ -270,10 +270,6 @@ public abstract class AbstractSimpleAttack<T extends AbstractSimpleAttack<T, A>,
         active = true;
         onStart(player, world);
 
-        // Play start animation if configured
-        if (startAnimation != null) {
-            startAnimation.perform(attacker);
-        }
     }
 
     protected abstract boolean canStart(A attacker);

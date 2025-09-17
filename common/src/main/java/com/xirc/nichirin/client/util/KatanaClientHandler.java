@@ -3,7 +3,6 @@ package com.xirc.nichirin.client.util;
 import com.xirc.nichirin.client.gui.CooldownHUD;
 import com.xirc.nichirin.client.handler.AttackWheelHandler;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
-import com.xirc.nichirin.common.util.AnimationUtils;
 import com.xirc.nichirin.common.util.MultiplayerInputHandler;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import dev.architectury.event.EventResult;
@@ -29,7 +28,6 @@ public class KatanaClientHandler {
 
     public static void registerClientEvents() {
         registerClientInteractions();
-        registerClientPackets();
     }
 
     private static void registerClientInteractions() {
@@ -133,40 +131,5 @@ public class KatanaClientHandler {
         } catch (Exception e) {
             // Ignore
         }
-    }
-
-    private static void registerClientPackets() {
-        NetworkManager.registerReceiver(NetworkManager.Side.S2C, FEEDBACK_ID, (buf, context) -> {
-            boolean hasBreathingMove = buf.readBoolean();
-
-            context.queue(() -> {
-                try {
-                    if (hasBreathingMove) {
-                        String moveName = buf.readUtf();
-                        int cooldown = buf.readInt();
-
-                        CooldownHUD.setCooldown(moveName, cooldown);
-
-                        if (moveName.contains("Thunder Clap")) {
-                            AnimationUtils.playAnimation(Minecraft.getInstance().player, "thunder_clap_flash");
-                        } else if (moveName.contains("Heat Lightning")) {
-                            AnimationUtils.playAnimation(Minecraft.getInstance().player, "heat_lightning");
-                        }
-                    } else {
-                        boolean wasCrouching = buf.readBoolean();
-
-                        if (wasCrouching) {
-                            AnimationUtils.playAnimation(Minecraft.getInstance().player, "rising_slash");
-                            CooldownHUD.setCooldown("Rising Slash", 25);
-                        } else {
-                            AnimationUtils.playAnimation(Minecraft.getInstance().player, "double_slash");
-                            CooldownHUD.setCooldown("Double Slash", 20);
-                        }
-                    }
-                } catch (Exception e) {
-                    // Ignore
-                }
-            });
-        });
     }
 }

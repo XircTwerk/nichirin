@@ -1,6 +1,5 @@
 package com.xirc.nichirin.client;
 
-import com.xirc.nichirin.client.animation.AnimationRegistryHelper;
 import com.xirc.nichirin.client.animation.NichirinAnimations;
 import com.xirc.nichirin.client.handler.AttackWheelHandler;
 import com.xirc.nichirin.client.handler.BigGuiKeyHandler;
@@ -109,7 +108,6 @@ public class BreathOfNichirinClient {
 
             // Register animations
             NichirinAnimations.init();
-            AnimationRegistryHelper.preloadAnimations();
 
             // Register other client components
             MoveExecutor.registerClientHandler();
