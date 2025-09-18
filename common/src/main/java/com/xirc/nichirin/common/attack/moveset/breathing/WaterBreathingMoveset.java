@@ -142,7 +142,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withRange(3.0f) // Whirlpool radius
                         .withKnockback(0.1f) // Light knockback, enemies spin around
                         .withBreathCost(20.0f)
-                        .withHitStun(5) // Short for spinning effect
+                        .withHitStun(7) // Short for spinning effect
                         .withHitboxSize(3.0f)
                         .withAction(player -> {
                             WhirlpoolAttack attack = new WhirlpoolAttack();
@@ -178,9 +178,9 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("waterfall_basin", "Waterfall Basin")
                         .withAnimation("nichirin:waterfall_basin", 16)
                         .withTiming(300, 30, 60) // 9 second cooldown, 1.5s windup, 3s duration
-                        .withDamage(8.5f) // High DPS multi-hit
+                        .withDamage(3.5f) // High DPS multi-hit
                         .withRange(6.0f) // Large waterfall area
-                        .withKnockback(0.15f) // Light knockback to keep enemies in waterfall
+                        .withKnockback(0.0f) // Light knockback to keep enemies in waterfall
                         .withBreathCost(35.0f)
                         .withHitStun(8) // Medium stun for multi-hit
                         .withHitboxSize(6.0f) // BIG ASS HITBOX
@@ -204,7 +204,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(25.0f)
                         .withHitStun(18)
                         .withHitboxSize(6f)
-                        .withDashSpeed(8.0f) // Fast zigzag speed
+                        .withDashSpeed(4.0f) // Fast zigzag speed
                         .withAction(player -> {
                             SplashingWaterFlowAttack attack = new SplashingWaterFlowAttack();
                             WaterBreathingMoveset moveset = getCurrentMoveset();
