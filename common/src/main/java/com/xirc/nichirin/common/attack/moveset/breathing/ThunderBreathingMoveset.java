@@ -92,7 +92,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withDamage(8.0f) // 3 strikes = 27 damage over time (was 12.0f = 36 total)
                         .withRange(15.0f) // Large AOE radius
                         .withKnockback(0.3f)
-                        .withBreathCost(35.0f) // High cost for area denial
+                        .withBreathCost(45.0f) // High cost for area denial
                         .withHitStun(25)
                         .withAction(player -> {
                             DistantThunderAttack attack = new DistantThunderAttack();
@@ -183,7 +183,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 .withDamage(12.0f)
                 .withTeleportDistance(12.0f)
                 .withKnockback(0.2f)
-                .withBreathCost(15.0f)
+                .withBreathCost(12.0f)
                 .withHitStun(10)
                 .withHitboxSize(1.5f)
                 .build();
