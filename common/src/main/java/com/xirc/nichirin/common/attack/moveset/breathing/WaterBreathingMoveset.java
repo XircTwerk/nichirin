@@ -243,7 +243,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withRange(12.0f) // Large persistent area
                         .withKnockback(0f)
                         .withBreathCost(55.0f)
-                        .withHitStun(5)
+                        .withHitStun(6)
                         .withHitboxSize(6.0f) // Large area field
                         .withAction(player -> {
                             DeadCalmAttack attack = new DeadCalmAttack();

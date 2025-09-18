@@ -52,7 +52,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                         .withTiming(160, 50, 20) // 5 second cooldown, moderate windup
                         .withDamage(23.0f) // Good AOE damage
                         .withRange(13.5f) // Tripled from 4.5f (4.5 * 3 = 13.5)
-                        .withKnockback(1.0f) // Strong knockback
+                        .withKnockback(0.3f) // Strong knockback
                         .withBreathCost(25.0f)
                         .withHitStun(10) // 0.5 second stun
                         .withHitboxSize(13.5f) // Full radius
@@ -95,7 +95,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                         .withRange(16.0f) // Dash distance
                         .withKnockback(0f) // Light knockback during dash
                         .withBreathCost(40.0f) // Expensive ultimate-style move
-                        .withHitStun(15) // Good stun
+                        .withHitStun(20) // Good stun
                         .withHitboxSize(3.5f) // Wide chain hitbox
                         .withAction(player -> {
                             StringPerformanceAttack attack = new StringPerformanceAttack();
