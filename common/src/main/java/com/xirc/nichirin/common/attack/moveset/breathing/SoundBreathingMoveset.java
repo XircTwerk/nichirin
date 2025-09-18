@@ -3,7 +3,9 @@ package com.xirc.nichirin.common.attack.moveset.breathing;
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.sound.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
+import com.xirc.nichirin.common.network.s2c.MovesetConfigSyncPacket;
 import com.xirc.nichirin.common.util.BreathingManager;
+import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
@@ -39,6 +41,46 @@ public class SoundBreathingMoveset extends AbstractMoveset {
 
     public SoundBreathingMoveset() {
         super("sound_breathing", "Sound Breathing", MovesetType.BREATHING, createBuilder());
+
+        // Auto-capture configs for GUI display
+        captureInitialConfigs();
+    }
+
+    private void captureInitialConfigs() {
+        // Execute the config creation logic without actually performing the moves
+        createAndCaptureTempoBreakerConfig();
+        createAndCaptureRhythmicStepConfig();
+    }
+
+    private void createAndCaptureTempoBreakerConfig() {
+        MoveConfiguration tempConfig = new MoveBuilder("tempo_breaker", "Tempo Breaker")
+                .withAnimation("nichirin:tempo_breaker", 8)
+                .withTiming(0, 8, 60) // Extended duration to allow delayed explosions
+                .withDamage(0f) //explosion is what deals the damage
+                .withRange(5.0f) // Wide sweep range
+                .withKnockback(0.8f) // Reduced from 1.2f - still too strong
+                .withBreathCost(20.0f) // Moderate cost
+                .withHitStun(10)
+                .withHitboxSize(3.0f)
+                .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                .build();
+        this.captureRightClickConfig(tempConfig, false);
+    }
+
+    private void createAndCaptureRhythmicStepConfig() {
+        MoveConfiguration tempConfig = new MoveBuilder("rhythmic_step", "Rhythmic Step")
+                .withAnimation("nichirin:rhythmic_step", 9)
+                .withTiming(0, 0, 20) // Fast dash with finishing duration
+                .withDamage(12.0f) // Moderate damage but hits multiple times
+                .withDashSpeed(4.0f) // 4 block dash (halved from 8)
+                .withRange(4.0f) // Dash distance (halved from 8)
+                .withKnockback(0.5f) // Light knockback during dash
+                .withBreathCost(25.0f) // Mobility move cost
+                .withHitStun(15) // Good stun for finishing slash
+                .withHitboxSize(3.0f)
+                .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                .build();
+        this.captureRightClickConfig(tempConfig, true);
     }
 
     private static MovesetBuilder createBuilder() {
@@ -56,6 +98,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(25.0f)
                         .withHitStun(10) // 0.5 second stun
                         .withHitboxSize(13.5f) // Full radius
+                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
                         .withAction(player -> {
                             RoarAttack attack = new RoarAttack();
                             SoundBreathingMoveset moveset = getCurrentMoveset();
@@ -76,6 +119,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(25.0f)
                         .withHitStun(10) // Brief stun per hit
                         .withHitboxSize(12.25f) // Full 360° radius
+                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
                         .withAction(player -> {
                             ConstantResoundingSlashesAttack attack = new ConstantResoundingSlashesAttack();
                             SoundBreathingMoveset moveset = getCurrentMoveset();
@@ -97,6 +141,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(40.0f) // Expensive ultimate-style move
                         .withHitStun(20) // Good stun
                         .withHitboxSize(3.5f) // Wide chain hitbox
+                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
                         .withAction(player -> {
                             StringPerformanceAttack attack = new StringPerformanceAttack();
                             SoundBreathingMoveset moveset = getCurrentMoveset();
@@ -128,16 +173,18 @@ public class SoundBreathingMoveset extends AbstractMoveset {
         // Remove manual breath consumption - let attack system handle it
         TempoBreakerAttack attack = new TempoBreakerAttack();
 
-        MoveConfiguration tempConfig = new MoveBuilder("tempo_breaker", "Tempo Breaker")
-                .withAnimation("nichirin:tempo_breaker", 8)
-                .withTiming(0, 8, 60) // Extended duration to allow delayed explosions
-                .withDamage(0f) //explosion is what deals the damage
-                .withRange(5.0f) // Wide sweep range
-                .withKnockback(0.8f) // Reduced from 1.2f - still too strong
-                .withBreathCost(20.0f) // Moderate cost
-                .withHitStun(10)
-                .withHitboxSize(3.0f)
-                .build();
+        // Use the same config creation method and sync to client
+        createAndCaptureTempoBreakerConfig();
+        MoveConfiguration tempConfig = getRightClickConfiguration();
+
+        if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+            MovesetConfigSyncPacket packet = new MovesetConfigSyncPacket(
+                    "sound_breathing",
+                    this.getRightClickConfiguration(),
+                    this.getCrouchRightClickConfiguration()
+            );
+            NichirinPacketRegistry.sendToPlayer(packet, serverPlayer);
+        }
 
         attack.configure(tempConfig);
         MoveExecutor.executeAttack(player, attack, "sound_breathing", "tempo_breaker");
@@ -149,17 +196,18 @@ public class SoundBreathingMoveset extends AbstractMoveset {
         // Remove manual breath consumption - let attack system handle it
         RhythmicStepAttack attack = new RhythmicStepAttack();
 
-        MoveConfiguration tempConfig = new MoveBuilder("rhythmic_step", "Rhythmic Step")
-                .withAnimation("nichirin:rhythmic_step", 9)
-                .withTiming(0, 0, 20) // Fast dash with finishing duration
-                .withDamage(12.0f) // Moderate damage but hits multiple times
-                .withDashSpeed(4.0f) // 4 block dash (halved from 8)
-                .withRange(4.0f) // Dash distance (halved from 8)
-                .withKnockback(0.5f) // Light knockback during dash
-                .withBreathCost(25.0f) // Mobility move cost
-                .withHitStun(15) // Good stun for finishing slash
-                .withHitboxSize(3.0f)
-                .build();
+        // Use the same config creation method and sync to client
+        createAndCaptureRhythmicStepConfig();
+        MoveConfiguration tempConfig = getCrouchRightClickConfiguration();
+
+        if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+            MovesetConfigSyncPacket packet = new MovesetConfigSyncPacket(
+                    "sound_breathing",
+                    this.getRightClickConfiguration(),
+                    this.getCrouchRightClickConfiguration()
+            );
+            NichirinPacketRegistry.sendToPlayer(packet, serverPlayer);
+        }
 
         attack.configure(tempConfig);
         MoveExecutor.executeAttack(player, attack, "sound_breathing", "rhythmic_step");

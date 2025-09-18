@@ -22,6 +22,7 @@
   "breathing_style.flame_breathing": "Flame Breathing",
   "breathing_style.insect_breathing": "Insect Breathing",
   "breathing_style.sound_breathing": "Sound Breathing",
+  "breathing_style.water_breathing": "Water Breathing",
 
   "command.nichirin.breathing.add.success": "Gave %s the breathing style %s",
   "command.nichirin.breathing.player.add.success": "You have been given the breathing style %s",
@@ -78,6 +79,23 @@
   "gui.nichirin.moveset.current_style": "Style: %s",
   "gui.nichirin.moveset.move_details_coming_soon": "Move details coming soon...",
   "gui.nichirin.moveset.select_style": "Select a breathing style to view moves",
+  "gui.nichirin.moveset.tab.breathing_styles": "Breathing Styles",
+  "gui.nichirin.moveset.tab.demon_arts": "Demon Arts",
+  "gui.nichirin.moveset.tab.data": "Data",
+
+  "gui.nichirin.demon_arts.title": "DEMON ARTS",
+  "gui.nichirin.demon_arts.current": "Current: %s",
+  "gui.nichirin.demon_arts.instructions": "Click to select a demon art:",
+  "gui.nichirin.demon_arts.locked_status": "LOCKED",
+  "gui.nichirin.demon_arts.equipped": "EQUIPPED",
+  "gui.nichirin.demon_arts.click_to_select": "Click to Select",
+  "gui.nichirin.demon_arts.none": "None",
+
+  "gui.nichirin.moveset.data.title": "MOVESET DATA",
+  "gui.nichirin.moveset.data.current_moveset": "Current Moveset: %s",
+  "gui.nichirin.moveset.data.coming_soon": "Detailed moveset data coming soon...",
+  "gui.nichirin.moveset.data.no_moveset": "No moveset selected. Choose a breathing style or demon art to view data.",
+  "gui.nichirin.moveset.data.planned_features": "Planned features:",
 
   "item.nichirin.katana": "Katana",
   "item.nichirin.thunder_katana": "Thunder Katana",

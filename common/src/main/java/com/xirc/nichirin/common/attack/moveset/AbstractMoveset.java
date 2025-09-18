@@ -3,6 +3,7 @@ package com.xirc.nichirin.common.attack.moveset;
 import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
+import com.xirc.nichirin.common.util.BreathingManager;
 import lombok.Getter;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -10,10 +11,13 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -37,6 +41,14 @@ public abstract class AbstractMoveset {
     // List of moves - flexible for any count
     protected final List<MoveConfiguration> moves = new ArrayList<>();
 
+    // Right-click moves
+    protected final MoveConfiguration rightClickMove;
+    protected final MoveConfiguration crouchRightClickMove;
+
+    // Static storage for captured right-click configurations per moveset type
+    private static final Map<String, MoveConfiguration> capturedRightClickConfigs = new HashMap<>();
+    private static final Map<String, MoveConfiguration> capturedCrouchRightClickConfigs = new HashMap<>();
+
     // Optional moveset-wide properties
     @Nullable
     protected final ResourceLocation idleAnimation;
@@ -45,6 +57,7 @@ public abstract class AbstractMoveset {
     protected final float speedMultiplier;
     protected final float fallDamageMultiplier;    // 0.5 = half damage, 0.0 = no damage
     protected final float healthRegenMultiplier;   // 2.0 = double regen rate
+
     // Static tracking for followup queues per player
     private static final java.util.concurrent.ConcurrentHashMap<UUID, FollowupQueue> playerFollowupQueues = new java.util.concurrent.ConcurrentHashMap<>();
 
@@ -131,6 +144,12 @@ public abstract class AbstractMoveset {
         this.speedMultiplier = builder.speedMultiplier;
         this.fallDamageMultiplier = builder.fallDamageMultiplier;
         this.healthRegenMultiplier = builder.healthRegenMultiplier;
+        this.rightClickMove = builder.rightClickMove;
+        this.crouchRightClickMove = builder.crouchRightClickMove;
+
+        // Debug prints
+        System.out.println("Moveset " + movesetId + " - rightClickMove: " + (rightClickMove != null ? rightClickMove.getDisplayName() : "null"));
+        System.out.println("Moveset " + movesetId + " - crouchRightClickMove: " + (crouchRightClickMove != null ? crouchRightClickMove.getDisplayName() : "null"));
 
         // Add all configured moves
         moves.addAll(builder.moveConfigs);
@@ -208,7 +227,7 @@ public abstract class AbstractMoveset {
 
                 // Show feedback that followup was queued
                 player.displayClientMessage(
-                        net.minecraft.network.chat.Component.literal("Followup queued!")
+                        Component.literal("Followup queued!")
                                 .withStyle(style -> style.withColor(0x55FF55)),
                         true
                 );
@@ -219,10 +238,23 @@ public abstract class AbstractMoveset {
     }
 
     /**
+     * Capture a move configuration for later retrieval (used by GUI)
+     * Stores configs statically per moveset type so they persist
+     */
+    public void captureRightClickConfig(MoveConfiguration config, boolean isCrouch) {
+        String key = this.movesetId;
+        if (isCrouch) {
+            capturedCrouchRightClickConfigs.put(key, config);
+        } else {
+            capturedRightClickConfigs.put(key, config);
+        }
+    }
+
+    /**
      * Get the move index to use for right-click
      */
     public int getRightClickMoveIndex(boolean isCrouching) {
-        return 0; // First move by default
+        return isCrouching ? -2 : -1; // Not in attack wheel, handled separately
     }
 
     /**
@@ -254,46 +286,33 @@ public abstract class AbstractMoveset {
      * Performs a move by index with automatic animation handling, stun prevention and followup queue initialization
      */
     public void performMove(Player player, int moveIndex) {
-        System.out.println("[DEBUG] AbstractMoveset.performMove called for moveIndex: " + moveIndex);
-
         if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
-            System.out.println("[DEBUG] Player is stunned, blocking move");
             return;
         }
 
         MoveConfiguration config = getMove(moveIndex);
         if (config != null) {
-            System.out.println("[DEBUG] Move config found: " + config.getDisplayName() + " with " + config.getFollowupCount() + " followups");
-
             // AUTOMATIC ANIMATION HANDLING - Send animation packet if animation is configured
             if (config.animationId != null && player instanceof ServerPlayer serverPlayer) {
                 String animationName = config.animationId.getPath();
                 PlayerAnimationPacket packet = new PlayerAnimationPacket(serverPlayer.getId(), animationName);
                 NichirinPacketRegistry.sendToPlayer(packet, serverPlayer);
-                System.out.println("[DEBUG] Sent animation packet for: " + animationName);
             }
 
             // Initialize followup queue for this attack
             if (config.hasFollowups()) {
-                System.out.println("[DEBUG] Initializing followup queue for attack with " + config.getFollowupCount() + " followups");
                 FollowupQueue queue = new FollowupQueue();
                 queue.startAttack(config);
                 playerFollowupQueues.put(player.getUUID(), queue);
 
                 // Schedule followup check after attack duration
                 int duration = config.getDurationOrDefault(0);
-                System.out.println("[DEBUG] Scheduling followup check after " + duration + " ticks");
                 scheduleFollowupCheck(player, duration);
             }
 
             if (config.startAction != null) {
-                System.out.println("[DEBUG] Executing move start action");
                 config.startAction.accept(player);
-            } else {
-                System.out.println("[DEBUG] No start action defined for this move");
             }
-        } else {
-            System.out.println("[DEBUG] No move config found for index: " + moveIndex);
         }
     }
 
@@ -346,7 +365,6 @@ public abstract class AbstractMoveset {
             String animationName = followup.followupAnimationId.getPath();
             PlayerAnimationPacket packet = new PlayerAnimationPacket(serverPlayer.getId(), animationName);
             NichirinPacketRegistry.sendToPlayer(packet, serverPlayer);
-            System.out.println("[DEBUG] Sent followup animation packet for: " + animationName);
         }
 
         // Execute followup action (no windup - immediate execution)
@@ -439,14 +457,54 @@ public abstract class AbstractMoveset {
      * Get the name of the right-click move for cooldown display
      */
     public String getRightClickMoveName() {
-        return "Special Move";
+        MoveConfiguration config = getRightClickConfiguration();
+        if (config != null) return config.getDisplayName();
+        return rightClickMove != null ? rightClickMove.getDisplayName() : "Special Move";
     }
 
     /**
      * Get the name of the crouch right-click move for cooldown display
      */
     public String getCrouchRightClickMoveName() {
-        return "Crouch Special Move";
+        MoveConfiguration config = getCrouchRightClickConfiguration();
+        if (config != null) return config.getDisplayName();
+        return crouchRightClickMove != null ? crouchRightClickMove.getDisplayName() : "Crouch Special Move";
+    }
+
+    /**
+     * Get description for right-click move
+     */
+    public String getRightClickDescription() {
+        MoveConfiguration config = getRightClickConfiguration();
+        if (config != null) return config.getDescription();
+        return rightClickMove != null ? rightClickMove.getDescription() : null;
+    }
+
+    /**
+     * Get description for crouch right-click move
+     */
+    public String getCrouchRightClickDescription() {
+        MoveConfiguration config = getCrouchRightClickConfiguration();
+        if (config != null) return config.getDescription();
+        return crouchRightClickMove != null ? crouchRightClickMove.getDescription() : null;
+    }
+
+    /**
+     * Get the configuration for right-click move (for data display)
+     * Returns captured config if available, otherwise the builder-configured one
+     */
+    public MoveConfiguration getRightClickConfiguration() {
+        MoveConfiguration captured = capturedRightClickConfigs.get(this.movesetId);
+        return captured != null ? captured : rightClickMove;
+    }
+
+    /**
+     * Get the configuration for crouch right-click move (for data display)
+     * Returns captured config if available, otherwise the builder-configured one
+     */
+    public MoveConfiguration getCrouchRightClickConfiguration() {
+        MoveConfiguration captured = capturedCrouchRightClickConfigs.get(this.movesetId);
+        return captured != null ? captured : crouchRightClickMove;
     }
 
     /**
@@ -457,6 +515,7 @@ public abstract class AbstractMoveset {
         // Basic properties
         public final String moveId;
         public final String displayName;
+        public final String description;
         public final Consumer<Player> startAction;
         public final ResourceLocation animationId;
         public final int animationPriority;
@@ -490,6 +549,7 @@ public abstract class AbstractMoveset {
         private MoveConfiguration(MoveBuilder builder) {
             this.moveId = builder.moveId;
             this.displayName = builder.displayName;
+            this.description = builder.description;
             this.startAction = builder.startAction;
             this.animationId = builder.animationId;
             this.animationPriority = builder.animationPriority;
@@ -748,6 +808,7 @@ public abstract class AbstractMoveset {
         private final String moveId;
         private final String displayName;
 
+        private String description;
         private Consumer<Player> startAction;
         private ResourceLocation animationId;
         private int animationPriority = 0;
@@ -776,6 +837,11 @@ public abstract class AbstractMoveset {
         public MoveBuilder(String moveId, String displayName) {
             this.moveId = moveId;
             this.displayName = displayName;
+        }
+
+        public MoveBuilder withDescription(String description) {
+            this.description = description;
+            return this;
         }
 
         public MoveBuilder withAction(Consumer<Player> action) {
@@ -910,6 +976,9 @@ public abstract class AbstractMoveset {
         private float fallDamageMultiplier = 1.0f;
         private float healthRegenMultiplier = 1.0f;
         private float staminaCostMultiplier = 1.0f;
+
+        private MoveConfiguration rightClickMove;
+        private MoveConfiguration crouchRightClickMove;
 
         final List<MoveConfiguration> moveConfigs = new ArrayList<>();
 

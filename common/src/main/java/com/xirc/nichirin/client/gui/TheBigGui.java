@@ -48,7 +48,6 @@ public class TheBigGui extends Screen {
 
     // Section instances
     private final HomeSection homeSection = new HomeSection();
-    private final BreathingStylesSection breathingStylesSection = new BreathingStylesSection();
     private final SkillsSection skillsSection = new SkillsSection();
     private final BestiarySection bestiarySection = new BestiarySection();
     private final QuestsSection questsSection = new QuestsSection();
@@ -186,12 +185,11 @@ public class TheBigGui extends Screen {
         // Render current section content
         switch (currentSection) {
             case HOME -> homeSection.render(graphics, adjustedMouseX, adjustedMouseY, player, contentWidth, contentHeight, this.font);
-            case BREATHING_STYLES -> breathingStylesSection.render(graphics, player, contentWidth, contentHeight, this.font, adjustedMouseX, adjustedMouseY);
             case SKILLS -> skillsSection.render(graphics, player, this.font);
             case BESTIARY -> bestiarySection.render(graphics, player, this.font);
             case QUESTS -> questsSection.render(graphics, player, this.font);
             case REPUTATION -> reputationSection.render(graphics, player, this.font);
-            case MOVESET -> movesetSection.render(graphics, player, this.font);
+            case MOVESET -> movesetSection.render(graphics, player, this.font, contentWidth, contentHeight, adjustedMouseX, adjustedMouseY);
             case CONFIG -> configSection.render(graphics, player, this.font);
         }
 
@@ -250,10 +248,6 @@ public class TheBigGui extends Screen {
 
         // Handle section-specific clicks
         boolean handled = switch (currentSection) {
-            case BREATHING_STYLES -> {
-                int contentWidth = this.scaledWidth - BUTTON_WIDTH - RIGHT_MARGIN - 20;
-                yield breathingStylesSection.handleClick(adjustedMouseX, adjustedMouseY, player, contentWidth);
-            }
             case HOME -> homeSection.handleClick(adjustedMouseX, adjustedMouseY, player);
             case SKILLS -> skillsSection.handleClick(adjustedMouseX, adjustedMouseY, player);
             case BESTIARY -> bestiarySection.handleClick(adjustedMouseX, adjustedMouseY, player);
@@ -325,7 +319,6 @@ public class TheBigGui extends Screen {
     @Getter
     public enum GuiSection {
         HOME("gui.nichirin.section.home"),
-        BREATHING_STYLES("gui.nichirin.section.breathing_styles"),
         SKILLS("gui.nichirin.section.skills"),
         BESTIARY("gui.nichirin.section.bestiary"),
         QUESTS("gui.nichirin.section.quests"),

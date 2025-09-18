@@ -3,7 +3,9 @@ package com.xirc.nichirin.common.attack.moveset.breathing;
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.thunder.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
+import com.xirc.nichirin.common.network.s2c.MovesetConfigSyncPacket;
 import com.xirc.nichirin.common.util.BreathingManager;
+import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
@@ -36,6 +38,29 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
 
     public ThunderBreathingMoveset() {
         super("thunder_breathing", "Thunder Breathing", MovesetType.BREATHING, createBuilder());
+
+        // Auto-capture configs for GUI display
+        captureInitialConfigs();
+    }
+
+    private void captureInitialConfigs() {
+        // Execute the config creation logic without actually performing the moves
+        createAndCaptureThunderclapFlashConfig();
+    }
+
+    private void createAndCaptureThunderclapFlashConfig() {
+        MoveConfiguration tempConfig = new MoveBuilder("thunderclap_flash", "Thunderclap and Flash")
+                .withAnimation("nichirin:thunderclap_flash", 10)
+                .withTiming(0, 1, 15)
+                .withDamage(12.0f)
+                .withTeleportDistance(12.0f)
+                .withKnockback(0.2f)
+                .withBreathCost(15.0f)
+                .withHitStun(10)
+                .withHitboxSize(1.5f)
+                .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                .build();
+        this.captureRightClickConfig(tempConfig, false);
     }
 
     private static MovesetBuilder createBuilder() {
@@ -55,6 +80,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(30.0f)
                         .withHitStun(4)
                         .withHitboxSize(1.8f)
+                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
                         .withAction(player -> {
                             RiceSpiritAttack attack = new RiceSpiritAttack();
                             ThunderBreathingMoveset moveset = getCurrentMoveset();
@@ -75,6 +101,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(35.0f) // Higher cost for AOE
                         .withHitStun(14)
                         .withHitboxSize(2.5f) // Large hitbox for AOE
+                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
                         .withAction(player -> {
                             ThunderSwarmAttack attack = new ThunderSwarmAttack();
                             ThunderBreathingMoveset moveset = getCurrentMoveset();
@@ -94,6 +121,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withKnockback(0.3f)
                         .withBreathCost(45.0f) // High cost for area denial
                         .withHitStun(25)
+                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
                         .withAction(player -> {
                             DistantThunderAttack attack = new DistantThunderAttack();
                             ThunderBreathingMoveset moveset = getCurrentMoveset();
@@ -114,6 +142,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(30.0f)
                         .withHitStun(25) // Good combo potential
                         .withHitboxSize(0.1f)
+                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
                         .withAction(player -> {
                             HeatLightningAttack attack = new HeatLightningAttack();
                             ThunderBreathingMoveset moveset = getCurrentMoveset();
@@ -133,6 +162,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withKnockback(0.6f)
                         .withBreathCost(40.0f) // High cost for range and damage
                         .withHitStun(35) // Good stun for follow-up
+                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
                         .withAction(player -> {
                             RumbleFlashAttack attack = new RumbleFlashAttack();
                             ThunderBreathingMoveset moveset = getCurrentMoveset();
@@ -153,6 +183,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(70.0f) // Very expensive ultimate
                         .withHitStun(60) // 3 second stun
                         .withHitboxSize(3.5f) // Large hitbox for ultimate
+                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
                         .withAction(player -> {
                             HonoikazuchiNoKamiAttack attack = new HonoikazuchiNoKamiAttack();
                             ThunderBreathingMoveset moveset = getCurrentMoveset();
@@ -177,16 +208,18 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
         // Remove manual breath consumption - let attack system handle it
         ThunderClapFlashAttack attack = new ThunderClapFlashAttack();
 
-        MoveConfiguration tempConfig = new MoveBuilder("thunderclap_flash", "Thunderclap and Flash")
-                .withAnimation("nichirin:thunderclap_flash", 10)
-                .withTiming(0, 1, 15)
-                .withDamage(12.0f)
-                .withTeleportDistance(12.0f)
-                .withKnockback(0.2f)
-                .withBreathCost(12.0f)
-                .withHitStun(10)
-                .withHitboxSize(1.5f)
-                .build();
+        // Use the same config creation method and sync to client
+        createAndCaptureThunderclapFlashConfig();
+        MoveConfiguration tempConfig = getRightClickConfiguration();
+
+        if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+            MovesetConfigSyncPacket packet = new MovesetConfigSyncPacket(
+                    "thunder_breathing",
+                    this.getRightClickConfiguration(),
+                    this.getCrouchRightClickConfiguration()
+            );
+            NichirinPacketRegistry.sendToPlayer(packet, serverPlayer);
+        }
 
         attack.configure(tempConfig);
         MoveExecutor.executeAttack(player, attack, "thunder_breathing", "thunderclap_flash");

@@ -3,7 +3,9 @@ package com.xirc.nichirin.common.attack.moveset.breathing;
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.insect.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
+import com.xirc.nichirin.common.network.s2c.MovesetConfigSyncPacket;
 import com.xirc.nichirin.common.util.BreathingManager;
+import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
@@ -39,6 +41,46 @@ public class InsectBreathingMoveset extends AbstractMoveset {
 
     public InsectBreathingMoveset() {
         super("insect_breathing", "Insect Breathing", MovesetType.BREATHING, createBuilder());
+
+        // Auto-capture configs for GUI display
+        captureInitialConfigs();
+    }
+
+    private void captureInitialConfigs() {
+        // Execute the config creation logic without actually performing the moves
+        createAndCaptureQuickStingConfig();
+        createAndCaptureBeeStingConfig();
+    }
+
+    private void createAndCaptureQuickStingConfig() {
+        MoveConfiguration tempConfig = new MoveBuilder("quick_sting", "Quick Sting")
+                .withAnimation("nichirin:quick_sting", 6)
+                .withTiming(5, 3, 20)
+                .withDamage(2.0f)
+                .withRange(4.0f)
+                .withKnockback(0f)
+                .withBreathCost(10.0f)
+                .withHitStun(15)
+                .withHitboxSize(1.5f)
+                .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                .build();
+        this.captureRightClickConfig(tempConfig, false);
+    }
+
+    private void createAndCaptureBeeStingConfig() {
+        MoveConfiguration tempConfig = new MoveBuilder("bee_sting", "Bee Sting")
+                .withAnimation("nichirin:bee_sting", 9)
+                .withTiming(0, 6, 13)
+                .withDamage(8.0f)
+                .withDashSpeed(6.0f)
+                .withRange(6.0f)
+                .withKnockback(0.1f)
+                .withBreathCost(20.0f)
+                .withHitStun(10)
+                .withHitboxSize(2.0f)
+                .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                .build();
+        this.captureRightClickConfig(tempConfig, true);
     }
 
     private static MovesetBuilder createBuilder() {
@@ -57,6 +99,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(20.0f)
                         .withHitStun(25) // Good stun for precision strike
                         .withHitboxSize(2f) // Small precise hitbox
+                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
                         .withAction(player -> {
                             ButterflyAttack attack = new ButterflyAttack();
                             InsectBreathingMoveset moveset = getCurrentMoveset();
@@ -77,6 +120,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(25.0f) // Higher cost for multi-hit
                         .withHitStun(5) // Very short per hit, final hit has more
                         .withHitboxSize(2.0f) // Target lock area
+                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
                         .withAction(player -> {
                             DragonflyAttack attack = new DragonflyAttack();
                             InsectBreathingMoveset moveset = getCurrentMoveset();
@@ -98,6 +142,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(45.0f) // Expensive ultimate-level move
                         .withHitStun(40) // Strong stun on finisher
                         .withHitboxSize(2.5f) // Larger finisher hitbox
+                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
                         .withAction(player -> {
                             CentipedeAttack attack = new CentipedeAttack();
                             InsectBreathingMoveset moveset = getCurrentMoveset();
@@ -129,16 +174,18 @@ public class InsectBreathingMoveset extends AbstractMoveset {
         // Remove manual breath consumption - let attack system handle it
         QuickStingAttack attack = new QuickStingAttack();
 
-        MoveConfiguration tempConfig = new MoveBuilder("quick_sting", "Quick Sting")
-                .withAnimation("nichirin:quick_sting", 6)
-                .withTiming(5, 3, 20)
-                .withDamage(2.0f)
-                .withRange(4.0f)
-                .withKnockback(0f)
-                .withBreathCost(10.0f)
-                .withHitStun(15)
-                .withHitboxSize(1.5f)
-                .build();
+        // Use the same config creation method and sync to client
+        createAndCaptureQuickStingConfig();
+        MoveConfiguration tempConfig = getRightClickConfiguration();
+
+        if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+            MovesetConfigSyncPacket packet = new MovesetConfigSyncPacket(
+                    "insect_breathing",
+                    this.getRightClickConfiguration(),
+                    this.getCrouchRightClickConfiguration()
+            );
+            NichirinPacketRegistry.sendToPlayer(packet, serverPlayer);
+        }
 
         attack.configure(tempConfig);
         MoveExecutor.executeAttack(player, attack, "insect_breathing", "quick_sting");
@@ -150,17 +197,18 @@ public class InsectBreathingMoveset extends AbstractMoveset {
         // Remove manual breath consumption - let attack system handle it
         BeeStingAttack attack = new BeeStingAttack();
 
-        MoveConfiguration tempConfig = new MoveBuilder("bee_sting", "Bee Sting")
-                .withAnimation("nichirin:bee_sting", 9)
-                .withTiming(0, 6, 13)
-                .withDamage(8.0f)
-                .withDashSpeed(6.0f)
-                .withRange(6.0f)
-                .withKnockback(0.1f)
-                .withBreathCost(20.0f)
-                .withHitStun(10)
-                .withHitboxSize(2.0f)
-                .build();
+        // Use the same config creation method and sync to client
+        createAndCaptureBeeStingConfig();
+        MoveConfiguration tempConfig = getCrouchRightClickConfiguration();
+
+        if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+            MovesetConfigSyncPacket packet = new MovesetConfigSyncPacket(
+                    "insect_breathing",
+                    this.getRightClickConfiguration(),
+                    this.getCrouchRightClickConfiguration()
+            );
+            NichirinPacketRegistry.sendToPlayer(packet, serverPlayer);
+        }
 
         attack.configure(tempConfig);
         MoveExecutor.executeAttack(player, attack, "insect_breathing", "bee_sting");

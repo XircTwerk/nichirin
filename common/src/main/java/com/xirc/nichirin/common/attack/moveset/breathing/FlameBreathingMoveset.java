@@ -3,7 +3,9 @@ package com.xirc.nichirin.common.attack.moveset.breathing;
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.flame.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
+import com.xirc.nichirin.common.network.s2c.MovesetConfigSyncPacket;
 import com.xirc.nichirin.common.util.BreathingManager;
+import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
@@ -39,6 +41,45 @@ public class FlameBreathingMoveset extends AbstractMoveset {
 
     public FlameBreathingMoveset() {
         super("flame_breathing", "Flame Breathing", MovesetType.BREATHING, createBuilder());
+
+        // Auto-capture configs for GUI display using existing execution methods
+        captureInitialConfigs();
+    }
+
+    private void captureInitialConfigs() {
+        // Execute the config creation logic without actually performing the moves
+        createAndCapturePommelSlashConfig();
+        createAndCaptureUnknowingFireConfig();
+    }
+
+    private void createAndCapturePommelSlashConfig() {
+        MoveConfiguration tempConfig = new MoveBuilder("pommel_slash", "Pommel Slash")
+                .withAnimation("nichirin:pommel_slash", 8)
+                .withTiming(0, 5, 18)
+                .withDamage(3.0f)
+                .withRange(4.0f)
+                .withKnockback(0f)
+                .withBreathCost(15.0f)
+                .withHitStun(8)
+                .withHitboxSize(2.0f)
+                .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                .build();
+        this.captureRightClickConfig(tempConfig, false);
+    }
+
+    private void createAndCaptureUnknowingFireConfig() {
+        MoveConfiguration tempConfig = new MoveBuilder("unknowing_fire_quick", "Unknowing Fire")
+                .withAnimation("nichirin:unknowing_fire", 9)
+                .withTiming(0, 6, 15)
+                .withDamage(16.0f)
+                .withRange(3.0f)
+                .withKnockback(0.4f)
+                .withBreathCost(40.0f)
+                .withHitStun(20)
+                .withHitboxSize(2.0f)
+                .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                .build();
+        this.captureRightClickConfig(tempConfig, true);
     }
 
     private static MovesetBuilder createBuilder() {
@@ -58,6 +99,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(20.0f)
                         .withHitStun(20)
                         .withHitboxSize(5f) // Larger for arc
+                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
                         .withAction(player -> {
                             RisingScorchingSunAttack attack = new RisingScorchingSunAttack();
                             FlameBreathingMoveset moveset = getCurrentMoveset();
@@ -78,6 +120,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(30.0f) // Expensive for heavy attack
                         .withHitStun(35)
                         .withHitboxSize(3.0f) // Large explosion hitbox
+                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
                         .withAction(player -> {
                             BlazingUniverseAttack attack = new BlazingUniverseAttack();
                             FlameBreathingMoveset moveset = getCurrentMoveset();
@@ -98,6 +141,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(25.0f)
                         .withHitStun(15)
                         .withHitboxSize(3.5f) // Full radius
+                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
                         .withAction(player -> {
                             BloomingFlameUndulationAttack attack = new BloomingFlameUndulationAttack();
                             FlameBreathingMoveset moveset = getCurrentMoveset();
@@ -119,6 +163,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(50.0f)
                         .withHitStun(10) // Short stun for combo potential
                         .withHitboxSize(2.0f)
+                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
                         .withAction(player -> {
                             FlameTigerAttack attack = new FlameTigerAttack();
                             FlameBreathingMoveset moveset = getCurrentMoveset();
@@ -140,6 +185,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(75.0f)
                         .withHitStun(80) // 4 second stun
                         .withHitboxSize(4.0f) // Large dragon hitbox
+                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
                         .withAction(player -> {
                             RengokuAttack attack = new RengokuAttack();
                             FlameBreathingMoveset moveset = getCurrentMoveset();
@@ -171,20 +217,21 @@ public class FlameBreathingMoveset extends AbstractMoveset {
         // Remove manual breath consumption - let attack system handle it
         PommelSlashAttack attack = new PommelSlashAttack();
 
-        MoveConfiguration tempConfig = new MoveBuilder("pommel_slash", "Pommel Slash")
-                .withAnimation("nichirin:pommel_slash", 8)
-                .withTiming(0, 5, 18)
-                .withDamage(3.0f)
-                .withRange(4.0f)
-                .withKnockback(0f)
-                .withBreathCost(15.0f) // System will consume this automatically (was 7.5f)
-                .withHitStun(8)
-                .withHitboxSize(2.0f)
-                .build();
+        // Use the same config creation method
+        createAndCapturePommelSlashConfig();
+        MoveConfiguration tempConfig = getRightClickConfiguration();
+
+        // Send config sync packet to client
+        if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+            MovesetConfigSyncPacket packet = new MovesetConfigSyncPacket(
+                    "flame_breathing",
+                    this.getRightClickConfiguration(),
+                    this.getCrouchRightClickConfiguration()
+            );
+            NichirinPacketRegistry.sendToPlayer(packet, serverPlayer);
+        }
+
         attack.configure(tempConfig);
-        System.out.println("DEBUG: About to execute attack");
-        MoveExecutor.executeAttack(player, attack, "flame_breathing", "pommel_slash");
-        System.out.println("DEBUG: Attack executed");
         MoveExecutor.executeAttack(player, attack, "flame_breathing", "pommel_slash");
         onMovePerformed(player, -1, false);
         return true;
@@ -194,16 +241,19 @@ public class FlameBreathingMoveset extends AbstractMoveset {
         // Remove manual breath consumption - let attack system handle it
         UnknowingFireAttack attack = new UnknowingFireAttack();
 
-        MoveConfiguration tempConfig = new MoveBuilder("unknowing_fire_quick", "Unknowing Fire")
-                .withAnimation("nichirin:unknowing_fire", 9)
-                .withTiming(0, 6, 15)
-                .withDamage(16.0f)
-                .withRange(3.0f)
-                .withKnockback(0.4f)
-                .withBreathCost(40.0f)
-                .withHitStun(20)
-                .withHitboxSize(2.0f)
-                .build();
+        // Use the same config creation method
+        createAndCaptureUnknowingFireConfig();
+        MoveConfiguration tempConfig = getCrouchRightClickConfiguration();
+
+        // Send config sync packet to client
+        if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+            MovesetConfigSyncPacket packet = new MovesetConfigSyncPacket(
+                    "flame_breathing",
+                    this.getRightClickConfiguration(),
+                    this.getCrouchRightClickConfiguration()
+            );
+            NichirinPacketRegistry.sendToPlayer(packet, serverPlayer);
+        }
 
         attack.configure(tempConfig);
         MoveExecutor.executeAttack(player, attack, "flame_breathing", "unknowing_fire_quick");

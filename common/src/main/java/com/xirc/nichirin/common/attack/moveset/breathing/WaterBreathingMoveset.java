@@ -3,8 +3,10 @@ package com.xirc.nichirin.common.attack.moveset.breathing;
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.water.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
+import com.xirc.nichirin.common.network.s2c.MovesetConfigSyncPacket;
 import com.xirc.nichirin.common.util.BreathingManager;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
+import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
@@ -66,6 +68,46 @@ public class WaterBreathingMoveset extends AbstractMoveset {
 
     public WaterBreathingMoveset() {
         super("water_breathing", "Water Breathing", MovesetType.BREATHING, createBuilder());
+
+        // Auto-capture configs for GUI display
+        captureInitialConfigs();
+    }
+
+    private void captureInitialConfigs() {
+        // Execute the config creation logic without actually performing the moves
+        createAndCaptureWaterSurfaceSlashConfig();
+        createAndCaptureWaterWheelConfig();
+    }
+
+    private void createAndCaptureWaterSurfaceSlashConfig() {
+        MoveConfiguration tempConfig = new MoveBuilder("water_surface_slash", "Water Surface Slash")
+                .withAnimation("nichirin:water_surface_slash", 6)
+                .withTiming(0, 0, 18)
+                .withDamage(5.0f)
+                .withRange(3.5f)
+                .withKnockback(0f)
+                .withBreathCost(8.0f)
+                .withHitStun(20)
+                .withHitboxSize(3.0f)
+                .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                .build();
+        this.captureRightClickConfig(tempConfig, false);
+    }
+
+    private void createAndCaptureWaterWheelConfig() {
+        MoveConfiguration tempConfig = new MoveBuilder("water_wheel", "Water Wheel")
+                .withAnimation("nichirin:water_wheel", 10)
+                .withTiming(0, 10, 30)
+                .withDamage(6.0f)
+                .withRange(4.0f)
+                .withKnockback(0.1f)
+                .withBreathCost(18.0f)
+                .withHitStun(5)
+                .withHitboxSize(3.5f)
+                .withDashSpeed(4.0f)
+                .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                .build();
+        this.captureRightClickConfig(tempConfig, true);
     }
 
     private static MovesetBuilder createBuilder() {
@@ -83,6 +125,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(25.0f)
                         .withHitStun(3) // Very short for continuous hits
                         .withHitboxSize(2.5f)
+                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
                         .withAction(player -> {
                             FlowingDanceAttack attack = new FlowingDanceAttack();
                             WaterBreathingMoveset moveset = getCurrentMoveset();
@@ -103,6 +146,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(25.0f)
                         .withHitStun(8)
                         .withHitboxSize(4.5f) // Full radius
+                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
                         .withAction(player -> {
                             StrikingTideAttack attack = new StrikingTideAttack();
                             WaterBreathingMoveset moveset = getCurrentMoveset();
@@ -124,6 +168,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withHitStun(30)
                         .withHitboxSize(1.0f) // Very small precise hitbox
                         .withDashSpeed(12.0f) // Fast dash
+                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
                         .withAction(player -> {
                             BlessedRainAttack attack = new BlessedRainAttack();
                             WaterBreathingMoveset moveset = getCurrentMoveset();
@@ -144,6 +189,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(20.0f)
                         .withHitStun(7) // Short for spinning effect
                         .withHitboxSize(3.0f)
+                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
                         .withAction(player -> {
                             WhirlpoolAttack attack = new WhirlpoolAttack();
                             WaterBreathingMoveset moveset = getCurrentMoveset();
@@ -164,6 +210,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(15.0f)
                         .withHitStun(20)
                         .withHitboxSize(4.0f) // Wall of ripples
+                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
                         .withAction(player -> {
                             DropRippleThrustAttack attack = new DropRippleThrustAttack();
                             WaterBreathingMoveset moveset = getCurrentMoveset();
@@ -184,6 +231,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(35.0f)
                         .withHitStun(8) // Medium stun for multi-hit
                         .withHitboxSize(6.0f) // BIG ASS HITBOX
+                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
                         .withAction(player -> {
                             WaterfallBasinAttack attack = new WaterfallBasinAttack();
                             WaterBreathingMoveset moveset = getCurrentMoveset();
@@ -205,6 +253,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withHitStun(18)
                         .withHitboxSize(6f)
                         .withDashSpeed(4.0f) // Fast zigzag speed
+                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
                         .withAction(player -> {
                             SplashingWaterFlowAttack attack = new SplashingWaterFlowAttack();
                             WaterBreathingMoveset moveset = getCurrentMoveset();
@@ -225,6 +274,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(50.0f)
                         .withHitStun(12)
                         .withHitboxSize(4.0f)
+                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
                         .withAction(player -> {
                             ConstantFluxAttack attack = new ConstantFluxAttack();
                             WaterBreathingMoveset moveset = getCurrentMoveset();
@@ -245,6 +295,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(55.0f)
                         .withHitStun(6)
                         .withHitboxSize(6.0f) // Large area field
+                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
                         .withAction(player -> {
                             DeadCalmAttack attack = new DeadCalmAttack();
                             WaterBreathingMoveset moveset = getCurrentMoveset();
@@ -307,22 +358,30 @@ public class WaterBreathingMoveset extends AbstractMoveset {
             if (nextStage == 3) {
                 comboState.reset();
             }
-        } else {
         }
 
         return success;
     }
 
     private boolean executeWaterSurfaceSlashStage(Player player, int stage) {
-
         WaterSurfaceSlashAttack attack = new WaterSurfaceSlashAttack();
         attack.setComboStage(stage);
 
         // Different configurations for each stage
         MoveConfiguration config = createStageConfig(stage);
 
-        attack.configure(config);
+        // Use the same config creation method and sync to client
+        createAndCaptureWaterSurfaceSlashConfig();
+        if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+            MovesetConfigSyncPacket packet = new MovesetConfigSyncPacket(
+                    "water_breathing",
+                    this.getRightClickConfiguration(),
+                    this.getCrouchRightClickConfiguration()
+            );
+            NichirinPacketRegistry.sendToPlayer(packet, serverPlayer);
+        }
 
+        attack.configure(config);
         MoveExecutor.executeAttack(player, attack, "water_breathing", "water_surface_slash_stage_" + stage);
         onMovePerformed(player, -1, false);
 
@@ -374,17 +433,18 @@ public class WaterBreathingMoveset extends AbstractMoveset {
     private boolean executeWaterWheel(Player player) {
         WaterWheelAttack attack = new WaterWheelAttack();
 
-        MoveConfiguration tempConfig = new MoveBuilder("water_wheel", "Water Wheel")
-                .withAnimation("nichirin:water_wheel", 10)
-                .withTiming(0, 10, 30) // No cooldown, 0.5s windup, 1.5s duration
-                .withDamage(6.0f)
-                .withRange(4.0f)
-                .withKnockback(0.1f)
-                .withBreathCost(18.0f)
-                .withHitStun(5)
-                .withHitboxSize(3.5f)
-                .withDashSpeed(4.0f)
-                .build();
+        // Use the same config creation method and sync to client
+        createAndCaptureWaterWheelConfig();
+        MoveConfiguration tempConfig = getCrouchRightClickConfiguration();
+
+        if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+            MovesetConfigSyncPacket packet = new MovesetConfigSyncPacket(
+                    "water_breathing",
+                    this.getRightClickConfiguration(),
+                    this.getCrouchRightClickConfiguration()
+            );
+            NichirinPacketRegistry.sendToPlayer(packet, serverPlayer);
+        }
 
         attack.configure(tempConfig);
         MoveExecutor.executeAttack(player, attack, "water_breathing", "water_wheel");

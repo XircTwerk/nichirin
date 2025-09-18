@@ -44,6 +44,7 @@ public interface NichirinPacketRegistry {
     ResourceLocation MOVE_HOTKEY_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "move_hotkey");
     ResourceLocation SYNC_PROGRESSION_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "sync_progression");
     ResourceLocation DEMON_MOVE_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "demon_move");
+    ResourceLocation MOVESET_CONFIG_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "moveset_config_sync");
 
 
 
@@ -206,13 +207,17 @@ public interface NichirinPacketRegistry {
                 context.queue(() -> packet.handleClient());
             });
 
+            NetworkManager.registerReceiver(NetworkManager.Side.S2C, MOVESET_CONFIG_ID, (buf, context) -> {
+                MovesetConfigSyncPacket packet = new MovesetConfigSyncPacket(buf);
+                context.queue(() -> packet.handleClient());
+            });
+
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, SYNC_BREATHING_STYLE, (buf, context) -> {
                 String movesetId = buf.readBoolean() ? buf.readUtf() : null;
                 context.queue(() -> {
                     Player player = context.getPlayer();
                     if (player != null) {
                         PlayerDataProvider.getBreathingStyleData(player).setMovesetId(movesetId);
-                        BreathOfNichirin.LOGGER.debug("Client received breathing style sync: {}", movesetId);
                     }
                 });
             });
@@ -432,6 +437,8 @@ public interface NichirinPacketRegistry {
         } else if (packet instanceof MoveHotkeyPacket p) {
             p.toBytes(buf);
         } else if (packet instanceof DemonMovePacket p) {
+            p.toBytes(buf);
+        } else if (packet instanceof MovesetConfigSyncPacket p) {
             p.toBytes(buf);
         }
 
