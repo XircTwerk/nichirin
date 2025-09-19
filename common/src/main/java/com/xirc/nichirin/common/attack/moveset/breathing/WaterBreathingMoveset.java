@@ -182,8 +182,8 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 // Sixth Form: Whirlpool - Rising whirlpool attack (INDEX 3)
                 .withMove(new MoveBuilder("whirlpool", "Whirlpool")
                         .withAnimation("nichirin:whirlpool", 15)
-                        .withTiming(240, 20, 50) // 8 second cooldown, 1s windup, 2.5s duration
-                        .withDamage(8.0f) // Multi-hit spinning damage
+                        .withTiming(240, 20, 70) // 8 second cooldown, 1s windup, 2.5s duration
+                        .withDamage(6.0f) // Multi-hit spinning damage
                         .withRange(3.0f) // Whirlpool radius
                         .withKnockback(0.1f) // Light knockback, enemies spin around
                         .withBreathCost(20.0f)
@@ -225,7 +225,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("waterfall_basin", "Waterfall Basin")
                         .withAnimation("nichirin:waterfall_basin", 16)
                         .withTiming(300, 30, 60) // 9 second cooldown, 1.5s windup, 3s duration
-                        .withDamage(3.5f) // High DPS multi-hit
+                        .withDamage(2.5f) // High DPS multi-hit
                         .withRange(6.0f) // Large waterfall area
                         .withKnockback(0.0f) // Light knockback to keep enemies in waterfall
                         .withBreathCost(35.0f)
