@@ -55,7 +55,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 .withDamage(12.0f)
                 .withTeleportDistance(12.0f)
                 .withKnockback(0.2f)
-                .withBreathCost(15.0f)
+                .withBreathCost(12.0f)
                 .withHitStun(10)
                 .withHitboxSize(1.5f)
                 .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
@@ -98,7 +98,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withDamage(6.0f) // 4 slashes = 24 damage total (was 8.0f = 32 total)
                         .withRange(7.0f) // Large area around player
                         .withKnockback(0.4f)
-                        .withBreathCost(35.0f) // Higher cost for AOE
+                        .withBreathCost(45.0f) // Higher cost for AOE
                         .withHitStun(14)
                         .withHitboxSize(2.5f) // Large hitbox for AOE
                         .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
