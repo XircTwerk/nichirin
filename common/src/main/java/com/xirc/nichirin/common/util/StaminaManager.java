@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.util;
 
+import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.network.s2c.StaminaSyncPacket;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.world.entity.player.Player;
@@ -11,6 +12,7 @@ import java.util.UUID;
 
 /**
  * Enhanced stamina manager with proper regeneration and networking
+ * Demons and creative mode players always have full stamina
  */
 public class StaminaManager {
 
@@ -23,10 +25,40 @@ public class StaminaManager {
     private static final float MIN_REGEN_THRESHOLD = 0.1f; // Stop regen when this close to max
 
     /**
+     * Check if player should have unlimited stamina
+     */
+    private static boolean hasUnlimitedStamina(Player player) {
+        if (player == null) return false;
+
+        // Creative mode players have unlimited stamina
+        if (player.isCreative()) {
+            return true;
+        }
+
+        // Demons have unlimited stamina
+        if (MovesetHelper.hasDemonMoveset(player)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Updates stamina for a player (call this every tick on SERVER)
      */
     public static void tick(Player player) {
         if (player == null || player.level().isClientSide) return;
+
+        // Demons and creative players always have full stamina
+        if (hasUnlimitedStamina(player)) {
+            StaminaData data = getOrCreateData(player);
+            if (data.current != data.max) {
+                data.current = data.max;
+                data.timeSinceUse = data.regenDelay;
+                syncToClient(player, data);
+            }
+            return;
+        }
 
         StaminaData data = getOrCreateData(player);
 
@@ -64,6 +96,11 @@ public class StaminaManager {
     public static boolean consume(Player player, float amount) {
         if (player == null) return false;
 
+        // Demons and creative players never consume stamina
+        if (hasUnlimitedStamina(player)) {
+            return true;
+        }
+
         StaminaData data = getOrCreateData(player);
         if (data.current >= amount) {
             data.current = Math.max(0, data.current - amount);
@@ -81,6 +118,12 @@ public class StaminaManager {
      */
     public static boolean hasStamina(Player player, float amount) {
         if (player == null) return false;
+
+        // Demons and creative players always have unlimited stamina
+        if (hasUnlimitedStamina(player)) {
+            return true;
+        }
+
         StaminaData data = getOrCreateData(player);
         return data.current >= amount;
     }
@@ -90,7 +133,15 @@ public class StaminaManager {
      */
     public static float getStamina(Player player) {
         if (player == null) return 0;
-        return getOrCreateData(player).current;
+
+        StaminaData data = getOrCreateData(player);
+
+        // Demons and creative players always show full stamina
+        if (hasUnlimitedStamina(player)) {
+            return data.max;
+        }
+
+        return data.current;
     }
 
     /**
@@ -106,6 +157,11 @@ public class StaminaManager {
      */
     public static void restore(Player player, float amount) {
         if (player == null) return;
+
+        // Demons and creative players are always at full stamina anyway
+        if (hasUnlimitedStamina(player)) {
+            return;
+        }
 
         StaminaData data = getOrCreateData(player);
         data.current = Math.min(data.max, data.current + amount);
@@ -133,6 +189,12 @@ public class StaminaManager {
         StaminaData data = getOrCreateData(player);
         data.max = Math.max(1, max);
         data.current = Math.min(data.current, data.max);
+
+        // Demons and creative players should be at full stamina
+        if (hasUnlimitedStamina(player)) {
+            data.current = data.max;
+        }
+
         syncToClient(player, data);
     }
 
@@ -159,6 +221,12 @@ public class StaminaManager {
      */
     public static float getStaminaPercentage(Player player) {
         if (player == null) return 0f;
+
+        // Demons and creative players always show 100%
+        if (hasUnlimitedStamina(player)) {
+            return 1.0f;
+        }
+
         StaminaData data = getOrCreateData(player);
         return data.current / data.max;
     }
@@ -169,6 +237,12 @@ public class StaminaManager {
     public static void forceSyncToClient(Player player) {
         if (player == null) return;
         StaminaData data = getOrCreateData(player);
+
+        // Make sure demons and creative players show full stamina
+        if (hasUnlimitedStamina(player)) {
+            data.current = data.max;
+        }
+
         syncToClient(player, data);
     }
 
@@ -204,6 +278,11 @@ public class StaminaManager {
         data.current = staminaTag.getFloat("current");
         data.timeSinceUse = staminaTag.getInt("timeSinceUse");
 
+        // Ensure demons and creative players start with full stamina
+        if (hasUnlimitedStamina(player)) {
+            data.current = data.max;
+        }
+
         playerStamina.put(player.getUUID(), data);
         syncToClient(player, data);
     }
@@ -229,8 +308,15 @@ public class StaminaManager {
     }
 
     private static StaminaData getOrCreateData(Player player) {
-        return playerStamina.computeIfAbsent(player.getUUID(),
+        StaminaData data = playerStamina.computeIfAbsent(player.getUUID(),
                 uuid -> new StaminaData(DEFAULT_MAX_STAMINA, DEFAULT_REGEN_RATE, DEFAULT_REGEN_DELAY));
+
+        // Ensure demons and creative players have full stamina
+        if (hasUnlimitedStamina(player)) {
+            data.current = data.max;
+        }
+
+        return data;
     }
 
     private static class StaminaData {

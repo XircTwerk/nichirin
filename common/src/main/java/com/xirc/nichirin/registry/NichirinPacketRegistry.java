@@ -45,8 +45,8 @@ public interface NichirinPacketRegistry {
     ResourceLocation SYNC_PROGRESSION_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "sync_progression");
     ResourceLocation DEMON_MOVE_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "demon_move");
     ResourceLocation MOVESET_CONFIG_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "moveset_config_sync");
-
-
+    ResourceLocation DEMON_SYNC_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "demon_sync");
+    ResourceLocation DEMON_INPUT_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "demon_input");
 
     // Packet class mappings
     Map<Class<?>, ResourceLocation> PACKET_IDS = new HashMap<>();
@@ -67,6 +67,7 @@ public interface NichirinPacketRegistry {
         PACKET_IDS.put(MovementInputSyncPacket.class, MOVEMENT_INPUT_SYNC_ID);
         PACKET_IDS.put(ComboCounterPacket.class, COMBO_COUNTER_ID);
         PACKET_IDS.put(MoveHotkeyPacket.class, MOVE_HOTKEY_ID);
+        PACKET_IDS.put(DemonSyncPacket.class, DEMON_SYNC_ID);
 
         // Register packets with error handling
         registerPackets();
@@ -111,6 +112,22 @@ public interface NichirinPacketRegistry {
             DemonMovePacket packet = new DemonMovePacket(buf);
             if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
                 context.queue(() -> packet.handle(serverPlayer));
+            }
+        });
+
+        // NEW: Demon input handling (no katana required)
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, DEMON_INPUT_ID, (buf, context) -> {
+            String inputTypeName = buf.readUtf();
+            if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
+                context.queue(() -> {
+                    try {
+                        com.xirc.nichirin.common.util.MultiplayerInputHandler.InputType inputType =
+                                com.xirc.nichirin.common.util.MultiplayerInputHandler.InputType.valueOf(inputTypeName);
+                        handleDemonInput(serverPlayer, inputType);
+                    } catch (Exception e) {
+                        // Ignore invalid input types
+                    }
+                });
             }
         });
 
@@ -232,6 +249,15 @@ public interface NichirinPacketRegistry {
 
                 context.queue(() -> {
                     com.xirc.nichirin.client.data.ClientProgressionCache.setUnlockedStyles(unlockedStyles);
+                });
+            });
+
+            NetworkManager.registerReceiver(NetworkManager.Side.S2C, DEMON_SYNC_ID, (buf, context) -> {
+                int bloodPoints = buf.readInt();
+                boolean isDemon = buf.readBoolean();
+
+                context.queue(() -> {
+                    com.xirc.nichirin.common.system.DemonComponent.setClientBloodPoints(bloodPoints);
                 });
             });
 
@@ -412,6 +438,17 @@ public interface NichirinPacketRegistry {
         }
     }
 
+    static void sendDemonSync(ServerPlayer player, int bloodPoints, boolean isDemon) {
+        try {
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+            buf.writeInt(bloodPoints);
+            buf.writeBoolean(isDemon);
+            NetworkManager.sendToPlayer(player, DEMON_SYNC_ID, buf);
+        } catch (Exception e) {
+            BreathOfNichirin.LOGGER.error("Failed to send demon sync: {}", e.getMessage());
+        }
+    }
+
     // Simple packet encoding
     static FriendlyByteBuf encodePacket(Object packet) {
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
@@ -492,5 +529,39 @@ public interface NichirinPacketRegistry {
             formatted.append(part.substring(0, 1).toUpperCase()).append(part.substring(1));
         }
         return formatted.toString();
+    }
+
+    private static void handleDemonInput(ServerPlayer player, com.xirc.nichirin.common.util.MultiplayerInputHandler.InputType inputType) {
+        // Check if player is stunned
+        if (player.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.STUNNED.get())) {
+            return;
+        }
+
+        // Check if player has blocking effect
+        if (player.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.BLOCKING.get())) {
+            return;
+        }
+
+        // Get the demon moveset
+        if (!com.xirc.nichirin.common.data.MovesetHelper.hasDemonMoveset(player)) {
+            return;
+        }
+
+        com.xirc.nichirin.common.attack.moveset.AbstractMoveset moveset = com.xirc.nichirin.common.data.MovesetHelper.getDemonMoveset(player);
+        if (moveset == null || !moveset.isDemonMoveset()) {
+            return;
+        }
+
+        switch (inputType) {
+            case LEFT_CLICK -> {
+                moveset.handleLeftClick(player);
+            }
+            case RIGHT_CLICK -> {
+                moveset.handleRightClick(player, false);
+            }
+            case RIGHT_CLICK_CROUCH -> {
+                moveset.handleRightClick(player, true);
+            }
+        }
     }
 }

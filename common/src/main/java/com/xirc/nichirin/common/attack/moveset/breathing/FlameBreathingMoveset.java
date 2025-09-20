@@ -1,7 +1,7 @@
 package com.xirc.nichirin.common.attack.moveset.breathing;
 
 import com.xirc.nichirin.common.attack.MoveExecutor;
-import com.xirc.nichirin.common.attack.moves.flame.*;
+import com.xirc.nichirin.common.attack.moves.breathing.flame.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.network.s2c.MovesetConfigSyncPacket;
 import com.xirc.nichirin.common.util.BreathingManager;

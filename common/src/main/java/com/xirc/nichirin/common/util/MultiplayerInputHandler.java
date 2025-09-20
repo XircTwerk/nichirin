@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.util;
 
+import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.network.c2s.BreathingMovePacket;
 import com.xirc.nichirin.common.network.c2s.DemonMovePacket;
 import dev.architectury.networking.NetworkManager;
@@ -7,6 +8,7 @@ import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.Map;
@@ -15,12 +17,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Handles all multiplayer input for katanas, breathing moves, and demon arts
+ * Enhanced to support demon abilities without katana requirement
  */
 public class MultiplayerInputHandler {
 
     // Network packet IDs
     private static final ResourceLocation ATTACK_WHEEL_STATE_PACKET = new ResourceLocation("nichirin", "attack_wheel_state");
     private static final ResourceLocation KATANA_INPUT_PACKET = new ResourceLocation("nichirin", "katana_input");
+    private static final ResourceLocation DEMON_INPUT_PACKET = new ResourceLocation("nichirin", "demon_input");
 
     // Server-side state tracking (AUTHORITATIVE)
     private static final Map<UUID, PlayerInputState> serverPlayerStates = new ConcurrentHashMap<>();
@@ -99,20 +103,50 @@ public class MultiplayerInputHandler {
     }
 
     /**
-     * CLIENT: Send katana input to server
+     * CLIENT: Send katana/demon input to server
      */
-    public static void sendKatanaInput(InputType inputType, Player player) {
+    public static void sendInput(InputType inputType, Player player) {
         if (player.level().isClientSide) {
             // Check client-side block first (immediate feedback)
             if (shouldBlockInputsClient()) {
                 return;
             }
 
-            // Send to server for authoritative handling
-            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-            buf.writeEnum(inputType);
-            NetworkManager.sendToServer(KATANA_INPUT_PACKET, buf);
+            // PRIORITY: Check held item first, then movesets
+            boolean holdingKatana = player.getMainHandItem().getItem() instanceof com.xirc.nichirin.common.item.katana.SimpleKatana;
+
+            if (holdingKatana) {
+                // Holding katana = ALWAYS use katana input (breathing techniques)
+                FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+                buf.writeEnum(inputType);
+                NetworkManager.sendToServer(KATANA_INPUT_PACKET, buf);
+            } else {
+                // Not holding katana = check for demon moveset
+                boolean hasDemon = MovesetHelper.hasDemonMoveset(player);
+
+                if (hasDemon) {
+                    // Send demon input packet
+                    FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+                    buf.writeUtf(inputType.name());
+                    NetworkManager.sendToServer(DEMON_INPUT_PACKET, buf);
+                } else {
+                    // No demon moveset and no katana = send katana packet anyway (will fail server-side)
+                    // But only for right-click inputs, not left-click
+                    if (inputType != InputType.LEFT_CLICK) {
+                        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+                        buf.writeEnum(inputType);
+                        NetworkManager.sendToServer(KATANA_INPUT_PACKET, buf);
+                    }
+                }
+            }
         }
+    }
+
+    /**
+     * CLIENT: Send katana input to server (legacy method)
+     */
+    public static void sendKatanaInput(InputType inputType, Player player) {
+        sendInput(inputType, player); // Redirect to unified method
     }
 
     /**
@@ -208,7 +242,7 @@ public class MultiplayerInputHandler {
             });
         });
 
-        // Katana input handling
+        // Katana input handling (breathing users)
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, KATANA_INPUT_PACKET, (buf, context) -> {
             InputType inputType = buf.readEnum(InputType.class);
             ServerPlayer player = (ServerPlayer) context.getPlayer();
@@ -219,14 +253,31 @@ public class MultiplayerInputHandler {
                     return;
                 }
 
-                // Execute the katana input
+                // Execute katana input (requires katana)
                 executeKatanaInput(player, inputType);
+            });
+        });
+
+        // Demon input handling (demon art users)
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, DEMON_INPUT_PACKET, (buf, context) -> {
+            String inputTypeStr = buf.readUtf();
+            InputType inputType = InputType.valueOf(inputTypeStr);
+            ServerPlayer player = (ServerPlayer) context.getPlayer();
+
+            context.queue(() -> {
+                // AUTHORITATIVE CHECK: Block if needed
+                if (shouldBlockInputsServer(player)) {
+                    return;
+                }
+
+                // Execute demon input (only if has demon moveset)
+                executeDemonInput(player, inputType);
             });
         });
     }
 
     /**
-     * SERVER SIDE: Execute katana input (called after validation)
+     * SERVER SIDE: Execute katana input (breathing users - requires katana)
      */
     private static void executeKatanaInput(ServerPlayer player, InputType inputType) {
         // Get the katana and execute the appropriate action
@@ -240,15 +291,60 @@ public class MultiplayerInputHandler {
                 katana.performAttack(player);
             }
             case RIGHT_CLICK -> {
-                katana.use(player.level(), player, net.minecraft.world.InteractionHand.MAIN_HAND);
+                katana.use(player.level(), player, InteractionHand.MAIN_HAND);
             }
             case RIGHT_CLICK_CROUCH -> {
                 // Temporarily set crouch state
                 boolean wasCrouching = player.isShiftKeyDown();
                 player.setShiftKeyDown(true);
-                katana.use(player.level(), player, net.minecraft.world.InteractionHand.MAIN_HAND);
+                katana.use(player.level(), player, InteractionHand.MAIN_HAND);
                 player.setShiftKeyDown(wasCrouching);
             }
+        }
+    }
+
+    /**
+     * SERVER SIDE: Execute demon input (demon art users - no katana required)
+     */
+    private static void executeDemonInput(ServerPlayer player, InputType inputType) {
+        // Check if player has demon moveset
+        if (!MovesetHelper.hasDemonMoveset(player)) {
+            return;
+        }
+
+        // Handle right-click and crouch+right-click for entity attacks
+        switch (inputType) {
+            case RIGHT_CLICK -> {
+                // Execute demon right-click ability on entities (move index 0)
+                executeDemonMove(player, 0);
+            }
+            case RIGHT_CLICK_CROUCH -> {
+                // Execute demon crouch+right-click ability on entities (move index 1)
+                executeDemonMove(player, 1);
+            }
+            // LEFT_CLICK not used for demon abilities
+        }
+    }
+
+    /**
+     * SERVER SIDE: Execute a specific demon move by index
+     */
+    private static void executeDemonMove(ServerPlayer player, int moveIndex) {
+        try {
+            var moveset = MovesetHelper.getDemonMoveset(player);
+            if (moveset == null || moveIndex >= moveset.getMoveCount()) {
+                return;
+            }
+
+            // Execute the demon move
+            moveset.performMove(player, moveIndex);
+
+            // Block inputs after execution
+            blockInputsAfterMoveExecution(player);
+
+        } catch (Exception e) {
+            System.err.println("ERROR: Failed to execute demon move " + moveIndex + " for player " + player.getName().getString());
+            e.printStackTrace();
         }
     }
 

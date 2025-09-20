@@ -19,8 +19,7 @@ import net.minecraft.world.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
 
 /**
- * FIXED ATTACK WHEEL HANDLER - PROPERLY SEPARATES BREATHING AND DEMON ARTS
- * Now properly distinguishes between breathing movesets (require katana) and demon movesets (no katana needed)
+ * CORRECTED ATTACK WHEEL HANDLER - Properly uses demon movesets for demons
  */
 public class AttackWheelHandler {
 
@@ -38,6 +37,9 @@ public class AttackWheelHandler {
     // New blocking system
     private static long wheelClosedTime = 0;
     private static final long BLOCK_DURATION_TICKS = 40; // 2 seconds at 20 TPS
+
+    // Track which moveset type the wheel is currently showing
+    private static boolean currentWheelIsBreathing = false;
 
     public static void register() {
 
@@ -169,7 +171,7 @@ public class AttackWheelHandler {
     }
 
     /**
-     * Open the attack wheel - properly distinguishes breathing vs demon arts
+     * CORRECTED: Open the attack wheel - properly uses demon movesets for demons
      */
     private static void openWheel() {
         Minecraft mc = Minecraft.getInstance();
@@ -186,25 +188,26 @@ public class AttackWheelHandler {
             return;
         }
 
+        // CORRECTED LOGIC: Determine moveset based on what player has, not what they're holding
+        AbstractMoveset moveset = null;
+        boolean isBreathingWheel = false;
+
         // Check held item
         ItemStack mainHand = mc.player.getMainHandItem();
         boolean holdingKatana = mainHand.getItem() instanceof SimpleKatana;
 
-        // Determine which moveset to use based on held item and moveset type
-        AbstractMoveset moveset = null;
-
         if (holdingKatana) {
-            // Holding katana - ONLY check for breathing movesets
+            // Holding katana - use breathing moveset if available
             if (MovesetHelper.hasBreathingMoveset(mc.player)) {
                 moveset = MovesetHelper.getBreathingMoveset(mc.player);
+                isBreathingWheel = true;
             }
-            // If no breathing moveset while holding katana, can't open wheel
         } else {
-            // Not holding katana - ONLY check for demon movesets
+            // Not holding katana - use demon moveset if available
             if (MovesetHelper.hasDemonMoveset(mc.player)) {
                 moveset = MovesetHelper.getDemonMoveset(mc.player);
+                isBreathingWheel = false;
             }
-            // If no demon moveset while not holding katana, can't open wheel
         }
 
         // Must have appropriate moveset to open wheel
@@ -221,6 +224,7 @@ public class AttackWheelHandler {
             mc.mouseHandler.releaseMouse();
             currentWheel.activate();
             wheelOpen = true;
+            currentWheelIsBreathing = isBreathingWheel; // Track which type
 
             // Reset captured move state
             capturedSelectedMove = -1;
@@ -230,6 +234,9 @@ public class AttackWheelHandler {
             MultiplayerInputHandler.setAttackWheelOpen(true, mc.player);
 
             wasAttackDown = false;
+
+            // Debug output
+            System.out.println("DEBUG: Opened " + (isBreathingWheel ? "BREATHING" : "DEMON") + " wheel with moveset: " + moveset.getMovesetId());
         }
     }
 
@@ -243,6 +250,7 @@ public class AttackWheelHandler {
             currentWheel.deactivate();
         }
         wheelOpen = false;
+        currentWheelIsBreathing = false; // Reset
 
         // Reset captured move state
         capturedSelectedMove = -1;
@@ -267,7 +275,7 @@ public class AttackWheelHandler {
     }
 
     /**
-     * Execute the selected wheel move - properly distinguishes breathing vs demon arts
+     * CORRECTED: Execute the selected wheel move - uses the correct moveset type
      */
     private static void executeWheelMove() {
         Minecraft mc = Minecraft.getInstance();
@@ -283,25 +291,13 @@ public class AttackWheelHandler {
             return;
         }
 
-        // Determine moveset type and get appropriate moveset
-        ItemStack mainHand = mc.player.getMainHandItem();
-        boolean holdingKatana = mainHand.getItem() instanceof SimpleKatana;
-
+        // CORRECTED: Use the moveset type that was determined when wheel opened
         AbstractMoveset moveset = null;
-        boolean isBreathingMove = false;
 
-        if (holdingKatana) {
-            // Holding katana - ONLY breathing movesets
-            if (MovesetHelper.hasBreathingMoveset(mc.player)) {
-                moveset = MovesetHelper.getBreathingMoveset(mc.player);
-                isBreathingMove = true;
-            }
+        if (currentWheelIsBreathing) {
+            moveset = MovesetHelper.getBreathingMoveset(mc.player);
         } else {
-            // Not holding katana - ONLY demon movesets
-            if (MovesetHelper.hasDemonMoveset(mc.player)) {
-                moveset = MovesetHelper.getDemonMoveset(mc.player);
-                isBreathingMove = false;
-            }
+            moveset = MovesetHelper.getDemonMoveset(mc.player);
         }
 
         if (moveset == null) {
@@ -330,7 +326,7 @@ public class AttackWheelHandler {
         }
 
         // Only check resource costs for breathing arts (demon arts don't use breath/stamina)
-        if (isBreathingMove) {
+        if (currentWheelIsBreathing) {
             if (moveConfig.hasStaminaCost() && !StaminaManager.hasStamina(mc.player, moveConfig.getStaminaCost())) {
                 mc.player.displayClientMessage(
                         Component.literal("Not enough stamina!")
@@ -353,10 +349,12 @@ public class AttackWheelHandler {
         }
 
         // Send move to server using appropriate packet type
-        if (isBreathingMove) {
+        if (currentWheelIsBreathing) {
             MultiplayerInputHandler.sendBreathingMove(selectedMove, mc.player);
+            System.out.println("DEBUG: Sent BREATHING move " + selectedMove + " (" + moveName + ")");
         } else {
             MultiplayerInputHandler.sendDemonMove(selectedMove, mc.player);
+            System.out.println("DEBUG: Sent DEMON move " + selectedMove + " (" + moveName + ")");
         }
 
         // Close wheel after sending command

@@ -6,12 +6,29 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Helper class for moveset data access
- * Supports both breathing techniques and demon arts
+ * Enhanced to support dual moveset system (breathing techniques AND demon arts simultaneously)
  */
 public class MovesetHelper {
 
     /**
-     * Gets the current moveset for a player (breathing or demon)
+     * Gets the current breathing moveset for a player
+     */
+    @Nullable
+    public static AbstractMoveset getBreathingMoveset(Player player) {
+        return PlayerDataProvider.getMovesetData(player).getBreathingMoveset();
+    }
+
+    /**
+     * Gets the current demon moveset for a player
+     */
+    @Nullable
+    public static AbstractMoveset getDemonMoveset(Player player) {
+        return PlayerDataProvider.getMovesetData(player).getDemonMoveset();
+    }
+
+    /**
+     * Gets the primary moveset for a player (breathing takes precedence, then demon)
+     * This maintains backwards compatibility with existing code
      */
     @Nullable
     public static AbstractMoveset getMoveset(Player player) {
@@ -19,29 +36,10 @@ public class MovesetHelper {
     }
 
     /**
-     * Checks if a player has any moveset selected (breathing or demon)
+     * Checks if a player has any moveset selected (breathing OR demon)
      */
     public static boolean hasMoveset(Player player) {
         return PlayerDataProvider.getMovesetData(player).hasMoveset();
-    }
-
-    /**
-     * Gets the moveset ID for a player
-     */
-    @Nullable
-    public static String getMovesetId(Player player) {
-        return PlayerDataProvider.getMovesetData(player).getMovesetId();
-    }
-
-    // Breathing-specific methods
-
-    /**
-     * Gets the current breathing moveset for a player
-     */
-    @Nullable
-    public static AbstractMoveset getBreathingMoveset(Player player) {
-        AbstractMoveset moveset = getMoveset(player);
-        return (moveset != null && moveset.isBreathingMoveset()) ? moveset : null;
     }
 
     /**
@@ -52,26 +50,6 @@ public class MovesetHelper {
     }
 
     /**
-     * Gets the breathing moveset ID for a player
-     */
-    @Nullable
-    public static String getBreathingMovesetId(Player player) {
-        AbstractMoveset moveset = getBreathingMoveset(player);
-        return moveset != null ? moveset.getMovesetId() : null;
-    }
-
-    // Demon art-specific methods
-
-    /**
-     * Gets the current demon art moveset for a player
-     */
-    @Nullable
-    public static AbstractMoveset getDemonMoveset(Player player) {
-        AbstractMoveset moveset = getMoveset(player);
-        return (moveset != null && moveset.isDemonMoveset()) ? moveset : null;
-    }
-
-    /**
      * Checks if a player has a demon art selected
      */
     public static boolean hasDemonMoveset(Player player) {
@@ -79,12 +57,76 @@ public class MovesetHelper {
     }
 
     /**
-     * Gets the demon art moveset ID for a player
+     * Gets the breathing moveset ID for a player
+     */
+    @Nullable
+    public static String getBreathingMovesetId(Player player) {
+        return PlayerDataProvider.getMovesetData(player).getBreathingMovesetId();
+    }
+
+    /**
+     * Gets the demon moveset ID for a player
      */
     @Nullable
     public static String getDemonMovesetId(Player player) {
-        AbstractMoveset moveset = getDemonMoveset(player);
-        return moveset != null ? moveset.getMovesetId() : null;
+        return PlayerDataProvider.getMovesetData(player).getDemonMovesetId();
+    }
+
+    /**
+     * Gets the primary moveset ID for a player (backwards compatibility)
+     */
+    @Nullable
+    public static String getMovesetId(Player player) {
+        return PlayerDataProvider.getMovesetData(player).getMovesetId();
+    }
+
+    /**
+     * Sets a breathing moveset for a player
+     */
+    public static void setBreathingMoveset(Player player, @Nullable String movesetId) {
+        PlayerDataProvider.getMovesetData(player).setBreathingMovesetId(movesetId);
+    }
+
+    /**
+     * Sets a demon moveset for a player
+     */
+    public static void setDemonMoveset(Player player, @Nullable String movesetId) {
+        PlayerDataProvider.getMovesetData(player).setDemonMovesetId(movesetId);
+    }
+
+    /**
+     * Sets a moveset for a player (backwards compatibility - determines type automatically)
+     */
+    public static void setMoveset(Player player, @Nullable String movesetId) {
+        PlayerDataProvider.getMovesetData(player).setMovesetId(movesetId);
+    }
+
+    /**
+     * Clears all movesets for a player
+     */
+    public static void clearMovesets(Player player) {
+        PlayerDataProvider.getMovesetData(player).clearMovesets();
+    }
+
+    /**
+     * Clears only the breathing moveset for a player
+     */
+    public static void clearBreathingMoveset(Player player) {
+        PlayerDataProvider.getMovesetData(player).clearBreathingMoveset();
+    }
+
+    /**
+     * Clears only the demon moveset for a player
+     */
+    public static void clearDemonMoveset(Player player) {
+        PlayerDataProvider.getMovesetData(player).clearDemonMoveset();
+    }
+
+    /**
+     * Gets the moveset data object for a player
+     */
+    public static MovesetData getMovesetData(Player player) {
+        return PlayerDataProvider.getMovesetData(player);
     }
 
     // Legacy methods for backwards compatibility

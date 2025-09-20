@@ -3,6 +3,7 @@ package com.xirc.nichirin.common.handler;
 import com.xirc.nichirin.common.system.movement.Dash;
 import com.xirc.nichirin.common.system.movement.Dodge;
 import com.xirc.nichirin.common.system.abilities.PlayerDoubleJump;
+import com.xirc.nichirin.common.system.DemonManager;
 import dev.architectury.event.events.common.TickEvent;
 import net.minecraft.world.entity.player.Player;
 
@@ -21,9 +22,12 @@ public class PlayerTickHandler {
     private static void onPlayerTick(Player player) {
         PlayerDoubleJump.tickPlayer(player);
 
-        // Only per-player dodge tick
+        // Only per-player systems on server side
         if (!player.level().isClientSide) {
             Dodge.tickForPlayer(player);
+
+            // Tick demon passives (sun damage, blood regen, infinite stamina, blood drain)
+            DemonManager.tickDemon(player);
         }
     }
 }

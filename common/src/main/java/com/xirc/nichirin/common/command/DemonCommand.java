@@ -22,7 +22,9 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * Demon commands for managing player demon arts
- * Usage: /demon give <player> <art> [set] - Give a demon art with optional set flag
+ * Usage: /demon become <player> - Make player a demon (gives default_demon)
+ *        /demon remove <player> - Remove demon status (clears moveset)
+ *        /demon give <player> <art> [set] - Give a demon art with optional set flag
  *        /demon set <player> <art> - Set active art (only if unlocked)
  *        /demon cooldown <player> - Reset all demon art cooldowns
  */
@@ -31,6 +33,26 @@ public class DemonCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("demon")
                 .requires(source -> source.hasPermission(2)) // Requires op level 2
+
+                // /demon become <player> - Make player a demon
+                .then(Commands.literal("become")
+                        .then(Commands.argument("player", EntityArgument.player())
+                                .executes(context -> becomeDemon(
+                                        context,
+                                        EntityArgument.getPlayer(context, "player")
+                                ))
+                        )
+                )
+
+                // /demon remove <player> - Remove demon status
+                .then(Commands.literal("remove")
+                        .then(Commands.argument("player", EntityArgument.player())
+                                .executes(context -> removeDemon(
+                                        context,
+                                        EntityArgument.getPlayer(context, "player")
+                                ))
+                        )
+                )
 
                 // /demon give <player> <art> [set] - Give art with optional set flag (default true)
                 .then(Commands.literal("give")
@@ -79,6 +101,75 @@ public class DemonCommand {
                         )
                 )
         );
+    }
+
+    /**
+     * Makes a player become a demon by giving them the default demon moveset
+     */
+    private static int becomeDemon(CommandContext<CommandSourceStack> context, ServerPlayer player) {
+        CommandSourceStack source = context.getSource();
+        final String playerName = player.getName().getString();
+
+        // Check if player is already a demon
+        String currentMoveset = PlayerDataProvider.getData(player).getMovesetData().getMovesetId();
+        if (isDemonArt(currentMoveset)) {
+            source.sendFailure(Component.literal(playerName + " is already a demon")
+                    .withStyle(s -> s.withColor(0xFFAA00)));
+            return 0;
+        }
+
+        // Unlock default_demon if not already unlocked
+        if (!ProgressionHelper.isMovesetUnlocked(player, "default_demon")) {
+            ProgressionHelper.unlockMoveset(player, "default_demon");
+        }
+
+        // Set default_demon as active
+        PlayerDataProvider.updateAndSync(player, "default_demon");
+
+        // Send success message
+        source.sendSuccess(() -> Component.literal("Made " + playerName + " a demon")
+                .withStyle(s -> s.withColor(0x55FF55)), true);
+
+        // Notify the player
+        player.displayClientMessage(
+                Component.literal("You have become a demon! You now have demon abilities and passives.")
+                        .withStyle(s -> s.withColor(0xFF5555)), // Red for demon
+                false
+        );
+
+        return 1;
+    }
+
+    /**
+     * Removes demon status from a player by clearing their moveset
+     */
+    private static int removeDemon(CommandContext<CommandSourceStack> context, ServerPlayer player) {
+        CommandSourceStack source = context.getSource();
+        final String playerName = player.getName().getString();
+
+        // Check if player is a demon
+        String currentMoveset = PlayerDataProvider.getData(player).getMovesetData().getMovesetId();
+        if (!isDemonArt(currentMoveset)) {
+            source.sendFailure(Component.literal(playerName + " is not a demon")
+                    .withStyle(s -> s.withColor(0xFFAA00)));
+            return 0;
+        }
+
+        // Clear their moveset (set to null)
+        PlayerDataProvider.updateAndSync(player, null);
+
+        // Send success message
+        source.sendSuccess(() -> Component.literal("Removed demon status from " + playerName)
+                .withStyle(s -> s.withColor(0x55FF55)), true);
+
+        // Notify the player
+        player.displayClientMessage(
+                Component.literal("You are no longer a demon. Your demon abilities have been removed.")
+                        .withStyle(s -> s.withColor(0x55FFFF)), // Cyan for normal
+                false
+        );
+
+        return 1;
     }
 
     /**
@@ -279,13 +370,18 @@ public class DemonCommand {
      * Check if a moveset ID is a demon art
      */
     private static boolean isDemonArt(String movesetId) {
-        return movesetId.contains("demon");
+        if (movesetId == null) return false;
+        return movesetId.equals("default_demon") || movesetId.contains("demon");
     }
 
     /**
      * Formats a demon art ID for display
      */
     private static String formatArtName(String artId) {
+        if (artId.equals("default_demon")) {
+            return "Demon Arts";
+        }
+
         String[] parts = artId.split("_");
         StringBuilder formatted = new StringBuilder();
         for (String part : parts) {

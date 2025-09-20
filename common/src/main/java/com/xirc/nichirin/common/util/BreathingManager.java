@@ -11,6 +11,7 @@ import java.util.UUID;
 
 /**
  * Manages breathing power for breathing techniques (separate from stamina)
+ * Creative mode players have unlimited breath
  */
 public class BreathingManager {
 
@@ -23,10 +24,31 @@ public class BreathingManager {
     private static final float MIN_REGEN_THRESHOLD = 0.1f;
 
     /**
+     * Check if player should have unlimited breath
+     */
+    private static boolean hasUnlimitedBreath(Player player) {
+        if (player == null) return false;
+
+        // Creative mode players have unlimited breath
+        return player.isCreative();
+    }
+
+    /**
      * Updates breathing for a player (call this every tick on SERVER)
      */
     public static void tick(Player player) {
         if (player == null || player.level().isClientSide) return;
+
+        // Creative players always have full breath
+        if (hasUnlimitedBreath(player)) {
+            BreathingData data = getOrCreateData(player);
+            if (data.current != data.max) {
+                data.current = data.max;
+                data.timeSinceUse = data.regenDelay;
+                syncToClient(player, data);
+            }
+            return;
+        }
 
         BreathingData data = getOrCreateData(player);
 
@@ -64,6 +86,11 @@ public class BreathingManager {
     public static boolean consume(Player player, float amount) {
         if (player == null) return false;
 
+        // Creative players never consume breath
+        if (hasUnlimitedBreath(player)) {
+            return true;
+        }
+
         BreathingData data = getOrCreateData(player);
         if (data.current >= amount) {
             data.current = Math.max(0, data.current - amount);
@@ -81,6 +108,12 @@ public class BreathingManager {
      */
     public static boolean hasBreath(Player player, float amount) {
         if (player == null) return false;
+
+        // Creative players always have unlimited breath
+        if (hasUnlimitedBreath(player)) {
+            return true;
+        }
+
         BreathingData data = getOrCreateData(player);
         return data.current >= amount;
     }
@@ -90,7 +123,15 @@ public class BreathingManager {
      */
     public static float getBreath(Player player) {
         if (player == null) return 0;
-        return getOrCreateData(player).current;
+
+        BreathingData data = getOrCreateData(player);
+
+        // Creative players always show full breath
+        if (hasUnlimitedBreath(player)) {
+            return data.max;
+        }
+
+        return data.current;
     }
 
     /**
@@ -106,6 +147,11 @@ public class BreathingManager {
      */
     public static void restore(Player player, float amount) {
         if (player == null) return;
+
+        // Creative players are always at full breath anyway
+        if (hasUnlimitedBreath(player)) {
+            return;
+        }
 
         BreathingData data = getOrCreateData(player);
         data.current = Math.min(data.max, data.current + amount);
@@ -133,6 +179,12 @@ public class BreathingManager {
         BreathingData data = getOrCreateData(player);
         data.max = Math.max(1, max);
         data.current = Math.min(data.current, data.max);
+
+        // Creative players should be at full breath
+        if (hasUnlimitedBreath(player)) {
+            data.current = data.max;
+        }
+
         syncToClient(player, data);
     }
 
@@ -159,6 +211,12 @@ public class BreathingManager {
      */
     public static float getBreathingPercentage(Player player) {
         if (player == null) return 0f;
+
+        // Creative players always show 100%
+        if (hasUnlimitedBreath(player)) {
+            return 1.0f;
+        }
+
         BreathingData data = getOrCreateData(player);
         return data.current / data.max;
     }
@@ -169,6 +227,12 @@ public class BreathingManager {
     public static void forceSyncToClient(Player player) {
         if (player == null) return;
         BreathingData data = getOrCreateData(player);
+
+        // Make sure creative players show full breath
+        if (hasUnlimitedBreath(player)) {
+            data.current = data.max;
+        }
+
         syncToClient(player, data);
     }
 
@@ -204,6 +268,11 @@ public class BreathingManager {
         data.current = breathingTag.getFloat("current");
         data.timeSinceUse = breathingTag.getInt("timeSinceUse");
 
+        // Ensure creative players start with full breath
+        if (hasUnlimitedBreath(player)) {
+            data.current = data.max;
+        }
+
         playerBreathing.put(player.getUUID(), data);
         syncToClient(player, data);
     }
@@ -229,8 +298,15 @@ public class BreathingManager {
     }
 
     private static BreathingData getOrCreateData(Player player) {
-        return playerBreathing.computeIfAbsent(player.getUUID(),
+        BreathingData data = playerBreathing.computeIfAbsent(player.getUUID(),
                 uuid -> new BreathingData(DEFAULT_MAX_BREATH, DEFAULT_REGEN_RATE, DEFAULT_REGEN_DELAY));
+
+        // Ensure creative players have full breath
+        if (hasUnlimitedBreath(player)) {
+            data.current = data.max;
+        }
+
+        return data;
     }
 
     private static class BreathingData {

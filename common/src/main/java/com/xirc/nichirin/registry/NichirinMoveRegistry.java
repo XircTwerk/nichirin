@@ -3,6 +3,7 @@ package com.xirc.nichirin.registry;
 import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.common.attack.moveset.*;
 import com.xirc.nichirin.common.attack.moveset.breathing.*;
+import com.xirc.nichirin.common.attack.moveset.demon.DefaultDemonMoveset;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.HashMap;
@@ -63,6 +64,7 @@ public interface NichirinMoveRegistry {
         registerMoveset(new InsectBreathingMoveset());
         registerMoveset(new SoundBreathingMoveset());
         registerMoveset(new WaterBreathingMoveset());
+        registerMoveset(new DefaultDemonMoveset());
         BreathOfNichirin.LOGGER.info("Auto-registered {} movesets with {} total moves",
                 MOVESETS.size(), GLOBAL_MOVES.size());
     }

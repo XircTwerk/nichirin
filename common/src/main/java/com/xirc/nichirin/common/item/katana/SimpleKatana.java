@@ -18,6 +18,7 @@ import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.item.Tiers;
@@ -34,7 +35,7 @@ import java.util.UUID;
 /**
  * Simple katana using existing attack classes with combo integration
  */
-public class SimpleKatana extends SwordItem {
+public class SimpleKatana extends Item {
 
     private static final int COMBO_WINDOW = 20; // ticks to chain attacks
     private static final float LIGHT_ATTACK_STAMINA_COST = 5.0f;
@@ -49,7 +50,7 @@ public class SimpleKatana extends SwordItem {
     private final Map<UUID, PlayerAttackState> playerStates = new HashMap<>();
 
     public SimpleKatana(Properties properties) {
-        super(Tiers.IRON, 3, -2.4f, properties);
+        super(properties);
     }
 
     public boolean isDamageable(ItemStack stack) {
@@ -171,7 +172,7 @@ public class SimpleKatana extends SwordItem {
         }
 
         // Check if moveset wants to override left-click
-        AbstractMoveset moveset = MovesetHelper.getMoveset(player);
+        AbstractMoveset moveset = MovesetHelper.getBreathingMoveset(player);
         if (moveset != null && moveset.handleLeftClick(player)) {
             if (!canPerformAttack(player)) {
                 return;
@@ -277,7 +278,7 @@ public class SimpleKatana extends SwordItem {
         }
 
         // Check if moveset wants to override right-click
-        AbstractMoveset moveset = MovesetHelper.getMoveset(player);
+        AbstractMoveset moveset = MovesetHelper.getBreathingMoveset(player);
         if (moveset != null && moveset.handleRightClick(player, isCrouching)) {
             if (!canPerformAttack(player)) {
                 return InteractionResultHolder.pass(player.getItemInHand(hand));
@@ -433,7 +434,7 @@ public class SimpleKatana extends SwordItem {
         if (!player.level().isClientSide) return;
 
         // Check if player has a breathing style that will handle this
-        AbstractMoveset moveset = MovesetHelper.getMoveset(player);
+        AbstractMoveset moveset = MovesetHelper.getBreathingMoveset(player);
         if (moveset != null) {
             // Don't display default cooldowns - let the breathing system handle it
             return;

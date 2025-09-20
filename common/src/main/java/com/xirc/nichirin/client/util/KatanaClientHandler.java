@@ -2,6 +2,8 @@ package com.xirc.nichirin.client.util;
 
 import com.xirc.nichirin.client.gui.CooldownHUD;
 import com.xirc.nichirin.client.handler.AttackWheelHandler;
+import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
+import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.util.MultiplayerInputHandler;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
@@ -17,7 +19,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * CLIENT-ONLY katana handler - contains all client-specific code
+ * CLIENT-ONLY katana/demon handler - supports both katana-based breathing and katana-free demon abilities
  */
 public class KatanaClientHandler {
 
@@ -33,32 +35,48 @@ public class KatanaClientHandler {
     private static void registerClientInteractions() {
         // Left click air
         InteractionEvent.CLIENT_LEFT_CLICK_AIR.register((player, hand) -> {
-            ItemStack item = player.getItemInHand(hand);
-            if (!(item.getItem() instanceof SimpleKatana)) return;
-
             if (isInputBlocked()) {
                 return;
             }
 
-            sendLeftClick(player);
+            // Check if player can perform attacks (katana OR demon moveset)
+            if (canPerformAttacks(player, hand)) {
+                sendLeftClick(player);
+            }
         });
 
         // Right click air
         InteractionEvent.CLIENT_RIGHT_CLICK_AIR.register((player, hand) -> {
-            ItemStack item = player.getItemInHand(hand);
-            if (!(item.getItem() instanceof SimpleKatana)) return;
-
             if (isInputBlocked()) {
                 return;
             }
 
-            sendRightClick(player);
+            // Check if player can perform attacks (katana OR demon moveset)
+            if (canPerformAttacks(player, hand)) {
+                sendRightClick(player);
+            }
         });
 
-        // Entity attack blocking
+        // RIGHT CLICK ON ENTITIES - for demon abilities
+        InteractionEvent.INTERACT_ENTITY.register((player, entity, hand) -> {
+            if (isInputBlocked()) {
+                return EventResult.pass();
+            }
+
+            // Only for demon users (not katana holders)
+            if (canPerformDemonAttacks(player, hand)) {
+                sendRightClick(player);
+                return EventResult.interruptFalse(); // Prevent normal entity interaction
+            }
+
+            return EventResult.pass(); // Allow normal entity interaction
+        });
+
+        // Removed block interaction for demon abilities - demons only work on entities
+
+        // Entity attack blocking (LEFT CLICK ON ENTITIES)
         PlayerEvent.ATTACK_ENTITY.register((player, level, entity, hand, hitResult) -> {
-            ItemStack item = player.getItemInHand(hand);
-            if (!(item.getItem() instanceof SimpleKatana)) {
+            if (!canPerformAttacks(player, hand)) {
                 return EventResult.pass();
             }
 
@@ -72,6 +90,35 @@ public class KatanaClientHandler {
 
             return EventResult.interruptFalse();
         });
+    }
+
+    /**
+     * Check if player can perform attacks - katana users can only use breathing, demons only when NOT holding katana
+     */
+    private static boolean canPerformAttacks(Player player, net.minecraft.world.InteractionHand hand) {
+        ItemStack item = player.getItemInHand(hand);
+
+        // Check if holding katana (for breathing users ONLY)
+        if (item.getItem() instanceof SimpleKatana) {
+            return true; // Katana holders can use breathing abilities
+        }
+
+        // NOT holding katana - check if has demon moveset
+        if (MovesetHelper.hasDemonMoveset(player)) {
+            return true; // Demons can use abilities when NOT holding katana
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if player can perform demon attacks specifically (no katana held)
+     */
+    private static boolean canPerformDemonAttacks(Player player, net.minecraft.world.InteractionHand hand) {
+        ItemStack item = player.getItemInHand(hand);
+
+        // Must NOT be holding katana AND must have demon moveset
+        return !(item.getItem() instanceof SimpleKatana) && MovesetHelper.hasDemonMoveset(player);
     }
 
     private static boolean isInputBlocked() {
@@ -106,6 +153,7 @@ public class KatanaClientHandler {
 
     private static void sendLeftClick(Player player) {
         try {
+            // Show cooldown for katana users
             if (player.getMainHandItem().getItem() instanceof SimpleKatana katana) {
                 katana.displayClientCooldown(player);
             }
@@ -114,22 +162,47 @@ public class KatanaClientHandler {
         }
 
         try {
-            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-            NetworkManager.sendToServer(LEFT_CLICK_ID, buf);
+            // Use the unified input system that handles both katana and demon routing
+            MultiplayerInputHandler.sendInput(MultiplayerInputHandler.InputType.LEFT_CLICK, player);
         } catch (Exception e) {
-            // Ignore
+            // Fallback to direct packet for backwards compatibility
+            try {
+                FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+                NetworkManager.sendToServer(LEFT_CLICK_ID, buf);
+            } catch (Exception fallbackException) {
+                // Ignore
+            }
         }
     }
 
     private static void sendRightClick(Player player) {
         boolean crouch = player.isCrouching();
-        ResourceLocation id = crouch ? RIGHT_CROUCH_ID : RIGHT_CLICK_ID;
 
         try {
-            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-            NetworkManager.sendToServer(id, buf);
+            // Show cooldown for katana users
+            if (player.getMainHandItem().getItem() instanceof SimpleKatana katana) {
+                katana.displayClientRightClickFeedback(player, crouch);
+            }
         } catch (Exception e) {
             // Ignore
+        }
+
+        try {
+            // Use the unified input system that handles both katana and demon routing
+            MultiplayerInputHandler.InputType inputType = crouch ?
+                    MultiplayerInputHandler.InputType.RIGHT_CLICK_CROUCH :
+                    MultiplayerInputHandler.InputType.RIGHT_CLICK;
+
+            MultiplayerInputHandler.sendInput(inputType, player);
+        } catch (Exception e) {
+            // Fallback to direct packet for backwards compatibility
+            try {
+                ResourceLocation id = crouch ? RIGHT_CROUCH_ID : RIGHT_CLICK_ID;
+                FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+                NetworkManager.sendToServer(id, buf);
+            } catch (Exception fallbackException) {
+                // Ignore
+            }
         }
     }
 }

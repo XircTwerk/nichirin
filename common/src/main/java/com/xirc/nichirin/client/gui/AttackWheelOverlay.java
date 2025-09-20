@@ -4,6 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.data.MovesetHelper;
+import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.registry.MovesetRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -11,15 +12,13 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Simplified attack wheel overlay with clean click detection
- * FIXED SCALE: Always renders at GUI scale 2 regardless of user's GUI scale setting
- * FIXED: Square center for better icon display, reliable click detection
- * FIXED: Connected divider lines and proper layering (lines -> square/outline -> icon)
+ * FIXED: Attack wheel overlay that properly displays demon movesets for demons
  */
 public class AttackWheelOverlay {
 
@@ -84,6 +83,9 @@ public class AttackWheelOverlay {
         this.scaledCenterY = scaledHeight / 2;
     }
 
+    /**
+     * FIXED: Rebuild wheel using the same logic as AttackWheelHandler
+     */
     private void rebuildWheel() {
         segments.clear();
 
@@ -92,16 +94,34 @@ public class AttackWheelOverlay {
         }
 
         Player player = minecraft.player;
-        String movesetId = MovesetHelper.getMovesetId(player);
 
-        if (movesetId == null || movesetId.isEmpty()) {
+        // FIXED: Use the same logic as AttackWheelHandler to determine which moveset to show
+        AbstractMoveset moveset = null;
+        String movesetId = null;
+
+        // Check held item
+        ItemStack mainHand = player.getMainHandItem();
+        boolean holdingKatana = mainHand.getItem() instanceof SimpleKatana;
+
+        if (holdingKatana) {
+            // Holding katana - use breathing moveset if available
+            if (MovesetHelper.hasBreathingMoveset(player)) {
+                moveset = MovesetHelper.getBreathingMoveset(player);
+                movesetId = MovesetHelper.getBreathingMovesetId(player);
+            }
+        } else {
+            // Not holding katana - use demon moveset if available
+            if (MovesetHelper.hasDemonMoveset(player)) {
+                moveset = MovesetHelper.getDemonMoveset(player);
+                movesetId = MovesetHelper.getDemonMovesetId(player);
+            }
+        }
+
+        if (moveset == null || movesetId == null) {
             return;
         }
 
-        AbstractMoveset moveset = MovesetRegistry.getMoveset(movesetId);
-        if (moveset == null) {
-            return;
-        }
+        System.out.println("DEBUG: AttackWheelOverlay rebuilding with " + (holdingKatana ? "BREATHING" : "DEMON") + " moveset: " + movesetId);
 
         // Build segments in order
         for (int i = 0; i < moveset.getMoveCount(); i++) {
@@ -109,6 +129,7 @@ public class AttackWheelOverlay {
             if (config != null) {
                 MoveSegment segment = new MoveSegment(i, config);
                 segments.add(segment);
+                System.out.println("DEBUG: Added segment " + i + ": " + config.getDisplayName());
             }
         }
     }
@@ -322,9 +343,19 @@ public class AttackWheelOverlay {
     private void drawCenterIcon(GuiGraphics guiGraphics, int centerX, int centerY, MoveSegment segment) {
         ResourceLocation iconLocation = null;
 
-        // Get the breathing style and move name for the icon using MoveIcon system only
+        // FIXED: Get the correct moveset ID based on held item
         if (minecraft.player != null && segment.config != null) {
-            String movesetId = MovesetHelper.getMovesetId(minecraft.player);
+            Player player = minecraft.player;
+            ItemStack mainHand = player.getMainHandItem();
+            boolean holdingKatana = mainHand.getItem() instanceof SimpleKatana;
+
+            String movesetId = null;
+            if (holdingKatana) {
+                movesetId = MovesetHelper.getBreathingMovesetId(player);
+            } else {
+                movesetId = MovesetHelper.getDemonMovesetId(player);
+            }
+
             if (movesetId != null) {
                 String moveName = segment.config.getMoveId();
                 if (moveName != null) {

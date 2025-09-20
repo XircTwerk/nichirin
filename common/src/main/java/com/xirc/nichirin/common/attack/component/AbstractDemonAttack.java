@@ -1,12 +1,17 @@
 package com.xirc.nichirin.common.attack.component;
 
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset.MoveConfiguration;
+import com.xirc.nichirin.common.util.ComboIntegration;
 import com.xirc.nichirin.common.util.HitboxData;
 import com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer;
+import com.xirc.nichirin.common.util.enums.MoveClass;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
+import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
@@ -21,11 +26,12 @@ import java.util.Set;
 import java.util.HashSet;
 import java.util.ArrayList;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Base class for all demon art attacks.
  * Similar to AbstractBreathingAttack but for demon abilities - no breath/stamina costs.
- * Enhanced with rotation-aware hitbox system for directional attacks.
+ * Fixed hitbox system with proper positioning and no rotation issues.
  */
 @Getter
 @SuppressWarnings("rawtypes")
@@ -53,7 +59,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
     protected Level world;
 
     // Self-ticking system - attacks register themselves for automatic ticking
-    private static final java.util.concurrent.ConcurrentHashMap<Player, java.util.List<AbstractDemonAttack<?, ?>>> selfTickingAttacks = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Player, List<AbstractDemonAttack<?, ?>>> selfTickingAttacks = new ConcurrentHashMap<>();
 
     // Hit tracking
     @Setter
@@ -214,7 +220,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
 
         if (damaged) {
             // Add combo tracking for demon attacks
-            com.xirc.nichirin.common.util.ComboIntegration.handleSuccessfulHit(user, target, hitStun, damage);
+            ComboIntegration.handleSuccessfulHit(user, target, hitStun, damage);
         }
 
         // Apply hit stun if configured
@@ -260,7 +266,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
 
         if (damaged) {
             // Add combo tracking for demon attacks (no immunity version)
-            com.xirc.nichirin.common.util.ComboIntegration.handleSuccessfulHit(user, target, hitStun, damage);
+            ComboIntegration.handleSuccessfulHit(user, target, hitStun, damage);
         }
 
         // Apply hit stun
@@ -291,172 +297,168 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
 
     /**
      * Get entities in a hitbox centered at the given position
-     * WITH ROTATION SUPPORT: Hitboxes rotate based on player's look direction
+     * FIXED: Uses position-based detection instead of rotated AABBs
      */
     protected List<LivingEntity> getTargetsInHitbox(Vec3 center) {
-        HitboxData hitboxData = new HitboxData(hitboxSize);
-        AABB hitbox = hitboxData.createAABBFromEntity(user);
+        // Use a simple search area around the center
+        double searchRadius = hitboxSize + 2; // Add buffer for safety
+        AABB searchArea = new AABB(
+                center.x - searchRadius, center.y - searchRadius, center.z - searchRadius,
+                center.x + searchRadius, center.y + searchRadius, center.z + searchRadius
+        );
 
-        // Override center position if different from player position
-        if (!center.equals(user.position().add(0, user.getBbHeight() / 2, 0))) {
-            Vec3 lookDirection = user.getLookAngle();
-            float yaw = (float) Math.toRadians(user.getYRot());
-            hitbox = hitboxData.createAABB(center, lookDirection, yaw);
-        }
+        List<LivingEntity> potentialTargets = world.getEntitiesOfClass(LivingEntity.class, searchArea,
+                entity -> entity != user && entity.isAlive());
 
-        // Add to visual debugger if on client
-        if (user.level().isClientSide) {
-            AttackHitboxRenderer.addHitbox(hitbox);
-        } else {
-            // Server side - send packet to client for visual debugging
-            if (user instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-                com.xirc.nichirin.registry.NichirinPacketRegistry.sendHitboxToClient(
-                        serverPlayer, hitbox, 2500L
-                );
+        // Filter by actual distance
+        List<LivingEntity> validTargets = new ArrayList<>();
+        for (LivingEntity target : potentialTargets) {
+            Vec3 targetPos = target.position().add(0, target.getBbHeight() / 2, 0);
+            double distance = center.distanceTo(targetPos);
+
+            if (distance <= hitboxSize) {
+                validTargets.add(target);
             }
         }
 
-        List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
-                entity -> entity != user && entity.isAlive());
+        // Create simple visual hitbox for debugging
+        AABB visualHitbox = new AABB(
+                center.x - hitboxSize/2, center.y - hitboxSize/2, center.z - hitboxSize/2,
+                center.x + hitboxSize/2, center.y + hitboxSize/2, center.z + hitboxSize/2
+        );
 
-        return targets;
+        if (user.level().isClientSide) {
+            AttackHitboxRenderer.addHitbox(visualHitbox);
+        } else {
+            if (user instanceof ServerPlayer serverPlayer) {
+                NichirinPacketRegistry.sendHitboxToClient(serverPlayer, visualHitbox, 2500L);
+            }
+        }
+
+        return validTargets;
     }
 
     /**
      * Get entities in a custom hitbox with specified shape and size
-     * WITH ROTATION SUPPORT: Custom hitboxes also rotate with player direction
+     * FIXED: Uses simple distance checking instead of rotation
      */
     protected List<LivingEntity> getTargetsInCustomHitbox(Vec3 center, float size, HitboxData.HitboxShape shape) {
-        HitboxData hitboxData = new HitboxData(size, shape);
+        // Use distance-based detection regardless of shape
+        double searchRadius = size + 2;
+        AABB searchArea = new AABB(
+                center.x - searchRadius, center.y - searchRadius, center.z - searchRadius,
+                center.x + searchRadius, center.y + searchRadius, center.z + searchRadius
+        );
 
-        Vec3 lookDirection = user.getLookAngle();
-        float yaw = (float) Math.toRadians(user.getYRot());
-        AABB hitbox = hitboxData.createAABB(center, lookDirection, yaw);
+        List<LivingEntity> potentialTargets = world.getEntitiesOfClass(LivingEntity.class, searchArea,
+                entity -> entity != user && entity.isAlive());
 
-        // Add to visual debugger if on client
-        if (user.level().isClientSide) {
-            AttackHitboxRenderer.addHitbox(hitbox);
-        } else {
-            // Server side - send packet to client
-            if (user instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-                com.xirc.nichirin.registry.NichirinPacketRegistry.sendHitboxToClient(
-                        serverPlayer, hitbox, 2500L
-                );
+        List<LivingEntity> validTargets = new ArrayList<>();
+        for (LivingEntity target : potentialTargets) {
+            Vec3 targetPos = target.position().add(0, target.getBbHeight() / 2, 0);
+            double distance = center.distanceTo(targetPos);
+
+            if (distance <= size) {
+                validTargets.add(target);
             }
         }
 
-        List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
-                entity -> entity != user && entity.isAlive());
+        // Simple visual representation
+        AABB visualHitbox = new AABB(
+                center.x - size/2, center.y - size/2, center.z - size/2,
+                center.x + size/2, center.y + size/2, center.z + size/2
+        );
 
-        return targets;
+        if (user.level().isClientSide) {
+            AttackHitboxRenderer.addHitbox(visualHitbox);
+        } else {
+            if (user instanceof ServerPlayer serverPlayer) {
+                NichirinPacketRegistry.sendHitboxToClient(serverPlayer, visualHitbox, 2500L);
+            }
+        }
+
+        return validTargets;
     }
 
     /**
-     * Legacy method for backward compatibility - converts old parameters to new system
+     * Legacy method for backward compatibility
      */
     protected List<LivingEntity> getTargetsInCustomHitbox(Vec3 center, double width, double height, double depth) {
-        // Convert dimensions to our new system
         float size = (float) Math.max(width, Math.max(height, depth));
-
-        // Determine best shape based on dimensions
-        HitboxData.HitboxShape shape;
-        if (width > height && width > depth) {
-            shape = HitboxData.HitboxShape.WIDE;
-        } else if (height > width && height > depth) {
-            shape = HitboxData.HitboxShape.TALL;
-        } else if (depth > width && depth > height) {
-            shape = HitboxData.HitboxShape.LONG;
-        } else {
-            shape = HitboxData.HitboxShape.CUBE;
-        }
-
-        return getTargetsInCustomHitbox(center, size, shape);
+        return getTargetsInCustomHitbox(center, size, HitboxData.HitboxShape.CUBE);
     }
 
     /**
      * Get entities in a line between two points
-     * WITH ROTATION SUPPORT: Line hitboxes can be rotated based on the line direction
+     * FIXED: Uses mathematical line-to-point distance calculation
      */
     protected List<LivingEntity> getTargetsInLine(Vec3 start, Vec3 end, double thickness) {
-        // Calculate the distance and create multiple hitboxes along the line
-        double distance = start.distanceTo(end);
-        int hitboxCount = Math.max(1, (int) Math.ceil(distance / thickness));
+        double lineLength = start.distanceTo(end);
+        Vec3 center = start.add(end).scale(0.5);
+        double searchRadius = Math.max(lineLength, thickness) + 2;
 
-        Set<LivingEntity> allTargets = new HashSet<>();
-        Set<AABB> lineHitboxes = new HashSet<>();
+        AABB searchArea = new AABB(
+                center.x - searchRadius, center.y - searchRadius, center.z - searchRadius,
+                center.x + searchRadius, center.y + searchRadius, center.z + searchRadius
+        );
 
-        // Calculate the direction of the line for rotation
+        List<LivingEntity> potentialTargets = world.getEntitiesOfClass(LivingEntity.class, searchArea,
+                entity -> entity != user && entity.isAlive());
+
+        List<LivingEntity> validTargets = new ArrayList<>();
         Vec3 lineDirection = end.subtract(start).normalize();
-        float lineYaw = (float) Math.atan2(-lineDirection.x, lineDirection.z);
 
-        for (int i = 0; i <= hitboxCount; i++) {
-            double progress = hitboxCount > 0 ? (double) i / hitboxCount : 0;
-            Vec3 hitboxCenter = start.lerp(end, progress);
+        for (LivingEntity target : potentialTargets) {
+            Vec3 targetPos = target.position().add(0, target.getBbHeight() / 2, 0);
+            Vec3 toTarget = targetPos.subtract(start);
 
-            // Create a LONG shaped hitbox oriented along the line direction
-            HitboxData hitboxData = new HitboxData((float) thickness, HitboxData.HitboxShape.LONG);
-            AABB hitbox = hitboxData.createAABB(hitboxCenter, lineDirection, lineYaw);
-            lineHitboxes.add(hitbox);
+            // Project target onto line
+            double projection = toTarget.dot(lineDirection);
+            projection = Math.max(0, Math.min(lineLength, projection)); // Clamp to line segment
 
-            List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
-                    entity -> entity != user && entity.isAlive());
-            allTargets.addAll(targets);
-        }
+            Vec3 closestPoint = start.add(lineDirection.scale(projection));
+            double distanceToLine = targetPos.distanceTo(closestPoint);
 
-        // Add all hitboxes to visual debugger if on client
-        if (user.level().isClientSide) {
-            AttackHitboxRenderer.addHitboxes(lineHitboxes);
-        } else {
-            // Server side - send packets for each hitbox
-            if (user instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-                for (AABB hitbox : lineHitboxes) {
-                    com.xirc.nichirin.registry.NichirinPacketRegistry.sendHitboxToClient(
-                            serverPlayer, hitbox, 2500L
-                    );
-                }
+            if (distanceToLine <= thickness / 2) {
+                validTargets.add(target);
             }
         }
 
-        return new ArrayList<>(allTargets);
+        // Simple visual representation
+        AABB visualBox = new AABB(
+                Math.min(start.x, end.x) - thickness/2,
+                Math.min(start.y, end.y) - thickness/2,
+                Math.min(start.z, end.z) - thickness/2,
+                Math.max(start.x, end.x) + thickness/2,
+                Math.max(start.y, end.y) + thickness/2,
+                Math.max(start.z, end.z) + thickness/2
+        );
+
+        if (user.level().isClientSide) {
+            AttackHitboxRenderer.addHitbox(visualBox);
+        } else {
+            if (user instanceof ServerPlayer serverPlayer) {
+                NichirinPacketRegistry.sendHitboxToClient(serverPlayer, visualBox, 2500L);
+            }
+        }
+
+        return validTargets;
     }
 
     /**
      * Create a hitbox at the configured range from the player
-     * WITH ROTATION SUPPORT: Range hitboxes are positioned and oriented correctly
+     * FIXED: Uses simple positioning without rotation
      */
     protected List<LivingEntity> getTargetsAtRange() {
         Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDirection = user.getLookAngle();
         Vec3 hitboxCenter = playerPos.add(lookDirection.scale(range));
 
-        HitboxData hitboxData = new HitboxData(hitboxSize);
-        AABB hitbox = hitboxData.createAABBFromEntity(user);
-
-        // Override center to be at range distance
-        float yaw = (float) Math.toRadians(user.getYRot());
-        hitbox = hitboxData.createAABB(hitboxCenter, lookDirection, yaw);
-
-        // Add to visual debugger if on client
-        if (user.level().isClientSide) {
-            AttackHitboxRenderer.addHitbox(hitbox);
-        } else {
-            // Server side - send packet to client
-            if (user instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-                com.xirc.nichirin.registry.NichirinPacketRegistry.sendHitboxToClient(
-                        serverPlayer, hitbox, 2500L
-                );
-            }
-        }
-
-        List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
-                entity -> entity != user && entity.isAlive());
-
-        return targets;
+        return getTargetsInHitbox(hitboxCenter);
     }
 
     /**
      * Create a hitbox at the configured range with custom shape
-     * WITH ROTATION SUPPORT: Custom shaped hitboxes at range rotate properly
      */
     protected List<LivingEntity> getTargetsAtRange(HitboxData.HitboxShape shape) {
         Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);
@@ -468,210 +470,142 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
 
     /**
      * Create multiple hitboxes from player to max range
-     * WITH ROTATION SUPPORT: Range line follows player's look direction
+     * FIXED: Uses proper line detection
      */
     protected List<LivingEntity> getTargetsInRangeLine(float spacing) {
         Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDirection = user.getLookAngle();
         Vec3 endPos = playerPos.add(lookDirection.scale(range));
 
-        return getTargetsInLine(playerPos, endPos, spacing);
+        double thickness = Math.min(spacing, hitboxSize);
+        return getTargetsInLine(playerPos, endPos, thickness);
     }
 
     /**
      * Create a cone of hitboxes at the configured range
-     * WITH ROTATION SUPPORT: Cone properly rotates with player direction
+     * FIXED: Uses angle-based detection instead of rotated hitboxes
      */
     protected List<LivingEntity> getTargetsInCone(float coneAngle, int hitboxCount) {
         Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);
-        Vec3 lookDirection = user.getLookAngle();
-        float playerYaw = (float) Math.toRadians(user.getYRot());
+        Vec3 lookDirection = user.getLookAngle().normalize();
 
-        Set<LivingEntity> allTargets = new HashSet<>();
-        Set<AABB> coneHitboxes = new HashSet<>();
+        // Use broader search area
+        double searchRadius = range + hitboxSize;
+        AABB searchArea = new AABB(
+                playerPos.x - searchRadius, playerPos.y - searchRadius, playerPos.z - searchRadius,
+                playerPos.x + searchRadius, playerPos.y + searchRadius, playerPos.z + searchRadius
+        );
 
-        float angleStep = coneAngle / (hitboxCount - 1);
-        float startAngle = -coneAngle / 2;
+        List<LivingEntity> potentialTargets = world.getEntitiesOfClass(LivingEntity.class, searchArea,
+                entity -> entity != user && entity.isAlive());
 
-        for (int i = 0; i < hitboxCount; i++) {
-            float angle = startAngle + (i * angleStep);
+        List<LivingEntity> validTargets = new ArrayList<>();
+        double coneAngleRad = Math.toRadians(coneAngle / 2); // Half angle for easier calculation
+        double cosHalfAngle = Math.cos(coneAngleRad);
 
-            // Calculate the yaw for this hitbox (player yaw + cone offset)
-            float hitboxYaw = playerYaw + (float) Math.toRadians(angle);
+        for (LivingEntity target : potentialTargets) {
+            Vec3 targetPos = target.position().add(0, target.getBbHeight() / 2, 0);
+            Vec3 toTarget = targetPos.subtract(playerPos);
+            double distance = toTarget.length();
 
-            // Calculate direction vector for this angle
-            Vec3 rotatedDirection = rotateVectorY(lookDirection, Math.toRadians(angle));
-            Vec3 hitboxCenter = playerPos.add(rotatedDirection.scale(range));
+            if (distance <= range && distance > 0) {
+                Vec3 toTargetNorm = toTarget.normalize();
+                double dotProduct = lookDirection.dot(toTargetNorm);
 
-            // Create hitbox with proper rotation
-            HitboxData hitboxData = new HitboxData(hitboxSize);
-            AABB hitbox = hitboxData.createAABB(hitboxCenter, rotatedDirection, hitboxYaw);
-            coneHitboxes.add(hitbox);
-
-            List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
-                    entity -> entity != user && entity.isAlive());
-            allTargets.addAll(targets);
-        }
-
-        // Add all hitboxes to visual debugger if on client
-        if (user.level().isClientSide) {
-            AttackHitboxRenderer.addHitboxes(coneHitboxes);
-        } else {
-            // Server side - send packets
-            if (user instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-                for (AABB hitbox : coneHitboxes) {
-                    com.xirc.nichirin.registry.NichirinPacketRegistry.sendHitboxToClient(
-                            serverPlayer, hitbox, 2500L
-                    );
+                // Check if target is within cone angle
+                if (dotProduct >= cosHalfAngle) {
+                    validTargets.add(target);
                 }
             }
         }
 
-        return new ArrayList<>(allTargets);
+        // Create visual cone representation (simplified)
+        List<AABB> coneBoxes = new ArrayList<>();
+        for (int i = 0; i < 5; i++) { // Just 5 visual segments
+            double segmentRange = range * (i + 1) / 5.0;
+            Vec3 segmentCenter = playerPos.add(lookDirection.scale(segmentRange));
+            double segmentSize = hitboxSize * (i + 1) / 5.0; // Growing cone
+
+            AABB segmentBox = new AABB(
+                    segmentCenter.x - segmentSize/2, segmentCenter.y - segmentSize/2, segmentCenter.z - segmentSize/2,
+                    segmentCenter.x + segmentSize/2, segmentCenter.y + segmentSize/2, segmentCenter.z + segmentSize/2
+            );
+            coneBoxes.add(segmentBox);
+        }
+
+        if (user.level().isClientSide) {
+            AttackHitboxRenderer.addHitboxes(new HashSet<>(coneBoxes));
+        } else {
+            if (user instanceof ServerPlayer serverPlayer) {
+                for (AABB hitbox : coneBoxes) {
+                    NichirinPacketRegistry.sendHitboxToClient(serverPlayer, hitbox, 2500L);
+                }
+            }
+        }
+
+        return validTargets;
     }
 
     /**
      * Create a fan/sweep attack that covers an arc in front of the player
      */
     protected List<LivingEntity> getTargetsInSweep(float sweepAngle, float sweepRange, int hitboxCount) {
-        Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);
-        Vec3 lookDirection = user.getLookAngle();
-        float playerYaw = (float) Math.toRadians(user.getYRot());
-
-        Set<LivingEntity> allTargets = new HashSet<>();
-        Set<AABB> sweepHitboxes = new HashSet<>();
-
-        float angleStep = sweepAngle / (hitboxCount - 1);
-        float startAngle = -sweepAngle / 2;
-
-        for (int i = 0; i < hitboxCount; i++) {
-            float angle = startAngle + (i * angleStep);
-            float hitboxYaw = playerYaw + (float) Math.toRadians(angle);
-
-            // Calculate position for this hitbox
-            Vec3 rotatedDirection = rotateVectorY(lookDirection, Math.toRadians(angle));
-            Vec3 hitboxCenter = playerPos.add(rotatedDirection.scale(sweepRange));
-
-            // Create WIDE hitbox for sweep attacks
-            HitboxData hitboxData = new HitboxData(hitboxSize, HitboxData.HitboxShape.WIDE);
-            AABB hitbox = hitboxData.createAABB(hitboxCenter, rotatedDirection, hitboxYaw);
-            sweepHitboxes.add(hitbox);
-
-            List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
-                    entity -> entity != user && entity.isAlive());
-            allTargets.addAll(targets);
-        }
-
-        // Add all hitboxes to visual debugger
-        if (user.level().isClientSide) {
-            AttackHitboxRenderer.addHitboxes(sweepHitboxes);
-        } else {
-            if (user instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-                for (AABB hitbox : sweepHitboxes) {
-                    com.xirc.nichirin.registry.NichirinPacketRegistry.sendHitboxToClient(
-                            serverPlayer, hitbox, 2500L
-                    );
-                }
-            }
-        }
-
-        return new ArrayList<>(allTargets);
+        return getTargetsInCone(sweepAngle, hitboxCount); // Reuse cone logic
     }
 
     /**
-     * Create a thrust attack with a long hitbox extending from the player
+     * FIXED: Thrust attack using line detection
      */
     protected List<LivingEntity> getTargetsInThrust() {
         Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDirection = user.getLookAngle();
+        Vec3 endPos = playerPos.add(lookDirection.scale(range));
 
-        // Position the thrust hitbox halfway between player and max range
-        Vec3 hitboxCenter = playerPos.add(lookDirection.scale(range / 2));
-
-        // Create a LONG hitbox with the range as the size
-        HitboxData hitboxData = new HitboxData(range, HitboxData.HitboxShape.LONG);
-        AABB hitbox = hitboxData.createAABBFromEntity(user);
-
-        // Override center position
-        float yaw = (float) Math.toRadians(user.getYRot());
-        hitbox = hitboxData.createAABB(hitboxCenter, lookDirection, yaw);
-
-        // Add to visual debugger
-        if (user.level().isClientSide) {
-            AttackHitboxRenderer.addHitbox(hitbox);
-        } else {
-            if (user instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-                com.xirc.nichirin.registry.NichirinPacketRegistry.sendHitboxToClient(
-                        serverPlayer, hitbox, 2500L
-                );
-            }
-        }
-
-        List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
-                entity -> entity != user && entity.isAlive());
-
-        return targets;
+        return getTargetsInLine(playerPos, endPos, hitboxSize);
     }
 
     /**
      * Create a 360-degree circular attack around the player
+     * FIXED: Uses simple distance checking
      */
     protected List<LivingEntity> getTargetsInCircle(float radius, int hitboxCount) {
         Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
-        Set<LivingEntity> allTargets = new HashSet<>();
-        Set<AABB> circleHitboxes = new HashSet<>();
+        double searchRadius = radius + hitboxSize;
+        AABB searchArea = new AABB(
+                playerPos.x - searchRadius, playerPos.y - searchRadius, playerPos.z - searchRadius,
+                playerPos.x + searchRadius, playerPos.y + searchRadius, playerPos.z + searchRadius
+        );
 
-        float angleStep = 360f / hitboxCount;
+        List<LivingEntity> potentialTargets = world.getEntitiesOfClass(LivingEntity.class, searchArea,
+                entity -> entity != user && entity.isAlive());
 
-        for (int i = 0; i < hitboxCount; i++) {
-            float angle = i * angleStep;
-            float angleRadians = (float) Math.toRadians(angle);
+        List<LivingEntity> validTargets = new ArrayList<>();
 
-            // Calculate position around the circle
-            double offsetX = radius * Math.cos(angleRadians);
-            double offsetZ = radius * Math.sin(angleRadians);
-            Vec3 hitboxCenter = playerPos.add(offsetX, 0, offsetZ);
+        for (LivingEntity target : potentialTargets) {
+            Vec3 targetPos = target.position().add(0, target.getBbHeight() / 2, 0);
+            double distance = playerPos.distanceTo(targetPos);
 
-            // Calculate direction from player to hitbox for rotation
-            Vec3 direction = hitboxCenter.subtract(playerPos).normalize();
-
-            HitboxData hitboxData = new HitboxData(hitboxSize);
-            AABB hitbox = hitboxData.createAABB(hitboxCenter, direction, angleRadians);
-            circleHitboxes.add(hitbox);
-
-            List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
-                    entity -> entity != user && entity.isAlive());
-            allTargets.addAll(targets);
-        }
-
-        // Add all hitboxes to visual debugger
-        if (user.level().isClientSide) {
-            AttackHitboxRenderer.addHitboxes(circleHitboxes);
-        } else {
-            if (user instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-                for (AABB hitbox : circleHitboxes) {
-                    com.xirc.nichirin.registry.NichirinPacketRegistry.sendHitboxToClient(
-                            serverPlayer, hitbox, 2500L
-                    );
-                }
+            if (distance <= radius) {
+                validTargets.add(target);
             }
         }
 
-        return new ArrayList<>(allTargets);
-    }
+        // Simple circular visual representation
+        AABB circleBox = new AABB(
+                playerPos.x - radius, playerPos.y - hitboxSize/2, playerPos.z - radius,
+                playerPos.x + radius, playerPos.y + hitboxSize/2, playerPos.z + radius
+        );
 
-    /**
-     * Utility method to rotate a vector around the Y axis
-     */
-    private Vec3 rotateVectorY(Vec3 vector, double angleRadians) {
-        double cos = Math.cos(angleRadians);
-        double sin = Math.sin(angleRadians);
+        if (user.level().isClientSide) {
+            AttackHitboxRenderer.addHitbox(circleBox);
+        } else {
+            if (user instanceof ServerPlayer serverPlayer) {
+                NichirinPacketRegistry.sendHitboxToClient(serverPlayer, circleBox, 2500L);
+            }
+        }
 
-        double newX = vector.x * cos - vector.z * sin;
-        double newZ = vector.x * sin + vector.z * cos;
-
-        return new Vec3(newX, vector.y, newZ);
+        return validTargets;
     }
 
     // Abstract methods that must be implemented by subclasses
@@ -736,7 +670,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
     /**
      * Legacy method support for MoveClass registration
      */
-    public void onRegister(com.xirc.nichirin.common.util.enums.MoveClass moveClass) {
+    public void onRegister(MoveClass moveClass) {
         // Override if needed - default implementation does nothing
     }
 
@@ -745,7 +679,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
      */
     private void registerForTicking() {
         if (user != null) {
-            selfTickingAttacks.computeIfAbsent(user, k -> new java.util.ArrayList<>()).add(this);
+            selfTickingAttacks.computeIfAbsent(user, k -> new ArrayList<>()).add(this);
         }
     }
 
@@ -767,12 +701,12 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
     /**
      * Tick all self-registered attacks - CALL THIS FROM YOUR MAIN TICK HANDLER
      */
-    public static void tickAllActiveAttacks(net.minecraft.server.MinecraftServer server) {
+    public static void tickAllActiveAttacks(MinecraftServer server) {
         if (selfTickingAttacks.isEmpty()) {
             return;
         }
 
-        java.util.List<Player> playersToClean = new java.util.ArrayList<>();
+        List<Player> playersToClean = new ArrayList<>();
 
         for (var entry : selfTickingAttacks.entrySet()) {
             Player player = entry.getKey();
@@ -783,10 +717,10 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
                 continue;
             }
 
-            java.util.List<AbstractDemonAttack<?, ?>> toRemove = new java.util.ArrayList<>();
+            List<AbstractDemonAttack<?, ?>> toRemove = new ArrayList<>();
 
             synchronized (attacks) {
-                for (var attack : new java.util.ArrayList<>(attacks)) {
+                for (var attack : new ArrayList<>(attacks)) {
                     try {
                         if (attack.isActive()) {
                             attack.tick();

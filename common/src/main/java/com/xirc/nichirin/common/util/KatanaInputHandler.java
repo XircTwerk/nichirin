@@ -1,6 +1,6 @@
 package com.xirc.nichirin.common.util;
 
-import com.xirc.nichirin.common.attack.moves.thunder.ThunderClapFlashAttack;
+import com.xirc.nichirin.common.attack.moves.breathing.thunder.ThunderClapFlashAttack;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;

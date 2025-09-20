@@ -27,10 +27,8 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Generic attack executor - handles all types of breathing attacks with automatic configuration
- * Now includes anti-spam detection that reduces hitstun on repeated moves
- * Includes stun prevention system to prevent move stacking
- * Enhanced with hitbox visual debugging system
+ * Unified attack executor - handles both breathing and demon attacks with the same logic
+ * Includes anti-spam detection, stun prevention, and hitbox debugging
  */
 public class MoveExecutor {
 
@@ -44,121 +42,182 @@ public class MoveExecutor {
     private static boolean hitboxDebuggingEnabled = false;
 
     /**
-     * Execute any breathing attack - handles both pre-configured and auto-configured attacks
-     * Now includes anti-spam detection for hitstun modification and stun prevention
+     * Unified execute method for both breathing and demon attacks
      */
     public static void executeAttack(Player player, Object attack, String movesetId, String moveId) {
-
         // Check if player is currently stunned (prevents move stacking)
         if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
             return;
         }
 
-        // Handle all breathing attacks through the unified interface
+        // Handle both breathing and demon attacks through unified interface
         if (attack instanceof AbstractBreathingAttack<?, ?> breathingAttack) {
-            // Check if attack is already configured (via moveset manual config)
-            boolean alreadyConfigured = isAttackConfigured(breathingAttack);
+            handleAttack(player, breathingAttack, movesetId, moveId);
+        } else if (attack instanceof AbstractDemonAttack<?, ?> demonAttack) {
+            handleAttack(player, demonAttack, movesetId, moveId);
+        } else {
+            // Fallback for other attack types
+            handleGenericAttack(player, attack, movesetId, moveId);
+        }
+    }
 
-            if (!alreadyConfigured) {
-                // Get the moveset for configuration
-                AbstractMoveset moveset = MovesetRegistry.getMoveset(movesetId);
-                if (moveset != null) {
-                    // Find the move configuration
-                    AbstractMoveset.MoveConfiguration config = findMoveConfig(moveset, moveId);
-                    if (config != null) {
-                        // Apply anti-spam detection to hitstun
-                        int originalHitStun = config.getHitStunOrDefault(0);
-                        int modifiedHitStun = ComboTracker.getModifiedHitStun(player, moveId, originalHitStun);
+    /**
+     * Unified handler for breathing attacks
+     */
+    private static void handleAttack(Player player, AbstractBreathingAttack<?, ?> attack, String movesetId, String moveId) {
+        // Check if attack is already configured
+        boolean alreadyConfigured = isAttackConfigured(attack);
 
-                        if (modifiedHitStun != originalHitStun) {
-                            // Create modified config with reduced hitstun
-                            config = createModifiedConfig(config, modifiedHitStun);
-                        }
-
-                        // Apply stun effect during windup + duration to prevent move stacking
-                        applyMoveStun(player, config);
-
-                        breathingAttack.configure(config);
-                    } else {
-                        return;
-                    }
-                } else {
-                    return;
-                }
-            } else {
-                // Even if pre-configured, we still need to apply spam detection and stun
-                int originalHitStun = breathingAttack.getHitStun();
-                int modifiedHitStun = ComboTracker.getModifiedHitStun(player, moveId, originalHitStun);
-
-                if (modifiedHitStun != originalHitStun) {
-                    // We need to modify the hitstun on the already configured attack
-                    // This would require adding a method to AbstractBreathingAttack to modify hitstun
-                    // For now, we'll need to add a setHitStun method to AbstractBreathingAttack
-                    // breathingAttack.setHitStun(modifiedHitStun);
-                }
-
-                // Apply stun effect for pre-configured attacks too
-                applyPreConfiguredMoveStun(player, breathingAttack);
-            }
+        if (!alreadyConfigured) {
+            configureAttackFromMoveset(player, attack, movesetId, moveId);
+        } else {
+            applyPreConfiguredEffects(player, attack, moveId);
         }
 
-        // Get move info from registry for the display name
+        executeConfiguredAttack(player, attack, movesetId, moveId);
+    }
+
+    /**
+     * Unified handler for demon attacks
+     */
+    private static void handleAttack(Player player, AbstractDemonAttack<?, ?> attack, String movesetId, String moveId) {
+        // Check if attack is already configured
+        boolean alreadyConfigured = isDemonAttackConfigured(attack);
+
+        if (!alreadyConfigured) {
+            configureAttackFromMoveset(player, attack, movesetId, moveId);
+        } else {
+            applyPreConfiguredDemonEffects(player, attack, moveId);
+        }
+
+        executeConfiguredAttack(player, attack, movesetId, moveId);
+    }
+
+    /**
+     * Configure attack using moveset configuration
+     */
+    private static void configureAttackFromMoveset(Player player, Object attack, String movesetId, String moveId) {
+        AbstractMoveset moveset = MovesetRegistry.getMoveset(movesetId);
+        if (moveset == null) return;
+
+        AbstractMoveset.MoveConfiguration config = findMoveConfig(moveset, moveId);
+        if (config == null) return;
+
+        // Apply anti-spam detection to hitstun
+        int originalHitStun = config.getHitStunOrDefault(0);
+        int modifiedHitStun = ComboTracker.getModifiedHitStun(player, moveId, originalHitStun);
+
+        if (modifiedHitStun != originalHitStun) {
+            config = createModifiedConfig(config, modifiedHitStun);
+        }
+
+        // Apply stun effect to prevent move stacking
+        applyMoveStun(player, config);
+
+        // Configure the attack
+        if (attack instanceof AbstractBreathingAttack<?, ?> breathingAttack) {
+            breathingAttack.configure(config);
+        } else if (attack instanceof AbstractDemonAttack<?, ?> demonAttack) {
+            demonAttack.configure(config);
+        }
+    }
+
+    /**
+     * Apply effects for pre-configured breathing attacks
+     */
+    private static void applyPreConfiguredEffects(Player player, AbstractBreathingAttack<?, ?> attack, String moveId) {
+        // Apply anti-spam detection
+        int originalHitStun = attack.getHitStun();
+        ComboTracker.getModifiedHitStun(player, moveId, originalHitStun);
+
+        // Apply stun effect
+        applyPreConfiguredMoveStun(player, attack);
+    }
+
+    /**
+     * Apply effects for pre-configured demon attacks
+     */
+    private static void applyPreConfiguredDemonEffects(Player player, AbstractDemonAttack<?, ?> attack, String moveId) {
+        // Apply anti-spam detection
+        int originalHitStun = getHitStunFromAttack(attack);
+        ComboTracker.getModifiedHitStun(player, moveId, originalHitStun);
+
+        // Apply stun effect
+        applyPreConfiguredDemonMoveStun(player, attack);
+    }
+
+    /**
+     * Execute the configured attack
+     */
+    private static void executeConfiguredAttack(Player player, Object attack, String movesetId, String moveId) {
+        // Get display name from registry
         NichirinMoveRegistry.MoveInfo moveInfo = NichirinMoveRegistry.getMove(movesetId, moveId);
         String displayName = moveInfo != null ? moveInfo.displayName : attack.getClass().getSimpleName();
 
-        // Get cooldown from the attack object
+        // Get cooldown from attack
         int cooldown = getCooldownForAttack(attack);
 
-        // Execute with proper display name
+        // Execute the attack
+        executeAttackInternal(player, attack, displayName, cooldown);
+    }
+
+    /**
+     * Fallback for generic attack types
+     */
+    private static void handleGenericAttack(Player player, Object attack, String movesetId, String moveId) {
+        // Basic execution for unknown attack types
+        String displayName = attack.getClass().getSimpleName();
+        int cooldown = getCooldownForAttack(attack);
         executeAttackInternal(player, attack, displayName, cooldown);
     }
 
     /**
      * Execute attack with visual hitbox debugging
-     * Enhanced version of executeAttack that includes hitbox visualization
      */
     public static void executeAttackWithVisuals(Player player, Object attack, String movesetId, String moveId) {
-        // Check if player is currently stunned (prevents move stacking)
         if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
             return;
         }
 
-        // Clear any existing hitboxes for clean visuals
+        // Clear existing hitboxes for clean visuals
         if (player.level().isClientSide) {
             AttackHitboxRenderer.clearAll();
         }
 
-        // Execute the attack normally
         executeAttack(player, attack, movesetId, moveId);
     }
 
     /**
-     * Apply stun after attack starts successfully
+     * Check if a breathing attack is configured
      */
-    private static void applyStunAfterAttackStart(Player player, Object attack) {
-        if (attack instanceof AbstractBreathingAttack<?, ?> breathingAttack) {
-            // Try to get windup from the configured attack
-            int windupTicks = 0;
-            try {
-                var getWindupMethod = attack.getClass().getMethod("getWindup");
-                windupTicks = (int) getWindupMethod.invoke(attack);
-            } catch (Exception e) {
-                // No windup method, check if we can get it from stored config
-                // For now, use 0
-            }
+    private static boolean isAttackConfigured(AbstractBreathingAttack<?, ?> attack) {
+        try {
+            return attack.getDuration() > 0;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
-            if (windupTicks > 0) {
-                MobEffectInstance stunEffect = new MobEffectInstance(
-                        NichirinEffectRegistry.STUNNED.get(),
-                        windupTicks,
-                        0,
-                        false,
-                        false,
-                        false
-                );
+    /**
+     * Check if a demon attack is configured
+     */
+    private static boolean isDemonAttackConfigured(AbstractDemonAttack<?, ?> attack) {
+        try {
+            return attack.getDuration() > 0;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
-                player.addEffect(stunEffect);
-            }
+    /**
+     * Get hitstun from attack using reflection
+     */
+    private static int getHitStunFromAttack(Object attack) {
+        try {
+            var getHitStunMethod = attack.getClass().getMethod("getHitStun");
+            return (int) getHitStunMethod.invoke(attack);
+        } catch (Exception e) {
+            return 0;
         }
     }
 
@@ -171,35 +230,23 @@ public class MoveExecutor {
         int totalStunTicks = windupTicks + durationTicks;
 
         if (totalStunTicks > 0) {
-            // Apply stunned effect (amplifier 0)
             MobEffectInstance stunEffect = new MobEffectInstance(
                     NichirinEffectRegistry.STUNNED.get(),
                     totalStunTicks,
-                    0, // Amplifier 0
-                    false, // Not ambient
-                    false, // Don't show particles
-                    false  // Don't show icon in inventory
+                    0,
+                    false,
+                    false,
+                    false
             );
-
             player.addEffect(stunEffect);
         }
     }
 
     /**
-     * Apply stun effect for pre-configured attacks
+     * Apply stun effect for pre-configured breathing attacks
      */
     private static void applyPreConfiguredMoveStun(Player player, AbstractBreathingAttack<?, ?> attack) {
-        // For pre-configured attacks, we need to get the timing info differently
-        int windupTicks = 0;
-
-        // Try to get windup if the attack has it
-        try {
-            var getWindupMethod = attack.getClass().getMethod("getWindup");
-            windupTicks = (int) getWindupMethod.invoke(attack);
-        } catch (Exception e) {
-            // No windup method, use 0
-        }
-
+        int windupTicks = getWindupFromAttack(attack);
         if (windupTicks > 0) {
             MobEffectInstance stunEffect = new MobEffectInstance(
                     NichirinEffectRegistry.STUNNED.get(),
@@ -209,8 +256,37 @@ public class MoveExecutor {
                     false,
                     false
             );
-
             player.addEffect(stunEffect);
+        }
+    }
+
+    /**
+     * Apply stun effect for pre-configured demon attacks
+     */
+    private static void applyPreConfiguredDemonMoveStun(Player player, AbstractDemonAttack<?, ?> attack) {
+        int windupTicks = getWindupFromAttack(attack);
+        if (windupTicks > 0) {
+            MobEffectInstance stunEffect = new MobEffectInstance(
+                    NichirinEffectRegistry.STUNNED.get(),
+                    windupTicks,
+                    0,
+                    false,
+                    false,
+                    false
+            );
+            player.addEffect(stunEffect);
+        }
+    }
+
+    /**
+     * Get windup from attack using reflection
+     */
+    private static int getWindupFromAttack(Object attack) {
+        try {
+            var getWindupMethod = attack.getClass().getMethod("getWindup");
+            return (int) getWindupMethod.invoke(attack);
+        } catch (Exception e) {
+            return 0;
         }
     }
 
@@ -218,60 +294,9 @@ public class MoveExecutor {
      * Create a modified configuration with different hitstun
      */
     private static AbstractMoveset.MoveConfiguration createModifiedConfig(AbstractMoveset.MoveConfiguration originalConfig, int newHitStun) {
-        // This would require creating a new MoveConfiguration with modified hitstun
-        // Since MoveConfiguration is immutable, we'd need to rebuild it
-        // For now, return the original and handle this in the attack class
-
         // TODO: Implement proper configuration modification
-        // This is a temporary solution - ideally we'd create a new MoveConfiguration
+        // For now, return the original config
         return originalConfig;
-    }
-
-    /**
-     * Check if a breathing attack is already configured
-     */
-    private static boolean isAttackConfigured(AbstractBreathingAttack<?, ?> attack) {
-        try {
-            // Check if duration > 0 as the only required value
-            // All other values (damage, range, hitboxSize) can be 0 for special attacks
-            return attack.getDuration() > 0;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    /**
-     * Execute an attack with explicit name and cooldown
-     */
-    public static void executeAttackWithInfo(Player player, Object attack, String displayName, int cooldown) {
-        // Check if player is stunned
-        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
-            return;
-        }
-
-        executeAttackInternal(player, attack, displayName, cooldown);
-    }
-
-    /**
-     * Internal execution method
-     */
-    private static void executeAttackInternal(Player player, Object attack, String displayName, int cooldown) {
-
-        if (!isAttackActive(attack)) {
-            startAttack(player, attack);
-
-            // Only track if attack actually started successfully
-            if (isAttackActive(attack)) {
-                trackAttack(player, attack);
-
-                // Send cooldown to client if on server
-                if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer && cooldown > 0) {
-                    sendCooldownToClient(serverPlayer, displayName, cooldown);
-                }
-            } else {
-            }
-        } else {
-        }
     }
 
     /**
@@ -288,15 +313,41 @@ public class MoveExecutor {
     }
 
     /**
+     * Execute an attack with explicit name and cooldown
+     */
+    public static void executeAttackWithInfo(Player player, Object attack, String displayName, int cooldown) {
+        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+            return;
+        }
+        executeAttackInternal(player, attack, displayName, cooldown);
+    }
+
+    /**
+     * Internal execution method
+     */
+    private static void executeAttackInternal(Player player, Object attack, String displayName, int cooldown) {
+        if (!isAttackActive(attack)) {
+            startAttack(player, attack);
+
+            if (isAttackActive(attack)) {
+                trackAttack(player, attack);
+
+                // Send cooldown to client if on server
+                if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer && cooldown > 0) {
+                    sendCooldownToClient(serverPlayer, displayName, cooldown);
+                }
+            }
+        }
+    }
+
+    /**
      * Generic method to check if attack is active
      */
     private static boolean isAttackActive(Object attack) {
-        // Handle AbstractBreathingAttack directly
         if (attack instanceof AbstractBreathingAttack<?, ?> breathingAttack) {
             return breathingAttack.isActive();
         }
 
-        // Fallback to reflection for other types
         try {
             var isActiveMethod = attack.getClass().getMethod("isActive");
             return (boolean) isActiveMethod.invoke(attack);
@@ -309,14 +360,11 @@ public class MoveExecutor {
      * Generic method to start an attack
      */
     private static void startAttack(Player player, Object attack) {
-
-        // Handle AbstractBreathingAttack directly
         if (attack instanceof AbstractBreathingAttack<?, ?> breathingAttack) {
             breathingAttack.start(player, player.level());
             return;
         }
 
-        // Fallback to reflection for other types
         try {
             // Try different start method signatures
             try {
@@ -327,12 +375,12 @@ public class MoveExecutor {
                     var startMethod = attack.getClass().getMethod("start", Player.class);
                     startMethod.invoke(attack, player);
                 } catch (NoSuchMethodException e2) {
-                    // Try parameterless start
                     var startMethod = attack.getClass().getMethod("start");
                     startMethod.invoke(attack);
                 }
             }
         } catch (Exception e) {
+            // Silent failure for unknown attack types
         }
     }
 
@@ -340,12 +388,10 @@ public class MoveExecutor {
      * Generic method to get cooldown from attack
      */
     private static int getCooldownForAttack(Object attack) {
-        // Handle AbstractBreathingAttack directly
         if (attack instanceof AbstractBreathingAttack<?, ?> breathingAttack) {
             return breathingAttack.getCooldown();
         }
 
-        // Fallback to reflection for other types
         try {
             var getCooldownMethod = attack.getClass().getMethod("getCooldown");
             return (int) getCooldownMethod.invoke(attack);
@@ -358,12 +404,10 @@ public class MoveExecutor {
      * Execute a move by name with cooldown and stun prevention
      */
     public static void executeMove(Player player, String moveName, Runnable moveExecution, int cooldownTicks, int stunDurationTicks) {
-        // Check if player is currently stunned
         if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
             return;
         }
 
-        // Apply stun effect to prevent move stacking
         if (stunDurationTicks > 0) {
             MobEffectInstance stunEffect = new MobEffectInstance(
                     NichirinEffectRegistry.STUNNED.get(),
@@ -373,117 +417,14 @@ public class MoveExecutor {
                     false,
                     false
             );
-
             player.addEffect(stunEffect);
         }
 
-        // Apply anti-spam detection to move execution
         ComboTracker.getModifiedHitStun(player, moveName, 0);
-
-        // Execute the move
         moveExecution.run();
 
-        // Send cooldown to client if on server
         if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer && cooldownTicks > 0) {
             sendCooldownToClient(serverPlayer, moveName, cooldownTicks);
-        }
-    }
-
-    /**
-     * Execute any demon attack - handles both pre-configured and auto-configured attacks
-     */
-    public static void executeDemonAttack(Player player, Object attack, String movesetId, String moveId) {
-        // Check if player is currently stunned (prevents move stacking)
-        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
-            return;
-        }
-
-        // Handle demon attacks through the unified interface
-        if (attack instanceof AbstractDemonAttack<?, ?> demonAttack) {
-            // Check if attack is already configured
-            boolean alreadyConfigured = isDemonAttackConfigured(demonAttack);
-
-            if (!alreadyConfigured) {
-                // Get the moveset for configuration
-                AbstractMoveset moveset = MovesetRegistry.getMoveset(movesetId);
-                if (moveset != null) {
-                    // Find the move configuration
-                    AbstractMoveset.MoveConfiguration config = findMoveConfig(moveset, moveId);
-                    if (config != null) {
-                        // Apply anti-spam detection to hitstun
-                        int originalHitStun = config.getHitStunOrDefault(0);
-                        int modifiedHitStun = ComboTracker.getModifiedHitStun(player, moveId, originalHitStun);
-
-                        if (modifiedHitStun != originalHitStun) {
-                            // Create modified config with reduced hitstun
-                            config = createModifiedConfig(config, modifiedHitStun);
-                        }
-
-                        // Apply stun effect during windup + duration to prevent move stacking
-                        applyMoveStun(player, config);
-
-                        demonAttack.configure(config);
-                    } else {
-                        return;
-                    }
-                } else {
-                    return;
-                }
-            } else {
-                // Apply stun effect for pre-configured attacks too
-                applyPreConfiguredDemonMoveStun(player, demonAttack);
-            }
-        }
-
-        // Get move info from registry for the display name
-        NichirinMoveRegistry.MoveInfo moveInfo = NichirinMoveRegistry.getMove(movesetId, moveId);
-        String displayName = moveInfo != null ? moveInfo.displayName : attack.getClass().getSimpleName();
-
-        // Get cooldown from the attack object
-        int cooldown = getCooldownForAttack(attack);
-
-        // Execute with proper display name
-        executeAttackInternal(player, attack, displayName, cooldown);
-    }
-
-    /**
-     * Check if a demon attack is already configured
-     */
-    private static boolean isDemonAttackConfigured(AbstractDemonAttack<?, ?> attack) {
-        try {
-            // Check if duration > 0 as the only required value
-            return attack.getDuration() > 0;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    /**
-     * Apply stun effect for pre-configured demon attacks
-     */
-    private static void applyPreConfiguredDemonMoveStun(Player player, AbstractDemonAttack<?, ?> attack) {
-        // For pre-configured attacks, we need to get the timing info differently
-        int windupTicks = 0;
-
-        // Try to get windup if the attack has it
-        try {
-            var getWindupMethod = attack.getClass().getMethod("getWindup");
-            windupTicks = (int) getWindupMethod.invoke(attack);
-        } catch (Exception e) {
-            // No windup method, use 0
-        }
-
-        if (windupTicks > 0) {
-            MobEffectInstance stunEffect = new MobEffectInstance(
-                    NichirinEffectRegistry.STUNNED.get(),
-                    windupTicks,
-                    0,
-                    false,
-                    false,
-                    false
-            );
-
-            player.addEffect(stunEffect);
         }
     }
 
@@ -491,7 +432,6 @@ public class MoveExecutor {
      * Overloaded method for backward compatibility
      */
     public static void executeMove(Player player, String moveName, Runnable moveExecution, int cooldownTicks) {
-        // Default stun duration of 20 ticks (1 second) if not specified
         executeMove(player, moveName, moveExecution, cooldownTicks, 20);
     }
 
@@ -503,7 +443,7 @@ public class MoveExecutor {
     }
 
     /**
-     * Force remove move stun (for canceling moves or emergency situations)
+     * Force remove move stun
      */
     public static void removeMoveStun(Player player) {
         player.removeEffect(NichirinEffectRegistry.STUNNED.get());
@@ -524,36 +464,32 @@ public class MoveExecutor {
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
         buf.writeUtf(moveName);
         buf.writeInt(cooldownTicks);
-
         NetworkManager.sendToPlayer(player, COOLDOWN_PACKET_ID, buf);
     }
 
     /**
-     * Register the client-side packet handler (call this in client init)
+     * Register the client-side packet handler
      */
     public static void registerClientHandler() {
         NetworkManager.registerReceiver(NetworkManager.Side.S2C, COOLDOWN_PACKET_ID, (buf, context) -> {
             String moveName = buf.readUtf();
             int cooldownTicks = buf.readInt();
-
-            context.queue(() -> {
-                // Display the cooldown on client
-                CooldownHUD.setCooldown(moveName, cooldownTicks);
-            });
+            context.queue(() -> CooldownHUD.setCooldown(moveName, cooldownTicks));
         });
     }
 
     /**
-     * Render hitboxes - call this from your client render event handler
+     * Render hitboxes
      */
     public static void renderHitboxes(PoseStack poseStack, MultiBufferSource bufferSource,
                                       LevelRenderer levelRenderer, Vec3 cameraPosition) {
         AttackHitboxRenderer.render(poseStack, cameraPosition, levelRenderer, bufferSource);
     }
 
+    // === ATTACK TRACKING METHODS ===
+
     /**
      * Tick all active attacks for a player
-     * THIS METHOD MUST BE CALLED EVERY TICK FROM YOUR MAIN TICK HANDLER
      */
     public static void tickAttacks(Player player) {
         var attacks = activeAttacks.get(player);
@@ -562,8 +498,6 @@ public class MoveExecutor {
         }
 
         List<Object> toRemove = new ArrayList<>();
-
-        // Create a copy to avoid concurrent modification
         List<Object> attacksCopy;
         synchronized (attacks) {
             attacksCopy = new ArrayList<>(attacks);
@@ -572,7 +506,6 @@ public class MoveExecutor {
         for (Object attack : attacksCopy) {
             try {
                 boolean stillActive = tickAndCheckActive(player, attack);
-
                 if (!stillActive) {
                     toRemove.add(attack);
                 }
@@ -582,12 +515,9 @@ public class MoveExecutor {
             }
         }
 
-        // Remove all inactive attacks
         if (!toRemove.isEmpty()) {
             synchronized (attacks) {
                 attacks.removeAll(toRemove);
-
-                // Clean up empty lists
                 if (attacks.isEmpty()) {
                     activeAttacks.remove(player);
                 }
@@ -599,28 +529,25 @@ public class MoveExecutor {
      * Tick an attack and return whether it's still active
      */
     private static boolean tickAndCheckActive(Player player, Object attack) throws Exception {
-        // Handle AbstractBreathingAttack directly
         if (attack instanceof AbstractBreathingAttack<?, ?> breathingAttack) {
             breathingAttack.tick();
             return breathingAttack.isActive();
         }
 
-        // Generic reflection-based handling for other types
+
+        // Generic reflection-based handling
         try {
             var tickMethod = attack.getClass().getMethod("tick");
             tickMethod.invoke(attack);
         } catch (NoSuchMethodException e) {
             try {
-                // Try with player parameter
                 var tickMethod = attack.getClass().getMethod("tick", Player.class);
                 tickMethod.invoke(attack, player);
             } catch (NoSuchMethodException e2) {
-                // Try with no parameters but set user field if it exists
                 try {
                     var userField = attack.getClass().getDeclaredField("user");
                     userField.setAccessible(true);
                     userField.set(attack, player);
-
                     var tickMethod = attack.getClass().getMethod("tick");
                     tickMethod.invoke(attack);
                 } catch (Exception e3) {
@@ -641,19 +568,16 @@ public class MoveExecutor {
     }
 
     /**
-     * Clear all attacks for a player (on death, disconnect, etc.)
+     * Clear all attacks for a player
      */
     public static void clearAttacks(Player player) {
         var attacks = activeAttacks.remove(player);
         if (attacks != null) {
-
-            // Stop all attacks gracefully
             for (Object attack : attacks) {
                 try {
                     if (attack instanceof AbstractBreathingAttack<?, ?> breathingAttack) {
                         breathingAttack.stop();
                     } else {
-                        // Try to call stop method via reflection
                         try {
                             var stopMethod = attack.getClass().getMethod("stop");
                             stopMethod.invoke(attack);
@@ -662,6 +586,7 @@ public class MoveExecutor {
                         }
                     }
                 } catch (Exception e) {
+                    // Ignore errors during cleanup
                 }
             }
         }
@@ -701,19 +626,19 @@ public class MoveExecutor {
                 if (attack instanceof AbstractBreathingAttack<?, ?> breathingAttack) {
                     breathingAttack.stop();
                 } else {
-                    // Try to call stop method via reflection
-                    var stopMethod = attack.getClass().getMethod("stop");
-                    stopMethod.invoke(attack);
+                    try {
+                        var stopMethod = attack.getClass().getMethod("stop");
+                        stopMethod.invoke(attack);
+                    } catch (Exception e) {
+                        // Ignore if no stop method
+                    }
                 }
                 attacks.remove(attack);
-
-                // Clean up empty lists
                 if (attacks.isEmpty()) {
                     activeAttacks.remove(player);
                 }
                 return true;
             } catch (Exception e) {
-                // Remove it anyway
                 attacks.remove(attack);
                 return false;
             }
@@ -743,22 +668,19 @@ public class MoveExecutor {
                 stopped++;
             }
         }
-
         return stopped;
     }
 
     /**
-     * Tick all active attacks for all players - CALL THIS FROM YOUR MAIN SERVER TICK HANDLER
+     * Tick all active attacks for all players
      */
     public static void tickAllAttacks(net.minecraft.server.MinecraftServer server) {
         if (server == null) return;
 
-        // Tick all tracked attacks via the executor system
         for (var player : server.getPlayerList().getPlayers()) {
             tickAttacks(player);
         }
 
-        // Also tick self-managed attacks
         AbstractBreathingAttack.tickAllActiveAttacks(server);
         AbstractDemonAttack.tickAllActiveAttacks(server);
     }

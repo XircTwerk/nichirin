@@ -31,11 +31,11 @@ public class DemonArtSection {
                 centerX - font.width(title) / 2, contentY, 0xFFFFFF);
         contentY += 30;
 
-        // Current demon art - use same data source as breathing styles
+        // Current demon art - show if player has a demon moveset
         String currentStyle = MovesetHelper.getMovesetId(player);
         if (currentStyle != null && isDemonArt(currentStyle)) {
             Component current = Component.translatable("gui.nichirin.demon_arts.current",
-                            Component.translatable("demon_art." + currentStyle))
+                            Component.literal(formatArtName(currentStyle)))
                     .withStyle(style -> style.withColor(0xFF5555));
             graphics.drawString(font, current, contentX, contentY, 0xFF5555);
             contentY += 25;
@@ -46,51 +46,47 @@ public class DemonArtSection {
         graphics.drawString(font, instructions, contentX, contentY, 0xAAAAAA);
         contentY += 20;
 
-        // Show all demon arts
-        String[] demonArts = {
+        // Show demon arts (if any additional ones exist beyond default)
+        String[] additionalDemonArts = {
+                // Future demon arts would go here
         };
 
-        if (demonArts.length == 0) {
-            Component noArts = Component.literal("No demon arts registered").withStyle(style -> style.withColor(0xFF5555));
-            graphics.drawString(font, noArts, centerX - font.width(noArts) / 2, contentY + 50, 0xFF5555);
-            return;
-        }
-
-        // Art grid - dynamic based on available arts
+        // Calculate layout
         int gridY = contentY + 10;
         int boxWidth = 140;
         int boxHeight = 80;
         int spacing = 20;
 
-        // Calculate grid layout
-        int cols = Math.min(2, demonArts.length);
-        int rows = (int) Math.ceil((double) demonArts.length / cols);
-        int totalWidth = (boxWidth * cols) + (spacing * (cols - 1));
-        int startX = centerX - totalWidth / 2;
-
         // Check what's being hovered
         String hoveredLockedArt = null;
 
-        // Render art boxes dynamically
-        for (int i = 0; i < demonArts.length; i++) {
-            String artId = demonArts[i];
-            int row = i / cols;
-            int col = i % cols;
+        // Render additional demon arts if any exist
+        if (additionalDemonArts.length > 0) {
+            int cols = Math.min(2, additionalDemonArts.length);
+            int totalWidth = (boxWidth * cols) + (spacing * (cols - 1));
+            int startX = centerX - totalWidth / 2;
 
-            int x = startX + col * (boxWidth + spacing);
-            int y = gridY + row * (boxHeight + spacing);
+            for (int i = 0; i < additionalDemonArts.length; i++) {
+                String artId = additionalDemonArts[i];
+                int row = i / cols;
+                int col = i % cols;
 
-            // Check if this box is being hovered and is locked
-            if (mouseX >= x && mouseX <= x + boxWidth && mouseY >= y && mouseY <= y + boxHeight) {
-                if (!isArtUnlocked(player, artId)) {
-                    hoveredLockedArt = artId;
+                int x = startX + col * (boxWidth + spacing);
+                int y = gridY + row * (boxHeight + spacing);
+
+                if (mouseX >= x && mouseX <= x + boxWidth && mouseY >= y && mouseY <= y + boxHeight) {
+                    if (!isArtUnlocked(player, artId)) {
+                        hoveredLockedArt = artId;
+                    }
                 }
+
+                renderDemonArtBox(graphics, font, player, currentStyle, artId, x, y, boxWidth, boxHeight);
             }
 
-            renderDemonArtBox(graphics, font, player, currentStyle, artId, x, y, boxWidth, boxHeight);
+            gridY += ((additionalDemonArts.length - 1) / cols + 1) * (boxHeight + spacing);
         }
 
-        // Show tooltip at top if hovering over locked art
+        // Show tooltip if hovering over locked art
         if (hoveredLockedArt != null) {
             String requirement = getUnlockRequirement(hoveredLockedArt);
             Component tooltip = Component.literal(requirement).withStyle(style -> style.withColor(0xFF5555).withBold(true));
@@ -98,15 +94,14 @@ public class DemonArtSection {
             graphics.drawString(font, tooltip, centerX - font.width(tooltip) / 2, tooltipY, 0xFF5555);
         }
 
-        // "None" button - positioned below the grid
-        int lastRow = (demonArts.length - 1) / cols;
-        int noneButtonY = gridY + (lastRow + 1) * (boxHeight + spacing) + 20;
+        // "None" button - gives default demon moveset
+        int noneButtonY = gridY + 20;
         int noneButtonX = centerX - 75;
         int noneButtonWidth = 150;
         int noneButtonHeight = 20;
 
-        // None button background
-        boolean isNoneSelected = (currentStyle == null || !isDemonArt(currentStyle));
+        // None button is selected when player has default_demon moveset
+        boolean isNoneSelected = "default_demon".equals(currentStyle);
         int noneButtonBg = isNoneSelected ? 0xFF3A3A3A : 0xFF2A2A2A;
         int noneButtonBorder = isNoneSelected ? 0xFF5555 : 0xFF4A4A4A;
 
@@ -204,13 +199,18 @@ public class DemonArtSection {
      */
     private boolean isDemonArt(String movesetId) {
         if (movesetId == null) return false;
-        return movesetId.contains("demon_art");
+        // Check for demon moveset IDs
+        return movesetId.equals("default_demon") || movesetId.contains("demon");
     }
 
     /**
      * Format art name
      */
     private String formatArtName(String artId) {
+        if (artId.equals("default_demon")) {
+            return "Demon Arts";
+        }
+
         String[] parts = artId.split("_");
         StringBuilder formatted = new StringBuilder();
         for (String part : parts) {
@@ -233,39 +233,40 @@ public class DemonArtSection {
         String currentStyle = MovesetHelper.getMovesetId(player);
         int centerX = (contentWidth - 20) / 2;
 
-        String[] demonArts = {
+        // Additional demon arts (future ones beyond default)
+        String[] additionalDemonArts = {
+                // Future demon arts would go here
         };
 
-        if (demonArts.length == 0) {
-            return false;
-        }
-
-        // Calculate click areas
-        int boxWidth = 140;
-        int boxHeight = 80;
-        int spacing = 20;
-        int cols = Math.min(2, demonArts.length);
-        int totalWidth = (boxWidth * cols) + (spacing * (cols - 1));
-        int startX = centerX - totalWidth / 2;
         int topRowY = TOP_MARGIN + 10 + 30 + 25 + 20 + 10;
 
-        // Check clicks on art boxes
-        for (int i = 0; i < demonArts.length; i++) {
-            String artId = demonArts[i];
-            int row = i / cols;
-            int col = i % cols;
+        // Check clicks on additional demon art boxes (if any exist)
+        if (additionalDemonArts.length > 0) {
+            int boxWidth = 140;
+            int boxHeight = 80;
+            int spacing = 20;
+            int cols = Math.min(2, additionalDemonArts.length);
+            int totalWidth = (boxWidth * cols) + (spacing * (cols - 1));
+            int startX = centerX - totalWidth / 2;
 
-            int x = startX + col * (boxWidth + spacing);
-            int y = topRowY + row * (boxHeight + spacing);
+            for (int i = 0; i < additionalDemonArts.length; i++) {
+                String artId = additionalDemonArts[i];
+                int row = i / cols;
+                int col = i % cols;
 
-            if (mouseX >= x && mouseX <= x + boxWidth && mouseY >= y && mouseY <= y + boxHeight) {
-                return handleArtClick(player, artId, currentStyle, currentTime);
+                int x = startX + col * (boxWidth + spacing);
+                int y = topRowY + row * (boxHeight + spacing);
+
+                if (mouseX >= x && mouseX <= x + boxWidth && mouseY >= y && mouseY <= y + boxHeight) {
+                    return handleArtClick(player, artId, currentStyle, currentTime);
+                }
             }
+
+            topRowY += ((additionalDemonArts.length - 1) / cols + 1) * (boxHeight + spacing);
         }
 
-        // Check for "None" button click
-        int lastRow = (demonArts.length - 1) / cols;
-        int noneButtonY = topRowY + (lastRow + 1) * (boxHeight + spacing) + 20;
+        // Check for "None" button click - sets default_demon moveset
+        int noneButtonY = topRowY + 20;
         int noneButtonX = centerX - 75;
         int noneButtonWidth = 150;
         int noneButtonHeight = 20;
@@ -273,8 +274,8 @@ public class DemonArtSection {
         if (mouseX >= noneButtonX && mouseX <= noneButtonX + noneButtonWidth &&
                 mouseY >= noneButtonY && mouseY <= noneButtonY + noneButtonHeight) {
 
-            // Clear demon art
-            NichirinPacketRegistry.requestStyleChange(null);
+            // Set default demon moveset (basic demon abilities)
+            NichirinPacketRegistry.requestStyleChange("default_demon");
 
             // Play click sound
             Minecraft.getInstance().getSoundManager().play(
@@ -308,7 +309,7 @@ public class DemonArtSection {
 
         // Art is unlocked - only set if not already selected
         if (!artName.equals(currentStyle)) {
-            // Use packet to request style change from server
+            // Set demon art (becomes a demon)
             NichirinPacketRegistry.requestStyleChange(artName);
 
             // Play success sound

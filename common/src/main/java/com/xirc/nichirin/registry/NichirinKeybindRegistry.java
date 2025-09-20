@@ -2,10 +2,15 @@ package com.xirc.nichirin.registry;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.xirc.nichirin.client.gui.CooldownHUD;
+import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.network.c2s.MovementInputPacket;
 import com.xirc.nichirin.common.network.c2s.MoveHotkeyPacket;
+import com.xirc.nichirin.common.util.BreathingManager;
+import com.xirc.nichirin.common.util.StaminaManager;
+import com.xirc.nichirin.common.util.MultiplayerInputHandler;
+import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import dev.architectury.registry.client.keymappings.KeyMappingRegistry;
 import dev.architectury.event.events.client.ClientTickEvent;
 import net.fabricmc.api.EnvType;
@@ -21,6 +26,7 @@ import java.util.Map;
 
 /**
  * Extended keybind registry with movement system and move index hotkeys
+ * Now uses the same logic as AttackWheelHandler for breathing/demon determination
  */
 @Environment(EnvType.CLIENT)
 public interface NichirinKeybindRegistry {
@@ -121,39 +127,96 @@ public interface NichirinKeybindRegistry {
     }
 
     /**
-     * Handle move hotkey press
+     * Handle move hotkey press - SAME LOGIC AS ATTACK WHEEL
      */
     private static void handleMoveHotkeyPress(int moveIndex) {
         Minecraft client = Minecraft.getInstance();
         if (client.player == null) return;
 
-        // Check if holding katana first (same as attack wheel)
-        ItemStack mainHand = client.player.getMainHandItem();
-        if (!(mainHand.getItem() instanceof SimpleKatana)) {
-            return; // No katana - hotkey does nothing silently
+        // Same checks as attack wheel
+        if (client.player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+            return;
         }
 
-        // Check cooldown before sending packet
-        var moveset = MovesetHelper.getMoveset(client.player);
-        if (moveset != null) {
-            var moveConfig = moveset.getMove(moveIndex);
-            if (moveConfig != null) {
-                String moveName = moveConfig.getDisplayName();
-                if (CooldownHUD.isOnCooldown(moveName)) {
-                    int remaining = CooldownHUD.getRemainingCooldown(moveName);
-                    client.player.displayClientMessage(
-                            Component.literal("Move on cooldown! " + (remaining / 20.0f) + "s remaining")
-                                    .withStyle(style -> style.withColor(0xFF5555)),
-                            true
-                    );
-                    return;
-                }
+        // Check if player has blocking effect - CAN'T USE HOTKEYS
+        if (client.player.hasEffect(NichirinEffectRegistry.BLOCKING.get())) {
+            return;
+        }
+
+        // SAME LOGIC AS ATTACK WHEEL: Determine moveset based on what player has, not what they're holding
+        AbstractMoveset moveset = null;
+        boolean isBreathingMove = false;
+
+        // Check held item
+        ItemStack mainHand = client.player.getMainHandItem();
+        boolean holdingKatana = mainHand.getItem() instanceof SimpleKatana;
+
+        if (holdingKatana) {
+            // Holding katana - use breathing moveset if available
+            if (MovesetHelper.hasBreathingMoveset(client.player)) {
+                moveset = MovesetHelper.getBreathingMoveset(client.player);
+                isBreathingMove = true;
+            }
+        } else {
+            // Not holding katana - use demon moveset if available
+            if (MovesetHelper.hasDemonMoveset(client.player)) {
+                moveset = MovesetHelper.getDemonMoveset(client.player);
+                isBreathingMove = false;
             }
         }
 
-        // Send move hotkey packet to server
-        MoveHotkeyPacket packet = new MoveHotkeyPacket(moveIndex);
-        NichirinPacketRegistry.sendToServer(packet);
+        // Must have appropriate moveset to use hotkey
+        if (moveset == null) {
+            return; // No moveset - hotkey does nothing silently
+        }
+
+        // Check if move exists in the moveset
+        var moveConfig = moveset.getMove(moveIndex);
+        if (moveConfig == null) {
+            return; // Move doesn't exist - hotkey does nothing silently
+        }
+
+        // Check cooldown before sending packet (SAME AS ATTACK WHEEL)
+        String moveName = moveConfig.getDisplayName();
+        if (CooldownHUD.isOnCooldown(moveName)) {
+            int remaining = CooldownHUD.getRemainingCooldown(moveName);
+            client.player.displayClientMessage(
+                    Component.literal("Move on cooldown! " + (remaining / 20.0f) + "s remaining")
+                            .withStyle(style -> style.withColor(0xFF5555)),
+                    true
+            );
+            return;
+        }
+
+        // Only check resource costs for breathing arts (demon arts don't use breath/stamina)
+        if (isBreathingMove) {
+            if (moveConfig.hasStaminaCost() && !StaminaManager.hasStamina(client.player, moveConfig.getStaminaCost())) {
+                client.player.displayClientMessage(
+                        Component.literal("Not enough stamina!")
+                                .withStyle(style -> style.withColor(0xFF5555)),
+                        true
+                );
+                return;
+            }
+
+            if (moveConfig.hasBreathCost() && !BreathingManager.hasBreath(client.player, moveConfig.getBreathCost())) {
+                client.player.displayClientMessage(
+                        Component.literal("Not enough breath!")
+                                .withStyle(style -> style.withColor(0xFF5555)),
+                        true
+                );
+                return;
+            }
+        }
+
+        // Send move to server using appropriate packet type (SAME AS ATTACK WHEEL)
+        if (isBreathingMove) {
+            MultiplayerInputHandler.sendBreathingMove(moveIndex, client.player);
+            System.out.println("DEBUG: Sent BREATHING move " + moveIndex + " (" + moveName + ") via hotkey");
+        } else {
+            MultiplayerInputHandler.sendDemonMove(moveIndex, client.player);
+            System.out.println("DEBUG: Sent DEMON move " + moveIndex + " (" + moveName + ") via hotkey");
+        }
     }
 
     /**
