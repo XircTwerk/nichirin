@@ -89,6 +89,13 @@ public interface NichirinBlockRegistry {
     RegistrySupplier<Block> WYSTERIA_SAPLING = BLOCKS.register("wysteria_sapling",
             () -> new SaplingBlock(new WysteriaTreeGrower(), BlockBehaviour.Properties.copy(Blocks.OAK_SAPLING)));
 
+    // Tatami shi by Nacho
+    RegistrySupplier<Block> TATAMI_BLOCK = BLOCKS.register("tatami_block",
+            () -> new RotatedPillarBlock(BlockBehaviour.Properties.copy(Blocks.OAK_LOG)));
+
+    RegistrySupplier<Item> TATAMI_BLOCK_ITEM = ITEMS.register("tatami_block",
+            () -> new BlockItem(TATAMI_BLOCK.get(), new Item.Properties()));
+
 
     // Block Item Registration
     RegistrySupplier<Item> SCARLET_CRIMSON_IRON_SAND_ITEM = ITEMS.register("scarlet_crimson_iron_sand",

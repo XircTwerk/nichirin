@@ -24,6 +24,12 @@ public class NichirinModelProvider extends FabricModelProvider {
 
         // NEW: Wysteria Wood Set - using vanilla wood provider system
         createWysteriaWoodSet(generator);
+        createMiscellaneousBlocks(generator);
+    }
+
+    private void createMiscellaneousBlocks(BlockModelGenerators generator){
+        generator.woodProvider(NichirinBlockRegistry.TATAMI_BLOCK.get())
+                .logWithHorizontal(NichirinBlockRegistry.TATAMI_BLOCK.get());
     }
 
     private void createWysteriaWoodSet(BlockModelGenerators generator) {
