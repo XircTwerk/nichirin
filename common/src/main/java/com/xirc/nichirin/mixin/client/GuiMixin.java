@@ -22,7 +22,11 @@ public class GuiMixin {
         boolean isDemon = minecraft.player != null && MovesetHelper.hasDemonMoveset(minecraft.player);
         boolean isHungerBarBlit = v == 27; // Food icons are at v=27 in the GUI_ICONS_LOCATION texture
 
-        if (!isDemon || !isHungerBarBlit) {
+        // Don't hide hunger bar in creative or spectator mode
+        boolean isCreativeOrSpectator = minecraft.player != null &&
+                (minecraft.player.isCreative() || minecraft.player.isSpectator());
+
+        if (!isDemon || !isHungerBarBlit || isCreativeOrSpectator) {
             guiGraphics.blit(texture, x, y, u, v, width, height);
         }
     }

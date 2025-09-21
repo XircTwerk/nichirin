@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.system;
 
+import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
 import net.minecraft.nbt.CompoundTag;
@@ -37,9 +38,9 @@ public class DemonComponent {
      */
     public static void sync(ServerPlayer player) {
         if (DemonManager.isDemon(player)) {
-            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-            writeSyncPacket(buf, player);
-            NetworkManager.sendToPlayer(player, DEMON_SYNC_PACKET, buf);
+            int bloodPoints = DemonManager.getBloodPoints(player);
+            int halfBloodPoints = com.xirc.nichirin.common.event.DemonFoodHandler.getHalfBloodPoints(player);
+            NichirinPacketRegistry.sendDemonSync(player, bloodPoints, halfBloodPoints, true);
         }
     }
 
@@ -76,12 +77,19 @@ public class DemonComponent {
     }
 
     /**
-     * Loads demon data from NBT
+     * Loads demon data from NBT - FIXED to prevent infinite loop
      */
     public static void load(Player player, CompoundTag tag) {
         if (tag.getBoolean("IsDemon")) {
             int bloodPoints = tag.getInt("BloodPoints");
-            DemonManager.setBloodPoints(player, bloodPoints);
+
+            // Use direct method to prevent infinite recursion
+            DemonManager.setBloodPointsDirectly(player, bloodPoints);
+
+            // Sync after loading is complete
+            if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+                sync(serverPlayer);
+            }
         }
     }
 

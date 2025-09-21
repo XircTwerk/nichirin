@@ -254,10 +254,12 @@ public interface NichirinPacketRegistry {
 
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, DEMON_SYNC_ID, (buf, context) -> {
                 int bloodPoints = buf.readInt();
+                int halfBloodPoints = buf.readInt();
                 boolean isDemon = buf.readBoolean();
 
                 context.queue(() -> {
-                    com.xirc.nichirin.common.system.DemonComponent.setClientBloodPoints(bloodPoints);
+                    com.xirc.nichirin.client.gui.DemonBloodGui.updateBloodPoints(bloodPoints, isDemon);
+                    com.xirc.nichirin.client.gui.DemonBloodGui.updateHalfBloodPoints(halfBloodPoints);
                 });
             });
 
@@ -438,10 +440,11 @@ public interface NichirinPacketRegistry {
         }
     }
 
-    static void sendDemonSync(ServerPlayer player, int bloodPoints, boolean isDemon) {
+    static void sendDemonSync(ServerPlayer player, int bloodPoints, int halfBloodPoints, boolean isDemon) {
         try {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             buf.writeInt(bloodPoints);
+            buf.writeInt(halfBloodPoints);  // Add this line
             buf.writeBoolean(isDemon);
             NetworkManager.sendToPlayer(player, DEMON_SYNC_ID, buf);
         } catch (Exception e) {

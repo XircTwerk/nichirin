@@ -7,6 +7,7 @@ import com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer;
 import com.xirc.nichirin.common.util.enums.MoveClass;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
+import com.xirc.nichirin.common.system.DemonManager;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.network.chat.Component;
@@ -32,6 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Base class for all demon art attacks.
  * Similar to AbstractBreathingAttack but for demon abilities - no breath/stamina costs.
  * Fixed hitbox system with proper positioning and no rotation issues.
+ * Now includes blood restoration on successful hits.
  */
 @Getter
 @SuppressWarnings("rawtypes")
@@ -46,6 +48,10 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
     protected int cooldown;
     protected int windup;
     protected int duration;
+
+    // Blood restoration properties (hardcoded defaults)
+    protected int bloodPerHit = 1; // Default: 1 blood point per hit
+    protected int maxBloodPerAttack = 3; // Default: maximum 3 blood points per attack
 
     // Movement properties (nullable - not all attacks use these)
     protected Float teleportDistance;
@@ -66,6 +72,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
     private Set<UUID> hitEntities = new HashSet<>();
     @Setter
     private int hitCount = 0;
+    private int bloodGainedThisAttack = 0; // Track blood gained to enforce max
 
     // Configuration tracking
     private boolean configured = false;
@@ -90,6 +97,9 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
         this.cooldown = config.getCooldownOrDefault(0);
         this.windup = config.getWindupOrDefault(0);
         this.duration = config.getDurationOrDefault(0);
+
+        // Blood restoration uses hardcoded defaults
+        // Can be overridden by subclasses if needed
 
         // Movement (nullable - only set if configured in moveset)
         this.teleportDistance = config.getTeleportDistance();
@@ -118,6 +128,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
         this.tickCount = 0;
         this.hitEntities.clear();
         this.hitCount = 0;
+        this.bloodGainedThisAttack = 0;
 
         // No resource cost check for demon attacks - they're free to use
 
@@ -158,6 +169,12 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
      */
     public void tick() {
         if (!isActive || user == null || world == null) {
+            return;
+        }
+
+        // Check if user is still alive and a demon
+        if (!user.isAlive() || !DemonManager.isDemon(user)) {
+            stop();
             return;
         }
 
@@ -205,6 +222,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
 
     /**
      * Apply damage and effects to a target with immunity frames
+     * Now includes blood restoration for demons
      */
     protected void hitTarget(LivingEntity target) {
         if (world.isClientSide) return;
@@ -221,6 +239,15 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
         if (damaged) {
             // Add combo tracking for demon attacks
             ComboIntegration.handleSuccessfulHit(user, target, hitStun, damage);
+
+            // Restore blood for demon user (only on successful damage)
+            if (DemonManager.isDemon(user) && bloodGainedThisAttack < maxBloodPerAttack) {
+                int bloodToGain = Math.min(bloodPerHit, maxBloodPerAttack - bloodGainedThisAttack);
+                if (bloodToGain > 0) {
+                    DemonManager.addBloodPoints(user, bloodToGain);
+                    bloodGainedThisAttack += bloodToGain;
+                }
+            }
         }
 
         // Apply hit stun if configured
@@ -252,6 +279,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
 
     /**
      * Special hit method that removes immunity frames
+     * Now includes blood restoration for demons
      */
     protected void hitTargetNoImmunity(LivingEntity target) {
         if (world.isClientSide) return;
@@ -267,6 +295,24 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
         if (damaged) {
             // Add combo tracking for demon attacks (no immunity version)
             ComboIntegration.handleSuccessfulHit(user, target, hitStun, damage);
+
+            // Restore blood for demon user (only on successful damage)
+            if (DemonManager.isDemon(user) && bloodGainedThisAttack < maxBloodPerAttack) {
+                int bloodToGain = Math.min(bloodPerHit, maxBloodPerAttack - bloodGainedThisAttack);
+                if (bloodToGain > 0) {
+                    DemonManager.addBloodPoints(user, bloodToGain);
+                    bloodGainedThisAttack += bloodToGain;
+
+                    // Send feedback message to player
+                    if (user instanceof ServerPlayer serverPlayer) {
+                        serverPlayer.displayClientMessage(
+                                Component.literal("§c+" + bloodToGain + " Blood")
+                                        .withStyle(style -> style.withColor(0xDC143C)), // Crimson color
+                                true // Action bar
+                        );
+                    }
+                }
+            }
         }
 
         // Apply hit stun
@@ -757,5 +803,18 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
                 }
             }
         }
+    }
+
+    // Blood restoration configuration methods
+    public void setBloodPerHit(int bloodPerHit) {
+        this.bloodPerHit = Math.max(0, bloodPerHit);
+    }
+
+    public void setMaxBloodPerAttack(int maxBloodPerAttack) {
+        this.maxBloodPerAttack = Math.max(0, maxBloodPerAttack);
+    }
+
+    public int getBloodGainedThisAttack() {
+        return bloodGainedThisAttack;
     }
 }

@@ -51,7 +51,6 @@ public final class BreathOfNichirin {
         ThunderBreathingUnlockHandler.register();
         SoundBreathingUnlockHandler.register();
 
-
         // SERVER-SIDE handlers only
         BreathOfNichirinEventHandler.init();
         KatanaInputHandler.register();
@@ -61,6 +60,7 @@ public final class BreathOfNichirin {
         StaminaEventHandler.register();
         BlockingEventHandler.register();
         DodgeEventHandler.register();
+        DemonFoodHandler.register();
 
         // Data
         MovesetRegistry.init();

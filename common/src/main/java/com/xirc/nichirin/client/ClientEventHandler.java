@@ -22,21 +22,10 @@ public class ClientEventHandler {
             // Render cooldown HUD
             CooldownHUD.render(graphics, partialTicks);
 
-            // Render demon blood bar
+            // Render demon blood bar (only for demons not in creative/spectator)
             int screenWidth = minecraft.getWindow().getGuiScaledWidth();
             int screenHeight = minecraft.getWindow().getGuiScaledHeight();
             DemonBloodGui.renderBloodBar(graphics, screenWidth, screenHeight);
-        });
-
-        // Cancel hunger bar rendering for demons
-        ClientGuiEvent.RENDER_HUD.register((graphics, partialTicks) -> {
-            Minecraft minecraft = Minecraft.getInstance();
-
-            if (minecraft.player != null && DemonBloodGui.shouldHideHungerBar(minecraft.player)) {
-                // This cancels the hunger bar rendering for demons
-                // The actual implementation depends on your modding platform
-                // You might need a mixin for this
-            }
         });
     }
 }

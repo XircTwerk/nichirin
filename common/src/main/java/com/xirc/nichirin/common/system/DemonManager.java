@@ -12,6 +12,8 @@ import net.minecraft.world.food.FoodData;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.UUID;
 
 /**
@@ -20,13 +22,16 @@ import java.util.UUID;
 public class DemonManager {
 
     // Track blood points per player (0-10)
-    private static final Map<UUID, Integer> playerBloodPoints = new HashMap<>();
+    static final Map<UUID, Integer> playerBloodPoints = new HashMap<>();
 
     // Track last regen tick to prevent spam
     private static final Map<UUID, Long> lastRegenTick = new HashMap<>();
 
     // Track exhaustion accumulation for blood drain
     private static final Map<UUID, Float> accumulatedExhaustion = new HashMap<>();
+
+    // Prevent infinite recursion during loading
+    private static final Set<UUID> loadingPlayers = new HashSet<>();
 
     // Constants
     private static final int MAX_BLOOD_POINTS = 10;
@@ -52,12 +57,31 @@ public class DemonManager {
      * Sets blood points for a player
      */
     public static void setBloodPoints(Player player, int bloodPoints) {
+        // Prevent recursive calls during loading
+        if (loadingPlayers.contains(player.getUUID())) {
+            playerBloodPoints.put(player.getUUID(), Math.max(0, Math.min(bloodPoints, MAX_BLOOD_POINTS)));
+            return;
+        }
+
         bloodPoints = Math.max(0, Math.min(bloodPoints, MAX_BLOOD_POINTS));
         playerBloodPoints.put(player.getUUID(), bloodPoints);
 
         // Sync to client if on server
         if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
-            DemonComponent.sync(serverPlayer);
+            int halfBloodPoints = com.xirc.nichirin.common.event.DemonFoodHandler.getHalfBloodPoints(player);
+            com.xirc.nichirin.registry.NichirinPacketRegistry.sendDemonSync(serverPlayer, bloodPoints, halfBloodPoints, true);
+        }
+    }
+
+    /**
+     * Sets blood points directly without sync (for loading)
+     */
+    public static void setBloodPointsDirectly(Player player, int bloodPoints) {
+        loadingPlayers.add(player.getUUID());
+        try {
+            playerBloodPoints.put(player.getUUID(), Math.max(0, Math.min(bloodPoints, MAX_BLOOD_POINTS)));
+        } finally {
+            loadingPlayers.remove(player.getUUID());
         }
     }
 
@@ -89,7 +113,7 @@ public class DemonManager {
         // Handle blood regeneration
         handleBloodRegeneration(player);
 
-        // Apply infinite stamina
+        // Apply infinite stamina and maintain full hunger
         applyInfiniteStamina(player);
 
         // Handle blood drain from exhaustion
@@ -141,18 +165,28 @@ public class DemonManager {
      */
     private static float getRegenRate(int bloodPoints) {
         if (bloodPoints == 0) return 0.0f;
-        if (bloodPoints <= 3) return 1.0f; // 1 health/s
-        if (bloodPoints <= 7) return 2.0f; // 2 health/s (1 heart)
-        return 3.0f; // 3 health/s at 10 blood points
+        if (bloodPoints <= 5) return 1.5f; // 1.5 health/s for 1-5 blood
+        return 3.0f; // 3 health/s for 6-10 blood
     }
 
     /**
-     * Applies infinite stamina by removing exhaustion
+     * Applies infinite stamina and maintains full hunger for demons
      */
     private static void applyInfiniteStamina(Player player) {
         FoodData foodData = player.getFoodData();
+
+        // Remove exhaustion (existing functionality)
         if (foodData.getExhaustionLevel() > 0) {
             foodData.setExhaustion(0.0f);
+        }
+
+        // Maintain full hunger and saturation for demons
+        if (foodData.getFoodLevel() < 20) {
+            foodData.setFoodLevel(20); // Full hunger (20/20)
+        }
+
+        if (foodData.getSaturationLevel() < 20.0f) {
+            foodData.setSaturation(20.0f); // Full saturation
         }
     }
 
@@ -220,6 +254,7 @@ public class DemonManager {
         playerBloodPoints.remove(playerUUID);
         lastRegenTick.remove(playerUUID);
         accumulatedExhaustion.remove(playerUUID);
+        loadingPlayers.remove(playerUUID);
     }
 
     /**
@@ -229,5 +264,6 @@ public class DemonManager {
         playerBloodPoints.clear();
         lastRegenTick.clear();
         accumulatedExhaustion.clear();
+        loadingPlayers.clear();
     }
 }
