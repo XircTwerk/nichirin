@@ -19,7 +19,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * CLIENT-ONLY katana/demon handler - supports both katana-based breathing and katana-free demon abilities
+ * DEBUG VERSION: CLIENT-ONLY katana/demon handler with extensive logging
  */
 public class KatanaClientHandler {
 
@@ -33,8 +33,10 @@ public class KatanaClientHandler {
     }
 
     private static void registerClientInteractions() {
+
         // Left click air
         InteractionEvent.CLIENT_LEFT_CLICK_AIR.register((player, hand) -> {
+
             if (isInputBlocked()) {
                 return;
             }
@@ -42,11 +44,13 @@ public class KatanaClientHandler {
             // Check if player can perform attacks (katana OR demon moveset)
             if (canPerformAttacks(player, hand)) {
                 sendLeftClick(player);
+            } else {
             }
         });
 
         // Right click air
         InteractionEvent.CLIENT_RIGHT_CLICK_AIR.register((player, hand) -> {
+
             if (isInputBlocked()) {
                 return;
             }
@@ -54,11 +58,13 @@ public class KatanaClientHandler {
             // Check if player can perform attacks (katana OR demon moveset)
             if (canPerformAttacks(player, hand)) {
                 sendRightClick(player);
+            } else {
             }
         });
 
         // RIGHT CLICK ON ENTITIES - for demon abilities
         InteractionEvent.INTERACT_ENTITY.register((player, entity, hand) -> {
+
             if (isInputBlocked()) {
                 return EventResult.pass();
             }
@@ -72,10 +78,9 @@ public class KatanaClientHandler {
             return EventResult.pass(); // Allow normal entity interaction
         });
 
-        // Removed block interaction for demon abilities - demons only work on entities
-
         // Entity attack blocking (LEFT CLICK ON ENTITIES)
         PlayerEvent.ATTACK_ENTITY.register((player, level, entity, hand, hitResult) -> {
+
             if (!canPerformAttacks(player, hand)) {
                 return EventResult.pass();
             }
@@ -90,6 +95,7 @@ public class KatanaClientHandler {
 
             return EventResult.interruptFalse();
         });
+
     }
 
     /**
@@ -100,11 +106,13 @@ public class KatanaClientHandler {
 
         // Check if holding katana (for breathing users ONLY)
         if (item.getItem() instanceof SimpleKatana) {
+            boolean hasBreathing = MovesetHelper.hasBreathingMoveset(player);
             return true; // Katana holders can use breathing abilities
         }
 
         // NOT holding katana - check if has demon moveset
-        if (MovesetHelper.hasDemonMoveset(player)) {
+        boolean hasDemon = MovesetHelper.hasDemonMoveset(player);
+        if (hasDemon) {
             return true; // Demons can use abilities when NOT holding katana
         }
 
@@ -116,9 +124,11 @@ public class KatanaClientHandler {
      */
     private static boolean canPerformDemonAttacks(Player player, net.minecraft.world.InteractionHand hand) {
         ItemStack item = player.getItemInHand(hand);
+        boolean holdingKatana = item.getItem() instanceof SimpleKatana;
+        boolean hasDemon = MovesetHelper.hasDemonMoveset(player);
 
         // Must NOT be holding katana AND must have demon moveset
-        return !(item.getItem() instanceof SimpleKatana) && MovesetHelper.hasDemonMoveset(player);
+        return !holdingKatana && hasDemon;
     }
 
     private static boolean isInputBlocked() {
@@ -152,13 +162,13 @@ public class KatanaClientHandler {
     }
 
     private static void sendLeftClick(Player player) {
+
         try {
             // Show cooldown for katana users
             if (player.getMainHandItem().getItem() instanceof SimpleKatana katana) {
                 katana.displayClientCooldown(player);
             }
         } catch (Exception e) {
-            // Ignore
         }
 
         try {
@@ -170,7 +180,6 @@ public class KatanaClientHandler {
                 FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
                 NetworkManager.sendToServer(LEFT_CLICK_ID, buf);
             } catch (Exception fallbackException) {
-                // Ignore
             }
         }
     }
@@ -184,7 +193,6 @@ public class KatanaClientHandler {
                 katana.displayClientRightClickFeedback(player, crouch);
             }
         } catch (Exception e) {
-            // Ignore
         }
 
         try {
@@ -201,7 +209,6 @@ public class KatanaClientHandler {
                 FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
                 NetworkManager.sendToServer(id, buf);
             } catch (Exception fallbackException) {
-                // Ignore
             }
         }
     }

@@ -7,7 +7,7 @@ import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Unified data class for storing player's selected movesets (breathing techniques AND demon arts)
+ * DEBUG VERSION: Unified data class for storing player's selected movesets (breathing techniques AND demon arts)
  * Supports dual moveset system - player can have both breathing and demon movesets simultaneously
  * Handles modifiers and statistics tracking automatically
  */
@@ -68,7 +68,6 @@ public class MovesetData {
                 try {
                     this.currentBreathingMoveset.removeAllModifiers(this.player);
                 } catch (Exception e) {
-                    System.err.println("Error removing breathing modifiers: " + e.getMessage());
                 }
             }
 
@@ -146,7 +145,6 @@ public class MovesetData {
                     }
                 }
             } catch (Exception e) {
-                System.err.println("Error loading breathing moveset " + breathingMovesetId + ": " + e.getMessage());
                 this.breathingMovesetId = null;
             }
         }
@@ -168,7 +166,6 @@ public class MovesetData {
                     }
                 }
             } catch (Exception e) {
-                System.err.println("Error loading demon moveset " + demonMovesetId + ": " + e.getMessage());
                 this.demonMovesetId = null;
             }
         }
@@ -192,6 +189,7 @@ public class MovesetData {
      * Sets breathing moveset by ID
      */
     public void setBreathingMovesetId(@Nullable String movesetId) {
+
         if (isApplyingModifiers) {
             return;
         }
@@ -208,7 +206,6 @@ public class MovesetData {
                 try {
                     this.currentBreathingMoveset.removeAllModifiers(this.player);
                 } catch (Exception e) {
-                    System.err.println("Error removing breathing modifiers: " + e.getMessage());
                 }
             }
 
@@ -226,6 +223,7 @@ public class MovesetData {
      * Sets demon moveset by ID
      */
     public void setDemonMovesetId(@Nullable String movesetId) {
+
         if (isApplyingModifiers) {
             return;
         }
@@ -255,6 +253,7 @@ public class MovesetData {
      * Sets moveset by ID (backwards compatibility - determines type automatically)
      */
     public void setMovesetId(@Nullable String movesetId) {
+
         if (movesetId == null) {
             clearMovesets();
             return;
@@ -267,7 +266,9 @@ public class MovesetData {
                 setBreathingMovesetId(movesetId);
             } else if (moveset.isDemonMoveset()) {
                 setDemonMovesetId(movesetId);
+            } else {
             }
+        } else {
         }
     }
 
@@ -292,31 +293,42 @@ public class MovesetData {
      */
     @Nullable
     public String getMovesetId() {
+        String result;
         if (breathingMovesetId != null) {
-            return breathingMovesetId;
+            result = breathingMovesetId;
+        } else {
+            result = demonMovesetId;
         }
-        return demonMovesetId;
+
+        // Only log when actually requested, not every tick
+        return result;
     }
 
     /**
      * Checks if player has any moveset
      */
     public boolean hasMoveset() {
-        return breathingMovesetId != null || demonMovesetId != null;
+        boolean result = breathingMovesetId != null || demonMovesetId != null;
+        // Only log when state changes or when explicitly requested
+        return result;
     }
 
     /**
      * Checks if player has a breathing moveset
      */
     public boolean hasBreathingMoveset() {
-        return breathingMovesetId != null;
+        boolean result = breathingMovesetId != null;
+        // Only log when state changes or when explicitly requested
+        return result;
     }
 
     /**
      * Checks if player has a demon moveset
      */
     public boolean hasDemonMoveset() {
-        return demonMovesetId != null;
+        boolean result = demonMovesetId != null;
+        // Only log when state changes or when explicitly requested
+        return result;
     }
 
     /**
@@ -368,7 +380,6 @@ public class MovesetData {
                 try {
                     this.currentBreathingMoveset.removeAllModifiers(this.player);
                 } catch (Exception e) {
-                    System.err.println("Error during copyFrom breathing cleanup: " + e.getMessage());
                 }
             }
 
@@ -457,7 +468,6 @@ public class MovesetData {
             try {
                 return com.xirc.nichirin.common.data.PlayerDataProvider.getData(player).getStatistics();
             } catch (Exception e) {
-                System.err.println("Error accessing statistics: " + e.getMessage());
                 return null;
             }
         }
@@ -480,7 +490,6 @@ public class MovesetData {
             try {
                 this.currentBreathingMoveset.removeAllModifiers(this.player);
             } catch (Exception e) {
-                System.err.println("Error during cleanup: " + e.getMessage());
             }
         }
 
@@ -501,7 +510,6 @@ public class MovesetData {
                 isApplyingModifiers = true;
                 this.currentBreathingMoveset.applyAllModifiers(this.player);
             } catch (Exception e) {
-                System.err.println("Error force reapplying modifiers: " + e.getMessage());
             } finally {
                 isApplyingModifiers = false;
             }

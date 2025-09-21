@@ -44,16 +44,8 @@ public class FlameBreathingUnlockHandler {
             currentTicks++;
             burningPlayers.put(playerId, currentTicks);
 
-            // Debug logging every 5 seconds (100 ticks)
-            if (currentTicks % 100 == 0) {
-                BreathOfNichirin.LOGGER.info("Player {} has been burning for {} ticks ({} seconds)",
-                        player.getName().getString(), currentTicks, currentTicks / 20);
-            }
-
             // Check if they've been burning long enough
             if (currentTicks >= REQUIRED_BURN_TICKS) {
-                BreathOfNichirin.LOGGER.info("Player {} reached 300 burn ticks, checking unlock...",
-                        player.getName().getString());
                 checkFlameBreathingUnlock(player);
                 // Remove from tracking to prevent multiple unlocks
                 burningPlayers.remove(playerId);
@@ -61,8 +53,6 @@ public class FlameBreathingUnlockHandler {
         } else {
             // Player is not burning - reset their counter
             if (burningPlayers.containsKey(playerId)) {
-                BreathOfNichirin.LOGGER.info("Player {} stopped burning, resetting counter",
-                        player.getName().getString());
                 burningPlayers.remove(playerId);
             }
         }
@@ -72,16 +62,11 @@ public class FlameBreathingUnlockHandler {
      * Checks if player should unlock Flame Breathing
      */
     private static void checkFlameBreathingUnlock(ServerPlayer player) {
-        BreathOfNichirin.LOGGER.info("Checking flame breathing unlock for player {}", player.getName().getString());
 
         // Check if player already has Flame Breathing unlocked
         if (ProgressionHelper.isStyleUnlocked(player, "flame_breathing")) {
-            BreathOfNichirin.LOGGER.info("Player {} already has flame breathing unlocked", player.getName().getString());
             return; // Already unlocked
         }
-
-        BreathOfNichirin.LOGGER.info("Player {} doesn't have flame breathing, unlocking now!", player.getName().getString());
-        // Unlock Flame Breathing!
         unlockFlameBreathing(player);
     }
 

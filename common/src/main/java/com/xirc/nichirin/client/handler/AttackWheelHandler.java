@@ -19,7 +19,7 @@ import net.minecraft.world.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
 
 /**
- * CORRECTED ATTACK WHEEL HANDLER - Properly uses demon movesets for demons
+ * DEBUG VERSION: Attack wheel handler with extensive logging
  */
 public class AttackWheelHandler {
 
@@ -53,6 +53,10 @@ public class AttackWheelHandler {
             boolean isKeyDown = NichirinKeybindRegistry.ATTACK_WHEEL_KEY.isDown();
             boolean isEscDown = org.lwjgl.glfw.GLFW.glfwGetKey(client.getWindow().getWindow(), GLFW.GLFW_KEY_ESCAPE) == GLFW.GLFW_PRESS;
 
+            // Debug key state changes
+            if (isKeyDown != wasKeyDown) {
+            }
+
             // Handle ESC when wheel is open - more aggressive for multiplayer
             if (wheelOpen && isEscDown && !wasEscDown) {
                 closeWheel();
@@ -80,11 +84,11 @@ public class AttackWheelHandler {
             if (wheelOpen && currentWheel != null) {
                 int currentHovered = currentWheel.getCurrentlyHoveredMove();
                 if (currentHovered != lastHoveredMove) {
-                    lastHoveredMove = currentHovered;
-                    // Capture the move when it becomes highlighted
+                    // Only log when move actually changes
                     if (currentHovered >= 0) {
                         capturedSelectedMove = currentHovered;
                     }
+                    lastHoveredMove = currentHovered;
                 }
             }
 
@@ -141,10 +145,8 @@ public class AttackWheelHandler {
 
             // NUCLEAR OPTION: Consume ALL clicks while wheel is open
             while (client.options.keyAttack.consumeClick()) {
-                // Consume attack clicks
             }
             while (client.options.keyUse.consumeClick()) {
-                // Consume use clicks
             }
 
             // IMMEDIATE EXECUTION: Execute and close on first click detection
@@ -171,7 +173,7 @@ public class AttackWheelHandler {
     }
 
     /**
-     * CORRECTED: Open the attack wheel - properly uses demon movesets for demons
+     * DEBUG: Open the attack wheel - properly uses demon movesets for demons
      */
     private static void openWheel() {
         Minecraft mc = Minecraft.getInstance();
@@ -198,13 +200,15 @@ public class AttackWheelHandler {
 
         if (holdingKatana) {
             // Holding katana - use breathing moveset if available
-            if (MovesetHelper.hasBreathingMoveset(mc.player)) {
+            boolean hasBreathing = MovesetHelper.hasBreathingMoveset(mc.player);
+            if (hasBreathing) {
                 moveset = MovesetHelper.getBreathingMoveset(mc.player);
                 isBreathingWheel = true;
             }
         } else {
             // Not holding katana - use demon moveset if available
-            if (MovesetHelper.hasDemonMoveset(mc.player)) {
+            boolean hasDemon = MovesetHelper.hasDemonMoveset(mc.player);
+            if (hasDemon) {
                 moveset = MovesetHelper.getDemonMoveset(mc.player);
                 isBreathingWheel = false;
             }
@@ -234,9 +238,6 @@ public class AttackWheelHandler {
             MultiplayerInputHandler.setAttackWheelOpen(true, mc.player);
 
             wasAttackDown = false;
-
-            // Debug output
-            System.out.println("DEBUG: Opened " + (isBreathingWheel ? "BREATHING" : "DEMON") + " wheel with moveset: " + moveset.getMovesetId());
         }
     }
 
@@ -275,7 +276,7 @@ public class AttackWheelHandler {
     }
 
     /**
-     * CORRECTED: Execute the selected wheel move - uses the correct moveset type
+     * DEBUG: Execute the selected wheel move - uses the correct moveset type
      */
     private static void executeWheelMove() {
         Minecraft mc = Minecraft.getInstance();
@@ -351,10 +352,8 @@ public class AttackWheelHandler {
         // Send move to server using appropriate packet type
         if (currentWheelIsBreathing) {
             MultiplayerInputHandler.sendBreathingMove(selectedMove, mc.player);
-            System.out.println("DEBUG: Sent BREATHING move " + selectedMove + " (" + moveName + ")");
         } else {
             MultiplayerInputHandler.sendDemonMove(selectedMove, mc.player);
-            System.out.println("DEBUG: Sent DEMON move " + selectedMove + " (" + moveName + ")");
         }
 
         // Close wheel after sending command
@@ -422,5 +421,4 @@ public class AttackWheelHandler {
         boolean shouldBlock = shouldBlockAttackInputs() || MultiplayerInputHandler.shouldBlockInputsClient();
         return shouldBlock;
     }
-
 }

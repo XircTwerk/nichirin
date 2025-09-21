@@ -25,8 +25,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Extended keybind registry with movement system and move index hotkeys
- * Now uses the same logic as AttackWheelHandler for breathing/demon determination
+ * FIXED: Extended keybind registry with movement system and move index hotkeys
+ * Attack wheel key is now handled by AttackWheelHandler, not here
  */
 @Environment(EnvType.CLIENT)
 public interface NichirinKeybindRegistry {
@@ -72,6 +72,7 @@ public interface NichirinKeybindRegistry {
         registerMoveHotkeys();
 
         // Register tick event for input handling - ARCHITECTURY WAY
+        // NOTE: Attack wheel is handled by AttackWheelHandler, not here
         ClientTickEvent.CLIENT_POST.register(NichirinKeybindRegistry::onClientTick);
     }
 
@@ -94,6 +95,7 @@ public interface NichirinKeybindRegistry {
 
     /**
      * Handle client tick for key input
+     * NOTE: Attack wheel R key is handled by AttackWheelHandler
      */
     private static void onClientTick(Minecraft client) {
         if (client.player == null) return;
@@ -212,10 +214,8 @@ public interface NichirinKeybindRegistry {
         // Send move to server using appropriate packet type (SAME AS ATTACK WHEEL)
         if (isBreathingMove) {
             MultiplayerInputHandler.sendBreathingMove(moveIndex, client.player);
-            System.out.println("DEBUG: Sent BREATHING move " + moveIndex + " (" + moveName + ") via hotkey");
         } else {
             MultiplayerInputHandler.sendDemonMove(moveIndex, client.player);
-            System.out.println("DEBUG: Sent DEMON move " + moveIndex + " (" + moveName + ") via hotkey");
         }
     }
 

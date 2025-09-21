@@ -1,7 +1,6 @@
 package com.xirc.nichirin.common.data;
 
 import com.xirc.nichirin.common.network.s2c.ProgressionSyncPacket;
-import com.xirc.nichirin.common.network.util.MovesetSyncPacket;
 import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.event.events.common.TickEvent;
 import net.minecraft.server.level.ServerPlayer;
@@ -12,7 +11,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Provides and manages player data including movesets, progression, and statistics
+ * DEBUG VERSION: Provides and manages player data including movesets, progression, and statistics
  * Uses Architectury events for cross-platform compatibility
  */
 public class PlayerDataProvider {
@@ -197,7 +196,6 @@ public class PlayerDataProvider {
         try {
             PlayerDataStorage.savePlayerData(player);
         } catch (Exception e) {
-            System.err.println("Failed to save player data for " + player.getName().getString() + ": " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -222,15 +220,15 @@ public class PlayerDataProvider {
     }
 
     /**
-     * Syncs moveset data to client
+     * FIXED: Syncs moveset data to client using registered packet
      */
     private static void syncToClient(ServerPlayer player) {
         try {
             PlayerData data = getData(player);
             String movesetId = data.getMovesetData().getMovesetId();
 
-            // Send moveset sync (renamed from BreathingStyleSyncPacket)
-            MovesetSyncPacket.sendToPlayer(player, movesetId);
+            // FIXED: Use the registered packet from NichirinPacketRegistry instead of MovesetSyncPacket
+            com.xirc.nichirin.registry.NichirinPacketRegistry.sendToPlayer(player, movesetId);
 
             ProgressionSyncPacket.sendToPlayer(player);
 
@@ -263,7 +261,6 @@ public class PlayerDataProvider {
         try {
             getData(player).getStatistics().recordTechniqueUsage(movesetId);
         } catch (Exception e) {
-            System.err.println("Failed to record technique usage: " + e.getMessage());
         }
     }
 
@@ -274,7 +271,6 @@ public class PlayerDataProvider {
         try {
             getData(player).getStatistics().recordDamageDealt(movesetId, damage);
         } catch (Exception e) {
-            System.err.println("Failed to record damage dealt: " + e.getMessage());
         }
     }
 
@@ -285,7 +281,6 @@ public class PlayerDataProvider {
         try {
             getData(player).getStatistics().updateComboChain(movesetId, comboLength);
         } catch (Exception e) {
-            System.err.println("Failed to update combo chain: " + e.getMessage());
         }
     }
 
@@ -296,7 +291,6 @@ public class PlayerDataProvider {
         try {
             getData(player).getStatistics().resetComboChain();
         } catch (Exception e) {
-            System.err.println("Failed to reset combo chain: " + e.getMessage());
         }
     }
 
@@ -307,7 +301,6 @@ public class PlayerDataProvider {
         try {
             getData(player).getStatistics().recordSuccessfulDodge();
         } catch (Exception e) {
-            System.err.println("Failed to record successful dodge: " + e.getMessage());
         }
     }
 
@@ -318,7 +311,6 @@ public class PlayerDataProvider {
         try {
             getData(player).getStatistics().recordSuccessfulBlock();
         } catch (Exception e) {
-            System.err.println("Failed to record successful block: " + e.getMessage());
         }
     }
 
