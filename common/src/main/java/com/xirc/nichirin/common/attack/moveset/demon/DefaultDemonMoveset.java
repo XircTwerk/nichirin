@@ -40,7 +40,6 @@ public class DefaultDemonMoveset extends AbstractMoveset {
 
     // Immediate execution flags to prevent rapid-fire spam
     private static final Map<UUID, Boolean> executingHighJump = new HashMap<>();
-    private static final Map<UUID, Boolean> executingSlashFollowup = new HashMap<>();
 
     // Manual combo system for slash
     private static final Map<UUID, SlashComboState> playerSlashStates = new HashMap<>();
@@ -53,7 +52,6 @@ public class DefaultDemonMoveset extends AbstractMoveset {
 
     // Same-tick execution counters to prevent multiple calls in same game tick
     private static final Map<UUID, Long> lastHighJumpTick = new HashMap<>();
-    private static final Map<UUID, Long> lastSlashFollowupTick = new HashMap<>();
 
     // Thread-local to store current moveset instance for action access
     private static final ThreadLocal<DefaultDemonMoveset> CURRENT_MOVESET = new ThreadLocal<>();
@@ -97,8 +95,8 @@ public class DefaultDemonMoveset extends AbstractMoveset {
 
     private void createAndCaptureSlashConfig() {
         MoveConfiguration tempConfig = new MoveBuilder("demon_slash", "Slash")
-                .withAnimation("nichirin:demon_slash", 6) // Added animation
-                .withTiming(0, 0, 10) // No cooldown on first slash
+                .withAnimation("nichirin:demon_slash", 6)
+                .withTiming(0, 0, 20) // No cooldown on first slash
                 .withDamage(4.0f)
                 .withRange(3.0f)
                 .withKnockback(0f) // First hit no knockback
@@ -111,7 +109,7 @@ public class DefaultDemonMoveset extends AbstractMoveset {
 
     private void createAndCaptureHighJumpConfig() {
         MoveConfiguration tempConfig = new MoveBuilder("high_jump", "High Jump")
-                .withAnimation("nichirin:demon_high_jump", 8) // Added animation
+                .withAnimation("nichirin:demon_high_jump", 8)
                 .withTiming(100, 0, 5) // 5 second cooldown for high jump
                 .withDescription("Launch 5 blocks into the air, crouch right-click mid-air for stomp attack")
                 .build();
@@ -120,17 +118,17 @@ public class DefaultDemonMoveset extends AbstractMoveset {
 
     private static MovesetBuilder createBuilder() {
         return new MovesetBuilder()
-                .withIdleAnimation("nichirin:demon_idle") // Added idle animation
+                .withIdleAnimation("nichirin:demon_idle")
                 .withSpeedMultiplier(1.05f) // Slight speed boost for demons
 
                 // Kick - High knockback front push (INDEX 0)
                 .withMove(new MoveBuilder("demon_kick", "Kick")
-                        .withAnimation("nichirin:demon_kick", 8) // Added animation
+                        .withAnimation("nichirin:demon_kick", 8)
                         .withTiming(60, 5, 15) // 3 second cooldown, quick windup, 15 tick duration
-                        .withDamage(6.0f) // Moderate damage
+                        .withDamage(6.0f)
                         .withRange(2.5f)
-                        .withKnockback(1.2f) // High knockback
-                        .withHitStun(25) // High stun
+                        .withKnockback(1.2f)
+                        .withHitStun(25)
                         .withHitboxSize(2.0f)
                         .withDescription("Powerful front kick with high knockback and crowd control")
                         .withAction(player -> {
@@ -145,10 +143,10 @@ public class DefaultDemonMoveset extends AbstractMoveset {
 
                 // Dashing Strike - Dash 4 blocks forward with punch (INDEX 1)
                 .withMove(new MoveBuilder("dashing_strike", "Dashing Strike")
-                        .withAnimation("nichirin:demon_dash_strike", 10) // Added animation
+                        .withAnimation("nichirin:demon_dash_strike", 10)
                         .withTiming(80, 8, 20) // 4 second cooldown, dash windup, 20 tick duration
-                        .withDamage(12.0f) // High damage punch
-                        .withDashSpeed(4.0f) // 4 block dash
+                        .withDamage(12.0f)
+                        .withDashSpeed(4.0f)
                         .withRange(4.0f)
                         .withKnockback(0.4f)
                         .withHitStun(20)
@@ -166,13 +164,13 @@ public class DefaultDemonMoveset extends AbstractMoveset {
 
                 // Bite - Strong bite that steals blood (INDEX 2)
                 .withMove(new MoveBuilder("demon_bite", "Bite")
-                        .withAnimation("nichirin:demon_bite", 12) // Added animation
+                        .withAnimation("nichirin:demon_bite", 12)
                         .withTiming(100, 10, 25) // 5 second cooldown, bite windup, 25 tick duration
-                        .withDamage(15.0f) // High damage
-                        .withRange(2.0f) // Close range
-                        .withKnockback(0f) // No knockback
-                        .withHitStun(30) // High stun
-                        .withHitboxSize(1.5f) // Precise bite
+                        .withDamage(15.0f)
+                        .withRange(2.0f)
+                        .withKnockback(0f)
+                        .withHitStun(30)
+                        .withHitboxSize(1.5f)
                         .withDescription("Powerful bite that steals blood from enemies and deals high damage")
                         .withAction(player -> {
                             DemonBiteAttack biteAttack = new DemonBiteAttack();
@@ -235,18 +233,8 @@ public class DefaultDemonMoveset extends AbstractMoveset {
             nextStage = 1;
             comboState.reset();
         } else {
-            // Continue existing combo - this means we're going to stage 2
+            // Continue existing combo
             nextStage = comboState.currentStage + 1;
-
-            // SET COOLDOWN IMMEDIATELY when executing stage 2
-            if (nextStage == 2) {
-                setMoveCooldown(player, -1, 40); // 2 second cooldown for followup
-
-                // Send cooldown display packet using utility
-                if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
-                    com.xirc.nichirin.common.network.util.CooldownDisplayPacket.sendToClient(serverPlayer, "Slash Followup", 40);
-                }
-            }
         }
 
         // Cap at stage 2 (2-hit combo)
@@ -255,28 +243,26 @@ public class DefaultDemonMoveset extends AbstractMoveset {
             nextStage = 1;
         }
 
-        try {
-            // Execute the appropriate stage
-            boolean success = executeSlashStage(player, nextStage);
+        // Execute the appropriate stage
+        boolean success = executeSlashStage(player, nextStage);
 
-            if (success) {
-                comboState.currentStage = nextStage;
-                comboState.updateAttackTime();
+        if (success) {
+            comboState.currentStage = nextStage;
+            comboState.updateAttackTime();
 
-                // Reset combo after final stage
-                if (nextStage == 2) {
-                    comboState.reset();
-                }
-            }
-
-            return success;
-
-        } finally {
-            // Clear execution flag if it was set (only for stage 2)
+            // Set cooldown after final stage
             if (nextStage == 2) {
-                executingSlashFollowup.remove(player.getUUID());
+                setMoveCooldown(player, -1, 40); // 2 second cooldown for followup
+
+                // Send cooldown display packet using utility
+                if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+                    com.xirc.nichirin.common.network.util.CooldownDisplayPacket.sendToClient(serverPlayer, "Slash Followup", 40);
+                }
+                comboState.reset(); // Reset after final stage
             }
         }
+
+        return success;
     }
 
     private boolean executeSlashStage(Player player, int stage) {
@@ -316,7 +302,7 @@ public class DefaultDemonMoveset extends AbstractMoveset {
             case 1 -> {
                 return new MoveBuilder("demon_slash_1", "Slash")
                         .withAnimation("nichirin:demon_slash", 6)
-                        .withTiming(0, 0, 10) // No cooldown, instant, 10 ticks duration
+                        .withTiming(0, 0, 20) // No cooldown, instant, 10 ticks duration
                         .withDamage(4.0f)
                         .withRange(3.0f)
                         .withKnockback(0f) // No knockback for first hit
@@ -327,7 +313,7 @@ public class DefaultDemonMoveset extends AbstractMoveset {
             case 2 -> {
                 return new MoveBuilder("demon_slash_2", "Slash Followup")
                         .withAnimation("nichirin:demon_slash_2", 6)
-                        .withTiming(0, 0, 10) // No windup, 10 tick duration
+                        .withTiming(0, 5, 20)
                         .withDamage(4.0f) // Same damage
                         .withRange(3.0f)
                         .withKnockback(0.6f) // Higher knockback on second hit
@@ -488,9 +474,6 @@ public class DefaultDemonMoveset extends AbstractMoveset {
 
         playerCooldowns.computeIfAbsent(player.getUUID(), k -> new HashMap<>())
                 .put(moveIndex, cooldownEnd);
-
-        // Verify it was set
-        Long storedEnd = playerCooldowns.get(player.getUUID()).get(moveIndex);
     }
 
     @Override
@@ -643,8 +626,6 @@ public class DefaultDemonMoveset extends AbstractMoveset {
         hasUsedHighJumpInAir.remove(player.getUUID());
         executingMove.remove(player.getUUID());
         executingHighJump.remove(player.getUUID());
-        executingSlashFollowup.remove(player.getUUID());
         lastHighJumpTick.remove(player.getUUID());
-        lastSlashFollowupTick.remove(player.getUUID());
     }
 }
