@@ -122,7 +122,8 @@ public class BreathOfNichirinClient {
 
             RenderTypeRegistry.register(RenderType.cutout(),
                     NichirinBlockRegistry.WYSTERIA_DOOR.get(),
-                    NichirinBlockRegistry.WYSTERIA_TRAPDOOR.get());
+                    NichirinBlockRegistry.WYSTERIA_TRAPDOOR.get(),
+                    NichirinBlockRegistry.WYSTERIA_SAPLING.get());
 
             LOGGER.info("DEBUG: Client initialization complete");
             initialized = true;
