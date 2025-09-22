@@ -44,6 +44,8 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinBlockRegistry.WYSTERIA_BUTTON.get());
                         entries.accept(NichirinBlockRegistry.WYSTERIA_SAPLING_ITEM.get());
 
+                        entries.accept(NichirinBlockRegistry.TATAMI_BLOCK_ITEM.get());
+
                         // Your existing items - unchanged
                         entries.accept(NichirinItemRegistry.SCARLET_CRIMSON_IRON_GEM.get());
                         entries.accept(NichirinItemRegistry.SCARLET_GEM.get());
