@@ -170,7 +170,7 @@ public class DefaultDemonMoveset extends AbstractMoveset {
                         .withRange(2.0f)
                         .withKnockback(0f)
                         .withHitStun(30)
-                        .withHitboxSize(1.5f)
+                        .withHitboxSize(2f)
                         .withDescription("Powerful bite that steals blood from enemies and deals high damage")
                         .withAction(player -> {
                             DemonBiteAttack biteAttack = new DemonBiteAttack();
