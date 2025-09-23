@@ -1,7 +1,7 @@
-package com.xirc.nichirin.client.gui;
+package com.xirc.nichirin.client.gui.biggui;
 
+import com.xirc.nichirin.client.gui.TheBigGui;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.entity.player.Player;
 
 /**
  * Helper methods for THE BIG GUI

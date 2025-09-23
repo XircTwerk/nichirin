@@ -111,6 +111,7 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
         world.playSound(null, fieldCenter.x, fieldCenter.y, fieldCenter.z,
                 SoundEvents.ENCHANTMENT_TABLE_USE, SoundSource.PLAYERS, 0.8f, 0.8f);
     }
+
     private void applySlowdown() {
         int slowDuration = 100;
         user.addEffect(new MobEffectInstance(
@@ -125,7 +126,7 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
     private void maintainCalmField() {
         if (fieldCenter == null) return;
 
-        // Create persistent calm water field visual
+        // Create persistent calm water field visual - enhanced for 10 second visibility
         createPersistentFieldEffect();
 
         // Check for entities entering/leaving the field
@@ -252,39 +253,34 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
     private void createPersistentFieldEffect() {
         if (!(world instanceof ServerLevel serverLevel) || fieldCenter == null) return;
 
-        // Gentle, continuous field visualization
-        if (calmTicks % 8 == 0) {
-            // Field boundary ring
-            int boundaryParticles = 24;
-            for (int i = 0; i < boundaryParticles; i++) {
-                double angle = (2 * Math.PI * i) / boundaryParticles + calmTicks * 0.02;
-                double x = fieldCenter.x + Math.cos(angle) * range * 0.9;
-                double z = fieldCenter.z + Math.sin(angle) * range * 0.9;
-                double y = fieldCenter.y + Math.sin(angle * 3) * 0.2;
+        // Continuous field visualization - spawn particles every tick for full duration visibility
 
-                serverLevel.sendParticles(ParticleTypes.DRIPPING_WATER,
-                        x, y, z, 1, 0.02, 0.02, 0.02, 0.01);
-            }
+        // Field boundary ring - every tick
+        int boundaryParticles = 24;
+        for (int i = 0; i < boundaryParticles; i++) {
+            double angle = (2 * Math.PI * i) / boundaryParticles + calmTicks * 0.02;
+            double x = fieldCenter.x + Math.cos(angle) * range * 0.9;
+            double z = fieldCenter.z + Math.sin(angle) * range * 0.9;
+            double y = fieldCenter.y + Math.sin(angle * 3) * 0.2;
+
+            serverLevel.sendParticles(ParticleTypes.DRIPPING_WATER,
+                    x, y, z, 1, 0.02, 0.02, 0.02, 0.01);
         }
 
-        // Occasional bubbles rising in the field
-        if (calmTicks % 12 == 0) {
-            for (int i = 0; i < 6; i++) {
-                double x = fieldCenter.x + (Math.random() - 0.5) * range * 1.5;
-                double z = fieldCenter.z + (Math.random() - 0.5) * range * 1.5;
-                double y = fieldCenter.y;
+        // Bubbles rising in the field - every tick
+        for (int i = 0; i < 6; i++) {
+            double x = fieldCenter.x + (Math.random() - 0.5) * range * 1.5;
+            double z = fieldCenter.z + (Math.random() - 0.5) * range * 1.5;
+            double y = fieldCenter.y;
 
-                serverLevel.sendParticles(ParticleTypes.BUBBLE,
-                        x, y, z, 1, 0.1, 0.1, 0.1, 0.05);
-            }
+            serverLevel.sendParticles(ParticleTypes.BUBBLE,
+                    x, y, z, 1, 0.1, 0.1, 0.1, 0.05);
         }
 
-        // Central calm effect
-        if (calmTicks % 20 == 0) {
-            serverLevel.sendParticles(ParticleTypes.SPLASH,
-                    fieldCenter.x, fieldCenter.y + 0.5, fieldCenter.z,
-                    4, 0.3, 0.3, 0.3, 0.08);
-        }
+        // Central calm effect - every tick
+        serverLevel.sendParticles(ParticleTypes.SPLASH,
+                fieldCenter.x, fieldCenter.y + 0.5, fieldCenter.z,
+                4, 0.3, 0.3, 0.3, 0.08);
     }
 
     private void createAutoSlashEffect(Vec3 slashPos, int slashIndex) {

@@ -1,8 +1,6 @@
 package com.xirc.nichirin.client.util;
 
-import com.xirc.nichirin.client.gui.CooldownHUD;
 import com.xirc.nichirin.client.handler.AttackWheelHandler;
-import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.util.MultiplayerInputHandler;
@@ -21,7 +19,7 @@ import net.minecraft.world.item.ItemStack;
 /**
  * DEBUG VERSION: CLIENT-ONLY katana/demon handler with extensive logging
  */
-public class KatanaClientHandler {
+public class ClientInputHandler {
 
     private static final ResourceLocation LEFT_CLICK_ID = new ResourceLocation("nichirin", "katana_left");
     private static final ResourceLocation RIGHT_CLICK_ID = new ResourceLocation("nichirin", "katana_right");

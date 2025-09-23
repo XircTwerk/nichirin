@@ -3,6 +3,7 @@ package com.xirc.nichirin.client.gui.biggui;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.data.MovesetProgression;
 import com.xirc.nichirin.common.data.ProgressionHelper;
+import com.xirc.nichirin.common.data.MovesetData;
 import com.xirc.nichirin.common.util.PlayerStats;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -41,6 +42,7 @@ public class HomeSection {
         int statsY = contentY + 120 + modelSize + 20; // Fixed position independent of modelY
         int statLineHeight = 16;
         MovesetProgression progression = ProgressionHelper.getProgression(player);
+        MovesetData movesetData = MovesetHelper.getMovesetData(player);
 
         // Title
         Component statsTitle = Component.translatable("gui.nichirin.home.player_stats").withStyle(style -> style.withBold(true));
@@ -53,13 +55,14 @@ public class HomeSection {
                 player.getName().getString(), 0xFFD700, contentWidth, font);
         statsY += statLineHeight;
 
-        // Slayer rank - coming soon
-        drawStatLine(graphics, contentX, statsY, Component.translatable("gui.nichirin.home.slayer_rank"),
-                "Coming Soon", 0x5555FF, contentWidth, font);
+        // Faction - Slayer or Demon based on demon moveset
+        String faction = movesetData.hasDemonMoveset() ? "Demon" : "Slayer";
+        drawStatLine(graphics, contentX, statsY, Component.translatable("gui.nichirin.home.faction"),
+                faction, movesetData.hasDemonMoveset() ? 0xFF5555 : 0x5555FF, contentWidth, font);
         statsY += statLineHeight;
 
-        // Breathing style
-        String breathingStyle = MovesetHelper.getMovesetId(player);
+        // Current breathing style
+        String breathingStyle = movesetData.getBreathingMovesetId();
         String breathingStyleDisplay = breathingStyle != null ?
                 Component.translatable("breathing_style." + breathingStyle).getString() :
                 Component.translatable("gui.nichirin.home.none").getString();
@@ -67,15 +70,57 @@ public class HomeSection {
                 breathingStyleDisplay, 0x55FFFF, contentWidth, font);
         statsY += statLineHeight;
 
-        // Combat stats separator
+        // Faction-specific stats separator
+        statsY += 10;
+        String sectionTitle = movesetData.hasDemonMoveset() ? "Demon Stats" : "Slayer Stats";
+        graphics.drawString(font, sectionTitle, contentX, statsY, 0xFFFFFF);
+        statsY += 15;
+
+        if (movesetData.hasDemonMoveset()) {
+            // === DEMON STATS ===
+
+            // Humans eaten - coming soon
+            drawStatLine(graphics, contentX, statsY, Component.translatable("gui.nichirin.home.humans_eaten"),
+                    "Coming Soon", 0xFF5555, contentWidth, font);
+            statsY += statLineHeight;
+
+            // Muzan's blood consumed - coming soon
+            drawStatLine(graphics, contentX, statsY, Component.translatable("gui.nichirin.home.blood_consumed"),
+                    "Coming Soon", 0xFF5555, contentWidth, font);
+            statsY += statLineHeight;
+
+            // Current demon art
+            String demonArt = movesetData.getDemonMovesetId();
+            String demonArtDisplay = demonArt != null ?
+                    Component.translatable("demon_art." + demonArt).getString() :
+                    Component.translatable("gui.nichirin.home.none").getString();
+            drawStatLine(graphics, contentX, statsY, Component.translatable("gui.nichirin.home.demon_art"),
+                    demonArtDisplay, 0xFF3333, contentWidth, font);
+            statsY += statLineHeight;
+
+        } else {
+            // === SLAYER STATS ===
+
+            // Total breathing arts mastered - coming soon
+            drawStatLine(graphics, contentX, statsY, Component.translatable("gui.nichirin.home.breathing_arts_mastered"),
+                    "Coming Soon", 0x5555FF, contentWidth, font);
+            statsY += statLineHeight;
+
+            // Slayer rank - coming soon
+            drawStatLine(graphics, contentX, statsY, Component.translatable("gui.nichirin.home.slayer_rank"),
+                    "Coming Soon", 0x5555FF, contentWidth, font);
+            statsY += statLineHeight;
+
+            // Demons slain - coming soon
+            drawStatLine(graphics, contentX, statsY, Component.translatable("gui.nichirin.home.demons_slain"),
+                    "Coming Soon", 0xFF5555, contentWidth, font);
+            statsY += statLineHeight;
+        }
+
+        // General stats separator
         statsY += 10;
         graphics.drawString(font, "─────────────────────", contentX, statsY, 0x555555);
         statsY += 15;
-
-        // Demon kill count - coming soon
-        drawStatLine(graphics, contentX, statsY, Component.translatable("gui.nichirin.home.demons_slain"),
-                "Coming Soon", 0xFF5555, contentWidth, font);
-        statsY += statLineHeight;
 
         // Time played
         long playtime = player.level().getGameTime() / 20;

@@ -55,7 +55,7 @@ public class KatanaInputHandler {
         if (Platform.getEnvironment() == Env.CLIENT) {
             try {
                 // Use reflection to avoid loading client classes on server
-                Class<?> clientHandlerClass = Class.forName("com.xirc.nichirin.client.util.KatanaClientHandler");
+                Class<?> clientHandlerClass = Class.forName("com.xirc.nichirin.client.util.ClientInputHandler");
                 clientHandlerClass.getMethod("registerClientEvents").invoke(null);
             } catch (Exception e) {
                 System.err.println("Failed to register client katana events: " + e.getMessage());
@@ -149,6 +149,7 @@ public class KatanaInputHandler {
                     moveName = moveset.getRightClickMoveName();
                 }
             }
+
 
             // Execute with main hand
             instance.use(player.level(), player, InteractionHand.MAIN_HAND);

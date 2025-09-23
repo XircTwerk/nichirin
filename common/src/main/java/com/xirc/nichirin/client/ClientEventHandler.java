@@ -2,7 +2,7 @@ package com.xirc.nichirin.client;
 
 import com.xirc.nichirin.client.gui.CooldownHUD;
 import com.xirc.nichirin.client.gui.DemonBloodGui;
-import com.xirc.nichirin.client.util.KatanaClientHandler;
+import com.xirc.nichirin.client.util.ClientInputHandler;
 import dev.architectury.event.events.client.ClientGuiEvent;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -13,7 +13,7 @@ public class ClientEventHandler {
 
     public static void register() {
         // CRITICAL FIX: Register katana/demon input handler directly
-        KatanaClientHandler.registerClientEvents();
+        ClientInputHandler.registerClientEvents();
 
         // Register HUD render event
         ClientGuiEvent.RENDER_HUD.register((graphics, partialTicks) -> {
