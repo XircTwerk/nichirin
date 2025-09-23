@@ -67,6 +67,11 @@
   "gui.nichirin.home.playtime": "Time Played",
   "gui.nichirin.home.none": "None",
   "gui.nichirin.home.instructions": "Navigate sections using the buttons on the right",
+  "gui.nichirin.home.faction": "Faction",
+  "gui.nichirin.home.humans_eaten": "Humans Eaten",
+  "gui.nichirin.home.blood_consumed": "Muzan's Blood Consumed",
+  "gui.nichirin.home.demon_art": "Current Demon Art",
+  "gui.nichirin.home.breathing_arts_mastered": "Total Breathing Arts Mastered",
   "gui.nichirin.breathing_styles.title": "BREATHING STYLES",
   "gui.nichirin.breathing_styles.current": "Current: %s",
   "gui.nichirin.breathing_styles.instructions": "Click to select a breathing style:",
@@ -84,7 +89,6 @@
   "gui.nichirin.moveset.tab.breathing_styles": "Breathing Styles",
   "gui.nichirin.moveset.tab.demon_arts": "Demon Arts",
   "gui.nichirin.moveset.tab.data": "Data",
-
   "gui.nichirin.demon_arts.title": "DEMON ARTS",
   "gui.nichirin.demon_arts.current": "Current: %s",
   "gui.nichirin.demon_arts.instructions": "Click to select a demon art:",
@@ -92,7 +96,6 @@
   "gui.nichirin.demon_arts.equipped": "EQUIPPED",
   "gui.nichirin.demon_arts.click_to_select": "Click to Select",
   "gui.nichirin.demon_arts.none": "None",
-
   "gui.nichirin.moveset.data.title": "MOVESET DATA",
   "gui.nichirin.moveset.data.current_moveset": "Current Moveset: %s",
   "gui.nichirin.moveset.data.coming_soon": "Detailed moveset data coming soon...",
