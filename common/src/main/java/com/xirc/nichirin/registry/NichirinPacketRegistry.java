@@ -320,12 +320,30 @@ public interface NichirinPacketRegistry {
                 context.queue(() -> packet.handleClient());
             });
 
+            // FIXED: Proper dual moveset sync handling
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, SYNC_BREATHING_STYLE, (buf, context) -> {
                 String movesetId = buf.readBoolean() ? buf.readUtf() : null;
                 context.queue(() -> {
                     Player player = context.getPlayer();
                     if (player != null) {
-                        PlayerDataProvider.getBreathingStyleData(player).setMovesetId(movesetId);
+                        MovesetData data = PlayerDataProvider.getMovesetData(player);
+
+                        if (movesetId != null) {
+                            // Determine if it's breathing or demon and set to correct slot
+                            com.xirc.nichirin.common.attack.moveset.AbstractMoveset moveset =
+                                    com.xirc.nichirin.registry.MovesetRegistry.getMoveset(movesetId);
+
+                            if (moveset != null) {
+                                if (moveset.isBreathingMoveset()) {
+                                    data.setBreathingMovesetId(movesetId);
+                                } else if (moveset.isDemonMoveset()) {
+                                    data.setDemonMovesetId(movesetId);
+                                }
+                            }
+                        } else {
+                            // Clear all movesets if null
+                            data.clearMovesets();
+                        }
                     }
                 });
             });

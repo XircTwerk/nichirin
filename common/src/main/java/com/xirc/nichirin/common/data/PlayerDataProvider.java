@@ -220,15 +220,28 @@ public class PlayerDataProvider {
     }
 
     /**
-     * FIXED: Syncs moveset data to client using registered packet
+     * FIXED: Syncs moveset data to client using proper dual moveset system
      */
     private static void syncToClient(ServerPlayer player) {
         try {
             PlayerData data = getData(player);
-            String movesetId = data.getMovesetData().getMovesetId();
 
-            // FIXED: Use the registered packet from NichirinPacketRegistry instead of MovesetSyncPacket
-            com.xirc.nichirin.registry.NichirinPacketRegistry.sendToPlayer(player, movesetId);
+            // Send breathing moveset if exists
+            String breathingId = data.getMovesetData().getBreathingMovesetId();
+            if (breathingId != null) {
+                com.xirc.nichirin.registry.NichirinPacketRegistry.sendToPlayer(player, breathingId);
+            }
+
+            // Send demon moveset if exists
+            String demonId = data.getMovesetData().getDemonMovesetId();
+            if (demonId != null) {
+                com.xirc.nichirin.registry.NichirinPacketRegistry.sendToPlayer(player, demonId);
+            }
+
+            // If no movesets, send null to clear client
+            if (breathingId == null && demonId == null) {
+                com.xirc.nichirin.registry.NichirinPacketRegistry.sendToPlayer(player, (String) null);
+            }
 
             ProgressionSyncPacket.sendToPlayer(player);
 

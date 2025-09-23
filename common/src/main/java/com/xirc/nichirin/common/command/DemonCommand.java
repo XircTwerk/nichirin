@@ -110,9 +110,9 @@ public class DemonCommand {
         CommandSourceStack source = context.getSource();
         final String playerName = player.getName().getString();
 
-        // Check if player is already a demon
-        String currentMoveset = PlayerDataProvider.getData(player).getMovesetData().getMovesetId();
-        if (isDemonArt(currentMoveset)) {
+        // FIXED: Check demon moveset specifically instead of primary moveset
+        String currentDemonMoveset = PlayerDataProvider.getData(player).getMovesetData().getDemonMovesetId();
+        if (currentDemonMoveset != null) {
             source.sendFailure(Component.literal(playerName + " is already a demon")
                     .withStyle(s -> s.withColor(0xFFAA00)));
             return 0;
@@ -125,6 +125,14 @@ public class DemonCommand {
 
         // Set default_demon as active
         PlayerDataProvider.updateAndSync(player, "default_demon");
+
+        // DEBUG: Verify the demon status after setting
+        boolean actuallyDemon = com.xirc.nichirin.common.data.MovesetHelper.hasDemonMoveset(player);
+        String actualDemonId = com.xirc.nichirin.common.data.MovesetHelper.getDemonMovesetId(player);
+
+        System.out.println("DEBUG DEMON COMMAND: Player " + playerName +
+                " - Has demon moveset: " + actuallyDemon +
+                " - Demon ID: " + actualDemonId);
 
         // Send success message
         source.sendSuccess(() -> Component.literal("Made " + playerName + " a demon")
