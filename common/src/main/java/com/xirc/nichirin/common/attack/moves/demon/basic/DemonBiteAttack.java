@@ -24,7 +24,8 @@ public class DemonBiteAttack extends AbstractDemonAttack<DemonBiteAttack, IDemon
     private boolean biteConnected = false;
 
     public DemonBiteAttack() {
-        setBloodPerHit(3);
+        setBloodOnKill(5);
+        setHitsForBlood(1);
     }
 
     @Override

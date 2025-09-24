@@ -291,12 +291,12 @@ public class DefaultDemonMoveset extends AbstractMoveset {
 
             // Set cooldown after final stage
             if (nextStage == 2) {
-                setMoveCooldown(player, clickIndex, 40); // Use the passed index for cooldown
+                setMoveCooldown(player, clickIndex, 15); // Use the passed index for cooldown
 
                 // Send cooldown display packet using utility
                 if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
                     String moveName = clickIndex == -3 ? "Gut Punch" : "Slash";
-                    com.xirc.nichirin.common.network.util.CooldownDisplayPacket.sendToClient(serverPlayer, moveName, 40);
+                    com.xirc.nichirin.common.network.util.CooldownDisplayPacket.sendToClient(serverPlayer, moveName, 15);
                 }
                 comboState.reset(); // Reset after final stage
             }

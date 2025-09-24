@@ -33,7 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Base class for all demon art attacks.
  * Similar to AbstractBreathingAttack but for demon abilities - no breath/stamina costs.
  * Fixed hitbox system with proper positioning and no rotation issues.
- * Now includes blood restoration on successful hits.
+ * Now includes blood restoration on successful hits (1 blood every 3 hits).
  */
 @Getter
 @SuppressWarnings("rawtypes")
@@ -49,9 +49,10 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
     protected int windup;
     protected int duration;
 
-    // Blood restoration properties (hardcoded defaults)
-    protected int bloodPerHit = 0; // Default: 1 blood point per hit
+    // Blood restoration properties (3 hits = 1 blood system)
+    protected int hitsForBlood = 3; // Default: 3 hits for 1 blood point
     protected int maxBloodPerAttack = 3; // Default: maximum 3 blood points per attack
+    protected int bloodOnKill = 3; // Default: 3 blood points for killing
 
     // Movement properties (nullable - not all attacks use these)
     protected Float teleportDistance;
@@ -72,6 +73,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
     private Set<UUID> hitEntities = new HashSet<>();
     @Setter
     private int hitCount = 0;
+    private int hitCountForBlood = 0; // Track hits for blood gain (every 3 hits)
     private int bloodGainedThisAttack = 0; // Track blood gained to enforce max
 
     // Configuration tracking
@@ -128,6 +130,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
         this.tickCount = 0;
         this.hitEntities.clear();
         this.hitCount = 0;
+        this.hitCountForBlood = 0;
         this.bloodGainedThisAttack = 0;
 
         // No resource cost check for demon attacks - they're free to use
@@ -222,7 +225,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
 
     /**
      * Apply damage and effects to a target with immunity frames
-     * Now includes blood restoration for demons
+     * Now includes blood restoration for demons (1 blood every 3 hits)
      */
     protected void hitTarget(LivingEntity target) {
         if (world.isClientSide) return;
@@ -240,14 +243,8 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
             // Add combo tracking for demon attacks
             ComboIntegration.handleSuccessfulHit(user, target, hitStun, damage);
 
-            // Restore blood for demon user (only on successful damage)
-            if (DemonManager.isDemon(user) && bloodGainedThisAttack < maxBloodPerAttack) {
-                int bloodToGain = Math.min(bloodPerHit, maxBloodPerAttack - bloodGainedThisAttack);
-                if (bloodToGain > 0) {
-                    DemonManager.addBloodPoints(user, bloodToGain);
-                    bloodGainedThisAttack += bloodToGain;
-                }
-            }
+            // Handle blood restoration (1 blood every 3 hits)
+            handleBloodGain(target);
         }
 
         // Apply hit stun if configured
@@ -279,7 +276,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
 
     /**
      * Special hit method that removes immunity frames
-     * Now includes blood restoration for demons
+     * Now includes blood restoration for demons (1 blood every 3 hits)
      */
     protected void hitTargetNoImmunity(LivingEntity target) {
         if (world.isClientSide) return;
@@ -296,23 +293,8 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
             // Add combo tracking for demon attacks (no immunity version)
             ComboIntegration.handleSuccessfulHit(user, target, hitStun, damage);
 
-            // Restore blood for demon user (only on successful damage)
-            if (DemonManager.isDemon(user) && bloodGainedThisAttack < maxBloodPerAttack) {
-                int bloodToGain = Math.min(bloodPerHit, maxBloodPerAttack - bloodGainedThisAttack);
-                if (bloodToGain > 0) {
-                    DemonManager.addBloodPoints(user, bloodToGain);
-                    bloodGainedThisAttack += bloodToGain;
-
-                    // Send feedback message to player
-                    if (user instanceof ServerPlayer serverPlayer) {
-                        serverPlayer.displayClientMessage(
-                                Component.literal("§c+" + bloodToGain + " Blood")
-                                        .withStyle(style -> style.withColor(0xDC143C)), // Crimson color
-                                true // Action bar
-                        );
-                    }
-                }
-            }
+            // Handle blood restoration (1 blood every 3 hits)
+            handleBloodGain(target);
         }
 
         // Apply hit stun
@@ -339,6 +321,57 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
 
         // Track hit (allow multiple hits for no-immunity attacks)
         hitCount++;
+    }
+
+    /**
+     * Handle blood gain from hitting targets
+     * 1 blood every 3 hits, 3 blood on kill
+     */
+    private void handleBloodGain(LivingEntity target) {
+        if (!DemonManager.isDemon(user) || bloodGainedThisAttack >= maxBloodPerAttack) {
+            return;
+        }
+
+        // Check if target dies from this hit (for kill bonus)
+        boolean targetDied = !target.isAlive() || target.getHealth() <= 0;
+
+        if (targetDied) {
+            // Give 3 blood for killing
+            int killBlood = Math.min(bloodOnKill, maxBloodPerAttack - bloodGainedThisAttack);
+            if (killBlood > 0) {
+                DemonManager.addBloodPoints(user, killBlood);
+                bloodGainedThisAttack += killBlood;
+
+                // Send feedback message
+                if (user instanceof ServerPlayer serverPlayer) {
+                    serverPlayer.displayClientMessage(
+                            Component.literal("§c+" + killBlood + " Blood (Kill)")
+                                    .withStyle(style -> style.withColor(0xDC143C)),
+                            true
+                    );
+                }
+            }
+        } else {
+            // Count hits for blood gain (every 3 hits = 1 blood)
+            hitCountForBlood++;
+            if (hitCountForBlood >= hitsForBlood) {
+                int bloodToGain = Math.min(1, maxBloodPerAttack - bloodGainedThisAttack);
+                if (bloodToGain > 0) {
+                    DemonManager.addBloodPoints(user, bloodToGain);
+                    bloodGainedThisAttack += bloodToGain;
+                    hitCountForBlood = 0; // Reset hit counter
+
+                    // Send feedback message
+                    if (user instanceof ServerPlayer serverPlayer) {
+                        serverPlayer.displayClientMessage(
+                                Component.literal("§c+" + bloodToGain + " Blood")
+                                        .withStyle(style -> style.withColor(0xDC143C)),
+                                true
+                        );
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -806,15 +839,23 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
     }
 
     // Blood restoration configuration methods
-    public void setBloodPerHit(int bloodPerHit) {
-        this.bloodPerHit = Math.max(0, bloodPerHit);
+    public void setHitsForBlood(int hitsForBlood) {
+        this.hitsForBlood = Math.max(1, hitsForBlood);
     }
 
     public void setMaxBloodPerAttack(int maxBloodPerAttack) {
         this.maxBloodPerAttack = Math.max(0, maxBloodPerAttack);
     }
 
+    public void setBloodOnKill(int bloodOnKill) {
+        this.bloodOnKill = Math.max(0, bloodOnKill);
+    }
+
     public int getBloodGainedThisAttack() {
         return bloodGainedThisAttack;
+    }
+
+    public int getHitCountForBlood() {
+        return hitCountForBlood;
     }
 }

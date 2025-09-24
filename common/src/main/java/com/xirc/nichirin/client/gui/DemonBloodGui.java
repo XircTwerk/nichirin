@@ -81,7 +81,6 @@ public class DemonBloodGui {
 
         // Debug logging only when values change
         if (fullBloodPoints != lastFullBlood || halfBloodPoints != lastHalfBlood) {
-            System.out.println("Blood GUI Render - Full: " + fullBloodPoints + ", Half: " + halfBloodPoints);
             lastFullBlood = fullBloodPoints;
             lastHalfBlood = halfBloodPoints;
         }
