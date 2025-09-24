@@ -24,7 +24,7 @@ import java.util.UUID;
 /**
  * Enhanced katana input handler with FIXED client/server separation
  */
-public class KatanaInputHandler {
+public class InputHandler {
 
     // Server-side katana instances
     private static final Map<UUID, SimpleKatana> PLAYER_KATANAS = new HashMap<>();

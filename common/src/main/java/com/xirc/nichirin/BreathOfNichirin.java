@@ -6,7 +6,7 @@ import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.event.*;
 import com.xirc.nichirin.common.handler.FallDamageHandler;
 import com.xirc.nichirin.common.handler.PlayerTickHandler;
-import com.xirc.nichirin.common.util.KatanaInputHandler;
+import com.xirc.nichirin.common.util.InputHandler;
 import com.xirc.nichirin.registry.*;
 import dev.architectury.registry.registries.DeferredRegister;
 import net.minecraft.core.registries.Registries;
@@ -53,7 +53,7 @@ public final class BreathOfNichirin {
 
         // SERVER-SIDE handlers only
         BreathOfNichirinEventHandler.init();
-        KatanaInputHandler.register();
+        InputHandler.register();
         PlayerTickHandler.register();
         FallDamageHandler.register();
         BreathingEventHandler.register();

@@ -2,7 +2,7 @@ package com.xirc.nichirin.common.network.c2s;
 
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.data.MovesetHelper;
-import com.xirc.nichirin.common.util.KatanaInputHandler;
+import com.xirc.nichirin.common.util.InputHandler;
 import com.xirc.nichirin.common.util.MultiplayerInputHandler;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -63,7 +63,7 @@ public class BreathingMovePacket {
                 moveset.performMove(player, moveIndex);
 
                 // Also block katana inputs (redundant but safe)
-                KatanaInputHandler.blockAfterBreathingMove(player);
+                InputHandler.blockAfterBreathingMove(player);
             }
         }
     }

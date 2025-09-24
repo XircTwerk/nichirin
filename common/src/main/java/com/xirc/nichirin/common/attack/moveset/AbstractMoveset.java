@@ -27,6 +27,7 @@ import java.util.function.Consumer;
  * Flexible system supporting any number of moves with full configuration and followup system
  * Icons are handled by the MoveIcon system, not stored in move configs
  * Includes stun prevention system to prevent move stacking
+ * Now supports custom left click attacks
  */
 @Getter
 public abstract class AbstractMoveset {
@@ -41,11 +42,13 @@ public abstract class AbstractMoveset {
     // List of moves - flexible for any count
     protected final List<MoveConfiguration> moves = new ArrayList<>();
 
-    // Right-click moves
+    // Click moves
+    protected final MoveConfiguration leftClickMove;
     protected final MoveConfiguration rightClickMove;
     protected final MoveConfiguration crouchRightClickMove;
 
-    // Static storage for captured right-click configurations per moveset type
+    // Static storage for captured configurations per moveset type
+    private static final Map<String, MoveConfiguration> capturedLeftClickConfigs = new HashMap<>();
     private static final Map<String, MoveConfiguration> capturedRightClickConfigs = new HashMap<>();
     private static final Map<String, MoveConfiguration> capturedCrouchRightClickConfigs = new HashMap<>();
 
@@ -144,10 +147,12 @@ public abstract class AbstractMoveset {
         this.speedMultiplier = builder.speedMultiplier;
         this.fallDamageMultiplier = builder.fallDamageMultiplier;
         this.healthRegenMultiplier = builder.healthRegenMultiplier;
+        this.leftClickMove = builder.leftClickMove;
         this.rightClickMove = builder.rightClickMove;
         this.crouchRightClickMove = builder.crouchRightClickMove;
 
         // Debug prints
+        System.out.println("Moveset " + movesetId + " - leftClickMove: " + (leftClickMove != null ? leftClickMove.getDisplayName() : "null"));
         System.out.println("Moveset " + movesetId + " - rightClickMove: " + (rightClickMove != null ? rightClickMove.getDisplayName() : "null"));
         System.out.println("Moveset " + movesetId + " - crouchRightClickMove: " + (crouchRightClickMove != null ? crouchRightClickMove.getDisplayName() : "null"));
 
@@ -206,13 +211,45 @@ public abstract class AbstractMoveset {
     }
 
     /**
-     * Override the left-click (M1) behavior for SimpleKatana with stun checking
+     * Override the left-click (M1) behavior for SimpleKatana with custom attack support
      */
     public boolean handleLeftClick(Player player) {
         if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
-            return true; // Block the move by overriding
+            return true; // Block the move when stunned
         }
-        return false;
+
+        // Execute custom left click move if configured
+        if (leftClickMove != null) {
+            // Apply stun effect
+            applyMoveStun(player, leftClickMove);
+
+            // AUTOMATIC ANIMATION HANDLING - Send animation packet if animation is configured
+            if (leftClickMove.animationId != null && player instanceof ServerPlayer serverPlayer) {
+                String animationName = leftClickMove.animationId.getPath();
+                PlayerAnimationPacket packet = new PlayerAnimationPacket(serverPlayer.getId(), animationName);
+                NichirinPacketRegistry.sendToPlayer(packet, serverPlayer);
+            }
+
+            // Initialize followup queue for this attack
+            if (leftClickMove.hasFollowups()) {
+                FollowupQueue queue = new FollowupQueue();
+                queue.startAttack(leftClickMove);
+                playerFollowupQueues.put(player.getUUID(), queue);
+
+                // Schedule followup check after attack duration
+                int duration = leftClickMove.getDurationOrDefault(0);
+                scheduleFollowupCheck(player, duration);
+            }
+
+            // Execute the move action
+            if (leftClickMove.startAction != null) {
+                leftClickMove.startAction.accept(player);
+            }
+
+            return true; // Override default katana behavior
+        }
+
+        return false; // Use default katana behavior
     }
 
     /**
@@ -241,6 +278,10 @@ public abstract class AbstractMoveset {
      * Capture a move configuration for later retrieval (used by GUI)
      * Stores configs statically per moveset type so they persist
      */
+    public void captureLeftClickConfig(MoveConfiguration config) {
+        capturedLeftClickConfigs.put(this.movesetId, config);
+    }
+
     public void captureRightClickConfig(MoveConfiguration config, boolean isCrouch) {
         String key = this.movesetId;
         if (isCrouch) {
@@ -248,6 +289,13 @@ public abstract class AbstractMoveset {
         } else {
             capturedRightClickConfigs.put(key, config);
         }
+    }
+
+    /**
+     * Get the move index to use for left click
+     */
+    public int getLeftClickMoveIndex() {
+        return -3; // Special index for left click
     }
 
     /**
@@ -454,6 +502,15 @@ public abstract class AbstractMoveset {
     }
 
     /**
+     * Get the name of the left-click move for cooldown display
+     */
+    public String getLeftClickMoveName() {
+        MoveConfiguration config = getLeftClickConfiguration();
+        if (config != null) return config.getDisplayName();
+        return leftClickMove != null ? leftClickMove.getDisplayName() : "Basic Attack";
+    }
+
+    /**
      * Get the name of the right-click move for cooldown display
      */
     public String getRightClickMoveName() {
@@ -472,6 +529,15 @@ public abstract class AbstractMoveset {
     }
 
     /**
+     * Get description for left-click move
+     */
+    public String getLeftClickDescription() {
+        MoveConfiguration config = getLeftClickConfiguration();
+        if (config != null) return config.getDescription();
+        return leftClickMove != null ? leftClickMove.getDescription() : null;
+    }
+
+    /**
      * Get description for right-click move
      */
     public String getRightClickDescription() {
@@ -487,6 +553,15 @@ public abstract class AbstractMoveset {
         MoveConfiguration config = getCrouchRightClickConfiguration();
         if (config != null) return config.getDescription();
         return crouchRightClickMove != null ? crouchRightClickMove.getDescription() : null;
+    }
+
+    /**
+     * Get the configuration for left-click move (for data display)
+     * Returns captured config if available, otherwise the builder-configured one
+     */
+    public MoveConfiguration getLeftClickConfiguration() {
+        MoveConfiguration captured = capturedLeftClickConfigs.get(this.movesetId);
+        return captured != null ? captured : leftClickMove;
     }
 
     /**
@@ -977,6 +1052,7 @@ public abstract class AbstractMoveset {
         private float healthRegenMultiplier = 1.0f;
         private float staminaCostMultiplier = 1.0f;
 
+        private MoveConfiguration leftClickMove;
         private MoveConfiguration rightClickMove;
         private MoveConfiguration crouchRightClickMove;
 
@@ -1004,6 +1080,21 @@ public abstract class AbstractMoveset {
 
         public MovesetBuilder withStaminaCostMultiplier(float multiplier) {
             this.staminaCostMultiplier = multiplier;
+            return this;
+        }
+
+        public MovesetBuilder withLeftClickMove(MoveBuilder moveBuilder) {
+            this.leftClickMove = moveBuilder.build();
+            return this;
+        }
+
+        public MovesetBuilder withRightClickMove(MoveBuilder moveBuilder) {
+            this.rightClickMove = moveBuilder.build();
+            return this;
+        }
+
+        public MovesetBuilder withCrouchRightClickMove(MoveBuilder moveBuilder) {
+            this.crouchRightClickMove = moveBuilder.build();
             return this;
         }
 

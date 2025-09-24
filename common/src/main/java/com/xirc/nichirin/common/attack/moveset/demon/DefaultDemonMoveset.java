@@ -27,6 +27,7 @@ import java.util.UUID;
  * Focuses on basic demonic abilities and blood mechanics
  * Now aligned with breathing moveset patterns while retaining demon-specific features
  *
+ * Left-click: Gut Punch (high damage, zero knockback, high stun)
  * Right-click: Slash combo (2-stage combo system)
  * Crouch + Right-click: High Jump / Stomp
  */
@@ -89,8 +90,23 @@ public class DefaultDemonMoveset extends AbstractMoveset {
     }
 
     private void captureInitialConfigs() {
+        createAndCaptureLeftClickConfig();
         createAndCaptureSlashConfig();
         createAndCaptureHighJumpConfig();
+    }
+
+    private void createAndCaptureLeftClickConfig() {
+        MoveConfiguration tempConfig = new MoveBuilder("demon_gut_punch", "Gut Punch")
+                .withAnimation("nichirin:demon_gut_punch", 6)
+                .withTiming(70, 5, 10) // 1 second cooldown, quick windup, short duration
+                .withDamage(8.0f) // High damage
+                .withRange(1.5f) // Very close range
+                .withKnockback(0f) // NO knockback
+                .withHitStun(30) // High stun
+                .withHitboxSize(1.5f)
+                .withDescription("Powerful close-range punch that stuns enemies")
+                .build();
+        this.captureLeftClickConfig(tempConfig);
     }
 
     private void createAndCaptureSlashConfig() {
@@ -104,7 +120,7 @@ public class DefaultDemonMoveset extends AbstractMoveset {
                 .withHitboxSize(2.0f)
                 .withDescription("Basic claw slash with followup potential")
                 .build();
-        this.captureRightClickConfig(tempConfig, false);
+        this.captureRightClickConfig(tempConfig, false); // Keep for right-click
     }
 
     private void createAndCaptureHighJumpConfig() {
@@ -120,6 +136,19 @@ public class DefaultDemonMoveset extends AbstractMoveset {
         return new MovesetBuilder()
                 .withIdleAnimation("nichirin:demon_idle")
                 .withSpeedMultiplier(1.05f) // Slight speed boost for demons
+
+                // LEFT CLICK: Gut Punch attack
+                .withLeftClickMove(new MoveBuilder("demon_gut_punch", "Gut Punch")
+                                .withAnimation("nichirin:demon_punch", 6)
+                                .withTiming(20, 5, 10) // 1 second cooldown, quick windup, short duration
+                                .withDamage(8.0f) // High damage
+                                .withRange(1.5f) // Very close range
+                                .withKnockback(0f) // NO knockback
+                                .withHitStun(30) // High stun
+                                .withHitboxSize(1.5f)
+                                .withDescription("Powerful close-range punch that stuns enemies")
+                        // NO ACTION - handled in handleLeftClick override
+                )
 
                 // Kick - High knockback front push (INDEX 0)
                 .withMove(new MoveBuilder("demon_kick", "Kick")
@@ -189,6 +218,16 @@ public class DefaultDemonMoveset extends AbstractMoveset {
     }
 
     @Override
+    public boolean handleLeftClick(Player player) {
+        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+            return true; // Block the move when stunned
+        }
+
+        // Execute gut punch attack (simple single hit with cooldown)
+        return executeGutPunch(player);
+    }
+
+    @Override
     public boolean handleRightClick(Player player, boolean isCrouching) {
         if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
             return true; // Block the move by overriding
@@ -198,16 +237,16 @@ public class DefaultDemonMoveset extends AbstractMoveset {
             // Crouch + Right-click: High Jump or Stomp
             return executeHighJumpOrStomp(player);
         } else {
-            // Regular Right-click: Slash combo system
-            return executeSlashCombo(player);
+            // Regular Right-click: Slash combo system (index -1)
+            return executeSlashComboForClick(player, -1);
         }
     }
 
-    private boolean executeSlashCombo(Player player) {
+    private boolean executeSlashComboForClick(Player player, int clickIndex) {
         // Direct cooldown check without separate method to avoid compilation issues
         Map<Integer, Long> cooldowns = playerCooldowns.get(player.getUUID());
         if (cooldowns != null) {
-            Long cooldownEnd = cooldowns.get(-1);
+            Long cooldownEnd = cooldowns.get(clickIndex); // Use the passed index
             if (cooldownEnd != null) {
                 long currentTime = player.level().getGameTime();
                 boolean onCooldown = currentTime < cooldownEnd;
@@ -244,7 +283,7 @@ public class DefaultDemonMoveset extends AbstractMoveset {
         }
 
         // Execute the appropriate stage
-        boolean success = executeSlashStage(player, nextStage);
+        boolean success = executeSlashStage(player, nextStage, clickIndex);
 
         if (success) {
             comboState.currentStage = nextStage;
@@ -252,11 +291,12 @@ public class DefaultDemonMoveset extends AbstractMoveset {
 
             // Set cooldown after final stage
             if (nextStage == 2) {
-                setMoveCooldown(player, -1, 40); // 2 second cooldown for followup
+                setMoveCooldown(player, clickIndex, 40); // Use the passed index for cooldown
 
                 // Send cooldown display packet using utility
                 if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
-                    com.xirc.nichirin.common.network.util.CooldownDisplayPacket.sendToClient(serverPlayer, "Slash Followup", 40);
+                    String moveName = clickIndex == -3 ? "Gut Punch" : "Slash";
+                    com.xirc.nichirin.common.network.util.CooldownDisplayPacket.sendToClient(serverPlayer, moveName, 40);
                 }
                 comboState.reset(); // Reset after final stage
             }
@@ -265,7 +305,63 @@ public class DefaultDemonMoveset extends AbstractMoveset {
         return success;
     }
 
-    private boolean executeSlashStage(Player player, int stage) {
+    private boolean executeGutPunch(Player player) {
+        // Check cooldown for gut punch (left-click uses index -3)
+        Map<Integer, Long> cooldowns = playerCooldowns.get(player.getUUID());
+        if (cooldowns != null) {
+            Long cooldownEnd = cooldowns.get(-3);
+            if (cooldownEnd != null) {
+                long currentTime = player.level().getGameTime();
+                boolean onCooldown = currentTime < cooldownEnd;
+
+                if (onCooldown) {
+                    long remaining = (cooldownEnd - currentTime);
+                    player.displayClientMessage(
+                            Component.literal("Move on cooldown! " + (remaining / 20.0f) + "s remaining")
+                                    .withStyle(style -> style.withColor(0xFF5555)),
+                            true
+                    );
+                    return false;
+                }
+            }
+        }
+
+        // Create and execute gut punch attack
+        DemonGutPunchAttack gutPunchAttack = new DemonGutPunchAttack();
+
+        // Get the left-click configuration
+        MoveConfiguration config = getLeftClickConfiguration();
+        if (config == null) {
+            // Fallback config if not found
+            config = new MoveBuilder("demon_gut_punch", "Gut Punch")
+                    .withDamage(8.0f)
+                    .withRange(1.5f)
+                    .withKnockback(0f)
+                    .withHitStun(30)
+                    .withHitboxSize(1.5f)
+                    .withTiming(20, 5, 10)
+                    .build();
+        }
+
+        // Configure and execute the attack
+        gutPunchAttack.configure(config);
+
+        if (config.animationId != null && player instanceof ServerPlayer serverPlayer) {
+            String animationName = config.animationId.getPath();
+            PlayerAnimationPacket packet = new PlayerAnimationPacket(serverPlayer.getId(), animationName);
+            NichirinPacketRegistry.sendToPlayer(packet, serverPlayer);
+        }
+
+        MoveExecutor.executeAttack(player, gutPunchAttack, "default_demon", "demon_gut_punch");
+
+        // Set cooldown
+        setMoveCooldown(player, -3, config.getCooldownOrDefault(20));
+
+        onMovePerformed(player, -3, false);
+        return true;
+    }
+
+    private boolean executeSlashStage(Player player, int stage, int clickIndex) {
         DemonSlashAttack attack = new DemonSlashAttack();
         attack.setSlashStage(stage);
 
@@ -292,7 +388,7 @@ public class DefaultDemonMoveset extends AbstractMoveset {
 
         attack.configure(config);
         MoveExecutor.executeAttack(player, attack, "default_demon", "demon_slash_stage_" + stage);
-        onMovePerformed(player, -1, false);
+        onMovePerformed(player, clickIndex, false); // Use the passed clickIndex
 
         return true;
     }
@@ -581,8 +677,18 @@ public class DefaultDemonMoveset extends AbstractMoveset {
     }
 
     @Override
+    public int getLeftClickMoveIndex() {
+        return -3; // Left click slash combo
+    }
+
+    @Override
     public int getRightClickMoveIndex(boolean isCrouching) {
         return isCrouching ? -2 : -1; // Not in attack wheel, handled separately
+    }
+
+    @Override
+    public String getLeftClickMoveName() {
+        return "Gut Punch";
     }
 
     @Override
@@ -598,6 +704,7 @@ public class DefaultDemonMoveset extends AbstractMoveset {
     @Override
     public void onMovePerformed(Player player, int moveIndex, boolean isCrouching) {
         // Track move usage for demons
+        // moveIndex -3 = Gut Punch (left-click)
         // moveIndex -1 = Slash (right-click)
         // moveIndex -2 = High Jump/Stomp (crouch + right-click)
         // moveIndex 0 = Kick

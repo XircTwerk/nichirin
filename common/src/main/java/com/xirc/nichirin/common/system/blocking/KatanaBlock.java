@@ -1,8 +1,7 @@
 package com.xirc.nichirin.common.system.blocking;
 
-import com.xirc.nichirin.common.effect.BlockingStatusEffect;
 import com.xirc.nichirin.common.system.StanceManager;
-import com.xirc.nichirin.common.util.KatanaInputHandler;
+import com.xirc.nichirin.common.util.InputHandler;
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
@@ -111,7 +110,7 @@ public class KatanaBlock {
         applyBlockingEffect(player);
 
         // Block katana inputs
-        KatanaInputHandler.blockAfterBreathingMove(player);
+        InputHandler.blockAfterBreathingMove(player);
 
         // Play blocking sound
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),

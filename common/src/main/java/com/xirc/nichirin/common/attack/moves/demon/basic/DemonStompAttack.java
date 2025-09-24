@@ -61,8 +61,16 @@ public class DemonStompAttack extends AbstractDemonAttack<DemonStompAttack, IDem
             // High damage stomp
             hitTarget(target);
 
-            // Bury effect - teleport target 1 block down
+            // Increase gravity effect - make them fall faster/harder
             if (target.isAlive()) {
+                // Apply strong downward velocity
+                Vec3 currentVelocity = target.getDeltaMovement();
+                target.setDeltaMovement(currentVelocity.x, -1.5, currentVelocity.z); // Strong downward force
+                target.hasImpulse = true;
+                target.hurtMarked = true;
+
+
+                // Bury effect - teleport target 1 block down
                 BlockPos targetPos = target.blockPosition();
                 BlockPos buriedPos = targetPos.below();
 

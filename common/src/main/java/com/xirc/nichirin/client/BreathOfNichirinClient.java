@@ -6,6 +6,7 @@ import com.xirc.nichirin.client.handler.BigGuiKeyHandler;
 import com.xirc.nichirin.client.handler.ClientDoubleJumpHandler;
 import com.xirc.nichirin.client.handler.ComboClientHandler;
 import com.xirc.nichirin.client.particle.*;
+import com.xirc.nichirin.common.util.InputHandler;
 import com.xirc.nichirin.registry.NichirinKeybindRegistry;
 import com.xirc.nichirin.client.renderer.BreathingBarRenderer;
 import com.xirc.nichirin.client.renderer.StaminaBarRenderer;
@@ -17,7 +18,6 @@ import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.event.CooldownClearEventHandler;
 import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
 import com.xirc.nichirin.common.util.BlockingInputHandler;
-import com.xirc.nichirin.common.util.KatanaInputHandler;
 import com.xirc.nichirin.common.util.PlayerStats;
 import com.xirc.nichirin.registry.*;
 import dev.architectury.event.events.client.ClientTickEvent;
@@ -72,7 +72,7 @@ public class BreathOfNichirinClient {
             // Register all client handlers and components
             ClientEventHandler.register();
             LOGGER.info("DEBUG: About to register katana client handler");
-            KatanaInputHandler.registerClient();
+            InputHandler.registerClient();
             LOGGER.info("DEBUG: Katana client handler registered");
 
             // Initialize shaders early
