@@ -7,6 +7,7 @@ import com.xirc.nichirin.common.network.util.MovesetSyncPacket;
 import com.xirc.nichirin.common.system.blocking.KatanaBlock;
 import com.xirc.nichirin.common.data.*;
 import com.xirc.nichirin.common.util.MultiplayerInputHandler;
+import com.xirc.nichirin.common.system.DemonComponent;
 import dev.architectury.networking.NetworkManager;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -23,7 +24,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * FIXED: Architectury networking with all required packet registrations including MovesetSyncPacket
+ * UPDATED: Architectury networking with mixin-based demon blood bar support
  */
 public interface NichirinPacketRegistry {
 
@@ -50,8 +51,6 @@ public interface NichirinPacketRegistry {
     ResourceLocation MOVESET_CONFIG_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "moveset_config_sync");
     ResourceLocation DEMON_SYNC_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "demon_sync");
     ResourceLocation DEMON_INPUT_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "demon_input");
-
-    // NEW: Missing MultiplayerInputHandler packet IDs
     ResourceLocation ATTACK_WHEEL_STATE_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "attack_wheel_state");
     ResourceLocation KATANA_INPUT_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "katana_input");
 
@@ -62,7 +61,6 @@ public interface NichirinPacketRegistry {
     Map<java.util.UUID, MultiplayerInputHandler.PlayerInputState> SERVER_PLAYER_STATES = new java.util.concurrent.ConcurrentHashMap<>();
 
     static void init() {
-
         // Map packet classes to IDs
         PACKET_IDS.put(DoubleJumpPacket.class, DOUBLE_JUMP_ID);
         PACKET_IDS.put(BreathingMovePacket.class, BREATHING_MOVE_ID);
@@ -78,29 +76,19 @@ public interface NichirinPacketRegistry {
         PACKET_IDS.put(MoveHotkeyPacket.class, MOVE_HOTKEY_ID);
         PACKET_IDS.put(DemonSyncPacket.class, DEMON_SYNC_ID);
 
-        // REMOVED: MovesetSyncPacket.register() - causes Architectury version incompatibility
-        // We handle moveset sync directly in this registry now
-
-        // Register packets with error handling
         registerPackets();
     }
 
     static void registerPackets() {
-
         try {
-            // Register C2S packets (these work fine)
             registerC2SPackets();
-
-            // Try to register S2C packets with fallback
             registerS2CPacketsWithFallback();
-
         } catch (Exception e) {
             throw new RuntimeException("Packet registration failed", e);
         }
     }
 
     static void registerC2SPackets() {
-
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, DOUBLE_JUMP_ID, (buf, context) -> {
             DoubleJumpPacket packet = new DoubleJumpPacket(buf);
             if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
@@ -122,56 +110,46 @@ public interface NichirinPacketRegistry {
             }
         });
 
-        // NEW: Attack wheel state packet
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, ATTACK_WHEEL_STATE_ID, (buf, context) -> {
             boolean wheelOpen = buf.readBoolean();
             if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
                 context.queue(() -> {
-                    // Handle attack wheel state on server
                     MultiplayerInputHandler.PlayerInputState state = getOrCreatePlayerState(serverPlayer);
                     state.attackWheelOpen = wheelOpen;
 
                     if (!wheelOpen) {
-                        // When wheel closes, brief block to prevent click leakage
                         state.wheelCloseTime = serverPlayer.level().getGameTime();
                         state.inputBlocked = true;
-                        state.blockUntilTime = serverPlayer.level().getGameTime() + 10; // 0.5 second block
+                        state.blockUntilTime = serverPlayer.level().getGameTime() + 10;
                     }
                 });
             }
         });
 
-        // NEW: Katana input packet
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, KATANA_INPUT_ID, (buf, context) -> {
             MultiplayerInputHandler.InputType inputType = buf.readEnum(MultiplayerInputHandler.InputType.class);
             if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
                 context.queue(() -> {
-                    // Check if inputs should be blocked
                     if (shouldBlockInputsServer(serverPlayer)) {
                         return;
                     }
-
-                    // Execute katana input (requires katana)
                     executeKatanaInput(serverPlayer, inputType);
                 });
             }
         });
 
-        // Demon input handling (no katana required)
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, DEMON_INPUT_ID, (buf, context) -> {
             String inputTypeName = buf.readUtf();
             if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
                 context.queue(() -> {
                     try {
                         MultiplayerInputHandler.InputType inputType = MultiplayerInputHandler.InputType.valueOf(inputTypeName);
-
-                        // Check if inputs should be blocked
                         if (shouldBlockInputsServer(serverPlayer)) {
                             return;
                         }
-
                         handleDemonInput(serverPlayer, inputType);
                     } catch (Exception e) {
+                        // Invalid input type, ignore
                     }
                 });
             }
@@ -179,25 +157,19 @@ public interface NichirinPacketRegistry {
 
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, BLOCK_START_ID, (buf, context) -> {
             if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
-                context.queue(() -> {
-                    KatanaBlock.startBlocking(serverPlayer);
-                });
+                context.queue(() -> KatanaBlock.startBlocking(serverPlayer));
             }
         });
 
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, BLOCK_STOP_ID, (buf, context) -> {
             if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
-                context.queue(() -> {
-                    KatanaBlock.stopBlocking(serverPlayer);
-                });
+                context.queue(() -> KatanaBlock.stopBlocking(serverPlayer));
             }
         });
 
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, PARRY_ID, (buf, context) -> {
             if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
-                context.queue(() -> {
-                    KatanaBlock.attemptParry(serverPlayer);
-                });
+                context.queue(() -> KatanaBlock.attemptParry(serverPlayer));
             }
         });
 
@@ -215,7 +187,6 @@ public interface NichirinPacketRegistry {
             }
         });
 
-        // BREATHING STYLE CHANGE REQUEST (C2S)
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, REQUEST_STYLE_CHANGE, (buf, context) -> {
             String movesetId = buf.readBoolean() ? buf.readUtf() : null;
             if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
@@ -231,59 +202,7 @@ public interface NichirinPacketRegistry {
         });
     }
 
-    static MultiplayerInputHandler.PlayerInputState getOrCreatePlayerState(Player player) {
-        return SERVER_PLAYER_STATES.computeIfAbsent(player.getUUID(), uuid -> new MultiplayerInputHandler.PlayerInputState());
-    }
-
-    static boolean shouldBlockInputsServer(Player player) {
-        if (player.level().isClientSide) return false;
-
-        if (player.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.STUNNED.get())) {
-            return true;
-        }
-
-        if (player.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.BLOCKING.get())) {
-            return true;
-        }
-
-        MultiplayerInputHandler.PlayerInputState state = SERVER_PLAYER_STATES.get(player.getUUID());
-        if (state == null) return false;
-
-        long currentTime = player.level().getGameTime();
-        return state.shouldBlockInput(currentTime);
-    }
-
-    static void executeKatanaInput(ServerPlayer player, MultiplayerInputHandler.InputType inputType) {
-        // Get the katana and execute the appropriate action
-        var mainHand = player.getMainHandItem();
-        if (!(mainHand.getItem() instanceof com.xirc.nichirin.common.item.katana.SimpleKatana katana)) {
-            return;
-        }
-
-        switch (inputType) {
-            case LEFT_CLICK -> {
-                katana.performAttack(player);
-            }
-            case RIGHT_CLICK -> {
-                katana.use(player.level(), player, InteractionHand.MAIN_HAND);
-            }
-            case RIGHT_CLICK_CROUCH -> {
-                // Temporarily set crouch state
-                boolean wasCrouching = player.isShiftKeyDown();
-                player.setShiftKeyDown(true);
-                katana.use(player.level(), player, InteractionHand.MAIN_HAND);
-                player.setShiftKeyDown(wasCrouching);
-            }
-        }
-
-        // Block inputs after execution
-        MultiplayerInputHandler.PlayerInputState state = getOrCreatePlayerState(player);
-        state.inputBlocked = true;
-        state.blockUntilTime = player.level().getGameTime() + 40; // 2 seconds
-    }
-
     static void registerS2CPacketsWithFallback() {
-
         try {
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, BREATHING_EFFECT_ID, (buf, context) -> {
                 BreathingEffectPacket packet = new BreathingEffectPacket(buf);
@@ -320,7 +239,6 @@ public interface NichirinPacketRegistry {
                 context.queue(() -> packet.handleClient());
             });
 
-            // FIXED: Proper dual moveset sync handling
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, SYNC_BREATHING_STYLE, (buf, context) -> {
                 String movesetId = buf.readBoolean() ? buf.readUtf() : null;
                 context.queue(() -> {
@@ -329,7 +247,6 @@ public interface NichirinPacketRegistry {
                         MovesetData data = PlayerDataProvider.getMovesetData(player);
 
                         if (movesetId != null) {
-                            // Determine if it's breathing or demon and set to correct slot
                             com.xirc.nichirin.common.attack.moveset.AbstractMoveset moveset =
                                     com.xirc.nichirin.registry.MovesetRegistry.getMoveset(movesetId);
 
@@ -341,7 +258,6 @@ public interface NichirinPacketRegistry {
                                 }
                             }
                         } else {
-                            // Clear all movesets if null
                             data.clearMovesets();
                         }
                     }
@@ -361,23 +277,19 @@ public interface NichirinPacketRegistry {
                 });
             });
 
+            // UPDATED: Use DemonComponent instead of DemonBloodGui
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, DEMON_SYNC_ID, (buf, context) -> {
                 int bloodPoints = buf.readInt();
                 int halfBloodPoints = buf.readInt();
                 boolean isDemon = buf.readBoolean();
 
                 context.queue(() -> {
-                    com.xirc.nichirin.client.gui.DemonBloodGui.updateBloodPoints(bloodPoints, isDemon);
-                    com.xirc.nichirin.client.gui.DemonBloodGui.updateHalfBloodPoints(halfBloodPoints);
+                    DemonComponent.updateBloodFromSync(bloodPoints, halfBloodPoints, isDemon);
                 });
             });
 
-            // HITBOX PACKET (S2C)
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, HITBOX_PACKET_ID, (buf, context) -> {
-                // Read hitbox data OUTSIDE the queue - buffer will be invalid inside the lambda
                 int hitboxCount = buf.readInt();
-
-                // Read all hitbox data into local variables first
                 java.util.List<AABB> hitboxesToAdd = new java.util.ArrayList<>();
                 long duration = 0;
 
@@ -394,7 +306,6 @@ public interface NichirinPacketRegistry {
                     hitboxesToAdd.add(hitbox);
                 }
 
-                // THEN queue the action with the local data
                 final long finalDuration = duration;
                 context.queue(() -> {
                     for (AABB hitbox : hitboxesToAdd) {
@@ -404,19 +315,131 @@ public interface NichirinPacketRegistry {
             });
 
         } catch (NoSuchMethodError e) {
+            // Handle older Architectury versions
         } catch (Exception e) {
+            // Log error but don't crash
         }
     }
 
-    // Hitbox packet sending methods
+    // Utility methods
+    static MultiplayerInputHandler.PlayerInputState getOrCreatePlayerState(Player player) {
+        return SERVER_PLAYER_STATES.computeIfAbsent(player.getUUID(), uuid -> new MultiplayerInputHandler.PlayerInputState());
+    }
+
+    static boolean shouldBlockInputsServer(Player player) {
+        if (player.level().isClientSide) return false;
+
+        if (player.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.STUNNED.get())) {
+            return true;
+        }
+
+        if (player.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.BLOCKING.get())) {
+            return true;
+        }
+
+        MultiplayerInputHandler.PlayerInputState state = SERVER_PLAYER_STATES.get(player.getUUID());
+        if (state == null) return false;
+
+        long currentTime = player.level().getGameTime();
+        return state.shouldBlockInput(currentTime);
+    }
+
+    static void executeKatanaInput(ServerPlayer player, MultiplayerInputHandler.InputType inputType) {
+        var mainHand = player.getMainHandItem();
+        if (!(mainHand.getItem() instanceof com.xirc.nichirin.common.item.katana.SimpleKatana katana)) {
+            return;
+        }
+
+        switch (inputType) {
+            case LEFT_CLICK -> katana.performAttack(player);
+            case RIGHT_CLICK -> katana.use(player.level(), player, InteractionHand.MAIN_HAND);
+            case RIGHT_CLICK_CROUCH -> {
+                boolean wasCrouching = player.isShiftKeyDown();
+                player.setShiftKeyDown(true);
+                katana.use(player.level(), player, InteractionHand.MAIN_HAND);
+                player.setShiftKeyDown(wasCrouching);
+            }
+        }
+
+        MultiplayerInputHandler.PlayerInputState state = getOrCreatePlayerState(player);
+        state.inputBlocked = true;
+        state.blockUntilTime = player.level().getGameTime() + 40;
+    }
+
+    static void handleDemonInput(ServerPlayer player, MultiplayerInputHandler.InputType inputType) {
+        if (player.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.STUNNED.get())) {
+            return;
+        }
+
+        if (player.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.BLOCKING.get())) {
+            return;
+        }
+
+        if (!com.xirc.nichirin.common.data.MovesetHelper.hasDemonMoveset(player)) {
+            return;
+        }
+
+        com.xirc.nichirin.common.attack.moveset.AbstractMoveset moveset = com.xirc.nichirin.common.data.MovesetHelper.getDemonMoveset(player);
+        if (moveset == null || !moveset.isDemonMoveset()) {
+            return;
+        }
+
+        switch (inputType) {
+            case LEFT_CLICK -> moveset.handleLeftClick(player);
+            case RIGHT_CLICK -> moveset.handleRightClick(player, false);
+            case RIGHT_CLICK_CROUCH -> moveset.handleRightClick(player, true);
+        }
+    }
+
+    static void handleStyleChangeRequestFromOriginalPacket(ServerPlayer player, String movesetId) {
+        try {
+            if (movesetId != null && !MovesetRegistry.isRegistered(movesetId)) {
+                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                        "§cInvalid breathing style: " + movesetId
+                ));
+                return;
+            }
+
+            if (movesetId != null && !ProgressionHelper.isStyleUnlocked(player, movesetId)) {
+                String requirement = ProgressionHelper.getUnlockRequirement(movesetId);
+                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                        "§cYou haven't unlocked this breathing style! §fRequirement: §e" + requirement
+                ));
+                return;
+            }
+
+            PlayerDataProvider.updateAndSync(player, movesetId);
+
+            if (movesetId != null) {
+                String styleName = formatStyleName(movesetId);
+                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                        "§aSwitched to " + styleName + "."
+                ));
+            } else {
+                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                        "§7Cleared breathing style."
+                ));
+            }
+        } catch (Exception e) {
+            // Log error but don't crash
+        }
+    }
+
+    static String formatStyleName(String styleId) {
+        String[] parts = styleId.split("_");
+        StringBuilder formatted = new StringBuilder();
+        for (String part : parts) {
+            if (formatted.length() > 0) formatted.append(" ");
+            formatted.append(part.substring(0, 1).toUpperCase()).append(part.substring(1));
+        }
+        return formatted.toString();
+    }
+
+    // Packet sending methods
     static void sendHitboxToClient(ServerPlayer player, AABB hitbox, long durationMs) {
         try {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-
-            // Write hitbox count (1)
             buf.writeInt(1);
-
-            // Write hitbox data
             buf.writeDouble(hitbox.minX);
             buf.writeDouble(hitbox.minY);
             buf.writeDouble(hitbox.minZ);
@@ -424,13 +447,12 @@ public interface NichirinPacketRegistry {
             buf.writeDouble(hitbox.maxY);
             buf.writeDouble(hitbox.maxZ);
             buf.writeLong(durationMs);
-
             NetworkManager.sendToPlayer(player, HITBOX_PACKET_ID, buf);
         } catch (Exception e) {
+            // Handle error
         }
     }
 
-    // Breathing style specific methods - keeping the same interface as the original BreathingStyleSyncPacket
     static void sendToPlayer(ServerPlayer player, String movesetId) {
         try {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
@@ -440,6 +462,7 @@ public interface NichirinPacketRegistry {
             }
             NetworkManager.sendToPlayer(player, SYNC_BREATHING_STYLE, buf);
         } catch (Exception e) {
+            // Handle error
         }
     }
 
@@ -451,11 +474,11 @@ public interface NichirinPacketRegistry {
                 buf.writeUtf(movesetId);
             }
 
-            // Send to all players in the same dimension
             player.server.getPlayerList().getPlayers().stream()
                     .filter(p -> p.level() == player.level())
                     .forEach(p -> NetworkManager.sendToPlayer(p, SYNC_BREATHING_STYLE, buf));
         } catch (Exception e) {
+            // Handle error
         }
     }
 
@@ -468,15 +491,16 @@ public interface NichirinPacketRegistry {
             }
             NetworkManager.sendToServer(REQUEST_STYLE_CHANGE, buf);
         } catch (Exception e) {
+            // Handle error
         }
     }
 
-    // Blocking-specific methods for easy access
     static void sendBlockStart() {
         try {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             NetworkManager.sendToServer(BLOCK_START_ID, buf);
         } catch (Exception e) {
+            // Handle error
         }
     }
 
@@ -485,6 +509,7 @@ public interface NichirinPacketRegistry {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             NetworkManager.sendToServer(BLOCK_STOP_ID, buf);
         } catch (Exception e) {
+            // Handle error
         }
     }
 
@@ -493,10 +518,10 @@ public interface NichirinPacketRegistry {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             NetworkManager.sendToServer(PARRY_ID, buf);
         } catch (Exception e) {
+            // Handle error
         }
     }
 
-    // General packet sending methods
     static void sendToPlayer(Object packet, ServerPlayer player) {
         ResourceLocation id = PACKET_IDS.get(packet.getClass());
         if (id != null) {
@@ -504,6 +529,7 @@ public interface NichirinPacketRegistry {
                 FriendlyByteBuf buf = encodePacket(packet);
                 NetworkManager.sendToPlayer(player, id, buf);
             } catch (Exception e) {
+                // Handle error
             }
         }
     }
@@ -515,6 +541,7 @@ public interface NichirinPacketRegistry {
                 FriendlyByteBuf buf = encodePacket(packet);
                 NetworkManager.sendToServer(id, buf);
             } catch (Exception e) {
+                // Handle error
             }
         }
     }
@@ -536,10 +563,10 @@ public interface NichirinPacketRegistry {
             buf.writeBoolean(isDemon);
             NetworkManager.sendToPlayer(player, DEMON_SYNC_ID, buf);
         } catch (Exception e) {
+            // Handle error
         }
     }
 
-    // Simple packet encoding
     static FriendlyByteBuf encodePacket(Object packet) {
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
 
@@ -567,94 +594,13 @@ public interface NichirinPacketRegistry {
             p.toBytes(buf);
         } else if (packet instanceof MovesetConfigSyncPacket p) {
             p.toBytes(buf);
+        } else if (packet instanceof DemonSyncPacket p) {
+            p.toBytes(buf);
         }
 
         return buf;
     }
 
-    // Handler method for breathing style change requests (copying logic from original BreathingStyleSyncPacket)
-    static void handleStyleChangeRequestFromOriginalPacket(ServerPlayer player, String movesetId) {
-        try {
-            // Validate the moveset exists
-            if (movesetId != null && !MovesetRegistry.isRegistered(movesetId)) {
-                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                        "§cInvalid breathing style: " + movesetId
-                ));
-                return;
-            }
-
-            // Check if the player has unlocked this breathing style
-            if (movesetId != null && !ProgressionHelper.isStyleUnlocked(player, movesetId)) {
-                String requirement = ProgressionHelper.getUnlockRequirement(movesetId);
-                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                        "§cYou haven't unlocked this breathing style! §fRequirement: §e" + requirement
-                ));
-                return;
-            }
-
-            // All checks passed - update the moveset
-            PlayerDataProvider.updateAndSync(player, movesetId);
-
-            // Send confirmation message
-            if (movesetId != null) {
-                String styleName = formatStyleName(movesetId);
-                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                        "§aSwitched to " + styleName + "."
-                ));
-            } else {
-                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                        "§7Cleared breathing style."
-                ));
-            }
-        } catch (Exception e) {
-        }
-    }
-
-    static String formatStyleName(String styleId) {
-        String[] parts = styleId.split("_");
-        StringBuilder formatted = new StringBuilder();
-        for (String part : parts) {
-            if (formatted.length() > 0) formatted.append(" ");
-            formatted.append(part.substring(0, 1).toUpperCase()).append(part.substring(1));
-        }
-        return formatted.toString();
-    }
-
-    static void handleDemonInput(ServerPlayer player, MultiplayerInputHandler.InputType inputType) {
-        // Check if player is stunned
-        if (player.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.STUNNED.get())) {
-            return;
-        }
-
-        // Check if player has blocking effect
-        if (player.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.BLOCKING.get())) {
-            return;
-        }
-
-        // Get the demon moveset
-        if (!com.xirc.nichirin.common.data.MovesetHelper.hasDemonMoveset(player)) {
-            return;
-        }
-
-        com.xirc.nichirin.common.attack.moveset.AbstractMoveset moveset = com.xirc.nichirin.common.data.MovesetHelper.getDemonMoveset(player);
-        if (moveset == null || !moveset.isDemonMoveset()) {
-            return;
-        }
-
-        switch (inputType) {
-            case LEFT_CLICK -> {
-                moveset.handleLeftClick(player);
-            }
-            case RIGHT_CLICK -> {
-                moveset.handleRightClick(player, false);
-            }
-            case RIGHT_CLICK_CROUCH -> {
-                moveset.handleRightClick(player, true);
-            }
-        }
-    }
-
-    // Clean up player state when they disconnect
     static void cleanupPlayer(Player player) {
         SERVER_PLAYER_STATES.remove(player.getUUID());
     }

@@ -1,11 +1,7 @@
 package com.xirc.nichirin.common.system;
 
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
-import dev.architectury.networking.NetworkManager;
-import io.netty.buffer.Unpooled;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 
@@ -14,10 +10,8 @@ import net.minecraft.world.entity.player.Player;
  */
 public class DemonComponent {
 
-    public static final ResourceLocation DEMON_SYNC_PACKET = new ResourceLocation("nichirin", "demon_sync");
-
-    // Client-side blood points for display
     private static int clientBloodPoints = 10;
+    private static int clientHalfBloodPoints = 0;
 
     /**
      * Gets blood points for display (client-side)
@@ -27,10 +21,42 @@ public class DemonComponent {
     }
 
     /**
+     * Gets half blood points for display (client-side)
+     */
+    public static int getClientHalfBloodPoints() {
+        return clientHalfBloodPoints;
+    }
+
+    /**
      * Sets blood points from server sync (client-side)
      */
     public static void setClientBloodPoints(int bloodPoints) {
         clientBloodPoints = Math.max(0, Math.min(bloodPoints, 10));
+    }
+
+    /**
+     * Sets half blood points from server sync (client-side)
+     */
+    public static void setClientHalfBloodPoints(int halfBloodPoints) {
+        clientHalfBloodPoints = Math.max(0, Math.min(halfBloodPoints, 1));
+    }
+
+    /**
+     * Updates both blood values from server sync (client-side)
+     */
+    public static void updateBloodFromSync(int bloodPoints, int halfBloodPoints, boolean isDemon) {
+        if (isDemon) {
+            setClientBloodPoints(bloodPoints);
+            setClientHalfBloodPoints(halfBloodPoints);
+        }
+    }
+
+    /**
+     * Called when player dies/respawns to reset blood to full
+     */
+    public static void onPlayerRespawn() {
+        clientBloodPoints = 10;
+        clientHalfBloodPoints = 0;
     }
 
     /**
@@ -45,58 +71,32 @@ public class DemonComponent {
     }
 
     /**
-     * Writes sync packet data
-     */
-    private static void writeSyncPacket(FriendlyByteBuf buf, ServerPlayer player) {
-        buf.writeInt(DemonManager.getBloodPoints(player));
-        buf.writeBoolean(DemonManager.isDemon(player));
-    }
-
-    /**
-     * Applies sync packet data (client-side)
-     */
-    public static void applySyncPacket(FriendlyByteBuf buf) {
-        int bloodPoints = buf.readInt();
-        boolean isDemon = buf.readBoolean();
-
-        if (isDemon) {
-            setClientBloodPoints(bloodPoints);
-        }
-    }
-
-    /**
      * Saves demon data to NBT
      */
     public static CompoundTag save(Player player) {
         CompoundTag tag = new CompoundTag();
         if (DemonManager.isDemon(player)) {
             tag.putInt("BloodPoints", DemonManager.getBloodPoints(player));
+            tag.putInt("HalfBloodPoints", com.xirc.nichirin.common.event.DemonFoodHandler.getHalfBloodPoints(player));
             tag.putBoolean("IsDemon", true);
         }
         return tag;
     }
 
     /**
-     * Loads demon data from NBT - FIXED to prevent infinite loop
+     * Loads demon data from NBT
      */
     public static void load(Player player, CompoundTag tag) {
         if (tag.getBoolean("IsDemon")) {
             int bloodPoints = tag.getInt("BloodPoints");
+            int halfBloodPoints = tag.getInt("HalfBloodPoints");
 
-            // Use direct method to prevent infinite recursion
             DemonManager.setBloodPointsDirectly(player, bloodPoints);
+            com.xirc.nichirin.common.event.DemonFoodHandler.setHalfBloodPointsDirectly(player, halfBloodPoints);
 
-            // Sync after loading is complete
             if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
                 sync(serverPlayer);
             }
         }
-    }
-
-    /**
-     * Handles packet on client side
-     */
-    public static void handleSyncPacket(FriendlyByteBuf buf) {
-        applySyncPacket(buf);
     }
 }

@@ -1,9 +1,10 @@
 package com.xirc.nichirin.client;
 
 import com.xirc.nichirin.client.gui.CooldownHUD;
-import com.xirc.nichirin.client.gui.DemonBloodGui;
 import com.xirc.nichirin.client.util.ClientInputHandler;
+import com.xirc.nichirin.common.system.DemonComponent;
 import dev.architectury.event.events.client.ClientGuiEvent;
+import dev.architectury.event.events.client.ClientPlayerEvent;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -26,10 +27,13 @@ public class ClientEventHandler {
             // Render cooldown HUD
             CooldownHUD.render(graphics, partialTicks);
 
-            // Render demon blood bar (only for demons not in creative/spectator)
-            int screenWidth = minecraft.getWindow().getGuiScaledWidth();
-            int screenHeight = minecraft.getWindow().getGuiScaledHeight();
-            DemonBloodGui.renderBloodBar(graphics, screenWidth, screenHeight);
+            // Note: Blood bar is now rendered via mixin - no manual rendering needed
+        });
+
+        // Handle player respawn - reset blood display
+        ClientPlayerEvent.CLIENT_PLAYER_RESPAWN.register((oldPlayer, newPlayer) -> {
+            // Reset client-side blood display when player respawns
+            DemonComponent.onPlayerRespawn();
         });
     }
 }
