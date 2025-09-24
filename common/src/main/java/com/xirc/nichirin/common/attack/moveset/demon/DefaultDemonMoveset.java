@@ -98,11 +98,11 @@ public class DefaultDemonMoveset extends AbstractMoveset {
     private void createAndCaptureLeftClickConfig() {
         MoveConfiguration tempConfig = new MoveBuilder("demon_gut_punch", "Gut Punch")
                 .withAnimation("nichirin:demon_gut_punch", 6)
-                .withTiming(70, 5, 10) // 1 second cooldown, quick windup, short duration
+                .withTiming(15, 5, 10) // 1 second cooldown, quick windup, short duration
                 .withDamage(8.0f) // High damage
                 .withRange(1.5f) // Very close range
-                .withKnockback(0f) // NO knockback
-                .withHitStun(30) // High stun
+                .withKnockback(0.1f) // NO knockback
+                .withHitStun(15) // High stun
                 .withHitboxSize(1.5f)
                 .withDescription("Powerful close-range punch that stuns enemies")
                 .build();
@@ -126,7 +126,7 @@ public class DefaultDemonMoveset extends AbstractMoveset {
     private void createAndCaptureHighJumpConfig() {
         MoveConfiguration tempConfig = new MoveBuilder("high_jump", "High Jump")
                 .withAnimation("nichirin:demon_high_jump", 8)
-                .withTiming(100, 0, 5) // 5 second cooldown for high jump
+                .withTiming(140, 0, 5) // 5 second cooldown for high jump
                 .withDescription("Launch 5 blocks into the air, crouch right-click mid-air for stomp attack")
                 .build();
         this.captureRightClickConfig(tempConfig, true);
@@ -140,11 +140,11 @@ public class DefaultDemonMoveset extends AbstractMoveset {
                 // LEFT CLICK: Gut Punch attack
                 .withLeftClickMove(new MoveBuilder("demon_gut_punch", "Gut Punch")
                                 .withAnimation("nichirin:demon_punch", 6)
-                                .withTiming(20, 5, 10) // 1 second cooldown, quick windup, short duration
-                                .withDamage(8.0f) // High damage
+                                .withTiming(10, 5, 10) // 1 second cooldown, quick windup, short duration
+                                .withDamage(2.0f) // High damage
                                 .withRange(1.5f) // Very close range
-                                .withKnockback(0f) // NO knockback
-                                .withHitStun(30) // High stun
+                                .withKnockback(0.1f) // NO knockback
+                                .withHitStun(15) // High stun
                                 .withHitboxSize(1.5f)
                                 .withDescription("Powerful close-range punch that stuns enemies")
                         // NO ACTION - handled in handleLeftClick override
@@ -156,7 +156,7 @@ public class DefaultDemonMoveset extends AbstractMoveset {
                         .withTiming(60, 5, 15) // 3 second cooldown, quick windup, 15 tick duration
                         .withDamage(6.0f)
                         .withRange(2.5f)
-                        .withKnockback(1.2f)
+                        .withKnockback(0.6f)
                         .withHitStun(25)
                         .withHitboxSize(2.0f)
                         .withDescription("Powerful front kick with high knockback and crowd control")
@@ -177,7 +177,7 @@ public class DefaultDemonMoveset extends AbstractMoveset {
                         .withDamage(12.0f)
                         .withDashSpeed(4.0f)
                         .withRange(4.0f)
-                        .withKnockback(0.4f)
+                        .withKnockback(0.2f)
                         .withHitStun(20)
                         .withHitboxSize(2)
                         .withDescription("Dash forward 4 blocks and deliver a devastating punch")
@@ -194,7 +194,7 @@ public class DefaultDemonMoveset extends AbstractMoveset {
                 // Bite - Strong bite that steals blood (INDEX 2)
                 .withMove(new MoveBuilder("demon_bite", "Bite")
                         .withAnimation("nichirin:demon_bite", 12)
-                        .withTiming(100, 10, 25) // 5 second cooldown, bite windup, 25 tick duration
+                        .withTiming(100, 16, 15) // 5 second cooldown, bite windup, 25 tick duration
                         .withDamage(15.0f)
                         .withRange(2.0f)
                         .withKnockback(0f)

@@ -50,7 +50,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
     protected int duration;
 
     // Blood restoration properties (hardcoded defaults)
-    protected int bloodPerHit = 1; // Default: 1 blood point per hit
+    protected int bloodPerHit = 0; // Default: 1 blood point per hit
     protected int maxBloodPerAttack = 3; // Default: maximum 3 blood points per attack
 
     // Movement properties (nullable - not all attacks use these)
