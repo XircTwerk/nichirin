@@ -18,8 +18,12 @@ import java.util.List;
  */
 public class DemonGutPunchAttack extends AbstractDemonAttack<DemonGutPunchAttack, IDemonAttacker> {
 
+    private boolean hasExecuted = false;
+
     @Override
     protected void onStart() {
+        hasExecuted = false;
+
         // Play punch startup sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.PLAYERS, 1.0f, 0.8f);
@@ -34,6 +38,9 @@ public class DemonGutPunchAttack extends AbstractDemonAttack<DemonGutPunchAttack
 
     @Override
     protected void perform() {
+        if (hasExecuted) return; // Only execute once
+        hasExecuted = true;
+
         // Simple close-range attack - hit targets right in front of player
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDir = user.getLookAngle();
@@ -65,6 +72,6 @@ public class DemonGutPunchAttack extends AbstractDemonAttack<DemonGutPunchAttack
 
     @Override
     protected void onStop() {
-        // No cleanup needed for this simple attack
+        hasExecuted = false; // Reset for next use
     }
 }

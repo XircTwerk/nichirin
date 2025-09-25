@@ -17,13 +17,16 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Handles demon-specific food restrictions and blood mechanics
+ * Handles demon-specific food restrictions and blood mechanics with multihit resistance
  */
 public class DemonFoodHandler {
 
     private static final Map<UUID, Float> accumulatedDamage = new HashMap<>();
     private static final Map<UUID, Integer> halfBloodPoints = new HashMap<>();
+    private static final Map<UUID, Long> lastDamageTimes = new HashMap<>();
+
     private static final float DAMAGE_PER_HALF_BLOOD = 10.0f;
+    private static final long MULTIHIT_WINDOW_MS = 1000; // Milliseconds
 
     public static void register() {
         InteractionEvent.RIGHT_CLICK_ITEM.register((player, hand) -> {
@@ -72,11 +75,14 @@ public class DemonFoodHandler {
     }
 
     /**
-     * Tracks damage accumulation for blood loss calculation
-     * Every 10 damage (5 hearts) = 0.5 blood points lost
+     * Tracks damage accumulation for blood loss calculation with multihit resistance
+     * Every 10 damage (5 hearts) = 0.5 blood points lost, but multihits are reduced
      */
     private static void trackDamageForBloodLoss(Player player, float damage) {
         UUID playerUUID = player.getUUID();
+
+        // Apply multihit resistance
+        float adjustedDamage = applyMultihitResistance(playerUUID, damage);
 
         float accumulated = accumulatedDamage.getOrDefault(playerUUID, 0.0f);
 
@@ -84,7 +90,7 @@ public class DemonFoodHandler {
             accumulated = 0.0f;
         }
 
-        accumulated += damage;
+        accumulated += adjustedDamage;
 
         if (accumulated > 1000.0f || Float.isInfinite(accumulated) || Float.isNaN(accumulated)) {
             accumulated = 100.0f;
@@ -123,6 +129,24 @@ public class DemonFoodHandler {
     }
 
     /**
+     * Apply multihit resistance - reduce blood loss from rapid consecutive hits
+     */
+    private static float applyMultihitResistance(UUID playerUUID, float damage) {
+        long currentTime = System.currentTimeMillis();
+        Long lastDamage = lastDamageTimes.get(playerUUID);
+
+        if (lastDamage != null && (currentTime - lastDamage) < MULTIHIT_WINDOW_MS) {
+            // Recent damage within window - apply 50% reduction for blood loss calculation
+            lastDamageTimes.put(playerUUID, currentTime);
+            return damage * 0.5f;
+        } else {
+            // First hit or after window - full blood loss
+            lastDamageTimes.put(playerUUID, currentTime);
+            return damage;
+        }
+    }
+
+    /**
      * Sync half-blood points to client for GUI display
      */
     private static void syncHalfBloodToClient(Player player, int halfBloodPoints) {
@@ -150,7 +174,9 @@ public class DemonFoodHandler {
      * Clean up damage tracking when player disconnects
      */
     public static void cleanupPlayer(Player player) {
-        accumulatedDamage.remove(player.getUUID());
-        halfBloodPoints.remove(player.getUUID());
+        UUID playerUUID = player.getUUID();
+        accumulatedDamage.remove(playerUUID);
+        halfBloodPoints.remove(playerUUID);
+        lastDamageTimes.remove(playerUUID);
     }
 }

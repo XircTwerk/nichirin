@@ -337,9 +337,9 @@ public class DefaultDemonMoveset extends AbstractMoveset {
                     .withDamage(8.0f)
                     .withRange(1.5f)
                     .withKnockback(0f)
-                    .withHitStun(30)
+                    .withHitStun(20)
                     .withHitboxSize(1.5f)
-                    .withTiming(20, 5, 10)
+                    .withTiming(20, 5, 1)
                     .build();
         }
 
