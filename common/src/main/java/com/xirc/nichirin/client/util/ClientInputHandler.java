@@ -13,11 +13,12 @@ import io.netty.buffer.Unpooled;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * DEBUG VERSION: CLIENT-ONLY katana/demon handler with extensive logging
+ * CLIENT-ONLY handler with proper vanilla interaction priority
  */
 public class ClientInputHandler {
 
@@ -34,43 +35,45 @@ public class ClientInputHandler {
 
         // Left click air
         InteractionEvent.CLIENT_LEFT_CLICK_AIR.register((player, hand) -> {
-
             if (isInputBlocked()) {
                 return;
             }
 
-            // Check if player can perform attacks (katana OR demon moveset)
             if (canPerformAttacks(player, hand)) {
                 sendLeftClick(player);
-            } else {
             }
         });
 
         // Right click air
         InteractionEvent.CLIENT_RIGHT_CLICK_AIR.register((player, hand) -> {
-
             if (isInputBlocked()) {
                 return;
             }
 
-            // Check if player can perform attacks (katana OR demon moveset)
             if (canPerformAttacks(player, hand)) {
                 sendRightClick(player);
-            } else {
             }
         });
 
-        // RIGHT CLICK ON ENTITIES - for demon abilities
+        // Entity interaction - let vanilla happen first, only use custom if vanilla doesn't handle it
         InteractionEvent.INTERACT_ENTITY.register((player, entity, hand) -> {
-
             if (isInputBlocked()) {
                 return EventResult.pass();
             }
 
-            // Only for demon users (not katana holders)
+            // For demons not holding katanas - check if vanilla would handle this interaction
             if (canPerformDemonAttacks(player, hand)) {
+                // Test if vanilla would handle this interaction
+                ItemStack heldItem = player.getItemInHand(hand);
+
+                // Check common vanilla interactions that should take priority
+                if (wouldVanillaHandleEntityInteraction(entity, heldItem)) {
+                    return EventResult.pass(); // Let vanilla handle it
+                }
+
+                // Vanilla won't handle it, use custom demon attack
                 sendRightClick(player);
-                return EventResult.interruptFalse(); // Prevent normal entity interaction
+                return EventResult.interruptTrue(); // Block vanilla to prevent double processing
             }
 
             return EventResult.pass(); // Allow normal entity interaction
@@ -78,7 +81,6 @@ public class ClientInputHandler {
 
         // Entity attack blocking (LEFT CLICK ON ENTITIES)
         PlayerEvent.ATTACK_ENTITY.register((player, level, entity, hand, hitResult) -> {
-
             if (!canPerformAttacks(player, hand)) {
                 return EventResult.pass();
             }
@@ -93,28 +95,60 @@ public class ClientInputHandler {
 
             return EventResult.interruptFalse();
         });
-
     }
 
     /**
-     * Check if player can perform attacks - katana users can only use breathing, demons only when NOT holding katana
+     * Check if vanilla would handle this entity interaction
      */
+    private static boolean wouldVanillaHandleEntityInteraction(net.minecraft.world.entity.Entity entity, ItemStack heldItem) {
+        // Check for animal feeding
+        if (entity instanceof net.minecraft.world.entity.animal.Animal animal) {
+            if (animal.isFood(heldItem)) {
+                return true; // Vanilla will handle feeding
+            }
+            if (!animal.isBaby() && animal.canFallInLove()) {
+                return true; // Vanilla might handle breeding
+            }
+        }
+
+        // Check for other common vanilla interactions
+        if (entity instanceof net.minecraft.world.entity.npc.Villager) {
+            return true; // Trading
+        }
+
+        if (entity instanceof net.minecraft.world.entity.decoration.ItemFrame) {
+            return true; // Item frame interactions
+        }
+
+        if (entity instanceof net.minecraft.world.entity.decoration.ArmorStand) {
+            return true; // Armor stand interactions
+        }
+
+        // Check for lead usage
+        if (heldItem.is(net.minecraft.world.item.Items.LEAD) &&
+                entity instanceof net.minecraft.world.entity.Mob) {
+            return true;
+        }
+
+        // Check for name tag usage
+        if (heldItem.is(net.minecraft.world.item.Items.NAME_TAG) &&
+                heldItem.hasCustomHoverName()) {
+            return true;
+        }
+
+        return false; // No vanilla interaction expected
+    }
+
     private static boolean canPerformAttacks(Player player, net.minecraft.world.InteractionHand hand) {
         ItemStack item = player.getItemInHand(hand);
 
         // Check if holding katana (for breathing users ONLY)
         if (item.getItem() instanceof SimpleKatana) {
-            boolean hasBreathing = MovesetHelper.hasBreathingMoveset(player);
             return true; // Katana holders can use breathing abilities
         }
 
         // NOT holding katana - check if has demon moveset
-        boolean hasDemon = MovesetHelper.hasDemonMoveset(player);
-        if (hasDemon) {
-            return true; // Demons can use abilities when NOT holding katana
-        }
-
-        return false;
+        return MovesetHelper.hasDemonMoveset(player);
     }
 
     /**
@@ -160,7 +194,6 @@ public class ClientInputHandler {
     }
 
     private static void sendLeftClick(Player player) {
-
         try {
             // Show cooldown for katana users
             if (player.getMainHandItem().getItem() instanceof SimpleKatana katana) {
