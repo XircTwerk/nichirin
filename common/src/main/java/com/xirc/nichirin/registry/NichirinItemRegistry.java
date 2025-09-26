@@ -15,6 +15,10 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.food.FoodProperties;
+import net.minecraft.world.item.Item;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -49,6 +53,14 @@ public interface NichirinItemRegistry {
             () -> new FlashBombItem(settings().stacksTo(16)));
     RegistrySupplier<Item> BENTO_BOX = register("bento_box",
             () -> new BentoBoxItem(NichirinBlockRegistry.BENTO_BOX_BLOCK.get(), settings().stacksTo(1)));
+    RegistrySupplier<Item> ONIGIRI = register("onigiri",
+            () -> new Item(new Item.Properties().food(
+                    new FoodProperties.Builder()
+                            .nutrition(2)                     // restores 1 hunger point
+                            .saturationMod(1.25F)             // see note below: nutrition * saturationMod * 2 = saturation value (1 * 1.25 * 2 = 2.5)
+                            .alwaysEat()                      // allow eating when full
+                            .effect(new MobEffectInstance(MobEffects.REGENERATION, 60, 0), 1.0F)
+                            .build())));
 
     // Armor
     RegistrySupplier<Item> ZENITSU_HEADPIECE = register("zenitsu_headpiece",
