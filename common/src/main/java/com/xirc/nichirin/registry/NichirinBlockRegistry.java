@@ -96,6 +96,17 @@ public interface NichirinBlockRegistry {
     RegistrySupplier<Item> TATAMI_BLOCK_ITEM = ITEMS.register("tatami_block",
             () -> new BlockItem(TATAMI_BLOCK.get(), new Item.Properties()));
 
+    RegistrySupplier<Block> INFINITY_GLASS1 = BLOCKS.register("infinity_glass1",
+            () -> new Block(BlockBehaviour.Properties.copy(Blocks.GLASS)));
+
+    RegistrySupplier<Block> INFINITY_GLASS2 = BLOCKS.register("infinity_glass2",
+            () -> new Block(BlockBehaviour.Properties.copy(Blocks.GLASS)));
+    RegistrySupplier<Item> INFINITY_GLASS1_ITEM = ITEMS.register("infinity_glass1",
+            () -> new BlockItem(INFINITY_GLASS1.get(), new Item.Properties()));
+    RegistrySupplier<Item> INFINITY_GLASS2_ITEM = ITEMS.register("infinity_glass2",
+            () -> new BlockItem(INFINITY_GLASS2.get(), new Item.Properties()));
+
+
 
     // Block Item Registration
     RegistrySupplier<Item> SCARLET_CRIMSON_IRON_SAND_ITEM = ITEMS.register("scarlet_crimson_iron_sand",

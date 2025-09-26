@@ -45,6 +45,8 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinBlockRegistry.WYSTERIA_SAPLING_ITEM.get());
 
                         entries.accept(NichirinBlockRegistry.TATAMI_BLOCK_ITEM.get());
+                        entries.accept(NichirinBlockRegistry.INFINITY_GLASS1_ITEM.get());
+                        entries.accept(NichirinBlockRegistry.INFINITY_GLASS2_ITEM.get());
 
                         // Your existing items - unchanged
                         entries.accept(NichirinItemRegistry.SCARLET_CRIMSON_IRON_GEM.get());
@@ -52,6 +54,7 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinItemRegistry.SMOKE_BOMB.get());
                         entries.accept(NichirinItemRegistry.FLASH_BOMB.get());
                         entries.accept(NichirinItemRegistry.BENTO_BOX.get());
+                        entries.accept(NichirinItemRegistry.ONIGIRI.get());
 
                     })
                     .build();
