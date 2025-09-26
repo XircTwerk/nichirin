@@ -121,7 +121,7 @@ public class ConstantFluxAttack extends WaterBreathingAttackBase {
         // Create combo slash visual
         createComboSlashEffect(userPos, comboHitsExecuted);
 
-        // Combo hit sounds with increasing intensity
+// Combo hit sounds with increasing intensity
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS,
                 0.8f, 1.0f + comboHitsExecuted * 0.15f);
@@ -129,6 +129,19 @@ public class ConstantFluxAttack extends WaterBreathingAttackBase {
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_SPLASH, SoundSource.PLAYERS,
                 0.6f, 1.2f + comboHitsExecuted * 0.1f);
+
+// Small forward boost when grounded
+        if (user.onGround()) {
+            Vec3 lookDir = user.getLookAngle().normalize();
+            double boostStrength = 1;
+            user.setDeltaMovement(user.getDeltaMovement().add(
+                    lookDir.x * boostStrength,
+                    0,
+                    lookDir.z * boostStrength
+            ));
+            user.hurtMarked = true;
+        }
+
     }
 
     private void maintainDragEffects() {
