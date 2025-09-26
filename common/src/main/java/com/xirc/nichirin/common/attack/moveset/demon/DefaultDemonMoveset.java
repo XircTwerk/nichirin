@@ -156,7 +156,7 @@ public class DefaultDemonMoveset extends AbstractMoveset {
                         .withTiming(60, 5, 15) // 3 second cooldown, quick windup, 15 tick duration
                         .withDamage(6.0f)
                         .withRange(2.5f)
-                        .withKnockback(0.6f)
+                        .withKnockback(1f)
                         .withHitStun(25)
                         .withHitboxSize(2.0f)
                         .withDescription("Powerful front kick with high knockback and crowd control")
@@ -402,7 +402,7 @@ public class DefaultDemonMoveset extends AbstractMoveset {
                         .withDamage(4.0f)
                         .withRange(3.0f)
                         .withKnockback(0f) // No knockback for first hit
-                        .withHitStun(15)
+                        .withHitStun(5)
                         .withHitboxSize(2.0f)
                         .build();
             }
@@ -413,7 +413,7 @@ public class DefaultDemonMoveset extends AbstractMoveset {
                         .withDamage(4.0f) // Same damage
                         .withRange(3.0f)
                         .withKnockback(0.6f) // Higher knockback on second hit
-                        .withHitStun(20) // More stun
+                        .withHitStun(5)
                         .withHitboxSize(2.0f)
                         .build();
             }
