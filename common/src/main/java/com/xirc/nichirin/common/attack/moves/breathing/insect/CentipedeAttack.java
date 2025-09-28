@@ -20,8 +20,8 @@ import java.util.Set;
 public class CentipedeAttack extends InsectBreathingAttackBase {
 
     private static final int ZIGZAG_COUNT = 3;
-    private static final int DASH_DURATION = 2; // 1/3 of 6
-    private static final int DASH_INTERVAL = 2; // 1/3 of 6
+    private static final int DASH_DURATION = 10; // 1/3 of 6
+    private static final int DASH_INTERVAL = 10; // 1/3 of 6
 
     private int zigzagsExecuted = 0;
     private int nextZigzagTick = 0;
