@@ -55,6 +55,7 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinItemRegistry.FLASH_BOMB.get());
                         entries.accept(NichirinItemRegistry.BENTO_BOX.get());
                         entries.accept(NichirinItemRegistry.ONIGIRI.get());
+                        entries.accept(NichirinItemRegistry.SAKURAMOCHI.get());
 
                     })
                     .build();

@@ -57,10 +57,17 @@ public interface NichirinItemRegistry {
             () -> new Item(new Item.Properties().food(
                     new FoodProperties.Builder()
                             .nutrition(2)                     // restores 1 hunger point
-                            .saturationMod(1.25F)             // see note below: nutrition * saturationMod * 2 = saturation value (1 * 1.25 * 2 = 2.5)
+                            .saturationMod(1.25F)
                             .alwaysEat()                      // allow eating when full
                             .effect(new MobEffectInstance(MobEffects.REGENERATION, 60, 0), 1.0F)
                             .build())));
+    RegistrySupplier<Item> SAKURAMOCHI = register("sakuramochi",
+            () -> new Item(new Item.Properties().food(
+                    new FoodProperties.Builder()
+                            .nutrition(6)                     // restores 1 hunger point
+                            .saturationMod(1.5F)
+                            .build())));
+
 
     // Armor
     RegistrySupplier<Item> ZENITSU_HEADPIECE = register("zenitsu_headpiece",

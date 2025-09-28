@@ -67,6 +67,7 @@ public class NichirinModelProvider extends FabricModelProvider {
         generator.generateFlatItem(NichirinItemRegistry.SCARLET_CRIMSON_IRON_GEM.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.SCARLET_GEM.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.ONIGIRI.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.SAKURAMOCHI.get(), ModelTemplates.FLAT_ITEM);
 
         generator.generateFlatItem(NichirinItemRegistry.SMOKE_BOMB.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.FLASH_BOMB.get(), ModelTemplates.FLAT_ITEM);
