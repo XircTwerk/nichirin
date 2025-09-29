@@ -77,4 +77,8 @@ public class PlayerData {
     public MovesetData getBreathingStyleData() {
         return movesetData;
     }
+
+    public MovesetData getMovesetData() {
+        return movesetData;
+    }
 }
