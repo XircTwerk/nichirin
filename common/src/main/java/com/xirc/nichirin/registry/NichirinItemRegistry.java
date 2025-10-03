@@ -106,6 +106,16 @@ public interface NichirinItemRegistry {
     RegistrySupplier<Item> SHINOBU_BOOTS = register("shinobu_boots",
             () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.BOOTS, settings().stacksTo(1)));
 
+    RegistrySupplier<Item> SABITO_HEADPIECE = register("sabito_headpiece",
+            () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.HELMET, settings().stacksTo(1)));
+    RegistrySupplier<Item> SABITO_CAPE = register("sabito_cape",
+            () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.CHESTPLATE, settings().stacksTo(1)));
+    RegistrySupplier<Item> SABITO_LEGGINGS = register("sabito_leggings",
+            () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.LEGGINGS, settings().stacksTo(1)));
+    RegistrySupplier<Item> SABITO_BOOTS = register("sabito_boots",
+            () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.BOOTS, settings().stacksTo(1)));
+
+
     static <T extends Item> RegistrySupplier<T> register(String id, Supplier<? extends T> supplier) {
         LOGGER.info("Registering item: {}", id);
         RegistrySupplier<T> item = ITEM_REGISTRY.register(id, supplier);

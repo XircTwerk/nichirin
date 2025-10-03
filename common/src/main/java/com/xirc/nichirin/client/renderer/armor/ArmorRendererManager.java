@@ -114,6 +114,19 @@ public class ArmorRendererManager {
             return new TengenUniformRenderer();
         }
 
+        if (item == NichirinItemRegistry.SABITO_HEADPIECE.get()) {
+            return new SabitoUniformRenderer();
+        }
+        if (item == NichirinItemRegistry.SABITO_CAPE.get()) {
+            return new SabitoCapeRenderer();
+        }
+        if (item == NichirinItemRegistry.SABITO_LEGGINGS.get()) {
+            return new SabitoUniformRenderer();
+        }
+        if (item == NichirinItemRegistry.SABITO_BOOTS.get()) {
+            return new SabitoUniformRenderer();
+        }
+
         // Default fallback - using the base renderer
         return new NichirinArmorRenderer<>(new NichirinArmorModel<>("default_armor"));
     }
