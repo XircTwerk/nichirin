@@ -43,6 +43,8 @@ public interface NichirinItemRegistry {
     RegistrySupplier<Item> SOUND_KATANAS = register("sound_katanas", () -> new SoundKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
     RegistrySupplier<Item> RIGHT_SOUND_KATANA = register("right_sound_katana", () -> new IndividualSoundKatana(settings().rarity(Rarity.RARE).stacksTo(1), true));
     RegistrySupplier<Item> LEFT_SOUND_KATANA = register("left_sound_katana", () -> new IndividualSoundKatana(settings().rarity(Rarity.RARE).stacksTo(1), false));
+    RegistrySupplier<Item> SABITO_KATANA = register("sabito_katana",
+            () -> new SimpleKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
 
     RegistrySupplier<Item> SCARLET_CRIMSON_IRON_GEM = register("scarlet_crimson_iron_gem", () -> new Item(settings()));
     RegistrySupplier<Item> SCARLET_GEM = register("scarlet_gem", () -> new Item(settings()));
@@ -66,6 +68,142 @@ public interface NichirinItemRegistry {
                     new FoodProperties.Builder()
                             .nutrition(6)                     // restores 1 hunger point
                             .saturationMod(1.5F)
+                            .build())));
+    // Mochiiii
+    RegistrySupplier<Item> MOCHI = register("mochi",
+            () -> new Item(new Item.Properties().food(
+                    new FoodProperties.Builder()
+                            .nutrition(2)                     // restores 1 hunger point
+                            .saturationMod(1.0F)
+                            .build())));
+    RegistrySupplier<Item> RED_MOCHI = register("red_mochi",
+            () -> new Item(new Item.Properties().food(
+                    new FoodProperties.Builder()
+                            .nutrition(2)                     // restores 1 hunger point
+                            .saturationMod(1.0F)
+                            .alwaysEat()                      // allow eating when full
+                            .effect(new MobEffectInstance(MobEffects.HEAL, 40, 0), 1.0F)
+                            .build())));
+    RegistrySupplier<Item> BLUE_MOCHI = register("blue_mochi",
+            () -> new Item(new Item.Properties().food(
+                    new FoodProperties.Builder()
+                            .nutrition(2)                     // restores 1 hunger point
+                            .saturationMod(1.0F)
+                            .alwaysEat()                      // allow eating when full
+                            .effect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 3), 1.0F)
+                            .effect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 40, 2), 1.0F)
+                            .build())));
+    RegistrySupplier<Item> YELLOW_MOCHI = register("yellow_mochi",
+            () -> new Item(new Item.Properties().food(
+                    new FoodProperties.Builder()
+                            .nutrition(2)                     // restores 1 hunger point
+                            .saturationMod(1.0F)
+                            .alwaysEat()                      // allow eating when full
+                            .effect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 40, 0), 1.0F)
+                            .build())));
+    RegistrySupplier<Item> GREEN_MOCHI = register("green_mochi",
+            () -> new Item(new Item.Properties().food(
+                    new FoodProperties.Builder()
+                            .nutrition(2)                     // restores 1 hunger point
+                            .saturationMod(1.0F)
+                            .alwaysEat()                      // allow eating when full
+                            .effect(new MobEffectInstance(MobEffects.POISON, 40, 0), 1.0F)
+                            .build())));
+    RegistrySupplier<Item> ORANGE_MOCHI = register("orange_mochi",
+            () -> new Item(new Item.Properties().food(
+                    new FoodProperties.Builder()
+                            .nutrition(2)                     // restores 1 hunger point
+                            .saturationMod(1.0F)
+                            .alwaysEat()                      // allow eating when full
+                            .effect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 40, 0), 1.0F)
+                            .build())));
+    RegistrySupplier<Item> LIME_MOCHI = register("lime_mochi",
+            () -> new Item(new Item.Properties().food(
+                    new FoodProperties.Builder()
+                            .nutrition(2)                     // restores 1 hunger point
+                            .saturationMod(1.0F)
+                            .alwaysEat()                      // allow eating when full
+                            .effect(new MobEffectInstance(MobEffects.NIGHT_VISION, 40, 0), 1.0F)
+                            .build())));
+    RegistrySupplier<Item> LIGHT_BLUE_MOCHI = register("light_blue_mochi",
+            () -> new Item(new Item.Properties().food(
+                    new FoodProperties.Builder()
+                            .nutrition(2)                     // restores 1 hunger point
+                            .saturationMod(1.0F)
+                            .alwaysEat()                      // allow eating when full
+                            .effect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 40, 0), 1.0F)
+                            .build())));
+    RegistrySupplier<Item> CYAN_MOCHI = register("cyan_mochi",
+            () -> new Item(new Item.Properties().food(
+                    new FoodProperties.Builder()
+                            .nutrition(2)                     // restores 1 hunger point
+                            .saturationMod(1.0F)
+                            .alwaysEat()                      // allow eating when full
+                            .effect(new MobEffectInstance(MobEffects.CONDUIT_POWER, 40, 0), 1.0F)
+                            .build())));
+    RegistrySupplier<Item> BROWN_MOCHI = register("brown_mochi",
+            () -> new Item(new Item.Properties().food(
+                    new FoodProperties.Builder()
+                            .nutrition(2)                     // restores 1 hunger point
+                            .saturationMod(1.0F)
+                            .alwaysEat()                      // allow eating when full
+                            .effect(new MobEffectInstance(MobEffects.HARM, 40, 0), 1.0F)
+                            .build())));
+    RegistrySupplier<Item> PINK_MOCHI = register("pink_mochi",
+            () -> new Item(new Item.Properties().food(
+                    new FoodProperties.Builder()
+                            .nutrition(2)                     // restores 1 hunger point
+                            .saturationMod(1.0F)
+                            .alwaysEat()                      // allow eating when full
+                            .effect(new MobEffectInstance(MobEffects.REGENERATION, 40, 0), 1.0F)
+                            .build())));
+    RegistrySupplier<Item> PURPLE_MOCHI = register("purple_mochi",
+            () -> new Item(new Item.Properties().food(
+                    new FoodProperties.Builder()
+                            .nutrition(2)                     // restores 1 hunger point
+                            .saturationMod(1.0F)
+                            .alwaysEat()                      // allow eating when full
+                            .effect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 40, 0), 1.0F)
+                            .build())));
+    RegistrySupplier<Item> MAGENTA_MOCHI = register("magenta_mochi",
+            () -> new Item(new Item.Properties().food(
+                    new FoodProperties.Builder()
+                            .nutrition(2)                     // restores 1 hunger point
+                            .saturationMod(1.0F)
+                            .alwaysEat()                      // allow eating when full
+                            .effect(new MobEffectInstance(MobEffects.ABSORPTION, 40, 0), 1.0F)
+                            .build())));
+    RegistrySupplier<Item> BLACK_MOCHI = register("black_mochi",
+            () -> new Item(new Item.Properties().food(
+                    new FoodProperties.Builder()
+                            .nutrition(2)                     // restores 1 hunger point
+                            .saturationMod(1.0F)
+                            .alwaysEat()                      // allow eating when full
+                            .effect(new MobEffectInstance(MobEffects.WITHER, 40, 0), 1.0F)
+                            .build())));
+    RegistrySupplier<Item> WHITE_MOCHI = register("white_mochi",
+            () -> new Item(new Item.Properties().food(
+                    new FoodProperties.Builder()
+                            .nutrition(2)                     // restores 1 hunger point
+                            .saturationMod(1.0F)
+                            .alwaysEat()                      // allow eating when full
+                            .effect(new MobEffectInstance(MobEffects.SLOW_FALLING, 40, 0), 1.0F)
+                            .build())));
+    RegistrySupplier<Item> GRAY_MOCHI = register("gray_mochi",
+            () -> new Item(new Item.Properties().food(
+                    new FoodProperties.Builder()
+                            .nutrition(2)                     // restores 1 hunger point
+                            .saturationMod(1.0F)
+                            .alwaysEat()                      // allow eating when full
+                            .effect(new MobEffectInstance(MobEffects.DOLPHINS_GRACE, 40, 0), 1.0F)
+                            .build())));
+    RegistrySupplier<Item> LIGHT_GRAY_MOCHI = register("light_gray_mochi",
+            () -> new Item(new Item.Properties().food(
+                    new FoodProperties.Builder()
+                            .nutrition(2)                     // restores 1 hunger point
+                            .saturationMod(1.0F)
+                            .alwaysEat()                      // allow eating when full
+                            .effect(new MobEffectInstance(MobEffects.LEVITATION, 40, 0), 1.0F)
                             .build())));
 
 

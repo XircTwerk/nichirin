@@ -75,6 +75,7 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinItemRegistry.FLAME_KATANA.get());
                         entries.accept(NichirinItemRegistry.INSECT_KATANA.get());
                         entries.accept(NichirinItemRegistry.SOUND_KATANAS.get());
+                        entries.accept(NichirinItemRegistry.SABITO_KATANA.get());
                     })
                     .build();
         });
