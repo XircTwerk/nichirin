@@ -5,6 +5,7 @@ import com.xirc.nichirin.common.entity.BoarEntity;
 import com.xirc.nichirin.common.entity.FlashBombEntity;
 import com.xirc.nichirin.common.entity.SmokeBombEntity;
 import com.xirc.nichirin.common.entity.ThunderBallEntity;
+import com.xirc.nichirin.common.entity.npc.TempleDemonEntity;
 import dev.architectury.registry.level.entity.EntityAttributeRegistry;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
@@ -48,9 +49,18 @@ public interface NichirinEntityRegistry {
                     .updateInterval(3)
                     .build("boar"));
 
+    RegistrySupplier<EntityType<TempleDemonEntity>> TEMPLE_DEMON =
+            ENTITY_TYPES.register("temple_demon", () -> EntityType.Builder.<TempleDemonEntity>of(
+                            TempleDemonEntity::new, MobCategory.MONSTER)
+                    .sized(0.6f, 1.95f)
+                    .clientTrackingRange(16)
+                    .updateInterval(2)
+                    .build("temple_demon"));
+
 
     static void registerAttributes() {
         EntityAttributeRegistry.register(BOAR, BoarEntity::createAttributes);
+        EntityAttributeRegistry.register(TEMPLE_DEMON, TempleDemonEntity::createAttributes);
     }
 
     static void init() {

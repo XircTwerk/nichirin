@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * UPDATED: Architectury networking with mixin-based demon blood bar support
+ * UPDATED: Architectury networking with mixin-based demon blood bar support and NPC animation support
  */
 public interface NichirinPacketRegistry {
 
@@ -39,6 +39,7 @@ public interface NichirinPacketRegistry {
     ResourceLocation BLOCK_STOP_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "block_stop");
     ResourceLocation PARRY_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "parry");
     ResourceLocation PLAYER_ANIMATION_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "player_animation");
+    ResourceLocation NPC_ANIMATION_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "npc_animation");
     ResourceLocation MOVEMENT_INPUT_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "movement_input");
     ResourceLocation MOVEMENT_INPUT_SYNC_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "movement_input_sync");
     ResourceLocation SYNC_BREATHING_STYLE = new ResourceLocation(BreathOfNichirin.MOD_ID, "sync_breathing_style");
@@ -70,6 +71,7 @@ public interface NichirinPacketRegistry {
         PACKET_IDS.put(StaminaSyncPacket.class, SYNC_STAMINA_ID);
         PACKET_IDS.put(StanceSyncPacket.class, SYNC_STANCE_ID);
         PACKET_IDS.put(PlayerAnimationPacket.class, PLAYER_ANIMATION_ID);
+        PACKET_IDS.put(NPCAnimationPacket.class, NPC_ANIMATION_ID);
         PACKET_IDS.put(MovementInputPacket.class, MOVEMENT_INPUT_ID);
         PACKET_IDS.put(MovementInputSyncPacket.class, MOVEMENT_INPUT_SYNC_ID);
         PACKET_IDS.put(ComboCounterPacket.class, COMBO_COUNTER_ID);
@@ -226,6 +228,11 @@ public interface NichirinPacketRegistry {
 
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, PLAYER_ANIMATION_ID, (buf, context) -> {
                 PlayerAnimationPacket packet = new PlayerAnimationPacket(buf);
+                context.queue(() -> packet.handleClient());
+            });
+
+            NetworkManager.registerReceiver(NetworkManager.Side.S2C, NPC_ANIMATION_ID, (buf, context) -> {
+                NPCAnimationPacket packet = new NPCAnimationPacket(buf);
                 context.queue(() -> packet.handleClient());
             });
 
@@ -583,6 +590,8 @@ public interface NichirinPacketRegistry {
         } else if (packet instanceof StanceSyncPacket p) {
             p.toBytes(buf);
         } else if (packet instanceof PlayerAnimationPacket p) {
+            p.toBytes(buf);
+        } else if (packet instanceof NPCAnimationPacket p) {
             p.toBytes(buf);
         } else if (packet instanceof MovementInputPacket p) {
             p.toBytes(buf);

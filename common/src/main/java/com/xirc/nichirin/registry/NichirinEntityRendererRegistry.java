@@ -6,6 +6,8 @@ import com.xirc.nichirin.client.renderer.entity.BoarEntityRenderer;
 import com.xirc.nichirin.client.renderer.entity.FlashBombRenderer;
 import com.xirc.nichirin.client.renderer.entity.SmokeBombRenderer;
 import com.xirc.nichirin.client.renderer.entity.ThunderBallRenderer;
+import com.xirc.nichirin.client.renderer.entity.npc.TempleDemonRenderer;
+import com.xirc.nichirin.common.entity.npc.TempleDemonEntity;
 import dev.architectury.registry.client.level.entity.EntityRendererRegistry;
 import dev.architectury.registry.client.rendering.BlockEntityRendererRegistry;
 import dev.architectury.registry.registries.RegistrySupplier;
@@ -39,7 +41,8 @@ public interface NichirinEntityRendererRegistry {
             new RendererData<>(NichirinEntityRegistry.THUNDER_BALL, ThunderBallRenderer::new),
             new RendererData<>(NichirinEntityRegistry.FLASH_BOMB, FlashBombRenderer::new),
             new RendererData<>(NichirinEntityRegistry.SMOKE_BOMB, SmokeBombRenderer::new),
-            new RendererData<>(NichirinEntityRegistry.BOAR, BoarEntityRenderer::new)
+            new RendererData<>(NichirinEntityRegistry.BOAR, BoarEntityRenderer::new),
+            new RendererData<>(NichirinEntityRegistry.TEMPLE_DEMON, TempleDemonRenderer::new)
     };
 
     BlockEntityRendererData<?>[] blockEntityEntries = {

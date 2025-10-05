@@ -6,6 +6,7 @@ import com.xirc.nichirin.client.handler.BigGuiKeyHandler;
 import com.xirc.nichirin.client.handler.ClientDoubleJumpHandler;
 import com.xirc.nichirin.client.handler.ComboClientHandler;
 import com.xirc.nichirin.client.particle.*;
+import com.xirc.nichirin.client.util.NPCAnimationClientHandler;
 import com.xirc.nichirin.common.util.InputHandler;
 import com.xirc.nichirin.registry.NichirinKeybindRegistry;
 import com.xirc.nichirin.client.renderer.BreathingBarRenderer;
@@ -102,6 +103,7 @@ public class BreathOfNichirinClient {
             // Register handlers AFTER keybinds
             BigGuiKeyHandler.register();
             LOGGER.info("DEBUG: AttackWheelHandler.register() called");
+            NPCAnimationClientHandler.register();
             AttackWheelHandler.register();
             ClientDoubleJumpHandler.register();
             CooldownDisplayPacket.registerClient();
