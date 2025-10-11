@@ -68,6 +68,23 @@ public class NichirinModelProvider extends FabricModelProvider {
         generator.generateFlatItem(NichirinItemRegistry.SCARLET_GEM.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.ONIGIRI.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.SAKURAMOCHI.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.MOCHI.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.BLACK_MOCHI.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.BLUE_MOCHI.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.BROWN_MOCHI.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.MAGENTA_MOCHI.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.CYAN_MOCHI.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.GRAY_MOCHI.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.GREEN_MOCHI.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.LIGHT_BLUE_MOCHI.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.LIGHT_GRAY_MOCHI.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.LIME_MOCHI.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.ORANGE_MOCHI.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.PINK_MOCHI.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.PURPLE_MOCHI.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.RED_MOCHI.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.WHITE_MOCHI.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.YELLOW_MOCHI.get(), ModelTemplates.FLAT_ITEM);
 
         generator.generateFlatItem(NichirinItemRegistry.SMOKE_BOMB.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.FLASH_BOMB.get(), ModelTemplates.FLAT_ITEM);

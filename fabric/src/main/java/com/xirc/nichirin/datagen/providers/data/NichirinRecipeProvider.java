@@ -290,5 +290,13 @@ public class NichirinRecipeProvider extends FabricRecipeProvider {
                 .pattern("K K")
                 .unlockedBy("has_netherite_boots", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_BOOTS))
                 .save(exporter);
+
+        // Sakuramochi
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.FOOD, NichirinItemRegistry.SAKURAMOCHI.get())
+                .requires(NichirinItemRegistry.PINK_MOCHI.get())
+                .requires(Items.COCOA_BEANS)
+                .requires(Items.CHERRY_LEAVES)
+                .unlockedBy("has_mochi", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinItemRegistry.MOCHI.get()))
+                .save(exporter);
     }
 }
