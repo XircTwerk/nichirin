@@ -370,7 +370,7 @@ public interface NichirinPacketRegistry {
 
         MultiplayerInputHandler.PlayerInputState state = getOrCreatePlayerState(player);
         state.inputBlocked = true;
-        state.blockUntilTime = player.level().getGameTime() + 40;
+        state.blockUntilTime = player.level().getGameTime();
     }
 
     static void handleDemonInput(ServerPlayer player, MultiplayerInputHandler.InputType inputType) {

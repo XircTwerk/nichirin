@@ -92,14 +92,12 @@ public class MultiplayerInputHandler {
             boolean holdingKatana = player.getMainHandItem().getItem() instanceof com.xirc.nichirin.common.item.katana.SimpleKatana;
 
             if (holdingKatana) {
-                if (MovesetHelper.hasBreathingMoveset(player)) {
-                    try {
-                        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-                        buf.writeEnum(inputType);
-                        NetworkManager.sendToServer(KATANA_INPUT_PACKET, buf);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+                try {
+                    FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+                    buf.writeEnum(inputType);
+                    NetworkManager.sendToServer(KATANA_INPUT_PACKET, buf);
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             } else {
                 if (MovesetHelper.hasDemonMoveset(player)) {

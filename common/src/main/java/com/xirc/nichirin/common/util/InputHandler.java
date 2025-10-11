@@ -32,8 +32,8 @@ public class InputHandler {
     private static final Map<UUID, Long> BLOCKED_UNTIL = new HashMap<>();
     private static final Map<UUID, Long> INTERACTION_BLOCKED_UNTIL = new HashMap<>();
 
-    private static final long BLOCK_TICKS = 25;
-    private static final long INTERACTION_BLOCK_TICKS = 10; // Brief block after interactions
+    private static final long BLOCK_TICKS = 0;
+    private static final long INTERACTION_BLOCK_TICKS = 0;
 
     // Packet IDs
     private static final ResourceLocation LEFT_CLICK_ID = new ResourceLocation("nichirin", "katana_left");

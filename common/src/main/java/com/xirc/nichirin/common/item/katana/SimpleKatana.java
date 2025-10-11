@@ -9,6 +9,7 @@ import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
 import com.xirc.nichirin.common.util.StaminaManager;
 import com.xirc.nichirin.common.util.MultiplayerInputHandler;
 import com.xirc.nichirin.common.util.ComboIntegration;
+import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -146,15 +147,11 @@ public class SimpleKatana extends Item {
             return;
         }
 
-        if (player.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.STUNNED.get())) {
+        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
             return;
         }
 
-        if (player.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.BLOCKING.get())) {
-            return;
-        }
-
-        if (MultiplayerInputHandler.shouldBlockInputsServer(player)) {
+        if (player.hasEffect(NichirinEffectRegistry.BLOCKING.get())) {
             return;
         }
 
