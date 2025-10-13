@@ -89,15 +89,8 @@ public class NichirinModelProvider extends FabricModelProvider {
         generator.generateFlatItem(NichirinItemRegistry.SMOKE_BOMB.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.FLASH_BOMB.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.BENTO_BOX.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.DRINKING_GOURD.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinBlockRegistry.WYSTERIA_SAPLING_ITEM.get(), ModelTemplates.FLAT_ITEM);
-
-        generator.generateFlatItem(NichirinItemRegistry.KATANA.get(), ModelTemplates.FLAT_HANDHELD_ITEM);
-        generator.generateFlatItem(NichirinItemRegistry.THUNDER_KATANA.get(), ModelTemplates.FLAT_HANDHELD_ITEM);
-        generator.generateFlatItem(NichirinItemRegistry.FLAME_KATANA.get(), ModelTemplates.FLAT_HANDHELD_ITEM);
-        generator.generateFlatItem(NichirinItemRegistry.INSECT_KATANA.get(), ModelTemplates.FLAT_HANDHELD_ITEM);
-        generator.generateFlatItem(NichirinItemRegistry.SOUND_KATANAS.get(), ModelTemplates.FLAT_HANDHELD_ITEM);
-        generator.generateFlatItem(NichirinItemRegistry.RIGHT_SOUND_KATANA.get(), ModelTemplates.FLAT_HANDHELD_ITEM);
-        generator.generateFlatItem(NichirinItemRegistry.LEFT_SOUND_KATANA.get(), ModelTemplates.FLAT_HANDHELD_ITEM);
 
         // Armor items
         generateArmorItems(generator);

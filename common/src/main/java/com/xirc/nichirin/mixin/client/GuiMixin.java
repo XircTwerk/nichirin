@@ -2,7 +2,6 @@ package com.xirc.nichirin.mixin.client;
 
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.system.DemonComponent;
-import com.xirc.nichirin.common.event.DemonFoodHandler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;

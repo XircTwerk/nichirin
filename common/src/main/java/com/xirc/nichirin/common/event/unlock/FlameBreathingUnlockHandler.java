@@ -1,6 +1,5 @@
-package com.xirc.nichirin.common.event;
+package com.xirc.nichirin.common.event.unlock;
 
-import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.data.ProgressionHelper;
 import dev.architectury.event.events.common.TickEvent;

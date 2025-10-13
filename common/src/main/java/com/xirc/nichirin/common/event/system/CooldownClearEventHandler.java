@@ -1,4 +1,4 @@
-package com.xirc.nichirin.common.event;
+package com.xirc.nichirin.common.event.system;
 
 import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
 import dev.architectury.event.EventResult;

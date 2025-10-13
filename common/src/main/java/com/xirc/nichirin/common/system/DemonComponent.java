@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.system;
 
+import com.xirc.nichirin.common.event.system.DemonFoodHandler;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
@@ -65,7 +66,7 @@ public class DemonComponent {
     public static void sync(ServerPlayer player) {
         if (DemonManager.isDemon(player)) {
             int bloodPoints = DemonManager.getBloodPoints(player);
-            int halfBloodPoints = com.xirc.nichirin.common.event.DemonFoodHandler.getHalfBloodPoints(player);
+            int halfBloodPoints = DemonFoodHandler.getHalfBloodPoints(player);
             NichirinPacketRegistry.sendDemonSync(player, bloodPoints, halfBloodPoints, true);
         }
     }
@@ -77,7 +78,7 @@ public class DemonComponent {
         CompoundTag tag = new CompoundTag();
         if (DemonManager.isDemon(player)) {
             tag.putInt("BloodPoints", DemonManager.getBloodPoints(player));
-            tag.putInt("HalfBloodPoints", com.xirc.nichirin.common.event.DemonFoodHandler.getHalfBloodPoints(player));
+            tag.putInt("HalfBloodPoints", DemonFoodHandler.getHalfBloodPoints(player));
             tag.putBoolean("IsDemon", true);
         }
         return tag;
@@ -92,7 +93,7 @@ public class DemonComponent {
             int halfBloodPoints = tag.getInt("HalfBloodPoints");
 
             DemonManager.setBloodPointsDirectly(player, bloodPoints);
-            com.xirc.nichirin.common.event.DemonFoodHandler.setHalfBloodPointsDirectly(player, halfBloodPoints);
+            DemonFoodHandler.setHalfBloodPointsDirectly(player, halfBloodPoints);
 
             if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
                 sync(serverPlayer);

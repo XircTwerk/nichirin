@@ -1,4 +1,4 @@
-package com.xirc.nichirin.common.handler;
+package com.xirc.nichirin.common.event.system;
 
 import com.xirc.nichirin.common.system.abilities.PlayerDoubleJump;
 import dev.architectury.event.EventResult;

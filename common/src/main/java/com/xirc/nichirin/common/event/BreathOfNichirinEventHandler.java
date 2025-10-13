@@ -2,6 +2,7 @@ package com.xirc.nichirin.common.event;
 
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.component.AbstractDemonAttack;
+import com.xirc.nichirin.common.event.system.DemonFoodHandler;
 import com.xirc.nichirin.common.system.DemonManager;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.data.MovesetHelper;

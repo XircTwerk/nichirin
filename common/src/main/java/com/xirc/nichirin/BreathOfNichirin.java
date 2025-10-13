@@ -1,11 +1,12 @@
 package com.xirc.nichirin;
 
 import com.xirc.nichirin.common.advancement.NichirinCriteriaTriggers;
+import com.xirc.nichirin.common.event.item.DrinkingGourdInteractionHandler;
+import com.xirc.nichirin.common.event.system.*;
+import com.xirc.nichirin.common.event.*;
+import com.xirc.nichirin.common.event.unlock.*;
 import com.xirc.nichirin.registry.MovesetRegistry;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
-import com.xirc.nichirin.common.event.*;
-import com.xirc.nichirin.common.handler.FallDamageHandler;
-import com.xirc.nichirin.common.handler.PlayerTickHandler;
 import com.xirc.nichirin.common.util.InputHandler;
 import com.xirc.nichirin.registry.*;
 import dev.architectury.registry.registries.DeferredRegister;
@@ -61,6 +62,7 @@ public final class BreathOfNichirin {
         BlockingEventHandler.register();
         DodgeEventHandler.register();
         DemonFoodHandler.register();
+        DrinkingGourdInteractionHandler.register();
 
         // Data
         MovesetRegistry.init();

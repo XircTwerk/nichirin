@@ -1,11 +1,10 @@
 package com.xirc.nichirin.common.system;
 
 import com.xirc.nichirin.common.data.MovesetHelper;
+import com.xirc.nichirin.common.event.system.DemonFoodHandler;
 import net.minecraft.tags.EntityTypeTags;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.food.FoodData;
@@ -68,7 +67,7 @@ public class DemonManager {
 
         // Sync to client if on server
         if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
-            int halfBloodPoints = com.xirc.nichirin.common.event.DemonFoodHandler.getHalfBloodPoints(player);
+            int halfBloodPoints = DemonFoodHandler.getHalfBloodPoints(player);
             com.xirc.nichirin.registry.NichirinPacketRegistry.sendDemonSync(serverPlayer, bloodPoints, halfBloodPoints, true);
         }
     }

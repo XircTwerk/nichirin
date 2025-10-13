@@ -1,4 +1,4 @@
-package com.xirc.nichirin.common.event;
+package com.xirc.nichirin.common.event.system;
 
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.system.DemonManager;

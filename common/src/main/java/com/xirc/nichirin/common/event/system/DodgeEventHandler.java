@@ -1,4 +1,4 @@
-package com.xirc.nichirin.common.event;
+package com.xirc.nichirin.common.event.system;
 
 import dev.architectury.event.events.common.EntityEvent;
 import dev.architectury.event.EventResult;

@@ -1,4 +1,4 @@
-package com.xirc.nichirin.common.handler;
+package com.xirc.nichirin.common.event.system;
 
 import com.xirc.nichirin.common.system.movement.Dash;
 import com.xirc.nichirin.common.system.movement.Dodge;
