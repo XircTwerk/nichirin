@@ -1,11 +1,14 @@
 package com.xirc.nichirin.client;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.xirc.nichirin.client.animation.NichirinAnimations;
 import com.xirc.nichirin.client.handler.AttackWheelHandler;
 import com.xirc.nichirin.client.handler.BigGuiKeyHandler;
 import com.xirc.nichirin.client.handler.ClientDoubleJumpHandler;
 import com.xirc.nichirin.client.handler.ComboClientHandler;
 import com.xirc.nichirin.client.particle.*;
+import com.xirc.nichirin.client.shader.DeadCalmShaderEffect;
+import com.xirc.nichirin.client.shader.NichirinShaderManager;
 import com.xirc.nichirin.client.util.NPCAnimationClientHandler;
 import com.xirc.nichirin.common.util.InputHandler;
 import com.xirc.nichirin.registry.NichirinKeybindRegistry;
@@ -37,6 +40,9 @@ public class BreathOfNichirinClient {
     private static final Logger LOGGER = LoggerFactory.getLogger(BreathOfNichirinClient.class);
     private static boolean initialized = false;
 
+    // Store shader effect for easy access
+    private static DeadCalmShaderEffect deadCalmEffect;
+
     private static void registerParticles() {
         try {
             ParticleProviderRegistry.register(NichirinParticleRegistry.THUNDER, ThunderParticleProvider::new);
@@ -54,6 +60,31 @@ public class BreathOfNichirinClient {
         }
     }
 
+    private static void registerShaders() {
+        try {
+            // Register Dead Calm shader effect
+            deadCalmEffect = new DeadCalmShaderEffect();
+            NichirinShaderManager.getInstance().register(deadCalmEffect);
+
+            LOGGER.info("Dead Calm shader registered successfully");
+            System.out.println("DEBUG: Dead Calm shader registered!");
+        } catch (Exception e) {
+            LOGGER.error("Failed to register shaders: {}", e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private static void registerRenderingHooks() {
+        try {
+            // Rendering hooks are handled via LevelRendererMixin
+            // See: com.xirc.nichirin.mixin.client.LevelRendererMixin
+
+            LOGGER.info("Rendering hooks will be injected via mixins");
+        } catch (Exception e) {
+            LOGGER.error("Failed to register rendering hooks: {}", e.getMessage());
+        }
+    }
+
     public static void init() {
         LOGGER.info("DEBUG: BreathOfNichirinClient.init() called");
 
@@ -63,6 +94,11 @@ public class BreathOfNichirinClient {
                 if (minecraft.level != null) {
                     // Add input tracking
                     ClientInputTracker.tick();
+
+                    // Tick shader skybox renderers
+                    if (deadCalmEffect != null && deadCalmEffect.getSkyboxRenderer().isActive()) {
+                        deadCalmEffect.getSkyboxRenderer().tick();
+                    }
 
                     if (minecraft.level.getGameTime() % 100 == 0) {
                         LocalPlayer player = minecraft.player;
@@ -79,6 +115,12 @@ public class BreathOfNichirinClient {
             // Initialize shaders early
             NichirinShaderRegistry.init();
             LOGGER.info("Initialized Nichirin shaders");
+
+            // Register post-processing shaders
+            registerShaders();
+
+            // Register rendering hooks for shaders
+            registerRenderingHooks();
 
             // Register critical systems first
             BlockingInputHandler.register();
@@ -130,11 +172,39 @@ public class BreathOfNichirinClient {
             LOGGER.info("DEBUG: Client initialization complete");
             initialized = true;
 
+            ClientTickEvent.CLIENT_POST.register(minecraft -> {
+                if (minecraft.level != null) {
+                    // Add input tracking
+                    ClientInputTracker.tick();
+
+                    // Tick shader skybox and block renderers
+                    if (deadCalmEffect != null) {
+                        if (deadCalmEffect.getSkyboxRenderer().isActive()) {
+                            deadCalmEffect.getSkyboxRenderer().tick();
+                        }
+                        if (deadCalmEffect.getBlockRenderer().isActive()) {
+                            deadCalmEffect.getBlockRenderer().tick();
+                        }
+                    }
+
+                    if (minecraft.level.getGameTime() % 100 == 0) {
+                        LocalPlayer player = minecraft.player;
+                    }
+                }
+            });
+
         } catch (Exception e) {
             LOGGER.error("ERROR: Failed to initialize client", e);
             // Set initialized to true anyway to prevent complete failure
             initialized = true;
         }
+    }
+
+    /**
+     * Get the Dead Calm shader effect instance
+     */
+    public static DeadCalmShaderEffect getDeadCalmEffect() {
+        return deadCalmEffect;
     }
 
     public static boolean isClientReady() {

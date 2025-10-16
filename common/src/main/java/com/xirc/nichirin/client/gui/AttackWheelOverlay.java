@@ -121,15 +121,12 @@ public class AttackWheelOverlay {
             return;
         }
 
-        System.out.println("DEBUG: AttackWheelOverlay rebuilding with " + (holdingKatana ? "BREATHING" : "DEMON") + " moveset: " + movesetId);
-
         // Build segments in order
         for (int i = 0; i < moveset.getMoveCount(); i++) {
             AbstractMoveset.MoveConfiguration config = moveset.getMove(i);
             if (config != null) {
                 MoveSegment segment = new MoveSegment(i, config);
                 segments.add(segment);
-                System.out.println("DEBUG: Added segment " + i + ": " + config.getDisplayName());
             }
         }
     }

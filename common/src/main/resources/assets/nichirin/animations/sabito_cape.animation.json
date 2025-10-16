@@ -21,7 +21,7 @@
 						}
 					}
 				},
-				"Lower Parts": {
+				"Capelower": {
 					"rotation": {
 						"0.0": {
 							"vector": [22.5, 0, 0],
@@ -73,7 +73,7 @@
 						}
 					}
 				},
-				"Lower Parts": {
+				"Capelower": {
 					"rotation": {
 						"0.0": {
 							"vector": [5, 0, 0],

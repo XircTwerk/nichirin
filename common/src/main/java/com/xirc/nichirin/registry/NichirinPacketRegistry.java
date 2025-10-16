@@ -54,6 +54,7 @@ public interface NichirinPacketRegistry {
     ResourceLocation DEMON_INPUT_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "demon_input");
     ResourceLocation ATTACK_WHEEL_STATE_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "attack_wheel_state");
     ResourceLocation KATANA_INPUT_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "katana_input");
+    ResourceLocation TRIGGER_SHADER_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "trigger_shader");
 
     // Packet class mappings
     Map<Class<?>, ResourceLocation> PACKET_IDS = new HashMap<>();
@@ -77,6 +78,9 @@ public interface NichirinPacketRegistry {
         PACKET_IDS.put(ComboCounterPacket.class, COMBO_COUNTER_ID);
         PACKET_IDS.put(MoveHotkeyPacket.class, MOVE_HOTKEY_ID);
         PACKET_IDS.put(DemonSyncPacket.class, DEMON_SYNC_ID);
+        PACKET_IDS.put(TriggerShaderPacket.class, TRIGGER_SHADER_ID);
+
+        System.out.println("DEBUG: Registered TriggerShaderPacket with ID: " + TRIGGER_SHADER_ID);
 
         registerPackets();
     }
@@ -319,6 +323,13 @@ public interface NichirinPacketRegistry {
                         com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer.addHitbox(hitbox, finalDuration, false);
                     }
                 });
+            });
+
+            // SHADER PACKET REGISTRATION
+            NetworkManager.registerReceiver(NetworkManager.Side.S2C, TRIGGER_SHADER_ID, (buf, context) -> {
+                System.out.println("DEBUG: Received TriggerShaderPacket on client!");
+                TriggerShaderPacket packet = new TriggerShaderPacket(buf);
+                context.queue(() -> packet.handleClient());
             });
 
         } catch (NoSuchMethodError e) {
@@ -604,6 +615,9 @@ public interface NichirinPacketRegistry {
         } else if (packet instanceof MovesetConfigSyncPacket p) {
             p.toBytes(buf);
         } else if (packet instanceof DemonSyncPacket p) {
+            p.toBytes(buf);
+        } else if (packet instanceof TriggerShaderPacket p) {
+            System.out.println("DEBUG: Encoding TriggerShaderPacket");
             p.toBytes(buf);
         }
 

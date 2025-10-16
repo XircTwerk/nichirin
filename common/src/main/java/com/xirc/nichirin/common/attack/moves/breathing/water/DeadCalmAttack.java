@@ -17,11 +17,7 @@ import java.util.Set;
 /**
  * Eleventh Form: Dead Calm
  * Plain multihit auto-target AoE
- * Larger AoE that procs a series of slashes whenever someone steps into it
- * Creates a persistent area effect field that triggers on entity entry
- *
- * All configuration comes from the moveset builder.
- * This class handles only the behavior and visual/audio effects.
+ * 240 TICKS duration
  */
 public class DeadCalmAttack extends WaterBreathingAttackBase {
 
@@ -33,23 +29,52 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
 
     public DeadCalmAttack() {
         // No configuration here - everything comes from moveset
-        // All values will be set via configure() method
     }
 
     @Override
     protected void onStart() {
+        System.out.println("DEBUG: DeadCalmAttack.onStart() called! isClientSide=" + world.isClientSide);
+
         fieldActive = false;
         fieldCenter = null;
         entitiesInField.clear();
         recentlyTriggered.clear();
         calmTicks = 0;
 
-        // Dead calm startup sound - very quiet and ominous
+        // Dead calm startup sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.WATER_AMBIENT, SoundSource.PLAYERS, 0.6f, 0.5f);
 
-        // Create initial calm water effect
         createCalmWaterGathering();
+
+        // Trigger shader effect - send packet from SERVER to all clients
+        if (!world.isClientSide) {
+            System.out.println("DEBUG: Server side, sending shader packet to all players!");
+            sendShaderPacketToNearbyPlayers();
+        }
+    }
+
+    private void sendShaderPacketToNearbyPlayers() {
+        if (!(world instanceof ServerLevel serverLevel)) return;
+
+        System.out.println("DEBUG: Preparing to send shader packets...");
+
+        Vec3 userPos = user.position();
+        int playerCount = 0;
+        for (net.minecraft.server.level.ServerPlayer player : serverLevel.players()) {
+            if (player.distanceToSqr(userPos) < 10000) { // 100 block range
+                playerCount++;
+                System.out.println("DEBUG: Sending shader packet to player: " + player.getName().getString());
+                com.xirc.nichirin.registry.NichirinPacketRegistry.sendToPlayer(
+                        new com.xirc.nichirin.common.network.s2c.TriggerShaderPacket(
+                                "com.xirc.nichirin.client.shader.DeadCalmShaderEffect",
+                                true
+                        ),
+                        player
+                );
+            }
+        }
+        System.out.println("DEBUG: Sent shader packet to " + playerCount + " players");
     }
 
     @Override
@@ -62,7 +87,7 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
             fieldActive = true;
         }
 
-        // Maintain the persistent area effect during duration
+        // Maintain the persistent area effect during duration (240 ticks total)
         if (fieldActive && tickCount > windup && tickCount < windup + duration) {
             calmTicks++;
             maintainCalmField();
@@ -74,7 +99,7 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
-        // Calm, still water gathering around user
+        // Calm water gathering
         for (int ring = 1; ring <= 12; ring++) {
             float radius = ring * 1.2f;
             int particlesInRing = 8 * ring;
@@ -83,9 +108,8 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
                 double angle = (2 * Math.PI * i) / particlesInRing;
                 double x = userPos.x + Math.cos(angle) * radius;
                 double z = userPos.z + Math.sin(angle) * radius;
-                double y = userPos.y + Math.sin(angle * 4) * 0.1; // Very subtle waves
+                double y = userPos.y + Math.sin(angle * 4) * 0.1;
 
-                // Calm water particles
                 serverLevel.sendParticles(ParticleTypes.DRIPPING_WATER,
                         x, y, z, 1, 0.05, 0.05, 0.05, 0.01);
 
@@ -100,24 +124,21 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
     private void establishCalmField() {
         applySlowdown();
 
-        // Set field center slightly in front of user
         Vec3 lookDir = user.getLookAngle();
         fieldCenter = user.position().add(lookDir.scale(2.0));
 
-        // Create initial field establishment effect
         createFieldEstablishmentEffect();
 
-        // Calm field activation sound
         world.playSound(null, fieldCenter.x, fieldCenter.y, fieldCenter.z,
                 SoundEvents.ENCHANTMENT_TABLE_USE, SoundSource.PLAYERS, 0.8f, 0.8f);
     }
 
     private void applySlowdown() {
-        int slowDuration = 100;
+        int slowDuration = duration; // Use the full duration from moveset
         user.addEffect(new MobEffectInstance(
                 MobEffects.MOVEMENT_SLOWDOWN,
                 slowDuration,
-                255, // Max slowness (can't move but can't be knocked back)
+                220, // Max slowness (can't move but can't be knocked back)
                 false, // Not ambient
                 false  // Don't show particles (too much visual noise)
         ));
@@ -126,16 +147,10 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
     private void maintainCalmField() {
         if (fieldCenter == null) return;
 
-        // Create persistent calm water field visual - enhanced for 10 second visibility
         createPersistentFieldEffect();
-
-        // Check for entities entering/leaving the field
         updateEntitiesInField();
-
-        // Trigger slashes for entities that enter the field
         triggerAutoSlashes();
 
-        // Ambient field sound occasionally
         if (calmTicks % 40 == 0) {
             world.playSound(null, fieldCenter.x, fieldCenter.y, fieldCenter.z,
                     SoundEvents.WATER_AMBIENT, SoundSource.PLAYERS, 0.4f, 0.7f);
@@ -143,7 +158,6 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
     }
 
     private void updateEntitiesInField() {
-        // Get all entities currently in the field area
         AABB fieldArea = new AABB(
                 fieldCenter.x - range, fieldCenter.y - 2, fieldCenter.z - range,
                 fieldCenter.x + range, fieldCenter.y + 4, fieldCenter.z + range
@@ -152,11 +166,9 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
         List<LivingEntity> currentEntities = world.getEntitiesOfClass(LivingEntity.class, fieldArea,
                 entity -> entity != user && entity.isAlive() && !entity.isSpectator());
 
-        // Find entities that just entered the field
         Set<LivingEntity> newEntrants = new HashSet<>(currentEntities);
         newEntrants.removeAll(entitiesInField);
 
-        // Trigger slashes for new entrants
         for (LivingEntity newEntrant : newEntrants) {
             if (!recentlyTriggered.contains(newEntrant)) {
                 triggerSlashSequence(newEntrant);
@@ -164,18 +176,15 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
             }
         }
 
-        // Update the set of entities in field
         entitiesInField.clear();
         entitiesInField.addAll(currentEntities);
 
-        // Clear recently triggered entities periodically to allow re-triggering
         if (calmTicks % 10 == 0) {
             recentlyTriggered.clear();
         }
     }
 
     private void triggerAutoSlashes() {
-        // Also trigger slashes for entities that remain in the field (every 20 ticks = 1 second)
         if (calmTicks % 2 == 0) {
             for (LivingEntity entity : entitiesInField) {
                 if (!recentlyTriggered.contains(entity)) {
@@ -187,34 +196,24 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
     }
 
     private void triggerSlashSequence(LivingEntity target) {
-        // Auto-target slash sequence - 3 rapid slashes
         Vec3 targetPos = target.position().add(0, target.getBbHeight() / 2, 0);
 
         for (int slash = 0; slash < 3; slash++) {
-            // Schedule slashes with small delays
-            scheduleSlash(target, targetPos, slash * 4); // 4 tick intervals
+            scheduleSlash(target, targetPos, slash * 4);
         }
 
-        // Trigger sound
         world.playSound(null, targetPos.x, targetPos.y, targetPos.z,
                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.8f, 1.4f);
     }
 
     private void scheduleSlash(LivingEntity target, Vec3 targetPos, int delay) {
-        // Since we can't actually schedule delayed actions easily, we'll execute all slashes immediately
-        // but with different visual patterns
-
-        // Hit the target immediately
         hitTargetNoImmunity(target);
 
-        // Light knockback toward field center to keep them in the danger zone
         Vec3 centerDirection = fieldCenter.subtract(target.position()).normalize();
         target.push(centerDirection.x * knockback * 0.2, 0.01, centerDirection.z * knockback * 0.2);
 
-        // Create slash effect at target position
         createAutoSlashEffect(targetPos, delay);
 
-        // Individual slash sound
         world.playSound(null, targetPos.x, targetPos.y, targetPos.z,
                 SoundEvents.PLAYER_SPLASH_HIGH_SPEED, SoundSource.PLAYERS, 0.6f, 1.5f + delay * 0.1f);
     }
@@ -222,7 +221,6 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
     private void createFieldEstablishmentEffect() {
         if (!(world instanceof ServerLevel serverLevel) || fieldCenter == null) return;
 
-        // Large expanding ring to show field creation
         for (int ring = 1; ring <= 5; ring++) {
             float ringRadius = ring * (range / 5);
             int particlesInRing = 12 * ring;
@@ -233,18 +231,16 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
                 double z = fieldCenter.z + Math.sin(angle) * ringRadius;
                 double y = fieldCenter.y + 0.5;
 
-                // Field boundary particles
                 serverLevel.sendParticles(ParticleTypes.DRIPPING_WATER,
                         x, y, z, 2, 0.1, 0.1, 0.1, 0.05);
 
-                if (ring == 5) { // Outer ring gets special effect
+                if (ring == 5) {
                     serverLevel.sendParticles(ParticleTypes.BUBBLE,
                             x, y, z, 1, 0.05, 0.05, 0.05, 0.02);
                 }
             }
         }
 
-        // Central field pillar
         serverLevel.sendParticles(ParticleTypes.SPLASH,
                 fieldCenter.x, fieldCenter.y + 1, fieldCenter.z,
                 20, 0.5, 2.0, 0.5, 0.2);
@@ -253,9 +249,6 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
     private void createPersistentFieldEffect() {
         if (!(world instanceof ServerLevel serverLevel) || fieldCenter == null) return;
 
-        // Continuous field visualization - spawn particles every tick for full duration visibility
-
-        // Field boundary ring - every tick
         int boundaryParticles = 24;
         for (int i = 0; i < boundaryParticles; i++) {
             double angle = (2 * Math.PI * i) / boundaryParticles + calmTicks * 0.02;
@@ -267,7 +260,6 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
                     x, y, z, 1, 0.02, 0.02, 0.02, 0.01);
         }
 
-        // Bubbles rising in the field - every tick
         for (int i = 0; i < 6; i++) {
             double x = fieldCenter.x + (Math.random() - 0.5) * range * 1.5;
             double z = fieldCenter.z + (Math.random() - 0.5) * range * 1.5;
@@ -277,7 +269,6 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
                     x, y, z, 1, 0.1, 0.1, 0.1, 0.05);
         }
 
-        // Central calm effect - every tick
         serverLevel.sendParticles(ParticleTypes.SPLASH,
                 fieldCenter.x, fieldCenter.y + 0.5, fieldCenter.z,
                 4, 0.3, 0.3, 0.3, 0.08);
@@ -286,15 +277,13 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
     private void createAutoSlashEffect(Vec3 slashPos, int slashIndex) {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
-        // Auto-slash visual effect - different angles for each slash
         for (int i = -2; i <= 2; i++) {
-            double angle = i * 30 + slashIndex * 60; // Different angle per slash
+            double angle = i * 30 + slashIndex * 60;
             double radians = Math.toRadians(angle);
 
             Vec3 slashDir = new Vec3(Math.cos(radians), 0, Math.sin(radians));
             Vec3 particlePos = slashPos.add(slashDir.scale(1.5));
 
-            // Auto-slash particles
             serverLevel.sendParticles(ParticleTypes.SPLASH,
                     particlePos.x, particlePos.y, particlePos.z,
                     4, 0.3, 0.3, 0.3, 0.15);
@@ -306,7 +295,6 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
             }
         }
 
-        // Center impact
         serverLevel.sendParticles(ParticleTypes.SPLASH,
                 slashPos.x, slashPos.y, slashPos.z,
                 8, 0.4, 0.4, 0.4, 0.2);
@@ -314,14 +302,12 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
 
     @Override
     public boolean isPersistentArea() {
-        return true; // This creates a persistent area effect
+        return true;
     }
 
     @Override
     protected void onStop() {
-        // Field dissolution effect
         if (world instanceof ServerLevel serverLevel && fieldCenter != null) {
-            // Final field collapse
             for (int ring = 5; ring >= 1; ring--) {
                 float ringRadius = ring * (range / 5);
                 int particlesInRing = 8 * ring;
@@ -337,19 +323,16 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
                 }
             }
 
-            // Final calm center effect
             serverLevel.sendParticles(ParticleTypes.SPLASH,
                     fieldCenter.x, fieldCenter.y + 1, fieldCenter.z,
                     30, 1.0, 2.0, 1.0, 0.3);
         }
 
-        // Final calm dissolution sound
         world.playSound(null, fieldCenter != null ? fieldCenter.x : user.getX(),
                 fieldCenter != null ? fieldCenter.y : user.getY(),
                 fieldCenter != null ? fieldCenter.z : user.getZ(),
                 SoundEvents.WATER_AMBIENT, SoundSource.PLAYERS, 0.8f, 0.6f);
 
-        // Clear state
         entitiesInField.clear();
         recentlyTriggered.clear();
         fieldActive = false;
