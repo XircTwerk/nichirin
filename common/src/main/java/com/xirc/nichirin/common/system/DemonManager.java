@@ -2,6 +2,7 @@ package com.xirc.nichirin.common.system;
 
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.event.system.DemonFoodHandler;
+import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import net.minecraft.tags.EntityTypeTags;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -109,7 +110,10 @@ public class DemonManager {
         // Handle sun damage (now sets on fire)
         handleSunDamage(player);
 
-        // Handle blood regeneration
+        // Handle extra fire damage
+        handleFireDamage(player);
+
+        // Handle blood regeneration (checks for stun and fire)
         handleBloodRegeneration(player);
 
         // Apply infinite stamina and maintain full hunger
@@ -135,11 +139,36 @@ public class DemonManager {
     }
 
     /**
-     * Handles blood-based regeneration
+     * Handles extra fire damage for demons - 1 heart magic damage per second
+     */
+    private static void handleFireDamage(Player player) {
+        if (player.getRemainingFireTicks() > 0) {
+            // Deal 1 heart (2.0 damage) of magic damage every second (20 ticks)
+            if (player.getRemainingFireTicks() % 20 == 0) {
+                player.hurt(player.damageSources().magic(), 2.0f);
+            }
+        }
+    }
+
+    /**
+     * FIXED: Handles blood-based regeneration with stun check and fire check
      */
     private static void handleBloodRegeneration(Player player) {
         long currentTime = player.level().getGameTime();
         UUID playerUUID = player.getUUID();
+
+        // FIXED: Check if player is stunned (amplifier 1+)
+        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+            var stunnedEffect = player.getEffect(NichirinEffectRegistry.STUNNED.get());
+            if (stunnedEffect != null && stunnedEffect.getAmplifier() >= 1) {
+                return; // Block regen during stun
+            }
+        }
+
+        // FIXED: Check if player is on fire using getRemainingFireTicks
+        if (player.getRemainingFireTicks() > 0) {
+            return; // Block regen while burning
+        }
 
         Long lastRegen = lastRegenTick.get(playerUUID);
         if (lastRegen == null || currentTime - lastRegen >= REGEN_INTERVAL) {
@@ -160,18 +189,27 @@ public class DemonManager {
     }
 
     /**
-     * Gets regeneration rate based on blood points
+     * FIXED: Gets regeneration rate based on blood points with gradual scaling
+     * 10 blood: 3.0 hp/s
+     * 5 blood: 1.5 hp/s
+     * 1 blood: 0.5 hp/s
      */
     private static float getRegenRate(int bloodPoints) {
         if (bloodPoints == 0) return 0.0f;
-        if (bloodPoints <= 5) return 1.5f; // 1.5 health/s for 1-5 blood
-        return 3.0f; // 3 health/s for 6-10 blood
+
+        // Gradual scaling from 0.5 to 3.0 hp/s
+        // Formula: 0.5 + (bloodPoints - 1) * 0.277778
+        // This gives: 1→0.5, 2→0.78, 3→1.06, 4→1.33, 5→1.5, 6→1.78, 7→2.06, 8→2.33, 9→2.61, 10→3.0
+        return 0.5f + (bloodPoints - 1) * 0.277778f;
     }
 
     /**
-     * Applies infinite stamina and maintains full hunger for demons
+     * FIXED: Applies infinite stamina and maintains full hunger ONLY for demons
      */
     private static void applyInfiniteStamina(Player player) {
+        // Double-check demon status to prevent non-demons from getting benefits
+        if (!isDemon(player)) return;
+
         FoodData foodData = player.getFoodData();
 
         // Remove exhaustion (existing functionality)

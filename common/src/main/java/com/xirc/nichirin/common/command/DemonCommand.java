@@ -11,6 +11,7 @@ import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.data.PlayerDataStorage;
 import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
 import com.xirc.nichirin.registry.NichirinMoveRegistry;
+import com.xirc.nichirin.common.system.DemonManager;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -110,7 +111,7 @@ public class DemonCommand {
         CommandSourceStack source = context.getSource();
         final String playerName = player.getName().getString();
 
-        // FIXED: Check demon moveset specifically
+        // Check demon moveset specifically
         String currentDemonMoveset = PlayerDataProvider.getData(player).getMovesetData().getDemonMovesetId();
         if (currentDemonMoveset != null) {
             source.sendFailure(Component.literal(playerName + " is already a demon with " + formatArtName(currentDemonMoveset))
@@ -123,8 +124,11 @@ public class DemonCommand {
             ProgressionHelper.unlockMoveset(player, "default_demon");
         }
 
-        // FIXED: Set demon moveset specifically
+        // Set demon moveset specifically
         PlayerDataProvider.getData(player).getMovesetData().setDemonMovesetId("default_demon");
+
+        // Initialize blood points to max
+        DemonManager.setBloodPoints(player, 10);
 
         // Force save and sync to all players
         PlayerDataStorage.savePlayerData(player);
@@ -153,13 +157,13 @@ public class DemonCommand {
     }
 
     /**
-     * FIXED: Removes demon status from a player by clearing their demon moveset specifically
+     * FIXED: Removes demon status from a player and clears ALL demon-related data
      */
     private static int removeDemon(CommandContext<CommandSourceStack> context, ServerPlayer player) {
         CommandSourceStack source = context.getSource();
         final String playerName = player.getName().getString();
 
-        // FIXED: Check demon moveset specifically
+        // Check demon moveset specifically
         String currentDemonMoveset = PlayerDataProvider.getData(player).getMovesetData().getDemonMovesetId();
         if (currentDemonMoveset == null) {
             source.sendFailure(Component.literal(playerName + " is not a demon")
@@ -167,8 +171,21 @@ public class DemonCommand {
             return 0;
         }
 
-        // FIXED: Clear demon moveset specifically, not primary moveset
+        // FIXED: Clear demon moveset specifically
         PlayerDataProvider.getData(player).getMovesetData().setDemonMovesetId(null);
+
+        // FIXED: Clean up ALL demon-specific data (blood points, regen tracking, etc.)
+        DemonManager.cleanupPlayer(player);
+
+        // FIXED: Reset food data to normal (remove infinite hunger/stamina)
+        player.getFoodData().setFoodLevel(20);
+        player.getFoodData().setSaturation(5.0f);
+        player.getFoodData().setExhaustion(0.0f);
+
+        // FIXED: Extinguish any sun fire
+        if (player.isOnFire()) {
+            player.clearFire();
+        }
 
         // Force save and sync to all players
         PlayerDataStorage.savePlayerData(player);
@@ -227,7 +244,7 @@ public class DemonCommand {
             return 0;
         }
 
-        // FIXED: Check demon moveset specifically if setActive is true
+        // Check demon moveset specifically if setActive is true
         if (setActive) {
             String currentDemonArt = PlayerDataProvider.getData(player).getMovesetData().getDemonMovesetId();
             if (art.equals(currentDemonArt)) {
@@ -240,7 +257,7 @@ public class DemonCommand {
         ProgressionHelper.unlockMoveset(player, art);
 
         if (setActive) {
-            // FIXED: Set demon moveset specifically
+            // Set demon moveset specifically
             PlayerDataProvider.getData(player).getMovesetData().setDemonMovesetId(art);
             PlayerDataStorage.savePlayerData(player);
             PlayerDataProvider.forceSync(player.server);
@@ -291,7 +308,7 @@ public class DemonCommand {
             return 0;
         }
 
-        // FIXED: Check demon moveset specifically
+        // Check demon moveset specifically
         String currentDemonArt = PlayerDataProvider.getData(player).getMovesetData().getDemonMovesetId();
         if (art.equals(currentDemonArt)) {
             source.sendFailure(Component.literal(player.getName().getString() + " already has " + formatArtName(art) + " active")
@@ -299,7 +316,7 @@ public class DemonCommand {
             return 0;
         }
 
-        // FIXED: Set demon moveset specifically
+        // Set demon moveset specifically
         PlayerDataProvider.getData(player).getMovesetData().setDemonMovesetId(art);
         PlayerDataStorage.savePlayerData(player);
         PlayerDataProvider.forceSync(player.server);
