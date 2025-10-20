@@ -35,7 +35,8 @@ public class DemonManager {
 
     // Constants
     private static final int MAX_BLOOD_POINTS = 10;
-    private static final int REGEN_INTERVAL = 20; // 1 second in ticks
+    private static final int REGEN_INTERVAL = 15; // 0.75 seconds in ticks (default)
+    private static final int REGEN_INTERVAL_STUNNED = 40; // 2 seconds in ticks (when stunned)
     private static final float EXHAUSTION_THRESHOLD = 6.0f; // Slower than normal hunger (4.0f)
     private static final int SUN_FIRE_DURATION = 40; // 2 seconds of fire
 
@@ -157,16 +158,17 @@ public class DemonManager {
         long currentTime = player.level().getGameTime();
         UUID playerUUID = player.getUUID();
 
-        // FIXED: Check if player is stunned (amplifier 1+)
-        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
-            var stunnedEffect = player.getEffect(NichirinEffectRegistry.STUNNED.get());
-            if (stunnedEffect != null && stunnedEffect.getAmplifier() >= 1) {
-                return; // Block regen during stun
-            }
+        // FIXED: Check if player is stunned (ANY amplifier level)
+        boolean hasStunEffect = player.hasEffect(NichirinEffectRegistry.STUNNED.get());
+        if (hasStunEffect) {
+            System.out.println("DEBUG: Player " + player.getName().getString() + " is stunned, blocking regen");
+            return; // Block regen during any stun
         }
 
         // FIXED: Check if player is on fire using getRemainingFireTicks
-        if (player.getRemainingFireTicks() > 0) {
+        int fireTicks = player.getRemainingFireTicks();
+        if (fireTicks > 0) {
+            System.out.println("DEBUG: Player " + player.getName().getString() + " is on fire (" + fireTicks + " ticks), blocking regen");
             return; // Block regen while burning
         }
 
@@ -205,6 +207,7 @@ public class DemonManager {
 
     /**
      * FIXED: Applies infinite stamina and maintains full hunger ONLY for demons
+     * BUT prevents natural regeneration - demons only heal via blood regen
      */
     private static void applyInfiniteStamina(Player player) {
         // Double-check demon status to prevent non-demons from getting benefits
@@ -217,13 +220,15 @@ public class DemonManager {
             foodData.setExhaustion(0.0f);
         }
 
-        // Maintain full hunger and saturation for demons
+        // Maintain full hunger for demons BUT keep saturation at 0 to prevent vanilla natural regen
         if (foodData.getFoodLevel() < 20) {
             foodData.setFoodLevel(20); // Full hunger (20/20)
         }
 
-        if (foodData.getSaturationLevel() < 20.0f) {
-            foodData.setSaturation(20.0f); // Full saturation
+        // FIXED: Set saturation to 0 to disable vanilla natural regeneration
+        // Demons should only heal via blood regeneration, not vanilla mechanics
+        if (foodData.getSaturationLevel() > 0.0f) {
+            foodData.setSaturation(0.0f); // No saturation = no vanilla regen
         }
     }
 
