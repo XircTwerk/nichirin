@@ -1,24 +1,35 @@
 package com.xirc.nichirin.client.renderer.entity;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.xirc.nichirin.client.model.entity.BoarEntityModel;
+import com.xirc.nichirin.BreathOfNichirin;
+import com.xirc.nichirin.client.animator.entity.BoarEntityAnimator;
 import com.xirc.nichirin.common.entity.BoarEntity;
-import mod.azure.azurelib.cache.object.BakedGeoModel;
-import mod.azure.azurelib.renderer.GeoEntityRenderer;
+import mod.azure.azurelib.render.entity.AzEntityRenderer;
+import mod.azure.azurelib.render.entity.AzEntityRendererConfig;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.Nullable;
 
 /**
- * The {@link GeoEntityRenderer} for {@link BoarEntity}.
- * @see BoarEntityModel
+ * The renderer for {@link BoarEntity}.
  */
-public class BoarEntityRenderer extends GeoEntityRenderer<BoarEntity> {
+public class BoarEntityRenderer extends AzEntityRenderer<BoarEntity> {
+
+    private static final ResourceLocation GEO = new ResourceLocation(BreathOfNichirin.MOD_ID, "geo/boar.geo.json");
+    private static final ResourceLocation TEX = new ResourceLocation(BreathOfNichirin.MOD_ID, "textures/entity/boar.png");
 
     public BoarEntityRenderer(final EntityRendererProvider.Context context) {
-        super(context, new BoarEntityModel());
+        super(
+                AzEntityRendererConfig.<BoarEntity>builder(GEO, TEX)
+                        .setAnimatorProvider(BoarEntityAnimator::new)
+                        .build(),
+                context
+        );
+    }
+
+    @Override
+    public ResourceLocation getTextureLocation(BoarEntity entity) {
+        return TEX;
     }
 
     @Override
@@ -29,33 +40,12 @@ public class BoarEntityRenderer extends GeoEntityRenderer<BoarEntity> {
 
         // Make boar 1.25x bigger, but babies should be reasonable size
         if (entity.isBaby()) {
-            poseStack.scale(0.8f, 0.8f, 0.8f); // Bigger baby size (was 0.625f)
+            poseStack.scale(0.8f, 0.8f, 0.8f); // Bigger baby size
         } else {
             poseStack.scale(1.25f, 1.25f, 1.25f);
         }
 
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
         poseStack.popPose();
-    }
-
-    @Override
-    public RenderType getRenderType(final BoarEntity animatable, final ResourceLocation texture,
-                                    final @Nullable MultiBufferSource bufferSource, final float partialTick) {
-        // Use cutout render type for normal rendering
-        return RenderType.entityCutout(this.getTextureLocation(animatable));
-    }
-
-    @Override
-    protected float getDeathMaxRotation(BoarEntity animatable) {
-        // Standard death rotation
-        return 90.0f;
-    }
-
-    @Override
-    public boolean shouldRender(BoarEntity livingEntity,
-                                net.minecraft.client.renderer.culling.Frustum camera,
-                                double camX, double camY, double camZ) {
-        // Standard rendering distance check
-        return super.shouldRender(livingEntity, camera, camX, camY, camZ);
     }
 }

@@ -6,11 +6,6 @@ import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.data.MovesetData;
 import com.xirc.nichirin.common.network.s2c.NPCAnimationPacket;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
-import mod.azure.azurelib.animatable.GeoEntity;
-import mod.azure.azurelib.core.animatable.instance.AnimatableInstanceCache;
-import mod.azure.azurelib.core.animation.AnimatableManager;
-import mod.azure.azurelib.core.animation.AnimationController;
-import mod.azure.azurelib.util.AzureLibUtil;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -30,9 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class TempleDemonEntity extends DemonNPCEntity implements GeoEntity {
-
-    private final AnimatableInstanceCache cache = AzureLibUtil.createInstanceCache(this);
+public class TempleDemonEntity extends DemonNPCEntity {
 
     private NPCPlayerWrapper playerWrapper;
     private DefaultDemonMoveset demonMoveset;
@@ -78,16 +71,6 @@ public class TempleDemonEntity extends DemonNPCEntity implements GeoEntity {
     @Override
     protected String getDefaultDemonType() {
         return "temple";
-    }
-
-    @Override
-    public void registerControllers(AnimatableManager.ControllerRegistrar controllerRegistrar) {
-        controllerRegistrar.add(new AnimationController<>(this, "controller", 0, state -> null));
-    }
-
-    @Override
-    public AnimatableInstanceCache getAnimatableInstanceCache() {
-        return cache;
     }
 
     private void initializeAttackSystem() {

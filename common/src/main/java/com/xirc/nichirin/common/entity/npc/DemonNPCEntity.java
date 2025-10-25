@@ -14,7 +14,7 @@ import com.xirc.nichirin.common.network.s2c.NPCAnimationPacket;
 
 /**
  * Abstract base class for demon NPCs that can use PlayerAnimator animations.
- * Simplified to use standard AI goals like SpecUserMob.
+ * Simplified to use standard AI goals.
  */
 public abstract class DemonNPCEntity extends Monster {
 
@@ -53,7 +53,7 @@ public abstract class DemonNPCEntity extends Monster {
     protected abstract String getDefaultDemonType();
 
     /**
-     * Set an animation to play. Similar to SpecUserMob's setAnimation method.
+     * Set an animation to play.
      */
     public void setAnimation(String animationID, float animationSpeed) {
         this.entityData.set(ANIMATION_RESET, this.entityData.get(CURRENT_ANIMATION).equals(animationID));

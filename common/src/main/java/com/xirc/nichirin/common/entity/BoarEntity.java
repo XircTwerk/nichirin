@@ -1,12 +1,6 @@
 package com.xirc.nichirin.common.entity;
 
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
-import mod.azure.azurelib.animatable.GeoEntity;
-import mod.azure.azurelib.core.animatable.instance.AnimatableInstanceCache;
-import mod.azure.azurelib.core.animation.*;
-import mod.azure.azurelib.core.object.PlayState;
-import mod.azure.azurelib.util.AzureLibUtil;
-import mod.azure.azurelib.util.RenderUtils;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -34,12 +28,11 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import mod.azure.azurelib.core.animation.AnimationState;
 
 import java.util.List;
 import java.util.UUID;
 
-public class BoarEntity extends TamableAnimal implements GeoEntity {
+public class BoarEntity extends TamableAnimal {
 
     private static final EntityDataAccessor<Boolean> ENRAGED = SynchedEntityData.defineId(BoarEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> MOVEMENT_STATE = SynchedEntityData.defineId(BoarEntity.class, EntityDataSerializers.INT);
@@ -65,7 +58,6 @@ public class BoarEntity extends TamableAnimal implements GeoEntity {
     private static final double GROUP_DETECTION_RADIUS = 50.0;
     private static final double CHARGE_KNOCKBACK = 2.5;
 
-    private final AnimatableInstanceCache cache = AzureLibUtil.createInstanceCache(this);
     private int lastAmbientTick = 0;
 
     public BoarEntity(EntityType<? extends BoarEntity> entityType, Level level) {
@@ -112,7 +104,6 @@ public class BoarEntity extends TamableAnimal implements GeoEntity {
         this.targetSelector.addGoal(3, new HurtByTargetGoal(this) {
             @Override
             public boolean canUse() {
-                // Don't target other boars with same owner
                 if (super.canUse() && this.mob.getLastHurtByMob() instanceof BoarEntity otherBoar) {
                     if (BoarEntity.this.isTame() && otherBoar.isTame()) {
                         UUID myOwner = BoarEntity.this.getOwnerUUID();
@@ -192,26 +183,19 @@ public class BoarEntity extends TamableAnimal implements GeoEntity {
     }
 
     private void handleSittingBehavior() {
-        if (this.isOrderedToSit() && this.isTame()) {
+        if (this.isOrderedToSit()) {
             int sitTicks = this.entityData.get(SIT_TICKS);
-            sitTicks++;
-            this.entityData.set(SIT_TICKS, sitTicks);
+            this.entityData.set(SIT_TICKS, sitTicks + 1);
         } else {
             this.entityData.set(SIT_TICKS, 0);
         }
     }
 
     private void handleAmbientBehavior() {
-        if (this.tickCount - lastAmbientTick > 100 + this.random.nextInt(100)) {
-            if (this.random.nextFloat() < 0.3f) {
+        if (this.tickCount - lastAmbientTick >= 100) {
+            if (this.random.nextFloat() < 0.1f) {
                 this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
-                        SoundEvents.RAVAGER_AMBIENT, SoundSource.NEUTRAL, 1.0f, 1.2f);
-
-                if (this.level() instanceof ServerLevel serverLevel) {
-                    serverLevel.sendParticles(ParticleTypes.POOF,
-                            this.getX(), this.getY(), this.getZ(),
-                            5, 0.3, 0.1, 0.3, 0.1);
-                }
+                        SoundEvents.PIG_AMBIENT, SoundSource.NEUTRAL, 0.8f, 0.8f + this.random.nextFloat() * 0.4f);
             }
             lastAmbientTick = this.tickCount;
         }
@@ -219,152 +203,139 @@ public class BoarEntity extends TamableAnimal implements GeoEntity {
 
     private void updateMovementState() {
         LivingEntity target = this.getTarget();
-
         if (target != null) {
             int chaseTicks = this.entityData.get(CHASE_TICKS);
-            chaseTicks++;
-            this.entityData.set(CHASE_TICKS, chaseTicks);
+            this.entityData.set(CHASE_TICKS, chaseTicks + 1);
 
-            if (chaseTicks >= 200) {
+            double distance = this.distanceToSqr(target);
+
+            if (chaseTicks > 60 && distance > 16.0) {
                 setMovementState(MOVEMENT_RUNNING_FAST);
-                this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.35);
-                this.getNavigation().setSpeedModifier(1.3);
-            } else if (chaseTicks >= 100) {
+            } else if (distance > 9.0) {
                 setMovementState(MOVEMENT_RUNNING);
-                this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.3);
-                this.getNavigation().setSpeedModifier(1.2);
             } else {
                 setMovementState(MOVEMENT_WALKING);
-                this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.25);
-                this.getNavigation().setSpeedModifier(1.0);
             }
         } else {
             this.entityData.set(CHASE_TICKS, 0);
             setMovementState(MOVEMENT_WALKING);
-            this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.25);
-            this.getNavigation().setSpeedModifier(1.0);
         }
     }
 
     private void forceTargetLook() {
-        LivingEntity target = this.getTarget();
-        if (target != null && !this.isOrderedToSit()) {
-            double deltaX = target.getX() - this.getX();
-            double deltaZ = target.getZ() - this.getZ();
-            double deltaY = target.getY() + target.getEyeHeight() - (this.getY() + this.getEyeHeight());
-
-            double distance = Math.sqrt(deltaX * deltaX + deltaZ * deltaZ);
-            float yaw = (float)(Math.atan2(deltaZ, deltaX) * (180.0 / Math.PI)) - 90.0F;
-            float pitch = (float)(-(Math.atan2(deltaY, distance) * (180.0 / Math.PI)));
-
-            this.setYRot(this.rotlerp(this.getYRot(), yaw, 30.0F));
-            this.setXRot(this.rotlerp(this.getXRot(), pitch, 30.0F));
-            this.yHeadRot = this.getYRot();
-            this.yBodyRot = this.getYRot();
-        }
-    }
-
-    private float rotlerp(float current, float target, float speed) {
-        float delta = target - current;
-        while (delta > 180.0F) {
-            delta -= 360.0F;
-        }
-        while (delta < -180.0F) {
-            delta += 360.0F;
-        }
-        return current + delta * (speed / 180.0F);
-    }
-
-    private void executeJumpAttack() {
-        this.setDeltaMovement(this.getDeltaMovement().add(0, 0.4, 0));
-        damageNearbyEntities(10.0f);
-    }
-
-    private void executePounceAttack() {
-        LivingEntity target = this.getTarget();
-        if (target != null) {
-            Vec3 direction = target.position().subtract(this.position()).normalize();
-            this.setDeltaMovement(direction.scale(1.0).add(0, 0.2, 0));
-
-            this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
-                    SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.HOSTILE, 1.0f, 1.2f);
-        }
-
-        damageNearbyEntities(12.0f);
-    }
-
-    private void executeChargeAttack() {
-        if (this.level() instanceof ServerLevel serverLevel && this.tickCount % 3 == 0) {
-            serverLevel.sendParticles(ParticleTypes.POOF,
-                    this.getX(), this.getY(), this.getZ(),
-                    3, 0.5, 0.1, 0.5, 0.1);
-        }
-
-        damageNearbyEntitiesWithKnockback(8.0f);
-    }
-
-    private void damageNearbyEntities(float damage) {
-        AABB damageArea = this.getBoundingBox().inflate(2.0);
-        List<LivingEntity> nearbyEntities = this.level().getEntitiesOfClass(LivingEntity.class, damageArea,
-                entity -> entity != this && entity != this.getOwner() && this.canAttack(entity));
-
-        for (LivingEntity entity : nearbyEntities) {
-            // Skip other tamed boars with same owner
-            if (entity instanceof BoarEntity otherBoar && this.isTame() && otherBoar.isTame()) {
-                UUID myOwner = this.getOwnerUUID();
-                UUID otherOwner = otherBoar.getOwnerUUID();
-                if (myOwner != null && myOwner.equals(otherOwner)) {
-                    continue;
-                }
-            }
-
-            float finalDamage = isEnraged() ? damage * 1.5f : damage;
-            entity.hurt(this.level().damageSources().mobAttack(this), finalDamage);
-
-            entity.addEffect(new MobEffectInstance(
-                    NichirinEffectRegistry.STUNNED.get(),
-                    STUN_DURATION,
-                    0,
-                    false,
-                    true
-            ));
-        }
-    }
-
-    private void damageNearbyEntitiesWithKnockback(float damage) {
-        AABB damageArea = this.getBoundingBox().inflate(2.0);
-        List<LivingEntity> nearbyEntities = this.level().getEntitiesOfClass(LivingEntity.class, damageArea,
-                entity -> entity != this && entity != this.getOwner() && this.canAttack(entity));
-
-        for (LivingEntity entity : nearbyEntities) {
-            // Skip other tamed boars with same owner
-            if (entity instanceof BoarEntity otherBoar && this.isTame() && otherBoar.isTame()) {
-                UUID myOwner = this.getOwnerUUID();
-                UUID otherOwner = otherBoar.getOwnerUUID();
-                if (myOwner != null && myOwner.equals(otherOwner)) {
-                    continue;
-                }
-            }
-
-            float finalDamage = isEnraged() ? damage * 1.5f : damage;
-            entity.hurt(this.level().damageSources().mobAttack(this), finalDamage);
-
-            Vec3 direction = entity.position().subtract(this.position()).normalize();
-            entity.setDeltaMovement(entity.getDeltaMovement().add(direction.scale(CHARGE_KNOCKBACK)));
-
-            entity.addEffect(new MobEffectInstance(
-                    NichirinEffectRegistry.STUNNED.get(),
-                    STUN_DURATION,
-                    0,
-                    false,
-                    true
-            ));
+        if (this.getTarget() != null) {
+            this.getLookControl().setLookAt(this.getTarget(), 30.0F, 30.0F);
         }
     }
 
     public void startAttack(int attackType) {
         this.entityData.set(ATTACK_TYPE, attackType);
         this.entityData.set(ATTACK_TICK, 0);
+
+        if (this.level().isClientSide) return;
+
+        switch (attackType) {
+            case ATTACK_CHARGE:
+                LivingEntity target = this.getTarget();
+                if (target != null) {
+                    Vec3 direction = target.position().subtract(this.position()).normalize();
+                    this.setDeltaMovement(direction.scale(1.2).add(0, 0.3, 0));
+                }
+
+                this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
+                        SoundEvents.RAVAGER_ROAR, SoundSource.HOSTILE, 1.5f, 1.0f);
+
+                if (this.level() instanceof ServerLevel serverLevel) {
+                    serverLevel.sendParticles(ParticleTypes.ANGRY_VILLAGER,
+                            this.getX(), this.getY() + 1, this.getZ(),
+                            10, 0.5, 0.5, 0.5, 0.1);
+                }
+                break;
+        }
+    }
+
+    private void executeJumpAttack() {
+        LivingEntity target = this.getTarget();
+        if (target == null) return;
+
+        Vec3 jumpDirection = target.position().subtract(this.position()).normalize();
+        this.setDeltaMovement(jumpDirection.scale(0.8).add(0, 0.4, 0));
+
+        this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
+                SoundEvents.IRON_GOLEM_ATTACK, SoundSource.HOSTILE, 1.0f, 1.2f);
+
+        AABB damageArea = this.getBoundingBox().inflate(1.5);
+        List<LivingEntity> nearbyEntities = this.level().getEntitiesOfClass(LivingEntity.class, damageArea,
+                entity -> entity != this && entity.isAlive() && (entity instanceof Player || entity instanceof Monster));
+
+        for (LivingEntity entity : nearbyEntities) {
+            if (entity == this.getOwner()) continue;
+
+            float damage = (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE) * 1.5f;
+            entity.hurt(this.level().damageSources().mobAttack(this), damage);
+
+            Vec3 knockback = entity.position().subtract(this.position()).normalize().scale(0.8);
+            entity.setDeltaMovement(entity.getDeltaMovement().add(knockback.x, 0.3, knockback.z));
+
+            if (this.level() instanceof ServerLevel serverLevel) {
+                serverLevel.sendParticles(ParticleTypes.CRIT,
+                        entity.getX(), entity.getY() + entity.getBbHeight() / 2, entity.getZ(),
+                        10, 0.3, 0.3, 0.3, 0.1);
+            }
+        }
+    }
+
+    private void executePounceAttack() {
+        LivingEntity target = this.getTarget();
+        if (target == null) return;
+
+        Vec3 pounceDirection = target.position().subtract(this.position()).normalize();
+        this.setDeltaMovement(pounceDirection.scale(1.5).add(0, 0.6, 0));
+
+        this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
+                SoundEvents.RAVAGER_ATTACK, SoundSource.HOSTILE, 1.2f, 0.9f);
+
+        if (this.level() instanceof ServerLevel serverLevel) {
+            serverLevel.sendParticles(ParticleTypes.EXPLOSION,
+                    this.getX(), this.getY(), this.getZ(),
+                    5, 0, 0, 0, 0);
+        }
+    }
+
+    private void executeChargeAttack() {
+        LivingEntity target = this.getTarget();
+        if (target == null) return;
+
+        Vec3 chargeDirection = target.position().subtract(this.position()).normalize();
+        this.setDeltaMovement(chargeDirection.scale(0.6));
+
+        AABB chargeArea = this.getBoundingBox().inflate(1.2);
+        List<LivingEntity> nearbyEntities = this.level().getEntitiesOfClass(LivingEntity.class, chargeArea,
+                entity -> entity != this && entity.isAlive() && entity != this.getOwner());
+
+        for (LivingEntity entity : nearbyEntities) {
+            float damage = (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE) * 2.0f;
+            entity.hurt(this.level().damageSources().mobAttack(this), damage);
+
+            Vec3 knockback = entity.position().subtract(this.position()).normalize().scale(CHARGE_KNOCKBACK);
+            entity.setDeltaMovement(knockback.add(0, 0.5, 0));
+
+            if (entity instanceof Player player) {
+                player.addEffect(new MobEffectInstance(NichirinEffectRegistry.SHOCKED.get(), STUN_DURATION, 0));
+            }
+
+            if (this.level() instanceof ServerLevel serverLevel) {
+                serverLevel.sendParticles(ParticleTypes.EXPLOSION,
+                        entity.getX(), entity.getY() + entity.getBbHeight() / 2, entity.getZ(),
+                        15, 0.5, 0.5, 0.5, 0.1);
+            }
+        }
+
+        if (this.level() instanceof ServerLevel serverLevel && this.tickCount % 5 == 0) {
+            serverLevel.sendParticles(ParticleTypes.CLOUD,
+                    this.getX(), this.getY(), this.getZ(),
+                    3, 0.3, 0.1, 0.3, 0.02);
+        }
     }
 
     private void resetAttack() {
@@ -375,86 +346,58 @@ public class BoarEntity extends TamableAnimal implements GeoEntity {
     @Override
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack itemStack = player.getItemInHand(hand);
-        Item item = itemStack.getItem();
 
-        if (!this.isTame()) {
-            // Can't tame when aggressive/has target
-            if (this.getTarget() != null) {
-                return InteractionResult.PASS;
-            }
+        if (this.level().isClientSide) {
+            return itemStack.is(Items.RED_MUSHROOM) || itemStack.is(Items.BROWN_MUSHROOM)
+                    ? InteractionResult.CONSUME : InteractionResult.PASS;
+        }
 
-            if (item == Items.RED_MUSHROOM || item == Items.BROWN_MUSHROOM) {
-                if (!player.getAbilities().instabuild) {
-                    itemStack.shrink(1);
-                }
-
-                if (this.random.nextFloat() < 0.25f) {
+        if (itemStack.is(Items.RED_MUSHROOM) || itemStack.is(Items.BROWN_MUSHROOM)) {
+            if (!this.isTame()) {
+                if (this.random.nextInt(3) == 0) {
                     this.tame(player);
+                    this.navigation.stop();
+                    this.setTarget(null);
                     this.setOrderedToSit(true);
-                    this.heal(20.0f);
+
+                    this.level().broadcastEntityEvent(this, (byte) 7);
+
                     if (this.level() instanceof ServerLevel serverLevel) {
                         serverLevel.sendParticles(ParticleTypes.HEART,
-                                this.getX(), this.getY() + this.getBbHeight() / 2, this.getZ(),
-                                7, 0.5, 0.5, 0.5, 0.1);
+                                this.getX(), this.getY() + this.getBbHeight() + 0.5, this.getZ(),
+                                7, 0.5, 0.5, 0.5, 0);
                     }
-                    return InteractionResult.SUCCESS;
                 } else {
-                    if (this.level() instanceof ServerLevel serverLevel) {
-                        serverLevel.sendParticles(ParticleTypes.SMOKE,
-                                this.getX(), this.getY() + this.getBbHeight() / 2, this.getZ(),
-                                3, 0.3, 0.3, 0.3, 0.05);
-                    }
-                    return InteractionResult.CONSUME;
+                    this.level().broadcastEntityEvent(this, (byte) 6);
                 }
-            } else if (item == Items.BEETROOT) {
+
                 if (!player.getAbilities().instabuild) {
                     itemStack.shrink(1);
                 }
 
-                if (this.random.nextFloat() < 0.20f) {
-                    this.tame(player);
-                    this.setOrderedToSit(true);
-                    this.heal(20.0f);
-                    if (this.level() instanceof ServerLevel serverLevel) {
-                        serverLevel.sendParticles(ParticleTypes.HEART,
-                                this.getX(), this.getY() + this.getBbHeight() / 2, this.getZ(),
-                                7, 0.5, 0.5, 0.5, 0.1);
-                    }
-                    return InteractionResult.SUCCESS;
-                } else {
-                    if (this.level() instanceof ServerLevel serverLevel) {
-                        serverLevel.sendParticles(ParticleTypes.SMOKE,
-                                this.getX(), this.getY() + this.getBbHeight() / 2, this.getZ(),
-                                3, 0.3, 0.3, 0.3, 0.05);
-                    }
-                    return InteractionResult.CONSUME;
-                }
-            }
-        } else if (this.isOwnedBy(player)) {
-            // Only mushrooms heal tamed boars
-            if ((item == Items.RED_MUSHROOM || item == Items.BROWN_MUSHROOM) && this.getHealth() < this.getMaxHealth()) {
+                return InteractionResult.SUCCESS;
+            } else if (this.isFood(itemStack) && this.getHealth() < this.getMaxHealth()) {
                 if (!player.getAbilities().instabuild) {
                     itemStack.shrink(1);
                 }
-                this.heal(4.0f);
+                this.heal(5.0F);
+
                 if (this.level() instanceof ServerLevel serverLevel) {
-                    // Green healing particles (like baby growth particles)
-                    serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER,
-                            this.getX(), this.getY() + this.getBbHeight() / 2, this.getZ(),
-                            5, 0.5, 0.5, 0.5, 0.1);
-                    // Also add heart particles for visual feedback
                     serverLevel.sendParticles(ParticleTypes.HEART,
-                            this.getX(), this.getY() + this.getBbHeight() / 2, this.getZ(),
-                            3, 0.3, 0.3, 0.3, 0.05);
+                            this.getX(), this.getY() + this.getBbHeight() + 0.5, this.getZ(),
+                            5, 0.3, 0.3, 0.3, 0);
                 }
-                return InteractionResult.SUCCESS;
-            }
 
-            // Sitting behavior
-            if (player.isShiftKeyDown()) {
-                this.setOrderedToSit(!this.isOrderedToSit());
                 return InteractionResult.SUCCESS;
             }
+        }
+
+        if (this.isTame() && this.isOwnedBy(player) && !this.isFood(itemStack)) {
+            this.setOrderedToSit(!this.isOrderedToSit());
+            this.jumping = false;
+            this.navigation.stop();
+            this.setTarget(null);
+            return InteractionResult.SUCCESS;
         }
 
         return super.mobInteract(player, hand);
@@ -462,12 +405,23 @@ public class BoarEntity extends TamableAnimal implements GeoEntity {
 
     @Override
     public boolean hurt(DamageSource damageSource, float amount) {
+        if (this.isInvulnerableTo(damageSource)) {
+            return false;
+        }
+
         boolean hurt = super.hurt(damageSource, amount);
 
-        if (hurt && this.getHealth() < this.getMaxHealth() * 0.3f) {
-            if (this.getTarget() != null) {
-                this.getNavigation().stop();
-                Vec3 retreatDirection = this.position().subtract(this.getTarget().position()).normalize();
+        if (hurt && !this.level().isClientSide) {
+            int chaseTicks = this.entityData.get(CHASE_TICKS);
+            if (chaseTicks > 120) {
+                int attackType = this.entityData.get(ATTACK_TYPE);
+                if (attackType == ATTACK_NONE && this.random.nextFloat() < 0.3f) {
+                    startAttack(ATTACK_CHARGE);
+                }
+            }
+
+            if (this.getHealth() < this.getMaxHealth() * 0.3f && this.random.nextFloat() < 0.4f) {
+                Vec3 retreatDirection = this.position().subtract(damageSource.getSourcePosition()).normalize();
                 this.getNavigation().moveTo(
                         this.getX() + retreatDirection.x * 10,
                         this.getY(),
@@ -562,67 +516,6 @@ public class BoarEntity extends TamableAnimal implements GeoEntity {
         this.entityData.set(ATTACK_TICK, compound.getInt("AttackTick"));
         this.entityData.set(SIT_TICKS, compound.getInt("SitTicks"));
         this.entityData.set(CHASE_TICKS, compound.getInt("ChaseTicks"));
-    }
-
-    // Animation Implementation
-    @Override
-    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>(this, "controller", 0, this::predicate));
-    }
-
-    private PlayState predicate(AnimationState<BoarEntity> state) {
-        int attackType = this.getAttackType();
-        if (attackType != ATTACK_NONE) {
-            switch (attackType) {
-                case ATTACK_JUMP_HIT:
-                    state.setAnimation(RawAnimation.begin().then("jump_hit", Animation.LoopType.HOLD_ON_LAST_FRAME));
-                    return PlayState.CONTINUE;
-                case ATTACK_POUNCE:
-                    state.setAnimation(RawAnimation.begin().then("pounce", Animation.LoopType.HOLD_ON_LAST_FRAME));
-                    return PlayState.CONTINUE;
-                case ATTACK_CHARGE:
-                    state.setAnimation(RawAnimation.begin().then("running_fast", Animation.LoopType.LOOP));
-                    return PlayState.CONTINUE;
-            }
-        }
-
-        if (this.isOrderedToSit()) {
-            if (this.shouldLayDown()) {
-                state.setAnimation(RawAnimation.begin().then("lay_down", Animation.LoopType.LOOP));
-            } else {
-                state.setAnimation(RawAnimation.begin().then("sit", Animation.LoopType.LOOP));
-            }
-            return PlayState.CONTINUE;
-        }
-
-        if (state.isMoving()) {
-            int movementState = this.getMovementState();
-            switch (movementState) {
-                case MOVEMENT_RUNNING_FAST:
-                    state.setAnimation(RawAnimation.begin().then("running_fast", Animation.LoopType.LOOP));
-                    break;
-                case MOVEMENT_RUNNING:
-                    state.setAnimation(RawAnimation.begin().then("running", Animation.LoopType.LOOP));
-                    break;
-                default:
-                    state.setAnimation(RawAnimation.begin().then("walking", Animation.LoopType.LOOP));
-                    break;
-            }
-        } else {
-            state.setAnimation(RawAnimation.begin().then("idle", Animation.LoopType.LOOP));
-        }
-
-        return PlayState.CONTINUE;
-    }
-
-    @Override
-    public AnimatableInstanceCache getAnimatableInstanceCache() {
-        return cache;
-    }
-
-    @Override
-    public double getTick(Object entity) {
-        return RenderUtils.getCurrentTick();
     }
 
     // Custom Attack Goal

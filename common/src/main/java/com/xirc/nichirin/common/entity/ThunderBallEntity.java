@@ -2,12 +2,6 @@ package com.xirc.nichirin.common.entity;
 
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NicirinSoundRegistry;
-import mod.azure.azurelib.animatable.GeoEntity;
-import mod.azure.azurelib.core.animatable.instance.AnimatableInstanceCache;
-import mod.azure.azurelib.core.animation.*;
-import mod.azure.azurelib.core.object.PlayState;
-import mod.azure.azurelib.util.AzureLibUtil;
-import mod.azure.azurelib.util.RenderUtils;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
@@ -23,7 +17,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -37,7 +30,7 @@ import java.util.Set;
  * Thunder Ball Entity - Travels forward for 6 seconds, continuously damaging nearby entities
  * and striking with lightning every 2 seconds (3 times total)
  */
-public class ThunderBallEntity extends Entity implements GeoEntity {
+public class ThunderBallEntity extends Entity {
 
     private static final EntityDataAccessor<Integer> LIFE_TICKS = SynchedEntityData.defineId(ThunderBallEntity.class, EntityDataSerializers.INT);
     private static final int MAX_LIFE_TICKS = 120; // 6 seconds at 20 TPS - EXACTLY 120 ticks
@@ -45,7 +38,6 @@ public class ThunderBallEntity extends Entity implements GeoEntity {
     private static final double TRAVEL_SPEED = 0.2; // 4 blocks per second (4/20 = 0.2 per tick)
     private static final double DAMAGE_RADIUS = 4.0;
 
-    private final AnimatableInstanceCache cache = AzureLibUtil.createInstanceCache(this);
     private final Set<LivingEntity> damagedEntities = new HashSet<>();
     private int lastLightningTick = 0;
     private int lightningCount = 0;
@@ -221,7 +213,6 @@ public class ThunderBallEntity extends Entity implements GeoEntity {
         return false; // Thunder ball cannot be damaged
     }
 
-    // Prevent command summoning by making the entity non-summonable
     @Override
     public boolean canBeCollidedWith() {
         return false;
@@ -248,36 +239,5 @@ public class ThunderBallEntity extends Entity implements GeoEntity {
     @Override
     public Packet<ClientGamePacketListener> getAddEntityPacket() {
         return NetworkManager.createAddEntityPacket(this);
-    }
-
-    // AzureLib Animation Implementation
-    @Override
-    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>(this, "controller", 0, this::predicate)
-                .setAnimationSpeed(1.0)); // Ensure normal animation speed
-    }
-
-    private PlayState predicate(AnimationState<ThunderBallEntity> state) {
-        // Play the spin animation while alive - ensure it's always playing
-        if (this.isAlive()) {
-            state.setAnimation(RawAnimation.begin().then("spin", Animation.LoopType.LOOP));
-            return PlayState.CONTINUE;
-        }
-        return PlayState.STOP;
-    }
-
-    @Override
-    public AnimatableInstanceCache getAnimatableInstanceCache() {
-        return cache;
-    }
-
-    @Override
-    public double getTick(Object entity) {
-        return RenderUtils.getCurrentTick();
-    }
-
-    @Override
-    public boolean shouldPlayAnimsWhileGamePaused() {
-        return false;
     }
 }

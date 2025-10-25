@@ -1,34 +1,35 @@
 package com.xirc.nichirin.client.renderer.entity;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.xirc.nichirin.client.model.entity.ThunderBallModel;
+import com.xirc.nichirin.BreathOfNichirin;
+import com.xirc.nichirin.client.animator.entity.ThunderBallAnimator;
 import com.xirc.nichirin.common.entity.ThunderBallEntity;
-import mod.azure.azurelib.cache.object.BakedGeoModel;
-import mod.azure.azurelib.renderer.GeoEntityRenderer;
+import mod.azure.azurelib.render.entity.AzEntityRenderer;
+import mod.azure.azurelib.render.entity.AzEntityRendererConfig;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.Nullable;
 
 /**
- * The {@link GeoEntityRenderer} for {@link ThunderBallEntity}.
- * @see ThunderBallModel
+ * The renderer for {@link ThunderBallEntity}.
  */
-public class ThunderBallRenderer<T> extends GeoEntityRenderer<ThunderBallEntity> {
+public class ThunderBallRenderer extends AzEntityRenderer<ThunderBallEntity> {
 
-    protected float scaleWidth = 2;
-    protected float scaleHeight = 2;
+    private static final ResourceLocation GEO = new ResourceLocation(BreathOfNichirin.MOD_ID, "geo/thunder_ball.geo.json");
+    private static final ResourceLocation TEX = new ResourceLocation(BreathOfNichirin.MOD_ID, "textures/entity/thunder_ball.png");
 
     public ThunderBallRenderer(final EntityRendererProvider.Context context) {
-        super(context, new ThunderBallModel());
+        super(
+                AzEntityRendererConfig.<ThunderBallEntity>builder(GEO, TEX)
+                        .setAnimatorProvider(ThunderBallAnimator::new)
+                        .build(),
+                context
+        );
     }
 
-    public ThunderBallRenderer<T> withScale(float scaleWidth, float scaleHeight) {
-        this.scaleWidth = scaleWidth;
-        this.scaleHeight = scaleHeight;
-
-        return this;
+    @Override
+    public ResourceLocation getTextureLocation(ThunderBallEntity entity) {
+        return TEX;
     }
 
     @Override
@@ -41,26 +42,5 @@ public class ThunderBallRenderer<T> extends GeoEntityRenderer<ThunderBallEntity>
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
 
         poseStack.popPose();
-    }
-
-    @Override
-    public RenderType getRenderType(final ThunderBallEntity animatable, final ResourceLocation texture,
-                                    final @Nullable MultiBufferSource bufferSource, final float partialTick) {
-        // Use translucent render type for glowing effect
-        return RenderType.entityTranslucent(this.getTextureLocation(animatable));
-    }
-
-    @Override
-    protected float getDeathMaxRotation(ThunderBallEntity animatable) {
-        // No death rotation for projectiles
-        return 0.0f;
-    }
-
-    @Override
-    public boolean shouldRender(ThunderBallEntity livingEntity,
-                                net.minecraft.client.renderer.culling.Frustum camera,
-                                double camX, double camY, double camZ) {
-        // Always render if within reasonable distance
-        return super.shouldRender(livingEntity, camera, camX, camY, camZ);
     }
 }
