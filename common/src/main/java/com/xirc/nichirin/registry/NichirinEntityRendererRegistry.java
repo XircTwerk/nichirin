@@ -1,13 +1,11 @@
 package com.xirc.nichirin.registry;
 
-import com.xirc.nichirin.client.renderer.BentoBoxBlockRenderer;
 import com.xirc.nichirin.client.renderer.KatanaHolderBlockRenderer;
 import com.xirc.nichirin.client.renderer.entity.BoarEntityRenderer;
 import com.xirc.nichirin.client.renderer.entity.FlashBombRenderer;
 import com.xirc.nichirin.client.renderer.entity.SmokeBombRenderer;
 import com.xirc.nichirin.client.renderer.entity.ThunderBallRenderer;
 import com.xirc.nichirin.client.renderer.entity.npc.TempleDemonRenderer;
-import com.xirc.nichirin.common.entity.npc.TempleDemonEntity;
 import dev.architectury.registry.client.level.entity.EntityRendererRegistry;
 import dev.architectury.registry.client.rendering.BlockEntityRendererRegistry;
 import dev.architectury.registry.registries.RegistrySupplier;
@@ -46,7 +44,6 @@ public interface NichirinEntityRendererRegistry {
     };
 
     BlockEntityRendererData<?>[] blockEntityEntries = {
-            new BlockEntityRendererData<>(NichirinBlockEntityRegistry.BENTO_BOX_BLOCK_ENTITY, BentoBoxBlockRenderer::new),
             new BlockEntityRendererData<>(NichirinBlockEntityRegistry.KATANA_HOLDER_BLOCK_ENTITY, KatanaHolderBlockRenderer::new)
     };
 

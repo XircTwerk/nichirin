@@ -1,7 +1,6 @@
 package com.xirc.nichirin.client.renderer.entity.npc;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.xirc.nichirin.client.model.entity.npc.DemonNPCModel;
 import com.xirc.nichirin.common.entity.npc.DemonNPCEntity;
 import dev.kosmx.playerAnim.api.layered.AnimationStack;
 import dev.kosmx.playerAnim.api.layered.IAnimation;

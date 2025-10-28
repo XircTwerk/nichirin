@@ -3,41 +3,65 @@ package com.xirc.nichirin.client.renderer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
-import com.xirc.nichirin.client.model.KatanaHolderBlockModel;
 import com.xirc.nichirin.common.blocks.KatanaHolderBlock;
-import mod.azure.azurelib.cache.object.BakedGeoModel;
-import mod.azure.azurelib.renderer.GeoBlockRenderer;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 
-public class KatanaHolderBlockRenderer extends GeoBlockRenderer<KatanaHolderBlock.KatanaHolderBlockEntity> {
+import java.util.List;
+
+public class KatanaHolderBlockRenderer implements BlockEntityRenderer<KatanaHolderBlock.KatanaHolderBlockEntity> {
 
     public KatanaHolderBlockRenderer(BlockEntityRendererProvider.Context context) {
-        super(new KatanaHolderBlockModel());
     }
 
     @Override
-    public void actuallyRender(PoseStack poseStack, KatanaHolderBlock.KatanaHolderBlockEntity animatable,
-                               BakedGeoModel model, RenderType renderType, MultiBufferSource bufferSource,
-                               VertexConsumer buffer, boolean isReRender, float partialTick, int packedLight,
-                               int packedOverlay, float red, float green, float blue, float alpha) {
+    public void render(KatanaHolderBlock.KatanaHolderBlockEntity blockEntity, float partialTick, PoseStack poseStack,
+                       MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
 
-        // Block rendering with manual rotations
-        Direction facing = animatable.getFacing();
-        boolean isRotated = animatable.isRotated();
+        // Render the block model
+        renderBlockModel(blockEntity, poseStack, bufferSource, packedLight, packedOverlay);
+
+        // Render the katana if present
+        if (blockEntity.shouldRenderKatana()) {
+            renderKatana(poseStack, blockEntity.getStoredKatana(), blockEntity.getFacing(),
+                    blockEntity.isRotated(), bufferSource, packedLight);
+        }
+    }
+
+    private void renderBlockModel(KatanaHolderBlock.KatanaHolderBlockEntity blockEntity, PoseStack poseStack,
+                                  MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
+
+        Minecraft mc = Minecraft.getInstance();
+        ModelResourceLocation modelLocation = new ModelResourceLocation(
+                new ResourceLocation("nichirin", "katana_holder_block"), "");
+        BakedModel model = mc.getModelManager().getModel(modelLocation);
+
+        if (model == null || model == mc.getModelManager().getMissingModel()) {
+            return; // Model not found
+        }
+
+        Direction facing = blockEntity.getFacing();
+        boolean isRotated = blockEntity.isRotated();
+
         poseStack.pushPose();
-
         poseStack.translate(0.5, 0.5, 0.5);
 
+        // Apply rotations based on facing and rotation state
         if (isRotated) {
-            // Rotated block orientations
             switch (facing) {
                 case UP -> {
                     poseStack.translate(0.5625, -0.5, 0);
@@ -68,7 +92,6 @@ public class KatanaHolderBlockRenderer extends GeoBlockRenderer<KatanaHolderBloc
                 }
             }
         } else {
-            // Normal block orientations
             switch (facing) {
                 case UP -> {
                     poseStack.translate(0, -0.5, 0.5625);
@@ -79,37 +102,33 @@ public class KatanaHolderBlockRenderer extends GeoBlockRenderer<KatanaHolderBloc
                     poseStack.translate(0, 0.5, -0.435);
                     poseStack.mulPose(Axis.XP.rotationDegrees(-90));
                 }
-                case NORTH -> {
-                    poseStack.mulPose(Axis.XP.rotationDegrees(-90));
-                }
-                case SOUTH -> {
-                    poseStack.mulPose(Axis.XP.rotationDegrees(90));
-                }
-                case WEST -> {
-                    poseStack.mulPose(Axis.ZP.rotationDegrees(90));
-                }
-                case EAST -> {
-                    poseStack.mulPose(Axis.ZP.rotationDegrees(-90));
-                }
+                case NORTH -> poseStack.mulPose(Axis.XP.rotationDegrees(-90));
+                case SOUTH -> poseStack.mulPose(Axis.XP.rotationDegrees(90));
+                case WEST -> poseStack.mulPose(Axis.ZP.rotationDegrees(90));
+                case EAST -> poseStack.mulPose(Axis.ZP.rotationDegrees(-90));
             }
         }
 
         poseStack.translate(-0.5, -0.5, -0.5);
 
-        super.actuallyRender(poseStack, animatable, model, renderType, bufferSource, buffer,
-                isReRender, partialTick, packedLight, packedOverlay, red, green, blue, alpha);
+        // Render the model
+        VertexConsumer buffer = bufferSource.getBuffer(RenderType.solid());
+        RandomSource random = RandomSource.create(42L);
 
-        poseStack.popPose();
-
-        // Katana rendering with manual rotations
-        if (!isReRender && animatable.getLevel() != null && animatable.getLevel().isClientSide()) {
-            boolean shouldRender = animatable.shouldRenderKatana();
-            ItemStack katana = animatable.getStoredKatana();
-
-            if (shouldRender) {
-                renderKatana(poseStack, katana, facing, isRotated, bufferSource, packedLight);
+        for (Direction dir : Direction.values()) {
+            List<BakedQuad> quads = model.getQuads(blockEntity.getBlockState(), dir, random);
+            for (BakedQuad quad : quads) {
+                buffer.putBulkData(poseStack.last(), quad, 1.0f, 1.0f, 1.0f, packedLight, packedOverlay);
             }
         }
+
+        // Render quads without direction (general quads)
+        List<BakedQuad> generalQuads = model.getQuads(blockEntity.getBlockState(), null, random);
+        for (BakedQuad quad : generalQuads) {
+            buffer.putBulkData(poseStack.last(), quad, 1.0f, 1.0f, 1.0f, packedLight, packedOverlay);
+        }
+
+        poseStack.popPose();
     }
 
     private void renderKatana(PoseStack poseStack, ItemStack katana, Direction facing, boolean isRotated,
@@ -159,7 +178,7 @@ public class KatanaHolderBlockRenderer extends GeoBlockRenderer<KatanaHolderBloc
                 }
             }
         } else {
-            // Normal katana positions (your original code)
+            // Normal katana positions
             switch (facing) {
                 case UP -> {
                     poseStack.translate(0.15, -0.075, 0.03);
@@ -203,8 +222,7 @@ public class KatanaHolderBlockRenderer extends GeoBlockRenderer<KatanaHolderBloc
 
         ItemRenderer itemRenderer = Minecraft.getInstance().getItemRenderer();
         itemRenderer.renderStatic(katana, ItemDisplayContext.FIXED, packedLight,
-                OverlayTexture.NO_OVERLAY, poseStack, bufferSource,
-                null, 0);
+                OverlayTexture.NO_OVERLAY, poseStack, bufferSource, null, 0);
 
         poseStack.popPose();
     }

@@ -1,15 +1,14 @@
 package com.xirc.nichirin.client.renderer.armor;
 
-import com.xirc.nichirin.client.model.NichirinArmorModel;
-import com.xirc.nichirin.client.renderer.armor.*;
+import com.xirc.nichirin.BreathOfNichirin;
+import com.xirc.nichirin.client.animator.NichirinArmorAnimator;
 import com.xirc.nichirin.registry.NichirinItemRegistry;
-import mod.azure.azurelibarmor.animatable.client.RenderProvider;
-import mod.azure.azurelibarmor.renderer.GeoArmorRenderer;
-import net.minecraft.client.model.HumanoidModel;
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.LivingEntity;
+import mod.azure.azurelib.render.armor.AzArmorRenderer;
+import mod.azure.azurelib.render.armor.AzArmorRendererConfig;
+import mod.azure.azurelib.render.armor.AzArmorRendererRegistry;
+import mod.azure.azurelib.animation.cache.AzIdentityRegistry;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,48 +16,64 @@ import java.util.Map;
 public class ArmorRendererManager {
 
     // Cache renderer instances to prevent constant recreation
-    private static final Map<Item, GeoArmorRenderer<?>> RENDERER_CACHE = new HashMap<>();
+    private static final Map<Item, AzArmorRenderer> RENDERER_CACHE = new HashMap<>();
 
-    // Singleton render provider to prevent multiple instances
-    private static RenderProvider RENDER_PROVIDER_INSTANCE = null;
+    /**
+     * Register all armor renderers and identities.
+     * Call this once during client initialization.
+     */
+    public static void registerAll() {
+        // Register Shinobu armor
+        registerArmor(NichirinItemRegistry.SHINOBU_HEADPIECE.get(), ShinobuUniformRenderer::new);
+        registerArmor(NichirinItemRegistry.SHINOBU_CAPE.get(), ShinobuCapeRenderer::new);
+        registerArmor(NichirinItemRegistry.SHINOBU_LEGGINGS.get(), ShinobuUniformRenderer::new);
+        registerArmor(NichirinItemRegistry.SHINOBU_BOOTS.get(), ShinobuUniformRenderer::new);
 
-    public static RenderProvider createRenderProvider() {
-        if (RENDER_PROVIDER_INSTANCE == null) {
-            RENDER_PROVIDER_INSTANCE = createNewRenderProvider();
-        }
-        return RENDER_PROVIDER_INSTANCE;
+        // Register Zenitsu armor
+        registerArmor(NichirinItemRegistry.ZENITSU_HEADPIECE.get(), ZenitsuUniformRenderer::new);
+        registerArmor(NichirinItemRegistry.ZENITSU_CAPE.get(), ZenitsuCapeRenderer::new);
+        registerArmor(NichirinItemRegistry.ZENITSU_LEGGINGS.get(), ZenitsuUniformRenderer::new);
+        registerArmor(NichirinItemRegistry.ZENITSU_BOOTS.get(), ZenitsuUniformRenderer::new);
+
+        // Register Rengoku armor
+        registerArmor(NichirinItemRegistry.RENGOKU_HEADPIECE.get(), RengokuUniformRenderer::new);
+        registerArmor(NichirinItemRegistry.RENGOKU_CAPE.get(), RengokuCapeRenderer::new);
+        registerArmor(NichirinItemRegistry.RENGOKU_LEGGINGS.get(), RengokuUniformRenderer::new);
+        registerArmor(NichirinItemRegistry.RENGOKU_BOOTS.get(), RengokuUniformRenderer::new);
+
+        // Register Tengen armor
+        registerArmor(NichirinItemRegistry.TENGEN_HEADPIECE.get(), TengenUniformRenderer::new);
+        registerArmor(NichirinItemRegistry.TENGEN_ACCESSORIES.get(), TengenAccessoriesRenderer::new);
+        registerArmor(NichirinItemRegistry.TENGEN_LEGGINGS.get(), TengenUniformRenderer::new);
+        registerArmor(NichirinItemRegistry.TENGEN_BOOTS.get(), TengenUniformRenderer::new);
+
+        // Register Sabito armor
+        registerArmor(NichirinItemRegistry.SABITO_HEADPIECE.get(), SabitoUniformRenderer::new);
+        registerArmor(NichirinItemRegistry.SABITO_CAPE.get(), SabitoCapeRenderer::new);
+        registerArmor(NichirinItemRegistry.SABITO_LEGGINGS.get(), SabitoUniformRenderer::new);
+        registerArmor(NichirinItemRegistry.SABITO_BOOTS.get(), SabitoUniformRenderer::new);
     }
 
-    private static RenderProvider createNewRenderProvider() {
-        return new RenderProvider() {
-            @Override
-            public HumanoidModel<LivingEntity> getHumanoidArmorModel(
-                    LivingEntity entity,
-                    ItemStack armorStack,
-                    EquipmentSlot slot,
-                    HumanoidModel<LivingEntity> baseModel) {
+    /**
+     * Register a single armor piece with its renderer
+     */
+    private static void registerArmor(Item item, java.util.function.Supplier<AzArmorRenderer> rendererSupplier) {
+        // Register with AzureLib
+        AzArmorRendererRegistry.register(item, rendererSupplier);
 
-                GeoArmorRenderer<?> renderer = getRendererForArmor(armorStack);
-                if (renderer != null) {
-                    renderer.prepForRender(entity, armorStack, slot, baseModel);
-                    return renderer;
-                }
-
-                // Fallback to base model if no specific renderer found
-                return baseModel;
-            }
-        };
+        // Register identity
+        AzIdentityRegistry.register(item);
     }
 
-    private static GeoArmorRenderer<?> getRendererForArmor(ItemStack armorStack) {
-        Item item = armorStack.getItem();
-
-        // Return cached renderer or create new one if not cached
-        return RENDERER_CACHE.computeIfAbsent(item, key -> createNewRendererForItem(key));
+    /**
+     * Get or create a renderer for the given armor item (legacy support)
+     */
+    public static AzArmorRenderer getRendererForItem(Item item) {
+        return RENDERER_CACHE.computeIfAbsent(item, ArmorRendererManager::createRendererForItem);
     }
 
-    private static GeoArmorRenderer<?> createNewRendererForItem(Item item) {
-        // Shinobu armor - each piece gets its own renderer instance
+    private static AzArmorRenderer createRendererForItem(Item item) {
+        // Shinobu armor
         if (item == NichirinItemRegistry.SHINOBU_HEADPIECE.get()) {
             return new ShinobuUniformRenderer();
         }
@@ -72,7 +87,7 @@ public class ArmorRendererManager {
             return new ShinobuUniformRenderer();
         }
 
-        // Zenitsu armor - each piece gets its own renderer instance
+        // Zenitsu armor
         if (item == NichirinItemRegistry.ZENITSU_HEADPIECE.get()) {
             return new ZenitsuUniformRenderer();
         }
@@ -86,7 +101,7 @@ public class ArmorRendererManager {
             return new ZenitsuUniformRenderer();
         }
 
-        // Rengoku armor - each piece gets its own renderer instance
+        // Rengoku armor
         if (item == NichirinItemRegistry.RENGOKU_HEADPIECE.get()) {
             return new RengokuUniformRenderer();
         }
@@ -100,7 +115,7 @@ public class ArmorRendererManager {
             return new RengokuUniformRenderer();
         }
 
-        // Tengen armor - each piece gets its own renderer instance
+        // Tengen armor
         if (item == NichirinItemRegistry.TENGEN_HEADPIECE.get()) {
             return new TengenUniformRenderer();
         }
@@ -114,6 +129,7 @@ public class ArmorRendererManager {
             return new TengenUniformRenderer();
         }
 
+        // Sabito armor
         if (item == NichirinItemRegistry.SABITO_HEADPIECE.get()) {
             return new SabitoUniformRenderer();
         }
@@ -127,7 +143,12 @@ public class ArmorRendererManager {
             return new SabitoUniformRenderer();
         }
 
-        // Default fallback - using the base renderer
-        return new NichirinArmorRenderer<>(new NichirinArmorModel<>("default_armor"));
+        // Default fallback
+        return new AzArmorRenderer(
+                AzArmorRendererConfig.builder(
+                        BreathOfNichirin.id("geo/default_armor.geo.json"),
+                        BreathOfNichirin.id("textures/armor/default_armor.png")
+                ).build()
+        );
     }
 }

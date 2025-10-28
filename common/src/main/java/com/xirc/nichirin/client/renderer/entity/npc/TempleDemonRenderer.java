@@ -1,22 +1,29 @@
 package com.xirc.nichirin.client.renderer.entity.npc;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.xirc.nichirin.client.model.entity.npc.TempleDemonModel;
+import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.common.entity.npc.TempleDemonEntity;
-import mod.azure.azurelib.renderer.GeoEntityRenderer;
+import mod.azure.azurelib.render.entity.AzEntityRenderer;
+import mod.azure.azurelib.render.entity.AzEntityRendererConfig;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * GeoEntityRenderer for TempleDemon
- * Note: Since we're using the moveset's animation system through performDemonAttack,
- * we don't need to manually manage animations here - they're handled by the attack system.
+ * AzEntityRenderer for TempleDemon without animations (static pose)
  */
-public class TempleDemonRenderer extends GeoEntityRenderer<TempleDemonEntity> {
+public class TempleDemonRenderer extends AzEntityRenderer<TempleDemonEntity> {
 
-    public TempleDemonRenderer(EntityRendererProvider.Context renderManager) {
-        super(renderManager, new TempleDemonModel());
+    private static final ResourceLocation GEO = new ResourceLocation(BreathOfNichirin.MOD_ID, "geo/temple_demon.geo.json");
+    private static final ResourceLocation TEX = new ResourceLocation(BreathOfNichirin.MOD_ID, "textures/entity/npc/temple_demon.png");
+
+    public TempleDemonRenderer(EntityRendererProvider.Context context) {
+        super(
+                AzEntityRendererConfig.<TempleDemonEntity>builder(GEO, TEX)
+                        .setAnimatorProvider(() -> null) // No animations
+                        .build(),
+                context
+        );
     }
 
     @Override
@@ -31,16 +38,14 @@ public class TempleDemonRenderer extends GeoEntityRenderer<TempleDemonEntity> {
             poseStack.scale(scale, scale, scale);
         }
 
-        // Call parent render method - AzureLib handles the GeoModel animations
-        // The entity's animation controller (registered in registerControllers) determines what plays
+        // Call parent render
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
 
         poseStack.popPose();
     }
 
     @Override
-    public ResourceLocation getTextureLocation(TempleDemonEntity animatable) {
-        // You can make this dynamic based on entity.getDemonType() if you have variants
-        return new ResourceLocation("nichirin", "textures/entity/npc/temple_demon.png");
+    public ResourceLocation getTextureLocation(TempleDemonEntity entity) {
+        return TEX;
     }
 }

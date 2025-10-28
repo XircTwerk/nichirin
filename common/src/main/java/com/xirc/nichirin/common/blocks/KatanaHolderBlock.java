@@ -3,10 +3,6 @@ package com.xirc.nichirin.common.blocks;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.registry.NichirinBlockEntityRegistry;
 import lombok.Getter;
-import mod.azure.azurelib.animatable.GeoBlockEntity;
-import mod.azure.azurelib.core.animatable.instance.AnimatableInstanceCache;
-import mod.azure.azurelib.core.animation.AnimatableManager;
-import mod.azure.azurelib.util.AzureLibUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -208,14 +204,12 @@ public class KatanaHolderBlock extends BaseEntityBlock {
         return null;
     }
 
-    public static class KatanaHolderBlockEntity extends BlockEntity implements GeoBlockEntity {
+    // ========== BLOCK ENTITY (NO AZURELIB) ==========
+    public static class KatanaHolderBlockEntity extends BlockEntity {
         private static final String KATANA_TAG = "StoredKatana";
-        private static final String DIRTY_FLAG_TAG = "DirtyFlag";
 
         @Getter
         private ItemStack storedKatana = ItemStack.EMPTY;
-        private final AnimatableInstanceCache cache = AzureLibUtil.createInstanceCache(this);
-        private boolean isDirty = false;
 
         public KatanaHolderBlockEntity(BlockPos pos, BlockState blockState) {
             super(NichirinBlockEntityRegistry.KATANA_HOLDER_BLOCK_ENTITY.get(), pos, blockState);
@@ -226,9 +220,6 @@ public class KatanaHolderBlock extends BaseEntityBlock {
                 this.storedKatana = katana.copy();
                 if (!katana.isEmpty()) {
                     this.storedKatana.setCount(1);
-                    isDirty = false;
-                } else {
-                    isDirty = true;
                 }
                 setChanged();
                 if (level != null && !level.isClientSide) {
@@ -240,18 +231,15 @@ public class KatanaHolderBlock extends BaseEntityBlock {
         public ItemStack removeKatana() {
             ItemStack result = storedKatana.copy();
             storedKatana = ItemStack.EMPTY;
-            isDirty = true;
             setChanged();
             if (level != null && !level.isClientSide) {
-                BlockState state = getBlockState();
-                level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_ALL);
-                setChanged();
+                syncToClient();
             }
             return result;
         }
 
         public boolean shouldRenderKatana() {
-            return !storedKatana.isEmpty() && !isDirty;
+            return !storedKatana.isEmpty();
         }
 
         public boolean hasKatana() {
@@ -276,7 +264,7 @@ public class KatanaHolderBlock extends BaseEntityBlock {
 
         @Override
         public void load(@NotNull CompoundTag tag) {
-            super.load(tag); // CRITICAL: Must be first
+            super.load(tag);
             if (tag.contains(KATANA_TAG)) {
                 storedKatana = ItemStack.of(tag.getCompound(KATANA_TAG));
             } else {
@@ -284,14 +272,12 @@ public class KatanaHolderBlock extends BaseEntityBlock {
             }
         }
 
-
         @Override
         protected void saveAdditional(@NotNull CompoundTag tag) {
-            super.saveAdditional(tag); // CRITICAL: Must be first
+            super.saveAdditional(tag);
             if (!storedKatana.isEmpty()) {
                 tag.put(KATANA_TAG, storedKatana.save(new CompoundTag()));
             }
-            tag.putBoolean(DIRTY_FLAG_TAG, isDirty);
         }
 
         @Override
@@ -300,22 +286,12 @@ public class KatanaHolderBlock extends BaseEntityBlock {
             if (!storedKatana.isEmpty()) {
                 tag.put(KATANA_TAG, storedKatana.save(new CompoundTag()));
             }
-            tag.putBoolean(DIRTY_FLAG_TAG, isDirty);
             return tag;
         }
 
         @Override
         public net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket getUpdatePacket() {
             return net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket.create(this);
-        }
-
-        @Override
-        public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        }
-
-        @Override
-        public AnimatableInstanceCache getAnimatableInstanceCache() {
-            return cache;
         }
     }
 }

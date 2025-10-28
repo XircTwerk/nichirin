@@ -3,10 +3,6 @@ package com.xirc.nichirin.common.blocks;
 import com.xirc.nichirin.common.item.tool.BentoBoxItem;
 import com.xirc.nichirin.registry.NichirinBlockEntityRegistry;
 import com.xirc.nichirin.registry.NichirinItemRegistry;
-import mod.azure.azurelib.animatable.GeoBlockEntity;
-import mod.azure.azurelib.core.animatable.instance.AnimatableInstanceCache;
-import mod.azure.azurelib.core.animation.AnimatableManager;
-import mod.azure.azurelib.util.AzureLibUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -37,6 +33,7 @@ import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,23 +59,23 @@ public class BentoBoxBlock extends BaseEntityBlock {
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+    public @NotNull VoxelShape getShape(@NotNull BlockState state, @NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull CollisionContext context) {
         return SHAPE;
     }
 
     @Override
-    public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.ENTITYBLOCK_ANIMATED;
+    public @NotNull RenderShape getRenderShape(@NotNull BlockState state) {
+        return RenderShape.MODEL;
     }
 
     // Use stripped oak log texture for break particles
     @Override
-    public ItemStack getCloneItemStack(BlockGetter level, BlockPos pos, BlockState state) {
+    public @NotNull ItemStack getCloneItemStack(@NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull BlockState state) {
         return new ItemStack(NichirinItemRegistry.BENTO_BOX.get());
     }
 
     @Override
-    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+    public @NotNull InteractionResult use(@NotNull BlockState state, Level level, @NotNull BlockPos pos, @NotNull Player player, @NotNull InteractionHand hand, @NotNull BlockHitResult hit) {
         if (level.isClientSide) {
             return InteractionResult.SUCCESS;
         }
@@ -123,7 +120,7 @@ public class BentoBoxBlock extends BaseEntityBlock {
     }
 
     @Override
-    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+    public void setPlacedBy(@NotNull Level level, @NotNull BlockPos pos, @NotNull BlockState state, @Nullable LivingEntity placer, @NotNull ItemStack stack) {
         super.setPlacedBy(level, pos, state, placer, stack);
 
         if (!level.isClientSide && stack.getItem() instanceof BentoBoxItem) {
@@ -137,21 +134,20 @@ public class BentoBoxBlock extends BaseEntityBlock {
 
     @Nullable
     @Override
-    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+    public BlockEntity newBlockEntity(@NotNull BlockPos pos, @NotNull BlockState state) {
         return new BentoBoxBlockEntity(pos, state);
     }
 
     @Nullable
     @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(@NotNull Level level, @NotNull BlockState state, @NotNull BlockEntityType<T> blockEntityType) {
         return null; // No ticking needed for static bento box
     }
 
     // Block Entity Implementation
-    public static class BentoBoxBlockEntity extends BlockEntity implements MenuProvider, GeoBlockEntity {
+    public static class BentoBoxBlockEntity extends BlockEntity implements MenuProvider {
         private static final int BENTO_SIZE = 9;
         private final SimpleContainer inventory;
-        private final AnimatableInstanceCache cache = AzureLibUtil.createInstanceCache(this);
 
         public BentoBoxBlockEntity(BlockPos pos, BlockState blockState) {
             super(NichirinBlockEntityRegistry.BENTO_BOX_BLOCK_ENTITY.get(), pos, blockState);
@@ -165,23 +161,23 @@ public class BentoBoxBlock extends BaseEntityBlock {
         }
 
         @Override
-        public Component getDisplayName() {
+        public @NotNull Component getDisplayName() {
             return Component.literal("Bento Box");
         }
 
         @Override
-        public AbstractContainerMenu createMenu(int syncId, Inventory playerInventory, Player player) {
+        public AbstractContainerMenu createMenu(int syncId, @NotNull Inventory playerInventory, @NotNull Player player) {
             return BentoBoxItem.createBlockMenu(syncId, playerInventory, inventory, this.worldPosition);
         }
 
         @Override
-        public void load(CompoundTag tag) {
+        public void load(@NotNull CompoundTag tag) {
             super.load(tag);
             BentoBoxItem.loadItemsFromNbt(tag, inventory);
         }
 
         @Override
-        protected void saveAdditional(CompoundTag tag) {
+        protected void saveAdditional(@NotNull CompoundTag tag) {
             super.saveAdditional(tag);
             BentoBoxItem.saveItemsToNbt(tag, inventory);
         }
@@ -200,17 +196,6 @@ public class BentoBoxBlock extends BaseEntityBlock {
 
         public Container getContainer() {
             return inventory;
-        }
-
-        // AzureLib methods (no animations)
-        @Override
-        public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-            // No animation controllers needed
-        }
-
-        @Override
-        public AnimatableInstanceCache getAnimatableInstanceCache() {
-            return cache;
         }
     }
 }

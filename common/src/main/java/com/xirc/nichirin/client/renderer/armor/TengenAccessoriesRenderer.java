@@ -1,159 +1,95 @@
 package com.xirc.nichirin.client.renderer.armor;
 
-import com.xirc.nichirin.client.model.NichirinArmorModel;
-import com.xirc.nichirin.common.item.armor.NichirinArmorItem;
-import com.xirc.nichirin.common.item.katana.SoundKatana;
-import mod.azure.azurelib.cache.object.GeoBone;
-import mod.azure.azurelib.util.RenderUtils;
-import net.minecraft.client.model.HumanoidModel;
-import net.minecraft.client.model.geom.ModelPart;
+import mod.azure.azurelib.model.AzBone;
 import net.minecraft.client.player.AbstractClientPlayer;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import org.jetbrains.annotations.Nullable;
+import net.minecraft.world.item.SwordItem;
 
-public class TengenAccessoriesRenderer extends NichirinArmorRenderer<NichirinArmorItem> {
+public class TengenAccessoriesRenderer extends NichirinArmorRenderer {
+
     public TengenAccessoriesRenderer() {
-        super(new NichirinArmorModel<>("tengen_accessories"));
+        super("tengen_accessories");
     }
 
     @Override
-    public GeoBone getHeadBone() {
-        return this.model.getBone("Head").orElse(super.getHeadBone());
-    }
-
-    @Nullable
-    @Override
-    public GeoBone getBodyBone() {
-        return this.model.getBone("Cape").orElse(super.getBodyBone());
-    }
-
-    @Nullable
-    @Override
-    public GeoBone getLeftArmBone() {
-        return this.model.getBone("CapeLeft").orElse(super.getLeftArmBone());
-    }
-
-    @Nullable
-    @Override
-    public GeoBone getRightArmBone() {
-        return this.model.getBone("CapeRight").orElse(super.getRightArmBone());
-    }
-
-    @Override
-    public void prepForRender(@Nullable Entity entity, ItemStack stack, @Nullable EquipmentSlot slot, @Nullable HumanoidModel<?> baseModel) {
-        super.prepForRender(entity, stack, slot, baseModel);
-    }
-
-    @Override
-    protected void applyBaseTransformations(HumanoidModel<?> baseModel) {
-        // FIRST: Apply base transformations
-        super.applyBaseTransformations(baseModel);
-
-        GeoBone cape = this.model.getBone("Cape").orElse(null);
-        GeoBone capeLeft = this.model.getBone("CapeLeft").orElse(null);
-        GeoBone capeRight = this.model.getBone("CapeRight").orElse(null);
-
-        // Get sword bones for visibility control
-        GeoBone sword1 = this.model.getBone("Sword").orElse(null);
-        GeoBone sword2 = this.model.getBone("Sword2").orElse(null);
-
-        // Check if player is dual-wielding sound katanas to hide swords
-        boolean hideSwords = false;
-        if (this.currentEntity instanceof Player player) {
-            hideSwords = SoundKatana.isPlayerDualWieldingSoundKatanas(player);
+    protected void applyBoneTransformations() {
+        if (!(currentEntity instanceof AbstractClientPlayer player)) {
+            return;
         }
 
-        // Apply positioning for all entities
-        if (cape != null) {
-            ModelPart bodyPart = baseModel.body;
-            RenderUtils.matchModelPartRot(bodyPart, cape);
-            cape.updatePosition(bodyPart.x, -bodyPart.y + 0.1875f, bodyPart.z);
+        boolean isSlim = isSlimPlayer(player);
+
+        if (currentBaseModel == null) return;
+
+        // Match body transformation
+        AzBone bodyBone = getBone("Body");
+        if (bodyBone != null) {
+            applyBodyTransform(bodyBone);
         }
 
-        if (capeLeft != null) {
-            ModelPart leftArmPart = baseModel.leftArm;
-            RenderUtils.matchModelPartRot(leftArmPart, capeLeft);
-            capeLeft.updatePosition(leftArmPart.x - 5f, 2f - leftArmPart.y + 0.1875f, leftArmPart.z);
-        }
+        // Match arm transformations
+        AzBone leftArm = getBone(isSlim ? "LeftArmSlim" : "LeftArm");
+        AzBone rightArm = getBone(isSlim ? "RightArmSlim" : "RightArm");
 
-        if (capeRight != null) {
-            ModelPart rightArmPart = baseModel.rightArm;
-            RenderUtils.matchModelPartRot(rightArmPart, capeRight);
-            capeRight.updatePosition(rightArmPart.x + 5f, 2f - rightArmPart.y + 0.1875f, rightArmPart.z);
-        }
-
-        // Hide swords if player is dual-wielding sound katanas
-        if (hideSwords) {
-            if (sword1 != null) {
-                sword1.setScaleX(0f);
-                sword1.setScaleY(0f);
-                sword1.setScaleZ(0f);
-            }
-            if (sword2 != null) {
-                sword2.setScaleX(0f);
-                sword2.setScaleY(0f);
-                sword2.setScaleZ(0f);
-            }
-        } else {
-            // Restore normal sword scaling
-            if (sword1 != null) {
-                sword1.setScaleX(1f);
-                sword1.setScaleY(1f);
-                sword1.setScaleZ(1f);
-            }
-            if (sword2 != null) {
-                sword2.setScaleX(1f);
-                sword2.setScaleY(1f);
-                sword2.setScaleZ(1f);
-            }
-        }
-
-        // Apply scaling based on player model type
-        if (this.currentEntity instanceof AbstractClientPlayer player) {
-            boolean isSlim = isSlimPlayer(player);
-
-            if (isSlim) {
-                if (capeLeft != null) {
-                    capeLeft.setScaleX(0.8f);
-                    capeLeft.setScaleY(1.15f);
-                    capeLeft.setScaleZ(1f);
-                }
-                if (capeRight != null) {
-                    capeRight.setScaleX(0.8f);
-                    capeRight.setScaleY(1.15f);
-                    capeRight.setScaleZ(1f);
-                }
-            } else {
-                if (capeLeft != null) {
-                    capeLeft.setScaleX(1f);
-                    capeLeft.setScaleY(1.15f);
-                    capeLeft.setScaleZ(1f);
-                }
-                if (capeRight != null) {
-                    capeRight.setScaleX(1f);
-                    capeRight.setScaleY(1.15f);
-                    capeRight.setScaleZ(1f);
-                }
-            }
-        }
+        applyArmTransform(leftArm, currentBaseModel.leftArm, true);
+        applyArmTransform(rightArm, currentBaseModel.rightArm, false);
     }
 
     @Override
-    protected void applyBoneVisibilityBySlot(EquipmentSlot currentSlot) {
+    protected void applyBoneVisibilityBySlot(EquipmentSlot slot) {
+        if (!(currentEntity instanceof AbstractClientPlayer player)) {
+            setAllVisible(false);
+            return;
+        }
+
+        boolean isSlim = isSlimPlayer(player);
+
+        // Set all bones invisible first
         setAllVisible(false);
 
-        if (currentSlot == EquipmentSlot.CHEST) {
-            setBoneVisible(this.model.getBone("Cape").orElse(null), true);
-            setBoneVisible(this.model.getBone("CapeLeft").orElse(null), true);
-            setBoneVisible(this.model.getBone("CapeRight").orElse(null), true);
-            setBoneVisible(this.model.getBone("Lower parts").orElse(null), true);
-
-            // Always make sword bones visible by default - scaling handles the hiding
-            setBoneVisible(this.model.getBone("Sword").orElse(null), true);
-            setBoneVisible(this.model.getBone("Sword2").orElse(null), true);
+        // Only show accessories in chest slot
+        if (slot != EquipmentSlot.CHEST) {
+            return;
         }
+
+        // Show body-based accessories
+        setBoneVisible(getBone("Body"), true);
+        setBoneVisible(getBone(isSlim ? "LeftArmSlim" : "LeftArm"), true);
+        setBoneVisible(getBone(isSlim ? "RightArmSlim" : "RightArm"), true);
+
+        // Check if player is holding swords to show/hide back swords
+        boolean hasMainHandSword = isSword(player.getMainHandItem());
+        boolean hasOffHandSword = isSword(player.getOffhandItem());
+
+        // Get back sword bones
+        AzBone leftBackSword = getBone("LeftBackSword");
+        AzBone rightBackSword = getBone("RightBackSword");
+
+        // Hide back swords if they're being held
+        if (hasMainHandSword && hasOffHandSword) {
+            // Both swords in hands - hide both back swords
+            setBoneVisible(leftBackSword, false);
+            setBoneVisible(rightBackSword, false);
+        } else if (hasMainHandSword) {
+            // One sword in main hand - hide right back sword
+            setBoneVisible(rightBackSword, false);
+            setBoneVisible(leftBackSword, true);
+        } else if (hasOffHandSword) {
+            // One sword in off hand - hide left back sword
+            setBoneVisible(leftBackSword, false);
+            setBoneVisible(rightBackSword, true);
+        } else {
+            // No swords in hands - show both back swords
+            setBoneVisible(leftBackSword, true);
+            setBoneVisible(rightBackSword, true);
+        }
+    }
+
+    /**
+     * Check if an item is a sword
+     */
+    private boolean isSword(ItemStack stack) {
+        return !stack.isEmpty() && stack.getItem() instanceof SwordItem;
     }
 }

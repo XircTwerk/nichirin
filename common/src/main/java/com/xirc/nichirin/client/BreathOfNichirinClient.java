@@ -7,6 +7,7 @@ import com.xirc.nichirin.client.handler.BigGuiKeyHandler;
 import com.xirc.nichirin.client.handler.ClientDoubleJumpHandler;
 import com.xirc.nichirin.client.handler.ComboClientHandler;
 import com.xirc.nichirin.client.particle.*;
+import com.xirc.nichirin.client.renderer.armor.ArmorRendererManager;
 import com.xirc.nichirin.client.shader.DeadCalmShaderEffect;
 import com.xirc.nichirin.client.shader.NichirinShaderManager;
 import com.xirc.nichirin.client.util.NPCAnimationClientHandler;
@@ -89,6 +90,11 @@ public class BreathOfNichirinClient {
         LOGGER.info("DEBUG: BreathOfNichirinClient.init() called");
 
         try {
+            // Register armor renderers EARLY - before anything else that might need them
+            LOGGER.info("Registering armor renderers...");
+            ArmorRendererManager.registerAll();
+            LOGGER.info("Armor renderers registered successfully");
+
             // Register client tick event to monitor player state
             ClientTickEvent.CLIENT_POST.register(minecraft -> {
                 if (minecraft.level != null) {

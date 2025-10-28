@@ -9,6 +9,7 @@ import mod.azure.azurelib.render.entity.AzEntityRendererConfig;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * The renderer for {@link BoarEntity}.
@@ -18,7 +19,7 @@ public class BoarEntityRenderer extends AzEntityRenderer<BoarEntity> {
     private static final ResourceLocation GEO = new ResourceLocation(BreathOfNichirin.MOD_ID, "geo/boar.geo.json");
     private static final ResourceLocation TEX = new ResourceLocation(BreathOfNichirin.MOD_ID, "textures/entity/boar.png");
 
-    public BoarEntityRenderer(final EntityRendererProvider.Context context) {
+    public BoarEntityRenderer(EntityRendererProvider.Context context) {
         super(
                 AzEntityRendererConfig.<BoarEntity>builder(GEO, TEX)
                         .setAnimatorProvider(BoarEntityAnimator::new)
@@ -28,23 +29,19 @@ public class BoarEntityRenderer extends AzEntityRenderer<BoarEntity> {
     }
 
     @Override
-    public ResourceLocation getTextureLocation(BoarEntity entity) {
+    public @NotNull ResourceLocation getTextureLocation(@NotNull BoarEntity entity) {
         return TEX;
     }
 
     @Override
     public void render(BoarEntity entity, float entityYaw, float partialTick,
                        PoseStack poseStack, MultiBufferSource bufferSource, int packedLight) {
-
         poseStack.pushPose();
-
-        // Make boar 1.25x bigger, but babies should be reasonable size
         if (entity.isBaby()) {
-            poseStack.scale(0.8f, 0.8f, 0.8f); // Bigger baby size
+            poseStack.scale(0.8f, 0.8f, 0.8f);
         } else {
             poseStack.scale(1.25f, 1.25f, 1.25f);
         }
-
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
         poseStack.popPose();
     }

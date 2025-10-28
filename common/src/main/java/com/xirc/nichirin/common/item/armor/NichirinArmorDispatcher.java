@@ -5,6 +5,10 @@ import mod.azure.azurelib.animation.play_behavior.AzPlayBehaviors;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 
+/**
+ * Dispatcher for triggering armor animations in AzureLib 3.x.
+ * Animations are now triggered via commands rather than controllers.
+ */
 public class NichirinArmorDispatcher {
 
     private static final AzCommand IDLE = AzCommand.create(
