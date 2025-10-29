@@ -11,7 +11,3 @@ accessible method net/minecraft/world/level/levelgen/feature/treedecorators/Tree
 # Shader stuff
 accessible field net/minecraft/client/renderer/PostChain passes Ljava/util/List;
 accessible method net/minecraft/client/renderer/GameRenderer getFov (Lnet/minecraft/client/Camera;FZ)D
-
-# AzureLib armor rendering
-accessible field mod/azure/azurelib/render/armor/AzArmorRenderer model Lmod/azure/azurelib/model/AzBakedModel;
-accessible method mod/azure/azurelib/model/AzBakedModel topLevelBones ()Ljava/util/List;
