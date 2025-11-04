@@ -1,7 +1,7 @@
-package com.xirc.nichirin.client.animator.entity;
+package com.xirc.nichirin.client.renderer.entity.animator;
 
 import com.xirc.nichirin.BreathOfNichirin;
-import com.xirc.nichirin.common.entity.BoarEntity;
+import com.xirc.nichirin.common.entity.animal.BoarEntity;
 import mod.azure.azurelib.animation.controller.AzAnimationController;
 import mod.azure.azurelib.animation.controller.AzAnimationControllerContainer;
 import mod.azure.azurelib.animation.impl.AzEntityAnimator;
@@ -18,7 +18,7 @@ public class BoarEntityAnimator extends AzEntityAnimator<BoarEntity> {
     @Override
     public void registerControllers(AzAnimationControllerContainer<BoarEntity> container) {
         container.add(
-                AzAnimationController.builder(this, "main_controller")
+                AzAnimationController.<BoarEntity>builder(this, "main_controller")
                         .build()
         );
     }

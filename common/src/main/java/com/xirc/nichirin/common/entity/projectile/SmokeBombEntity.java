@@ -1,4 +1,4 @@
-package com.xirc.nichirin.common.entity;
+package com.xirc.nichirin.common.entity.projectile;
 
 import com.xirc.nichirin.registry.NichirinEntityRegistry;
 import net.minecraft.core.particles.ParticleTypes;

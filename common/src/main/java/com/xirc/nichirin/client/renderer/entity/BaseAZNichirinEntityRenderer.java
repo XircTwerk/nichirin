@@ -6,11 +6,11 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 
-public abstract class BaseNichirinEntityRenderer<T extends Entity> extends AzEntityRenderer<T> {
+public abstract class BaseAZNichirinEntityRenderer<T extends Entity> extends AzEntityRenderer<T> {
 
     private final ResourceLocation textureLocation;
 
-    protected BaseNichirinEntityRenderer(AzEntityRendererConfig<T> config, EntityRendererProvider.Context context, ResourceLocation texture) {
+    protected BaseAZNichirinEntityRenderer(AzEntityRendererConfig<T> config, EntityRendererProvider.Context context, ResourceLocation texture) {
         super(config, context);
         this.textureLocation = texture;
     }

@@ -13,6 +13,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
+import com.xirc.nichirin.common.entity.MovesetCapableNPC;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.HashMap;
@@ -31,7 +32,7 @@ import java.util.UUID;
 public class FlameBreathingMoveset extends AbstractMoveset {
 
     // Track cooldowns per player per move
-    private static final Map<UUID, Map<Integer, Long>> playerCooldowns = new HashMap<>();
+    private static final Map<UUID, Map<Integer, Long>> entityCooldowns = new HashMap<>();
 
     // Track active attacks to prevent breath consumption on failed attempts
     private static final Map<UUID, Boolean> executingMove = new HashMap<>();
@@ -100,13 +101,13 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withHitStun(20)
                         .withHitboxSize(5f) // Larger for arc
                         .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
-                        .withAction(player -> {
+                        .withAction(entity -> {
                             RisingScorchingSunAttack attack = new RisingScorchingSunAttack();
                             FlameBreathingMoveset moveset = getCurrentMoveset();
                             if (moveset != null) {
                                 attack.configure(moveset.getMove(0));
                             }
-                            MoveExecutor.executeAttack(player, attack, "flame_breathing", "rising_scorching_sun");
+                            MoveExecutor.executeAttack(entity, attack, "flame_breathing", "rising_scorching_sun");
                         })
                 )
 
@@ -121,13 +122,13 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withHitStun(35)
                         .withHitboxSize(3.0f) // Large explosion hitbox
                         .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
-                        .withAction(player -> {
+                        .withAction(entity -> {
                             BlazingUniverseAttack attack = new BlazingUniverseAttack();
                             FlameBreathingMoveset moveset = getCurrentMoveset();
                             if (moveset != null) {
                                 attack.configure(moveset.getMove(1));
                             }
-                            MoveExecutor.executeAttack(player, attack, "flame_breathing", "blazing_universe");
+                            MoveExecutor.executeAttack(entity, attack, "flame_breathing", "blazing_universe");
                         })
                 )
 
@@ -142,13 +143,13 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withHitStun(15)
                         .withHitboxSize(3.5f) // Full radius
                         .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
-                        .withAction(player -> {
+                        .withAction(entity -> {
                             BloomingFlameUndulationAttack attack = new BloomingFlameUndulationAttack();
                             FlameBreathingMoveset moveset = getCurrentMoveset();
                             if (moveset != null) {
                                 attack.configure(moveset.getMove(2));
                             }
-                            MoveExecutor.executeAttack(player, attack, "flame_breathing", "blooming_flame_undulation");
+                            MoveExecutor.executeAttack(entity, attack, "flame_breathing", "blooming_flame_undulation");
                         })
                 )
 
@@ -164,13 +165,13 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withHitStun(10) // Short stun for combo potential
                         .withHitboxSize(2.0f)
                         .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
-                        .withAction(player -> {
+                        .withAction(entity -> {
                             FlameTigerAttack attack = new FlameTigerAttack();
                             FlameBreathingMoveset moveset = getCurrentMoveset();
                             if (moveset != null) {
                                 attack.configure(moveset.getMove(3));
                             }
-                            MoveExecutor.executeAttack(player, attack, "flame_breathing", "flame_tiger");
+                            MoveExecutor.executeAttack(entity, attack, "flame_breathing", "flame_tiger");
                         })
                 )
 
@@ -186,13 +187,13 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withHitStun(80) // 4 second stun
                         .withHitboxSize(4.0f) // Large dragon hitbox
                         .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
-                        .withAction(player -> {
+                        .withAction(entity -> {
                             RengokuAttack attack = new RengokuAttack();
                             FlameBreathingMoveset moveset = getCurrentMoveset();
                             if (moveset != null) {
                                 attack.configure(moveset.getMove(4));
                             }
-                            MoveExecutor.executeAttack(player, attack, "flame_breathing", "rengoku");
+                            MoveExecutor.executeAttack(entity, attack, "flame_breathing", "rengoku");
                         })
                 );
     }
@@ -213,7 +214,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
         }
     }
 
-    private boolean executePommelSlash(Player player) {
+    private boolean executePommelSlash(LivingEntity entity) {
         // Remove manual breath consumption - let attack system handle it
         PommelSlashAttack attack = new PommelSlashAttack();
 
@@ -222,7 +223,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
         MoveConfiguration tempConfig = getRightClickConfiguration();
 
         // Send config sync packet to client
-        if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+        if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer) {
             MovesetConfigSyncPacket packet = new MovesetConfigSyncPacket(
                     "flame_breathing",
                     this.getRightClickConfiguration(),
@@ -232,12 +233,12 @@ public class FlameBreathingMoveset extends AbstractMoveset {
         }
 
         attack.configure(tempConfig);
-        MoveExecutor.executeAttack(player, attack, "flame_breathing", "pommel_slash");
-        onMovePerformed(player, -1, false);
+        MoveExecutor.executeAttack(entity, attack, "flame_breathing", "pommel_slash");
+        onMovePerformed(entity, -1, false);
         return true;
     }
 
-    private boolean executeUnknowingFire(Player player) {
+    private boolean executeUnknowingFire(LivingEntity entity) {
         // Remove manual breath consumption - let attack system handle it
         UnknowingFireAttack attack = new UnknowingFireAttack();
 
@@ -246,7 +247,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
         MoveConfiguration tempConfig = getCrouchRightClickConfiguration();
 
         // Send config sync packet to client
-        if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+        if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer) {
             MovesetConfigSyncPacket packet = new MovesetConfigSyncPacket(
                     "flame_breathing",
                     this.getRightClickConfiguration(),
@@ -256,24 +257,24 @@ public class FlameBreathingMoveset extends AbstractMoveset {
         }
 
         attack.configure(tempConfig);
-        MoveExecutor.executeAttack(player, attack, "flame_breathing", "unknowing_fire_quick");
-        onMovePerformed(player, -2, true);
+        MoveExecutor.executeAttack(entity, attack, "flame_breathing", "unknowing_fire_quick");
+        onMovePerformed(entity, -2, true);
         return true;
     }
 
     @Override
-    public void performMove(Player player, int moveIndex) {
+    public void performMove(LivingEntity entity, int moveIndex) {
         // Check cooldown before allowing move
-        if (!canUseMove(player, moveIndex)) {
+        if (!canUseMove(entity, moveIndex)) {
             // Show cooldown message
             MoveConfiguration config = getMove(moveIndex);
             if (config != null) {
-                Map<Integer, Long> cooldowns = playerCooldowns.get(player.getUUID());
+                Map<Integer, Long> cooldowns = entityCooldowns.get(entity.getUUID());
                 if (cooldowns != null) {
                     Long cooldownEnd = cooldowns.get(moveIndex);
                     if (cooldownEnd != null) {
-                        long remaining = (cooldownEnd - player.level().getGameTime()) / 20;
-                        player.displayClientMessage(
+                        long remaining = (cooldownEnd - entity.level().getGameTime()) / 20;
+                        showMessage(entity,
                                 Component.literal(config.getDisplayName() + " on cooldown! " + remaining + "s remaining")
                                         .withStyle(style -> style.withColor(0xFF6600)), // Orange color for flame
                                 true
@@ -290,8 +291,8 @@ public class FlameBreathingMoveset extends AbstractMoveset {
             float breathCost = config.getBreathCostOrDefault(0.0f);
 
             // Add small buffer to prevent race conditions
-            if (breathCost > 0 && !BreathingManager.hasBreath(player, breathCost + 0.1f)) {
-                player.displayClientMessage(
+            if (breathCost > 0 && !hasEnoughBreath(entity, breathCost + 0.1f)) {
+                showMessage(entity,
                         Component.literal("Not enough breath for " + config.getDisplayName() + "!")
                                 .withStyle(style -> style.withColor(0xFF3333)), // Red for no breath
                         true
@@ -304,29 +305,29 @@ public class FlameBreathingMoveset extends AbstractMoveset {
         // and should work even without enemies nearby (unlike Thunder's targeted attacks)
 
         // Mark that we're executing a move
-        executingMove.put(player.getUUID(), true);
+        executingMove.put(entity.getUUID(), true);
 
         // Store current moveset instance for access by actions
         CURRENT_MOVESET.set(this);
 
         try {
             // Execute the move
-            super.performMove(player, moveIndex);
+            super.performMove(entity, moveIndex);
         } finally {
             // Always clean up the thread local
             CURRENT_MOVESET.remove();
         }
 
         // Check if move actually executed by seeing if breath was consumed
-        boolean moveExecuted = !executingMove.getOrDefault(player.getUUID(), false);
-        executingMove.remove(player.getUUID());
+        boolean moveExecuted = !executingMove.getOrDefault(entity.getUUID(), false);
+        executingMove.remove(entity.getUUID());
 
         if (moveExecuted && config != null) {
             // Set cooldown after successful execution
-            setMoveCooldown(player, moveIndex);
+            setMoveCooldown(entity, moveIndex);
 
             // Send cooldown display packet if on server and has cooldown
-            if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer
+            if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer
                     && config.getCooldownOrDefault(0) > 0) {
                 FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
                 buf.writeUtf(config.getDisplayName());
@@ -340,14 +341,14 @@ public class FlameBreathingMoveset extends AbstractMoveset {
     /**
      * Check if there are valid targets within range for crowd control moves
      */
-    private boolean hasTargetsInRange(Player player, float range) {
+    private boolean hasTargetsInRange(LivingEntity entity, float range) {
         net.minecraft.world.phys.AABB searchBox = new net.minecraft.world.phys.AABB(
-                player.getX() - range, player.getY() - range, player.getZ() - range,
-                player.getX() + range, player.getY() + range, player.getZ() + range
+                entity.getX() - range, entity.getY() - range, entity.getZ() - range,
+                entity.getX() + range, entity.getY() + range, entity.getZ() + range
         );
 
-        List<LivingEntity> entities = player.level().getEntitiesOfClass(LivingEntity.class, searchBox,
-                entity -> entity != player && entity.isAlive() && !entity.isSpectator());
+        List<LivingEntity> entities = entity.level().getEntitiesOfClass(LivingEntity.class, searchBox,
+                e -> e != entity && entity.isAlive() && !entity.isSpectator());
         return !entities.isEmpty();
     }
 
@@ -361,13 +362,13 @@ public class FlameBreathingMoveset extends AbstractMoveset {
     /**
      * Check if a player can use a specific move (not on cooldown)
      */
-    private boolean canUseMove(Player player, int moveIndex) {
+    private boolean canUseMove(LivingEntity entity, int moveIndex) {
         MoveConfiguration config = getMove(moveIndex);
         if (config == null || config.getCooldownOrDefault(0) <= 0) {
             return true; // No cooldown
         }
 
-        Map<Integer, Long> cooldowns = playerCooldowns.get(player.getUUID());
+        Map<Integer, Long> cooldowns = entityCooldowns.get(entity.getUUID());
         if (cooldowns == null) {
             return true; // No cooldowns tracked yet
         }
@@ -377,21 +378,21 @@ public class FlameBreathingMoveset extends AbstractMoveset {
             return true; // Move never used
         }
 
-        long currentTime = player.level().getGameTime();
+        long currentTime = entity.level().getGameTime();
         return currentTime >= cooldownEnd;
     }
 
     /**
      * Set a move on cooldown
      */
-    private void setMoveCooldown(Player player, int moveIndex) {
+    private void setMoveCooldown(LivingEntity entity, int moveIndex) {
         MoveConfiguration config = getMove(moveIndex);
         if (config == null || config.getCooldownOrDefault(0) <= 0) {
             return; // No cooldown
         }
 
-        long cooldownEnd = player.level().getGameTime() + config.getCooldownOrDefault(0);
-        playerCooldowns.computeIfAbsent(player.getUUID(), k -> new HashMap<>())
+        long cooldownEnd = entity.level().getGameTime() + config.getCooldownOrDefault(0);
+        entityCooldowns.computeIfAbsent(entity.getUUID(), k -> new HashMap<>())
                 .put(moveIndex, cooldownEnd);
     }
 
@@ -411,7 +412,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
     }
 
     @Override
-    public void onMovePerformed(Player player, int moveIndex, boolean isCrouching) {
+    public void onMovePerformed(LivingEntity entity, int moveIndex, boolean isCrouching) {
         // Flame Breathing specific post-move effects can be added here
         // moveIndex -1 = Pommel Slash (right-click)
         // moveIndex -2 = Unknowing Fire (crouch + right-click)
@@ -420,8 +421,32 @@ public class FlameBreathingMoveset extends AbstractMoveset {
     /**
      * Called when a player logs out - clean up their data
      */
-    public static void cleanupPlayer(Player player) {
-        playerCooldowns.remove(player.getUUID());
-        executingMove.remove(player.getUUID());
+    public static void cleanupPlayer(LivingEntity entity) {
+        entityCooldowns.remove(entity.getUUID());
+        executingMove.remove(entity.getUUID());
+    }
+
+    // ==================== NPC-PLAYER HELPER METHODS ====================
+
+    /**
+     * Check if entity has enough breath (works for both Players and NPCs)
+     */
+    private boolean hasEnoughBreath(LivingEntity entity, float amount) {
+        if (entity instanceof Player player) {
+            return BreathingManager.hasBreath(player, amount);
+        } else if (entity instanceof MovesetCapableNPC npc) {
+            return npc.getBreathGauge() >= amount;
+        }
+        return false;
+    }
+
+    /**
+     * Show message to entity (only works for Players)
+     */
+    private void showMessage(LivingEntity entity, Component message, boolean actionBar) {
+        if (entity instanceof Player player) {
+            showMessage(entity, message, actionBar);
+        }
+        // NPCs don't need messages
     }
 }

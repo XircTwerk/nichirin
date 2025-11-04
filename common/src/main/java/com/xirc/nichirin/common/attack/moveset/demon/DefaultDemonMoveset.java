@@ -3,6 +3,7 @@ package com.xirc.nichirin.common.attack.moveset.demon;
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.attack.moves.demon.basic.*;
+import com.xirc.nichirin.common.entity.MovesetCapableNPC;
 import com.xirc.nichirin.common.network.s2c.MovesetConfigSyncPacket;
 import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
 import com.xirc.nichirin.common.system.DemonManager;
@@ -15,6 +16,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
@@ -26,6 +28,7 @@ import java.util.UUID;
  * Default demon moveset available to all demons
  * Focuses on basic demonic abilities and blood mechanics
  * Now aligned with breathing moveset patterns while retaining demon-specific features
+ * REFACTORED: Works with both Players and NPCs (LivingEntity)
  *
  * Left-click: Gut Punch (high damage, zero knockback, high stun)
  * Right-click: Slash combo (2-stage combo system)
@@ -33,8 +36,8 @@ import java.util.UUID;
  */
 public class DefaultDemonMoveset extends AbstractMoveset {
 
-    // Track cooldowns per player per move (using base system now)
-    private static final Map<UUID, Map<Integer, Long>> playerCooldowns = new HashMap<>();
+    // Track cooldowns per entity per move - UNIFIED for Players and NPCs
+    private static final Map<UUID, Map<Integer, Long>> entityCooldowns = new HashMap<>();
 
     // Track active attacks to prevent resource consumption on failed attempts
     private static final Map<UUID, Boolean> executingMove = new HashMap<>();
@@ -42,13 +45,13 @@ public class DefaultDemonMoveset extends AbstractMoveset {
     // Immediate execution flags to prevent rapid-fire spam
     private static final Map<UUID, Boolean> executingHighJump = new HashMap<>();
 
-    // Manual combo system for slash
-    private static final Map<UUID, SlashComboState> playerSlashStates = new HashMap<>();
+    // Manual combo system for slash - works for both Players and NPCs
+    private static final Map<UUID, SlashComboState> entitySlashStates = new HashMap<>();
 
-    // Track high jump state per player - only allow stomp after high jump
+    // Track high jump state per entity - only allow stomp after high jump
     private static final Map<UUID, Boolean> canStompAfterHighJump = new HashMap<>();
 
-    // Simple flag to prevent high jump spam - resets when player lands
+    // Simple flag to prevent high jump spam - resets when entity lands
     private static final Map<UUID, Boolean> hasUsedHighJumpInAir = new HashMap<>();
 
     // Same-tick execution counters to prevent multiple calls in same game tick
@@ -160,13 +163,14 @@ public class DefaultDemonMoveset extends AbstractMoveset {
                         .withHitStun(25)
                         .withHitboxSize(2.0f)
                         .withDescription("Powerful front kick with high knockback and crowd control")
-                        .withAction(player -> {
+                        .withAction(entity -> {
+                            // FIXED: Works with LivingEntity instead of Player
                             DemonKickAttack kickAttack = new DemonKickAttack();
                             DefaultDemonMoveset moveset = getCurrentMoveset();
                             if (moveset != null) {
                                 kickAttack.configure(moveset.getMove(0));
                             }
-                            MoveExecutor.executeAttack(player, kickAttack, "default_demon", "demon_kick");
+                            MoveExecutor.executeAttack(entity, kickAttack, "default_demon", "demon_kick");
                         })
                 )
 
@@ -181,447 +185,436 @@ public class DefaultDemonMoveset extends AbstractMoveset {
                         .withHitStun(20)
                         .withHitboxSize(2)
                         .withDescription("Dash forward 4 blocks and deliver a devastating punch")
-                        .withAction(player -> {
+                        .withAction(entity -> {
+                            // FIXED: Works with LivingEntity instead of Player
                             DemonDashStrikeAttack dashStrikeAttack = new DemonDashStrikeAttack();
                             DefaultDemonMoveset moveset = getCurrentMoveset();
                             if (moveset != null) {
                                 dashStrikeAttack.configure(moveset.getMove(1));
                             }
-                            MoveExecutor.executeAttack(player, dashStrikeAttack, "default_demon", "dashing_strike");
+                            MoveExecutor.executeAttack(entity, dashStrikeAttack, "default_demon", "dashing_strike");
                         })
                 )
 
-                // Bite - Strong bite that steals blood (INDEX 2)
+                // Bite - Life steal attack (INDEX 2)
                 .withMove(new MoveBuilder("demon_bite", "Bite")
-                        .withAnimation("nichirin:demon_bite", 12)
-                        .withTiming(100, 16, 15) // 5 second cooldown, bite windup, 25 tick duration
-                        .withDamage(15.0f)
+                        .withAnimation("nichirin:demon_bite", 9)
+                        .withTiming(100, 5, 15) // 5 second cooldown, quick windup, 15 tick duration
+                        .withDamage(8.0f)
                         .withRange(2.0f)
-                        .withKnockback(0f)
-                        .withHitStun(30)
-                        .withHitboxSize(2f)
-                        .withDescription("Powerful bite that steals blood from enemies and deals high damage")
-                        .withAction(player -> {
+                        .withKnockback(0.1f)
+                        .withHitStun(20)
+                        .withHitboxSize(1.8f)
+                        .withDescription("Bite attack that heals you and adds blood points")
+                        .withAction(entity -> {
+                            // FIXED: Works with LivingEntity instead of Player
                             DemonBiteAttack biteAttack = new DemonBiteAttack();
                             DefaultDemonMoveset moveset = getCurrentMoveset();
                             if (moveset != null) {
                                 biteAttack.configure(moveset.getMove(2));
                             }
-                            MoveExecutor.executeAttack(player, biteAttack, "default_demon", "demon_bite");
+                            MoveExecutor.executeAttack(entity, biteAttack, "default_demon", "demon_bite");
                         })
                 );
     }
 
-    @Override
-    public int getMoveCount() {
-        return 3; // Kick, Dashing Strike, Bite
-    }
-
-    @Override
-    public boolean handleLeftClick(Player player) {
-        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
-            return true; // Block the move when stunned
-        }
-
-        // Execute gut punch attack (simple single hit with cooldown)
-        return executeGutPunch(player);
-    }
-
-    @Override
-    public boolean handleRightClick(Player player, boolean isCrouching) {
-        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
-            return true; // Block the move by overriding
-        }
-
-        if (isCrouching) {
-            // Crouch + Right-click: High Jump or Stomp
-            return executeHighJumpOrStomp(player);
-        } else {
-            // Regular Right-click: Slash combo system (index -1)
-            return executeSlashComboForClick(player, -1);
-        }
-    }
-
-    private boolean executeSlashComboForClick(Player player, int clickIndex) {
-        // Direct cooldown check without separate method to avoid compilation issues
-        Map<Integer, Long> cooldowns = playerCooldowns.get(player.getUUID());
-        if (cooldowns != null) {
-            Long cooldownEnd = cooldowns.get(clickIndex); // Use the passed index
-            if (cooldownEnd != null) {
-                long currentTime = player.level().getGameTime();
-                boolean onCooldown = currentTime < cooldownEnd;
-
-                if (onCooldown) {
-                    long remaining = (cooldownEnd - currentTime);
-                    player.displayClientMessage(
-                            Component.literal("Move on cooldown! " + (remaining / 20.0f) + "s remaining")
-                                    .withStyle(style -> style.withColor(0xFF5555)),
-                            true
-                    );
-                    return false;
-                }
-            }
-        }
-
-        SlashComboState comboState = playerSlashStates.computeIfAbsent(player.getUUID(), k -> new SlashComboState());
-
-        int nextStage;
-
-        if (comboState.currentStage == 0 || !comboState.canContinueCombo()) {
-            // Start new combo or restart if window expired
-            nextStage = 1;
-            comboState.reset();
-        } else {
-            // Continue existing combo
-            nextStage = comboState.currentStage + 1;
-        }
-
-        // Cap at stage 2 (2-hit combo)
-        if (nextStage > 2) {
-            comboState.reset();
-            nextStage = 1;
-        }
-
-        // Execute the appropriate stage
-        boolean success = executeSlashStage(player, nextStage, clickIndex);
-
-        if (success) {
-            comboState.currentStage = nextStage;
-            comboState.updateAttackTime();
-
-            // Set cooldown after final stage
-            if (nextStage == 2) {
-                setMoveCooldown(player, clickIndex, 15); // Use the passed index for cooldown
-
-                // Send cooldown display packet using utility
-                if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
-                    String moveName = clickIndex == -3 ? "Gut Punch" : "Slash";
-                    com.xirc.nichirin.common.network.util.CooldownDisplayPacket.sendToClient(serverPlayer, moveName, 15);
-                }
-                comboState.reset(); // Reset after final stage
-            }
-        }
-
-        return success;
-    }
-
-    private boolean executeGutPunch(Player player) {
-        // Check cooldown for gut punch (left-click uses index -3)
-        Map<Integer, Long> cooldowns = playerCooldowns.get(player.getUUID());
-        if (cooldowns != null) {
-            Long cooldownEnd = cooldowns.get(-3);
-            if (cooldownEnd != null) {
-                long currentTime = player.level().getGameTime();
-                boolean onCooldown = currentTime < cooldownEnd;
-
-                if (onCooldown) {
-                    long remaining = (cooldownEnd - currentTime);
-                    player.displayClientMessage(
-                            Component.literal("Move on cooldown! " + (remaining / 20.0f) + "s remaining")
-                                    .withStyle(style -> style.withColor(0xFF5555)),
-                            true
-                    );
-                    return false;
-                }
-            }
-        }
-
-        // Create and execute gut punch attack
-        DemonGutPunchAttack gutPunchAttack = new DemonGutPunchAttack();
-
-        // Get the left-click configuration
-        MoveConfiguration config = getLeftClickConfiguration();
-        if (config == null) {
-            // Fallback config if not found
-            config = new MoveBuilder("demon_gut_punch", "Gut Punch")
-                    .withDamage(8.0f)
-                    .withRange(1.5f)
-                    .withKnockback(0f)
-                    .withHitStun(20)
-                    .withHitboxSize(1.5f)
-                    .withTiming(20, 5, 1)
-                    .build();
-        }
-
-        // Configure and execute the attack
-        gutPunchAttack.configure(config);
-
-        if (config.animationId != null && player instanceof ServerPlayer serverPlayer) {
-            String animationName = config.animationId.getPath();
-            PlayerAnimationPacket packet = new PlayerAnimationPacket(serverPlayer.getId(), animationName);
-            NichirinPacketRegistry.sendToPlayer(packet, serverPlayer);
-        }
-
-        MoveExecutor.executeAttack(player, gutPunchAttack, "default_demon", "demon_gut_punch");
-
-        // Set cooldown
-        setMoveCooldown(player, -3, config.getCooldownOrDefault(20));
-
-        onMovePerformed(player, -3, false);
-        return true;
-    }
-
-    private boolean executeSlashStage(Player player, int stage, int clickIndex) {
-        DemonSlashAttack attack = new DemonSlashAttack();
-        attack.setSlashStage(stage);
-
-        // Different configurations for each stage
-        MoveConfiguration config = createSlashStageConfig(stage);
-
-        // AUTOMATIC ANIMATION HANDLING - Send animation packet
-        if (config.animationId != null && player instanceof ServerPlayer serverPlayer) {
-            String animationName = config.animationId.getPath();
-            PlayerAnimationPacket packet = new PlayerAnimationPacket(serverPlayer.getId(), animationName);
-            NichirinPacketRegistry.sendToPlayer(packet, serverPlayer);
-        }
-
-        // Sync to client
-        createAndCaptureSlashConfig();
-        if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
-            MovesetConfigSyncPacket packet = new MovesetConfigSyncPacket(
-                    "default_demon",
-                    this.getRightClickConfiguration(),
-                    this.getCrouchRightClickConfiguration()
-            );
-            NichirinPacketRegistry.sendToPlayer(packet, serverPlayer);
-        }
-
-        attack.configure(config);
-        MoveExecutor.executeAttack(player, attack, "default_demon", "demon_slash_stage_" + stage);
-        onMovePerformed(player, clickIndex, false); // Use the passed clickIndex
-
-        return true;
-    }
-
-    private MoveConfiguration createSlashStageConfig(int stage) {
-        switch (stage) {
-            case 1 -> {
-                return new MoveBuilder("demon_slash_1", "Slash")
-                        .withAnimation("nichirin:demon_slash", 6)
-                        .withTiming(0, 0, 20) // No cooldown, instant, 10 ticks duration
-                        .withDamage(4.0f)
-                        .withRange(3.0f)
-                        .withKnockback(0f) // No knockback for first hit
-                        .withHitStun(5)
-                        .withHitboxSize(2.0f)
-                        .build();
-            }
-            case 2 -> {
-                return new MoveBuilder("demon_slash_2", "Slash Followup")
-                        .withAnimation("nichirin:demon_slash_2", 6)
-                        .withTiming(0, 5, 20)
-                        .withDamage(4.0f) // Same damage
-                        .withRange(3.0f)
-                        .withKnockback(0.6f) // Higher knockback on second hit
-                        .withHitStun(5)
-                        .withHitboxSize(2.0f)
-                        .build();
-            }
-            default -> throw new IllegalArgumentException("Invalid stage: " + stage);
-        }
-    }
-
-    private boolean executeHighJumpOrStomp(Player player) {
-        if (player.onGround()) {
-            // Player is on ground - can always high jump (after cooldown)
-            return executeHighJump(player);
-        } else {
-            // Player is in air - check if they can stomp or high jump
-            if (canStompAfterHighJump.getOrDefault(player.getUUID(), false)) {
-                return executeStomp(player);
-            } else if (!hasUsedHighJumpInAir.getOrDefault(player.getUUID(), false)) {
-                // Can high jump in air if they haven't used it yet this air session
-                return executeHighJump(player);
-            }
-            return false;
-        }
-    }
-
-    private boolean executeHighJump(Player player) {
-        // Same-tick prevention check
-        long currentTick = player.level().getGameTime();
-        Long lastTick = lastHighJumpTick.get(player.getUUID());
-        if (lastTick != null && lastTick.equals(currentTick)) {
-            return false;
-        }
-
-        // Immediate execution flag check to prevent rapid-fire calls
-        boolean isExecuting = executingHighJump.getOrDefault(player.getUUID(), false);
-        if (isExecuting) {
-            return false;
-        }
-
-        // Direct cooldown check for high jump
-        Map<Integer, Long> cooldowns = playerCooldowns.get(player.getUUID());
-        if (cooldowns != null) {
-            Long cooldownEnd = cooldowns.get(-2);
-            if (cooldownEnd != null) {
-                long currentTime = player.level().getGameTime();
-                boolean onCooldown = currentTime < cooldownEnd;
-
-                if (onCooldown) {
-                    long remaining = (cooldownEnd - currentTime);
-                    player.displayClientMessage(
-                            Component.literal("Move on cooldown! " + (remaining / 20.0f) + "s remaining")
-                                    .withStyle(style -> style.withColor(0xFF5555)),
-                            true
-                    );
-                    return false;
-                }
-            }
-        }
-
-        // Record this tick to prevent same-tick re-execution
-        lastHighJumpTick.put(player.getUUID(), currentTick);
-
-        // SET EXECUTION FLAG IMMEDIATELY to block rapid-fire calls
-        executingHighJump.put(player.getUUID(), true);
-
-        // SET COOLDOWN IMMEDIATELY to prevent double execution
-        setMoveCooldown(player, -2, 100); // 5 second cooldown
-
-        // Send cooldown display packet using utility
-        if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
-            com.xirc.nichirin.common.network.util.CooldownDisplayPacket.sendToClient(serverPlayer, "High Jump", 100);
-        }
-
-        try {
-            // Mark as used if in air to prevent spam
-            if (!player.onGround()) {
-                hasUsedHighJumpInAir.put(player.getUUID(), true);
-            }
-
-            DemonHighJumpAttack highJumpAttack = new DemonHighJumpAttack();
-
-            // Use config without cooldown to prevent double cooldown
-            MoveConfiguration tempConfig = new MoveBuilder("high_jump", "High Jump")
-                    .withAnimation("nichirin:demon_high_jump", 8)
-                    .withTiming(0, 0, 5) // No cooldown here - we handle it manually
-                    .withDescription("Launch 5 blocks into the air, crouch right-click mid-air for stomp attack")
-                    .build();
-
-            // AUTOMATIC ANIMATION HANDLING - Send animation packet
-            if (tempConfig.animationId != null && player instanceof ServerPlayer serverPlayer) {
-                String animationName = tempConfig.animationId.getPath();
-                PlayerAnimationPacket packet = new PlayerAnimationPacket(serverPlayer.getId(), animationName);
-                NichirinPacketRegistry.sendToPlayer(packet, serverPlayer);
-            }
-
-            if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
-                MovesetConfigSyncPacket packet = new MovesetConfigSyncPacket(
-                        "default_demon",
-                        this.getRightClickConfiguration(),
-                        this.getCrouchRightClickConfiguration()
-                );
-                NichirinPacketRegistry.sendToPlayer(packet, serverPlayer);
-            }
-
-            highJumpAttack.configure(tempConfig);
-            MoveExecutor.executeAttack(player, highJumpAttack, "default_demon", "high_jump");
-
-            // Mark player as able to stomp after high jump
-            canStompAfterHighJump.put(player.getUUID(), true);
-
-            onMovePerformed(player, -2, true);
-            return true;
-
-        } finally {
-            // Always clear execution flag when done
-            executingHighJump.remove(player.getUUID());
-        }
-    }
-
-    private boolean executeStomp(Player player) {
-        DemonStompAttack stompAttack = new DemonStompAttack();
-
-        // Create stomp configuration
-        MoveConfiguration stompConfig = new MoveBuilder("demon_stomp", "Stomp")
-                .withAnimation("nichirin:demon_stomp", 10)
-                .withTiming(0, 0, 15)
-                .withDamage(20.0f) // High damage
-                .withRange(3.0f) // Area around landing
-                .withKnockback(0f) // No knockback, bury instead
-                .withHitStun(40) // Very high stun
-                .withHitboxSize(3.0f)
-                .build();
-
-        // AUTOMATIC ANIMATION HANDLING - Send animation packet
-        if (stompConfig.animationId != null && player instanceof ServerPlayer serverPlayer) {
-            String animationName = stompConfig.animationId.getPath();
-            PlayerAnimationPacket packet = new PlayerAnimationPacket(serverPlayer.getId(), animationName);
-            NichirinPacketRegistry.sendToPlayer(packet, serverPlayer);
-        }
-
-        stompAttack.configure(stompConfig);
-        MoveExecutor.executeAttack(player, stompAttack, "default_demon", "demon_stomp");
-
-        // Clear stomp ability after use
-        canStompAfterHighJump.remove(player.getUUID());
-
-        return true;
-    }
-
     /**
-     * Set a move on cooldown with custom cooldown time
+     * REFACTORED: Override left-click to support both Players and NPCs
      */
-    private void setMoveCooldown(Player player, int moveIndex, int cooldownTicks) {
-        long currentTime = player.level().getGameTime();
-        long cooldownEnd = currentTime + cooldownTicks;
-
-        playerCooldowns.computeIfAbsent(player.getUUID(), k -> new HashMap<>())
-                .put(moveIndex, cooldownEnd);
-    }
-
     @Override
-    public void performMove(Player player, int moveIndex) {
-        // Check cooldown before allowing move
-        if (!canUseMove(player, moveIndex)) {
-            // Show cooldown message
-            MoveConfiguration config = getMove(moveIndex);
-            if (config != null) {
-                Map<Integer, Long> cooldowns = playerCooldowns.get(player.getUUID());
+    public boolean handleLeftClick(LivingEntity entity) {
+        if (entity.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+            return true;
+        }
+
+        // Check cooldown
+        if (!canUseMove(entity, -3)) {
+            // Only show message for players
+            if (entity instanceof Player player) {
+                Map<Integer, Long> cooldowns = entityCooldowns.get(entity.getUUID());
                 if (cooldowns != null) {
-                    Long cooldownEnd = cooldowns.get(moveIndex);
+                    Long cooldownEnd = cooldowns.get(-3);
                     if (cooldownEnd != null) {
-                        long remaining = (cooldownEnd - player.level().getGameTime());
+                        long remaining = (cooldownEnd - entity.level().getGameTime());
                         player.displayClientMessage(
-                                Component.literal("Move on cooldown! " + (remaining / 20.0f) + "s remaining")
+                                Component.literal("Gut Punch on cooldown! " + (remaining / 20.0f) + "s remaining")
                                         .withStyle(style -> style.withColor(0xFF5555)),
                                 true
                         );
                     }
                 }
             }
+            return true;
+        }
+
+        MoveConfiguration gutPunchConfig = getLeftClickConfiguration();
+        if (gutPunchConfig == null) return false;
+
+        // Apply stun effect
+        applyMoveStun(entity, gutPunchConfig);
+
+        // Trigger animation (works for both Player and NPC)
+        if (gutPunchConfig.animationId != null) {
+            triggerAnimation(entity, gutPunchConfig.animationId.getPath());
+        }
+
+        // Execute gut punch attack
+        DemonGutPunchAttack gutPunchAttack = new DemonGutPunchAttack();
+        gutPunchAttack.configure(gutPunchConfig);
+        MoveExecutor.executeAttack(entity, gutPunchAttack, "default_demon", "demon_gut_punch");
+
+        // Set cooldown
+        setMoveCooldown(entity, -3, gutPunchConfig.getCooldownOrDefault(0));
+
+        // Send cooldown display for players
+        if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer
+                && gutPunchConfig.getCooldownOrDefault(0) > 0) {
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+            buf.writeUtf(gutPunchConfig.getDisplayName());
+            buf.writeInt(gutPunchConfig.getCooldownOrDefault(0));
+
+            NetworkManager.sendToPlayer(serverPlayer, new ResourceLocation("nichirin", "cooldown_display"), buf);
+        }
+
+        return true;
+    }
+
+    /**
+     * REFACTORED: Override right-click to support both Players and NPCs
+     */
+    @Override
+    public boolean handleRightClick(LivingEntity entity, boolean isCrouching) {
+        if (entity.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+            return true;
+        }
+
+        if (isCrouching) {
+            return handleCrouchRightClick(entity);
+        } else {
+            return handleSlashCombo(entity);
+        }
+    }
+
+    /**
+     * REFACTORED: Handle slash combo for both Players and NPCs
+     */
+    private boolean handleSlashCombo(LivingEntity entity) {
+        UUID entityUUID = entity.getUUID();
+        SlashComboState comboState = entitySlashStates.computeIfAbsent(entityUUID, k -> new SlashComboState());
+
+        // Check if combo window expired
+        if (!comboState.canContinueCombo()) {
+            comboState.reset();
+        }
+
+        int currentStage = comboState.currentStage;
+
+        // Stage 0: First slash (no cooldown check)
+        if (currentStage == 0) {
+            return executeSlashStage(entity, 0, comboState);
+        }
+        // Stage 1: Second slash (follow-up)
+        else if (currentStage == 1) {
+            return executeSlashStage(entity, 1, comboState);
+        }
+        // Stage 2: Combo complete, check cooldown for restart
+        else {
+            if (!canUseMove(entity, -1)) {
+                // Only show message for players
+                if (entity instanceof Player player) {
+                    Map<Integer, Long> cooldowns = entityCooldowns.get(entityUUID);
+                    if (cooldowns != null) {
+                        Long cooldownEnd = cooldowns.get(-1);
+                        if (cooldownEnd != null) {
+                            long remaining = (cooldownEnd - entity.level().getGameTime());
+                            player.displayClientMessage(
+                                    Component.literal("Slash on cooldown! " + (remaining / 20.0f) + "s remaining")
+                                            .withStyle(style -> style.withColor(0xFF5555)),
+                                    true
+                            );
+                        }
+                    }
+                }
+                return true;
+            }
+
+            // Reset combo and start fresh
+            comboState.reset();
+            return executeSlashStage(entity, 0, comboState);
+        }
+    }
+
+    /**
+     * Execute a specific slash stage
+     */
+    private boolean executeSlashStage(LivingEntity entity, int stage, SlashComboState comboState) {
+        MoveConfiguration slashConfig;
+        String animationId;
+
+        if (stage == 0) {
+            // First slash
+            slashConfig = new MoveBuilder("demon_slash_1", "Slash")
+                    .withAnimation("nichirin:demon_slash", 6)
+                    .withTiming(0, 0, 20)
+                    .withDamage(4.0f)
+                    .withRange(3.0f)
+                    .withKnockback(0f)
+                    .withHitStun(15)
+                    .withHitboxSize(2.0f)
+                    .build();
+            animationId = "nichirin:demon_slash";
+        } else {
+            // Second slash (stronger)
+            slashConfig = new MoveBuilder("demon_slash_2", "Slash Finisher")
+                    .withAnimation("nichirin:demon_slash_2", 7)
+                    .withTiming(60, 0, 25) // 3 second cooldown after second hit
+                    .withDamage(6.0f)
+                    .withRange(3.0f)
+                    .withKnockback(0.5f)
+                    .withHitStun(20)
+                    .withHitboxSize(2.2f)
+                    .build();
+            animationId = "nichirin:demon_slash_2";
+        }
+
+        // Apply stun
+        applyMoveStun(entity, slashConfig);
+
+        // Trigger animation (works for both Player and NPC)
+        triggerAnimation(entity, animationId);
+
+        // Execute slash attack
+        DemonSlashAttack slashAttack = new DemonSlashAttack();
+        slashAttack.configure(slashConfig);
+        MoveExecutor.executeAttack(entity, slashAttack, "default_demon", stage == 0 ? "demon_slash_1" : "demon_slash_2");
+
+        // Advance combo state
+        comboState.nextStage();
+
+        // Set cooldown only after second slash
+        if (stage == 1) {
+            setMoveCooldown(entity, -1, slashConfig.getCooldownOrDefault(0));
+
+            // Send cooldown display for players
+            if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer) {
+                FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+                buf.writeUtf("Slash");
+                buf.writeInt(slashConfig.getCooldownOrDefault(0));
+
+                NetworkManager.sendToPlayer(serverPlayer, new ResourceLocation("nichirin", "cooldown_display"), buf);
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * REFACTORED: Handle crouch + right-click (High Jump / Stomp) for both Players and NPCs
+     */
+    private boolean handleCrouchRightClick(LivingEntity entity) {
+        UUID entityUUID = entity.getUUID();
+
+        // Check if entity can stomp (mid-air after high jump)
+        if (canStompAfterHighJump.getOrDefault(entityUUID, false)) {
+            return executeStompAttack(entity);
+        }
+
+        // Otherwise, try to execute high jump
+        return executeHighJump(entity);
+    }
+
+    /**
+     * Execute high jump for both Players and NPCs
+     */
+    private boolean executeHighJump(LivingEntity entity) {
+        UUID entityUUID = entity.getUUID();
+
+        // Prevent spam in same tick
+        long currentTick = entity.level().getGameTime();
+        Long lastTick = lastHighJumpTick.get(entityUUID);
+        if (lastTick != null && lastTick == currentTick) {
+            return true;
+        }
+
+        // Check if already used in air
+        if (!entity.onGround() && hasUsedHighJumpInAir.getOrDefault(entityUUID, false)) {
+            return true;
+        }
+
+        // Check cooldown
+        if (!canUseMove(entity, -2)) {
+            // Only show message for players
+            if (entity instanceof Player player) {
+                Map<Integer, Long> cooldowns = entityCooldowns.get(entityUUID);
+                if (cooldowns != null) {
+                    Long cooldownEnd = cooldowns.get(-2);
+                    if (cooldownEnd != null) {
+                        long remaining = (cooldownEnd - entity.level().getGameTime());
+                        player.displayClientMessage(
+                                Component.literal("High Jump on cooldown! " + (remaining / 20.0f) + "s remaining")
+                                        .withStyle(style -> style.withColor(0xFF5555)),
+                                true
+                        );
+                    }
+                }
+            }
+            return true;
+        }
+
+        // Prevent double execution
+        if (executingHighJump.getOrDefault(entityUUID, false)) {
+            return true;
+        }
+
+        executingHighJump.put(entityUUID, true);
+        lastHighJumpTick.put(entityUUID, currentTick);
+
+        try {
+            MoveConfiguration highJumpConfig = getCrouchRightClickConfiguration();
+            if (highJumpConfig == null) return false;
+
+            // Apply stun
+            applyMoveStun(entity, highJumpConfig);
+
+            // Trigger animation (works for both Player and NPC)
+            if (highJumpConfig.animationId != null) {
+                triggerAnimation(entity, highJumpConfig.animationId.getPath());
+            }
+
+            // Launch entity upward
+            entity.setDeltaMovement(entity.getDeltaMovement().x, 1.5, entity.getDeltaMovement().z);
+            entity.hurtMarked = true;
+            entity.hasImpulse = true;
+
+            // Mark that high jump was used in air
+            hasUsedHighJumpInAir.put(entityUUID, true);
+
+            // Enable stomp ability
+            canStompAfterHighJump.put(entityUUID, true);
+
+            // Set cooldown
+            setMoveCooldown(entity, -2, highJumpConfig.getCooldownOrDefault(0));
+
+            // Send cooldown display for players
+            if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer) {
+                FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+                buf.writeUtf("High Jump");
+                buf.writeInt(highJumpConfig.getCooldownOrDefault(0));
+
+                NetworkManager.sendToPlayer(serverPlayer, new ResourceLocation("nichirin", "cooldown_display"), buf);
+            }
+
+            return true;
+
+        } finally {
+            executingHighJump.remove(entityUUID);
+        }
+    }
+
+    /**
+     * Execute stomp attack for both Players and NPCs
+     */
+    private boolean executeStompAttack(LivingEntity entity) {
+        UUID entityUUID = entity.getUUID();
+
+        MoveConfiguration stompConfig = new MoveBuilder("demon_stomp", "Stomp")
+                .withAnimation("nichirin:demon_stomp", 8)
+                .withTiming(0, 0, 15)
+                .withDamage(10.0f)
+                .withRange(4.0f)
+                .withKnockback(0.8f)
+                .withHitStun(30)
+                .withHitboxSize(3.0f)
+                .build();
+
+        // Apply stun
+        applyMoveStun(entity, stompConfig);
+
+        // Trigger animation for players
+        if (entity instanceof ServerPlayer serverPlayer) {
+            String animationName = stompConfig.animationId.getPath();
+            PlayerAnimationPacket packet = new PlayerAnimationPacket(serverPlayer.getId(), animationName);
+            NichirinPacketRegistry.sendToPlayer(packet, serverPlayer);
+        }
+        // Animation for NPCs is handled by triggerAnimation in applyMoveStun
+
+        // Execute stomp
+        DemonStompAttack stompAttack = new DemonStompAttack();
+        stompAttack.configure(stompConfig);
+        MoveExecutor.executeAttack(entity, stompAttack, "default_demon", "demon_stomp");
+
+        // Clear stomp ability after use
+        canStompAfterHighJump.remove(entityUUID);
+
+        return true;
+    }
+
+    /**
+     * Set a move on cooldown with custom cooldown time - UNIFIED for Players and NPCs
+     */
+    private void setMoveCooldown(LivingEntity entity, int moveIndex, int cooldownTicks) {
+        long currentTime = entity.level().getGameTime();
+        long cooldownEnd = currentTime + cooldownTicks;
+
+        entityCooldowns.computeIfAbsent(entity.getUUID(), k -> new HashMap<>())
+                .put(moveIndex, cooldownEnd);
+    }
+
+    /**
+     * REFACTORED: Override performMove to support both Players and NPCs
+     */
+    @Override
+    public void performMove(LivingEntity entity, int moveIndex) {
+        // Check cooldown before allowing move
+        if (!canUseMove(entity, moveIndex)) {
+            // Show cooldown message only for players
+            if (entity instanceof Player player) {
+                MoveConfiguration config = getMove(moveIndex);
+                if (config != null) {
+                    Map<Integer, Long> cooldowns = entityCooldowns.get(entity.getUUID());
+                    if (cooldowns != null) {
+                        Long cooldownEnd = cooldowns.get(moveIndex);
+                        if (cooldownEnd != null) {
+                            long remaining = (cooldownEnd - entity.level().getGameTime());
+                            player.displayClientMessage(
+                                    Component.literal("Move on cooldown! " + (remaining / 20.0f) + "s remaining")
+                                            .withStyle(style -> style.withColor(0xFF5555)),
+                                    true
+                            );
+                        }
+                    }
+                }
+            }
             return;
         }
 
-        // Demons don't require breath/blood - skip resource checks
+        // Demons don't require breath - skip resource checks
 
         // Mark that we're executing a move
-        executingMove.put(player.getUUID(), true);
+        executingMove.put(entity.getUUID(), true);
 
         // Store current moveset instance for access by actions
         CURRENT_MOVESET.set(this);
 
         try {
             // Execute the move (this will handle animations automatically)
-            super.performMove(player, moveIndex);
+            super.performMove(entity, moveIndex);
         } finally {
             // Always clean up the thread local
             CURRENT_MOVESET.remove();
         }
 
-        // Check if move actually executed by seeing if breath was consumed
-        boolean moveExecuted = !executingMove.getOrDefault(player.getUUID(), false);
-        executingMove.remove(player.getUUID());
+        // Check if move actually executed
+        boolean moveExecuted = !executingMove.getOrDefault(entity.getUUID(), false);
+        executingMove.remove(entity.getUUID());
 
         if (moveExecuted && getMove(moveIndex) != null) {
             MoveConfiguration config = getMove(moveIndex);
             // Set cooldown after successful execution
-            setMoveCooldown(player, moveIndex);
+            setMoveCooldown(entity, moveIndex);
 
-            // Send cooldown display packet if on server and has cooldown
-            if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer
+            // Send cooldown display packet if on server and entity is a player
+            if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer
                     && config.getCooldownOrDefault(0) > 0) {
                 FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
                 buf.writeUtf(config.getDisplayName());
@@ -640,15 +633,15 @@ public class DefaultDemonMoveset extends AbstractMoveset {
     }
 
     /**
-     * Check if a player can use a specific move (not on cooldown)
+     * Check if an entity can use a specific move (not on cooldown) - UNIFIED for Players and NPCs
      */
-    private boolean canUseMove(Player player, int moveIndex) {
+    private boolean canUseMove(LivingEntity entity, int moveIndex) {
         MoveConfiguration config = getMove(moveIndex);
         if (config == null || config.getCooldownOrDefault(0) <= 0) {
             return true; // No cooldown
         }
 
-        Map<Integer, Long> cooldowns = playerCooldowns.get(player.getUUID());
+        Map<Integer, Long> cooldowns = entityCooldowns.get(entity.getUUID());
         if (cooldowns == null) {
             return true; // No cooldowns tracked yet
         }
@@ -658,21 +651,21 @@ public class DefaultDemonMoveset extends AbstractMoveset {
             return true; // Move never used
         }
 
-        long currentTime = player.level().getGameTime();
+        long currentTime = entity.level().getGameTime();
         return currentTime >= cooldownEnd;
     }
 
     /**
-     * Set a move on cooldown
+     * Set a move on cooldown - UNIFIED for Players and NPCs
      */
-    private void setMoveCooldown(Player player, int moveIndex) {
+    private void setMoveCooldown(LivingEntity entity, int moveIndex) {
         MoveConfiguration config = getMove(moveIndex);
         if (config == null || config.getCooldownOrDefault(0) <= 0) {
             return; // No cooldown
         }
 
-        long cooldownEnd = player.level().getGameTime() + config.getCooldownOrDefault(0);
-        playerCooldowns.computeIfAbsent(player.getUUID(), k -> new HashMap<>())
+        long cooldownEnd = entity.level().getGameTime() + config.getCooldownOrDefault(0);
+        entityCooldowns.computeIfAbsent(entity.getUUID(), k -> new HashMap<>())
                 .put(moveIndex, cooldownEnd);
     }
 
@@ -713,26 +706,41 @@ public class DefaultDemonMoveset extends AbstractMoveset {
     }
 
     /**
-     * Simple tick method to reset high jump flag when player lands
-     * Call this every tick for demon players
+     * Simple tick method to reset high jump flag when entity lands - UNIFIED for Players and NPCs
+     * Call this every tick for demon entities
      */
-    public static void tickPlayer(Player player) {
-        // Reset high jump spam flag when player lands
-        if (player.onGround()) {
-            hasUsedHighJumpInAir.remove(player.getUUID());
+    public static void tickEntity(LivingEntity entity) {
+        // Reset high jump spam flag when entity lands
+        if (entity.onGround()) {
+            hasUsedHighJumpInAir.remove(entity.getUUID());
         }
     }
 
     /**
-     * Clean up demon-specific data when player disconnects
+     * Legacy player version for backwards compatibility
+     */
+    public static void tickPlayer(Player player) {
+        tickEntity(player);
+    }
+
+    /**
+     * Clean up demon-specific data when entity disconnects/is removed - UNIFIED
+     */
+    public static void cleanupEntity(LivingEntity entity) {
+        UUID entityUUID = entity.getUUID();
+        entityCooldowns.remove(entityUUID);
+        entitySlashStates.remove(entityUUID);
+        canStompAfterHighJump.remove(entityUUID);
+        hasUsedHighJumpInAir.remove(entityUUID);
+        executingMove.remove(entityUUID);
+        executingHighJump.remove(entityUUID);
+        lastHighJumpTick.remove(entityUUID);
+    }
+
+    /**
+     * Legacy player version for backwards compatibility
      */
     public static void cleanupPlayer(Player player) {
-        playerCooldowns.remove(player.getUUID());
-        playerSlashStates.remove(player.getUUID());
-        canStompAfterHighJump.remove(player.getUUID());
-        hasUsedHighJumpInAir.remove(player.getUUID());
-        executingMove.remove(player.getUUID());
-        executingHighJump.remove(player.getUUID());
-        lastHighJumpTick.remove(player.getUUID());
+        cleanupEntity(player);
     }
 }

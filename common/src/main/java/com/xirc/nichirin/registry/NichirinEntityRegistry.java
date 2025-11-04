@@ -1,10 +1,10 @@
 package com.xirc.nichirin.registry;
 
 import com.xirc.nichirin.BreathOfNichirin;
-import com.xirc.nichirin.common.entity.BoarEntity;
-import com.xirc.nichirin.common.entity.FlashBombEntity;
-import com.xirc.nichirin.common.entity.SmokeBombEntity;
-import com.xirc.nichirin.common.entity.ThunderBallEntity;
+import com.xirc.nichirin.common.entity.animal.BoarEntity;
+import com.xirc.nichirin.common.entity.projectile.FlashBombEntity;
+import com.xirc.nichirin.common.entity.projectile.SmokeBombEntity;
+import com.xirc.nichirin.common.entity.attack.ThunderBallEntity;
 import com.xirc.nichirin.common.entity.npc.TempleDemonEntity;
 import dev.architectury.registry.level.entity.EntityAttributeRegistry;
 import dev.architectury.registry.registries.DeferredRegister;

@@ -34,6 +34,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * Similar to AbstractBreathingAttack but for demon abilities - no breath/stamina costs.
  * Fixed hitbox system with proper positioning and no rotation issues.
  * Now includes blood restoration on successful hits (1 blood every 3 hits).
+ *
+ * REFACTORED: Now supports both Players and NPCs (uses LivingEntity)
  */
 @Getter
 @SuppressWarnings("rawtypes")
@@ -59,14 +61,14 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
     protected Float dashSpeed;
     protected Integer teleportWindup;
 
-    // Runtime state
+    // Runtime state - CHANGED FROM Player TO LivingEntity for NPC support
     protected boolean isActive = false;
     protected int tickCount = 0;
-    protected Player user;
+    protected LivingEntity user;  // FIXED: Changed from Player to LivingEntity
     protected Level world;
 
-    // Self-ticking system - attacks register themselves for automatic ticking
-    private static final ConcurrentHashMap<Player, List<AbstractDemonAttack<?, ?>>> selfTickingAttacks = new ConcurrentHashMap<>();
+    // Self-ticking system - CHANGED to use UUID instead of Player for NPC support
+    private static final ConcurrentHashMap<UUID, List<AbstractDemonAttack<?, ?>>> selfTickingAttacks = new ConcurrentHashMap<>();
 
     // Hit tracking
     @Setter
@@ -75,6 +77,28 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
     private int hitCount = 0;
     private int hitCountForBlood = 0; // Track hits for blood gain (every 3 hits)
     private int bloodGainedThisAttack = 0; // Track blood gained to enforce max
+
+    // ========== GETTERS (Lombok not working) ==========
+    public boolean isActive() { return isActive; }
+    public void setActive(boolean active) { this.isActive = active; }
+    public int getCooldown() { return cooldown; }
+    public int getDuration() { return duration; }
+    public int getHitStun() { return hitStun; }
+    public int getWindup() { return windup; }
+    public float getRange() { return range; }
+    public float getDamage() { return damage; }
+    public float getKnockback() { return knockback; }
+    public float getHitboxSize() { return hitboxSize; }
+    public Float getTeleportDistance() { return teleportDistance; }
+    public Float getDashSpeed() { return dashSpeed; }
+    public Integer getTeleportWindup() { return teleportWindup; }
+    public LivingEntity getUser() { return user; }
+    public Level getWorld() { return world; }
+    public int getTickCount() { return tickCount; }
+    public Set<UUID> getHitEntities() { return hitEntities; }
+    public int getHitCount() { return hitCount; }
+    public void setHitCount(int count) { this.hitCount = count; }
+    // ========== END GETTERS ==========
 
     // Configuration tracking
     private boolean configured = false;
@@ -112,16 +136,20 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
     }
 
     /**
-     * Start the attack - unified interface
+     * Start the attack - REFACTORED: Now works with LivingEntity (Players AND NPCs)
      */
-    public void start(Player user, Level world) {
+    public void start(LivingEntity user, Level world) {
         // CRITICAL: Check configuration first
         if (!configured) {
+            System.err.println("WARNING: Demon attack " + this.getClass().getSimpleName() +
+                    " not configured before start()");
             return;
         }
 
         // Validate only that duration exists (attacks need to run for some time)
         if (duration <= 0) {
+            System.err.println("WARNING: Demon attack " + this.getClass().getSimpleName() +
+                    " has invalid duration: " + duration);
             return;
         }
 
@@ -145,6 +173,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
         try {
             onStart();
         } catch (Exception e) {
+            System.err.println("ERROR in demon attack " + this.getClass().getSimpleName() + " onStart()");
             e.printStackTrace();
             // Clean up on error
             this.isActive = false;
@@ -153,18 +182,25 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
     }
 
     /**
-     * Legacy start method for backward compatibility
+     * Legacy start method for backward compatibility - Player version
      */
-    public void start(Player player) {
-        start(player, player.level());
+    public void start(Player player, Level world) {
+        start((LivingEntity) player, world);
     }
 
     /**
-     * Start with attacker interface
+     * Legacy start method for backward compatibility - Player only
+     */
+    public void start(Player player) {
+        start((LivingEntity) player, player.level());
+    }
+
+    /**
+     * Start with attacker interface - Player only
      */
     public void start(A attacker) {
         Player player = attacker.getPlayer();
-        start(player, player.level());
+        start((LivingEntity) player, player.level());
     }
 
     /**
@@ -175,8 +211,15 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
             return;
         }
 
-        // Check if user is still alive and a demon
-        if (!user.isAlive() || !DemonManager.isDemon(user)) {
+        // Check if user is still alive
+        if (!user.isAlive()) {
+            stop();
+            return;
+        }
+
+        // For players, check if they're still a demon
+        // For NPCs, just continue (they're always demons if they have demon moveset)
+        if (user instanceof Player player && !DemonManager.isDemon(player)) {
             stop();
             return;
         }
@@ -236,14 +279,21 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
         }
 
         // Apply damage using configured values
-        DamageSource source = user.damageSources().playerAttack(user);
+        DamageSource source;
+        if (user instanceof Player player) {
+            source = user.damageSources().playerAttack(player);
+        } else {
+            source = user.damageSources().mobAttack(user);
+        }
         boolean damaged = target.hurt(source, damage);
 
         if (damaged) {
-            // Add combo tracking for demon attacks
-            ComboIntegration.handleSuccessfulHit(user, target, hitStun, damage);
+            // Add combo tracking for demon attacks (only for players)
+            if (user instanceof Player player) {
+                ComboIntegration.handleSuccessfulHit(player, target, hitStun, damage);
+            }
 
-            // Handle blood restoration (1 blood every 3 hits)
+            // Handle blood restoration (1 blood every 3 hits) - ONLY for players
             handleBloodGain(target);
         }
 
@@ -286,14 +336,21 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
         target.hurtTime = 0;
 
         // Apply damage
-        DamageSource source = user.damageSources().playerAttack(user);
+        DamageSource source;
+        if (user instanceof Player player) {
+            source = user.damageSources().playerAttack(player);
+        } else {
+            source = user.damageSources().mobAttack(user);
+        }
         boolean damaged = target.hurt(source, damage);
 
         if (damaged) {
-            // Add combo tracking for demon attacks (no immunity version)
-            ComboIntegration.handleSuccessfulHit(user, target, hitStun, damage);
+            // Add combo tracking for demon attacks (no immunity version) - only for players
+            if (user instanceof Player player) {
+                ComboIntegration.handleSuccessfulHit(player, target, hitStun, damage);
+            }
 
-            // Handle blood restoration (1 blood every 3 hits)
+            // Handle blood restoration (1 blood every 3 hits) - ONLY for players
             handleBloodGain(target);
         }
 
@@ -326,9 +383,16 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
     /**
      * Handle blood gain from hitting targets
      * 1 blood every 3 hits, 3 blood on kill
+     * FIXED: Only works for Players (NPCs use their own blood system)
      */
     private void handleBloodGain(LivingEntity target) {
-        if (!DemonManager.isDemon(user) || bloodGainedThisAttack >= maxBloodPerAttack) {
+        // Only players have blood points managed by DemonManager
+        // NPCs have their own blood system through NPCResourceManager
+        if (!(user instanceof Player player)) {
+            return; // Skip blood gain for NPCs (handled by NPC system)
+        }
+
+        if (!DemonManager.isDemon(player) || bloodGainedThisAttack >= maxBloodPerAttack) {
             return;
         }
 
@@ -339,11 +403,11 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
             // Give 3 blood for killing
             int killBlood = Math.min(bloodOnKill, maxBloodPerAttack - bloodGainedThisAttack);
             if (killBlood > 0) {
-                DemonManager.addBloodPoints(user, killBlood);
+                DemonManager.addBloodPoints(player, killBlood);
                 bloodGainedThisAttack += killBlood;
 
                 // Send feedback message
-                if (user instanceof ServerPlayer serverPlayer) {
+                if (player instanceof ServerPlayer serverPlayer) {
                     serverPlayer.displayClientMessage(
                             Component.literal("§c+" + killBlood + " Blood (Kill)")
                                     .withStyle(style -> style.withColor(0xDC143C)),
@@ -357,12 +421,12 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
             if (hitCountForBlood >= hitsForBlood) {
                 int bloodToGain = Math.min(1, maxBloodPerAttack - bloodGainedThisAttack);
                 if (bloodToGain > 0) {
-                    DemonManager.addBloodPoints(user, bloodToGain);
+                    DemonManager.addBloodPoints(player, bloodToGain);
                     bloodGainedThisAttack += bloodToGain;
                     hitCountForBlood = 0; // Reset hit counter
 
                     // Send feedback message
-                    if (user instanceof ServerPlayer serverPlayer) {
+                    if (player instanceof ServerPlayer serverPlayer) {
                         serverPlayer.displayClientMessage(
                                 Component.literal("§c+" + bloodToGain + " Blood")
                                         .withStyle(style -> style.withColor(0xDC143C)),
@@ -525,13 +589,13 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
     }
 
     /**
-     * Create a hitbox at the configured range from the player
+     * Create a hitbox at the configured range from the user
      * FIXED: Uses simple positioning without rotation
      */
     protected List<LivingEntity> getTargetsAtRange() {
-        Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);
+        Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDirection = user.getLookAngle();
-        Vec3 hitboxCenter = playerPos.add(lookDirection.scale(range));
+        Vec3 hitboxCenter = userPos.add(lookDirection.scale(range));
 
         return getTargetsInHitbox(hitboxCenter);
     }
@@ -540,24 +604,24 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
      * Create a hitbox at the configured range with custom shape
      */
     protected List<LivingEntity> getTargetsAtRange(HitboxData.HitboxShape shape) {
-        Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);
+        Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDirection = user.getLookAngle();
-        Vec3 hitboxCenter = playerPos.add(lookDirection.scale(range));
+        Vec3 hitboxCenter = userPos.add(lookDirection.scale(range));
 
         return getTargetsInCustomHitbox(hitboxCenter, hitboxSize, shape);
     }
 
     /**
-     * Create multiple hitboxes from player to max range
+     * Create multiple hitboxes from user to max range
      * FIXED: Uses proper line detection
      */
     protected List<LivingEntity> getTargetsInRangeLine(float spacing) {
-        Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);
+        Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDirection = user.getLookAngle();
-        Vec3 endPos = playerPos.add(lookDirection.scale(range));
+        Vec3 endPos = userPos.add(lookDirection.scale(range));
 
         double thickness = Math.min(spacing, hitboxSize);
-        return getTargetsInLine(playerPos, endPos, thickness);
+        return getTargetsInLine(userPos, endPos, thickness);
     }
 
     /**
@@ -565,14 +629,14 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
      * FIXED: Uses angle-based detection instead of rotated hitboxes
      */
     protected List<LivingEntity> getTargetsInCone(float coneAngle, int hitboxCount) {
-        Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);
+        Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDirection = user.getLookAngle().normalize();
 
         // Use broader search area
         double searchRadius = range + hitboxSize;
         AABB searchArea = new AABB(
-                playerPos.x - searchRadius, playerPos.y - searchRadius, playerPos.z - searchRadius,
-                playerPos.x + searchRadius, playerPos.y + searchRadius, playerPos.z + searchRadius
+                userPos.x - searchRadius, userPos.y - searchRadius, userPos.z - searchRadius,
+                userPos.x + searchRadius, userPos.y + searchRadius, userPos.z + searchRadius
         );
 
         List<LivingEntity> potentialTargets = world.getEntitiesOfClass(LivingEntity.class, searchArea,
@@ -584,7 +648,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
 
         for (LivingEntity target : potentialTargets) {
             Vec3 targetPos = target.position().add(0, target.getBbHeight() / 2, 0);
-            Vec3 toTarget = targetPos.subtract(playerPos);
+            Vec3 toTarget = targetPos.subtract(userPos);
             double distance = toTarget.length();
 
             if (distance <= range && distance > 0) {
@@ -602,7 +666,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
         List<AABB> coneBoxes = new ArrayList<>();
         for (int i = 0; i < 5; i++) { // Just 5 visual segments
             double segmentRange = range * (i + 1) / 5.0;
-            Vec3 segmentCenter = playerPos.add(lookDirection.scale(segmentRange));
+            Vec3 segmentCenter = userPos.add(lookDirection.scale(segmentRange));
             double segmentSize = hitboxSize * (i + 1) / 5.0; // Growing cone
 
             AABB segmentBox = new AABB(
@@ -626,7 +690,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
     }
 
     /**
-     * Create a fan/sweep attack that covers an arc in front of the player
+     * Create a fan/sweep attack that covers an arc in front of the user
      */
     protected List<LivingEntity> getTargetsInSweep(float sweepAngle, float sweepRange, int hitboxCount) {
         return getTargetsInCone(sweepAngle, hitboxCount); // Reuse cone logic
@@ -636,24 +700,24 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
      * FIXED: Thrust attack using line detection
      */
     protected List<LivingEntity> getTargetsInThrust() {
-        Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);
+        Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDirection = user.getLookAngle();
-        Vec3 endPos = playerPos.add(lookDirection.scale(range));
+        Vec3 endPos = userPos.add(lookDirection.scale(range));
 
-        return getTargetsInLine(playerPos, endPos, hitboxSize);
+        return getTargetsInLine(userPos, endPos, hitboxSize);
     }
 
     /**
-     * Create a 360-degree circular attack around the player
+     * Create a 360-degree circular attack around the user
      * FIXED: Uses simple distance checking
      */
     protected List<LivingEntity> getTargetsInCircle(float radius, int hitboxCount) {
-        Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);
+        Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
         double searchRadius = radius + hitboxSize;
         AABB searchArea = new AABB(
-                playerPos.x - searchRadius, playerPos.y - searchRadius, playerPos.z - searchRadius,
-                playerPos.x + searchRadius, playerPos.y + searchRadius, playerPos.z + searchRadius
+                userPos.x - searchRadius, userPos.y - searchRadius, userPos.z - searchRadius,
+                userPos.x + searchRadius, userPos.y + searchRadius, userPos.z + searchRadius
         );
 
         List<LivingEntity> potentialTargets = world.getEntitiesOfClass(LivingEntity.class, searchArea,
@@ -663,7 +727,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
 
         for (LivingEntity target : potentialTargets) {
             Vec3 targetPos = target.position().add(0, target.getBbHeight() / 2, 0);
-            double distance = playerPos.distanceTo(targetPos);
+            double distance = userPos.distanceTo(targetPos);
 
             if (distance <= radius) {
                 validTargets.add(target);
@@ -672,8 +736,8 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
 
         // Simple circular visual representation
         AABB circleBox = new AABB(
-                playerPos.x - radius, playerPos.y - hitboxSize/2, playerPos.z - radius,
-                playerPos.x + radius, playerPos.y + hitboxSize/2, playerPos.z + radius
+                userPos.x - radius, userPos.y - hitboxSize/2, userPos.z - radius,
+                userPos.x + radius, userPos.y + hitboxSize/2, userPos.z + radius
         );
 
         if (user.level().isClientSide) {
@@ -754,11 +818,11 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
     }
 
     /**
-     * Register this attack for automatic ticking
+     * Register this attack for automatic ticking - USES UUID for NPC support
      */
     private void registerForTicking() {
         if (user != null) {
-            selfTickingAttacks.computeIfAbsent(user, k -> new ArrayList<>()).add(this);
+            selfTickingAttacks.computeIfAbsent(user.getUUID(), k -> new ArrayList<>()).add(this);
         }
     }
 
@@ -767,32 +831,35 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
      */
     private void unregisterFromTicking() {
         if (user != null) {
-            var attacks = selfTickingAttacks.get(user);
+            var attacks = selfTickingAttacks.get(user.getUUID());
             if (attacks != null) {
                 attacks.remove(this);
                 if (attacks.isEmpty()) {
-                    selfTickingAttacks.remove(user);
+                    selfTickingAttacks.remove(user.getUUID());
                 }
             }
         }
     }
 
     /**
-     * Tick all self-registered attacks - CALL THIS FROM YOUR MAIN TICK HANDLER
+     * Tick all self-registered attacks - REFACTORED for NPC support
      */
     public static void tickAllActiveAttacks(MinecraftServer server) {
         if (selfTickingAttacks.isEmpty()) {
             return;
         }
 
-        List<Player> playersToClean = new ArrayList<>();
+        List<UUID> uuidsToClean = new ArrayList<>();
 
         for (var entry : selfTickingAttacks.entrySet()) {
-            Player player = entry.getKey();
+            UUID entityUUID = entry.getKey();
             var attacks = entry.getValue();
 
-            if (player == null || !player.isAlive()) {
-                playersToClean.add(player);
+            // Find the entity by UUID (could be player or NPC)
+            LivingEntity entity = findEntityByUUID(server, entityUUID);
+
+            if (entity == null || !entity.isAlive()) {
+                uuidsToClean.add(entityUUID);
                 continue;
             }
 
@@ -807,6 +874,8 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
                             toRemove.add(attack);
                         }
                     } catch (Exception e) {
+                        System.err.println("Error ticking demon attack: " + e.getMessage());
+                        e.printStackTrace();
                         toRemove.add(attack);
                     }
                 }
@@ -816,17 +885,31 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
             }
         }
 
-        // Clean up disconnected players
-        for (Player player : playersToClean) {
-            selfTickingAttacks.remove(player);
+        // Clean up disconnected/dead entities
+        for (UUID uuid : uuidsToClean) {
+            selfTickingAttacks.remove(uuid);
         }
     }
 
     /**
-     * Clear all self-ticking attacks for a player (on disconnect, death, etc.)
+     * Helper method to find a LivingEntity by UUID across all levels
      */
-    public static void clearSelfTickingAttacks(Player player) {
-        var attacks = selfTickingAttacks.remove(player);
+    private static LivingEntity findEntityByUUID(MinecraftServer server, UUID entityUUID) {
+        for (var level : server.getAllLevels()) {
+            var entity = level.getEntity(entityUUID);
+            if (entity instanceof LivingEntity livingEntity) {
+                return livingEntity;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Clear all self-ticking attacks for a LivingEntity (on disconnect, death, etc.)
+     * REFACTORED: Now accepts LivingEntity for NPC support
+     */
+    public static void clearSelfTickingAttacks(LivingEntity entity) {
+        var attacks = selfTickingAttacks.remove(entity.getUUID());
         if (attacks != null) {
             for (var attack : attacks) {
                 try {
@@ -836,6 +919,13 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
                 }
             }
         }
+    }
+
+    /**
+     * Legacy Player version for backwards compatibility
+     */
+    public static void clearSelfTickingAttacks(Player player) {
+        clearSelfTickingAttacks((LivingEntity) player);
     }
 
     // Blood restoration configuration methods

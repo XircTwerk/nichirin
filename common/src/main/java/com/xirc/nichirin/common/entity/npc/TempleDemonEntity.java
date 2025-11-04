@@ -1,15 +1,9 @@
 package com.xirc.nichirin.common.entity.npc;
 
-import com.xirc.nichirin.common.attack.MoveExecutor;
+import com.xirc.nichirin.client.renderer.entity.dispatcher.TempleDemonDispatcher;
+import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.attack.moveset.demon.DefaultDemonMoveset;
-import com.xirc.nichirin.common.data.PlayerDataProvider;
-import com.xirc.nichirin.common.data.MovesetData;
-import com.xirc.nichirin.common.network.s2c.NPCAnimationPacket;
-import com.xirc.nichirin.registry.NichirinPacketRegistry;
-import net.minecraft.network.syncher.EntityDataAccessor;
-import net.minecraft.network.syncher.EntityDataSerializers;
-import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.server.level.ServerPlayer;
+import mod.azure.azurelib.util.MoveAnalysis;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -21,70 +15,48 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-
+/**
+ * Temple Demon with full moveset support and smart AI
+ * Configurable aggression, damage, and abilities
+ */
 public class TempleDemonEntity extends DemonNPCEntity {
 
-    private NPCPlayerWrapper playerWrapper;
-    private DefaultDemonMoveset demonMoveset;
-
-    private static final Map<UUID, Map<String, Long>> npcCooldowns = new HashMap<>();
-    private static final Map<UUID, String> lastUsedAttack = new HashMap<>();
-
-    // Add synced data for current animation
-    private static final EntityDataAccessor<String> CURRENT_ANIM =
-            SynchedEntityData.defineId(TempleDemonEntity.class, EntityDataSerializers.STRING);
-    private static final EntityDataAccessor<Integer> ANIM_START_TICK =
-            SynchedEntityData.defineId(TempleDemonEntity.class, EntityDataSerializers.INT);
+    public final TempleDemonDispatcher dispatcher;
+    public final MoveAnalysis moveAnalysis;
 
     public TempleDemonEntity(EntityType<? extends DemonNPCEntity> entityType, Level level) {
         super(entityType, level);
-        this.setDemonType("temple");
+        this.setDemonType("temple_demon");
+        this.dispatcher = new TempleDemonDispatcher(this);
+        this.moveAnalysis = new MoveAnalysis(this);
 
-        if (!level.isClientSide) {
-            initializeAttackSystem();
-        }
-    }
+        // Assign the demon moveset
+        this.setMoveset(new DefaultDemonMoveset());
 
-    @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(CURRENT_ANIM, "");
-        this.entityData.define(ANIM_START_TICK, 0);
-    }
+        // Configure Temple Demon properties (FULLY CUSTOMIZABLE)
+        this.maxBloodPoints = 15; // More blood than default
+        this.maxBreathGauge = 150.0f; // More breath for abilities
+        this.aggression = 0.9f; // 90% aggressive - very aggressive
+        this.damageMultiplier = 1.25f; // 25% more damage
+        this.attackSpeedMultiplier = 1.0f; // Normal attack speed
+        this.moveSpeedMultiplier = 1.0f; // Normal movement speed
+        this.canRegenBlood = true; // Can regenerate blood
+        this.bloodRegenMultiplier = 1.5f; // 50% faster blood regen
+        this.breathRegenMultiplier = 2.5f; // 150% faster breath regen
 
-    public String getCurrentPlayerAnimation() {
-        return this.entityData.get(CURRENT_ANIM);
-    }
-
-    public int getAnimationStartTick() {
-        return this.entityData.get(ANIM_START_TICK);
-    }
-
-    private void setCurrentPlayerAnimation(String animName) {
-        this.entityData.set(CURRENT_ANIM, animName);
-        this.entityData.set(ANIM_START_TICK, this.tickCount);
+        // Blacklist certain moves (example: disable move index 1 - Dashing Strike for balance)
+        // this.blacklistedMoves.add(1); // Uncomment to disable Dashing Strike
     }
 
     @Override
     protected String getDefaultDemonType() {
-        return "temple";
-    }
-
-    private void initializeAttackSystem() {
-        this.playerWrapper = new NPCPlayerWrapper(this);
-        this.demonMoveset = new DefaultDemonMoveset();
-
-        MovesetData data = PlayerDataProvider.getMovesetData(playerWrapper);
-        data.setDemonMovesetId("default_demon");
+        return "temple_demon";
     }
 
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
-        this.goalSelector.addGoal(1, new DemonMeleeAttackGoal(this, 1.2, true));
+        this.goalSelector.addGoal(1, new SmartDemonAttackGoal(this, 1.2, true));
         this.goalSelector.addGoal(2, new LookAtPlayerGoal(this, Player.class, 32.0f));
         this.goalSelector.addGoal(3, new WaterAvoidingRandomStrollGoal(this, 1.0));
         this.goalSelector.addGoal(4, new RandomLookAroundGoal(this));
@@ -97,105 +69,43 @@ public class TempleDemonEntity extends DemonNPCEntity {
 
     public static AttributeSupplier.Builder createAttributes() {
         return createDemonAttributes()
-                .add(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH, 80.0)
-                .add(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE, 10.0)
+                .add(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH, 100.0)
+                .add(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE, 12.0)
                 .add(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED, 0.3)
-                .add(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR, 6.0)
+                .add(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR, 8.0)
                 .add(net.minecraft.world.entity.ai.attributes.Attributes.FOLLOW_RANGE, 32.0)
                 .add(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_KNOCKBACK, 1.0);
     }
 
-    private boolean isOnNPCCooldown(String attackType) {
-        Map<String, Long> cooldowns = npcCooldowns.get(this.getUUID());
-        if (cooldowns == null) return false;
-
-        Long cooldownEnd = cooldowns.get(attackType);
-        if (cooldownEnd == null) return false;
-
-        return this.level().getGameTime() < cooldownEnd;
-    }
-
-    private void setNPCCooldown(String attackType, int ticks) {
-        Map<String, Long> cooldowns = npcCooldowns.computeIfAbsent(this.getUUID(), k -> new HashMap<>());
-        cooldowns.put(attackType, this.level().getGameTime() + ticks);
-    }
-
-    public void performDemonAttack(String attackType) {
-        if (playerWrapper == null || demonMoveset == null) return;
-
-        if (!this.level().isClientSide) {
-            if (isOnNPCCooldown(attackType)) return;
-
-            playerWrapper.syncWithNPC();
-            setNPCCooldown(attackType, 3);
-
-            switch (attackType) {
-                case "gut_punch" -> demonMoveset.handleLeftClick(playerWrapper);
-                case "slash" -> demonMoveset.handleRightClick(playerWrapper, false);
-                case "kick" -> demonMoveset.performMove(playerWrapper, 0);
-                case "dashing_strike" -> demonMoveset.performMove(playerWrapper, 1);
-                case "bite" -> demonMoveset.performMove(playerWrapper, 2);
-                case "high_jump" -> demonMoveset.handleRightClick(playerWrapper, true);
-            }
-
-            String animationName = mapAttackToAnimation(attackType);
-
-            // Set animation on entity (syncs to clients)
-            setAnimation(animationName, 1.0f);
-            setCurrentPlayerAnimation(animationName);
-
-            // Send packet to nearby players for PlayerAnimator
-            NPCAnimationPacket packet = NPCAnimationPacket.playAnimation(this.getId(), animationName);
-            this.level().players().stream()
-                    .filter(player -> player.distanceToSqr(this) < 64 * 64)
-                    .forEach(player -> {
-                        if (player instanceof ServerPlayer serverPlayer) {
-                            NichirinPacketRegistry.sendToPlayer(packet, serverPlayer);
-                        }
-                    });
-
-            lastUsedAttack.put(this.getUUID(), attackType);
-
-            System.out.println("Server: Performed attack " + attackType + " -> animation " + animationName);
-        }
-    }
-
-    private String mapAttackToAnimation(String attackType) {
-        return switch (attackType) {
-            case "gut_punch" -> "demon_gut_punch";
-            case "slash" -> "demon_slash";
-            case "kick" -> "demon_kick";
-            case "dashing_strike" -> "demon_dash_strike";
-            case "bite" -> "demon_bite";
-            case "high_jump" -> "demon_high_jump";
-            default -> attackType;
-        };
-    }
-
     @Override
-    protected void tickDemonSystems() {
-        if (playerWrapper != null) {
-            playerWrapper.syncWithNPC();
-            DefaultDemonMoveset.tickPlayer(playerWrapper);
-            MoveExecutor.tickAttacks(playerWrapper);
+    public void tick() {
+        super.tick();
+
+        if (this.level().isClientSide) {
+            moveAnalysis.update();
+            updateAnimations();
         }
     }
 
-    @Override
-    public void remove(RemovalReason reason) {
-        if (!this.level().isClientSide) {
-            if (playerWrapper != null) {
-                DefaultDemonMoveset.cleanupPlayer(playerWrapper);
-                MoveExecutor.clearAttacks(playerWrapper);
-            }
-            npcCooldowns.remove(this.getUUID());
-            lastUsedAttack.remove(this.getUUID());
+    private void updateAnimations() {
+        String currentAnim = getCurrentAnimation();
+
+        if (!currentAnim.isEmpty()) {
+            dispatcher.playAnimation(currentAnim);
+            return;
         }
 
-        super.remove(reason);
+        if (moveAnalysis.isMovingHorizontally()) {
+            dispatcher.walk();
+        } else {
+            dispatcher.idle();
+        }
     }
 
-    public static class DemonMeleeAttackGoal extends MeleeAttackGoal {
+    /**
+     * Smart AI goal that uses moveset moves with intelligent attack selection
+     */
+    public static class SmartDemonAttackGoal extends MeleeAttackGoal {
         private final TempleDemonEntity demon;
         private int attackCooldown = 0;
         private int ticksSinceLastAttack = 0;
@@ -203,7 +113,7 @@ public class TempleDemonEntity extends DemonNPCEntity {
         private double lastDistanceToTarget = 0;
         private int timesStuck = 0;
 
-        public DemonMeleeAttackGoal(TempleDemonEntity demon, double speedModifier, boolean followingTargetEvenIfNotSeen) {
+        public SmartDemonAttackGoal(TempleDemonEntity demon, double speedModifier, boolean followingTargetEvenIfNotSeen) {
             super(demon, speedModifier, followingTargetEvenIfNotSeen);
             this.demon = demon;
         }
@@ -221,6 +131,7 @@ public class TempleDemonEntity extends DemonNPCEntity {
             if (target != null && target.isAlive()) {
                 demon.getLookControl().setLookAt(target, 30.0F, 30.0F);
 
+                // Stuck detection
                 stuckCheckTimer++;
                 if (stuckCheckTimer >= 40) {
                     stuckCheckTimer = 0;
@@ -275,17 +186,26 @@ public class TempleDemonEntity extends DemonNPCEntity {
 
             double distance = Math.sqrt(distanceSquared);
 
+            // Check if looking at target
             if (!isLookingAtTarget(target)) {
                 return;
             }
 
-            if (attackCooldown <= 0 && ticksSinceLastAttack >= 3) {
+            // Attack cooldown with aggression modifier
+            int baseCooldown = 60; // 3 seconds base
+            int adjustedCooldown = (int) (baseCooldown * (1.0f - demon.getAggression() * 0.5f));
+
+            if (attackCooldown <= 0 && ticksSinceLastAttack >= adjustedCooldown) {
                 this.resetAttackCooldown();
 
-                String attack = selectSmartAttack(target, distance);
-                if (attack != null) {
-                    demon.performDemonAttack(attack);
-                    attackCooldown = 3;
+                // Select smart attack based on moveset
+                int moveIndex = selectSmartMovesetAttack(target, distance);
+
+                if (moveIndex != -1) {
+                    // Perform the moveset move
+                    demon.performMovesetMove(moveIndex);
+
+                    attackCooldown = adjustedCooldown;
                     ticksSinceLastAttack = 0;
                     timesStuck = 0;
                 }
@@ -299,49 +219,80 @@ public class TempleDemonEntity extends DemonNPCEntity {
             return dotProduct > 0.7;
         }
 
-        private String selectSmartAttack(LivingEntity target, double distance) {
+        /**
+         * SMART ATTACK SELECTION: Uses moveset configuration to pick best move
+         * Checks range, hitbox, breath cost, cooldown, and blacklist
+         */
+        private int selectSmartMovesetAttack(LivingEntity target, double distance) {
+            if (demon.getMoveset() == null) {
+                return -1;
+            }
+
             Vec3 targetVelocity = target.getDeltaMovement();
             boolean targetMoving = targetVelocity.horizontalDistanceSqr() > 0.01;
             boolean targetInAir = !target.onGround();
 
-            String lastAttack = lastUsedAttack.get(demon.getUUID());
+            // Get move count from moveset
+            int moveCount = demon.getMoveset().getMoveCount();
+
+            // Try moves in priority order based on situation
+            int[] priorityOrder = determinePriorityOrder(target, distance, targetMoving, targetInAir);
+
+            for (int moveIndex : priorityOrder) {
+                if (moveIndex >= moveCount) continue; // Skip invalid indices
+
+                // Check if can use this move
+                if (!demon.canUseMove(moveIndex)) {
+                    continue; // Skip if blacklisted, on cooldown, or not enough breath
+                }
+
+                AbstractMoveset.MoveConfiguration config = demon.getMoveset().getMove(moveIndex);
+                if (config == null) continue;
+
+                // Check if target is within range + hitbox
+                float moveRange = config.getRangeOrDefault(3.0f);
+                float hitboxSize = config.getHitboxSizeOrDefault(2.0f);
+                float totalReach = moveRange + hitboxSize;
+
+                if (distance <= totalReach) {
+                    // This move can hit! Return it
+                    return moveIndex;
+                }
+            }
+
+            // No suitable move found
+            return -1;
+        }
+
+        /**
+         * Determine priority order of moves based on situation
+         * Returns move indices in order of priority
+         */
+        private int[] determinePriorityOrder(LivingEntity target, double distance, boolean targetMoving, boolean targetInAir) {
+            // Default move indices for DefaultDemonMoveset:
+            // 0 = Kick
+            // 1 = Dashing Strike
+            // 2 = Bite
 
             if (distance <= 2.5) {
-                if (targetMoving && isTargetMovingAway(target)) {
-                    return "dashing_strike";
+                // Close range - prioritize kick and bite
+                if (target.getHealth() < target.getMaxHealth() * 0.4f) {
+                    return new int[]{2, 0, 1}; // Bite for healing, then kick, then dash
                 }
-                if (target.getHealth() < target.getMaxHealth() * 0.3f && demon.getHealth() < demon.getMaxHealth() * 0.7f) {
-                    return "bite";
-                }
-                if ("gut_punch".equals(lastAttack)) {
-                    return "slash";
-                } else if ("slash".equals(lastAttack)) {
-                    return "gut_punch";
-                }
-                return demon.random.nextBoolean() ? "gut_punch" : "slash";
-            }
-            else if (distance <= 5.0) {
+                return new int[]{0, 2, 1}; // Kick first, bite second, dash last
+            } else if (distance <= 5.0) {
+                // Medium range
                 if (targetInAir) {
-                    return "high_jump";
+                    return new int[]{1, 0, 2}; // Dash strike to close gap, kick, bite
                 }
-                if (!targetMoving && !"kick".equals(lastAttack)) {
-                    return "kick";
+                if (targetMoving && isTargetMovingAway(target)) {
+                    return new int[]{1, 0, 2}; // Dash strike to chase
                 }
-                if ("slash".equals(lastAttack)) {
-                    return "dashing_strike";
-                } else if ("dashing_strike".equals(lastAttack)) {
-                    return "slash";
-                }
-                return demon.random.nextBoolean() ? "slash" : "dashing_strike";
+                return new int[]{0, 1, 2}; // Kick, dash, bite
+            } else {
+                // Long range - prioritize gap closers
+                return new int[]{1, 0, 2}; // Dashing strike, kick, bite
             }
-            else if (distance <= 10.0) {
-                return "dashing_strike";
-            }
-            else if (distance <= 15.0) {
-                return "high_jump";
-            }
-
-            return null;
         }
 
         private boolean isTargetMovingAway(LivingEntity target) {
@@ -352,12 +303,14 @@ public class TempleDemonEntity extends DemonNPCEntity {
 
         @Override
         protected double getAttackReachSqr(LivingEntity target) {
+            // Large reach for checking, actual range is handled by moveset configs
             return 100.0;
         }
 
         @Override
         protected int getAttackInterval() {
-            return 3;
+            // Base interval, modified by aggression in checkAndPerformAttack
+            return 60;
         }
     }
 }

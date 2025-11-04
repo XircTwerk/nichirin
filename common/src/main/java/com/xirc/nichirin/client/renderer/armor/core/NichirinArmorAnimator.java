@@ -1,4 +1,4 @@
-package com.xirc.nichirin.client.animator;
+package com.xirc.nichirin.client.renderer.entity.animator;
 
 import com.xirc.nichirin.BreathOfNichirin;
 import mod.azure.azurelib.animation.controller.AzAnimationController;

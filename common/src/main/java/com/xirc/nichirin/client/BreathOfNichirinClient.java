@@ -1,6 +1,5 @@
 package com.xirc.nichirin.client;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.xirc.nichirin.client.animation.NichirinAnimations;
 import com.xirc.nichirin.client.handler.AttackWheelHandler;
 import com.xirc.nichirin.client.handler.BigGuiKeyHandler;
@@ -10,12 +9,11 @@ import com.xirc.nichirin.client.particle.*;
 import com.xirc.nichirin.client.renderer.armor.ArmorRendererManager;
 import com.xirc.nichirin.client.shader.DeadCalmShaderEffect;
 import com.xirc.nichirin.client.shader.NichirinShaderManager;
-import com.xirc.nichirin.client.util.NPCAnimationClientHandler;
 import com.xirc.nichirin.common.util.InputHandler;
 import com.xirc.nichirin.registry.NichirinKeybindRegistry;
-import com.xirc.nichirin.client.renderer.BreathingBarRenderer;
-import com.xirc.nichirin.client.renderer.StaminaBarRenderer;
-import com.xirc.nichirin.client.renderer.StanceBarRenderer;
+import com.xirc.nichirin.client.renderer.gui.BreathingBarRenderer;
+import com.xirc.nichirin.client.renderer.gui.StaminaBarRenderer;
+import com.xirc.nichirin.client.renderer.gui.StanceBarRenderer;
 import com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer;
 import com.xirc.nichirin.client.util.ClientInputTracker;
 import com.xirc.nichirin.client.util.ItemPropertiesHelper;
@@ -151,7 +149,6 @@ public class BreathOfNichirinClient {
             // Register handlers AFTER keybinds
             BigGuiKeyHandler.register();
             LOGGER.info("DEBUG: AttackWheelHandler.register() called");
-            NPCAnimationClientHandler.register();
             AttackWheelHandler.register();
             ClientDoubleJumpHandler.register();
             CooldownDisplayPacket.registerClient();

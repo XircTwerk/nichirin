@@ -1,4 +1,4 @@
-package com.xirc.nichirin.common.entity;
+package com.xirc.nichirin.common.entity.projectile;
 
 import com.xirc.nichirin.registry.NichirinEntityRegistry;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
@@ -12,7 +12,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;

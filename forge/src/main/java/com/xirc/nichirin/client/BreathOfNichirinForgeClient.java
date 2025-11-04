@@ -1,8 +1,11 @@
 package com.xirc.nichirin.client;
 
 import com.xirc.nichirin.client.particle.*;
-import com.xirc.nichirin.client.renderer.entity.*;
-import com.xirc.nichirin.client.renderer.*;
+import com.xirc.nichirin.client.renderer.block.KatanaHolderBlockRenderer;
+import com.xirc.nichirin.client.renderer.entity.animal.BoarEntityRenderer;
+import com.xirc.nichirin.client.renderer.entity.attack.ThunderBallRenderer;
+import com.xirc.nichirin.client.renderer.entity.projectile.FlashBombRenderer;
+import com.xirc.nichirin.client.renderer.entity.projectile.SmokeBombRenderer;
 import com.xirc.nichirin.client.util.ItemPropertiesHelper;
 import com.xirc.nichirin.registry.NichirinBlockEntityRegistry;
 import com.xirc.nichirin.registry.NichirinEntityRegistry;

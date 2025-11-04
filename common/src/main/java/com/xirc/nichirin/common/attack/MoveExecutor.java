@@ -5,7 +5,10 @@ import com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer;
 import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
 import com.xirc.nichirin.common.attack.component.AbstractDemonAttack;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
+import com.xirc.nichirin.common.entity.MovesetCapableNPC;
+import com.xirc.nichirin.common.system.NPCResourceManager;
 import com.xirc.nichirin.common.util.ComboTracker;
+import com.xirc.nichirin.common.util.BreathingManager;
 import com.xirc.nichirin.registry.NichirinMoveRegistry;
 import com.xirc.nichirin.registry.MovesetRegistry;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
@@ -16,24 +19,28 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.phys.Vec3;
 import com.mojang.blaze3d.vertex.PoseStack;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Unified attack executor - handles both breathing and demon attacks with the same logic
+ * Unified attack executor - handles both breathing and demon attacks for PLAYERS AND NPCs
  * Includes anti-spam detection, stun prevention, and hitbox debugging
+ * REFACTORED: Now accepts LivingEntity instead of just Player
  */
 public class MoveExecutor {
 
-    // Store active attacks - using thread-safe collections
-    private static final ConcurrentHashMap<Player, List<Object>> activeAttacks = new ConcurrentHashMap<>();
+    // Store active attacks - using thread-safe collections (UUID for both players and NPCs)
+    private static final ConcurrentHashMap<UUID, List<Object>> activeAttacks = new ConcurrentHashMap<>();
 
     // Packet ID for cooldown display
     private static final ResourceLocation COOLDOWN_PACKET_ID = new ResourceLocation("nichirin", "cooldown_display");
@@ -43,76 +50,88 @@ public class MoveExecutor {
 
     /**
      * Unified execute method for both breathing and demon attacks
+     * NOW WORKS WITH LIVINGENTITY (Players and NPCs)
      */
-    public static void executeAttack(Player player, Object attack, String movesetId, String moveId) {
-        // Check if player is currently stunned (prevents move stacking)
-        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+    public static void executeAttack(LivingEntity entity, Object attack, String movesetId, String moveId) {
+        // Check if entity is currently stunned (prevents move stacking)
+        if (entity.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
             return;
         }
 
         // Handle both breathing and demon attacks through unified interface
         if (attack instanceof AbstractBreathingAttack<?, ?> breathingAttack) {
-            handleAttack(player, breathingAttack, movesetId, moveId);
+            handleAttack(entity, breathingAttack, movesetId, moveId);
         } else if (attack instanceof AbstractDemonAttack<?, ?> demonAttack) {
-            handleAttack(player, demonAttack, movesetId, moveId);
+            handleAttack(entity, demonAttack, movesetId, moveId);
         } else {
             // Fallback for other attack types
-            handleGenericAttack(player, attack, movesetId, moveId);
+            handleGenericAttack(entity, attack, movesetId, moveId);
         }
+    }
+
+    /**
+     * LEGACY METHOD: Kept for backward compatibility with existing code
+     */
+    public static void executeAttack(Player player, Object attack, String movesetId, String moveId) {
+        executeAttack((LivingEntity) player, attack, movesetId, moveId);
     }
 
     /**
      * Unified handler for breathing attacks
      */
-    private static void handleAttack(Player player, AbstractBreathingAttack<?, ?> attack, String movesetId, String moveId) {
+    private static void handleAttack(LivingEntity entity, AbstractBreathingAttack<?, ?> attack, String movesetId, String moveId) {
         // Check if attack is already configured
         boolean alreadyConfigured = isAttackConfigured(attack);
 
         if (!alreadyConfigured) {
-            configureAttackFromMoveset(player, attack, movesetId, moveId);
+            configureAttackFromMoveset(entity, attack, movesetId, moveId);
         } else {
-            applyPreConfiguredEffects(player, attack, moveId);
+            applyPreConfiguredEffects(entity, attack, moveId);
         }
 
-        executeConfiguredAttack(player, attack, movesetId, moveId);
+        executeConfiguredAttack(entity, attack, movesetId, moveId);
     }
 
     /**
      * Unified handler for demon attacks
      */
-    private static void handleAttack(Player player, AbstractDemonAttack<?, ?> attack, String movesetId, String moveId) {
+    private static void handleAttack(LivingEntity entity, AbstractDemonAttack<?, ?> attack, String movesetId, String moveId) {
         // Check if attack is already configured
         boolean alreadyConfigured = isDemonAttackConfigured(attack);
 
         if (!alreadyConfigured) {
-            configureAttackFromMoveset(player, attack, movesetId, moveId);
+            configureAttackFromMoveset(entity, attack, movesetId, moveId);
         } else {
-            applyPreConfiguredDemonEffects(player, attack, moveId);
+            applyPreConfiguredDemonEffects(entity, attack, moveId);
         }
 
-        executeConfiguredAttack(player, attack, movesetId, moveId);
+        executeConfiguredAttack(entity, attack, movesetId, moveId);
     }
 
     /**
      * Configure attack using moveset configuration
      */
-    private static void configureAttackFromMoveset(Player player, Object attack, String movesetId, String moveId) {
+    private static void configureAttackFromMoveset(LivingEntity entity, Object attack, String movesetId, String moveId) {
         AbstractMoveset moveset = MovesetRegistry.getMoveset(movesetId);
         if (moveset == null) return;
 
         AbstractMoveset.MoveConfiguration config = findMoveConfig(moveset, moveId);
         if (config == null) return;
 
-        // Apply anti-spam detection to hitstun
+        // Apply anti-spam detection to hitstun (ONLY for players)
         int originalHitStun = config.getHitStunOrDefault(0);
-        int modifiedHitStun = ComboTracker.getModifiedHitStun(player, moveId, originalHitStun);
+        int modifiedHitStun = originalHitStun;
+
+        if (entity instanceof Player player) {
+            modifiedHitStun = ComboTracker.getModifiedHitStun(player, moveId, originalHitStun);
+        }
 
         if (modifiedHitStun != originalHitStun) {
             config = createModifiedConfig(config, modifiedHitStun);
         }
 
         // Apply stun effect to prevent move stacking
-        applyMoveStun(player, config);
+        applyMoveStun(entity, config);
 
         // Configure the attack
         if (attack instanceof AbstractBreathingAttack<?, ?> breathingAttack) {
@@ -125,31 +144,35 @@ public class MoveExecutor {
     /**
      * Apply effects for pre-configured breathing attacks
      */
-    private static void applyPreConfiguredEffects(Player player, AbstractBreathingAttack<?, ?> attack, String moveId) {
-        // Apply anti-spam detection
-        int originalHitStun = attack.getHitStun();
-        ComboTracker.getModifiedHitStun(player, moveId, originalHitStun);
+    private static void applyPreConfiguredEffects(LivingEntity entity, AbstractBreathingAttack<?, ?> attack, String moveId) {
+        // Apply anti-spam detection (ONLY for players)
+        if (entity instanceof Player player) {
+            int originalHitStun = attack.getHitStun();
+            ComboTracker.getModifiedHitStun(player, moveId, originalHitStun);
+        }
 
         // Apply stun effect
-        applyPreConfiguredMoveStun(player, attack);
+        applyPreConfiguredMoveStun(entity, attack);
     }
 
     /**
      * Apply effects for pre-configured demon attacks
      */
-    private static void applyPreConfiguredDemonEffects(Player player, AbstractDemonAttack<?, ?> attack, String moveId) {
-        // Apply anti-spam detection
-        int originalHitStun = getHitStunFromAttack(attack);
-        ComboTracker.getModifiedHitStun(player, moveId, originalHitStun);
+    private static void applyPreConfiguredDemonEffects(LivingEntity entity, AbstractDemonAttack<?, ?> attack, String moveId) {
+        // Apply anti-spam detection (ONLY for players)
+        if (entity instanceof Player player) {
+            int originalHitStun = getHitStunFromAttack(attack);
+            ComboTracker.getModifiedHitStun(player, moveId, originalHitStun);
+        }
 
         // Apply stun effect
-        applyPreConfiguredDemonMoveStun(player, attack);
+        applyPreConfiguredDemonMoveStun(entity, attack);
     }
 
     /**
      * Execute the configured attack
      */
-    private static void executeConfiguredAttack(Player player, Object attack, String movesetId, String moveId) {
+    private static void executeConfiguredAttack(LivingEntity entity, Object attack, String movesetId, String moveId) {
         // Get display name from registry
         NichirinMoveRegistry.MoveInfo moveInfo = NichirinMoveRegistry.getMove(movesetId, moveId);
         String displayName = moveInfo != null ? moveInfo.displayName : attack.getClass().getSimpleName();
@@ -158,33 +181,40 @@ public class MoveExecutor {
         int cooldown = getCooldownForAttack(attack);
 
         // Execute the attack
-        executeAttackInternal(player, attack, displayName, cooldown);
+        executeAttackInternal(entity, attack, displayName, cooldown);
     }
 
     /**
      * Fallback for generic attack types
      */
-    private static void handleGenericAttack(Player player, Object attack, String movesetId, String moveId) {
+    private static void handleGenericAttack(LivingEntity entity, Object attack, String movesetId, String moveId) {
         // Basic execution for unknown attack types
         String displayName = attack.getClass().getSimpleName();
         int cooldown = getCooldownForAttack(attack);
-        executeAttackInternal(player, attack, displayName, cooldown);
+        executeAttackInternal(entity, attack, displayName, cooldown);
     }
 
     /**
      * Execute attack with visual hitbox debugging
      */
-    public static void executeAttackWithVisuals(Player player, Object attack, String movesetId, String moveId) {
-        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+    public static void executeAttackWithVisuals(LivingEntity entity, Object attack, String movesetId, String moveId) {
+        if (entity.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
             return;
         }
 
-        // Clear existing hitboxes for clean visuals
-        if (player.level().isClientSide) {
+        // Clear existing hitboxes for clean visuals (client-side only)
+        if (entity.level().isClientSide) {
             AttackHitboxRenderer.clearAll();
         }
 
-        executeAttack(player, attack, movesetId, moveId);
+        executeAttack(entity, attack, movesetId, moveId);
+    }
+
+    /**
+     * LEGACY METHOD: Kept for backward compatibility
+     */
+    public static void executeAttackWithVisuals(Player player, Object attack, String movesetId, String moveId) {
+        executeAttackWithVisuals((LivingEntity) player, attack, movesetId, moveId);
     }
 
     /**
@@ -224,7 +254,7 @@ public class MoveExecutor {
     /**
      * Apply stun effect during move execution to prevent stacking
      */
-    private static void applyMoveStun(Player player, AbstractMoveset.MoveConfiguration config) {
+    private static void applyMoveStun(LivingEntity entity, AbstractMoveset.MoveConfiguration config) {
         int windupTicks = config.getWindupOrDefault(0);
         int durationTicks = config.getDurationOrDefault(0);
         int totalStunTicks = windupTicks + durationTicks;
@@ -238,14 +268,14 @@ public class MoveExecutor {
                     false,
                     false
             );
-            player.addEffect(stunEffect);
+            entity.addEffect(stunEffect);
         }
     }
 
     /**
      * Apply stun effect for pre-configured breathing attacks
      */
-    private static void applyPreConfiguredMoveStun(Player player, AbstractBreathingAttack<?, ?> attack) {
+    private static void applyPreConfiguredMoveStun(LivingEntity entity, AbstractBreathingAttack<?, ?> attack) {
         int windupTicks = getWindupFromAttack(attack);
         if (windupTicks > 0) {
             MobEffectInstance stunEffect = new MobEffectInstance(
@@ -256,14 +286,14 @@ public class MoveExecutor {
                     false,
                     false
             );
-            player.addEffect(stunEffect);
+            entity.addEffect(stunEffect);
         }
     }
 
     /**
      * Apply stun effect for pre-configured demon attacks
      */
-    private static void applyPreConfiguredDemonMoveStun(Player player, AbstractDemonAttack<?, ?> attack) {
+    private static void applyPreConfiguredDemonMoveStun(LivingEntity entity, AbstractDemonAttack<?, ?> attack) {
         int windupTicks = getWindupFromAttack(attack);
         if (windupTicks > 0) {
             MobEffectInstance stunEffect = new MobEffectInstance(
@@ -274,7 +304,7 @@ public class MoveExecutor {
                     false,
                     false
             );
-            player.addEffect(stunEffect);
+            entity.addEffect(stunEffect);
         }
     }
 
@@ -315,25 +345,32 @@ public class MoveExecutor {
     /**
      * Execute an attack with explicit name and cooldown
      */
-    public static void executeAttackWithInfo(Player player, Object attack, String displayName, int cooldown) {
-        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+    public static void executeAttackWithInfo(LivingEntity entity, Object attack, String displayName, int cooldown) {
+        if (entity.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
             return;
         }
-        executeAttackInternal(player, attack, displayName, cooldown);
+        executeAttackInternal(entity, attack, displayName, cooldown);
+    }
+
+    /**
+     * LEGACY METHOD: Kept for backward compatibility
+     */
+    public static void executeAttackWithInfo(Player player, Object attack, String displayName, int cooldown) {
+        executeAttackWithInfo((LivingEntity) player, attack, displayName, cooldown);
     }
 
     /**
      * Internal execution method
      */
-    private static void executeAttackInternal(Player player, Object attack, String displayName, int cooldown) {
+    private static void executeAttackInternal(LivingEntity entity, Object attack, String displayName, int cooldown) {
         if (!isAttackActive(attack)) {
-            startAttack(player, attack);
+            startAttack(entity, attack);
 
             if (isAttackActive(attack)) {
-                trackAttack(player, attack);
+                trackAttack(entity, attack);
 
-                // Send cooldown to client if on server
-                if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer && cooldown > 0) {
+                // Send cooldown to client if on server AND entity is a player
+                if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer && cooldown > 0) {
                     sendCooldownToClient(serverPlayer, displayName, cooldown);
                 }
             }
@@ -357,26 +394,55 @@ public class MoveExecutor {
     }
 
     /**
-     * Generic method to start an attack
+     * Generic method to start an attack - NOW WORKS WITH LivingEntity
      */
-    private static void startAttack(Player player, Object attack) {
+    private static void startAttack(LivingEntity entity, Object attack) {
         if (attack instanceof AbstractBreathingAttack<?, ?> breathingAttack) {
-            breathingAttack.start(player, player.level());
+            // Check if start() accepts LivingEntity or Player
+            if (entity instanceof Player player) {
+                breathingAttack.start(player, entity.level());
+            } else {
+                // For NPCs, try to call start with LivingEntity
+                try {
+                    var startMethod = attack.getClass().getMethod("start", LivingEntity.class, Level.class);
+                    try {
+                        startMethod.invoke(attack, entity, entity.level());
+                    } catch (IllegalAccessException e) {
+                        throw new RuntimeException(e);
+                    } catch (InvocationTargetException e) {
+                        throw new RuntimeException(e);
+                    }
+                } catch (NoSuchMethodException e) {
+                    // Fallback to Player version if LivingEntity not supported
+                    // This means the attack doesn't support NPCs yet
+                }
+            }
             return;
         }
 
         try {
-            // Try different start method signatures
+            // Try LivingEntity version first
             try {
-                var startMethod = attack.getClass().getMethod("start", Player.class, Level.class);
-                startMethod.invoke(attack, player, player.level());
+                var startMethod = attack.getClass().getMethod("start", LivingEntity.class, Level.class);
+                startMethod.invoke(attack, entity, entity.level());
+                return;
             } catch (NoSuchMethodException e1) {
-                try {
-                    var startMethod = attack.getClass().getMethod("start", Player.class);
-                    startMethod.invoke(attack, player);
-                } catch (NoSuchMethodException e2) {
-                    var startMethod = attack.getClass().getMethod("start");
-                    startMethod.invoke(attack);
+                // Fall back to Player version
+                if (entity instanceof Player player) {
+                    try {
+                        var startMethod = attack.getClass().getMethod("start", Player.class, Level.class);
+                        startMethod.invoke(attack, player, entity.level());
+                        return;
+                    } catch (NoSuchMethodException e2) {
+                        try {
+                            var startMethod = attack.getClass().getMethod("start", Player.class);
+                            startMethod.invoke(attack, player);
+                            return;
+                        } catch (NoSuchMethodException e3) {
+                            var startMethod = attack.getClass().getMethod("start");
+                            startMethod.invoke(attack);
+                        }
+                    }
                 }
             }
         } catch (Exception e) {
@@ -402,6 +468,7 @@ public class MoveExecutor {
 
     /**
      * Execute a move by name with cooldown and stun prevention
+     * PLAYER-ONLY method
      */
     public static void executeMove(Player player, String moveName, Runnable moveExecution, int cooldownTicks, int stunDurationTicks) {
         if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
@@ -436,25 +503,46 @@ public class MoveExecutor {
     }
 
     /**
-     * Check if a player can execute a move (not stunned)
+     * Check if an entity can execute a move (not stunned)
+     */
+    public static boolean canExecuteMove(LivingEntity entity) {
+        return !entity.hasEffect(NichirinEffectRegistry.STUNNED.get());
+    }
+
+    /**
+     * LEGACY METHOD: Player version
      */
     public static boolean canExecuteMove(Player player) {
-        return !player.hasEffect(NichirinEffectRegistry.STUNNED.get());
+        return canExecuteMove((LivingEntity) player);
     }
 
     /**
      * Force remove move stun
      */
+    public static void removeMoveStun(LivingEntity entity) {
+        entity.removeEffect(NichirinEffectRegistry.STUNNED.get());
+    }
+
+    /**
+     * LEGACY METHOD: Player version
+     */
     public static void removeMoveStun(Player player) {
-        player.removeEffect(NichirinEffectRegistry.STUNNED.get());
+        removeMoveStun((LivingEntity) player);
     }
 
     /**
      * Get remaining stun duration in ticks
      */
-    public static int getRemainingStunTicks(Player player) {
-        MobEffectInstance stunEffect = player.getEffect(NichirinEffectRegistry.STUNNED.get());
+    public static int getRemainingStunTicks(LivingEntity entity) {
+        MobEffectInstance stunEffect = entity.getEffect(NichirinEffectRegistry.STUNNED.get());
         return stunEffect != null ? stunEffect.getDuration() : 0;
+    }
+
+    /**
+     * LEGACY METHOD: Player version
+     */
+    public static int getRemainingStunTicks(Player player) {
+        return getRemainingStunTicks((LivingEntity) player);
     }
 
     /**
@@ -489,10 +577,10 @@ public class MoveExecutor {
     // === ATTACK TRACKING METHODS ===
 
     /**
-     * Tick all active attacks for a player
+     * Tick all active attacks for an entity
      */
-    public static void tickAttacks(Player player) {
-        var attacks = activeAttacks.get(player);
+    public static void tickAttacks(LivingEntity entity) {
+        var attacks = activeAttacks.get(entity.getUUID());
         if (attacks == null || attacks.isEmpty()) {
             return;
         }
@@ -505,7 +593,7 @@ public class MoveExecutor {
 
         for (Object attack : attacksCopy) {
             try {
-                boolean stillActive = tickAndCheckActive(player, attack);
+                boolean stillActive = tickAndCheckActive(entity, attack);
                 if (!stillActive) {
                     toRemove.add(attack);
                 }
@@ -519,39 +607,46 @@ public class MoveExecutor {
             synchronized (attacks) {
                 attacks.removeAll(toRemove);
                 if (attacks.isEmpty()) {
-                    activeAttacks.remove(player);
+                    activeAttacks.remove(entity.getUUID());
                 }
             }
         }
     }
 
     /**
+     * LEGACY METHOD: Player version
+     */
+    public static void tickAttacks(Player player) {
+        tickAttacks((LivingEntity) player);
+    }
+
+    /**
      * Tick an attack and return whether it's still active
      */
-    private static boolean tickAndCheckActive(Player player, Object attack) throws Exception {
+    private static boolean tickAndCheckActive(LivingEntity entity, Object attack) throws Exception {
         if (attack instanceof AbstractBreathingAttack<?, ?> breathingAttack) {
             breathingAttack.tick();
             return breathingAttack.isActive();
         }
-
 
         // Generic reflection-based handling
         try {
             var tickMethod = attack.getClass().getMethod("tick");
             tickMethod.invoke(attack);
         } catch (NoSuchMethodException e) {
+            // Try with entity parameter
             try {
-                var tickMethod = attack.getClass().getMethod("tick", Player.class);
-                tickMethod.invoke(attack, player);
+                var tickMethod = attack.getClass().getMethod("tick", LivingEntity.class);
+                tickMethod.invoke(attack, entity);
             } catch (NoSuchMethodException e2) {
-                try {
-                    var userField = attack.getClass().getDeclaredField("user");
-                    userField.setAccessible(true);
-                    userField.set(attack, player);
-                    var tickMethod = attack.getClass().getMethod("tick");
-                    tickMethod.invoke(attack);
-                } catch (Exception e3) {
-                    throw new Exception("Could not tick attack: " + attack.getClass().getName());
+                // Try with Player parameter (legacy)
+                if (entity instanceof Player player) {
+                    try {
+                        var tickMethod = attack.getClass().getMethod("tick", Player.class);
+                        tickMethod.invoke(attack, player);
+                    } catch (NoSuchMethodException e3) {
+                        throw new Exception("Could not tick attack: " + attack.getClass().getName());
+                    }
                 }
             }
         }
@@ -561,17 +656,17 @@ public class MoveExecutor {
     }
 
     /**
-     * Track an attack for a player
+     * Track an attack for an entity
      */
-    private static void trackAttack(Player player, Object attack) {
-        activeAttacks.computeIfAbsent(player, k -> new ArrayList<>()).add(attack);
+    private static void trackAttack(LivingEntity entity, Object attack) {
+        activeAttacks.computeIfAbsent(entity.getUUID(), k -> new ArrayList<>()).add(attack);
     }
 
     /**
-     * Clear all attacks for a player
+     * Clear all attacks for an entity
      */
-    public static void clearAttacks(Player player) {
-        var attacks = activeAttacks.remove(player);
+    public static void clearAttacks(LivingEntity entity) {
+        var attacks = activeAttacks.remove(entity.getUUID());
         if (attacks != null) {
             for (Object attack : attacks) {
                 try {
@@ -593,34 +688,62 @@ public class MoveExecutor {
     }
 
     /**
-     * Check if a player has any active attacks
+     * LEGACY METHOD: Player version
      */
-    public static boolean hasActiveAttacks(Player player) {
-        var attacks = activeAttacks.get(player);
+    public static void clearAttacks(Player player) {
+        clearAttacks((LivingEntity) player);
+    }
+
+    /**
+     * Check if an entity has any active attacks
+     */
+    public static boolean hasActiveAttacks(LivingEntity entity) {
+        var attacks = activeAttacks.get(entity.getUUID());
         return attacks != null && !attacks.isEmpty();
     }
 
     /**
-     * Get the number of active attacks for a player
+     * LEGACY METHOD: Player version
      */
-    public static int getActiveAttackCount(Player player) {
-        var attacks = activeAttacks.get(player);
+    public static boolean hasActiveAttacks(Player player) {
+        return hasActiveAttacks((LivingEntity) player);
+    }
+
+    /**
+     * Get the number of active attacks for an entity
+     */
+    public static int getActiveAttackCount(LivingEntity entity) {
+        var attacks = activeAttacks.get(entity.getUUID());
         return attacks != null ? attacks.size() : 0;
     }
 
     /**
-     * Get all active attacks for a player (defensive copy)
+     * LEGACY METHOD: Player version
      */
-    public static List<Object> getActiveAttacks(Player player) {
-        var attacks = activeAttacks.get(player);
+    public static int getActiveAttackCount(Player player) {
+        return getActiveAttackCount((LivingEntity) player);
+    }
+
+    /**
+     * Get all active attacks for an entity (defensive copy)
+     */
+    public static List<Object> getActiveAttacks(LivingEntity entity) {
+        var attacks = activeAttacks.get(entity.getUUID());
         return attacks != null ? new ArrayList<>(attacks) : new ArrayList<>();
     }
 
     /**
-     * Force stop a specific attack for a player
+     * LEGACY METHOD: Player version
      */
-    public static boolean stopAttack(Player player, Object attack) {
-        var attacks = activeAttacks.get(player);
+    public static List<Object> getActiveAttacks(Player player) {
+        return getActiveAttacks((LivingEntity) player);
+    }
+
+    /**
+     * Force stop a specific attack for an entity
+     */
+    public static boolean stopAttack(LivingEntity entity, Object attack) {
+        var attacks = activeAttacks.get(entity.getUUID());
         if (attacks != null && attacks.contains(attack)) {
             try {
                 if (attack instanceof AbstractBreathingAttack<?, ?> breathingAttack) {
@@ -635,7 +758,7 @@ public class MoveExecutor {
                 }
                 attacks.remove(attack);
                 if (attacks.isEmpty()) {
-                    activeAttacks.remove(player);
+                    activeAttacks.remove(entity.getUUID());
                 }
                 return true;
             } catch (Exception e) {
@@ -647,10 +770,17 @@ public class MoveExecutor {
     }
 
     /**
-     * Stop all attacks of a specific type for a player
+     * LEGACY METHOD: Player version
      */
-    public static int stopAttacksOfType(Player player, Class<?> attackType) {
-        var attacks = activeAttacks.get(player);
+    public static boolean stopAttack(Player player, Object attack) {
+        return stopAttack((LivingEntity) player, attack);
+    }
+
+    /**
+     * Stop all attacks of a specific type for an entity
+     */
+    public static int stopAttacksOfType(LivingEntity entity, Class<?> attackType) {
+        var attacks = activeAttacks.get(entity.getUUID());
         if (attacks == null) {
             return 0;
         }
@@ -664,11 +794,18 @@ public class MoveExecutor {
 
         int stopped = 0;
         for (Object attack : toStop) {
-            if (stopAttack(player, attack)) {
+            if (stopAttack(entity, attack)) {
                 stopped++;
             }
         }
         return stopped;
+    }
+
+    /**
+     * LEGACY METHOD: Player version
+     */
+    public static int stopAttacksOfType(Player player, Class<?> attackType) {
+        return stopAttacksOfType((LivingEntity) player, attackType);
     }
 
     /**

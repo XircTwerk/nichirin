@@ -1,6 +1,8 @@
-package com.xirc.nichirin.common.entity;
+package com.xirc.nichirin.common.entity.animal;
 
+import com.xirc.nichirin.client.renderer.entity.dispatcher.BoarEntityDispatcher;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
+import mod.azure.azurelib.util.MoveAnalysis;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -18,7 +20,6 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
 import net.minecraft.world.entity.ai.goal.target.*;
-import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -58,11 +59,15 @@ public class BoarEntity extends TamableAnimal {
     private static final double GROUP_DETECTION_RADIUS = 50.0;
     private static final double CHARGE_KNOCKBACK = 2.5;
 
+    public final BoarEntityDispatcher dispatcher;
+    public final MoveAnalysis moveAnalysis;
     private int lastAmbientTick = 0;
 
     public BoarEntity(EntityType<? extends BoarEntity> entityType, Level level) {
         super(entityType, level);
         this.setTame(false);
+        this.dispatcher = new BoarEntityDispatcher(this);
+        this.moveAnalysis = new MoveAnalysis(this);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -125,6 +130,11 @@ public class BoarEntity extends TamableAnimal {
     public void tick() {
         super.tick();
 
+        if (this.level().isClientSide) {
+            moveAnalysis.update();
+            updateAnimations();
+        }
+
         if (!this.level().isClientSide) {
             checkEnragedState();
             handleAttackTiming();
@@ -132,6 +142,53 @@ public class BoarEntity extends TamableAnimal {
             handleAmbientBehavior();
             updateMovementState();
             forceTargetLook();
+        }
+    }
+
+    private void updateAnimations() {
+        int attackType = getAttackType();
+
+        // Attack animations (highest priority)
+        if (attackType != ATTACK_NONE) {
+            switch (attackType) {
+                case ATTACK_JUMP_HIT:
+                    dispatcher.jumpHit();
+                    return;
+                case ATTACK_POUNCE:
+                    dispatcher.pounce();
+                    return;
+                case ATTACK_CHARGE:
+                    dispatcher.runningFast();
+                    return;
+            }
+        }
+
+        // Sitting animations
+        if (isOrderedToSit()) {
+            if (shouldLayDown()) {
+                dispatcher.layDown();
+            } else {
+                dispatcher.sit();
+            }
+            return;
+        }
+
+        // Movement animations
+        if (moveAnalysis.isMovingHorizontally()) {
+            int movementState = getMovementState();
+            switch (movementState) {
+                case MOVEMENT_RUNNING_FAST:
+                    dispatcher.runningFast();
+                    break;
+                case MOVEMENT_RUNNING:
+                    dispatcher.running();
+                    break;
+                default:
+                    dispatcher.walking();
+                    break;
+            }
+        } else {
+            dispatcher.idle();
         }
     }
 
@@ -183,19 +240,26 @@ public class BoarEntity extends TamableAnimal {
     }
 
     private void handleSittingBehavior() {
-        if (this.isOrderedToSit()) {
+        if (this.isOrderedToSit() && this.isTame()) {
             int sitTicks = this.entityData.get(SIT_TICKS);
-            this.entityData.set(SIT_TICKS, sitTicks + 1);
+            sitTicks++;
+            this.entityData.set(SIT_TICKS, sitTicks);
         } else {
             this.entityData.set(SIT_TICKS, 0);
         }
     }
 
     private void handleAmbientBehavior() {
-        if (this.tickCount - lastAmbientTick >= 100) {
-            if (this.random.nextFloat() < 0.1f) {
+        if (this.tickCount - lastAmbientTick > 100 + this.random.nextInt(100)) {
+            if (this.random.nextFloat() < 0.3f) {
                 this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
-                        SoundEvents.PIG_AMBIENT, SoundSource.NEUTRAL, 0.8f, 0.8f + this.random.nextFloat() * 0.4f);
+                        SoundEvents.RAVAGER_AMBIENT, SoundSource.NEUTRAL, 1.0f, 1.2f);
+
+                if (this.level() instanceof ServerLevel serverLevel) {
+                    serverLevel.sendParticles(ParticleTypes.POOF,
+                            this.getX(), this.getY(), this.getZ(),
+                            5, 0.3, 0.1, 0.3, 0.1);
+                }
             }
             lastAmbientTick = this.tickCount;
         }
@@ -203,139 +267,150 @@ public class BoarEntity extends TamableAnimal {
 
     private void updateMovementState() {
         LivingEntity target = this.getTarget();
+
         if (target != null) {
             int chaseTicks = this.entityData.get(CHASE_TICKS);
-            this.entityData.set(CHASE_TICKS, chaseTicks + 1);
+            chaseTicks++;
+            this.entityData.set(CHASE_TICKS, chaseTicks);
 
-            double distance = this.distanceToSqr(target);
-
-            if (chaseTicks > 60 && distance > 16.0) {
+            if (chaseTicks >= 200) {
                 setMovementState(MOVEMENT_RUNNING_FAST);
-            } else if (distance > 9.0) {
+                this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.35);
+                this.getNavigation().setSpeedModifier(1.3);
+            } else if (chaseTicks >= 100) {
                 setMovementState(MOVEMENT_RUNNING);
+                this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.3);
+                this.getNavigation().setSpeedModifier(1.2);
             } else {
                 setMovementState(MOVEMENT_WALKING);
+                this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.25);
+                this.getNavigation().setSpeedModifier(1.0);
             }
         } else {
             this.entityData.set(CHASE_TICKS, 0);
             setMovementState(MOVEMENT_WALKING);
+            this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.25);
+            this.getNavigation().setSpeedModifier(1.0);
         }
     }
 
     private void forceTargetLook() {
-        if (this.getTarget() != null) {
-            this.getLookControl().setLookAt(this.getTarget(), 30.0F, 30.0F);
+        LivingEntity target = this.getTarget();
+        if (target != null && !this.isOrderedToSit()) {
+            double deltaX = target.getX() - this.getX();
+            double deltaZ = target.getZ() - this.getZ();
+            double deltaY = target.getY() + target.getEyeHeight() - (this.getY() + this.getEyeHeight());
+
+            double distance = Math.sqrt(deltaX * deltaX + deltaZ * deltaZ);
+            float yaw = (float)(Math.atan2(deltaZ, deltaX) * (180.0 / Math.PI)) - 90.0F;
+            float pitch = (float)(-(Math.atan2(deltaY, distance) * (180.0 / Math.PI)));
+
+            this.setYRot(this.rotlerp(this.getYRot(), yaw, 30.0F));
+            this.setXRot(this.rotlerp(this.getXRot(), pitch, 30.0F));
+            this.yHeadRot = this.getYRot();
+            this.yBodyRot = this.getYRot();
+        }
+    }
+
+    private float rotlerp(float current, float target, float speed) {
+        float delta = target - current;
+        while (delta > 180.0F) {
+            delta -= 360.0F;
+        }
+        while (delta < -180.0F) {
+            delta += 360.0F;
+        }
+        return current + delta * (speed / 180.0F);
+    }
+
+    private void executeJumpAttack() {
+        this.setDeltaMovement(this.getDeltaMovement().add(0, 0.4, 0));
+        damageNearbyEntities(10.0f);
+    }
+
+    private void executePounceAttack() {
+        LivingEntity target = this.getTarget();
+        if (target != null) {
+            Vec3 direction = target.position().subtract(this.position()).normalize();
+            this.setDeltaMovement(direction.scale(1.0).add(0, 0.2, 0));
+
+            this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
+                    SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.HOSTILE, 1.0f, 1.2f);
+        }
+
+        damageNearbyEntities(12.0f);
+    }
+
+    private void executeChargeAttack() {
+        if (this.level() instanceof ServerLevel serverLevel && this.tickCount % 3 == 0) {
+            serverLevel.sendParticles(ParticleTypes.POOF,
+                    this.getX(), this.getY(), this.getZ(),
+                    3, 0.5, 0.1, 0.5, 0.1);
+        }
+
+        damageNearbyEntitiesWithKnockback(8.0f);
+    }
+
+    private void damageNearbyEntities(float damage) {
+        AABB damageArea = this.getBoundingBox().inflate(2.0);
+        List<LivingEntity> nearbyEntities = this.level().getEntitiesOfClass(LivingEntity.class, damageArea,
+                entity -> entity != this && entity != this.getOwner() && this.canAttack(entity));
+
+        for (LivingEntity entity : nearbyEntities) {
+            if (entity instanceof BoarEntity otherBoar && this.isTame() && otherBoar.isTame()) {
+                UUID myOwner = this.getOwnerUUID();
+                UUID otherOwner = otherBoar.getOwnerUUID();
+                if (myOwner != null && myOwner.equals(otherOwner)) {
+                    continue;
+                }
+            }
+
+            float finalDamage = isEnraged() ? damage * 1.5f : damage;
+            entity.hurt(this.level().damageSources().mobAttack(this), finalDamage);
+
+            entity.addEffect(new MobEffectInstance(
+                    NichirinEffectRegistry.STUNNED.get(),
+                    STUN_DURATION,
+                    0,
+                    false,
+                    true
+            ));
+        }
+    }
+
+    private void damageNearbyEntitiesWithKnockback(float damage) {
+        AABB damageArea = this.getBoundingBox().inflate(2.0);
+        List<LivingEntity> nearbyEntities = this.level().getEntitiesOfClass(LivingEntity.class, damageArea,
+                entity -> entity != this && entity != this.getOwner() && this.canAttack(entity));
+
+        for (LivingEntity entity : nearbyEntities) {
+            if (entity instanceof BoarEntity otherBoar && this.isTame() && otherBoar.isTame()) {
+                UUID myOwner = this.getOwnerUUID();
+                UUID otherOwner = otherBoar.getOwnerUUID();
+                if (myOwner != null && myOwner.equals(otherOwner)) {
+                    continue;
+                }
+            }
+
+            float finalDamage = isEnraged() ? damage * 1.5f : damage;
+            entity.hurt(this.level().damageSources().mobAttack(this), finalDamage);
+
+            Vec3 direction = entity.position().subtract(this.position()).normalize();
+            entity.setDeltaMovement(entity.getDeltaMovement().add(direction.scale(CHARGE_KNOCKBACK)));
+
+            entity.addEffect(new MobEffectInstance(
+                    NichirinEffectRegistry.STUNNED.get(),
+                    STUN_DURATION,
+                    0,
+                    false,
+                    true
+            ));
         }
     }
 
     public void startAttack(int attackType) {
         this.entityData.set(ATTACK_TYPE, attackType);
         this.entityData.set(ATTACK_TICK, 0);
-
-        if (this.level().isClientSide) return;
-
-        switch (attackType) {
-            case ATTACK_CHARGE:
-                LivingEntity target = this.getTarget();
-                if (target != null) {
-                    Vec3 direction = target.position().subtract(this.position()).normalize();
-                    this.setDeltaMovement(direction.scale(1.2).add(0, 0.3, 0));
-                }
-
-                this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
-                        SoundEvents.RAVAGER_ROAR, SoundSource.HOSTILE, 1.5f, 1.0f);
-
-                if (this.level() instanceof ServerLevel serverLevel) {
-                    serverLevel.sendParticles(ParticleTypes.ANGRY_VILLAGER,
-                            this.getX(), this.getY() + 1, this.getZ(),
-                            10, 0.5, 0.5, 0.5, 0.1);
-                }
-                break;
-        }
-    }
-
-    private void executeJumpAttack() {
-        LivingEntity target = this.getTarget();
-        if (target == null) return;
-
-        Vec3 jumpDirection = target.position().subtract(this.position()).normalize();
-        this.setDeltaMovement(jumpDirection.scale(0.8).add(0, 0.4, 0));
-
-        this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
-                SoundEvents.IRON_GOLEM_ATTACK, SoundSource.HOSTILE, 1.0f, 1.2f);
-
-        AABB damageArea = this.getBoundingBox().inflate(1.5);
-        List<LivingEntity> nearbyEntities = this.level().getEntitiesOfClass(LivingEntity.class, damageArea,
-                entity -> entity != this && entity.isAlive() && (entity instanceof Player || entity instanceof Monster));
-
-        for (LivingEntity entity : nearbyEntities) {
-            if (entity == this.getOwner()) continue;
-
-            float damage = (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE) * 1.5f;
-            entity.hurt(this.level().damageSources().mobAttack(this), damage);
-
-            Vec3 knockback = entity.position().subtract(this.position()).normalize().scale(0.8);
-            entity.setDeltaMovement(entity.getDeltaMovement().add(knockback.x, 0.3, knockback.z));
-
-            if (this.level() instanceof ServerLevel serverLevel) {
-                serverLevel.sendParticles(ParticleTypes.CRIT,
-                        entity.getX(), entity.getY() + entity.getBbHeight() / 2, entity.getZ(),
-                        10, 0.3, 0.3, 0.3, 0.1);
-            }
-        }
-    }
-
-    private void executePounceAttack() {
-        LivingEntity target = this.getTarget();
-        if (target == null) return;
-
-        Vec3 pounceDirection = target.position().subtract(this.position()).normalize();
-        this.setDeltaMovement(pounceDirection.scale(1.5).add(0, 0.6, 0));
-
-        this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
-                SoundEvents.RAVAGER_ATTACK, SoundSource.HOSTILE, 1.2f, 0.9f);
-
-        if (this.level() instanceof ServerLevel serverLevel) {
-            serverLevel.sendParticles(ParticleTypes.EXPLOSION,
-                    this.getX(), this.getY(), this.getZ(),
-                    5, 0, 0, 0, 0);
-        }
-    }
-
-    private void executeChargeAttack() {
-        LivingEntity target = this.getTarget();
-        if (target == null) return;
-
-        Vec3 chargeDirection = target.position().subtract(this.position()).normalize();
-        this.setDeltaMovement(chargeDirection.scale(0.6));
-
-        AABB chargeArea = this.getBoundingBox().inflate(1.2);
-        List<LivingEntity> nearbyEntities = this.level().getEntitiesOfClass(LivingEntity.class, chargeArea,
-                entity -> entity != this && entity.isAlive() && entity != this.getOwner());
-
-        for (LivingEntity entity : nearbyEntities) {
-            float damage = (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE) * 2.0f;
-            entity.hurt(this.level().damageSources().mobAttack(this), damage);
-
-            Vec3 knockback = entity.position().subtract(this.position()).normalize().scale(CHARGE_KNOCKBACK);
-            entity.setDeltaMovement(knockback.add(0, 0.5, 0));
-
-            if (entity instanceof Player player) {
-                player.addEffect(new MobEffectInstance(NichirinEffectRegistry.SHOCKED.get(), STUN_DURATION, 0));
-            }
-
-            if (this.level() instanceof ServerLevel serverLevel) {
-                serverLevel.sendParticles(ParticleTypes.EXPLOSION,
-                        entity.getX(), entity.getY() + entity.getBbHeight() / 2, entity.getZ(),
-                        15, 0.5, 0.5, 0.5, 0.1);
-            }
-        }
-
-        if (this.level() instanceof ServerLevel serverLevel && this.tickCount % 5 == 0) {
-            serverLevel.sendParticles(ParticleTypes.CLOUD,
-                    this.getX(), this.getY(), this.getZ(),
-                    3, 0.3, 0.1, 0.3, 0.02);
-        }
     }
 
     private void resetAttack() {
@@ -346,58 +421,81 @@ public class BoarEntity extends TamableAnimal {
     @Override
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack itemStack = player.getItemInHand(hand);
+        Item item = itemStack.getItem();
 
-        if (this.level().isClientSide) {
-            return itemStack.is(Items.RED_MUSHROOM) || itemStack.is(Items.BROWN_MUSHROOM)
-                    ? InteractionResult.CONSUME : InteractionResult.PASS;
-        }
+        if (!this.isTame()) {
+            if (this.getTarget() != null) {
+                return InteractionResult.PASS;
+            }
 
-        if (itemStack.is(Items.RED_MUSHROOM) || itemStack.is(Items.BROWN_MUSHROOM)) {
-            if (!this.isTame()) {
-                if (this.random.nextInt(3) == 0) {
+            if (item == Items.RED_MUSHROOM || item == Items.BROWN_MUSHROOM) {
+                if (!player.getAbilities().instabuild) {
+                    itemStack.shrink(1);
+                }
+
+                if (this.random.nextFloat() < 0.25f) {
                     this.tame(player);
-                    this.navigation.stop();
-                    this.setTarget(null);
                     this.setOrderedToSit(true);
-
-                    this.level().broadcastEntityEvent(this, (byte) 7);
-
+                    this.heal(20.0f);
                     if (this.level() instanceof ServerLevel serverLevel) {
                         serverLevel.sendParticles(ParticleTypes.HEART,
-                                this.getX(), this.getY() + this.getBbHeight() + 0.5, this.getZ(),
-                                7, 0.5, 0.5, 0.5, 0);
+                                this.getX(), this.getY() + this.getBbHeight() / 2, this.getZ(),
+                                7, 0.5, 0.5, 0.5, 0.1);
                     }
+                    return InteractionResult.SUCCESS;
                 } else {
-                    this.level().broadcastEntityEvent(this, (byte) 6);
+                    if (this.level() instanceof ServerLevel serverLevel) {
+                        serverLevel.sendParticles(ParticleTypes.SMOKE,
+                                this.getX(), this.getY() + this.getBbHeight() / 2, this.getZ(),
+                                3, 0.3, 0.3, 0.3, 0.05);
+                    }
+                    return InteractionResult.CONSUME;
                 }
-
+            } else if (item == Items.BEETROOT) {
                 if (!player.getAbilities().instabuild) {
                     itemStack.shrink(1);
                 }
 
-                return InteractionResult.SUCCESS;
-            } else if (this.isFood(itemStack) && this.getHealth() < this.getMaxHealth()) {
+                if (this.random.nextFloat() < 0.20f) {
+                    this.tame(player);
+                    this.setOrderedToSit(true);
+                    this.heal(20.0f);
+                    if (this.level() instanceof ServerLevel serverLevel) {
+                        serverLevel.sendParticles(ParticleTypes.HEART,
+                                this.getX(), this.getY() + this.getBbHeight() / 2, this.getZ(),
+                                7, 0.5, 0.5, 0.5, 0.1);
+                    }
+                    return InteractionResult.SUCCESS;
+                } else {
+                    if (this.level() instanceof ServerLevel serverLevel) {
+                        serverLevel.sendParticles(ParticleTypes.SMOKE,
+                                this.getX(), this.getY() + this.getBbHeight() / 2, this.getZ(),
+                                3, 0.3, 0.3, 0.3, 0.05);
+                    }
+                    return InteractionResult.CONSUME;
+                }
+            }
+        } else if (this.isOwnedBy(player)) {
+            if ((item == Items.RED_MUSHROOM || item == Items.BROWN_MUSHROOM) && this.getHealth() < this.getMaxHealth()) {
                 if (!player.getAbilities().instabuild) {
                     itemStack.shrink(1);
                 }
-                this.heal(5.0F);
-
+                this.heal(4.0f);
                 if (this.level() instanceof ServerLevel serverLevel) {
+                    serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER,
+                            this.getX(), this.getY() + this.getBbHeight() / 2, this.getZ(),
+                            5, 0.5, 0.5, 0.5, 0.1);
                     serverLevel.sendParticles(ParticleTypes.HEART,
-                            this.getX(), this.getY() + this.getBbHeight() + 0.5, this.getZ(),
-                            5, 0.3, 0.3, 0.3, 0);
+                            this.getX(), this.getY() + this.getBbHeight() / 2, this.getZ(),
+                            3, 0.3, 0.3, 0.3, 0.05);
                 }
-
                 return InteractionResult.SUCCESS;
             }
-        }
 
-        if (this.isTame() && this.isOwnedBy(player) && !this.isFood(itemStack)) {
-            this.setOrderedToSit(!this.isOrderedToSit());
-            this.jumping = false;
-            this.navigation.stop();
-            this.setTarget(null);
-            return InteractionResult.SUCCESS;
+            if (player.isShiftKeyDown()) {
+                this.setOrderedToSit(!this.isOrderedToSit());
+                return InteractionResult.SUCCESS;
+            }
         }
 
         return super.mobInteract(player, hand);
@@ -405,23 +503,12 @@ public class BoarEntity extends TamableAnimal {
 
     @Override
     public boolean hurt(DamageSource damageSource, float amount) {
-        if (this.isInvulnerableTo(damageSource)) {
-            return false;
-        }
-
         boolean hurt = super.hurt(damageSource, amount);
 
-        if (hurt && !this.level().isClientSide) {
-            int chaseTicks = this.entityData.get(CHASE_TICKS);
-            if (chaseTicks > 120) {
-                int attackType = this.entityData.get(ATTACK_TYPE);
-                if (attackType == ATTACK_NONE && this.random.nextFloat() < 0.3f) {
-                    startAttack(ATTACK_CHARGE);
-                }
-            }
-
-            if (this.getHealth() < this.getMaxHealth() * 0.3f && this.random.nextFloat() < 0.4f) {
-                Vec3 retreatDirection = this.position().subtract(damageSource.getSourcePosition()).normalize();
+        if (hurt && this.getHealth() < this.getMaxHealth() * 0.3f) {
+            if (this.getTarget() != null) {
+                this.getNavigation().stop();
+                Vec3 retreatDirection = this.position().subtract(this.getTarget().position()).normalize();
                 this.getNavigation().moveTo(
                         this.getX() + retreatDirection.x * 10,
                         this.getY(),
@@ -434,7 +521,6 @@ public class BoarEntity extends TamableAnimal {
         return hurt;
     }
 
-    // Getters and setters
     public boolean isEnraged() {
         return this.entityData.get(ENRAGED);
     }
@@ -495,7 +581,6 @@ public class BoarEntity extends TamableAnimal {
         return stack.is(Items.RED_MUSHROOM) || stack.is(Items.BROWN_MUSHROOM) || stack.is(Items.BEETROOT);
     }
 
-    // NBT Data
     @Override
     public void addAdditionalSaveData(CompoundTag compound) {
         super.addAdditionalSaveData(compound);
@@ -518,9 +603,9 @@ public class BoarEntity extends TamableAnimal {
         this.entityData.set(CHASE_TICKS, compound.getInt("ChaseTicks"));
     }
 
-    // Custom Attack Goal
     private static class BoarAttackGoal extends MeleeAttackGoal {
         private final BoarEntity boar;
+        private int attackCooldown = 0;
 
         public BoarAttackGoal(BoarEntity boar) {
             super(boar, 1.0D, true);
@@ -529,23 +614,49 @@ public class BoarEntity extends TamableAnimal {
 
         @Override
         public boolean canUse() {
+            // Don't attack if already attacking
             return super.canUse() && this.boar.getAttackType() == ATTACK_NONE;
         }
 
         @Override
+        public boolean canContinueToUse() {
+            // Stop goal if currently attacking
+            if (this.boar.getAttackType() != ATTACK_NONE) {
+                return false;
+            }
+            return super.canContinueToUse();
+        }
+
+        @Override
+        public void tick() {
+            super.tick();
+            if (attackCooldown > 0) {
+                attackCooldown--;
+            }
+        }
+
+        @Override
         protected void checkAndPerformAttack(LivingEntity target, double distance) {
+            // Only attack if cooldown is ready and not currently attacking
+            if (attackCooldown > 0 || this.boar.getAttackType() != ATTACK_NONE) {
+                return;
+            }
+
             if (distance <= this.getAttackReachSqr(target) && this.getTicksUntilNextAttack() <= 0) {
                 int movementState = this.boar.getMovementState();
 
                 switch (movementState) {
                     case MOVEMENT_RUNNING:
                         this.boar.startAttack(ATTACK_JUMP_HIT);
+                        attackCooldown = 25; // Cooldown after jump hit
                         break;
                     case MOVEMENT_RUNNING_FAST:
                         this.boar.startAttack(ATTACK_POUNCE);
+                        attackCooldown = 35; // Cooldown after pounce
                         break;
                     default:
                         super.checkAndPerformAttack(target, distance);
+                        attackCooldown = 15; // Cooldown after normal attack
                         return;
                 }
 

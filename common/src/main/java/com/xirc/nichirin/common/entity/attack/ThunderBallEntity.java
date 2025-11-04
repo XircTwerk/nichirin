@@ -1,4 +1,4 @@
-package com.xirc.nichirin.common.entity;
+package com.xirc.nichirin.common.entity.attack;
 
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NicirinSoundRegistry;

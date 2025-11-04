@@ -1,11 +1,11 @@
 package com.xirc.nichirin.registry;
 
-import com.xirc.nichirin.client.renderer.KatanaHolderBlockRenderer;
-import com.xirc.nichirin.client.renderer.entity.BoarEntityRenderer;
-import com.xirc.nichirin.client.renderer.entity.FlashBombRenderer;
-import com.xirc.nichirin.client.renderer.entity.SmokeBombRenderer;
-import com.xirc.nichirin.client.renderer.entity.ThunderBallRenderer;
+import com.xirc.nichirin.client.renderer.block.KatanaHolderBlockRenderer;
+import com.xirc.nichirin.client.renderer.entity.animal.BoarEntityRenderer;
+import com.xirc.nichirin.client.renderer.entity.attack.ThunderBallRenderer;
 import com.xirc.nichirin.client.renderer.entity.npc.TempleDemonRenderer;
+import com.xirc.nichirin.client.renderer.entity.projectile.FlashBombRenderer;
+import com.xirc.nichirin.client.renderer.entity.projectile.SmokeBombRenderer;
 import dev.architectury.registry.client.level.entity.EntityRendererRegistry;
 import dev.architectury.registry.client.rendering.BlockEntityRendererRegistry;
 import dev.architectury.registry.registries.RegistrySupplier;

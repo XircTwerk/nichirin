@@ -1,6 +1,6 @@
 package com.xirc.nichirin.common.attack.moves.breathing.thunder;
 
-import com.xirc.nichirin.common.entity.ThunderBallEntity;
+import com.xirc.nichirin.common.entity.attack.ThunderBallEntity;
 import com.xirc.nichirin.registry.NichirinEntityRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;

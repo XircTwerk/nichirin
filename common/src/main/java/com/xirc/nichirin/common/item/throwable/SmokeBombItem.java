@@ -1,6 +1,6 @@
 package com.xirc.nichirin.common.item.throwable;
 
-import com.xirc.nichirin.common.entity.SmokeBombEntity;
+import com.xirc.nichirin.common.entity.projectile.SmokeBombEntity;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;

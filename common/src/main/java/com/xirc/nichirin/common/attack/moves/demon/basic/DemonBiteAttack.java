@@ -17,6 +17,10 @@ import java.util.List;
  * Demon bite attack - powerful bite that steals blood from enemies
  * High damage, close range, high stun, steals blood on hit
  * No knockback to keep enemies in bite range
+ *
+ * REFACTORED: Now works with both Player and NPC users
+ * - Players: Steal blood via DemonManager
+ * - NPCs: Just deal damage (they rely on natural regen, no blood stealing)
  */
 public class DemonBiteAttack extends AbstractDemonAttack<DemonBiteAttack, IDemonAttacker> {
 
@@ -72,8 +76,13 @@ public class DemonBiteAttack extends AbstractDemonAttack<DemonBiteAttack, IDemon
                 // Apply extended stun instead
                 applyExtendedStun(target);
 
-                // Blood steal effect - user is already a Player (demon)
-                stealBlood(user, target);
+                // Blood steal - ONLY for Players
+                // NPCs don't need blood stealing, they just use their natural regen
+                if (user instanceof Player) {
+                    stealBlood((Player) user, target);
+                    // Blood drain particles (only for players)
+                    createBloodDrainEffect(target.position().add(0, target.getBbHeight() / 2, 0), userPos);
+                }
 
                 // Bite impact sound
                 world.playSound(null, target.getX(), target.getY(), target.getZ(),
@@ -81,9 +90,6 @@ public class DemonBiteAttack extends AbstractDemonAttack<DemonBiteAttack, IDemon
 
                 world.playSound(null, target.getX(), target.getY(), target.getZ(),
                         SoundEvents.GENERIC_DRINK, SoundSource.PLAYERS, 1.0f, 0.7f);
-
-                // Blood drain particles
-                createBloodDrainEffect(target.position().add(0, target.getBbHeight() / 2, 0), userPos);
             }
         }
 
@@ -104,6 +110,9 @@ public class DemonBiteAttack extends AbstractDemonAttack<DemonBiteAttack, IDemon
         // The base hitStun from configuration handles the main stun duration
     }
 
+    /**
+     * Handle blood stealing for Player demons only
+     */
     private void stealBlood(Player demonPlayer, LivingEntity target) {
         // Check if target has blood (not undead, not construct, etc.)
         if (targetHasBlood(target)) {
@@ -172,6 +181,9 @@ public class DemonBiteAttack extends AbstractDemonAttack<DemonBiteAttack, IDemon
                 6, 0.3, 0.2, 0.3, 0.1);
     }
 
+    /**
+     * Blood drain visual effect - only called for Player users
+     */
     private void createBloodDrainEffect(Vec3 targetPos, Vec3 userPos) {
         if (!(world instanceof ServerLevel serverLevel)) return;
 

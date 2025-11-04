@@ -1,30 +1,30 @@
-package com.xirc.nichirin.client.animator.entity;
+package com.xirc.nichirin.client.renderer.entity.animator;
 
 import com.xirc.nichirin.BreathOfNichirin;
-import com.xirc.nichirin.common.entity.ThunderBallEntity;
+import com.xirc.nichirin.common.entity.npc.TempleDemonEntity;
 import mod.azure.azurelib.animation.controller.AzAnimationController;
 import mod.azure.azurelib.animation.controller.AzAnimationControllerContainer;
 import mod.azure.azurelib.animation.impl.AzEntityAnimator;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 
-public class ThunderBallAnimator extends AzEntityAnimator<ThunderBallEntity> {
+public class TempleDemonAnimator extends AzEntityAnimator<TempleDemonEntity> {
 
     private static final ResourceLocation ANIMATIONS = new ResourceLocation(
             BreathOfNichirin.MOD_ID,
-            "animations/thunder_ball.animation.json"
+            "animations/temple_demon.animation.json"
     );
 
     @Override
-    public void registerControllers(AzAnimationControllerContainer<ThunderBallEntity> container) {
+    public void registerControllers(AzAnimationControllerContainer<TempleDemonEntity> container) {
         container.add(
-                AzAnimationController.builder(this, "spin_controller")
+                AzAnimationController.<TempleDemonEntity>builder(this, "main_controller")
                         .build()
         );
     }
 
     @Override
-    public @NotNull ResourceLocation getAnimationLocation(ThunderBallEntity animatable) {
+    public @NotNull ResourceLocation getAnimationLocation(TempleDemonEntity animatable) {
         return ANIMATIONS;
     }
 }

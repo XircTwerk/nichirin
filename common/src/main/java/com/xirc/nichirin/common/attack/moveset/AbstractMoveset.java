@@ -1,12 +1,15 @@
 package com.xirc.nichirin.common.attack.moveset;
 
+import com.xirc.nichirin.common.entity.MovesetCapableNPC;
 import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
+import com.xirc.nichirin.common.system.NPCResourceManager;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import com.xirc.nichirin.common.util.BreathingManager;
 import lombok.Getter;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
@@ -23,11 +26,12 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
- * AbstractMoveset that works with any attack type - breathing techniques and demon arts
+ * AbstractMoveset that works with ANY LivingEntity - players AND NPCs
  * Flexible system supporting any number of moves with full configuration and followup system
  * Icons are handled by the MoveIcon system, not stored in move configs
  * Includes stun prevention system to prevent move stacking
  * Now supports custom left click attacks
+ * REFACTORED: Works with LivingEntity instead of just Player
  */
 @Getter
 public abstract class AbstractMoveset {
@@ -58,14 +62,14 @@ public abstract class AbstractMoveset {
 
     // Modifiers
     protected final float speedMultiplier;
-    protected final float fallDamageMultiplier;    // 0.5 = half damage, 0.0 = no damage
-    protected final float healthRegenMultiplier;   // 2.0 = double regen rate
+    protected final float fallDamageMultiplier;
+    protected final float healthRegenMultiplier;
 
-    // Static tracking for followup queues per player
-    private static final java.util.concurrent.ConcurrentHashMap<UUID, FollowupQueue> playerFollowupQueues = new java.util.concurrent.ConcurrentHashMap<>();
+    // Static tracking for followup queues per entity
+    private static final java.util.concurrent.ConcurrentHashMap<UUID, FollowupQueue> entityFollowupQueues = new java.util.concurrent.ConcurrentHashMap<>();
 
     /**
-     * Followup queue state for a player
+     * Followup queue state for an entity
      */
     public static class FollowupQueue {
         private MoveConfiguration currentMove;
@@ -127,10 +131,8 @@ public abstract class AbstractMoveset {
 
             long duration;
             if (currentFollowupIndex == -1) {
-                // Main attack
-                duration = currentMove.getDurationOrDefault(0) * 50; // Convert ticks to ms
+                duration = currentMove.getDurationOrDefault(0) * 50;
             } else {
-                // Followup attack
                 FollowupConfiguration followup = currentMove.getFollowup(currentFollowupIndex);
                 duration = followup != null ? followup.getFollowupDurationOrDefault(0) * 50 : 0;
             }
@@ -151,14 +153,21 @@ public abstract class AbstractMoveset {
         this.rightClickMove = builder.rightClickMove;
         this.crouchRightClickMove = builder.crouchRightClickMove;
 
-        // Debug prints
-        System.out.println("Moveset " + movesetId + " - leftClickMove: " + (leftClickMove != null ? leftClickMove.getDisplayName() : "null"));
-        System.out.println("Moveset " + movesetId + " - rightClickMove: " + (rightClickMove != null ? rightClickMove.getDisplayName() : "null"));
-        System.out.println("Moveset " + movesetId + " - crouchRightClickMove: " + (crouchRightClickMove != null ? crouchRightClickMove.getDisplayName() : "null"));
-
-        // Add all configured moves
         moves.addAll(builder.moveConfigs);
     }
+
+    // Simple getters for AbstractMoveset fields (Lombok @Getter not working)
+    public String getMovesetId() { return movesetId; }
+    public String getDisplayName() { return displayName; }
+    public MovesetType getMovesetType() { return movesetType; }
+    public ResourceLocation getIdleAnimation() { return idleAnimation; }
+    public float getSpeedMultiplier() { return speedMultiplier; }
+    public float getFallDamageMultiplier() { return fallDamageMultiplier; }
+    public float getHealthRegenMultiplier() { return healthRegenMultiplier; }
+    public MoveConfiguration getLeftClickMove() { return leftClickMove; }
+    public MoveConfiguration getRightClickMove() { return rightClickMove; }
+    public MoveConfiguration getCrouchRightClickMove() { return crouchRightClickMove; }
+    public List<MoveConfiguration> getMoves() { return moves; }
 
     /**
      * Enum to distinguish between breathing and demon movesets
@@ -169,25 +178,25 @@ public abstract class AbstractMoveset {
     }
 
     /**
-     * Apply all moveset modifiers to a player
+     * Apply all moveset modifiers to an entity
      */
-    public void applyAllModifiers(Player player) {
-        applySpeedModifier(player);
+    public void applyAllModifiers(LivingEntity entity) {
+        applySpeedModifier(entity);
     }
 
     /**
-     * Remove all moveset modifiers from a player
+     * Remove all moveset modifiers from an entity
      */
-    public void removeAllModifiers(Player player) {
-        removeSpeedModifier(player);
+    public void removeAllModifiers(LivingEntity entity) {
+        removeSpeedModifier(entity);
     }
 
     /**
-     * Apply the moveset's speed modifier to a player
+     * Apply the moveset's speed modifier to an entity
      */
-    public void applySpeedModifier(Player player) {
+    public void applySpeedModifier(LivingEntity entity) {
         if (speedMultiplier != 1.0f) {
-            removeSpeedModifier(player);
+            removeSpeedModifier(entity);
 
             double modifierValue = speedMultiplier - 1.0;
             modifierValue = Math.max(-0.95, Math.min(modifierValue, 10.0));
@@ -199,84 +208,123 @@ public abstract class AbstractMoveset {
                     AttributeModifier.Operation.MULTIPLY_TOTAL
             );
 
-            Objects.requireNonNull(player.getAttribute(Attributes.MOVEMENT_SPEED)).addTransientModifier(modifier);
+            Objects.requireNonNull(entity.getAttribute(Attributes.MOVEMENT_SPEED)).addTransientModifier(modifier);
         }
     }
 
     /**
-     * Remove the moveset's speed modifier from a player
+     * Remove the moveset's speed modifier from an entity
      */
-    public void removeSpeedModifier(Player player) {
-        Objects.requireNonNull(player.getAttribute(Attributes.MOVEMENT_SPEED)).removeModifier(SPEED_MODIFIER_UUID);
+    public void removeSpeedModifier(LivingEntity entity) {
+        Objects.requireNonNull(entity.getAttribute(Attributes.MOVEMENT_SPEED)).removeModifier(SPEED_MODIFIER_UUID);
     }
 
     /**
-     * Override the left-click (M1) behavior for SimpleKatana with custom attack support
+     * Override the left-click (M1) behavior - works for both Player and NPC
      */
-    public boolean handleLeftClick(Player player) {
-        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
-            return true; // Block the move when stunned
+    public boolean handleLeftClick(LivingEntity entity) {
+        if (entity.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+            return true;
         }
 
-        // Execute custom left click move if configured
         if (leftClickMove != null) {
-            // Apply stun effect
-            applyMoveStun(player, leftClickMove);
+            applyMoveStun(entity, leftClickMove);
 
-            // AUTOMATIC ANIMATION HANDLING - Send animation packet if animation is configured
-            if (leftClickMove.animationId != null && player instanceof ServerPlayer serverPlayer) {
-                String animationName = leftClickMove.animationId.getPath();
-                PlayerAnimationPacket packet = new PlayerAnimationPacket(serverPlayer.getId(), animationName);
-                NichirinPacketRegistry.sendToPlayer(packet, serverPlayer);
+            // AUTOMATIC ANIMATION HANDLING - Player or NPC
+            if (leftClickMove.animationId != null) {
+                triggerAnimation(entity, leftClickMove.animationId.getPath());
             }
 
-            // Initialize followup queue for this attack
+            // Initialize followup queue
             if (leftClickMove.hasFollowups()) {
                 FollowupQueue queue = new FollowupQueue();
                 queue.startAttack(leftClickMove);
-                playerFollowupQueues.put(player.getUUID(), queue);
+                entityFollowupQueues.put(entity.getUUID(), queue);
 
-                // Schedule followup check after attack duration
                 int duration = leftClickMove.getDurationOrDefault(0);
-                scheduleFollowupCheck(player, duration);
+                scheduleFollowupCheck(entity, duration);
             }
 
             // Execute the move action
             if (leftClickMove.startAction != null) {
-                leftClickMove.startAction.accept(player);
+                leftClickMove.startAction.accept(entity);
             }
 
-            return true; // Override default katana behavior
+            return true;
         }
 
-        return false; // Use default katana behavior
-    }
-
-    /**
-     * Override the right-click (M2) behavior for SimpleKatana with stun checking and followup queuing
-     */
-    public boolean handleRightClick(Player player, boolean isCrouching) {
-        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
-            // Check if we should queue a followup
-            FollowupQueue queue = playerFollowupQueues.get(player.getUUID());
-            if (queue != null && queue.isAttackActive(System.currentTimeMillis()) && queue.canQueueNext()) {
-                queue.queueNext();
-
-                // Show feedback that followup was queued
-                player.displayClientMessage(
-                        Component.literal("Followup queued!")
-                                .withStyle(style -> style.withColor(0x55FF55)),
-                        true
-                );
-            }
-            return true; // Block the move by overriding
-        }
         return false;
     }
 
     /**
-     * Capture a move configuration for later retrieval (used by GUI)
-     * Stores configs statically per moveset type so they persist
+     * Override the right-click (M2) behavior - works for both Player and NPC
+     */
+    public boolean handleRightClick(LivingEntity entity, boolean isCrouching) {
+        // If stunned, try to queue followup instead of executing new attack
+        if (entity.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+            FollowupQueue queue = entityFollowupQueues.get(entity.getUUID());
+            if (queue != null && queue.isAttackActive(System.currentTimeMillis()) && queue.canQueueNext()) {
+                queue.queueNext();
+
+                if (entity instanceof Player player) {
+                    player.displayClientMessage(
+                            Component.literal("Followup queued!")
+                                    .withStyle(style -> style.withColor(0x55FF55)),
+                            true
+                    );
+                }
+            }
+            return true;
+        }
+
+        // NOT STUNNED - EXECUTE THE RIGHT-CLICK ATTACK!
+        MoveConfiguration config = isCrouching ? crouchRightClickMove : rightClickMove;
+
+        if (config != null) {
+            applyMoveStun(entity, config);
+
+            // AUTOMATIC ANIMATION HANDLING
+            if (config.animationId != null) {
+                triggerAnimation(entity, config.animationId.getPath());
+            }
+
+            // Initialize followup queue
+            if (config.hasFollowups()) {
+                FollowupQueue queue = new FollowupQueue();
+                queue.startAttack(config);
+                entityFollowupQueues.put(entity.getUUID(), queue);
+
+                int duration = config.getDurationOrDefault(0);
+                scheduleFollowupCheck(entity, duration);
+            }
+
+            // Execute the move action
+            if (config.startAction != null) {
+                config.startAction.accept(entity);
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Trigger animation - handles both Player (PlayerAnimationPacket) and NPC (Azure)
+     */
+    public void triggerAnimation(LivingEntity entity, String animationName) {
+        if (entity instanceof ServerPlayer serverPlayer) {
+            // Player animation using PlayerAnimationPacket
+            PlayerAnimationPacket packet = new PlayerAnimationPacket(serverPlayer.getId(), animationName);
+            NichirinPacketRegistry.sendToPlayer(packet, serverPlayer);
+        } else if (entity instanceof MovesetCapableNPC npc) {
+            // NPC animation using Azure
+            npc.triggerMovesetAnimation(animationName);
+        }
+    }
+
+    /**
+     * Capture a move configuration for later retrieval
      */
     public void captureLeftClickConfig(MoveConfiguration config) {
         capturedLeftClickConfigs.put(this.movesetId, config);
@@ -295,21 +343,21 @@ public abstract class AbstractMoveset {
      * Get the move index to use for left click
      */
     public int getLeftClickMoveIndex() {
-        return -3; // Special index for left click
+        return -3;
     }
 
     /**
      * Get the move index to use for right-click
      */
     public int getRightClickMoveIndex(boolean isCrouching) {
-        return isCrouching ? -2 : -1; // Not in attack wheel, handled separately
+        return isCrouching ? -2 : -1;
     }
 
     /**
-     * Called after a move is performed to allow post-move actions
+     * Called after a move is performed
      */
-    public void onMovePerformed(Player player, int moveIndex, boolean isCrouching) {
-        // Override in subclasses for special behavior
+    public void onMovePerformed(LivingEntity entity, int moveIndex, boolean isCrouching) {
+        // Override in subclasses
     }
 
     /**
@@ -331,127 +379,113 @@ public abstract class AbstractMoveset {
     }
 
     /**
-     * Performs a move by index with automatic animation handling, stun prevention and followup queue initialization
+     * Performs a move by index with automatic animation handling - WORKS FOR ENTITIES
      */
-    public void performMove(Player player, int moveIndex) {
-        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+    public void performMove(LivingEntity entity, int moveIndex) {
+        if (entity.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
             return;
         }
 
         MoveConfiguration config = getMove(moveIndex);
         if (config != null) {
-            // AUTOMATIC ANIMATION HANDLING - Send animation packet if animation is configured
-            if (config.animationId != null && player instanceof ServerPlayer serverPlayer) {
-                String animationName = config.animationId.getPath();
-                PlayerAnimationPacket packet = new PlayerAnimationPacket(serverPlayer.getId(), animationName);
-                NichirinPacketRegistry.sendToPlayer(packet, serverPlayer);
+            // AUTOMATIC ANIMATION HANDLING
+            if (config.animationId != null) {
+                triggerAnimation(entity, config.animationId.getPath());
             }
 
-            // Initialize followup queue for this attack
+            // Initialize followup queue
             if (config.hasFollowups()) {
                 FollowupQueue queue = new FollowupQueue();
                 queue.startAttack(config);
-                playerFollowupQueues.put(player.getUUID(), queue);
+                entityFollowupQueues.put(entity.getUUID(), queue);
 
-                // Schedule followup check after attack duration
                 int duration = config.getDurationOrDefault(0);
-                scheduleFollowupCheck(player, duration);
+                scheduleFollowupCheck(entity, duration);
             }
 
             if (config.startAction != null) {
-                config.startAction.accept(player);
+                config.startAction.accept(entity);
             }
         }
     }
 
     /**
-     * Schedules a followup check after the specified duration
+     * Schedules a followup check
      */
-    private void scheduleFollowupCheck(Player player, int durationTicks) {
-        // Convert ticks to milliseconds and schedule
-        long delayMs = durationTicks * 50L; // 20 ticks = 1000ms
+    private void scheduleFollowupCheck(LivingEntity entity, int durationTicks) {
+        long delayMs = durationTicks * 50L;
 
-        // Use a simple delay mechanism (you might want to integrate with your mod's tick system)
         java.util.concurrent.CompletableFuture.delayedExecutor(delayMs, java.util.concurrent.TimeUnit.MILLISECONDS)
-                .execute(() -> checkAndExecuteFollowup(player));
+                .execute(() -> checkAndExecuteFollowup(entity));
     }
 
     /**
-     * Checks if a followup should be executed and executes it
+     * Checks if a followup should be executed
      */
-    private void checkAndExecuteFollowup(Player player) {
-        FollowupQueue queue = playerFollowupQueues.get(player.getUUID());
+    private void checkAndExecuteFollowup(LivingEntity entity) {
+        FollowupQueue queue = entityFollowupQueues.get(entity.getUUID());
         if (queue == null || !queue.hasQueued()) {
-            // No followup queued, clear the queue
             if (queue != null) {
                 queue.clear();
-                playerFollowupQueues.remove(player.getUUID());
+                entityFollowupQueues.remove(entity.getUUID());
             }
             return;
         }
 
         FollowupConfiguration followup = queue.getNextFollowup();
         if (followup != null) {
-            // Execute the followup
-            executeFollowup(player, followup, queue);
+            executeFollowup(entity, followup, queue);
         } else {
-            // Clear queue if no valid followup
             queue.clear();
-            playerFollowupQueues.remove(player.getUUID());
+            entityFollowupQueues.remove(entity.getUUID());
         }
     }
 
     /**
      * Executes a followup attack with automatic animation handling
      */
-    private void executeFollowup(Player player, FollowupConfiguration followup, FollowupQueue queue) {
-        // Update queue state
+    private void executeFollowup(LivingEntity entity, FollowupConfiguration followup, FollowupQueue queue) {
         queue.startFollowup(queue.getNextFollowupIndex());
 
-        // AUTOMATIC ANIMATION HANDLING FOR FOLLOWUPS - Send animation packet if configured
-        if (followup.followupAnimationId != null && player instanceof ServerPlayer serverPlayer) {
-            String animationName = followup.followupAnimationId.getPath();
-            PlayerAnimationPacket packet = new PlayerAnimationPacket(serverPlayer.getId(), animationName);
-            NichirinPacketRegistry.sendToPlayer(packet, serverPlayer);
+        // AUTOMATIC ANIMATION HANDLING FOR FOLLOWUPS
+        if (followup.followupAnimationId != null) {
+            triggerAnimation(entity, followup.followupAnimationId.getPath());
         }
 
-        // Execute followup action (no windup - immediate execution)
         if (followup.followupAction != null) {
-            followup.followupAction.accept(player);
+            followup.followupAction.accept(entity);
         }
 
-        // Schedule next followup check if more followups available
         int followupDuration = followup.getFollowupDurationOrDefault(0);
         if (followupDuration > 0 && queue.canQueue) {
-            scheduleFollowupCheck(player, followupDuration);
+            scheduleFollowupCheck(entity, followupDuration);
         } else {
-            // No more followups possible, clear queue after duration
             java.util.concurrent.CompletableFuture.delayedExecutor(followupDuration * 50L, java.util.concurrent.TimeUnit.MILLISECONDS)
                     .execute(() -> {
                         queue.clear();
-                        playerFollowupQueues.remove(player.getUUID());
+                        entityFollowupQueues.remove(entity.getUUID());
                     });
         }
     }
 
     /**
-     * Clean up followup queues when player disconnects
+     * Clean up followup queues when entity is removed
      */
-    public static void cleanupPlayer(Player player) {
-        playerFollowupQueues.remove(player.getUUID());
+    public static void cleanupEntity(LivingEntity entity) {
+        entityFollowupQueues.remove(entity.getUUID());
     }
 
     /**
-     * Force clear all followup queues (for debugging or resets)
+     * Force clear all followup queues
      */
     public static void clearAllFollowupQueues() {
-        playerFollowupQueues.clear();
+        entityFollowupQueues.clear();
     }
 
     /**
      * Apply stun effect for a move configuration
      */
-    protected void applyMoveStun(Player player, MoveConfiguration config) {
+    protected void applyMoveStun(LivingEntity entity, MoveConfiguration config) {
         int windupTicks = config.getWindupOrDefault(0);
         int durationTicks = config.getDurationOrDefault(0);
         int totalStunTicks = windupTicks + durationTicks;
@@ -465,15 +499,15 @@ public abstract class AbstractMoveset {
                     false,
                     false
             );
-            player.addEffect(stunEffect);
+            entity.addEffect(stunEffect);
         }
     }
 
     /**
-     * Check if the player can perform moves (not stunned)
+     * Check if the entity can perform moves (not stunned)
      */
-    public boolean canPerformMoves(Player player) {
-        return !player.hasEffect(NichirinEffectRegistry.STUNNED.get());
+    public boolean canPerformMoves(LivingEntity entity) {
+        return !entity.hasEffect(NichirinEffectRegistry.STUNNED.get());
     }
 
     /**
@@ -556,8 +590,7 @@ public abstract class AbstractMoveset {
     }
 
     /**
-     * Get the configuration for left-click move (for data display)
-     * Returns captured config if available, otherwise the builder-configured one
+     * Get the configuration for left-click move
      */
     public MoveConfiguration getLeftClickConfiguration() {
         MoveConfiguration captured = capturedLeftClickConfigs.get(this.movesetId);
@@ -565,8 +598,7 @@ public abstract class AbstractMoveset {
     }
 
     /**
-     * Get the configuration for right-click move (for data display)
-     * Returns captured config if available, otherwise the builder-configured one
+     * Get the configuration for right-click move
      */
     public MoveConfiguration getRightClickConfiguration() {
         MoveConfiguration captured = capturedRightClickConfigs.get(this.movesetId);
@@ -574,8 +606,7 @@ public abstract class AbstractMoveset {
     }
 
     /**
-     * Get the configuration for crouch right-click move (for data display)
-     * Returns captured config if available, otherwise the builder-configured one
+     * Get the configuration for crouch right-click move
      */
     public MoveConfiguration getCrouchRightClickConfiguration() {
         MoveConfiguration captured = capturedCrouchRightClickConfigs.get(this.movesetId);
@@ -583,42 +614,86 @@ public abstract class AbstractMoveset {
     }
 
     /**
+     * Check if entity has enough breath/resources for a move - WORKS FOR NPCs TOO
+     */
+    public boolean hasResourcesForMove(LivingEntity entity, MoveConfiguration config) {
+        if (config == null) return false;
+
+        // Check breath cost
+        if (config.hasBreathCost()) {
+            float breathCost = config.getBreathCostOrDefault(0f);
+
+            if (entity instanceof Player player) {
+                // Player breath system
+                if (!BreathingManager.hasBreath(player, breathCost)) {
+                    return false;
+                }
+            } else if (entity instanceof MovesetCapableNPC npc) {
+                // NPC breath system
+                if (npc.getBreathGauge() < breathCost) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Consume resources for a move - WORKS FOR NPCs TOO
+     */
+    public boolean consumeResourcesForMove(LivingEntity entity, MoveConfiguration config) {
+        if (config == null) return false;
+
+        // Consume breath
+        if (config.hasBreathCost()) {
+            float breathCost = config.getBreathCostOrDefault(0f);
+
+            if (entity instanceof Player player) {
+                if (!BreathingManager.consume(player, breathCost)) {
+                    return false;
+                }
+            } else if (entity instanceof MovesetCapableNPC npc) {
+                if (!NPCResourceManager.consumeBreath(npc, breathCost)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Complete configuration for a moveset move with followup system
      */
     @Getter
     public static class MoveConfiguration {
-        // Basic properties
         public final String moveId;
         public final String displayName;
         public final String description;
-        public final Consumer<Player> startAction;
+        public final Consumer<LivingEntity> startAction;
         public final ResourceLocation animationId;
         public final int animationPriority;
 
-        // Combat Stats
         public final Float damage;
         public final Float range;
         public final Float knockback;
         public final Integer hitStun;
         public final Float hitboxSize;
 
-        // Timing
         public final Integer cooldown;
         public final Integer windup;
         public final Integer duration;
         public final Integer activeFrames;
         public final Integer recovery;
 
-        // Resources
         public final Float breathCost;
         public final Float staminaCost;
 
-        // Movement
         public final Float teleportDistance;
         public final Float dashSpeed;
         public final Integer teleportWindup;
 
-        // Followup system
         public final List<FollowupConfiguration> followups;
 
         private MoveConfiguration(MoveBuilder builder) {
@@ -651,7 +726,36 @@ public abstract class AbstractMoveset {
             this.followups = builder.followups != null ? new ArrayList<>(builder.followups) : new ArrayList<>();
         }
 
-        // Convenience methods for checking if properties are configured
+        // Simple getters for all fields
+        public String getMoveId() { return moveId; }
+        public String getDisplayName() { return displayName; }
+        public String getDescription() { return description; }
+        public Consumer<LivingEntity> getStartAction() { return startAction; }
+        public ResourceLocation getAnimationId() { return animationId; }
+        public int getAnimationPriority() { return animationPriority; }
+
+        public Float getDamage() { return damage; }
+        public Float getRange() { return range; }
+        public Float getKnockback() { return knockback; }
+        public Integer getHitStun() { return hitStun; }
+        public Float getHitboxSize() { return hitboxSize; }
+
+        public Integer getCooldown() { return cooldown; }
+        public Integer getWindup() { return windup; }
+        public Integer getDuration() { return duration; }
+        public Integer getActiveFrames() { return activeFrames; }
+        public Integer getRecovery() { return recovery; }
+
+        public Float getBreathCost() { return breathCost; }
+        public Float getStaminaCost() { return staminaCost; }
+
+        public Float getTeleportDistance() { return teleportDistance; }
+        public Float getDashSpeed() { return dashSpeed; }
+        public Integer getTeleportWindup() { return teleportWindup; }
+
+        public List<FollowupConfiguration> getFollowups() { return followups; }
+
+        // Convenience methods
         public boolean hasDamage() { return damage != null; }
         public boolean hasRange() { return range != null; }
         public boolean hasKnockback() { return knockback != null; }
@@ -668,7 +772,7 @@ public abstract class AbstractMoveset {
         public boolean hasDashSpeed() { return dashSpeed != null; }
         public boolean hasTeleportWindup() { return teleportWindup != null; }
 
-        // Safe getters with fallbacks
+        // Safe getters
         public float getDamageOrDefault(float defaultValue) { return damage != null ? damage : defaultValue; }
         public float getRangeOrDefault(float defaultValue) { return range != null ? range : defaultValue; }
         public float getKnockbackOrDefault(float defaultValue) { return knockback != null ? knockback : defaultValue; }
@@ -715,13 +819,13 @@ public abstract class AbstractMoveset {
     }
 
     /**
-     * Configuration for followup attacks (chaining moves)
+     * Configuration for followup attacks
      */
     @Getter
     public static class FollowupConfiguration {
         public final String followupMoveId;
         public final String followupDisplayName;
-        public final Consumer<Player> followupAction;
+        public final Consumer<LivingEntity> followupAction;
         public final ResourceLocation followupAnimationId;
         public final int followupAnimationPriority;
 
@@ -781,13 +885,13 @@ public abstract class AbstractMoveset {
     }
 
     /**
-     * Builder for followup configurations
+     * Builder for followup configurations - NOW uses Consumer<LivingEntity>
      */
     public static class FollowupBuilder {
         private final String followupMoveId;
         private final String followupDisplayName;
 
-        private Consumer<Player> followupAction;
+        private Consumer<LivingEntity> followupAction;
         private ResourceLocation followupAnimationId;
         private int followupAnimationPriority = 0;
 
@@ -813,7 +917,7 @@ public abstract class AbstractMoveset {
             this.followupDisplayName = followupDisplayName;
         }
 
-        public FollowupBuilder withAction(Consumer<Player> action) {
+        public FollowupBuilder withAction(Consumer<LivingEntity> action) {
             this.followupAction = action;
             return this;
         }
@@ -877,14 +981,14 @@ public abstract class AbstractMoveset {
     }
 
     /**
-     * Builder for individual moves
+     * Builder for individual moves - NOW uses Consumer<LivingEntity>
      */
     public static class MoveBuilder {
         private final String moveId;
         private final String displayName;
 
         private String description;
-        private Consumer<Player> startAction;
+        private Consumer<LivingEntity> startAction;
         private ResourceLocation animationId;
         private int animationPriority = 0;
 
@@ -919,7 +1023,7 @@ public abstract class AbstractMoveset {
             return this;
         }
 
-        public MoveBuilder withAction(Consumer<Player> action) {
+        public MoveBuilder withAction(Consumer<LivingEntity> action) {
             this.startAction = action;
             return this;
         }
@@ -1018,7 +1122,6 @@ public abstract class AbstractMoveset {
             return this;
         }
 
-        // Followup system
         public MoveBuilder withFollowup(FollowupBuilder followupBuilder) {
             if (this.followups == null) {
                 this.followups = new ArrayList<>();
@@ -1102,5 +1205,59 @@ public abstract class AbstractMoveset {
             this.moveConfigs.add(moveBuilder.build());
             return this;
         }
+    }
+
+    // ==================== PLAYER WRAPPER METHODS ====================
+    // These provide Player-specific convenience methods that delegate to LivingEntity versions
+
+    /**
+     * Performs a move by index - PLAYER VERSION (wrapper)
+     */
+    public void performMove(Player player, int moveIndex) {
+        performMove((LivingEntity) player, moveIndex);
+    }
+
+    /**
+     * Override the left-click (M1) behavior - PLAYER VERSION (wrapper)
+     */
+    public boolean handleLeftClick(Player player) {
+        return handleLeftClick((LivingEntity) player);
+    }
+
+    /**
+     * Override the right-click (M2) behavior - PLAYER VERSION (wrapper)
+     */
+    public boolean handleRightClick(Player player, boolean isCrouching) {
+        return handleRightClick((LivingEntity) player, isCrouching);
+    }
+
+    /**
+     * Check if the player can perform moves - PLAYER VERSION (wrapper)
+     */
+    public boolean canPerformMoves(Player player) {
+        return canPerformMoves((LivingEntity) player);
+    }
+
+    /**
+     * Check if player has enough resources for a move - PLAYER VERSION (wrapper)
+     */
+    public boolean hasResourcesForMove(Player player, MoveConfiguration config) {
+        return hasResourcesForMove((LivingEntity) player, config);
+    }
+
+    /**
+     * Consume resources for a move - PLAYER VERSION (wrapper)
+     */
+    public boolean consumeResourcesForMove(Player player, MoveConfiguration config) {
+        return consumeResourcesForMove((LivingEntity) player, config);
+    }
+
+    /**
+     * Called after a move is performed - PLAYER VERSION
+     * Default implementation does nothing - override in subclasses like FlameBreathingMoveset
+     */
+    public void onMovePerformed(Player player, int moveIndex, boolean isCrouching) {
+        // Default: do nothing
+        // Subclasses can override for player-specific post-move effects
     }
 }

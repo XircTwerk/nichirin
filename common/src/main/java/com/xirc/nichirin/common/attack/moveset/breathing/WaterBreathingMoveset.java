@@ -14,6 +14,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.LivingEntity;
+import com.xirc.nichirin.common.entity.MovesetCapableNPC;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -30,7 +32,7 @@ import java.util.UUID;
 public class WaterBreathingMoveset extends AbstractMoveset {
 
     // Track cooldowns per player per move
-    private static final Map<UUID, Map<Integer, Long>> playerCooldowns = new HashMap<>();
+    private static final Map<UUID, Map<Integer, Long>> entityCooldowns = new HashMap<>();
 
     // Track active attacks to prevent breath consumption on failed attempts
     private static final Map<UUID, Boolean> executingMove = new HashMap<>();
@@ -126,13 +128,13 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withHitStun(3) // Very short for continuous hits
                         .withHitboxSize(2.5f)
                         .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
-                        .withAction(player -> {
+                        .withAction(entity -> {
                             FlowingDanceAttack attack = new FlowingDanceAttack();
                             WaterBreathingMoveset moveset = getCurrentMoveset();
                             if (moveset != null) {
                                 attack.configure(moveset.getMove(0));
                             }
-                            MoveExecutor.executeAttack(player, attack, "water_breathing", "flowing_dance");
+                            MoveExecutor.executeAttack(entity, attack, "water_breathing", "flowing_dance");
                         })
                 )
 
@@ -147,13 +149,13 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withHitStun(8)
                         .withHitboxSize(4.5f) // Full radius
                         .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
-                        .withAction(player -> {
+                        .withAction(entity -> {
                             StrikingTideAttack attack = new StrikingTideAttack();
                             WaterBreathingMoveset moveset = getCurrentMoveset();
                             if (moveset != null) {
                                 attack.configure(moveset.getMove(1));
                             }
-                            MoveExecutor.executeAttack(player, attack, "water_breathing", "striking_tide");
+                            MoveExecutor.executeAttack(entity, attack, "water_breathing", "striking_tide");
                         })
                 )
 
@@ -169,13 +171,13 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withHitboxSize(1.0f) // Very small precise hitbox
                         .withDashSpeed(12.0f) // Fast dash
                         .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
-                        .withAction(player -> {
+                        .withAction(entity -> {
                             BlessedRainAttack attack = new BlessedRainAttack();
                             WaterBreathingMoveset moveset = getCurrentMoveset();
                             if (moveset != null) {
                                 attack.configure(moveset.getMove(2));
                             }
-                            MoveExecutor.executeAttack(player, attack, "water_breathing", "blessed_rain");
+                            MoveExecutor.executeAttack(entity, attack, "water_breathing", "blessed_rain");
                         })
                 )
 
@@ -190,13 +192,13 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withHitStun(7) // Short for spinning effect
                         .withHitboxSize(3.0f)
                         .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
-                        .withAction(player -> {
+                        .withAction(entity -> {
                             WhirlpoolAttack attack = new WhirlpoolAttack();
                             WaterBreathingMoveset moveset = getCurrentMoveset();
                             if (moveset != null) {
                                 attack.configure(moveset.getMove(3));
                             }
-                            MoveExecutor.executeAttack(player, attack, "water_breathing", "whirlpool");
+                            MoveExecutor.executeAttack(entity, attack, "water_breathing", "whirlpool");
                         })
                 )
 
@@ -211,13 +213,13 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withHitStun(20)
                         .withHitboxSize(4.0f) // Wall of ripples
                         .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
-                        .withAction(player -> {
+                        .withAction(entity -> {
                             DropRippleThrustAttack attack = new DropRippleThrustAttack();
                             WaterBreathingMoveset moveset = getCurrentMoveset();
                             if (moveset != null) {
                                 attack.configure(moveset.getMove(4));
                             }
-                            MoveExecutor.executeAttack(player, attack, "water_breathing", "drop_ripple_thrust");
+                            MoveExecutor.executeAttack(entity, attack, "water_breathing", "drop_ripple_thrust");
                         })
                 )
 
@@ -232,13 +234,13 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withHitStun(8) // Medium stun for multi-hit
                         .withHitboxSize(6.0f) // BIG ASS HITBOX
                         .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
-                        .withAction(player -> {
+                        .withAction(entity -> {
                             WaterfallBasinAttack attack = new WaterfallBasinAttack();
                             WaterBreathingMoveset moveset = getCurrentMoveset();
                             if (moveset != null) {
                                 attack.configure(moveset.getMove(5));
                             }
-                            MoveExecutor.executeAttack(player, attack, "water_breathing", "waterfall_basin");
+                            MoveExecutor.executeAttack(entity, attack, "water_breathing", "waterfall_basin");
                         })
                 )
 
@@ -254,13 +256,13 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withHitboxSize(6f)
                         .withDashSpeed(4.0f) // Fast zigzag speed
                         .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
-                        .withAction(player -> {
+                        .withAction(entity -> {
                             SplashingWaterFlowAttack attack = new SplashingWaterFlowAttack();
                             WaterBreathingMoveset moveset = getCurrentMoveset();
                             if (moveset != null) {
                                 attack.configure(moveset.getMove(6));
                             }
-                            MoveExecutor.executeAttack(player, attack, "water_breathing", "splashing_water_flow");
+                            MoveExecutor.executeAttack(entity, attack, "water_breathing", "splashing_water_flow");
                         })
                 )
 
@@ -275,13 +277,13 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withHitStun(12)
                         .withHitboxSize(4.0f)
                         .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
-                        .withAction(player -> {
+                        .withAction(entity -> {
                             ConstantFluxAttack attack = new ConstantFluxAttack();
                             WaterBreathingMoveset moveset = getCurrentMoveset();
                             if (moveset != null) {
                                 attack.configure(moveset.getMove(7));
                             }
-                            MoveExecutor.executeAttack(player, attack, "water_breathing", "constant_flux");
+                            MoveExecutor.executeAttack(entity, attack, "water_breathing", "constant_flux");
                         })
                 )
 
@@ -296,13 +298,13 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withHitStun(6)
                         .withHitboxSize(6.0f) // Large area field
                         .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
-                        .withAction(player -> {
+                        .withAction(entity -> {
                             DeadCalmAttack attack = new DeadCalmAttack();
                             WaterBreathingMoveset moveset = getCurrentMoveset();
                             if (moveset != null) {
                                 attack.configure(moveset.getMove(8));
                             }
-                            MoveExecutor.executeAttack(player, attack, "water_breathing", "dead_calm");
+                            MoveExecutor.executeAttack(entity, attack, "water_breathing", "dead_calm");
                         })
                 );
     }
@@ -327,8 +329,8 @@ public class WaterBreathingMoveset extends AbstractMoveset {
         }
     }
 
-    private boolean executeWaterSurfaceSlashCombo(Player player) {
-        ComboState comboState = playerComboStates.computeIfAbsent(player.getUUID(), k -> new ComboState());
+    private boolean executeWaterSurfaceSlashCombo(LivingEntity entity) {
+        ComboState comboState = playerComboStates.computeIfAbsent(entity.getUUID(), k -> new ComboState());
 
         int nextStage;
 
@@ -348,7 +350,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
         }
 
         // Execute the appropriate stage
-        boolean success = executeWaterSurfaceSlashStage(player, nextStage);
+        boolean success = executeWaterSurfaceSlashStage(entity, nextStage);
 
         if (success) {
             comboState.currentStage = nextStage;
@@ -363,7 +365,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
         return success;
     }
 
-    private boolean executeWaterSurfaceSlashStage(Player player, int stage) {
+    private boolean executeWaterSurfaceSlashStage(LivingEntity entity, int stage) {
         WaterSurfaceSlashAttack attack = new WaterSurfaceSlashAttack();
         attack.setComboStage(stage);
 
@@ -372,7 +374,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
 
         // Use the same config creation method and sync to client
         createAndCaptureWaterSurfaceSlashConfig();
-        if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+        if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer) {
             MovesetConfigSyncPacket packet = new MovesetConfigSyncPacket(
                     "water_breathing",
                     this.getRightClickConfiguration(),
@@ -382,8 +384,8 @@ public class WaterBreathingMoveset extends AbstractMoveset {
         }
 
         attack.configure(config);
-        MoveExecutor.executeAttack(player, attack, "water_breathing", "water_surface_slash_stage_" + stage);
-        onMovePerformed(player, -1, false);
+        MoveExecutor.executeAttack(entity, attack, "water_breathing", "water_surface_slash_stage_" + stage);
+        onMovePerformed(entity, -1, false);
 
         return true;
     }
@@ -430,14 +432,14 @@ public class WaterBreathingMoveset extends AbstractMoveset {
         }
     }
 
-    private boolean executeWaterWheel(Player player) {
+    private boolean executeWaterWheel(LivingEntity entity) {
         WaterWheelAttack attack = new WaterWheelAttack();
 
         // Use the same config creation method and sync to client
         createAndCaptureWaterWheelConfig();
         MoveConfiguration tempConfig = getCrouchRightClickConfiguration();
 
-        if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+        if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer) {
             MovesetConfigSyncPacket packet = new MovesetConfigSyncPacket(
                     "water_breathing",
                     this.getRightClickConfiguration(),
@@ -447,24 +449,24 @@ public class WaterBreathingMoveset extends AbstractMoveset {
         }
 
         attack.configure(tempConfig);
-        MoveExecutor.executeAttack(player, attack, "water_breathing", "water_wheel");
-        onMovePerformed(player, -2, true);
+        MoveExecutor.executeAttack(entity, attack, "water_breathing", "water_wheel");
+        onMovePerformed(entity, -2, true);
         return true;
     }
 
     @Override
-    public void performMove(Player player, int moveIndex) {
+    public void performMove(LivingEntity entity, int moveIndex) {
         // Check cooldown before allowing move
-        if (!canUseMove(player, moveIndex)) {
+        if (!canUseMove(entity, moveIndex)) {
             // Show cooldown message
             MoveConfiguration config = getMove(moveIndex);
             if (config != null) {
-                Map<Integer, Long> cooldowns = playerCooldowns.get(player.getUUID());
+                Map<Integer, Long> cooldowns = entityCooldowns.get(entity.getUUID());
                 if (cooldowns != null) {
                     Long cooldownEnd = cooldowns.get(moveIndex);
                     if (cooldownEnd != null) {
-                        long remaining = (cooldownEnd - player.level().getGameTime()) / 20;
-                        player.displayClientMessage(
+                        long remaining = (cooldownEnd - entity.level().getGameTime()) / 20;
+                        showMessage(entity,
                                 Component.literal(config.getDisplayName() + " on cooldown! " + remaining + "s remaining")
                                         .withStyle(style -> style.withColor(0x4A90E2)), // Blue color for water
                                 true
@@ -481,8 +483,8 @@ public class WaterBreathingMoveset extends AbstractMoveset {
             float breathCost = config.getBreathCostOrDefault(0.0f);
 
             // Add small buffer to prevent race conditions
-            if (breathCost > 0 && !BreathingManager.hasBreath(player, breathCost + 0.1f)) {
-                player.displayClientMessage(
+            if (breathCost > 0 && !BreathingManager.hasBreath((Player) entity, breathCost + 0.1f)) {
+                showMessage(entity,
                         Component.literal("Not enough breath for " + config.getDisplayName() + "!")
                                 .withStyle(style -> style.withColor(0xFF3333)), // Red for no breath
                         true
@@ -492,29 +494,29 @@ public class WaterBreathingMoveset extends AbstractMoveset {
         }
 
         // Mark that we're executing a move
-        executingMove.put(player.getUUID(), true);
+        executingMove.put(entity.getUUID(), true);
 
         // Store current moveset instance for access by actions
         CURRENT_MOVESET.set(this);
 
         try {
             // Execute the move
-            super.performMove(player, moveIndex);
+            super.performMove(entity, moveIndex);
         } finally {
             // Always clean up the thread local
             CURRENT_MOVESET.remove();
         }
 
         // Check if move actually executed by seeing if breath was consumed
-        boolean moveExecuted = !executingMove.getOrDefault(player.getUUID(), false);
-        executingMove.remove(player.getUUID());
+        boolean moveExecuted = !executingMove.getOrDefault(entity.getUUID(), false);
+        executingMove.remove(entity.getUUID());
 
         if (moveExecuted && config != null) {
             // Set cooldown after successful execution
-            setMoveCooldown(player, moveIndex);
+            setMoveCooldown(entity, moveIndex);
 
             // Send cooldown display packet if on server and has cooldown
-            if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer
+            if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer
                     && config.getCooldownOrDefault(0) > 0) {
                 FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
                 buf.writeUtf(config.getDisplayName());
@@ -535,13 +537,13 @@ public class WaterBreathingMoveset extends AbstractMoveset {
     /**
      * Check if a player can use a specific move (not on cooldown)
      */
-    private boolean canUseMove(Player player, int moveIndex) {
+    private boolean canUseMove(LivingEntity entity, int moveIndex) {
         MoveConfiguration config = getMove(moveIndex);
         if (config == null || config.getCooldownOrDefault(0) <= 0) {
             return true; // No cooldown
         }
 
-        Map<Integer, Long> cooldowns = playerCooldowns.get(player.getUUID());
+        Map<Integer, Long> cooldowns = entityCooldowns.get(entity.getUUID());
         if (cooldowns == null) {
             return true; // No cooldowns tracked yet
         }
@@ -551,21 +553,21 @@ public class WaterBreathingMoveset extends AbstractMoveset {
             return true; // Move never used
         }
 
-        long currentTime = player.level().getGameTime();
+        long currentTime = entity.level().getGameTime();
         return currentTime >= cooldownEnd;
     }
 
     /**
      * Set a move on cooldown
      */
-    private void setMoveCooldown(Player player, int moveIndex) {
+    private void setMoveCooldown(LivingEntity entity, int moveIndex) {
         MoveConfiguration config = getMove(moveIndex);
         if (config == null || config.getCooldownOrDefault(0) <= 0) {
             return; // No cooldown
         }
 
-        long cooldownEnd = player.level().getGameTime() + config.getCooldownOrDefault(0);
-        playerCooldowns.computeIfAbsent(player.getUUID(), k -> new HashMap<>())
+        long cooldownEnd = entity.level().getGameTime() + config.getCooldownOrDefault(0);
+        entityCooldowns.computeIfAbsent(entity.getUUID(), k -> new HashMap<>())
                 .put(moveIndex, cooldownEnd);
     }
 
@@ -585,7 +587,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
     }
 
     @Override
-    public void onMovePerformed(Player player, int moveIndex, boolean isCrouching) {
+    public void onMovePerformed(LivingEntity entity, int moveIndex, boolean isCrouching) {
         // Water Breathing specific post-move effects can be added here
         // moveIndex -1 = Water Surface Slash (right-click)
         // moveIndex -2 = Water Wheel (crouch + right-click)
@@ -594,9 +596,33 @@ public class WaterBreathingMoveset extends AbstractMoveset {
     /**
      * Called when a player logs out - clean up their data
      */
-    public static void cleanupPlayer(Player player) {
-        playerCooldowns.remove(player.getUUID());
-        executingMove.remove(player.getUUID());
-        playerComboStates.remove(player.getUUID());
+    public static void cleanupPlayer(LivingEntity entity) {
+        entityCooldowns.remove(entity.getUUID());
+        executingMove.remove(entity.getUUID());
+        playerComboStates.remove(entity.getUUID());
+    }
+
+    // ==================== NPC-PLAYER HELPER METHODS ====================
+
+    /**
+     * Check if entity has enough breath (works for both Players and NPCs)
+     */
+    private boolean hasEnoughBreath(LivingEntity entity, float amount) {
+        if (entity instanceof Player player) {
+            return BreathingManager.hasBreath(player, amount);
+        } else if (entity instanceof MovesetCapableNPC npc) {
+            return npc.getBreathGauge() >= amount;
+        }
+        return false;
+    }
+
+    /**
+     * Show message to entity (only works for Players)
+     */
+    private void showMessage(LivingEntity entity, Component message, boolean actionBar) {
+        if (entity instanceof Player player) {
+            showMessage(entity, message, actionBar);
+        }
+        // NPCs don't need messages
     }
 }

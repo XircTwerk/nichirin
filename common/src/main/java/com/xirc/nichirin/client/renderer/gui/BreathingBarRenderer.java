@@ -1,6 +1,6 @@
-package com.xirc.nichirin.client.renderer;
+package com.xirc.nichirin.client.renderer.gui;
 
-import com.xirc.nichirin.client.gui.StanceBarHUD;
+import com.xirc.nichirin.client.gui.BreathingBarHUD;
 import dev.architectury.event.events.client.ClientGuiEvent;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -8,28 +8,28 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 
 @Environment(EnvType.CLIENT)
-public class StanceBarRenderer {
+public class BreathingBarRenderer {
 
     /**
-     * Registers the stance bar renderer
+     * Registers the breathing bar renderer
      */
     public static void register() {
         // Register the render event
         ClientGuiEvent.RENDER_HUD.register((graphics, tickDelta) -> {
-            renderStanceBar(graphics, tickDelta);
+            renderBreathingBar(graphics, tickDelta);
         });
     }
 
     /**
-     * Renders the orange stance bar
+     * Renders the breathing bar
      */
-    private static void renderStanceBar(GuiGraphics graphics, float partialTicks) {
+    private static void renderBreathingBar(GuiGraphics graphics, float partialTicks) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player == null) return;
 
-        // Render the stance bar
-        if (StanceBarHUD.shouldRender()) {
-            StanceBarHUD.render(graphics, partialTicks);
+        // Render the breathing bar
+        if (BreathingBarHUD.shouldRender()) {
+            BreathingBarHUD.render(graphics, partialTicks);
         }
     }
 }

@@ -1,13 +1,14 @@
-package com.xirc.nichirin.client.renderer.entity;
+package com.xirc.nichirin.client.renderer.entity.animal;
 
 import com.xirc.nichirin.BreathOfNichirin;
-import com.xirc.nichirin.client.animator.entity.BoarEntityAnimator;
-import com.xirc.nichirin.common.entity.BoarEntity;
+import com.xirc.nichirin.client.renderer.entity.BaseAZNichirinEntityRenderer;
+import com.xirc.nichirin.client.renderer.entity.animator.BoarEntityAnimator;
+import com.xirc.nichirin.common.entity.animal.BoarEntity;
 import mod.azure.azurelib.render.entity.AzEntityRendererConfig;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 
-public class BoarEntityRenderer extends BaseNichirinEntityRenderer<BoarEntity> {
+public class BoarEntityRenderer extends BaseAZNichirinEntityRenderer<BoarEntity> {
 
     private static final ResourceLocation GEO = new ResourceLocation(BreathOfNichirin.MOD_ID, "geo/boar.geo.json");
     private static final ResourceLocation TEX = new ResourceLocation(BreathOfNichirin.MOD_ID, "textures/entity/boar.png");
