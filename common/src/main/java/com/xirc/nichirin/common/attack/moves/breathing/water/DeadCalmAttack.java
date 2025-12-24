@@ -134,7 +134,7 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
     }
 
     private void applySlowdown() {
-        int slowDuration = duration; // Use the full duration from moveset
+        int slowDuration = duration / 2; // Use the full duration from moveset
         user.addEffect(new MobEffectInstance(
                 MobEffects.MOVEMENT_SLOWDOWN,
                 slowDuration,

@@ -9,7 +9,7 @@ import org.joml.Vector3f;
 
 public class DeadCalmShaderEffect extends NichirinPostProcessor {
 
-    private static final int TOTAL_TICKS = 240;
+    private static final int TOTAL_TICKS = 200;
     private static final int FADE_IN_TICKS = 20;
     private static final int FADE_OUT_TICKS = 40;
 
