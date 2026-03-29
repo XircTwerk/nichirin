@@ -120,5 +120,23 @@ public class NichirinModelProvider extends FabricModelProvider {
         generator.generateFlatItem(NichirinItemRegistry.SHINOBU_CAPE.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.SHINOBU_LEGGINGS.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.SHINOBU_BOOTS.get(), ModelTemplates.FLAT_ITEM);
+
+        // Sabito armor
+        generator.generateFlatItem(NichirinItemRegistry.SABITO_HEADPIECE.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.SABITO_CAPE.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.SABITO_LEGGINGS.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.SABITO_BOOTS.get(), ModelTemplates.FLAT_ITEM);
+
+        // Giyu armor
+        generator.generateFlatItem(NichirinItemRegistry.GIYU_HEADPIECE.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.GIYU_CAPE.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.GIYU_LEGGINGS.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.GIYU_BOOTS.get(), ModelTemplates.FLAT_ITEM);
+
+        // Urokodaki armor
+        generator.generateFlatItem(NichirinItemRegistry.UROKODAKI_HEADPIECE.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.UROKODAKI_CAPE.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.UROKODAKI_LEGGINGS.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.UROKODAKI_BOOTS.get(), ModelTemplates.FLAT_ITEM);
     }
 }

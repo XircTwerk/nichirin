@@ -91,7 +91,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 .withBreathCost(8.0f)
                 .withHitStun(20)
                 .withHitboxSize(3.0f)
-                .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                .withDescription("3-hit combo ending in a heavy slam.")
                 .build();
         this.captureRightClickConfig(tempConfig, false);
     }
@@ -107,7 +107,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 .withHitStun(5)
                 .withHitboxSize(3.5f)
                 .withDashSpeed(4.0f)
-                .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                .withDescription("Lunging spinning slash through enemies.")
                 .build();
         this.captureRightClickConfig(tempConfig, true);
     }
@@ -127,7 +127,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(25.0f)
                         .withHitStun(3) // Very short for continuous hits
                         .withHitboxSize(2.5f)
-                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                        .withDescription("Continuous attack stance hitting nearby enemies for several seconds.")
                         .withAction(entity -> {
                             FlowingDanceAttack attack = new FlowingDanceAttack();
                             WaterBreathingMoveset moveset = getCurrentMoveset();
@@ -148,7 +148,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(25.0f)
                         .withHitStun(8)
                         .withHitboxSize(4.5f) // Full radius
-                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                        .withDescription("360° slash hitting all surrounding enemies at once.")
                         .withAction(entity -> {
                             StrikingTideAttack attack = new StrikingTideAttack();
                             WaterBreathingMoveset moveset = getCurrentMoveset();
@@ -170,7 +170,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withHitStun(30)
                         .withHitboxSize(1.0f) // Very small precise hitbox
                         .withDashSpeed(12.0f) // Fast dash
-                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                        .withDescription("High-speed precision dash strike dealing 20 damage.")
                         .withAction(entity -> {
                             BlessedRainAttack attack = new BlessedRainAttack();
                             WaterBreathingMoveset moveset = getCurrentMoveset();
@@ -191,7 +191,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(20.0f)
                         .withHitStun(7) // Short for spinning effect
                         .withHitboxSize(3.0f)
-                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                        .withDescription("Spinning attack that hits trapped enemies multiple times.")
                         .withAction(entity -> {
                             WhirlpoolAttack attack = new WhirlpoolAttack();
                             WaterBreathingMoveset moveset = getCurrentMoveset();
@@ -212,7 +212,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(15.0f)
                         .withHitStun(20)
                         .withHitboxSize(4.0f) // Wall of ripples
-                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                        .withDescription("Forward thrust with long reach.")
                         .withAction(entity -> {
                             DropRippleThrustAttack attack = new DropRippleThrustAttack();
                             WaterBreathingMoveset moveset = getCurrentMoveset();
@@ -233,7 +233,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(35.0f)
                         .withHitStun(8) // Medium stun for multi-hit
                         .withHitboxSize(6.0f) // BIG ASS HITBOX
-                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                        .withDescription("Multi-hit barrage over a large area lasting several seconds.")
                         .withAction(entity -> {
                             WaterfallBasinAttack attack = new WaterfallBasinAttack();
                             WaterBreathingMoveset moveset = getCurrentMoveset();
@@ -255,7 +255,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withHitStun(18)
                         .withHitboxSize(6f)
                         .withDashSpeed(4.0f) // Fast zigzag speed
-                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                        .withDescription("Zigzag dash that hits enemies along the path.")
                         .withAction(entity -> {
                             SplashingWaterFlowAttack attack = new SplashingWaterFlowAttack();
                             WaterBreathingMoveset moveset = getCurrentMoveset();
@@ -276,7 +276,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(50.0f)
                         .withHitStun(12)
                         .withHitboxSize(4.0f)
-                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                        .withDescription("5-hit combo ending in a heavy finishing slash.")
                         .withAction(entity -> {
                             ConstantFluxAttack attack = new ConstantFluxAttack();
                             WaterBreathingMoveset moveset = getCurrentMoveset();
@@ -297,7 +297,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(55.0f)
                         .withHitStun(6)
                         .withHitboxSize(6.0f) // Large area field
-                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                        .withDescription("Deploys a large auto-targeting field that damages nearby enemies for 10 seconds.")
                         .withAction(entity -> {
                             DeadCalmAttack attack = new DeadCalmAttack();
                             WaterBreathingMoveset moveset = getCurrentMoveset();
@@ -315,17 +315,17 @@ public class WaterBreathingMoveset extends AbstractMoveset {
     }
 
     @Override
-    public boolean handleRightClick(Player player, boolean isCrouching) {
-        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+    public boolean handleRightClick(LivingEntity entity, boolean isCrouching) {
+        if (entity.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
             return true; // Block the move by overriding
         }
 
         if (isCrouching) {
             // Crouch + Right-click: Water Wheel (separate from combo)
-            return executeWaterWheel(player);
+            return executeWaterWheel(entity);
         } else {
             // Regular Right-click: Water Surface Slash combo system
-            return executeWaterSurfaceSlashCombo(player);
+            return executeWaterSurfaceSlashCombo(entity);
         }
     }
 
@@ -596,6 +596,10 @@ public class WaterBreathingMoveset extends AbstractMoveset {
     /**
      * Called when a player logs out - clean up their data
      */
+    public static void resetCooldowns(LivingEntity entity) {
+        entityCooldowns.remove(entity.getUUID());
+    }
+
     public static void cleanupPlayer(LivingEntity entity) {
         entityCooldowns.remove(entity.getUUID());
         executingMove.remove(entity.getUUID());
@@ -621,7 +625,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
      */
     private void showMessage(LivingEntity entity, Component message, boolean actionBar) {
         if (entity instanceof Player player) {
-            showMessage(entity, message, actionBar);
+            player.displayClientMessage(message, actionBar);
         }
         // NPCs don't need messages
     }

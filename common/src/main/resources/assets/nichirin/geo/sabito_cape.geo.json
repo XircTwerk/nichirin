@@ -15,29 +15,34 @@
 					"name": "Cape",
 					"pivot": [0, 24, -2],
 					"cubes": [
-						{"origin": [-2, 23.25, -2], "size": [4, 2, 4], "inflate": 0.1, "uv": [66, 94]},
+						{"origin": [-2, 23.25, -2], "size": [4, 2, 4], "inflate": 0.1, "uv": [66, 94]}
+					]
+				},
+				{
+					"name": "CapeMiddle",
+					"parent": "Cape",
+					"pivot": [0, 24, -2],
+					"cubes": [
 						{"origin": [-4, 13.95, -2.8], "size": [8, 10, 5], "inflate": 0.55, "uv": [65, 104]}
 					]
 				},
 				{
-					"name": "capeRight",
-					"parent": "Cape",
-					"pivot": [-5, 22, 0],
-					"cubes": [
-						{"origin": [-7, 11.9, -2], "size": [3, 12, 4], "inflate": 0.48, "uv": [67, 78]}
-					]
-				},
-				{
-					"name": "Lower parts",
-					"parent": "Cape",
+					"name": "Capelower",
+					"parent": "CapeMiddle",
 					"pivot": [0, 14.45, 1.7],
 					"cubes": [
 						{"origin": [-4, 4.95, -2.8], "size": [8, 9, 5], "inflate": 0.65, "uv": [97, 95]}
 					]
 				},
 				{
+					"name": "capeRight",
+					"pivot": [-5, 22, 0],
+					"cubes": [
+						{"origin": [-7, 11.9, -2], "size": [3, 12, 4], "inflate": 0.48, "uv": [67, 78]}
+					]
+				},
+				{
 					"name": "capeLeft",
-					"parent": "Cape",
 					"pivot": [5, 22, 0],
 					"cubes": [
 						{"origin": [4, 11.9, -2], "size": [3, 12, 4], "inflate": 0.48, "uv": [67, 78], "mirror": true}

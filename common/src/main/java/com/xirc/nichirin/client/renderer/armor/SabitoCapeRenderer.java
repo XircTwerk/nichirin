@@ -1,31 +1,32 @@
 package com.xirc.nichirin.client.renderer.armor;
 
-import mod.azure.azurelib.model.AzBone;
+import com.xirc.nichirin.client.renderer.armor.core.NichirinCapeArmorBoneProvider;
 import net.minecraft.world.entity.EquipmentSlot;
 
 public class SabitoCapeRenderer extends NichirinArmorRenderer {
 
     public SabitoCapeRenderer() {
-        super("sabito_cape");
+        super("sabito_cape", "sabito_cape", new NichirinCapeArmorBoneProvider("Cape"), "sabito_cape");
     }
 
     @Override
     protected void applyBoneTransformations() {
-        // Match body transformation for cape to follow player
-        AzBone bodyBone = getBone("Body");
-        if (bodyBone != null && currentBaseModel != null) {
-            applyBodyTransform(bodyBone);
-        }
+        if (currentBaseModel == null) return;
+        // Cape body is handled by the bone provider.
+        // capeRight/capeLeft are children of Cape in the geo hierarchy, so their rotation is
+        // applied in addition to Cape's (body) rotation. Setting arm rotation here makes them
+        // swing with the arms while still following the body through the parent hierarchy.
+        matchArmBone(currentBaseModel.rightArm, getBone("capeRight"), false);
+        matchArmBone(currentBaseModel.leftArm, getBone("capeLeft"), true);
+        scaleArmBones(getBone("capeLeft"), getBone("capeRight"));
     }
 
     @Override
     protected void applyBoneVisibilityBySlot(EquipmentSlot slot) {
-        // Set all bones invisible first
-        setAllVisible(false);
-
-        // Only show cape when in chest slot
         if (slot == EquipmentSlot.CHEST) {
-            setBoneVisible(getBone("Body"), true);
+            setAllVisible(true);
+        } else {
+            setAllVisible(false);
         }
     }
 }

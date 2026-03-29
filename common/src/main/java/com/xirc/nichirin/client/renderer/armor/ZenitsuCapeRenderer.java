@@ -1,30 +1,31 @@
 package com.xirc.nichirin.client.renderer.armor;
 
-import mod.azure.azurelib.model.AzBone;
+import com.xirc.nichirin.client.renderer.armor.core.NichirinCapeArmorBoneProvider;
 import net.minecraft.world.entity.EquipmentSlot;
 
 public class ZenitsuCapeRenderer extends NichirinArmorRenderer {
 
     public ZenitsuCapeRenderer() {
-        super("zenitsu_cape");
+        super("zenitsu_cape", "zenitsu_cape", new NichirinCapeArmorBoneProvider("Cape"), "zenitsu_cape");
     }
 
     @Override
     protected void applyBoneTransformations() {
-        // Match body rotation for cape to follow player
-        if (currentBaseModel != null) {
-            matchRotation(currentBaseModel.body, getBone("Body"));
-        }
+        if (currentBaseModel == null) return;
+        // Cape body is handled by the bone provider.
+        // CapeRight/CapeLeft are arm-covering pieces — follow arm rotation+position so they swing.
+        // CapeRight pivot [-5,22,0] = right arm; CapeLeft pivot [5,22,0] = left arm.
+        matchArmBone(currentBaseModel.rightArm, getBone("CapeRight"), false);
+        matchArmBone(currentBaseModel.leftArm, getBone("CapeLeft"), true);
+        scaleArmBones(getBone("CapeLeft"), getBone("CapeRight"));
     }
 
     @Override
     protected void applyBoneVisibilityBySlot(EquipmentSlot slot) {
-        // Set all bones invisible first
-        setAllVisible(false);
-
-        // Only show cape when in chest slot
         if (slot == EquipmentSlot.CHEST) {
-            setBoneVisible(getBone("Body"), true);
+            setAllVisible(true);
+        } else {
+            setAllVisible(false);
         }
     }
 }

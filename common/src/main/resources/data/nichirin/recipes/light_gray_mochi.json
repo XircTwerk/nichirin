@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {"item": "nichirin:mochi"},
+    {"item": "minecraft:light_gray_dye"}
+  ],
+  "result": {"item": "nichirin:light_gray_mochi", "count": 1}
+}

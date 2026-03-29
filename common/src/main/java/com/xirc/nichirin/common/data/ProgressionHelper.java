@@ -63,6 +63,11 @@ public class ProgressionHelper {
                         NichirinCriteriaTriggers.SOUND_BREATHING_TRIGGER.trigger(serverPlayer);
                     }
                 }
+                case "water_breathing" -> {
+                    if (NichirinCriteriaTriggers.WATER_BREATHING_TRIGGER != null) {
+                        NichirinCriteriaTriggers.WATER_BREATHING_TRIGGER.trigger(serverPlayer);
+                    }
+                }
             }
 
             // Trigger First Technique advancement if this was their first moveset

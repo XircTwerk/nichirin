@@ -63,7 +63,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                 .withBreathCost(20.0f) // Moderate cost
                 .withHitStun(10)
                 .withHitboxSize(3.0f)
-                .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                .withDescription("Wide sweep that triggers a delayed explosion dealing area damage.")
                 .build();
         this.captureRightClickConfig(tempConfig, false);
     }
@@ -79,7 +79,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                 .withBreathCost(25.0f) // Mobility move cost
                 .withHitStun(15) // Good stun for finishing slash
                 .withHitboxSize(3.0f)
-                .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                .withDescription("Short dash that damages enemies you pass through.")
                 .build();
         this.captureRightClickConfig(tempConfig, true);
     }
@@ -99,7 +99,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(25.0f)
                         .withHitStun(10) // 0.5 second stun
                         .withHitboxSize(13.5f) // Full radius
-                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                        .withDescription("AOE slam that hits all enemies in a large radius.")
                         .withAction(entity -> {
                             RoarAttack attack = new RoarAttack();
                             SoundBreathingMoveset moveset = getCurrentMoveset();
@@ -120,7 +120,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(25.0f)
                         .withHitStun(10) // Brief stun per hit
                         .withHitboxSize(12.25f) // Full 360° radius
-                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                        .withDescription("Spinning 360° attack that hits all nearby enemies multiple times.")
                         .withAction(entity -> {
                             ConstantResoundingSlashesAttack attack = new ConstantResoundingSlashesAttack();
                             SoundBreathingMoveset moveset = getCurrentMoveset();
@@ -142,7 +142,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(40.0f) // Expensive ultimate-style move
                         .withHitStun(20) // Good stun
                         .withHitboxSize(3.5f) // Wide chain hitbox
-                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                        .withDescription("Multi-segment dash that strikes everything along a 16-block path.")
                         .withAction(entity -> {
                             StringPerformanceAttack attack = new StringPerformanceAttack();
                             SoundBreathingMoveset moveset = getCurrentMoveset();
@@ -160,13 +160,13 @@ public class SoundBreathingMoveset extends AbstractMoveset {
     }
 
     @Override
-    public boolean handleRightClick(Player player, boolean isCrouching) {
+    public boolean handleRightClick(LivingEntity entity, boolean isCrouching) {
         if (isCrouching) {
             // Crouch + Right-click: Rhythmic Step
-            return executeRhythmicStep(player);
+            return executeRhythmicStep(entity);
         } else {
             // Regular Right-click: Tempo Breaker
-            return executeTempoBreaker(player);
+            return executeTempoBreaker(entity);
         }
     }
 
@@ -377,6 +377,10 @@ public class SoundBreathingMoveset extends AbstractMoveset {
     /**
      * Called when a player logs out - clean up their data
      */
+    public static void resetCooldowns(LivingEntity entity) {
+        entityCooldowns.remove(entity.getUUID());
+    }
+
     public static void cleanupPlayer(LivingEntity entity) {
         entityCooldowns.remove(entity.getUUID());
         executingMove.remove(entity.getUUID());
@@ -411,7 +415,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
      */
     private void showMessage(LivingEntity entity, Component message, boolean actionBar) {
         if (entity instanceof Player player) {
-            showMessage(entity, message, actionBar);
+            player.displayClientMessage(message, actionBar);
         }
         // NPCs don't need messages
     }

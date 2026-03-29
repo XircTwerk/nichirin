@@ -2,16 +2,12 @@ package com.xirc.nichirin.common.attack.moves.demon.basic;
 
 import com.xirc.nichirin.common.attack.component.AbstractDemonAttack;
 import com.xirc.nichirin.common.attack.component.IDemonAttacker;
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Demon dashing strike attack - dash 4 blocks forward and deliver devastating punch
@@ -118,67 +114,9 @@ public class DemonDashStrikeAttack extends AbstractDemonAttack<DemonDashStrikeAt
     }
 
     private void createDashTrail() {
-        if (!(world instanceof ServerLevel serverLevel) || user == null) return;
-
-        Vec3 userPos = user.position();
-
-        // Create dash particle trail
-        for (int i = 0; i < 8; i++) {
-            int finalI = i;
-            CompletableFuture.delayedExecutor(i * 25L, TimeUnit.MILLISECONDS)
-                    .execute(() -> {
-                        if (world instanceof ServerLevel level && user != null) {
-                            Vec3 trailPos = user.position().add(0, 0.3, 0);
-
-                            // Speed lines behind the dash
-                            level.sendParticles(ParticleTypes.CLOUD,
-                                    trailPos.x, trailPos.y, trailPos.z,
-                                    3, 0.3, 0.2, 0.3, 0.1);
-
-                            // Smoke trail
-                            level.sendParticles(ParticleTypes.LARGE_SMOKE,
-                                    trailPos.x, trailPos.y, trailPos.z,
-                                    2, 0.2, 0.1, 0.2, 0.05);
-                        }
-                    });
-        }
     }
 
     private void createPunchImpact(Vec3 punchPos) {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-
-        // Central impact explosion
-        serverLevel.sendParticles(ParticleTypes.EXPLOSION,
-                punchPos.x, punchPos.y, punchPos.z,
-                5, 0.3, 0.3, 0.3, 0.1);
-
-        // Impact shockwave
-        for (int i = 0; i < 360; i += 45) {
-            double angle = Math.toRadians(i);
-            double radius = 1.5;
-
-            double x = punchPos.x + Math.cos(angle) * radius;
-            double z = punchPos.z + Math.sin(angle) * radius;
-
-            serverLevel.sendParticles(ParticleTypes.CRIT,
-                    x, punchPos.y, z, 2, 0.1, 0.1, 0.1, 0.1);
-        }
-
-        // Force burst effect
-        Vec3 rightVector = dashDirection.cross(new Vec3(0, 1, 0)).normalize();
-
-        for (int i = -3; i <= 3; i++) {
-            Vec3 burstPos = punchPos.add(rightVector.scale(i * 0.4));
-
-            serverLevel.sendParticles(ParticleTypes.DAMAGE_INDICATOR,
-                    burstPos.x, burstPos.y, burstPos.z,
-                    2, 0.1, 0.1, 0.1, 0.1);
-        }
-
-        // Ground impact dust
-        serverLevel.sendParticles(ParticleTypes.POOF,
-                punchPos.x, punchPos.y - 0.5, punchPos.z,
-                8, 0.5, 0.1, 0.5, 0.1);
     }
 
     @Override
@@ -187,14 +125,5 @@ public class DemonDashStrikeAttack extends AbstractDemonAttack<DemonDashStrikeAt
         punchExecuted = false;
         dashDirection = null;
         startPosition = null;
-
-        // Final impact particles
-        if (world instanceof ServerLevel serverLevel && user != null) {
-            Vec3 userPos = user.position();
-
-            serverLevel.sendParticles(ParticleTypes.CLOUD,
-                    userPos.x, userPos.y + 0.5, userPos.z,
-                    6, 0.4, 0.3, 0.4, 0.1);
-        }
     }
 }

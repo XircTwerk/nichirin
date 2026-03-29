@@ -2,6 +2,7 @@ package com.xirc.nichirin.common.attack.moves;
 
 import com.xirc.nichirin.common.attack.component.AbstractSimpleAttack;
 import com.xirc.nichirin.common.attack.component.IPhysicalAttacker;
+import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -126,13 +127,6 @@ public class BasicSlashAttack<A extends IPhysicalAttacker<A, ?>> extends Abstrac
                 // Call hit hook
                 onHit(user, target);
 
-                // Create hit particles
-                if (world instanceof ServerLevel serverLevel) {
-                    serverLevel.sendParticles(ParticleTypes.CRIT,
-                            target.getX(), target.getY() + target.getBbHeight() / 2, target.getZ(),
-                            10, 0.2, 0.2, 0.2, 0.1);
-                }
-
                 // Play hit sound
                 if (getHitSound() != null) {
                     world.playSound(null, target.getX(), target.getY(), target.getZ(),
@@ -153,11 +147,6 @@ public class BasicSlashAttack<A extends IPhysicalAttacker<A, ?>> extends Abstrac
         hitEntities.clear();
     }
 
-    @Override
-    public boolean canStart(Player physAttacker) {
-        return physAttacker != null && !isActive();
-    }
-
     /**
      * Public tick method to be called from the katana
      */
@@ -171,22 +160,13 @@ public class BasicSlashAttack<A extends IPhysicalAttacker<A, ?>> extends Abstrac
      * Creates visual slash effect
      */
     private void createSlashParticles(Player user, Level world) {
-        if (world.isClientSide() || !(world instanceof ServerLevel serverLevel)) return;
-
-        double radius = getRange();
-        Vec3 userPos = user.position().add(0, user.getBbHeight() * 0.75, 0);
-        Vec3 lookDir = user.getLookAngle();
-
-        // Create arc of particles
-        for (int i = -30; i <= 30; i += 10) {
-            double angle = Math.toRadians(i);
-            Vec3 offset = lookDir.yRot((float)angle).scale(radius);
-            Vec3 particlePos = userPos.add(offset);
-
-            serverLevel.sendParticles(ParticleTypes.SWEEP_ATTACK,
-                    particlePos.x, particlePos.y, particlePos.z,
-                    1, 0, 0, 0, 0);
-        }
+        if (!(world instanceof ServerLevel sl)) return;
+        Vec3 pos = user.position().add(0, user.getBbHeight() * 0.5, 0)
+                .add(user.getLookAngle().scale(getRange() * 0.7));
+        sl.sendParticles(ParticleTypes.SWEEP_ATTACK,
+                pos.x, pos.y, pos.z, 3, 0.3, 0.3, 0.3, 0.0);
+        sl.sendParticles(NichirinParticleRegistry.SLASH_IMPACT_SPARK.get(),
+                pos.x, pos.y, pos.z, 6, 0.2, 0.2, 0.2, 0.0);
     }
 
     @SuppressWarnings("unchecked")

@@ -61,6 +61,7 @@ public class MovesetProgression {
             case "flame_breathing" -> "Survive being on fire for 15 seconds";
             case "insect_breathing" -> "Throw a poison potion";
             case "sound_breathing" -> "Play a music disc in a jukebox";
+            case "water_breathing" -> "Kill a Drowned with your bare hands";
             default -> "Unknown requirement";
         };
     }

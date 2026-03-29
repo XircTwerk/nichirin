@@ -2,7 +2,7 @@ package com.xirc.nichirin.client.renderer.entity.attack;
 
 import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.client.renderer.entity.BaseAZNichirinEntityRenderer;
-import com.xirc.nichirin.client.renderer.entity.animator.entity.ThunderBallAnimator;
+import com.xirc.nichirin.client.renderer.entity.animator.ThunderBallAnimator;
 import com.xirc.nichirin.common.entity.attack.ThunderBallEntity;
 import mod.azure.azurelib.render.entity.AzEntityRendererConfig;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;

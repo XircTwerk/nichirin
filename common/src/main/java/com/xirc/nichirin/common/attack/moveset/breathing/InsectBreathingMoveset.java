@@ -63,7 +63,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                 .withBreathCost(10.0f)
                 .withHitStun(15)
                 .withHitboxSize(1.5f)
-                .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                .withDescription("Fast low-damage thrust that poisons on hit.")
                 .build();
         this.captureRightClickConfig(tempConfig, false);
     }
@@ -79,7 +79,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                 .withBreathCost(20.0f)
                 .withHitStun(10)
                 .withHitboxSize(2.0f)
-                .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                .withDescription("Short dash strike that deals moderate damage.")
                 .build();
         this.captureRightClickConfig(tempConfig, true);
     }
@@ -100,7 +100,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(20.0f)
                         .withHitStun(25) // Good stun for precision strike
                         .withHitboxSize(2f) // Small precise hitbox
-                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                        .withDescription("Lock-on dash strike that deals high single-target damage.")
                         .withAction(entity -> {
                             ButterflyAttack attack = new ButterflyAttack();
                             InsectBreathingMoveset moveset = getCurrentMoveset();
@@ -121,7 +121,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(25.0f) // Higher cost for multi-hit
                         .withHitStun(5) // Very short per hit, final hit has more
                         .withHitboxSize(2.0f) // Target lock area
-                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                        .withDescription("Lock-on multi-hit that lands 6 rapid strikes on a single target.")
                         .withAction(entity -> {
                             DragonflyAttack attack = new DragonflyAttack();
                             InsectBreathingMoveset moveset = getCurrentMoveset();
@@ -143,7 +143,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(45.0f) // Expensive ultimate-level move
                         .withHitStun(40) // Strong stun on finisher
                         .withHitboxSize(2.5f) // Larger finisher hitbox
-                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                        .withDescription("Zigzag multi-dash finisher with high damage and strong knockback.")
                         .withAction(entity -> {
                             CentipedeAttack attack = new CentipedeAttack();
                             InsectBreathingMoveset moveset = getCurrentMoveset();
@@ -161,13 +161,13 @@ public class InsectBreathingMoveset extends AbstractMoveset {
     }
 
     @Override
-    public boolean handleRightClick(Player player, boolean isCrouching) {
+    public boolean handleRightClick(LivingEntity entity, boolean isCrouching) {
         if (isCrouching) {
             // Crouch + Right-click: Poison Dash
-            return executeBeeSting(player);
+            return executeBeeSting(entity);
         } else {
             // Regular Right-click: Quick Sting
-            return executeQuickSting(player);
+            return executeQuickSting(entity);
         }
     }
 
@@ -375,6 +375,10 @@ public class InsectBreathingMoveset extends AbstractMoveset {
     /**
      * Called when a player logs out - clean up their data
      */
+    public static void resetCooldowns(LivingEntity entity) {
+        entityCooldowns.remove(entity.getUUID());
+    }
+
     public static void cleanupPlayer(LivingEntity entity) {
         entityCooldowns.remove(entity.getUUID());
         executingMove.remove(entity.getUUID());
@@ -399,7 +403,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
      */
     private void showMessage(LivingEntity entity, Component message, boolean actionBar) {
         if (entity instanceof Player player) {
-            showMessage(entity, message, actionBar);
+            player.displayClientMessage(message, actionBar);
         }
         // NPCs don't need messages
     }

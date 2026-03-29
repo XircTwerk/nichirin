@@ -1,16 +1,28 @@
 package com.xirc.nichirin.common.world;
 
 import com.xirc.nichirin.BreathOfNichirin;
+import com.xirc.nichirin.registry.NichirinEntityRegistry;
 import net.fabricmc.fabric.api.biome.v1.BiomeModifications;
 import net.fabricmc.fabric.api.biome.v1.BiomeSelectors;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BiomeTags;
-import net.minecraft.world.level.biome.Biomes;
+import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.level.levelgen.GenerationStep;
 
 public class NichirinBiomeModifications {
+    public static void addSpawns() {
+        BiomeModifications.addSpawn(
+                BiomeSelectors.tag(BiomeTags.IS_OVERWORLD),
+                MobCategory.MONSTER,
+                NichirinEntityRegistry.TEMPLE_DEMON.get(),
+                8,  // weight (zombie is 100 for reference — 8 is rare)
+                1,  // min group size
+                2   // max group size
+        );
+    }
+
     public static void addOres() {
         // Add Scarlet Crimson Iron Sand to ALL biomes, then filter by biome type
         BiomeModifications.addFeature(

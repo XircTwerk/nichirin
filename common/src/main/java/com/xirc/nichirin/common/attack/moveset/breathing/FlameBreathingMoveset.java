@@ -63,7 +63,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                 .withBreathCost(15.0f)
                 .withHitStun(8)
                 .withHitboxSize(2.0f)
-                .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                .withDescription("6 rapid slashes in quick succession.")
                 .build();
         this.captureRightClickConfig(tempConfig, false);
     }
@@ -78,7 +78,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                 .withBreathCost(40.0f)
                 .withHitStun(20)
                 .withHitboxSize(2.0f)
-                .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                .withDescription("Overhead slam with high damage and short windup.")
                 .build();
         this.captureRightClickConfig(tempConfig, true);
     }
@@ -100,7 +100,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(20.0f)
                         .withHitStun(20)
                         .withHitboxSize(5f) // Larger for arc
-                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                        .withDescription("Upward arc slash that launches enemies into the air.")
                         .withAction(entity -> {
                             RisingScorchingSunAttack attack = new RisingScorchingSunAttack();
                             FlameBreathingMoveset moveset = getCurrentMoveset();
@@ -121,7 +121,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(30.0f) // Expensive for heavy attack
                         .withHitStun(35)
                         .withHitboxSize(3.0f) // Large explosion hitbox
-                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                        .withDescription("Charged downward strike that explodes on impact.")
                         .withAction(entity -> {
                             BlazingUniverseAttack attack = new BlazingUniverseAttack();
                             FlameBreathingMoveset moveset = getCurrentMoveset();
@@ -142,7 +142,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(25.0f)
                         .withHitStun(15)
                         .withHitboxSize(3.5f) // Full radius
-                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                        .withDescription("Full 360° slash hitting all nearby enemies.")
                         .withAction(entity -> {
                             BloomingFlameUndulationAttack attack = new BloomingFlameUndulationAttack();
                             FlameBreathingMoveset moveset = getCurrentMoveset();
@@ -164,7 +164,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(50.0f)
                         .withHitStun(10) // Short stun for combo potential
                         .withHitboxSize(2.0f)
-                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                        .withDescription("Dashing multi-hit strike in a straight line.")
                         .withAction(entity -> {
                             FlameTigerAttack attack = new FlameTigerAttack();
                             FlameBreathingMoveset moveset = getCurrentMoveset();
@@ -186,7 +186,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(75.0f)
                         .withHitStun(80) // 4 second stun
                         .withHitboxSize(4.0f) // Large dragon hitbox
-                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                        .withDescription("Massive-damage dash through enemies. 30-second cooldown.")
                         .withAction(entity -> {
                             RengokuAttack attack = new RengokuAttack();
                             FlameBreathingMoveset moveset = getCurrentMoveset();
@@ -204,13 +204,13 @@ public class FlameBreathingMoveset extends AbstractMoveset {
     }
 
     @Override
-    public boolean handleRightClick(Player player, boolean isCrouching) {
+    public boolean handleRightClick(LivingEntity entity, boolean isCrouching) {
         if (isCrouching) {
             // Crouch + Right-click: Unknowing Fire
-            return executeUnknowingFire(player);
+            return executeUnknowingFire(entity);
         } else {
             // Regular Right-click: Pommel Slash
-            return executePommelSlash(player);
+            return executePommelSlash(entity);
         }
     }
 
@@ -421,6 +421,10 @@ public class FlameBreathingMoveset extends AbstractMoveset {
     /**
      * Called when a player logs out - clean up their data
      */
+    public static void resetCooldowns(LivingEntity entity) {
+        entityCooldowns.remove(entity.getUUID());
+    }
+
     public static void cleanupPlayer(LivingEntity entity) {
         entityCooldowns.remove(entity.getUUID());
         executingMove.remove(entity.getUUID());
@@ -445,7 +449,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
      */
     private void showMessage(LivingEntity entity, Component message, boolean actionBar) {
         if (entity instanceof Player player) {
-            showMessage(entity, message, actionBar);
+            player.displayClientMessage(message, actionBar);
         }
         // NPCs don't need messages
     }

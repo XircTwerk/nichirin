@@ -11,9 +11,12 @@ import com.xirc.nichirin.common.system.DemonComponent;
 import dev.architectury.networking.NetworkManager;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.InteractionHand;
 import io.netty.buffer.Unpooled;
@@ -51,6 +54,9 @@ public interface NichirinPacketRegistry {
     ResourceLocation ATTACK_WHEEL_STATE_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "attack_wheel_state");
     ResourceLocation KATANA_INPUT_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "katana_input");
     ResourceLocation TRIGGER_SHADER_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "trigger_shader");
+    ResourceLocation PARRY_SPARK_ID        = new ResourceLocation(BreathOfNichirin.MOD_ID, "parry_spark");
+    ResourceLocation OPEN_CONFIG_SCREEN_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "open_config_screen");
+    ResourceLocation BLOOD_MOON_SYNC_ID    = new ResourceLocation(BreathOfNichirin.MOD_ID, "blood_moon_sync");
 
     // Packet class mappings
     Map<Class<?>, ResourceLocation> PACKET_IDS = new HashMap<>();
@@ -320,6 +326,29 @@ public interface NichirinPacketRegistry {
                 context.queue(() -> packet.handleClient());
             });
 
+            NetworkManager.registerReceiver(NetworkManager.Side.S2C, PARRY_SPARK_ID, (buf, context) -> {
+                double x = buf.readDouble();
+                double y = buf.readDouble();
+                double z = buf.readDouble();
+                context.queue(() -> com.xirc.nichirin.client.renderer.effects.ParrySparkHandler.spawnSparks(x, y, z));
+            });
+
+            NetworkManager.registerReceiver(NetworkManager.Side.S2C, BLOOD_MOON_SYNC_ID, (buf, context) -> {
+                com.xirc.nichirin.common.network.s2c.BloodMoonSyncPacket packet =
+                        new com.xirc.nichirin.common.network.s2c.BloodMoonSyncPacket(buf);
+                context.queue(() -> packet.handleClient());
+            });
+
+            // Open the Cloth Config GUI on the client when requested by a command
+            NetworkManager.registerReceiver(NetworkManager.Side.S2C, OPEN_CONFIG_SCREEN_ID, (buf, context) -> {
+                context.queue(() -> {
+                    net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+                    mc.setScreen(me.shedaniel.autoconfig.AutoConfig
+                            .getConfigScreen(com.xirc.nichirin.common.config.NichirinModConfig.class, mc.screen)
+                            .get());
+                });
+            });
+
         } catch (NoSuchMethodError e) {
             // Handle older Architectury versions
         } catch (Exception e) {
@@ -442,6 +471,64 @@ public interface NichirinPacketRegistry {
     }
 
     // Packet sending methods
+    /**
+     * Broadcast a hitbox to all players tracking a given entity (works for NPCs too).
+     * Falls back to sending to all online players if not on a ServerLevel.
+     */
+    /**
+     * Broadcasts a parry spark effect at the parrying player's position to all online players.
+     */
+    static void sendParrySpark(LivingEntity parrier) {
+        if (parrier.level().isClientSide) return;
+        if (!(parrier.level() instanceof ServerLevel serverLevel)) return;
+        try {
+            double x = parrier.getX();
+            double y = parrier.getY() + parrier.getBbHeight() * 0.6;
+            double z = parrier.getZ();
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+            buf.writeDouble(x);
+            buf.writeDouble(y);
+            buf.writeDouble(z);
+            for (ServerPlayer player : serverLevel.getServer().getPlayerList().getPlayers()) {
+                NetworkManager.sendToPlayer(player, PARRY_SPARK_ID, new FriendlyByteBuf(buf.copy()));
+            }
+            buf.release();
+        } catch (Exception e) {
+            // ignore
+        }
+    }
+
+    static void sendOpenConfigScreen(ServerPlayer player) {
+        try {
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+            NetworkManager.sendToPlayer(player, OPEN_CONFIG_SCREEN_ID, buf);
+        } catch (Exception e) {
+            // ignore
+        }
+    }
+
+    static void sendHitboxToTracking(LivingEntity entity, AABB hitbox, long durationMs) {
+        if (entity.level().isClientSide) return;
+        if (!(entity.level() instanceof ServerLevel serverLevel)) return;
+        try {
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+            buf.writeInt(1);
+            buf.writeDouble(hitbox.minX);
+            buf.writeDouble(hitbox.minY);
+            buf.writeDouble(hitbox.minZ);
+            buf.writeDouble(hitbox.maxX);
+            buf.writeDouble(hitbox.maxY);
+            buf.writeDouble(hitbox.maxZ);
+            buf.writeLong(durationMs);
+            for (ServerPlayer player : serverLevel.getServer().getPlayerList().getPlayers()) {
+                NetworkManager.sendToPlayer(player, HITBOX_PACKET_ID, new FriendlyByteBuf(buf.copy()));
+            }
+            buf.release();
+        } catch (Exception e) {
+            // ignore
+        }
+    }
+
     static void sendHitboxToClient(ServerPlayer player, AABB hitbox, long durationMs) {
         try {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
@@ -550,6 +637,26 @@ public interface NichirinPacketRegistry {
                 // Handle error
             }
         }
+    }
+
+    /**
+     * Broadcasts a PlayerAnimationPacket to the animated player and all players in the same level.
+     * This ensures other players can see animations played on the given player.
+     */
+    public static void broadcastPlayerAnimation(ServerPlayer animatedPlayer, com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket packet) {
+        ResourceLocation id = PACKET_IDS.get(packet.getClass());
+        if (id == null) return;
+        try {
+            FriendlyByteBuf buf = encodePacket(packet);
+            animatedPlayer.server.getPlayerList().getPlayers().stream()
+                    .filter(p -> p.level() == animatedPlayer.level())
+                    .forEach(p -> {
+                        try {
+                            NetworkManager.sendToPlayer(p, id, new FriendlyByteBuf(buf.copy()));
+                        } catch (Exception ignored) {}
+                    });
+            buf.release();
+        } catch (Exception ignored) {}
     }
 
     static void sendToAll(Object packet, MinecraftServer server) {

@@ -4,7 +4,7 @@ import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
-import com.xirc.nichirin.registry.NichirinMoveRegistry;
+
 import dev.architectury.networking.NetworkManager;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -60,39 +60,27 @@ public class MoveHotkeyPacket {
             return;
         }
 
-        // Get current breathing style - if none, do nothing
+        // Get current breathing style - if none, use base katana wheel moves
         String currentBreathingStyle = MovesetHelper.getMovesetId(player);
         if (currentBreathingStyle == null || currentBreathingStyle.isEmpty()) {
-            return; // No breathing style equipped - hotkey does nothing
+            // No breathing style — delegate to SimpleKatana wheel moves
+            SimpleKatana katana = (SimpleKatana) mainHand.getItem();
+            katana.performWheelMove(player, moveIndex);
+            return;
         }
 
-        // Get the moveset - if none found, do nothing
-        AbstractMoveset moveset = NichirinMoveRegistry.getMoveset(currentBreathingStyle);
+        // Use MovesetHelper for consistency with how left/right click resolve the moveset
+        AbstractMoveset moveset = MovesetHelper.getBreathingMoveset(player);
         if (moveset == null) {
-            return; // Invalid breathing style - hotkey does nothing
+            return;
         }
 
-        // If move index is out of bounds for this moveset, do nothing
+        // Bounds check
         if (moveIndex < 0 || moveIndex >= moveset.getMoveCount()) {
-            return; // Invalid move index for this breathing style - hotkey does nothing
+            return;
         }
 
-        // Get the move configuration for cooldown validation
-        AbstractMoveset.MoveConfiguration moveConfig = moveset.getMove(moveIndex);
-        if (moveConfig == null) {
-            return; // Invalid move configuration - hotkey does nothing
-        }
-
-        // Check if move is on cooldown (server-side cooldown validation)
-        String moveName = moveConfig.getDisplayName();
-        // Note: You'll need server-side cooldown tracking or ensure moveset.performMove() handles cooldowns
-
-        // If player can't perform moves (stunned, etc.), do nothing
-        if (!moveset.canPerformMoves(player)) {
-            return; // Can't perform moves - hotkey does nothing
-        }
-
-        // Execute the move - the moveset should handle its own validation
+        // Let the moveset handle its own validation (cooldowns, stamina, etc.)
         moveset.performMove(player, moveIndex);
     }
 }

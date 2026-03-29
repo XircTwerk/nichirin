@@ -15,6 +15,17 @@ public interface NicirinSoundRegistry {
     RegistrySupplier<SoundEvent> BASIC_SLASH_1 = registerSound("basicslash1");
     RegistrySupplier<SoundEvent> BASIC_SLASH_2 = registerSound("basicslash2");
 
+    // Combat sounds
+    RegistrySupplier<SoundEvent> PARRY_CLASH = registerSound("parry_clash");
+    RegistrySupplier<SoundEvent> PARRY_CLASH_2 = registerSound("parry_clash_2");
+    RegistrySupplier<SoundEvent> SLASH_WHOOSH_1 = registerSound("slash_whoosh_1");
+    RegistrySupplier<SoundEvent> SLASH_WHOOSH_2 = registerSound("slash_whoosh_2");
+    RegistrySupplier<SoundEvent> BLOCK_CLANG = registerSound("block_clang");
+
+    // Demon sounds
+    RegistrySupplier<SoundEvent> BITE_CRUNCH = registerSound("bite_crunch");
+    RegistrySupplier<SoundEvent> STOMP_LAND = registerSound("stomp_land");
+
     // Entity sounds
     RegistrySupplier<SoundEvent> THUNDER_BALL = registerSound("thunderball");
 

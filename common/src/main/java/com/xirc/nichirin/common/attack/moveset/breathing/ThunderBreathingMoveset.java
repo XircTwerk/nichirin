@@ -59,7 +59,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 .withBreathCost(12.0f)
                 .withHitStun(10)
                 .withHitboxSize(1.5f)
-                .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                .withDescription("Teleport dash forward, hitting anything in the way.")
                 .build();
         this.captureRightClickConfig(tempConfig, false);
     }
@@ -81,7 +81,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(30.0f)
                         .withHitStun(4)
                         .withHitboxSize(1.8f)
-                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                        .withDescription("5 rapid slashes spread in a wide arc around the player.")
                         .withAction(entity -> {
                             RiceSpiritAttack attack = new RiceSpiritAttack();
                             ThunderBreathingMoveset moveset = getCurrentMoveset();
@@ -102,7 +102,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(45.0f) // Higher cost for AOE
                         .withHitStun(14)
                         .withHitboxSize(2.5f) // Large hitbox for AOE
-                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                        .withDescription("4 AOE slashes around the player in quick succession.")
                         .withAction(entity -> {
                             ThunderSwarmAttack attack = new ThunderSwarmAttack();
                             ThunderBreathingMoveset moveset = getCurrentMoveset();
@@ -122,7 +122,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withKnockback(0.3f)
                         .withBreathCost(45.0f) // High cost for area denial
                         .withHitStun(25)
-                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                        .withDescription("Calls down 3 delayed lightning strikes over a large area.")
                         .withAction(entity -> {
                             DistantThunderAttack attack = new DistantThunderAttack();
                             ThunderBreathingMoveset moveset = getCurrentMoveset();
@@ -143,7 +143,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(30.0f)
                         .withHitStun(25) // Good combo potential
                         .withHitboxSize(0.1f)
-                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                        .withDescription("Upward slash that launches the target into the air.")
                         .withAction(entity -> {
                             HeatLightningAttack attack = new HeatLightningAttack();
                             ThunderBreathingMoveset moveset = getCurrentMoveset();
@@ -163,7 +163,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withKnockback(0.6f)
                         .withBreathCost(40.0f) // High cost for range and damage
                         .withHitStun(35) // Good stun for follow-up
-                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                        .withDescription("Long-range dash slash with 20-block reach.")
                         .withAction(entity -> {
                             RumbleFlashAttack attack = new RumbleFlashAttack();
                             ThunderBreathingMoveset moveset = getCurrentMoveset();
@@ -184,7 +184,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(70.0f) // Very expensive ultimate
                         .withHitStun(60) // 3 second stun
                         .withHitboxSize(3.5f) // Large hitbox for ultimate
-                        .withDescription("PLACEHOLDER - NO DESCRIPTION YET.")
+                        .withDescription("Massive-damage teleport slash. 30-second cooldown.")
                         .withAction(entity -> {
                             HonoikazuchiNoKamiAttack attack = new HonoikazuchiNoKamiAttack();
                             ThunderBreathingMoveset moveset = getCurrentMoveset();
@@ -201,9 +201,12 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
         return 6; // Only 6 moves in attack wheel (excluding Thunder Clap Flash)
     }
 
-    public boolean handleRightClick(Player player, LivingEntity entity, boolean isCrouching) {
+    @Override
+    public boolean handleRightClick(LivingEntity entity, boolean isCrouching) {
         // Thunder Clap Flash - right-click exclusive move
-        ThunderClapFlashAttack.setCrouchDash(player, isCrouching);
+        if (entity instanceof Player player) {
+            ThunderClapFlashAttack.setCrouchDash(player, isCrouching);
+        }
 
         // Remove manual breath consumption - let attack system handle it
         ThunderClapFlashAttack attack = new ThunderClapFlashAttack();
@@ -222,8 +225,8 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
         }
 
         attack.configure(tempConfig);
-        MoveExecutor.executeAttack(player, attack, "thunder_breathing", "thunderclap_flash");
-        onMovePerformed(player, -1, isCrouching);
+        MoveExecutor.executeAttack(entity, attack, "thunder_breathing", "thunderclap_flash");
+        onMovePerformed(entity, -1, isCrouching);
         return true;
     }
 
@@ -396,6 +399,10 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
     /**
      * Called when a player logs out - clean up their data
      */
+    public static void resetCooldowns(LivingEntity entity) {
+        entityCooldowns.remove(entity.getUUID());
+    }
+
     public static void cleanupPlayer(LivingEntity entity) {
         entityCooldowns.remove(entity.getUUID());
         executingMove.remove(entity.getUUID());
@@ -420,7 +427,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
      */
     private void showMessage(LivingEntity entity, Component message, boolean actionBar) {
         if (entity instanceof Player player) {
-            showMessage(entity, message, actionBar);
+            player.displayClientMessage(message, actionBar);
         }
         // NPCs don't need messages
     }

@@ -1,10 +1,9 @@
 package com.xirc.nichirin.client;
 
 import com.xirc.nichirin.client.animation.NichirinAnimations;
-import com.xirc.nichirin.client.handler.AttackWheelHandler;
-import com.xirc.nichirin.client.handler.BigGuiKeyHandler;
-import com.xirc.nichirin.client.handler.ClientDoubleJumpHandler;
-import com.xirc.nichirin.client.handler.ComboClientHandler;
+import com.xirc.nichirin.client.config.NichirinClientConfig;
+import com.xirc.nichirin.client.handler.*;
+import dev.architectury.event.events.client.ClientGuiEvent;
 import com.xirc.nichirin.client.particle.*;
 import com.xirc.nichirin.client.renderer.armor.ArmorRendererManager;
 import com.xirc.nichirin.client.shader.DeadCalmShaderEffect;
@@ -53,6 +52,9 @@ public class BreathOfNichirinClient {
             ParticleProviderRegistry.register(NichirinParticleRegistry.BLUE_FLASH2, BlueFlash2ParticleProvider::new);
             ParticleProviderRegistry.register(NichirinParticleRegistry.BLUE_SHOCKWAVE, BlueShockwaveParticleProvider::new);
             ParticleProviderRegistry.register(NichirinParticleRegistry.BUTTERFLY, ButterflyParticleProvider::new);
+            ParticleProviderRegistry.register(NichirinParticleRegistry.BLOOD_SPLAT, BloodSplatParticleProvider::new);
+            ParticleProviderRegistry.register(NichirinParticleRegistry.BREATHING_AURA_WISP, BreathingAuraWispParticleProvider::new);
+            ParticleProviderRegistry.register(NichirinParticleRegistry.SLASH_IMPACT_SPARK, SlashImpactSparkParticleProvider::new);
             LOGGER.info("Particles registered successfully");
         } catch (Exception e) {
             LOGGER.error("Failed to register particles: {}", e.getMessage());
@@ -86,6 +88,9 @@ public class BreathOfNichirinClient {
 
     public static void init() {
         LOGGER.info("DEBUG: BreathOfNichirinClient.init() called");
+
+        // Register client-only visual config
+        NichirinClientConfig.register();
 
         try {
             // Register armor renderers EARLY - before anything else that might need them
@@ -128,6 +133,7 @@ public class BreathOfNichirinClient {
 
             // Register critical systems first
             BlockingInputHandler.register();
+            BreathingAuraHandler.register();
             PlayerStats.initialize();
             ItemPropertiesHelper.registerBentoBoxProperty();
             CooldownClearEventHandler.register();
@@ -167,6 +173,20 @@ public class BreathOfNichirinClient {
             StanceBarRenderer.register();
             AttackHitboxRenderer.init();
 
+            // Register blood moon screen overlay
+            ClientGuiEvent.RENDER_HUD.register((graphics, partialTicks) -> {
+                net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+                if (mc.level == null || mc.options.hideGui) return;
+                if (!BloodMoonClientState.isActive()) return;
+                long dayTime = mc.level.getDayTime() % 24000L;
+                boolean isNight = dayTime > 13000L || dayTime < 1000L;
+                if (!isNight) return;
+                int screenWidth  = mc.getWindow().getGuiScaledWidth();
+                int screenHeight = mc.getWindow().getGuiScaledHeight();
+                // Subtle red overlay: ARGB where alpha ~12/255 -> 0x0C in hex
+                graphics.fill(0, 0, screenWidth, screenHeight, 0x0CAA0000);
+            });
+
             RenderTypeRegistry.register(RenderType.cutout(),
                     NichirinBlockRegistry.WYSTERIA_DOOR.get(),
                     NichirinBlockRegistry.WYSTERIA_TRAPDOOR.get(),
@@ -201,6 +221,19 @@ public class BreathOfNichirinClient {
             // Set initialized to true anyway to prevent complete failure
             initialized = true;
         }
+    }
+
+    /** Maps a breathing style ID to an RGB color for the aura wisp particle. */
+    public static float[] getBreathingStyleColor(String styleId) {
+        if (styleId == null) return new float[]{1.0f, 0.8f, 0.4f};
+        return switch (styleId) {
+            case "flame_breathing"   -> new float[]{1.0f, 0.35f, 0.0f};
+            case "water_breathing"   -> new float[]{0.1f, 0.5f, 1.0f};
+            case "thunder_breathing" -> new float[]{1.0f, 0.9f, 0.0f};
+            case "insect_breathing"  -> new float[]{0.7f, 0.2f, 0.9f};
+            case "sound_breathing"   -> new float[]{1.0f, 0.3f, 0.6f};
+            default                  -> new float[]{1.0f, 0.8f, 0.4f};
+        };
     }
 
     /**

@@ -1,5 +1,7 @@
 package com.xirc.nichirin.mixin.client;
 
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.xirc.nichirin.client.handler.BloodMoonClientState;
 import com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer;
 import com.xirc.nichirin.client.shader.DeadCalmShaderEffect;
 import com.xirc.nichirin.client.shader.NichirinShaderManager;
@@ -9,10 +11,12 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.resources.ResourceLocation;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(LevelRenderer.class)
@@ -44,6 +48,39 @@ public class LevelRendererMixin {
         if (effect != null && effect.getBlockRenderer().isActive()) {
             System.out.println("DEBUG: Rendering blue blocks!");
             effect.getBlockRenderer().render(poseStack);
+        }
+    }
+
+    /**
+     * Tints the moon disc deep red during a blood moon.
+     *
+     * In vanilla renderSky the second setShaderTexture call (ordinal = 1) binds the moon
+     * phase atlas.  We intercept it, perform the bind as normal, then immediately set the
+     * shader colour to blood-red so the moon quad renders with that tint.
+     */
+    @Redirect(
+            method = "renderSky",
+            at = @At(value = "INVOKE",
+                    target = "Lcom/mojang/blaze3d/systems/RenderSystem;setShaderTexture(ILnet/minecraft/resources/ResourceLocation;)V",
+                    ordinal = 1)
+    )
+    private void nichirin$bloodMoonMoonTexture(int texUnit, ResourceLocation texture) {
+        RenderSystem.setShaderTexture(texUnit, texture);
+        if (BloodMoonClientState.isActive()) {
+            // Deep blood-red tint applied right before the moon quad is drawn
+            RenderSystem.setShaderColor(1.0F, 0.08F, 0.08F, 1.0F);
+        }
+    }
+
+    /**
+     * Reset shader colour after the sky pass so nothing rendered afterward is tinted.
+     */
+    @Inject(method = "renderSky", at = @At("TAIL"))
+    private void nichirin$bloodMoonResetColor(
+            PoseStack poseStack, Matrix4f projectionMatrix, float partialTick,
+            Camera camera, boolean isFoggy, Runnable setupFog, CallbackInfo ci) {
+        if (BloodMoonClientState.isActive()) {
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         }
     }
 

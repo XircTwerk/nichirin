@@ -3,6 +3,8 @@ package com.xirc.nichirin.common.attack.moves.demon.basic;
 import com.xirc.nichirin.common.attack.component.AbstractDemonAttack;
 import com.xirc.nichirin.common.attack.component.IDemonAttacker;
 import com.xirc.nichirin.common.system.DemonManager;
+import com.xirc.nichirin.registry.NicirinSoundRegistry;
+import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -80,16 +82,11 @@ public class DemonBiteAttack extends AbstractDemonAttack<DemonBiteAttack, IDemon
                 // NPCs don't need blood stealing, they just use their natural regen
                 if (user instanceof Player) {
                     stealBlood((Player) user, target);
-                    // Blood drain particles (only for players)
-                    createBloodDrainEffect(target.position().add(0, target.getBbHeight() / 2, 0), userPos);
                 }
 
                 // Bite impact sound
                 world.playSound(null, target.getX(), target.getY(), target.getZ(),
-                        SoundEvents.PLAYER_HURT, SoundSource.PLAYERS, 0.8f, 0.6f);
-
-                world.playSound(null, target.getX(), target.getY(), target.getZ(),
-                        SoundEvents.GENERIC_DRINK, SoundSource.PLAYERS, 1.0f, 0.7f);
+                        NicirinSoundRegistry.BITE_CRUNCH.get(), SoundSource.PLAYERS, 1.0f, 0.85f + world.random.nextFloat() * 0.15f);
             }
         }
 
@@ -119,16 +116,7 @@ public class DemonBiteAttack extends AbstractDemonAttack<DemonBiteAttack, IDemon
             // Call DemonManager to handle blood stealing
             DemonManager.onBiteHit(demonPlayer, target);
 
-            // Additional blood steal visual feedback
-            if (world instanceof ServerLevel serverLevel) {
-                Vec3 targetPos = target.position().add(0, target.getBbHeight() / 2, 0);
-
-                // Red particles rising from target (blood being drained)
-                serverLevel.sendParticles(ParticleTypes.DAMAGE_INDICATOR,
-                        targetPos.x, targetPos.y, targetPos.z,
-                        8, 0.3, 0.2, 0.3, 0.1);
             }
-        }
     }
 
     private boolean targetHasBlood(LivingEntity target) {
@@ -154,85 +142,17 @@ public class DemonBiteAttack extends AbstractDemonAttack<DemonBiteAttack, IDemon
     }
 
     private void createBiteEffect(Vec3 userPos, Vec3 lookDir) {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-
-        Vec3 bitePos = userPos.add(lookDir.scale(range * 0.8));
-
-        // Jaw snap effect
-        serverLevel.sendParticles(ParticleTypes.CRIT,
-                bitePos.x, bitePos.y, bitePos.z,
-                8, 0.2, 0.2, 0.2, 0.1);
-
-        // Menacing aura around bite
-        for (int i = 0; i < 12; i++) {
-            double angle = (i / 12.0) * 2 * Math.PI;
-            double radius = 0.8;
-
-            double x = bitePos.x + Math.cos(angle) * radius;
-            double z = bitePos.z + Math.sin(angle) * radius;
-
-            serverLevel.sendParticles(ParticleTypes.DAMAGE_INDICATOR,
-                    x, bitePos.y, z, 1, 0.1, 0.1, 0.1, 0.05);
-        }
-
-        // Bite impact burst
-        serverLevel.sendParticles(ParticleTypes.ANGRY_VILLAGER,
-                bitePos.x, bitePos.y, bitePos.z,
-                6, 0.3, 0.2, 0.3, 0.1);
-    }
-
-    /**
-     * Blood drain visual effect - only called for Player users
-     */
-    private void createBloodDrainEffect(Vec3 targetPos, Vec3 userPos) {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-
-        // Create blood stream from target to demon
-        Vec3 direction = userPos.subtract(targetPos).normalize();
-        int particles = 15;
-
-        for (int i = 0; i < particles; i++) {
-            double progress = i / (double)(particles - 1);
-            Vec3 particlePos = targetPos.add(direction.scale(progress * targetPos.distanceTo(userPos)));
-
-            // Delayed blood particles flowing to demon
-            int delay = i * 2; // 2 ticks between each particle
-            java.util.concurrent.CompletableFuture.delayedExecutor(delay * 50L, java.util.concurrent.TimeUnit.MILLISECONDS)
-                    .execute(() -> {
-                        if (world instanceof ServerLevel level) {
-                            level.sendParticles(ParticleTypes.DAMAGE_INDICATOR,
-                                    particlePos.x, particlePos.y, particlePos.z,
-                                    1, 0.05, 0.05, 0.05, 0.02);
-                        }
-                    });
-        }
-
-        // Blood absorption effect at demon's position
-        serverLevel.sendParticles(ParticleTypes.HEART,
-                userPos.x, userPos.y, userPos.z,
-                3, 0.2, 0.3, 0.2, 0.05);
+        if (!(world instanceof ServerLevel sl)) return;
+        Vec3 bitePos = userPos.add(lookDir.scale(range));
+        sl.sendParticles(NichirinParticleRegistry.BLOOD_SPLAT.get(),
+                bitePos.x, bitePos.y, bitePos.z, 10, 0.3, 0.3, 0.3, 0.0);
+        sl.sendParticles(ParticleTypes.CRIT,
+                bitePos.x, bitePos.y, bitePos.z, 5, 0.2, 0.2, 0.2, 0.1);
     }
 
     @Override
     protected void onStop() {
         biteExecuted = false;
         biteConnected = false;
-
-        // Final effect based on success
-        if (world instanceof ServerLevel serverLevel) {
-            Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
-
-            if (biteConnected) {
-                // Successful bite - satisfied demon effect
-                serverLevel.sendParticles(ParticleTypes.HEART,
-                        userPos.x, userPos.y + 0.5, userPos.z,
-                        5, 0.3, 0.2, 0.3, 0.1);
-            } else {
-                // Missed bite - frustrated demon effect
-                serverLevel.sendParticles(ParticleTypes.ANGRY_VILLAGER,
-                        userPos.x, userPos.y + 0.5, userPos.z,
-                        3, 0.2, 0.2, 0.2, 0.1);
-            }
-        }
     }
 }

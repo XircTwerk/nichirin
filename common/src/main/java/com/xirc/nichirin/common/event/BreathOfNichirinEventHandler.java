@@ -2,15 +2,26 @@ package com.xirc.nichirin.common.event;
 
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.component.AbstractDemonAttack;
+import com.xirc.nichirin.common.system.BloodMoonManager;
+import com.xirc.nichirin.common.system.KillRewardManager;
+import com.xirc.nichirin.common.event.item.RiceInteractionHandler;
 import com.xirc.nichirin.common.event.system.DemonFoodHandler;
 import com.xirc.nichirin.common.system.DemonManager;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.data.MovesetHelper;
+import com.xirc.nichirin.registry.NichirinItemRegistry;
 import dev.architectury.event.events.common.*;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.storage.loot.LootPool;
+import net.minecraft.world.level.storage.loot.entries.LootItem;
+import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
+import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
+
+import java.util.Set;
 
 /**
  * Event handler for Breath of Nichirin mod using Architectury API
@@ -30,6 +41,30 @@ public class BreathOfNichirinEventHandler {
 
         PlayerDataProvider.register();
         registerDemonEvents();
+        RiceInteractionHandler.register();
+        registerRiceLootInjection();
+    }
+
+    private static final Set<ResourceLocation> RICE_LOOT_TABLES = Set.of(
+            new ResourceLocation("minecraft", "chests/shipwreck_supply"),
+            new ResourceLocation("minecraft", "chests/village/village_plains_house"),
+            new ResourceLocation("minecraft", "chests/village/village_taiga_house"),
+            new ResourceLocation("minecraft", "chests/village/village_snowy_house"),
+            new ResourceLocation("minecraft", "chests/village/village_savanna_house"),
+            new ResourceLocation("minecraft", "chests/village/village_desert_house"),
+            new ResourceLocation("minecraft", "chests/pillager_outpost"),
+            new ResourceLocation("minecraft", "chests/abandoned_mineshaft")
+    );
+
+    private static void registerRiceLootInjection() {
+        LootEvent.MODIFY_LOOT_TABLE.register((manager, id, context, builtin) -> {
+            if (RICE_LOOT_TABLES.contains(id)) {
+                context.addPool(LootPool.lootPool()
+                        .add(LootItem.lootTableItem(NichirinItemRegistry.RICE.get())
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1, 6))))
+                        .build());
+            }
+        });
     }
 
     private static void registerDemonEvents() {
@@ -58,6 +93,9 @@ public class BreathOfNichirinEventHandler {
      */
     private static void onServerTick(MinecraftServer server) {
         if (server != null) {
+            // Blood Moon system
+            BloodMoonManager.onServerTick(server);
+
             // CRITICAL: Tick all breathing attacks
             MoveExecutor.tickAllAttacks(server);
 
@@ -111,6 +149,7 @@ public class BreathOfNichirinEventHandler {
      */
     public static void onMobKilled(ServerPlayer player, LivingEntity killedEntity) {
         DemonManager.onMobKilled((Player) player, killedEntity);
+        KillRewardManager.onKill(player, killedEntity);
     }
 
     /**

@@ -30,7 +30,13 @@ public class DemonFoodHandler {
 
     public static void register() {
         InteractionEvent.RIGHT_CLICK_ITEM.register((player, hand) -> {
-            if (player == null || hand != InteractionHand.MAIN_HAND) {
+            if (player == null) {
+                return CompoundEventResult.pass();
+            }
+
+            // Only enforce the restriction server-side to avoid stale client data
+            // blocking food use after demon status is removed
+            if (player.level().isClientSide()) {
                 return CompoundEventResult.pass();
             }
 

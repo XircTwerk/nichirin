@@ -3,7 +3,10 @@ package com.xirc.nichirin.client.handler;
 import com.xirc.nichirin.client.gui.AttackWheelOverlay;
 import com.xirc.nichirin.client.gui.CooldownHUD;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
+import com.xirc.nichirin.common.attack.moveset.DefaultKatanaMoveset;
+import com.xirc.nichirin.common.network.c2s.MoveHotkeyPacket;
 import com.xirc.nichirin.registry.NichirinKeybindRegistry;
+import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.util.BreathingManager;
@@ -40,6 +43,8 @@ public class AttackWheelHandler {
 
     // Track which moveset type the wheel is currently showing
     private static boolean currentWheelIsBreathing = false;
+    // True when showing default katana moves (no breathing style) — send MoveHotkeyPacket on execute
+    private static boolean isDefaultKatanaWheel = false;
 
     public static void register() {
 
@@ -199,11 +204,16 @@ public class AttackWheelHandler {
         boolean holdingKatana = mainHand.getItem() instanceof SimpleKatana;
 
         if (holdingKatana) {
-            // Holding katana - use breathing moveset if available
+            // Holding katana - use breathing moveset if available, otherwise default katana
             boolean hasBreathing = MovesetHelper.hasBreathingMoveset(mc.player);
             if (hasBreathing) {
                 moveset = MovesetHelper.getBreathingMoveset(mc.player);
                 isBreathingWheel = true;
+            } else {
+                // No breathing style — show the 3 default wheel moves (Check, Overhead, Thrust)
+                moveset = DefaultKatanaMoveset.INSTANCE;
+                isBreathingWheel = false;
+                isDefaultKatanaWheel = true;
             }
         } else {
             // Not holding katana - use demon moveset if available
@@ -252,6 +262,7 @@ public class AttackWheelHandler {
         }
         wheelOpen = false;
         currentWheelIsBreathing = false; // Reset
+        isDefaultKatanaWheel = false;    // Reset
 
         // Reset captured move state
         capturedSelectedMove = -1;
@@ -297,6 +308,9 @@ public class AttackWheelHandler {
 
         if (currentWheelIsBreathing) {
             moveset = MovesetHelper.getBreathingMoveset(mc.player);
+        } else if (isDefaultKatanaWheel) {
+            // Default katana — use the static display moveset for config lookup only
+            moveset = DefaultKatanaMoveset.INSTANCE;
         } else {
             moveset = MovesetHelper.getDemonMoveset(mc.player);
         }
@@ -352,6 +366,13 @@ public class AttackWheelHandler {
         // Send move to server using appropriate packet type
         if (currentWheelIsBreathing) {
             MultiplayerInputHandler.sendBreathingMove(selectedMove, mc.player);
+        } else if (isDefaultKatanaWheel) {
+            // Default katana wheel — server handles via SimpleKatana.performWheelMove
+            NichirinPacketRegistry.sendToServer(new MoveHotkeyPacket(selectedMove));
+            // Mirror cooldown on the client for HUD display
+            if (moveConfig.hasCooldown()) {
+                CooldownHUD.setCooldown(moveName, moveConfig.getCooldown());
+            }
         } else {
             MultiplayerInputHandler.sendDemonMove(selectedMove, mc.player);
         }

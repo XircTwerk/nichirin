@@ -3,6 +3,7 @@ package com.xirc.nichirin.client.gui;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
+import com.xirc.nichirin.common.attack.moveset.DefaultKatanaMoveset;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.registry.MovesetRegistry;
@@ -104,10 +105,13 @@ public class AttackWheelOverlay {
         boolean holdingKatana = mainHand.getItem() instanceof SimpleKatana;
 
         if (holdingKatana) {
-            // Holding katana - use breathing moveset if available
+            // Holding katana - use breathing moveset if available, otherwise default katana
             if (MovesetHelper.hasBreathingMoveset(player)) {
                 moveset = MovesetHelper.getBreathingMoveset(player);
                 movesetId = MovesetHelper.getBreathingMovesetId(player);
+            } else {
+                moveset = DefaultKatanaMoveset.INSTANCE;
+                movesetId = DefaultKatanaMoveset.INSTANCE.getMovesetId();
             }
         } else {
             // Not holding katana - use demon moveset if available

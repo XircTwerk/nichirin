@@ -53,10 +53,6 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinItemRegistry.SCARLET_GEM.get());
                         entries.accept(NichirinItemRegistry.SMOKE_BOMB.get());
                         entries.accept(NichirinItemRegistry.FLASH_BOMB.get());
-                        entries.accept(NichirinItemRegistry.BENTO_BOX.get());
-                        entries.accept(NichirinItemRegistry.ONIGIRI.get());
-                        entries.accept(NichirinItemRegistry.SAKURAMOCHI.get());
-
                     })
                     .build();
         });
@@ -109,6 +105,53 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinItemRegistry.TENGEN_LEGGINGS.get());
                         entries.accept(NichirinItemRegistry.TENGEN_BOOTS.get());
 
+                        entries.accept(NichirinItemRegistry.SABITO_HEADPIECE.get());
+                        entries.accept(NichirinItemRegistry.SABITO_CAPE.get());
+                        entries.accept(NichirinItemRegistry.SABITO_LEGGINGS.get());
+                        entries.accept(NichirinItemRegistry.SABITO_BOOTS.get());
+
+                        entries.accept(NichirinItemRegistry.GIYU_HEADPIECE.get());
+                        entries.accept(NichirinItemRegistry.GIYU_CAPE.get());
+                        entries.accept(NichirinItemRegistry.GIYU_LEGGINGS.get());
+                        entries.accept(NichirinItemRegistry.GIYU_BOOTS.get());
+
+                        entries.accept(NichirinItemRegistry.UROKODAKI_HEADPIECE.get());
+                        entries.accept(NichirinItemRegistry.UROKODAKI_CAPE.get());
+                        entries.accept(NichirinItemRegistry.UROKODAKI_LEGGINGS.get());
+                        entries.accept(NichirinItemRegistry.UROKODAKI_BOOTS.get());
+
+                    })
+                    .build();
+        });
+
+        BreathOfNichirin.CREATIVE_TAB_REGISTRY.register("food", () -> {
+            LOGGER.info("Creating food creative tab...");
+            return CreativeModeTab.builder(CreativeModeTab.Row.TOP, 1)
+                    .title(Component.translatable("itemgroup.nichirin.food"))
+                    .icon(() -> new ItemStack(NichirinItemRegistry.ONIGIRI.get()))
+                    .displayItems((displayContext, entries) -> {
+                        entries.accept(NichirinItemRegistry.RICE.get());
+                        entries.accept(NichirinItemRegistry.BENTO_BOX.get());
+                        entries.accept(NichirinItemRegistry.ONIGIRI.get());
+                        entries.accept(NichirinItemRegistry.SAKURAMOCHI.get());
+                        entries.accept(NichirinItemRegistry.DRINKING_GOURD.get());
+                        entries.accept(NichirinItemRegistry.MOCHI.get());
+                        entries.accept(NichirinItemRegistry.RED_MOCHI.get());
+                        entries.accept(NichirinItemRegistry.BLUE_MOCHI.get());
+                        entries.accept(NichirinItemRegistry.YELLOW_MOCHI.get());
+                        entries.accept(NichirinItemRegistry.GREEN_MOCHI.get());
+                        entries.accept(NichirinItemRegistry.ORANGE_MOCHI.get());
+                        entries.accept(NichirinItemRegistry.LIME_MOCHI.get());
+                        entries.accept(NichirinItemRegistry.LIGHT_BLUE_MOCHI.get());
+                        entries.accept(NichirinItemRegistry.CYAN_MOCHI.get());
+                        entries.accept(NichirinItemRegistry.BROWN_MOCHI.get());
+                        entries.accept(NichirinItemRegistry.PINK_MOCHI.get());
+                        entries.accept(NichirinItemRegistry.PURPLE_MOCHI.get());
+                        entries.accept(NichirinItemRegistry.MAGENTA_MOCHI.get());
+                        entries.accept(NichirinItemRegistry.BLACK_MOCHI.get());
+                        entries.accept(NichirinItemRegistry.WHITE_MOCHI.get());
+                        entries.accept(NichirinItemRegistry.GRAY_MOCHI.get());
+                        entries.accept(NichirinItemRegistry.LIGHT_GRAY_MOCHI.get());
                     })
                     .build();
         });

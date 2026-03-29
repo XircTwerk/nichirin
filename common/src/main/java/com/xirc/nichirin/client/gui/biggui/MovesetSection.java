@@ -42,14 +42,6 @@ public class MovesetSection {
     private final MovesetDataSection dataSection = new MovesetDataSection();
 
     public void render(GuiGraphics graphics, Player player, Font font, int contentWidth, int contentHeight, int mouseX, int mouseY) {
-        int contentX = 20;
-        int contentY = TOP_MARGIN + 10;
-
-        // Title
-        Component title = Component.translatable("gui.nichirin.moveset.title").withStyle(style -> style.withBold(true));
-        graphics.drawString(font, title, contentX, contentY, 0xFFFFFF);
-        contentY += 30;
-
         // Render current subtab content FIRST
         switch (currentTab) {
             case BREATHING_STYLES -> breathingStylesSection.render(graphics, player, contentWidth, contentHeight, font, mouseX, mouseY);

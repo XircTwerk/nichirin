@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.util;
 
+import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.network.s2c.StaminaSyncPacket;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
@@ -11,35 +12,23 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Enhanced stamina manager with proper regeneration and networking
- * Demons and creative mode players always have full stamina
+ * Server-side stamina manager. Demons, creative-mode players, and players with
+ * the Unlimited Stamina config option always have full stamina.
  */
 public class StaminaManager {
 
     private static final Map<UUID, StaminaData> playerStamina = new HashMap<>();
 
-    // Enhanced default values
     private static final float DEFAULT_MAX_STAMINA = 100f;
-    private static final float DEFAULT_REGEN_RATE = 1.2f; // Per tick when regenerating
-    private static final int DEFAULT_REGEN_DELAY = 60; // 3 seconds at 20 TPS
-    private static final float MIN_REGEN_THRESHOLD = 0.1f; // Stop regen when this close to max
+    private static final float DEFAULT_REGEN_RATE = 1.2f;
+    private static final int DEFAULT_REGEN_DELAY = 60;
+    private static final float MIN_REGEN_THRESHOLD = 0.1f;
 
-    /**
-     * Check if player should have unlimited stamina
-     */
     private static boolean hasUnlimitedStamina(Player player) {
         if (player == null) return false;
-
-        // Creative mode players have unlimited stamina
-        if (player.isCreative()) {
-            return true;
-        }
-
-        // Demons have unlimited stamina
-        if (MovesetHelper.hasDemonMoveset(player)) {
-            return true;
-        }
-
+        if (player.isCreative()) return true;
+        if (MovesetHelper.hasDemonMoveset(player)) return true;
+        if (NichirinModConfig.get().breathing.unlimitedStamina) return true;
         return false;
     }
 
@@ -67,9 +56,12 @@ public class StaminaManager {
 
         // Enhanced regeneration logic
         if (data.timeSinceUse >= data.regenDelay && data.current < data.max) {
-            float regenAmount = data.regenRate;
+            float regenAmount = NichirinModConfig.get().combat.staminaRegenRate / 20.0f;
 
-            // Slow down regen as we approach max (smoother feel)
+            // Scale regen by hunger: empty = 0x, full (20) = 2x
+            float hungerMultiplier = player.getFoodData().getFoodLevel() / 10.0f;
+            regenAmount *= hungerMultiplier;
+
             float missingStamina = data.max - data.current;
             if (missingStamina < 10f) {
                 regenAmount *= (missingStamina / 10f);
@@ -77,12 +69,10 @@ public class StaminaManager {
 
             data.current = Math.min(data.max, data.current + regenAmount);
 
-            // Stop micro-regeneration near max
             if (data.max - data.current < MIN_REGEN_THRESHOLD) {
                 data.current = data.max;
             }
 
-            // Sync to client every few ticks during regen (optimization)
             if (data.timeSinceUse % 4 == 0) {
                 syncToClient(player, data);
             }

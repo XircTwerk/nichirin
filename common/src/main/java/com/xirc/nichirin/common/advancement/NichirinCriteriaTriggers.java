@@ -12,6 +12,7 @@ public class NichirinCriteriaTriggers {
     public static FirstBreathTrigger FIRST_BREATH_TRIGGER;
     public static InsectBreathingTrigger INSECT_BREATHING_TRIGGER;
     public static SoundBreathingTrigger SOUND_BREATHING_TRIGGER;
+    public static WaterBreathingTrigger WATER_BREATHING_TRIGGER;
 
     public static void init() {
         THUNDER_BREATHING_TRIGGER = CriteriaTriggers.register(new ThunderBreathingTrigger());
@@ -19,5 +20,6 @@ public class NichirinCriteriaTriggers {
         FIRST_BREATH_TRIGGER = CriteriaTriggers.register(new FirstBreathTrigger());
         INSECT_BREATHING_TRIGGER = CriteriaTriggers.register(new InsectBreathingTrigger());
         SOUND_BREATHING_TRIGGER = CriteriaTriggers.register(new SoundBreathingTrigger());
+        WATER_BREATHING_TRIGGER = CriteriaTriggers.register(new WaterBreathingTrigger());
     }
 }

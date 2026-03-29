@@ -220,7 +220,7 @@ public class DemonArtSection {
         return formatted.toString();
     }
 
-    private static long lastClickTime = 0;
+    private long lastClickTime = 0;
     private static final long CLICK_COOLDOWN = 500; // 500ms cooldown
 
     public boolean handleClick(double mouseX, double mouseY, Player player, int contentWidth) {
@@ -238,7 +238,10 @@ public class DemonArtSection {
                 // Future demon arts would go here
         };
 
-        int topRowY = TOP_MARGIN + 10 + 30 + 25 + 20 + 10;
+        // Base Y matches render(): TOP_MARGIN+10 (30) + title (30) + instructions (20) + grid offset (10)
+        // Only add 25 when the current-art line is drawn (same condition as render())
+        int topRowY = TOP_MARGIN + 10 + 30 + 20 + 10;
+        if (currentStyle != null && isDemonArt(currentStyle)) topRowY += 25;
 
         // Check clicks on additional demon art boxes (if any exist)
         if (additionalDemonArts.length > 0) {

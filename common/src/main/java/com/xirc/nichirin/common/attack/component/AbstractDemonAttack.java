@@ -61,7 +61,9 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
     protected Float dashSpeed;
     protected Integer teleportWindup;
 
+    // ========== GETTERS (Lombok not working) ==========
     // Runtime state - CHANGED FROM Player TO LivingEntity for NPC support
+    @Setter
     protected boolean isActive = false;
     protected int tickCount = 0;
     protected LivingEntity user;  // FIXED: Changed from Player to LivingEntity
@@ -77,28 +79,6 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
     private int hitCount = 0;
     private int hitCountForBlood = 0; // Track hits for blood gain (every 3 hits)
     private int bloodGainedThisAttack = 0; // Track blood gained to enforce max
-
-    // ========== GETTERS (Lombok not working) ==========
-    public boolean isActive() { return isActive; }
-    public void setActive(boolean active) { this.isActive = active; }
-    public int getCooldown() { return cooldown; }
-    public int getDuration() { return duration; }
-    public int getHitStun() { return hitStun; }
-    public int getWindup() { return windup; }
-    public float getRange() { return range; }
-    public float getDamage() { return damage; }
-    public float getKnockback() { return knockback; }
-    public float getHitboxSize() { return hitboxSize; }
-    public Float getTeleportDistance() { return teleportDistance; }
-    public Float getDashSpeed() { return dashSpeed; }
-    public Integer getTeleportWindup() { return teleportWindup; }
-    public LivingEntity getUser() { return user; }
-    public Level getWorld() { return world; }
-    public int getTickCount() { return tickCount; }
-    public Set<UUID> getHitEntities() { return hitEntities; }
-    public int getHitCount() { return hitCount; }
-    public void setHitCount(int count) { this.hitCount = count; }
-    // ========== END GETTERS ==========
 
     // Configuration tracking
     private boolean configured = false;
@@ -473,9 +453,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
         if (user.level().isClientSide) {
             AttackHitboxRenderer.addHitbox(visualHitbox);
         } else {
-            if (user instanceof ServerPlayer serverPlayer) {
-                NichirinPacketRegistry.sendHitboxToClient(serverPlayer, visualHitbox, 2500L);
-            }
+            NichirinPacketRegistry.sendHitboxToTracking(user, visualHitbox, 2500L);
         }
 
         return validTargets;
@@ -515,9 +493,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
         if (user.level().isClientSide) {
             AttackHitboxRenderer.addHitbox(visualHitbox);
         } else {
-            if (user instanceof ServerPlayer serverPlayer) {
-                NichirinPacketRegistry.sendHitboxToClient(serverPlayer, visualHitbox, 2500L);
-            }
+            NichirinPacketRegistry.sendHitboxToTracking(user, visualHitbox, 2500L);
         }
 
         return validTargets;
@@ -580,9 +556,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
         if (user.level().isClientSide) {
             AttackHitboxRenderer.addHitbox(visualBox);
         } else {
-            if (user instanceof ServerPlayer serverPlayer) {
-                NichirinPacketRegistry.sendHitboxToClient(serverPlayer, visualBox, 2500L);
-            }
+            NichirinPacketRegistry.sendHitboxToTracking(user, visualBox, 2500L);
         }
 
         return validTargets;
@@ -679,10 +653,8 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
         if (user.level().isClientSide) {
             AttackHitboxRenderer.addHitboxes(new HashSet<>(coneBoxes));
         } else {
-            if (user instanceof ServerPlayer serverPlayer) {
-                for (AABB hitbox : coneBoxes) {
-                    NichirinPacketRegistry.sendHitboxToClient(serverPlayer, hitbox, 2500L);
-                }
+            for (AABB hitbox : coneBoxes) {
+                NichirinPacketRegistry.sendHitboxToTracking(user, hitbox, 2500L);
             }
         }
 
@@ -743,9 +715,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
         if (user.level().isClientSide) {
             AttackHitboxRenderer.addHitbox(circleBox);
         } else {
-            if (user instanceof ServerPlayer serverPlayer) {
-                NichirinPacketRegistry.sendHitboxToClient(serverPlayer, circleBox, 2500L);
-            }
+            NichirinPacketRegistry.sendHitboxToTracking(user, circleBox, 2500L);
         }
 
         return validTargets;
@@ -941,11 +911,4 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
         this.bloodOnKill = Math.max(0, bloodOnKill);
     }
 
-    public int getBloodGainedThisAttack() {
-        return bloodGainedThisAttack;
-    }
-
-    public int getHitCountForBlood() {
-        return hitCountForBlood;
-    }
 }

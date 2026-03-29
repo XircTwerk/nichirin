@@ -329,6 +329,7 @@ public class MovesetDataSection {
         if (tooltipX + tooltipWidth > contentWidth - 20) {
             tooltipX = mouseX - tooltipWidth - 10;
         }
+        tooltipX = Math.max(5, tooltipX); // Prevent going off the left edge
         if (tooltipY < 10) {
             tooltipY = mouseY + 20;
         }

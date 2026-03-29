@@ -2,8 +2,6 @@ package com.xirc.nichirin.common.attack.moves.demon.basic;
 
 import com.xirc.nichirin.common.attack.component.AbstractDemonAttack;
 import com.xirc.nichirin.common.attack.component.IDemonAttacker;
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -28,12 +26,6 @@ public class DemonGutPunchAttack extends AbstractDemonAttack<DemonGutPunchAttack
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.PLAYERS, 1.0f, 0.8f);
 
-        // Create initial wind-up particle effect
-        if (world instanceof ServerLevel serverLevel) {
-            Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
-            Vec3 lookDir = user.getLookAngle();
-            Vec3 punchPos = userPos.add(lookDir.scale(0.5)); // Close to user
-        }
     }
 
     @Override
@@ -62,12 +54,6 @@ public class DemonGutPunchAttack extends AbstractDemonAttack<DemonGutPunchAttack
     }
 
     private void createImpactEffects(Vec3 impactPos) {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-
-        // Impact particles
-        serverLevel.sendParticles(ParticleTypes.CRIT,
-                impactPos.x, impactPos.y, impactPos.z,
-                8, 0.3, 0.3, 0.3, 0.1);
     }
 
     @Override

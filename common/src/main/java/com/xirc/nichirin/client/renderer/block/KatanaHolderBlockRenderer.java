@@ -31,10 +31,8 @@ public class KatanaHolderBlockRenderer implements BlockEntityRenderer<KatanaHold
     public void render(KatanaHolderBlock.KatanaHolderBlockEntity blockEntity, float partialTick, PoseStack poseStack,
                        MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
 
-        // Render the block model
         renderBlockModel(blockEntity, poseStack, bufferSource, packedLight, packedOverlay);
 
-        // Render the katana if present
         if (blockEntity.shouldRenderKatana()) {
             renderKatana(poseStack, blockEntity.getStoredKatana(), blockEntity.getFacing(),
                     blockEntity.isRotated(), bufferSource, packedLight);
@@ -46,11 +44,11 @@ public class KatanaHolderBlockRenderer implements BlockEntityRenderer<KatanaHold
 
         Minecraft mc = Minecraft.getInstance();
         ModelResourceLocation modelLocation = new ModelResourceLocation(
-                new ResourceLocation("nichirin", "katana_holder_block"), "");
+                new ResourceLocation("nichirin", "katana_holder_block"), "facing=up,rotated=false");
         BakedModel model = mc.getModelManager().getModel(modelLocation);
 
         if (model == null || model == mc.getModelManager().getMissingModel()) {
-            return; // Model not found
+            return;
         }
 
         Direction facing = blockEntity.getFacing();
@@ -63,15 +61,11 @@ public class KatanaHolderBlockRenderer implements BlockEntityRenderer<KatanaHold
         if (isRotated) {
             switch (facing) {
                 case UP -> {
-                    poseStack.translate(0.5625, -0.5, 0);
-                    poseStack.mulPose(Axis.XP.rotationDegrees(90));
-                    poseStack.mulPose(Axis.YP.rotationDegrees(180));
-                    poseStack.mulPose(Axis.ZP.rotationDegrees(90));
+                    poseStack.mulPose(Axis.XP.rotationDegrees(0));
+                    poseStack.mulPose(Axis.YP.rotationDegrees(0));
                 }
                 case DOWN -> {
-                    poseStack.translate(-0.435, 0.5, 0);
-                    poseStack.mulPose(Axis.XP.rotationDegrees(-90));
-                    poseStack.mulPose(Axis.ZP.rotationDegrees(90));
+                    poseStack.mulPose(Axis.ZP.rotationDegrees(180));
                 }
                 case NORTH -> {
                     poseStack.mulPose(Axis.XP.rotationDegrees(-90));
@@ -92,14 +86,11 @@ public class KatanaHolderBlockRenderer implements BlockEntityRenderer<KatanaHold
             }
         } else {
             switch (facing) {
-                case UP -> {
-                    poseStack.translate(0, -0.5, 0.5625);
-                    poseStack.mulPose(Axis.XP.rotationDegrees(90));
-                    poseStack.mulPose(Axis.YP.rotationDegrees(180));
-                }
+                case UP -> poseStack.mulPose(Axis.YP.rotationDegrees(90));
                 case DOWN -> {
-                    poseStack.translate(0, 0.5, -0.435);
-                    poseStack.mulPose(Axis.XP.rotationDegrees(-90));
+                    // Flip the model upside down so it mounts on the ceiling properly
+                    poseStack.mulPose(Axis.ZP.rotationDegrees(180));
+                    poseStack.mulPose(Axis.YP.rotationDegrees(-90));
                 }
                 case NORTH -> poseStack.mulPose(Axis.XP.rotationDegrees(-90));
                 case SOUTH -> poseStack.mulPose(Axis.XP.rotationDegrees(90));
@@ -110,7 +101,6 @@ public class KatanaHolderBlockRenderer implements BlockEntityRenderer<KatanaHold
 
         poseStack.translate(-0.5, -0.5, -0.5);
 
-        // Render the model
         VertexConsumer buffer = bufferSource.getBuffer(RenderType.solid());
         RandomSource random = RandomSource.create(42L);
 
@@ -121,7 +111,6 @@ public class KatanaHolderBlockRenderer implements BlockEntityRenderer<KatanaHold
             }
         }
 
-        // Render quads without direction (general quads)
         List<BakedQuad> generalQuads = model.getQuads(blockEntity.getBlockState(), null, random);
         for (BakedQuad quad : generalQuads) {
             buffer.putBulkData(poseStack.last(), quad, 1.0f, 1.0f, 1.0f, packedLight, packedOverlay);
@@ -133,91 +122,45 @@ public class KatanaHolderBlockRenderer implements BlockEntityRenderer<KatanaHold
     private void renderKatana(PoseStack poseStack, ItemStack katana, Direction facing, boolean isRotated,
                               MultiBufferSource bufferSource, int packedLight) {
         poseStack.pushPose();
-
         poseStack.translate(0.5, 0.5, 0.5);
 
         if (isRotated) {
-            // Rotated katana positions
             switch (facing) {
-                case UP -> {
-                    poseStack.translate(0.03, -0.075, -0.15);
-                    poseStack.mulPose(Axis.XP.rotationDegrees(-45));
-                    poseStack.mulPose(Axis.YP.rotationDegrees(90));
-                    poseStack.mulPose(Axis.ZP.rotationDegrees(0));
-                }
-                case DOWN -> {
-                    poseStack.translate(0.035, 0.05, 0.15);
-                    poseStack.mulPose(Axis.XP.rotationDegrees(135));
-                    poseStack.mulPose(Axis.YP.rotationDegrees(270));
-                    poseStack.mulPose(Axis.ZP.rotationDegrees(90));
-                }
+                case UP   -> { /* identity — matches block model rotated-UP */ }
+                case DOWN -> poseStack.mulPose(Axis.ZP.rotationDegrees(180));
                 case NORTH -> {
-                    poseStack.translate(-0.025, -0.15, 0.05);
-                    poseStack.mulPose(Axis.XP.rotationDegrees(-315));
-                    poseStack.mulPose(Axis.YP.rotationDegrees(90));
-                    poseStack.mulPose(Axis.ZP.rotationDegrees(-180));
+                    poseStack.mulPose(Axis.XP.rotationDegrees(-90));
+                    poseStack.mulPose(Axis.YP.rotationDegrees(-90));
                 }
                 case SOUTH -> {
-                    poseStack.translate(0.025, -0.15, -0.05);
-                    poseStack.mulPose(Axis.XP.rotationDegrees(315));
+                    poseStack.mulPose(Axis.XP.rotationDegrees(90));
                     poseStack.mulPose(Axis.YP.rotationDegrees(-90));
-                    poseStack.mulPose(Axis.ZP.rotationDegrees(180));
                 }
                 case WEST -> {
-                    poseStack.translate(0.1, 0.175, 0.03);
-                    poseStack.mulPose(Axis.XP.rotationDegrees(0));
-                    poseStack.mulPose(Axis.YP.rotationDegrees(0));
-                    poseStack.mulPose(Axis.ZP.rotationDegrees(45));
+                    poseStack.mulPose(Axis.ZP.rotationDegrees(90));
+                    poseStack.mulPose(Axis.YP.rotationDegrees(-90));
                 }
                 case EAST -> {
-                    poseStack.translate(-0.1, 0.175, -0.03);
-                    poseStack.mulPose(Axis.XP.rotationDegrees(0));
-                    poseStack.mulPose(Axis.YP.rotationDegrees(180));
-                    poseStack.mulPose(Axis.ZP.rotationDegrees(45));
+                    poseStack.mulPose(Axis.ZP.rotationDegrees(-90));
+                    poseStack.mulPose(Axis.YP.rotationDegrees(-90));
                 }
             }
         } else {
-            // Normal katana positions
             switch (facing) {
-                case UP -> {
-                    poseStack.translate(0.15, -0.075, 0.03);
-                    poseStack.mulPose(Axis.XP.rotationDegrees(0));
-                    poseStack.mulPose(Axis.ZP.rotationDegrees(-45));
+                case UP    -> poseStack.mulPose(Axis.YP.rotationDegrees(90));
+                case DOWN  -> {
+                    poseStack.mulPose(Axis.ZP.rotationDegrees(180));
+                    poseStack.mulPose(Axis.YP.rotationDegrees(-90));
                 }
-                case DOWN -> {
-                    poseStack.translate(-0.15, 0.075, 0.03);
-                    poseStack.mulPose(Axis.XP.rotationDegrees(180));
-                    poseStack.mulPose(Axis.ZP.rotationDegrees(45));
-                    poseStack.mulPose(Axis.YP.rotationDegrees(180));
-                }
-                case NORTH -> {
-                    poseStack.translate(-0.15, 0.025, 0.125);
-                    poseStack.mulPose(Axis.XP.rotationDegrees(-270));
-                    poseStack.mulPose(Axis.ZP.rotationDegrees(-225));
-                    poseStack.mulPose(Axis.YP.rotationDegrees(0));
-                }
-                case SOUTH -> {
-                    poseStack.translate(0.15, 0.025, -0.125);
-                    poseStack.mulPose(Axis.XP.rotationDegrees(270));
-                    poseStack.mulPose(Axis.ZP.rotationDegrees(225));
-                    poseStack.mulPose(Axis.YP.rotationDegrees(180));
-                }
-                case WEST -> {
-                    poseStack.translate(0.1, 0.025, 0.15);
-                    poseStack.mulPose(Axis.XP.rotationDegrees(90));
-                    poseStack.mulPose(Axis.ZP.rotationDegrees(45));
-                }
-                case EAST -> {
-                    poseStack.translate(-0.1, 0.025, -0.15);
-                    poseStack.mulPose(Axis.XP.rotationDegrees(-90));
-                    poseStack.mulPose(Axis.ZP.rotationDegrees(-45));
-                    poseStack.mulPose(Axis.YP.rotationDegrees(-180));
-                }
+                case NORTH -> poseStack.mulPose(Axis.XP.rotationDegrees(-90));
+                case SOUTH -> poseStack.mulPose(Axis.XP.rotationDegrees(90));
+                case WEST  -> poseStack.mulPose(Axis.ZP.rotationDegrees(90));
+                case EAST  -> poseStack.mulPose(Axis.ZP.rotationDegrees(-90));
             }
         }
 
-        float scale = 1f;
-        poseStack.scale(scale, scale, scale);
+        poseStack.translate(0.12, -0.1, 0.028);
+        poseStack.mulPose(Axis.ZP.rotationDegrees(-45));
 
         ItemRenderer itemRenderer = Minecraft.getInstance().getItemRenderer();
         itemRenderer.renderStatic(katana, ItemDisplayContext.FIXED, packedLight,

@@ -14,7 +14,7 @@ public class DeadCalmShaderEffect extends NichirinPostProcessor {
     private static final int FADE_OUT_TICKS = 40;
 
     private int effectTicks = 0;
-    private float intensity = 1.0f;
+    private float intensity = 0f;
     private Vector3f playerPosAtStart = new Vector3f(0, 0, 0);
     private float attackRange = 10.0f;
 

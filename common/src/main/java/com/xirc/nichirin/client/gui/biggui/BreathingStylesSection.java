@@ -217,7 +217,7 @@ public class BreathingStylesSection {
         return formatted.toString();
     }
 
-    private static long lastClickTime = 0;
+    private long lastClickTime = 0;
     private static final long CLICK_COOLDOWN = 500; // 500ms cooldown
 
     public boolean handleClick(double mouseX, double mouseY, Player player, int contentWidth) {
@@ -250,7 +250,10 @@ public class BreathingStylesSection {
         int cols = Math.min(2, breathingStyles.length);
         int totalWidth = (boxWidth * cols) + (spacing * (cols - 1));
         int startX = centerX - totalWidth / 2;
-        int topRowY = TOP_MARGIN + 10 + 30 + 25 + 20 + 10;
+        // Base Y matches render(): TOP_MARGIN+10 (30) + title (30) + instructions (20) + grid offset (10)
+        // Only add 25 when the current-style line is drawn (same condition as render())
+        int topRowY = TOP_MARGIN + 10 + 30 + 20 + 10;
+        if (currentStyle != null) topRowY += 25;
 
         // Check clicks on style boxes
         for (int i = 0; i < breathingStyles.length; i++) {

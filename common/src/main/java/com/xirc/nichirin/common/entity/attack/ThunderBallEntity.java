@@ -72,6 +72,11 @@ public class ThunderBallEntity extends Entity {
     public void tick() {
         super.tick();
 
+        // Move on both sides — client applies deltaMovement each tick so rendering is smooth
+        // rather than snapping between server-synced positions.
+        Vec3 motion = this.getDeltaMovement();
+        this.setPos(this.getX() + motion.x, this.getY() + motion.y, this.getZ() + motion.z);
+
         if (!this.level().isClientSide) {
             int currentLifeTicks = this.entityData.get(LIFE_TICKS);
 
@@ -83,10 +88,6 @@ public class ThunderBallEntity extends Entity {
 
             // Update life ticks
             this.entityData.set(LIFE_TICKS, currentLifeTicks + 1);
-
-            // Move forward at constant speed
-            Vec3 motion = this.getDeltaMovement();
-            this.setPos(this.getX() + motion.x, this.getY() + motion.y, this.getZ() + motion.z);
 
             // Damage nearby entities continuously
             damageNearbyEntities();

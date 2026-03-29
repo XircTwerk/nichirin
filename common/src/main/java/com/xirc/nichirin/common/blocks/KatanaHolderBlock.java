@@ -18,6 +18,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
@@ -146,26 +149,20 @@ public class KatanaHolderBlock extends BaseEntityBlock {
 
         ItemStack handItem = player.getItemInHand(hand);
 
-        // Crouch + right click = rotate 90 degrees
         if (player.isShiftKeyDown()) {
-            boolean currentRotated = state.getValue(ROTATED);
-            BlockState newState = state.setValue(ROTATED, !currentRotated);
-            level.setBlock(pos, newState, Block.UPDATE_ALL);
+            level.setBlock(pos, state.setValue(ROTATED, !state.getValue(ROTATED)), Block.UPDATE_ALL);
             level.playSound(null, pos, SoundEvents.WOOD_STEP, SoundSource.BLOCKS, 0.6f, 1.0f);
             return InteractionResult.SUCCESS;
         }
 
-        // If holder has a katana, try to pick it up
         if (!holderEntity.getStoredKatana().isEmpty()) {
             if (handItem.isEmpty()) {
-                ItemStack katana = holderEntity.removeKatana();
-                player.setItemInHand(hand, katana);
+                player.setItemInHand(hand, holderEntity.removeKatana());
                 level.playSound(null, pos, SoundEvents.ITEM_PICKUP, SoundSource.BLOCKS, 0.8f, 1.0f);
             }
             return InteractionResult.SUCCESS;
         }
 
-        // If holder is empty and player has a katana, place it
         if (handItem.getItem() instanceof SimpleKatana) {
             ItemStack katanaToPlace = handItem.copy();
             katanaToPlace.setCount(1);
@@ -204,7 +201,6 @@ public class KatanaHolderBlock extends BaseEntityBlock {
         return null;
     }
 
-    // ========== BLOCK ENTITY (NO AZURELIB) ==========
     public static class KatanaHolderBlockEntity extends BlockEntity {
         private static final String KATANA_TAG = "StoredKatana";
 
@@ -255,10 +251,20 @@ public class KatanaHolderBlock extends BaseEntityBlock {
         }
 
         private void syncToClient() {
-            if (level != null && !level.isClientSide) {
-                BlockState state = getBlockState();
-                level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_ALL);
-                setChanged();
+            if (!(level instanceof ServerLevel serverLevel)) return;
+            setChanged();
+            ClientboundBlockEntityDataPacket packet = getUpdatePacket();
+            if (packet == null) return;
+            double cx = worldPosition.getX() + 0.5;
+            double cy = worldPosition.getY() + 0.5;
+            double cz = worldPosition.getZ() + 0.5;
+            for (ServerPlayer player : serverLevel.players()) {
+                double dx = cx - player.getX();
+                double dy = cy - player.getY();
+                double dz = cz - player.getZ();
+                if (dx * dx + dy * dy + dz * dz < 4096.0) {
+                    player.connection.send(packet);
+                }
             }
         }
 
@@ -268,6 +274,7 @@ public class KatanaHolderBlock extends BaseEntityBlock {
             if (tag.contains(KATANA_TAG)) {
                 storedKatana = ItemStack.of(tag.getCompound(KATANA_TAG));
             } else {
+                // Explicit empty marker OR missing tag both mean no katana
                 storedKatana = ItemStack.EMPTY;
             }
         }
@@ -285,6 +292,9 @@ public class KatanaHolderBlock extends BaseEntityBlock {
             CompoundTag tag = super.getUpdateTag();
             if (!storedKatana.isEmpty()) {
                 tag.put(KATANA_TAG, storedKatana.save(new CompoundTag()));
+            } else {
+                // Always write an explicit empty marker so the client clears its rendered katana
+                tag.putBoolean("HasKatana", false);
             }
             return tag;
         }

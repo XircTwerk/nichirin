@@ -1,0 +1,25 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+issueTrackerURL="https://github.com/AzureDoom/AzureLib/issues"
+license="MIT"
+[[mods]]
+modId="azurelib"
+version="3.1.2"
+displayName="AzureLib"
+displayURL="https://modrinth.com/mod/azurelib"
+logoFile="azurelib.png"
+credits="AzureDoom, Bvanseg, DerToaster, ZigyTheBird, Gecko, Eliot, Chappie, Tslat"
+authors="AzureDoom, Bvanseg, DerToaster, ZigyTheBird, Gecko, Eliot, Chappie, Tslat"
+description='''Java Minecraft mod using Bedrock models to create custom models and animations for items, blocks, entities'''
+[[dependencies.azurelib]]
+    modId="forge"
+    mandatory=true
+    versionRange="[47.1,)"
+    ordering="NONE"
+    side="BOTH"
+[[dependencies.azurelib]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.20.1, 1.20.2)"
+    ordering="NONE"
+    side="BOTH"

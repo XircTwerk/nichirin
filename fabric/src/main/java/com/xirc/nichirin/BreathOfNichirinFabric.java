@@ -1,6 +1,7 @@
 package com.xirc.nichirin;
 
 import com.xirc.nichirin.common.terrablender.NichirinTerraFabric;
+import com.xirc.nichirin.common.world.NichirinBiomeModifications;
 import net.fabricmc.api.ModInitializer;
 
 public final class BreathOfNichirinFabric implements ModInitializer {
@@ -9,5 +10,6 @@ public final class BreathOfNichirinFabric implements ModInitializer {
         BreathOfNichirin.LOGGER.info("Initializing Nichirin for Fabric");
         BreathOfNichirin.init();
         NichirinTerraFabric.onModInitialized();
+        NichirinBiomeModifications.addSpawns();
     }
 }

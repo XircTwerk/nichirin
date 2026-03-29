@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {"item": "nichirin:mochi"},
+    {"item": "minecraft:green_dye"}
+  ],
+  "result": {"item": "nichirin:green_mochi", "count": 1}
+}

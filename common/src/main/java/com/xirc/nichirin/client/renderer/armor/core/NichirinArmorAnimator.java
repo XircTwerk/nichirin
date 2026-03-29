@@ -1,4 +1,4 @@
-package com.xirc.nichirin.client.renderer.entity.animator;
+package com.xirc.nichirin.client.renderer.armor.core;
 
 import com.xirc.nichirin.BreathOfNichirin;
 import mod.azure.azurelib.animation.controller.AzAnimationController;
@@ -20,6 +20,7 @@ public class NichirinArmorAnimator extends AzItemAnimator {
     public void registerControllers(AzAnimationControllerContainer<ItemStack> container) {
         container.add(
                 AzAnimationController.builder(this, "movement_controller")
+                        .setTransitionLength(5)
                         .build()
         );
     }

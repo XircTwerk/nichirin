@@ -8,46 +8,193 @@
 				"texture_height": 128,
 				"visible_bounds_width": 3,
 				"visible_bounds_height": 4.5,
-				"visible_bounds_offset": [0, 1.75, 0]
+				"visible_bounds_offset": [
+					0,
+					1.75,
+					0
+				]
 			},
 			"bones": [
 				{
 					"name": "Cape",
-					"pivot": [0, 18.35361, -0.35284],
+					"pivot": [
+						0,
+						24,
+						0
+					],
 					"cubes": [
-						{"origin": [-2, 23.25, -2], "size": [4, 2, 4], "inflate": 0.1, "uv": [67, 71]},
-						{"origin": [-4, 13.95, -2], "size": [8, 10, 4], "inflate": 0.55, "uv": [99, 107]},
-						{"origin": [-4, 13.95, -2], "size": [8, 10, 4], "inflate": 0.72, "uv": [99, 71]}
+						{
+							"origin": [
+								-2,
+								23.25,
+								-2
+							],
+							"size": [
+								4,
+								2,
+								4
+							],
+							"inflate": 0.1,
+							"uv": [
+								67,
+								71
+							]
+						},
+						{
+							"origin": [
+								-4,
+								13.95,
+								-2
+							],
+							"size": [
+								8,
+								10,
+								4
+							],
+							"inflate": 0.55,
+							"uv": [
+								99,
+								107
+							]
+						},
+						{
+							"origin": [
+								-4,
+								13.95,
+								-2
+							],
+							"size": [
+								8,
+								10,
+								4
+							],
+							"inflate": 0.72,
+							"uv": [
+								99,
+								71
+							]
+						}
 					]
 				},
 				{
 					"name": "Lowerpartsback",
 					"parent": "Cape",
-					"pivot": [0, 14.45, 1.7],
+					"pivot": [
+						0,
+						14.45,
+						1.7
+					],
 					"cubes": [
-						{"origin": [-4, 9.75, -2.4], "size": [8, 4, 4], "inflate": 0.681, "pivot": [0, 11.95, -0.3], "rotation": [180, 0, 180], "uv": [99, 94]}
+						{
+							"origin": [
+								-4,
+								9.75,
+								-2.4
+							],
+							"size": [
+								8,
+								4,
+								4
+							],
+							"inflate": 0.681,
+							"pivot": [
+								0,
+								11.95,
+								-0.3
+							],
+							"rotation": [
+								180,
+								0,
+								180
+							],
+							"uv": [
+								99,
+								94
+							]
+						}
 					]
 				},
 				{
 					"name": "Lowerpartsfront",
 					"parent": "Cape",
-					"pivot": [0, 9.45, -0.3],
+					"pivot": [
+						0,
+						9.45,
+						-0.3
+					],
 					"cubes": [
-						{"origin": [-4, 9.75, -1.8], "size": [8, 4, 4], "inflate": 0.68, "uv": [99, 83]}
+						{
+							"origin": [
+								-4,
+								9.75,
+								-1.8
+							],
+							"size": [
+								8,
+								4,
+								4
+							],
+							"inflate": 0.68,
+							"uv": [
+								99,
+								83
+							]
+						}
 					]
 				},
 				{
 					"name": "rightArm",
-					"pivot": [0, 0, 0],
+					"pivot": [
+						5,
+						22,
+						0
+					],
 					"cubes": [
-						{"origin": [4, 11.9, -2], "size": [3, 12, 4], "inflate": 0.48, "uv": [84, 89], "mirror": true}
+						{
+							"origin": [
+								4,
+								11.9,
+								-2
+							],
+							"size": [
+								3,
+								12,
+								4
+							],
+							"inflate": 0.48,
+							"uv": [
+								84,
+								89
+							],
+							"mirror": true
+						}
 					]
 				},
 				{
 					"name": "leftArm",
-					"pivot": [0, 0, 0],
+					"pivot": [
+						-5,
+						22,
+						0
+					],
 					"cubes": [
-						{"origin": [-7, 11.9, -2], "size": [3, 12, 4], "inflate": 0.48, "uv": [83, 107]}
+						{
+							"origin": [
+								-7,
+								11.9,
+								-2
+							],
+							"size": [
+								3,
+								12,
+								4
+							],
+							"inflate": 0.48,
+							"uv": [
+								83,
+								107
+							]
+						}
 					]
 				}
 			]

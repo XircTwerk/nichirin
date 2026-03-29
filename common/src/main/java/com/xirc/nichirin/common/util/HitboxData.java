@@ -137,7 +137,7 @@ public record HitboxData(float size, Vec3 offset, HitboxShape shape, float durat
 
         // Rotate each corner and find the bounding box
         double minX = Double.MAX_VALUE, minY = Double.MAX_VALUE, minZ = Double.MAX_VALUE;
-        double maxX = Double.MIN_VALUE, maxY = Double.MIN_VALUE, maxZ = Double.MIN_VALUE;
+        double maxX = -Double.MAX_VALUE, maxY = -Double.MAX_VALUE, maxZ = -Double.MAX_VALUE;
 
         for (Vec3 corner : corners) {
             // Rotate the corner point around Y axis

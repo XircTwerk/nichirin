@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.attack.moves;
 
+import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import lombok.Getter;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
@@ -44,7 +45,6 @@ public class RisingSlashAttack {
     private int tickCount = 0;
     @Getter
     private boolean isActive = false;
-    private boolean hasHit = false;
     private final Set<LivingEntity> hitEntities = new HashSet<>();
 
     public RisingSlashAttack(int startup, int active, int recovery, int cooldown, float damage, float range,
@@ -79,7 +79,7 @@ public class RisingSlashAttack {
         private float hitboxSize = 1.5f;
         private Vec3 hitboxOffset = new Vec3(0, 0.5, 0); // Slightly higher hitbox
         private int hitStun = 20;
-        private float launchPower = 1.2f; // Default launch power (blocks)
+        private float launchPower = 0.8f; // Default launch power (blocks)
         private SoundEvent startSound = null;
         private SoundEvent hitSound = null;
 
@@ -146,7 +146,6 @@ public class RisingSlashAttack {
 
         // Reset state
         tickCount = 0;
-        hasHit = false;
         hitEntities.clear();
         isActive = true;
 
@@ -170,12 +169,9 @@ public class RisingSlashAttack {
 
         tickCount++;
 
-        // Check if we're in the active frames
+        // Check if we're in the active frames — detect every tick so all enemies in range get launched
         if (tickCount >= startup && tickCount <= startup + active) {
-            // Perform hit detection
-            if (!hasHit) {
-                performHitDetection(player, player.level());
-            }
+            performHitDetection(player, player.level());
         }
 
         // Check if attack is complete
@@ -204,7 +200,6 @@ public class RisingSlashAttack {
                 entity -> entity != user && entity.isAlive() && !hitEntities.contains(entity));
 
         if (!targets.isEmpty()) {
-            hasHit = true;
             DamageSource damageSource = user.damageSources().playerAttack(user);
 
             for (LivingEntity target : targets) {
@@ -213,11 +208,6 @@ public class RisingSlashAttack {
 
                 // Add to hit list
                 hitEntities.add(target);
-
-                // Create hit particles - upward stream
-                if (world instanceof ServerLevel serverLevel) {
-                    createHitParticles(serverLevel, target);
-                }
 
                 // Play hit sound
                 if (hitSound != null) {
@@ -229,18 +219,16 @@ public class RisingSlashAttack {
     }
 
     private void launchTarget(LivingEntity target, Player user, DamageSource damageSource) {
-        // Clear any existing velocity
-        target.setDeltaMovement(Vec3.ZERO);
+        // Apply damage first so vanilla knockback fires before we overwrite velocity
+        target.hurt(damageSource, damage);
 
         // Lift slightly off ground to ensure launch works
         if (target.onGround()) {
             target.setPos(target.getX(), target.getY() + 0.1, target.getZ());
         }
 
-        // Calculate launch velocity
+        // Calculate launch velocity — purely upward + slight horizontal scatter
         Vec3 launchVelocity = new Vec3(0, launchPower, 0);
-
-        // Add horizontal knockback if needed
         if (knockback > 0) {
             Vec3 knockDirection = target.position().subtract(user.position()).normalize();
             launchVelocity = launchVelocity.add(
@@ -250,93 +238,34 @@ public class RisingSlashAttack {
             );
         }
 
-        // Apply the velocity
+        // Overwrite velocity AFTER damage so nothing can clobber our launch
         target.setDeltaMovement(launchVelocity);
-        target.hurtMarked = true; // Forces velocity sync
-        target.hasImpulse = true; // Ensures the velocity is applied
+        target.hurtMarked = true;
+        target.hasImpulse = true;
+
+        // Apply hit stun after damage so it doesn't block our own hurt() call
+        if (hitStun > 0) {
+            target.invulnerableTime = hitStun;
+        }
 
         // Force sync for players
         if (target instanceof ServerPlayer serverPlayer) {
             serverPlayer.connection.send(new ClientboundSetEntityMotionPacket(target));
         }
-
-        // Apply hit stun BEFORE damage to prevent damage knockback interference
-        if (hitStun > 0) {
-            target.invulnerableTime = hitStun;
-        }
-
-        // Apply damage AFTER velocity
-        target.hurt(damageSource, damage);
-    }
-
-    private void createHitParticles(ServerLevel serverLevel, LivingEntity target) {
-        // Impact particles
-        serverLevel.sendParticles(ParticleTypes.CRIT,
-                target.getX(), target.getY() + target.getBbHeight() / 2, target.getZ(),
-                20, 0.3, 0.3, 0.3, 0.1);
-
-        // Rising particles
-        for (int i = 0; i < 5; i++) {
-            serverLevel.sendParticles(ParticleTypes.END_ROD,
-                    target.getX(), target.getY() + (i * 0.3), target.getZ(),
-                    3, 0.1, 0.1, 0.1, 0.05);
-        }
-
-        // Add some sweep particles around the target
-        serverLevel.sendParticles(ParticleTypes.SWEEP_ATTACK,
-                target.getX(), target.getY() + 1.0, target.getZ(),
-                1, 0, 0, 0, 0);
     }
 
     private void createRisingParticles(Player user, Level world) {
-        if (!(world instanceof ServerLevel serverLevel)) {
-            return;
+        if (!(world instanceof ServerLevel sl)) return;
+        Vec3 base = user.position().add(0, user.getBbHeight() * 0.3, 0)
+                .add(user.getLookAngle().scale(range * 0.5));
+        // Upward streak of sparks
+        for (int i = 0; i < 5; i++) {
+            Vec3 pos = base.add(0, i * 0.35, 0);
+            sl.sendParticles(NichirinParticleRegistry.SLASH_IMPACT_SPARK.get(),
+                    pos.x, pos.y, pos.z, 2, 0.1, 0.05, 0.1, 0.0);
         }
-
-        Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
-        Vec3 lookDir = user.getLookAngle();
-
-        // Position the slash in front of the player
-        Vec3 slashBase = userPos.add(lookDir.scale(range * 0.6));
-
-        float slashHeight = 3.0f; // Height of the vertical slash
-        float slashWidth = 0.8f;  // Width of the slash for some visual thickness
-
-        // Create vertical line of particles going straight up
-        for (int i = 0; i <= 8; i++) {
-            float progress = i / 8.0f;
-
-            // Main vertical line
-            Vec3 particlePos = slashBase.add(0, progress * slashHeight, 0);
-
-            serverLevel.sendParticles(ParticleTypes.SWEEP_ATTACK,
-                    particlePos.x, particlePos.y, particlePos.z,
-                    1, 0, 0, 0, 0);
-
-            // Add some width to the slash with side particles
-            if (i % 2 == 0) {
-                Vec3 rightDir = lookDir.cross(new Vec3(0, 1, 0)).normalize();
-
-                // Left side particle
-                Vec3 leftPos = particlePos.add(rightDir.scale(-slashWidth/2));
-                serverLevel.sendParticles(ParticleTypes.SWEEP_ATTACK,
-                        leftPos.x, leftPos.y, leftPos.z,
-                        1, 0, 0, 0, 0);
-
-                // Right side particle
-                Vec3 rightPos = particlePos.add(rightDir.scale(slashWidth/2));
-                serverLevel.sendParticles(ParticleTypes.SWEEP_ATTACK,
-                        rightPos.x, rightPos.y, rightPos.z,
-                        1, 0, 0, 0, 0);
-            }
-
-            // Add some cloud particles for effect at key points
-            if (i % 3 == 0) {
-                serverLevel.sendParticles(ParticleTypes.CLOUD,
-                        particlePos.x, particlePos.y, particlePos.z,
-                        2, 0.1, 0.1, 0.1, 0.01);
-            }
-        }
+        sl.sendParticles(ParticleTypes.SWEEP_ATTACK,
+                base.x, base.y + 0.8, base.z, 3, 0.2, 0.2, 0.2, 0.0);
     }
 
     private void end(Player player) {

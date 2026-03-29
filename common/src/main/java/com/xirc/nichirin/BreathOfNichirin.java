@@ -1,5 +1,6 @@
 package com.xirc.nichirin;
 
+import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.advancement.NichirinCriteriaTriggers;
 import com.xirc.nichirin.common.event.item.DrinkingGourdInteractionHandler;
 import com.xirc.nichirin.common.event.system.*;
@@ -23,6 +24,16 @@ public final class BreathOfNichirin {
 
     public static void init() {
         LOGGER.info("=== STARTING NICHIRIN COMMON INITIALIZATION ===");
+
+        // Register config first so all systems can read from it immediately
+        try {
+            me.shedaniel.autoconfig.AutoConfig.register(
+                    NichirinModConfig.class,
+                    me.shedaniel.autoconfig.serializer.GsonConfigSerializer::new);
+            LOGGER.info("Cloth Config registered successfully");
+        } catch (Exception e) {
+            LOGGER.warn("Could not register Cloth Config (cloth-config not installed?). Using hardcoded defaults.", e);
+        }
 
         // Initialize common registries first
         NichirinItemRegistry.init();
@@ -51,6 +62,7 @@ public final class BreathOfNichirin {
         InsectBreathingUnlockHandler.register();
         ThunderBreathingUnlockHandler.register();
         SoundBreathingUnlockHandler.register();
+        WaterBreathingUnlockHandler.register();
 
         // SERVER-SIDE handlers only
         BreathOfNichirinEventHandler.init();

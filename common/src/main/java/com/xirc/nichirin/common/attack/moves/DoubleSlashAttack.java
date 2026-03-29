@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.attack.moves;
 
+import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
@@ -149,6 +150,12 @@ public class DoubleSlashAttack {
         secondSlashVisual = false;
         isActive = true;
 
+        // If startup == 0, first slash fires immediately (tick() increments before checking so tickCount==0 is unreachable)
+        if (startup == 0) {
+            createDiagonalSlashParticles(player, player.level(), true);
+            firstSlashVisual = true;
+        }
+
         // Play start sound
         if (startSound != null) {
             player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
@@ -249,13 +256,6 @@ public class DoubleSlashAttack {
                 hitCooldowns.put(target, 6);
                 hasHit = true;
 
-                // Create hit particles
-                if (world instanceof ServerLevel serverLevel) {
-                    serverLevel.sendParticles(ParticleTypes.CRIT,
-                            target.getX(), target.getY() + target.getBbHeight() / 2, target.getZ(),
-                            10, 0.2, 0.2, 0.2, 0.1);
-                }
-
                 // Play hit sound
                 if (hitSound != null) {
                     world.playSound(null, target.getX(), target.getY(), target.getZ(),
@@ -266,44 +266,21 @@ public class DoubleSlashAttack {
     }
 
     private void createDiagonalSlashParticles(Player user, Level world, boolean isFirstDiagonal) {
-        if (!(world instanceof ServerLevel serverLevel)) {
-            return;
+        if (!(world instanceof ServerLevel sl)) return;
+        Vec3 centre = user.position().add(0, user.getBbHeight() * 0.5, 0)
+                .add(user.getLookAngle().scale(range * 0.6));
+        Vec3 right = new Vec3(-user.getLookAngle().z, 0, user.getLookAngle().x).normalize();
+        // First diagonal: top-right to bottom-left; second: top-left to bottom-right
+        double sign = isFirstDiagonal ? 1.0 : -1.0;
+        Vec3 start = centre.add(right.scale(sign * 1.2)).add(0, 0.5, 0);
+        Vec3 end   = centre.add(right.scale(sign * -1.2)).add(0, -0.5, 0);
+        for (double t = 0; t <= 1.0; t += 0.25) {
+            Vec3 pos = start.add(end.subtract(start).scale(t));
+            sl.sendParticles(NichirinParticleRegistry.SLASH_IMPACT_SPARK.get(),
+                    pos.x, pos.y, pos.z, 2, 0.05, 0.05, 0.05, 0.0);
         }
-
-        Vec3 userPos = user.position().add(0, user.getBbHeight() * 0.75, 0);
-        Vec3 lookDir = user.getLookAngle();
-        Vec3 rightDir = lookDir.cross(new Vec3(0, 1, 0)).normalize();
-
-        // Create diagonal line of particles
-        for (int i = 0; i <= 10; i++) {
-            float progress = i / 10.0f;
-
-            Vec3 particlePos;
-            if (isFirstDiagonal) {
-                // Top-left to bottom-right diagonal
-                particlePos = userPos
-                        .add(lookDir.scale(range * 0.5 + range * 0.5 * progress))
-                        .add(rightDir.scale(-0.8 + 1.6 * progress))
-                        .add(0, 0.8 - 1.6 * progress, 0);
-            } else {
-                // Top-right to bottom-left diagonal
-                particlePos = userPos
-                        .add(lookDir.scale(range * 0.5 + range * 0.5 * progress))
-                        .add(rightDir.scale(0.8 - 1.6 * progress))
-                        .add(0, 0.8 - 1.6 * progress, 0);
-            }
-
-            serverLevel.sendParticles(ParticleTypes.SWEEP_ATTACK,
-                    particlePos.x, particlePos.y, particlePos.z,
-                    1, 0, 0, 0, 0);
-
-            // Add some extra particles for the X effect
-            if (i % 3 == 0) {
-                serverLevel.sendParticles(ParticleTypes.ENCHANTED_HIT,
-                        particlePos.x, particlePos.y, particlePos.z,
-                        2, 0.1, 0.1, 0.1, 0.05);
-            }
-        }
+        sl.sendParticles(ParticleTypes.SWEEP_ATTACK,
+                centre.x, centre.y, centre.z, 2, 0.2, 0.2, 0.2, 0.0);
     }
 
     private void end(Player player) {

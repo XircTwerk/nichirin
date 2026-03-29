@@ -90,13 +90,6 @@ public class Dodge {
      */
     private static void grantImmunityFrames(Player player) {
         player.invulnerableTime = IMMUNITY_FRAMES;
-
-        // Show immunity granted message
-        player.displayClientMessage(
-                Component.literal("Immunity Frames Granted!")
-                        .withStyle(style -> style.withColor(0xFFD700).withBold(true)),
-                true
-        );
     }
 
     /**

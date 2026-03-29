@@ -81,6 +81,14 @@ public class StunnedStatusEffect extends MobEffect {
         if (attribute != null) {
             attribute.removeModifier(MOVEMENT_MODIFIER_UUID);
         }
+        // Restore building/flight abilities that were disabled during stun
+        if (entity instanceof Player player) {
+            player.getAbilities().mayBuild = true;
+            if (player.isCreative() || player.isSpectator()) {
+                player.getAbilities().mayfly = true;
+            }
+            player.onUpdateAbilities();
+        }
     }
 
     @Override
@@ -116,9 +124,8 @@ public class StunnedStatusEffect extends MobEffect {
 
         // Player-specific restrictions (apply regardless of amplifier level)
         if (entity instanceof Player player && !player.isCreative() && !player.isSpectator()) {
-            // Prevent flying and building
+            // Prevent flying only (not building - setting mayBuild false permanently breaks interaction)
             player.getAbilities().mayfly = false;
-            player.getAbilities().mayBuild = false;
         }
 
         // Mob-specific restrictions (apply regardless of amplifier level)

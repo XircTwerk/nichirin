@@ -3,6 +3,7 @@ package com.xirc.nichirin.registry;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.xirc.nichirin.client.gui.CooldownHUD;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
+import com.xirc.nichirin.common.attack.moveset.DefaultKatanaMoveset;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.network.c2s.MovementInputPacket;
@@ -167,9 +168,17 @@ public interface NichirinKeybindRegistry {
             }
         }
 
-        // Must have appropriate moveset to use hotkey
+        // Default katana case: holding katana with no breathing style assigned
+        // Route through MoveHotkeyPacket so SimpleKatana.performWheelMove handles it server-side
         if (moveset == null) {
-            return; // No moveset - hotkey does nothing silently
+            if (holdingKatana && moveIndex <= 2) {
+                NichirinPacketRegistry.sendToServer(new MoveHotkeyPacket(moveIndex));
+                var config = DefaultKatanaMoveset.INSTANCE.getMove(moveIndex);
+                if (config != null && config.hasCooldown()) {
+                    CooldownHUD.setCooldown(config.getDisplayName(), config.getCooldown());
+                }
+            }
+            return;
         }
 
         // Check if move exists in the moveset

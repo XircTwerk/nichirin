@@ -53,8 +53,6 @@ public class TheBigGui extends Screen {
     private final QuestsSection questsSection = new QuestsSection();
     private final ReputationSection reputationSection = new ReputationSection();
     private final MovesetSection movesetSection = new MovesetSection();
-    private final ConfigSection configSection = new ConfigSection();
-
     /**
      * -- GETTER --
      *  Get scaled width for use by sections
@@ -190,7 +188,6 @@ public class TheBigGui extends Screen {
             case QUESTS -> questsSection.render(graphics, player, this.font);
             case REPUTATION -> reputationSection.render(graphics, player, this.font);
             case MOVESET -> movesetSection.render(graphics, player, this.font, contentWidth, contentHeight, adjustedMouseX, adjustedMouseY);
-            case CONFIG -> configSection.render(graphics, player, this.font);
         }
 
         // Restore pose stack before rendering buttons (they handle their own scaling)
@@ -246,6 +243,11 @@ public class TheBigGui extends Screen {
         double adjustedMouseX = mouseX / scaleRatio;
         double adjustedMouseY = mouseY / scaleRatio;
 
+        // Compute content dimensions (must match render())
+        int contentRight = this.scaledWidth - BUTTON_WIDTH - RIGHT_MARGIN - 10;
+        int clickContentWidth = contentRight - 10;
+        int clickContentHeight = this.scaledHeight - 10;
+
         // Handle section-specific clicks
         boolean handled = switch (currentSection) {
             case HOME -> homeSection.handleClick(adjustedMouseX, adjustedMouseY, player);
@@ -253,8 +255,7 @@ public class TheBigGui extends Screen {
             case BESTIARY -> bestiarySection.handleClick(adjustedMouseX, adjustedMouseY, player);
             case QUESTS -> questsSection.handleClick(adjustedMouseX, adjustedMouseY, player);
             case REPUTATION -> reputationSection.handleClick(adjustedMouseX, adjustedMouseY, player);
-            case MOVESET -> movesetSection.handleClick(adjustedMouseX, adjustedMouseY, player);
-            case CONFIG -> configSection.handleClick(adjustedMouseX, adjustedMouseY, player);
+            case MOVESET -> movesetSection.handleClick(adjustedMouseX, adjustedMouseY, player, clickContentWidth, clickContentHeight);
         };
 
         if (handled) {
@@ -323,8 +324,7 @@ public class TheBigGui extends Screen {
         BESTIARY("gui.nichirin.section.bestiary"),
         QUESTS("gui.nichirin.section.quests"),
         REPUTATION("gui.nichirin.section.reputation"),
-        MOVESET("gui.nichirin.section.moveset"),
-        CONFIG("gui.nichirin.section.config");
+        MOVESET("gui.nichirin.section.moveset");
 
         private final String translationKey;
 

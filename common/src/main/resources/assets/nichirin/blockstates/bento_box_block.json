@@ -1,18 +1,18 @@
 {
   "variants": {
     "facing=north": {
-      "model": "minecraft:block/stripped_oak_log"
+      "model": "nichirin:block/bento_box_block"
     },
     "facing=south": {
-      "model": "minecraft:block/stripped_oak_log",
+      "model": "nichirin:block/bento_box_block",
       "y": 180
     },
     "facing=west": {
-      "model": "minecraft:block/stripped_oak_log",
+      "model": "nichirin:block/bento_box_block",
       "y": 270
     },
     "facing=east": {
-      "model": "minecraft:block/stripped_oak_log",
+      "model": "nichirin:block/bento_box_block",
       "y": 90
     }
   }

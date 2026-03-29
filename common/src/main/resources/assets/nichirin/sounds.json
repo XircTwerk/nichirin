@@ -1,4 +1,39 @@
 {
+  "parry_clash": {
+    "sounds": [
+      "nichirin:katana/parry_clash"
+    ]
+  },
+  "parry_clash_2": {
+    "sounds": [
+      "nichirin:katana/parry_clash_2"
+    ]
+  },
+  "slash_whoosh_1": {
+    "sounds": [
+      "nichirin:katana/slash_whoosh_1"
+    ]
+  },
+  "slash_whoosh_2": {
+    "sounds": [
+      "nichirin:katana/slash_whoosh_2"
+    ]
+  },
+  "block_clang": {
+    "sounds": [
+      "nichirin:katana/block_clang"
+    ]
+  },
+  "bite_crunch": {
+    "sounds": [
+      "nichirin:demon/bite_crunch"
+    ]
+  },
+  "stomp_land": {
+    "sounds": [
+      "nichirin:demon/stomp_land"
+    ]
+  },
   "basicslash1": {
     "sounds": [
       "nichirin:katana/hit1"

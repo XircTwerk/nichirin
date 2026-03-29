@@ -227,7 +227,7 @@ public abstract class AbstractMoveset {
             return true;
         }
 
-        if (leftClickMove != null) {
+        if (leftClickMove != null && leftClickMove.startAction != null) {
             applyMoveStun(entity, leftClickMove);
 
             // AUTOMATIC ANIMATION HANDLING - Player or NPC
@@ -246,26 +246,25 @@ public abstract class AbstractMoveset {
             }
 
             // Execute the move action
-            if (leftClickMove.startAction != null) {
-                leftClickMove.startAction.accept(entity);
-            }
+            leftClickMove.startAction.accept(entity);
 
             return true;
         }
 
-        return false;
+        return false; // No configured move, let subclass handle it
     }
 
     /**
-     * Override the right-click (M2) behavior - works for both Player and NPC
+     * Override the right-click (M2) behavior for SimpleKatana with stun checking and followup queuing
      */
     public boolean handleRightClick(LivingEntity entity, boolean isCrouching) {
-        // If stunned, try to queue followup instead of executing new attack
         if (entity.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+            // Check if we should queue a followup
             FollowupQueue queue = entityFollowupQueues.get(entity.getUUID());
             if (queue != null && queue.isAttackActive(System.currentTimeMillis()) && queue.canQueueNext()) {
                 queue.queueNext();
 
+                // Show feedback that followup was queued
                 if (entity instanceof Player player) {
                     player.displayClientMessage(
                             Component.literal("Followup queued!")
@@ -274,13 +273,13 @@ public abstract class AbstractMoveset {
                     );
                 }
             }
-            return true;
+            return true; // Block the move by overriding
         }
 
-        // NOT STUNNED - EXECUTE THE RIGHT-CLICK ATTACK!
+        // NOT STUNNED - Try to execute configured move if available
         MoveConfiguration config = isCrouching ? crouchRightClickMove : rightClickMove;
 
-        if (config != null) {
+        if (config != null && config.startAction != null) {
             applyMoveStun(entity, config);
 
             // AUTOMATIC ANIMATION HANDLING
@@ -299,14 +298,11 @@ public abstract class AbstractMoveset {
             }
 
             // Execute the move action
-            if (config.startAction != null) {
-                config.startAction.accept(entity);
-            }
-
+            config.startAction.accept(entity);
             return true;
         }
 
-        return false;
+        return false; // No configured move, let subclass handle it
     }
 
     /**
@@ -314,9 +310,9 @@ public abstract class AbstractMoveset {
      */
     public void triggerAnimation(LivingEntity entity, String animationName) {
         if (entity instanceof ServerPlayer serverPlayer) {
-            // Player animation using PlayerAnimationPacket
+            // Player animation — broadcast to all players in the same level so others can see it
             PlayerAnimationPacket packet = new PlayerAnimationPacket(serverPlayer.getId(), animationName);
-            NichirinPacketRegistry.sendToPlayer(packet, serverPlayer);
+            NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer, packet);
         } else if (entity instanceof MovesetCapableNPC npc) {
             // NPC animation using Azure
             npc.triggerMovesetAnimation(animationName);

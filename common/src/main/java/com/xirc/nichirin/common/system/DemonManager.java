@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.system;
 
+import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.event.system.DemonFoodHandler;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
@@ -16,29 +17,17 @@ import java.util.Set;
 import java.util.HashSet;
 import java.util.UUID;
 
-/**
- * Handles all demon-related mechanics and passives
- */
+/** Manages demon passives: sunlight, blood points, blood drain, and regen. */
 public class DemonManager {
 
-    // Track blood points per player (0-10)
     static final Map<UUID, Integer> playerBloodPoints = new HashMap<>();
-
-    // Track last regen tick to prevent spam
     private static final Map<UUID, Long> lastRegenTick = new HashMap<>();
+    private static final Map<UUID, Long> lastBloodDrainTick = new HashMap<>();
 
-    // Track exhaustion accumulation for blood drain
-    private static final Map<UUID, Float> accumulatedExhaustion = new HashMap<>();
-
-    // Prevent infinite recursion during loading
     private static final Set<UUID> loadingPlayers = new HashSet<>();
 
-    // Constants
-    private static final int MAX_BLOOD_POINTS = 10;
-    private static final int REGEN_INTERVAL = 15; // 0.75 seconds in ticks (default)
-    private static final int REGEN_INTERVAL_STUNNED = 40; // 2 seconds in ticks (when stunned)
-    private static final float EXHAUSTION_THRESHOLD = 6.0f; // Slower than normal hunger (4.0f)
-    private static final int SUN_FIRE_DURATION = 40; // 2 seconds of fire
+    private static final int REGEN_INTERVAL = 15;
+    private static final int SUN_FIRE_DURATION = 40;
 
     /**
      * Check if a player is a demon (has demon moveset)
@@ -51,20 +40,20 @@ public class DemonManager {
      * Gets blood points for a player
      */
     public static int getBloodPoints(Player player) {
-        return playerBloodPoints.getOrDefault(player.getUUID(), MAX_BLOOD_POINTS);
+        return playerBloodPoints.getOrDefault(player.getUUID(), NichirinModConfig.get().demon.maxBloodPoints);
     }
 
     /**
      * Sets blood points for a player
      */
     public static void setBloodPoints(Player player, int bloodPoints) {
-        // Prevent recursive calls during loading
+        int max = NichirinModConfig.get().demon.maxBloodPoints;
         if (loadingPlayers.contains(player.getUUID())) {
-            playerBloodPoints.put(player.getUUID(), Math.max(0, Math.min(bloodPoints, MAX_BLOOD_POINTS)));
+            playerBloodPoints.put(player.getUUID(), Math.max(0, Math.min(bloodPoints, max)));
             return;
         }
 
-        bloodPoints = Math.max(0, Math.min(bloodPoints, MAX_BLOOD_POINTS));
+        bloodPoints = Math.max(0, Math.min(bloodPoints, max));
         playerBloodPoints.put(player.getUUID(), bloodPoints);
 
         // Sync to client if on server
@@ -80,7 +69,8 @@ public class DemonManager {
     public static void setBloodPointsDirectly(Player player, int bloodPoints) {
         loadingPlayers.add(player.getUUID());
         try {
-            playerBloodPoints.put(player.getUUID(), Math.max(0, Math.min(bloodPoints, MAX_BLOOD_POINTS)));
+            int max = NichirinModConfig.get().demon.maxBloodPoints;
+            playerBloodPoints.put(player.getUUID(), Math.max(0, Math.min(bloodPoints, max)));
         } finally {
             loadingPlayers.remove(player.getUUID());
         }
@@ -117,37 +107,25 @@ public class DemonManager {
         // Handle blood regeneration (checks for stun and fire)
         handleBloodRegeneration(player);
 
+        // Handle blood drain BEFORE resetting exhaustion so the reading is accurate
+        handleBloodDrain(player);
+
         // Apply infinite stamina and maintain full hunger
         applyInfiniteStamina(player);
-
-        // Handle blood drain from exhaustion
-        handleBloodDrain(player);
     }
 
-    /**
-     * Handles sun damage for demons - now sets them on fire
-     */
     private static void handleSunDamage(Player player) {
+        if (!NichirinModConfig.get().demon.burnInSunlight) return;
         Level level = player.level();
-
-        // Only damage during day, not raining, can see sky
-        if (level.isDay() && !level.isRaining() && !level.isThundering() &&
-                level.canSeeSky(player.blockPosition())) {
-
-            // Set demon on fire instead of direct damage
-            player.setSecondsOnFire(SUN_FIRE_DURATION / 20); // Convert ticks to seconds
+        if (level.isDay() && !level.isRaining() && !level.isThundering()
+                && level.canSeeSky(player.blockPosition())) {
+            player.setSecondsOnFire(SUN_FIRE_DURATION / 20);
         }
     }
 
-    /**
-     * Handles extra fire damage for demons - 1 heart magic damage per second
-     */
     private static void handleFireDamage(Player player) {
-        if (player.getRemainingFireTicks() > 0) {
-            // Deal 1 heart (2.0 damage) of magic damage every second (20 ticks)
-            if (player.getRemainingFireTicks() % 20 == 0) {
-                player.hurt(player.damageSources().magic(), 2.0f);
-            }
+        if (player.getRemainingFireTicks() > 0 && player.getRemainingFireTicks() % 20 == 0) {
+            player.hurt(player.damageSources().magic(), NichirinModConfig.get().demon.sunDamagePerSecond);
         }
     }
 
@@ -161,14 +139,12 @@ public class DemonManager {
         // FIXED: Check if player is stunned (ANY amplifier level)
         boolean hasStunEffect = player.hasEffect(NichirinEffectRegistry.STUNNED.get());
         if (hasStunEffect) {
-            System.out.println("DEBUG: Player " + player.getName().getString() + " is stunned, blocking regen");
             return; // Block regen during any stun
         }
 
         // FIXED: Check if player is on fire using getRemainingFireTicks
         int fireTicks = player.getRemainingFireTicks();
         if (fireTicks > 0) {
-            System.out.println("DEBUG: Player " + player.getName().getString() + " is on fire (" + fireTicks + " ticks), blocking regen");
             return; // Block regen while burning
         }
 
@@ -232,26 +208,18 @@ public class DemonManager {
         }
     }
 
-    /**
-     * Handles blood drain from exhaustion accumulation
-     */
     private static void handleBloodDrain(Player player) {
-        UUID playerUUID = player.getUUID();
-        FoodData foodData = player.getFoodData();
+        NichirinModConfig cfg = NichirinModConfig.get();
+        if (!cfg.demon.bloodDrainEnabled) return;
 
-        // Accumulate exhaustion (but don't let it affect hunger since we reset it)
-        float currentExhaustion = foodData.getExhaustionLevel();
-        if (currentExhaustion > 0) {
-            float accumulated = accumulatedExhaustion.getOrDefault(playerUUID, 0.0f);
-            accumulated += currentExhaustion;
+        UUID uuid = player.getUUID();
+        long now = player.level().getGameTime();
+        long interval = (long) cfg.demon.bloodDrainIntervalSeconds * 20L;
 
-            // Check if we've accumulated enough to drain blood
-            if (accumulated >= EXHAUSTION_THRESHOLD) {
-                removeBloodPoints(player, 1);
-                accumulated -= EXHAUSTION_THRESHOLD;
-            }
-
-            accumulatedExhaustion.put(playerUUID, accumulated);
+        long last = lastBloodDrainTick.getOrDefault(uuid, 0L);
+        if (now - last >= interval) {
+            removeBloodPoints(player, 1);
+            lastBloodDrainTick.put(uuid, now);
         }
     }
 
@@ -261,9 +229,8 @@ public class DemonManager {
     public static void onMobKilled(Player player, LivingEntity killed) {
         if (!isDemon(player)) return;
 
-        // Award blood for killing mobs that have blood
         if (hasBlood(killed)) {
-            addBloodPoints(player, 1);
+            addBloodPoints(player, NichirinModConfig.get().demon.bloodPointsOnKill);
         }
     }
 
@@ -285,7 +252,7 @@ public class DemonManager {
     private static boolean hasBlood(LivingEntity entity) {
         // Most living entities have blood except undead
         return !entity.getType().is(EntityTypeTags.SKELETONS) &&
-                !entity.getType().is(EntityTypeTags.FREEZE_IMMUNE_ENTITY_TYPES);
+                entity.getMobType() != net.minecraft.world.entity.MobType.UNDEAD;
     }
 
     /**
@@ -295,17 +262,14 @@ public class DemonManager {
         UUID playerUUID = player.getUUID();
         playerBloodPoints.remove(playerUUID);
         lastRegenTick.remove(playerUUID);
-        accumulatedExhaustion.remove(playerUUID);
+        lastBloodDrainTick.remove(playerUUID);
         loadingPlayers.remove(playerUUID);
     }
 
-    /**
-     * Clear all data (for mod reload/testing)
-     */
     public static void clearAll() {
         playerBloodPoints.clear();
         lastRegenTick.clear();
-        accumulatedExhaustion.clear();
+        lastBloodDrainTick.clear();
         loadingPlayers.clear();
     }
 }

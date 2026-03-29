@@ -280,20 +280,19 @@ public abstract class AbstractSimpleAttack<T extends AbstractSimpleAttack<T, A>,
     public void tick(Player attacker) {
         if (!active) return;
 
-        Player player = Player;
-        Level world = player.level();
+        Level world = attacker.level();
 
         currentTick++;
 
         // Check if we're in active frames
         if (currentTick > startup && currentTick <= startup + activeFrames) {
             // Generate hitbox and check for hits
-            performHitCheck(player, world);
+            performHitCheck(attacker, world);
         }
 
         // Check if attack is complete
         if (currentTick >= getTotalDuration()) {
-            onEnd(player, world);
+            onEnd(attacker, world);
             active = false;
 
             // Check for followup input
@@ -302,7 +301,7 @@ public abstract class AbstractSimpleAttack<T extends AbstractSimpleAttack<T, A>,
             }
         }
 
-        onTick(player, world);
+        onTick(attacker, world);
     }
 
     /**
@@ -419,8 +418,6 @@ public abstract class AbstractSimpleAttack<T extends AbstractSimpleAttack<T, A>,
      * Called when a target is hit
      */
     protected void onHit(Player user, LivingEntity target) {}
-
-    public abstract boolean canStart(Player physAttacker);
 
     /**
      * Helper class for effect data

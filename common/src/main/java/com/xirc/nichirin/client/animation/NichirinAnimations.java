@@ -34,9 +34,7 @@ public class NichirinAnimations {
         if (!(player instanceof AbstractClientPlayer clientPlayer)) return;
 
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft == null || minecraft.player == null || !minecraft.player.equals(player)) {
-            return;
-        }
+        if (minecraft == null || minecraft.level == null) return;
 
         try {
             KeyframeAnimation animation = findAnimation(animationName);
@@ -59,6 +57,8 @@ public class NichirinAnimations {
 
         String[] paths = {
                 "attacks/basic/" + animationName,
+                "attacks/demon/basic/" + animationName,
+                "attacks/katana/basic/" + animationName,
                 "attacks/" + animationName,
                 "basic/" + animationName,
                 "combat/" + animationName,

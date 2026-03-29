@@ -1,10 +1,12 @@
 package com.xirc.nichirin.common.system.blocking;
 
+import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.system.StanceManager;
 import com.xirc.nichirin.common.util.InputHandler;
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
+import com.xirc.nichirin.registry.NicirinSoundRegistry;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.chat.Component;
@@ -23,25 +25,21 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Complete katana blocking and parrying system using STANCE instead of stamina
- * NEW: 0.75 second cooldown between blocking attempts, early release punishment
- * ENHANCED: Parried attacks are immediately stopped and put on cooldown
+ * Katana blocking and parrying system.
+ * Uses stance as the blocking resource, not stamina.
  */
 public class KatanaBlock {
 
-    // Player blocking states
     private static final Map<UUID, BlockingState> BLOCKING_STATES = new HashMap<>();
 
-    // Configuration constants - using STANCE not stamina
-    private static final float BLOCK_STANCE_DRAIN = 0.8f; // Per tick while blocking (higher than stamina drain)
-    private static final float PARRY_STANCE_COST = 15.0f; // One-time cost for successful parry
-    private static final int PARRY_WINDOW_TICKS = 10; // 0.5 seconds at 20 TPS
-    private static final int BLOCK_COOLDOWN_TICKS = 15; // 0.75 seconds (15 ticks)
-    private static final int EARLY_RELEASE_STUN_TICKS = 4; // 0.2 seconds (4 ticks)
-    private static final float BACKSTAB_ANGLE = 90.0f; // Degrees for backstab detection
-    private static final int PARRIED_ATTACK_COOLDOWN = 100; // 5 seconds default cooldown for parried attacks
+    private static final float BLOCK_STANCE_DRAIN = 0.8f;
+    private static final float PARRY_STANCE_COST = 15.0f;
+    private static final int PARRY_WINDOW_TICKS = 10;
+    private static final int BLOCK_COOLDOWN_TICKS = 15;
+    private static final int EARLY_RELEASE_STUN_TICKS = 4;
+    private static final float BACKSTAB_ANGLE = 90.0f;
+    private static final int PARRIED_ATTACK_COOLDOWN = 100;
 
-    // Packet ID for cooldown display
     private static final ResourceLocation COOLDOWN_PACKET_ID = new ResourceLocation("nichirin", "cooldown_display");
 
     /**
@@ -69,7 +67,6 @@ public class KatanaBlock {
             stance = BlockingStance.NONE;
             blockTicks = 0;
             parryWindowTicks = 0;
-            // Don't reset cooldown on block end - it persists
         }
 
         void setBlockCooldown(long currentTime) {
@@ -94,17 +91,25 @@ public class KatanaBlock {
             return false;
         }
 
-        // Start blocking with automatic parry window
-        state.stance = BlockingStance.PARRY_READY;
+        // Start blocking - open parry window only when parry system is enabled
         state.blockTicks = 0;
-        state.parryWindowTicks = PARRY_WINDOW_TICKS; // 0.5 second parry window (10 ticks)
-
-        // Send message to player about parry window
-        player.displayClientMessage(
-                Component.literal("Blocking - Perfect parry window active! (0.5s)")
-                        .withStyle(style -> style.withColor(0x55FF55)),
-                true // Overlay message
-        );
+        if (NichirinModConfig.get().combat.enableParrySystem) {
+            state.stance = BlockingStance.PARRY_READY;
+            state.parryWindowTicks = NichirinModConfig.get().combat.parryWindowTicks;
+            player.displayClientMessage(
+                    Component.literal("⚔ Guard Up!")
+                            .withStyle(style -> style.withColor(0xFFAA00).withBold(true)),
+                    true
+            );
+        } else {
+            state.stance = BlockingStance.BLOCKING;
+            state.parryWindowTicks = 0;
+            player.displayClientMessage(
+                    Component.literal("⚔ Blocking")
+                            .withStyle(style -> style.withColor(0xAAAAAA)),
+                    true
+            );
+        }
 
         // Apply blocking effect
         applyBlockingEffect(player);
@@ -175,7 +180,8 @@ public class KatanaBlock {
         }
 
         // Handle parry window - works against ALL damage sources
-        if (state.stance == BlockingStance.PARRY_READY && state.parryWindowTicks > 0) {
+        if (state.stance == BlockingStance.PARRY_READY && state.parryWindowTicks > 0
+                && NichirinModConfig.get().combat.enableParrySystem) {
             return handleSuccessfulParry(player, attacker, state);
         }
 
@@ -208,13 +214,6 @@ public class KatanaBlock {
                 if (state.parryWindowTicks <= 0) {
                     // Parry window expired - transition to regular blocking
                     state.stance = BlockingStance.BLOCKING;
-
-                    // Send message to player that parry window ended
-                    player.displayClientMessage(
-                            Component.literal("Parry window ended - now blocking")
-                                    .withStyle(style -> style.withColor(0xFFAA00)),
-                            true // Overlay message
-                    );
                 }
             }
 
@@ -317,7 +316,7 @@ public class KatanaBlock {
 
         // Send message to player
         player.displayClientMessage(
-                Component.literal("Early release! You are briefly stunned!")
+                Component.literal("✗ Early release!")
                         .withStyle(style -> style.withColor(0xFF5555)),
                 true // Overlay message
         );
@@ -349,23 +348,14 @@ public class KatanaBlock {
 
         // Show successful parry message
         player.displayClientMessage(
-                Component.literal("Successful Parry! No cooldown!")
+                Component.literal("✦ Perfect Parry!")
                         .withStyle(style -> style.withColor(0x00FF00).withBold(true)),
                 true // Overlay message
         );
 
-        // Play parry success sound
-        player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
-                SoundEvents.ANVIL_LAND, SoundSource.PLAYERS, 0.6f, 2.0f);
-
-        // FIXED: Remove stun from the defender, don't stun the attacker
+        // Remove stun from the defender if present
         if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
             player.removeEffect(NichirinEffectRegistry.STUNNED.get());
-            player.displayClientMessage(
-                    Component.literal("Parry removes stun!")
-                            .withStyle(style -> style.withColor(0x55FF55)),
-                    true
-            );
         }
 
         // Interrupt the attacker's moves but don't stun them
@@ -392,20 +382,16 @@ public class KatanaBlock {
 
             // Notify attacker (but don't stun them)
             attacker.displayClientMessage(
-                    Component.literal("Your attack was parried! Move on cooldown!")
-                            .withStyle(style -> style.withColor(0xFF5555)),
+                    Component.literal("✗ Parried!")
+                            .withStyle(style -> style.withColor(0xFF5555).withBold(true)),
                     true
             );
 
-            // Play punishment sound for attacker
+            // Play stun-break sound for the parried attacker
             attacker.level().playSound(null, attacker.getX(), attacker.getY(), attacker.getZ(),
                     SoundEvents.SHIELD_BREAK, SoundSource.PLAYERS, 0.8f, 0.8f);
 
-            System.out.println("DEBUG: Interrupted " + attacker.getName().getString() + "'s attacks due to parry");
-
         } catch (Exception e) {
-            System.err.println("Error interrupting attacker moves: " + e.getMessage());
-            e.printStackTrace();
             sendParriedCooldown(attacker, "Move (Parried)", PARRIED_ATTACK_COOLDOWN);
         }
     }
@@ -420,11 +406,7 @@ public class KatanaBlock {
             buf.writeInt(cooldownTicks);
 
             NetworkManager.sendToPlayer(player, COOLDOWN_PACKET_ID, buf);
-
-            System.out.println("DEBUG: Sent parried cooldown to " + player.getName().getString() +
-                    " - " + moveName + " for " + cooldownTicks + " ticks");
-        } catch (Exception e) {
-            System.err.println("Error sending parried cooldown: " + e.getMessage());
+        } catch (Exception ignored) {
         }
     }
 
@@ -447,17 +429,23 @@ public class KatanaBlock {
 
             // Send message to player
             player.displayClientMessage(
-                    Component.literal("Stance broken! You are stunned!")
-                            .withStyle(style -> style.withColor(0xFF5555)),
+                    Component.literal("✗ Stance broken!")
+                            .withStyle(style -> style.withColor(0xFF5555).withBold(true)),
                     true // Overlay message
             );
 
             return false; // Stance broken, take full damage
         }
 
-        // Play block sound
+        // Play block clang sound
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
-                SoundEvents.SHIELD_BLOCK, SoundSource.PLAYERS, 0.8f, 1.0f);
+                NicirinSoundRegistry.BLOCK_CLANG.get(), SoundSource.PLAYERS, 0.9f, 1.0f);
+
+        player.displayClientMessage(
+                Component.literal("🛡 Blocked!")
+                        .withStyle(style -> style.withColor(0xAAAAAA)),
+                true
+        );
 
         return true; // Damage reduced by blocking effect (80% resistance)
     }

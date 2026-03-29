@@ -4,17 +4,22 @@ import com.xirc.nichirin.client.particle.*;
 import com.xirc.nichirin.client.renderer.block.KatanaHolderBlockRenderer;
 import com.xirc.nichirin.client.renderer.entity.animal.BoarEntityRenderer;
 import com.xirc.nichirin.client.renderer.entity.attack.ThunderBallRenderer;
+import com.xirc.nichirin.client.renderer.entity.npc.TempleDemonRenderer;
 import com.xirc.nichirin.client.renderer.entity.projectile.FlashBombRenderer;
 import com.xirc.nichirin.client.renderer.entity.projectile.SmokeBombRenderer;
 import com.xirc.nichirin.client.util.ItemPropertiesHelper;
+import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.registry.NichirinBlockEntityRegistry;
 import com.xirc.nichirin.registry.NichirinEntityRegistry;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import dev.architectury.registry.client.particle.ParticleProviderRegistry;
+import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.ConfigScreenHandler;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLConstructModEvent;
@@ -30,6 +35,18 @@ public class BreathOfNichirinForgeClient {
 
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
+        // Register the "Config" button that appears in the Forge mod list
+        try {
+            ModLoadingContext.get().registerExtensionPoint(
+                    ConfigScreenHandler.ConfigScreenFactory.class,
+                    () -> new ConfigScreenHandler.ConfigScreenFactory(
+                            (mc, parent) -> AutoConfig.getConfigScreen(NichirinModConfig.class, parent).get()
+                    )
+            );
+        } catch (Exception e) {
+            // cloth-config not present — skip silently
+        }
+
         event.enqueueWork(() -> {
             // Initialize client systems (without particle registration)
             BreathOfNichirinClient.init();
@@ -39,8 +56,9 @@ public class BreathOfNichirinForgeClient {
             EntityRenderers.register(NichirinEntityRegistry.FLASH_BOMB.get(), FlashBombRenderer::new);
             EntityRenderers.register(NichirinEntityRegistry.SMOKE_BOMB.get(), SmokeBombRenderer::new);
             EntityRenderers.register(NichirinEntityRegistry.BOAR.get(), BoarEntityRenderer::new);
+            EntityRenderers.register(NichirinEntityRegistry.TEMPLE_DEMON.get(), TempleDemonRenderer::new);
 
-            BlockEntityRenderers.register(NichirinBlockEntityRegistry.BENTO_BOX_BLOCK_ENTITY.get(), BentoBoxBlockRenderer::new);
+            // BentoBoxBlockRenderer not yet implemented
             BlockEntityRenderers.register(NichirinBlockEntityRegistry.KATANA_HOLDER_BLOCK_ENTITY.get(), KatanaHolderBlockRenderer::new);
         });
     }
@@ -56,6 +74,9 @@ public class BreathOfNichirinForgeClient {
             ParticleProviderRegistry.register(NichirinParticleRegistry.BLUE_FLASH2, BlueFlash2ParticleProvider::new);
             ParticleProviderRegistry.register(NichirinParticleRegistry.BLUE_SHOCKWAVE, BlueShockwaveParticleProvider::new);
             ParticleProviderRegistry.register(NichirinParticleRegistry.BUTTERFLY, ButterflyParticleProvider::new);
+            ParticleProviderRegistry.register(NichirinParticleRegistry.BLOOD_SPLAT, BloodSplatParticleProvider::new);
+            ParticleProviderRegistry.register(NichirinParticleRegistry.BREATHING_AURA_WISP, BreathingAuraWispParticleProvider::new);
+            ParticleProviderRegistry.register(NichirinParticleRegistry.SLASH_IMPACT_SPARK, SlashImpactSparkParticleProvider::new);
         } catch (Exception e) {
             // Log but don't crash
             System.err.println("Failed to register particles: " + e.getMessage());

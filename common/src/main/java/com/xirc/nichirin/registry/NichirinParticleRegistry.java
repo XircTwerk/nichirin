@@ -1,6 +1,9 @@
 package com.xirc.nichirin.registry;
 
 import com.xirc.nichirin.common.particle.*;
+import com.xirc.nichirin.common.particle.BloodSplatParticleType;
+import com.xirc.nichirin.common.particle.BreathingAuraWispParticleType;
+import com.xirc.nichirin.common.particle.SlashImpactSparkParticleType;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.minecraft.core.particles.ParticleType;
@@ -36,6 +39,15 @@ public interface NichirinParticleRegistry {
 
     RegistrySupplier<ButterflyParticleType> BUTTERFLY =
             PARTICLES.register("butterfly", ButterflyParticleType::new);
+
+    RegistrySupplier<BloodSplatParticleType> BLOOD_SPLAT =
+            PARTICLES.register("blood_splat", BloodSplatParticleType::new);
+
+    RegistrySupplier<BreathingAuraWispParticleType> BREATHING_AURA_WISP =
+            PARTICLES.register("breathing_aura_wisp", BreathingAuraWispParticleType::new);
+
+    RegistrySupplier<SlashImpactSparkParticleType> SLASH_IMPACT_SPARK =
+            PARTICLES.register("slash_impact_spark", SlashImpactSparkParticleType::new);
 
     static void init() {
         PARTICLES.register();
