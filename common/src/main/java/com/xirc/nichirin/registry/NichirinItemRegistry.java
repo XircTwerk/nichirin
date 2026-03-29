@@ -99,7 +99,7 @@ public interface NichirinItemRegistry {
                             .nutrition(2)                     // restores 1 hunger point
                             .saturationMod(1.0F)
                             .alwaysEat()                      // allow eating when full
-                            .effect(new MobEffectInstance(MobEffects.HEAL, 40, 0), 1.0F)
+                            .effect(new MobEffectInstance(MobEffects.HEAL, 1, 0), 1.0F)
                             .build())));
 
     RegistrySupplier<Item> BLUE_MOCHI = register("blue_mochi",
@@ -181,7 +181,7 @@ public interface NichirinItemRegistry {
                             .nutrition(2)                     // restores 1 hunger point
                             .saturationMod(1.0F)
                             .alwaysEat()                      // allow eating when full
-                            .effect(new MobEffectInstance(MobEffects.REGENERATION, 40, 0), 1.0F)
+                            .effect(new MobEffectInstance(MobEffects.REGENERATION, 60, 2), 1.0F)
                             .build())));
 
     RegistrySupplier<Item> PURPLE_MOCHI = register("purple_mochi",
