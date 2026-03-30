@@ -58,11 +58,11 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                 .withAnimation("nichirin:quick_sting", 6)
                 .withTiming(5, 3, 20)
                 .withDamage(2.0f)
-                .withRange(4.0f)
+                .withRange(2.5f)
                 .withKnockback(0f)
                 .withBreathCost(10.0f)
                 .withHitStun(15)
-                .withHitboxSize(2.0f)
+                .withHitboxSize(0.5f)
                 .withDescription("Fast low-damage thrust that poisons on hit.")
                 .build();
         this.captureRightClickConfig(tempConfig, false);
@@ -172,7 +172,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
     }
 
     private boolean executeQuickSting(LivingEntity entity) {
-        triggerAnimation(entity, "quick_sting");
+        // Remove manual breath consumption - let attack system handle it
         QuickStingAttack attack = new QuickStingAttack();
 
         // Use the same config creation method and sync to client
@@ -195,7 +195,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
     }
 
     private boolean executeBeeSting(LivingEntity entity) {
-        triggerAnimation(entity, "bee_sting");
+        // Remove manual breath consumption - let attack system handle it
         BeeStingAttack attack = new BeeStingAttack();
 
         // Use the same config creation method and sync to client
@@ -256,8 +256,10 @@ public class InsectBreathingMoveset extends AbstractMoveset {
             }
         }
 
-        // Don't execute or consume cooldown if stunned
-        if (entity.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.STUNNED.get())) return;
+        // Removed range checks - all moves should execute regardless of targets
+
+        // Mark that we're executing a move
+        executingMove.put(entity.getUUID(), true);
 
         // Store current moveset instance for access by actions
         CURRENT_MOVESET.set(this);
@@ -270,8 +272,12 @@ public class InsectBreathingMoveset extends AbstractMoveset {
             CURRENT_MOVESET.remove();
         }
 
-        // Always set cooldown after execution attempt
-        if (config != null) {
+        // Check if move actually executed by seeing if breath was consumed
+        boolean moveExecuted = !executingMove.getOrDefault(entity.getUUID(), false);
+        executingMove.remove(entity.getUUID());
+
+        if (moveExecuted && config != null) {
+            // Set cooldown after successful execution
             setMoveCooldown(entity, moveIndex);
 
             // Send cooldown display packet if on server and has cooldown
