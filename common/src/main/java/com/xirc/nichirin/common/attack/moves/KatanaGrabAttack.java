@@ -59,8 +59,8 @@ public class KatanaGrabAttack {
 
         if (player.level() instanceof ServerLevel serverLevel) {
             Vec3 mid = target.position().add(0, target.getBbHeight() * 0.5, 0);
-            serverLevel.sendParticles(ParticleTypes.SWEEP_ATTACK,
-                    mid.x, mid.y, mid.z, 6, 0.2, 0.2, 0.2, 0.0);
+            serverLevel.sendParticles(ParticleTypes.CRIT,
+                    mid.x, mid.y, mid.z, 10, 0.3, 0.3, 0.3, 0.1);
         }
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.PLAYERS, 1.0f, 0.55f);

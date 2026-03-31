@@ -74,7 +74,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 // Second Form: Rice Spirit - 5 quick slashes (INDEX 0 in wheel)
                 .withMove(new MoveBuilder("rice_spirit", "Rice Spirit")
                         .withAnimation("nichirin:rice_spirit", 8)
-                        .withTiming(120, 12, 120) // 5 second cooldown, quick windup, duration
+                        .withTiming(120, 8, 120) // 5 second cooldown, windup, duration
                         .withDamage(3.0f)
                         .withRange(10.0f) // Medium range
                         .withKnockback(0.2f)
@@ -116,7 +116,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 // Fourth Form: Distant Thunder - Lightning over time (INDEX 2 in wheel)
                 .withMove(new MoveBuilder("distant_thunder", "Distant Thunder")
                         .withAnimation("nichirin:distant_thunder", 7)
-                        .withTiming(320, 60, 120) // 10 second cooldown, long windup, 6 second duration
+                        .withTiming(320, 7, 120) // 10 second cooldown, windup, 6 second duration
                         .withDamage(8.0f) // 3 strikes = 27 damage over time (was 12.0f = 36 total)
                         .withRange(15.0f) // Large AOE radius
                         .withKnockback(0.3f)
@@ -157,7 +157,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 // Sixth Form: Rumble and Flash - Long range precision (INDEX 4 in wheel)
                 .withMove(new MoveBuilder("rumble_flash", "Rumble and Flash")
                         .withAnimation("nichirin:rumble_flash", 8)
-                        .withTiming(180, 15, 25) // 9 second cooldown, aim time, duration
+                        .withTiming(180, 9, 25) // 9 second cooldown, windup, duration
                         .withDamage(16.5f) // High damage for long range precision (was 22.0f)
                         .withRange(20.0f) // Very long range
                         .withKnockback(0.6f)
@@ -177,7 +177,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 // Seventh Form: Honoikazuchi no Kami - Ultimate finisher (INDEX 5 in wheel)
                 .withMove(new MoveBuilder("honoikazuchi_no_kami", "Honoikazuchi no Kami")
                         .withAnimation("nichirin:honoikazuchi_no_kami", 15)
-                        .withTiming(600, 60, 40) // 30 second cooldown, long windup, execution
+                        .withTiming(600, 16, 40) // 30 second cooldown, windup, execution
                         .withDamage(80.0f) // Very high damage ultimate
                         .withTeleportDistance(20.0f) // Long dash
                         .withKnockback(2.0f) // High knockback
@@ -208,7 +208,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
             ThunderClapFlashAttack.setCrouchDash(player, isCrouching);
         }
 
-        // Remove manual breath consumption - let attack system handle it
+        triggerAnimation(entity, "thunderclap_flash");
         ThunderClapFlashAttack attack = new ThunderClapFlashAttack();
 
         // Use the same config creation method and sync to client

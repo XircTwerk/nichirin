@@ -277,7 +277,7 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
                 state.checkCooldownUntil = now + checkCd;
                 MoveExecutor.sendCooldownDisplay(player, "Check", checkCd);
                 if (player instanceof ServerPlayer sp)
-                    NichirinPacketRegistry.broadcastPlayerAnimation(sp, new PlayerAnimationPacket(sp.getId(), "sword.slash"));
+                    NichirinPacketRegistry.broadcastPlayerAnimation(sp, new PlayerAnimationPacket(sp.getId(), "sword.check"));
             }
             case 1 -> { // Overhead
                 if (now < state.overheadCooldownUntil) return;
@@ -299,7 +299,7 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
                 state.thrustCooldownUntil = now + thrustCd;
                 MoveExecutor.sendCooldownDisplay(player, "Thrust", thrustCd);
                 if (player instanceof ServerPlayer sp)
-                    NichirinPacketRegistry.broadcastPlayerAnimation(sp, new PlayerAnimationPacket(sp.getId(), "sword.doubleslash"));
+                    NichirinPacketRegistry.broadcastPlayerAnimation(sp, new PlayerAnimationPacket(sp.getId(), "sword.thrust"));
             }
         }
     }

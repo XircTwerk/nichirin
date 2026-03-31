@@ -15,7 +15,7 @@
 							"easing": "easeInOutSine"
 						},
 						"0.2": {
-							"post": [10, 15, 0],
+							"post": [10, 0, 0],
 							"lerp_mode": "catmullrom",
 							"easing": "easeInOutSine"
 						},
@@ -37,7 +37,7 @@
 							"easing": "easeInOutSine"
 						},
 						"0.2": {
-							"post": [-1, -2, 2],
+							"post": [0, -2, 0],
 							"lerp_mode": "catmullrom",
 							"easing": "easeInOutSine"
 						},

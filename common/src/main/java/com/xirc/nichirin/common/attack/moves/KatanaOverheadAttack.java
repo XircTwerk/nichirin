@@ -36,7 +36,16 @@ public class KatanaOverheadAttack extends AbstractKatanaAttack {
             player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                     startSound, SoundSource.PLAYERS, 1.0f, 0.7f);
         }
-
+        if (player.level() instanceof ServerLevel sl) {
+            Vec3 front = player.position().add(player.getLookAngle().scale(range * 0.6));
+            // Vertical arc from high to low for the downward slash
+            for (int i = 0; i <= 4; i++) {
+                double t = i / 4.0;
+                double y = player.getY() + player.getBbHeight() * (1.2 - t * 1.4);
+                sl.sendParticles(NichirinParticleRegistry.SLASH_IMPACT_SPARK.get(),
+                        front.x, y, front.z, 1, 0.15, 0.05, 0.15, 0.0);
+            }
+        }
     }
 
     /**

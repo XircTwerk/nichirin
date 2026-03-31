@@ -5,8 +5,10 @@ import com.xirc.nichirin.common.system.StanceManager;
 import com.xirc.nichirin.common.util.InputHandler;
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
+import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NicirinSoundRegistry;
+import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.chat.Component;
@@ -120,6 +122,12 @@ public class KatanaBlock {
         // Play blocking sound
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.SHIELD_BLOCK, SoundSource.PLAYERS, 0.7f, 1.2f);
+
+        // Trigger block animation
+        if (player instanceof ServerPlayer serverPlayer) {
+            NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer,
+                    new PlayerAnimationPacket(serverPlayer.getId(), "sword.block"));
+        }
 
         return true;
     }
@@ -324,6 +332,12 @@ public class KatanaBlock {
         // Play failure sound
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.SHIELD_BREAK, SoundSource.PLAYERS, 0.5f, 1.5f);
+
+        // Trigger early release / flinch animation
+        if (player instanceof ServerPlayer serverPlayer) {
+            NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer,
+                    new PlayerAnimationPacket(serverPlayer.getId(), "sword.early_release"));
+        }
     }
 
     private static boolean isBackstab(Player defender, Player attacker) {
@@ -356,6 +370,12 @@ public class KatanaBlock {
         // Remove stun from the defender if present
         if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
             player.removeEffect(NichirinEffectRegistry.STUNNED.get());
+        }
+
+        // Trigger parry animation on defender
+        if (player instanceof ServerPlayer serverPlayer) {
+            NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer,
+                    new PlayerAnimationPacket(serverPlayer.getId(), "sword.parry"));
         }
 
         // Interrupt the attacker's moves but don't stun them

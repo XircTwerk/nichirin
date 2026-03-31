@@ -10,6 +10,7 @@ import com.xirc.nichirin.common.item.food.RiceItem;
 import com.xirc.nichirin.common.item.throwable.FlashBombItem;
 import com.xirc.nichirin.common.item.throwable.SmokeBombItem;
 import com.xirc.nichirin.common.item.tool.BentoBoxItem;
+import com.xirc.nichirin.common.item.LazySpawnEggItem;
 import com.xirc.nichirin.common.item.tool.DrinkingGourdItem;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
@@ -34,7 +35,6 @@ public interface NichirinItemRegistry {
     DeferredRegister<Item> ITEM_REGISTRY = DeferredRegister.create(BreathOfNichirin.MOD_ID, Registries.ITEM);
     Map<RegistrySupplier<? extends Item>, ResourceLocation> ITEMS = new LinkedHashMap<>();
 
-    // Your existing items - unchanged
     RegistrySupplier<Item> KATANA = register("katana",
             () -> new SimpleKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
 
@@ -278,7 +278,7 @@ public interface NichirinItemRegistry {
 
     // Spawn egg for Temple Demon (dark body, blood-red spots)
     RegistrySupplier<Item> TEMPLE_DEMON_SPAWN_EGG = register("temple_demon_spawn_egg",
-            () -> new SpawnEggItem(NichirinEntityRegistry.TEMPLE_DEMON.get(), 0x1a1a2e, 0x8b0000, settings()));
+            () -> new LazySpawnEggItem(NichirinEntityRegistry.TEMPLE_DEMON, 0x1a1a2e, 0x8b0000, settings()));
 
 
     static <T extends Item> RegistrySupplier<T> register(String id, Supplier<? extends T> supplier) {

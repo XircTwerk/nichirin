@@ -114,7 +114,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                 // Third Form: Blazing Universe - Heavy downward strike (INDEX 2 in wheel)
                 .withMove(new MoveBuilder("blazing_universe", "Blazing Universe")
                         .withAnimation("nichirin:blazing_universe", 12)
-                        .withTiming(160, 40, 50) // 8 second cooldown, 2s windup, explosive finish
+                        .withTiming(160, 13, 50) // 8 second cooldown, windup, explosive finish
                         .withDamage(12.0f) // Very high damage
                         .withRange(4.0f) // Large AOE
                         .withKnockback(0.6f)
@@ -135,7 +135,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                 // Fourth Form: Blooming Flame Undulation - 360° defense (INDEX 3 in wheel)
                 .withMove(new MoveBuilder("blooming_flame_undulation", "Blooming Flame")
                         .withAnimation("nichirin:blooming_flame_undulation", 10)
-                        .withTiming(140, 15, 35) // 7 second cooldown
+                        .withTiming(140, 11, 35) // 7 second cooldown
                         .withDamage(12.0f) // Multiple hits around user
                         .withRange(3.5f) // 3.5 block radius
                         .withKnockback(0.3f)
@@ -178,7 +178,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                 // Ninth Form: Rengoku - Ultimate dragon technique (INDEX 5 in wheel)
                 .withMove(new MoveBuilder("rengoku", "Rengoku")
                         .withAnimation("nichirin:rengoku", 20)
-                        .withTiming(600, 80, 60) // 30 second cooldown, 4s windup, dragon dash
+                        .withTiming(600, 18, 60) // 30 second cooldown, windup, dragon dash
                         .withDamage(50.0f) // Massive damage
                         .withDashSpeed(25.0f) // Very fast dash
                         .withRange(20.0f) // Long range dash
@@ -215,7 +215,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
     }
 
     private boolean executePommelSlash(LivingEntity entity) {
-        // Remove manual breath consumption - let attack system handle it
+        triggerAnimation(entity, "pommel_slash");
         PommelSlashAttack attack = new PommelSlashAttack();
 
         // Use the same config creation method
@@ -239,7 +239,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
     }
 
     private boolean executeUnknowingFire(LivingEntity entity) {
-        // Remove manual breath consumption - let attack system handle it
+        triggerAnimation(entity, "unknowing_fire");
         UnknowingFireAttack attack = new UnknowingFireAttack();
 
         // Use the same config creation method

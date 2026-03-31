@@ -199,18 +199,24 @@ public class DefaultDemonMoveset extends AbstractMoveset {
         long currentTick = entity.level().getGameTime();
         SlashComboState comboState = entitySlashStates.computeIfAbsent(entityUUID, k -> new SlashComboState());
 
-        if (comboState.currentStage == 1 && comboState.isReadyForSlash2(currentTick)) {
-            // Player clicked again within the followup window — fire slash2
-            return executeSlashStage(entity, 1, comboState, currentTick);
-        } else {
-            // Fresh start, or window expired — start slash1
-            comboState.reset();
-            if (!canUseMove(entity, -1)) {
-                if (entity instanceof Player player) showCooldownMessage(player, -1, "Slash");
+        if (comboState.currentStage == 1) {
+            if (comboState.isReadyForSlash2(currentTick)) {
+                // Player clicked again within the followup window — fire slash2
+                return executeSlashStage(entity, 1, comboState, currentTick);
+            } else if (currentTick - comboState.slash1GameTick <= SlashComboState.MAX_FOLLOWUP_TICKS) {
+                // Inside the window but too early — absorb the click, don't restart slash1
                 return true;
             }
-            return executeSlashStage(entity, 0, comboState, currentTick);
+            // Window expired — fall through to fresh slash1
+            comboState.reset();
         }
+
+        // Fresh start — start slash1
+        if (!canUseMove(entity, -1)) {
+            if (entity instanceof Player player) showCooldownMessage(player, -1, "Slash");
+            return true;
+        }
+        return executeSlashStage(entity, 0, comboState, currentTick);
     }
 
     private boolean executeSlashStage(LivingEntity entity, int stage, SlashComboState comboState, long currentTick) {
@@ -263,8 +269,8 @@ public class DefaultDemonMoveset extends AbstractMoveset {
     private boolean handleCrouchRightClick(LivingEntity entity) {
         UUID entityUUID = entity.getUUID();
 
-        // Stomp if: did a high jump OR simply in the air
-        if (canStompAfterHighJump.getOrDefault(entityUUID, false) || !entity.onGround()) {
+        // Stomp if: did a high jump AND currently in the air
+        if (canStompAfterHighJump.getOrDefault(entityUUID, false) && !entity.onGround()) {
             if (!canUseMove(entity, -4)) return true; // stomp on cooldown
             return executeStompAttack(entity);
         }

@@ -17,12 +17,10 @@ public class NichirinModelProvider extends FabricModelProvider {
 
     @Override
     public void generateBlockStateModels(BlockModelGenerators generator) {
-        // Your existing blocks - unchanged
         generator.createTrivialCube(NichirinBlockRegistry.SCARLET_ORE.get());
         generator.createTrivialCube(NichirinBlockRegistry.SCARLET_CRIMSON_IRON_SAND.get());
         generator.createTrivialCube(NichirinBlockRegistry.KATANA_HOLDER_BLOCK.get());
 
-        // NEW: Wysteria Wood Set - using vanilla wood provider system
         createWysteriaWoodSet(generator);
         createMiscellaneousBlocks(generator);
     }

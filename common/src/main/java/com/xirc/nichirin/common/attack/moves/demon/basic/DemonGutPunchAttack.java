@@ -2,6 +2,8 @@ package com.xirc.nichirin.common.attack.moves.demon.basic;
 
 import com.xirc.nichirin.common.attack.component.AbstractDemonAttack;
 import com.xirc.nichirin.common.attack.component.IDemonAttacker;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -54,6 +56,9 @@ public class DemonGutPunchAttack extends AbstractDemonAttack<DemonGutPunchAttack
     }
 
     private void createImpactEffects(Vec3 impactPos) {
+        if (!(world instanceof ServerLevel sl)) return;
+        sl.sendParticles(ParticleTypes.CRIT,
+                impactPos.x, impactPos.y, impactPos.z, 8, 0.3, 0.3, 0.3, 0.1);
     }
 
     @Override

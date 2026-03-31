@@ -73,6 +73,8 @@ public class DeadCalmShaderEffect extends NichirinPostProcessor {
     }
 
     public void trigger(float range) {
+        // TODO: Dead Calm shader temporarily disabled
+        if (true) return;
         System.out.println("DEBUG: Dead Calm shader trigger() called with range=" + range);
         effectTicks = 0;
         intensity = 0.0f;

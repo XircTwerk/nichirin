@@ -3,6 +3,7 @@ package com.xirc.nichirin.common.attack.moves.demon.basic;
 import com.xirc.nichirin.common.attack.component.AbstractDemonAttack;
 import com.xirc.nichirin.common.attack.component.IDemonAttacker;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -39,14 +40,6 @@ public class DemonSlashAttack extends AbstractDemonAttack<DemonSlashAttack, IDem
         slashExecuted = false;
         slashTimer = 0;
 
-        // Demon claw sound based on stage
-        if (slashStage == 1) {
-            world.playSound(null, user.getX(), user.getY(), user.getZ(),
-                    SoundEvents.WOLF_GROWL, SoundSource.PLAYERS, 0.8f, 1.2f);
-        } else {
-            world.playSound(null, user.getX(), user.getY(), user.getZ(),
-                    SoundEvents.RAVAGER_ATTACK, SoundSource.PLAYERS, 1.0f, 1.4f);
-        }
     }
 
     @Override
@@ -91,6 +84,13 @@ public class DemonSlashAttack extends AbstractDemonAttack<DemonSlashAttack, IDem
             // Hit sound
             world.playSound(null, target.getX(), target.getY(), target.getZ(),
                     SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.PLAYERS, 0.8f, 1.3f);
+
+            // Vanilla hit particles
+            if (world instanceof ServerLevel sl) {
+                Vec3 tp = target.position().add(0, target.getBbHeight() * 0.5, 0);
+                sl.sendParticles(ParticleTypes.CRIT,
+                        tp.x, tp.y, tp.z, 6, 0.2, 0.2, 0.2, 0.1);
+            }
         }
 
         // Main slash sound

@@ -3,7 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/Models/Models.iml" filepath="$PROJECT_DIR$/Models/Models.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/nichirin.iml" filepath="$PROJECT_DIR$/.idea/modules/nichirin.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/common/nichirin.common.iml" filepath="$PROJECT_DIR$/.idea/modules/common/nichirin.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/common/nichirin.common.main.iml" filepath="$PROJECT_DIR$/.idea/modules/common/nichirin.common.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/common/nichirin.common.test.iml" filepath="$PROJECT_DIR$/.idea/modules/common/nichirin.common.test.iml" />

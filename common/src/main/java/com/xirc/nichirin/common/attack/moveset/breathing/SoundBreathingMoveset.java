@@ -92,7 +92,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                 // First Form: Roar - AOE slam (INDEX 0 in wheel)
                 .withMove(new MoveBuilder("roar", "Roar")
                         .withAnimation("nichirin:roar", 10)
-                        .withTiming(160, 50, 20) // 5 second cooldown, moderate windup
+                        .withTiming(160, 8, 20) // 5 second cooldown, windup
                         .withDamage(23.0f) // Good AOE damage
                         .withRange(13.5f) // Tripled from 4.5f (4.5 * 3 = 13.5)
                         .withKnockback(0.3f) // Strong knockback
@@ -134,7 +134,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                 // Fifth Form: String Performance - Multi-segment dash (INDEX 2 in wheel)
                 .withMove(new MoveBuilder("string_performance", "String Performance")
                         .withAnimation("nichirin:string_performance", 15)
-                        .withTiming(160, 20, 80) // 8 second cooldown, 4s duration
+                        .withTiming(160, 14, 80) // 8 second cooldown, windup, 4s duration
                         .withDamage(22.0f) // High damage for finale
                         .withDashSpeed(16.0f) // 16 block total dash
                         .withRange(16.0f) // Dash distance
@@ -171,7 +171,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
     }
 
     private boolean executeTempoBreaker(LivingEntity entity) {
-        // Remove manual breath consumption - let attack system handle it
+        triggerAnimation(entity, "tempo_breaker");
         TempoBreakerAttack attack = new TempoBreakerAttack();
 
         // Use the same config creation method and sync to client
@@ -194,7 +194,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
     }
 
     private boolean executeRhythmicStep(LivingEntity entity) {
-        // Remove manual breath consumption - let attack system handle it
+        triggerAnimation(entity, "rhythmic_step");
         RhythmicStepAttack attack = new RhythmicStepAttack();
 
         // Use the same config creation method and sync to client

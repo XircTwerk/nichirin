@@ -17,6 +17,7 @@
 build/
 out/
 classes/
+.idea/
 
 # eclipse
 

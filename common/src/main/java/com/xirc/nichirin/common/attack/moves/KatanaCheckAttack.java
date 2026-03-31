@@ -1,7 +1,9 @@
 package com.xirc.nichirin.common.attack.moves;
 
 import com.xirc.nichirin.registry.NicirinSoundRegistry;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
@@ -33,6 +35,14 @@ public class KatanaCheckAttack extends AbstractKatanaAttack {
             player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                     startSound, SoundSource.PLAYERS, 1.0f, 1.2f);
         }
+        if (player.level() instanceof ServerLevel sl) {
+            Vec3 front = player.position().add(player.getLookAngle().scale(1.2)).add(0, player.getBbHeight() * 0.5, 0);
+            Vec3 right = new Vec3(-player.getLookAngle().z, 0, player.getLookAngle().x).normalize();
+            for (double offset : new double[]{ -0.5, 0.0, 0.5 }) {
+                Vec3 pos = front.add(right.scale(offset));
+                sl.sendParticles(ParticleTypes.SWEEP_ATTACK, pos.x, pos.y, pos.z, 1, 0.05, 0.05, 0.05, 0.0);
+            }
+        }
     }
 
     @Override
@@ -40,6 +50,12 @@ public class KatanaCheckAttack extends AbstractKatanaAttack {
         if (hitSound != null) {
             world.playSound(null, target.getX(), target.getY(), target.getZ(),
                     hitSound, SoundSource.PLAYERS, 1.0f, 1.0f);
+        }
+
+        if (world instanceof ServerLevel sl) {
+            Vec3 tp = target.position().add(0, target.getBbHeight() * 0.5, 0);
+            sl.sendParticles(ParticleTypes.ENCHANTED_HIT,
+                    tp.x, tp.y, tp.z, 8, 0.2, 0.2, 0.2, 0.1);
         }
 
         if (target instanceof ServerPlayer serverPlayer) {

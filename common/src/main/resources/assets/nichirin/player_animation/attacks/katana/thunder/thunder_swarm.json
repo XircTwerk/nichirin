@@ -8,31 +8,51 @@
 					"rotation": {
 						"0.0": {
 							"post": {
-								"vector": [0, -5, 0]
+								"vector": [
+									0,
+									0,
+									0
+								]
 							},
 							"lerp_mode": "catmullrom"
 						},
 						"0.2": {
 							"post": {
-								"vector": [0, 5, 0]
+								"vector": [
+									0,
+									0,
+									0
+								]
 							},
 							"lerp_mode": "catmullrom"
 						},
 						"0.4": {
 							"post": {
-								"vector": [0, -5, 0]
+								"vector": [
+									0,
+									0,
+									0
+								]
 							},
 							"lerp_mode": "catmullrom"
 						},
 						"0.55": {
 							"post": {
-								"vector": [0, 0, 0]
+								"vector": [
+									0,
+									0,
+									0
+								]
 							},
 							"lerp_mode": "catmullrom"
 						},
 						"0.65": {
 							"post": {
-								"vector": [0, 0, 0]
+								"vector": [
+									0,
+									0,
+									0
+								]
 							},
 							"lerp_mode": "catmullrom"
 						}
@@ -42,37 +62,61 @@
 					"rotation": {
 						"0.0": {
 							"post": {
-								"vector": [-5, -8, 0]
+								"vector": [
+									-5,
+									-8,
+									0
+								]
 							},
 							"lerp_mode": "catmullrom"
 						},
 						"0.1625": {
 							"post": {
-								"vector": [-5, 8, 0]
+								"vector": [
+									-5,
+									8,
+									0
+								]
 							},
 							"lerp_mode": "catmullrom"
 						},
 						"0.325": {
 							"post": {
-								"vector": [-5, -8, 0]
+								"vector": [
+									-5,
+									-8,
+									0
+								]
 							},
 							"lerp_mode": "catmullrom"
 						},
 						"0.4875": {
 							"post": {
-								"vector": [-5, 8, 0]
+								"vector": [
+									-5,
+									8,
+									0
+								]
 							},
 							"lerp_mode": "catmullrom"
 						},
 						"0.55": {
 							"post": {
-								"vector": [-3, 0, 0]
+								"vector": [
+									-3,
+									0,
+									0
+								]
 							},
 							"lerp_mode": "catmullrom"
 						},
 						"0.65": {
 							"post": {
-								"vector": [0, 0, 0]
+								"vector": [
+									0,
+									0,
+									0
+								]
 							},
 							"lerp_mode": "catmullrom"
 						}
@@ -82,55 +126,91 @@
 					"rotation": {
 						"0.0": {
 							"post": {
-								"vector": [-90, 0, -20]
+								"vector": [
+									-90,
+									0,
+									-20
+								]
 							},
 							"lerp_mode": "catmullrom"
 						},
 						"0.083": {
 							"post": {
-								"vector": [-30, 0, -25]
+								"vector": [
+									-30,
+									0,
+									-25
+								]
 							},
 							"lerp_mode": "catmullrom"
 						},
 						"0.167": {
 							"post": {
-								"vector": [-95, 0, -18]
+								"vector": [
+									-95,
+									0,
+									-18
+								]
 							},
 							"lerp_mode": "catmullrom"
 						},
 						"0.25": {
 							"post": {
-								"vector": [-25, 0, -22]
+								"vector": [
+									-25,
+									0,
+									-22
+								]
 							},
 							"lerp_mode": "catmullrom"
 						},
 						"0.333": {
 							"post": {
-								"vector": [-90, 0, -20]
+								"vector": [
+									-90,
+									0,
+									-20
+								]
 							},
 							"lerp_mode": "catmullrom"
 						},
 						"0.417": {
 							"post": {
-								"vector": [-30, 0, -25]
+								"vector": [
+									-30,
+									0,
+									-25
+								]
 							},
 							"lerp_mode": "catmullrom"
 						},
 						"0.5": {
 							"post": {
-								"vector": [-85, 0, -18]
+								"vector": [
+									-85,
+									0,
+									-18
+								]
 							},
 							"lerp_mode": "catmullrom"
 						},
 						"0.55": {
 							"post": {
-								"vector": [-20, 0, -10]
+								"vector": [
+									-20,
+									0,
+									-10
+								]
 							},
 							"lerp_mode": "catmullrom"
 						},
 						"0.65": {
 							"post": {
-								"vector": [0, 0, 0]
+								"vector": [
+									0,
+									0,
+									0
+								]
 							},
 							"lerp_mode": "catmullrom"
 						}
@@ -140,55 +220,91 @@
 					"rotation": {
 						"0.0": {
 							"post": {
-								"vector": [-50, 0, 20]
+								"vector": [
+									-50,
+									0,
+									20
+								]
 							},
 							"lerp_mode": "catmullrom"
 						},
 						"0.083": {
 							"post": {
-								"vector": [-80, 0, 22]
+								"vector": [
+									-80,
+									0,
+									22
+								]
 							},
 							"lerp_mode": "catmullrom"
 						},
 						"0.167": {
 							"post": {
-								"vector": [-45, 0, 18]
+								"vector": [
+									-45,
+									0,
+									18
+								]
 							},
 							"lerp_mode": "catmullrom"
 						},
 						"0.25": {
 							"post": {
-								"vector": [-78, 0, 22]
+								"vector": [
+									-78,
+									0,
+									22
+								]
 							},
 							"lerp_mode": "catmullrom"
 						},
 						"0.333": {
 							"post": {
-								"vector": [-48, 0, 20]
+								"vector": [
+									-48,
+									0,
+									20
+								]
 							},
 							"lerp_mode": "catmullrom"
 						},
 						"0.417": {
 							"post": {
-								"vector": [-80, 0, 22]
+								"vector": [
+									-80,
+									0,
+									22
+								]
 							},
 							"lerp_mode": "catmullrom"
 						},
 						"0.5": {
 							"post": {
-								"vector": [-50, 0, 18]
+								"vector": [
+									-50,
+									0,
+									18
+								]
 							},
 							"lerp_mode": "catmullrom"
 						},
 						"0.55": {
 							"post": {
-								"vector": [-20, 0, 12]
+								"vector": [
+									-20,
+									0,
+									12
+								]
 							},
 							"lerp_mode": "catmullrom"
 						},
 						"0.65": {
 							"post": {
-								"vector": [0, 0, 0]
+								"vector": [
+									0,
+									0,
+									0
+								]
 							},
 							"lerp_mode": "catmullrom"
 						}
@@ -198,13 +314,21 @@
 					"rotation": {
 						"0.0": {
 							"post": {
-								"vector": [10, 0, 0]
+								"vector": [
+									10,
+									0,
+									0
+								]
 							},
 							"lerp_mode": "catmullrom"
 						},
 						"0.65": {
 							"post": {
-								"vector": [0, 0, 0]
+								"vector": [
+									0,
+									0,
+									0
+								]
 							},
 							"lerp_mode": "catmullrom"
 						}
@@ -214,13 +338,21 @@
 					"rotation": {
 						"0.0": {
 							"post": {
-								"vector": [10, 0, 0]
+								"vector": [
+									10,
+									0,
+									0
+								]
 							},
 							"lerp_mode": "catmullrom"
 						},
 						"0.65": {
 							"post": {
-								"vector": [0, 0, 0]
+								"vector": [
+									0,
+									0,
+									0
+								]
 							},
 							"lerp_mode": "catmullrom"
 						}

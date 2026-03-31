@@ -3,6 +3,8 @@ package com.xirc.nichirin.common.attack.moves.demon.basic;
 import com.xirc.nichirin.common.attack.component.AbstractDemonAttack;
 import com.xirc.nichirin.common.attack.component.IDemonAttacker;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -104,6 +106,34 @@ public class DemonHighJumpAttack extends AbstractDemonAttack<DemonHighJumpAttack
     }
 
     private void createLaunchEffects() {
+        if (!(world instanceof ServerLevel sl) || user == null) return;
+
+        Vec3 ground = user.position();
+
+        // Radial ring of EXPLOSION + POOF on the ground (12 directions, every 30°)
+        for (int i = 0; i < 12; i++) {
+            double angle = Math.toRadians(i * 30.0);
+            double rx = Math.cos(angle) * 2.0;
+            double rz = Math.sin(angle) * 2.0;
+            sl.sendParticles(ParticleTypes.EXPLOSION,
+                    ground.x + rx, ground.y, ground.z + rz, 2, 0.1, 0.05, 0.1, 0.02);
+            sl.sendParticles(ParticleTypes.POOF,
+                    ground.x + rx, ground.y, ground.z + rz, 3, 0.15, 0.05, 0.15, 0.03);
+        }
+
+        // Large central explosion
+        sl.sendParticles(ParticleTypes.EXPLOSION_EMITTER,
+                ground.x, ground.y, ground.z, 1, 0, 0, 0, 0);
+
+        // Upward cloud stream
+        for (int i = 0; i < 20; i++) {
+            double height = i * 0.3;
+            sl.sendParticles(ParticleTypes.CLOUD,
+                    ground.x + (world.random.nextDouble() - 0.5) * 0.6,
+                    ground.y + height,
+                    ground.z + (world.random.nextDouble() - 0.5) * 0.6,
+                    1, 0.1, 0.05, 0.1, 0.02 + height * 0.01);
+        }
     }
 
     private void createAscensionTrail() {
@@ -112,6 +142,14 @@ public class DemonHighJumpAttack extends AbstractDemonAttack<DemonHighJumpAttack
 
     @Override
     protected void onStop() {
+        if (world instanceof ServerLevel sl && user != null) {
+            Vec3 landing = user.position();
+            sl.sendParticles(ParticleTypes.CLOUD,
+                    landing.x, landing.y + user.getBbHeight() * 0.5, landing.z,
+                    8, 0.4, 0.2, 0.4, 0.1);
+            sl.sendParticles(ParticleTypes.EXPLOSION,
+                    landing.x, landing.y, landing.z, 3, 0.3, 0.1, 0.3, 0.05);
+        }
         jumpExecuted = false;
         startPosition = null;
     }

@@ -2,6 +2,8 @@ package com.xirc.nichirin.common.attack.moves.demon.basic;
 
 import com.xirc.nichirin.common.attack.component.AbstractDemonAttack;
 import com.xirc.nichirin.common.attack.component.IDemonAttacker;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -114,13 +116,50 @@ public class DemonDashStrikeAttack extends AbstractDemonAttack<DemonDashStrikeAt
     }
 
     private void createDashTrail() {
+        if (!(world instanceof ServerLevel sl) || user == null) return;
+        Vec3 pos = user.position().add(0, user.getBbHeight() * 0.5, 0);
+        sl.sendParticles(ParticleTypes.CLOUD,
+                pos.x, pos.y, pos.z, 3, 0.2, 0.2, 0.2, 0.05);
+        sl.sendParticles(ParticleTypes.LARGE_SMOKE,
+                pos.x, pos.y, pos.z, 2, 0.15, 0.15, 0.15, 0.02);
     }
 
     private void createPunchImpact(Vec3 punchPos) {
+        if (!(world instanceof ServerLevel sl) || dashDirection == null) return;
+
+        // Central explosion
+        sl.sendParticles(ParticleTypes.EXPLOSION,
+                punchPos.x, punchPos.y, punchPos.z, 5, 0.3, 0.3, 0.3, 0.05);
+
+        // Radial shockwave ring (8 directions, every 45°)
+        for (int i = 0; i < 8; i++) {
+            double angle = Math.toRadians(i * 45.0);
+            Vec3 radial = new Vec3(Math.cos(angle) * 1.5, 0, Math.sin(angle) * 1.5);
+            Vec3 pos = punchPos.add(radial);
+            sl.sendParticles(ParticleTypes.CRIT,
+                    pos.x, pos.y, pos.z, 2, 0.1, 0.1, 0.1, 0.05);
+        }
+
+        // Impact plane sweep (damage indicator along right vector)
+        Vec3 right = new Vec3(-dashDirection.z, 0, dashDirection.x).normalize();
+        for (int i = -3; i <= 3; i++) {
+            Vec3 pos = punchPos.add(right.scale(i * 0.4));
+            sl.sendParticles(ParticleTypes.DAMAGE_INDICATOR,
+                    pos.x, pos.y, pos.z, 2, 0.05, 0.05, 0.05, 0.02);
+        }
+
+        // Ground poof
+        sl.sendParticles(ParticleTypes.POOF,
+                punchPos.x, punchPos.y - 1.0, punchPos.z, 8, 0.5, 0.05, 0.5, 0.05);
     }
 
     @Override
     protected void onStop() {
+        if (world instanceof ServerLevel sl && user != null) {
+            sl.sendParticles(ParticleTypes.CLOUD,
+                    user.getX(), user.getY() + user.getBbHeight() * 0.5, user.getZ(),
+                    6, 0.4, 0.2, 0.4, 0.1);
+        }
         dashExecuted = false;
         punchExecuted = false;
         dashDirection = null;

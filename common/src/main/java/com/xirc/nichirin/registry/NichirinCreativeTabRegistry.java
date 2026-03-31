@@ -22,12 +22,10 @@ public interface NichirinCreativeTabRegistry {
                     })
                     .displayItems((displayContext, entries) -> {
 
-                        // Your existing blocks - unchanged
                         entries.accept(NichirinBlockRegistry.SCARLET_ORE_ITEM.get());
                         entries.accept(NichirinBlockRegistry.SCARLET_CRIMSON_IRON_SAND_ITEM.get());
                         entries.accept(NichirinBlockRegistry.KATANA_HOLDER_BLOCK.get());
 
-                        // NEW: Wysteria wood blocks
                         entries.accept(NichirinBlockRegistry.WYSTERIA_LOG.get());
                         entries.accept(NichirinBlockRegistry.STRIPPED_WYSTERIA_LOG.get());
                         entries.accept(NichirinBlockRegistry.WYSTERIA_WOOD.get());
@@ -48,7 +46,6 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinBlockRegistry.INFINITY_GLASS1_ITEM.get());
                         entries.accept(NichirinBlockRegistry.INFINITY_GLASS2_ITEM.get());
 
-                        // Your existing items - unchanged
                         entries.accept(NichirinItemRegistry.SCARLET_CRIMSON_IRON_GEM.get());
                         entries.accept(NichirinItemRegistry.SCARLET_GEM.get());
                         entries.accept(NichirinItemRegistry.SMOKE_BOMB.get());
@@ -65,7 +62,6 @@ public interface NichirinCreativeTabRegistry {
                         return new ItemStack(NichirinItemRegistry.KATANA.get());
                     })
                     .displayItems((displayContext, entries) -> {
-                        // Your existing katanas - unchanged
                         entries.accept(NichirinItemRegistry.KATANA.get());
                         entries.accept(NichirinItemRegistry.THUNDER_KATANA.get());
                         entries.accept(NichirinItemRegistry.FLAME_KATANA.get());
@@ -84,7 +80,6 @@ public interface NichirinCreativeTabRegistry {
                         return new ItemStack(NichirinItemRegistry.SHINOBU_CAPE.get());
                     })
                     .displayItems((displayContext, entries) -> {
-                        // Your existing armor - unchanged
                         entries.accept(NichirinItemRegistry.SHINOBU_HEADPIECE.get());
                         entries.accept(NichirinItemRegistry.SHINOBU_CAPE.get());
                         entries.accept(NichirinItemRegistry.SHINOBU_LEGGINGS.get());

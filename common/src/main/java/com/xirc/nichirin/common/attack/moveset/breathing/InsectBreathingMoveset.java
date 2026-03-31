@@ -172,7 +172,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
     }
 
     private boolean executeQuickSting(LivingEntity entity) {
-        // Remove manual breath consumption - let attack system handle it
+        triggerAnimation(entity, "quick_sting");
         QuickStingAttack attack = new QuickStingAttack();
 
         // Use the same config creation method and sync to client
@@ -195,7 +195,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
     }
 
     private boolean executeBeeSting(LivingEntity entity) {
-        // Remove manual breath consumption - let attack system handle it
+        triggerAnimation(entity, "bee_sting");
         BeeStingAttack attack = new BeeStingAttack();
 
         // Use the same config creation method and sync to client

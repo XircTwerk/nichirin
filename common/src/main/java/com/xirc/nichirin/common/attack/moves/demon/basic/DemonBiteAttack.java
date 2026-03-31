@@ -39,9 +39,6 @@ public class DemonBiteAttack extends AbstractDemonAttack<DemonBiteAttack, IDemon
         biteExecuted = false;
         biteConnected = false;
 
-        // Menacing bite windup sound
-        world.playSound(null, user.getX(), user.getY(), user.getZ(),
-                SoundEvents.WOLF_GROWL, SoundSource.PLAYERS, 1.2f, 0.8f);
     }
 
     @Override
