@@ -64,6 +64,8 @@ public class GrabManager {
         LivingEntity target = findEntity(demon, data.grabbedEntityId);
         if (target == null) return;
         if (launch) {
+            // Remove stun before launching so it doesn't suppress the velocity
+            target.removeEffect(NichirinEffectRegistry.STUNNED.get());
             Vec3 forward = demon.getLookAngle();
             target.setDeltaMovement(forward.x * 1.5, 1.2, forward.z * 1.5);
             target.hurtMarked  = true;

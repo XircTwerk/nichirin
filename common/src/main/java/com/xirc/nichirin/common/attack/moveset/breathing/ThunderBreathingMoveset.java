@@ -58,7 +58,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 .withKnockback(0.2f)
                 .withBreathCost(12.0f)
                 .withHitStun(10)
-                .withHitboxSize(1.5f)
+                .withHitboxSize(2.0f)
                 .withDescription("Teleport dash forward, hitting anything in the way.")
                 .build();
         this.captureRightClickConfig(tempConfig, false);
@@ -80,7 +80,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withKnockback(0.2f)
                         .withBreathCost(30.0f)
                         .withHitStun(4)
-                        .withHitboxSize(1.8f)
+                        .withHitboxSize(2.0f)
                         .withDescription("5 rapid slashes spread in a wide arc around the player.")
                         .withAction(entity -> {
                             RiceSpiritAttack attack = new RiceSpiritAttack();
@@ -142,7 +142,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withKnockback(0.1f) // Minimal horizontal, focuses on launch
                         .withBreathCost(30.0f)
                         .withHitStun(25) // Good combo potential
-                        .withHitboxSize(0.1f)
+                        .withHitboxSize(2.0f)
                         .withDescription("Upward slash that launches the target into the air.")
                         .withAction(entity -> {
                             HeatLightningAttack attack = new HeatLightningAttack();

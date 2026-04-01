@@ -72,7 +72,7 @@ public class DoubleSlashAttack {
         private float damage = 3.5f; // Damage per hit (targets can be hit twice)
         private float range = 2.8f;
         private float knockback = 0.4f;
-        private float hitboxSize = 1.6f;
+        private float hitboxSize = 2.0f;
         private Vec3 hitboxOffset = Vec3.ZERO;
         private int hitStun = 12;
         private int slashDelay = 2; // 2 tick delay between visual slashes

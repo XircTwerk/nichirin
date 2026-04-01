@@ -31,8 +31,8 @@ public class BreathingMovePacket {
     }
 
     public void handle(ServerPlayer player) {
-        // Get player's moveset
-        AbstractMoveset moveset = MovesetHelper.getMoveset(player);
+        // Get player's breathing moveset specifically
+        AbstractMoveset moveset = MovesetHelper.getBreathingMoveset(player);
         if (moveset == null) {
             player.displayClientMessage(
                     Component.literal("You need a breathing style to use moves!")

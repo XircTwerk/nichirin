@@ -118,7 +118,7 @@ public abstract class AbstractKatanaAttack {
     protected final void performHitDetection(Player user, Level world) {
         AABB hitbox = buildHitbox(user);
 
-        NichirinPacketRegistry.sendHitboxToTracking(user, hitbox, active * 50L);
+        NichirinPacketRegistry.sendHitboxToTracking(user, hitbox, Math.max(active * 50L, 1500L));
 
         List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
                 entity -> entity != user && entity.isAlive() && !hitEntities.contains(entity));
@@ -227,7 +227,7 @@ public abstract class AbstractKatanaAttack {
         protected float damage    = 5.0f;
         protected float range     = 2.5f;
         protected float knockback = 1.0f;
-        protected float hitboxSize   = 1.2f;
+        protected float hitboxSize   = 2.0f;
         protected Vec3  hitboxOffset = Vec3.ZERO;
         protected int   hitStun      = 10;
         protected SoundEvent startSound = null;

@@ -2,11 +2,14 @@ package com.xirc.nichirin.common.network.s2c;
 
 import com.xirc.nichirin.client.shader.NichirinShaderManager;
 import net.minecraft.network.FriendlyByteBuf;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * S2C packet to trigger shader effects on the client
  */
 public class TriggerShaderPacket {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TriggerShaderPacket.class);
 
     private final String shaderEffectClass;
     private final boolean activate;
@@ -38,20 +41,19 @@ public class TriggerShaderPacket {
 
             if (shader != null) {
                 if (activate) {
-                    System.out.println("CLIENT: Activating shader: " + shaderEffectClass);
+                    LOGGER.debug("Activating shader: {}", shaderEffectClass);
                     // Use reflection to call trigger() method
                     var triggerMethod = shader.getClass().getMethod("trigger");
                     triggerMethod.invoke(shader);
                 } else {
-                    System.out.println("CLIENT: Deactivating shader: " + shaderEffectClass);
+                    LOGGER.debug("Deactivating shader: {}", shaderEffectClass);
                     shader.setActive(false);
                 }
             } else {
-                System.out.println("ERROR: Shader not found: " + shaderEffectClass);
+                LOGGER.error("Shader not found: {}", shaderEffectClass);
             }
         } catch (Exception e) {
-            System.err.println("ERROR: Failed to trigger shader: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.error("Failed to trigger shader: {}", e.getMessage(), e);
         }
     }
 }

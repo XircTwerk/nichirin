@@ -60,8 +60,8 @@ public class MoveHotkeyPacket {
             return;
         }
 
-        // Get current breathing style - if none, use base katana wheel moves
-        String currentBreathingStyle = MovesetHelper.getMovesetId(player);
+        // Get current breathing style - if none (or only demon moveset), use base katana wheel moves
+        String currentBreathingStyle = MovesetHelper.getBreathingMovesetId(player);
         if (currentBreathingStyle == null || currentBreathingStyle.isEmpty()) {
             // No breathing style — delegate to SimpleKatana wheel moves
             SimpleKatana katana = (SimpleKatana) mainHand.getItem();

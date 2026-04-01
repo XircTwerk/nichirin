@@ -37,13 +37,13 @@ public class BloodSplatParticleProvider implements ParticleProvider<SimplePartic
             this.quadSize = 0.4f + this.random.nextFloat() * 0.2f;
             this.setColor(1.0f, 1.0f, 1.0f);
             this.setAlpha(0.95f);
-            this.setSpriteFromAge(sprites);
+            this.pickSprite(sprites);
         }
 
         @Override
         public void tick() {
             super.tick();
-            this.setSpriteFromAge(this.animatedSprites);
+            this.pickSprite(this.animatedSprites);
             float progress = (float) this.age / (float) this.lifetime;
             if (progress > 0.5f) {
                 this.setAlpha(0.95f * (1.0f - (progress - 0.5f) / 0.5f));

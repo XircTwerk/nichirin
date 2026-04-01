@@ -22,6 +22,9 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
@@ -40,6 +43,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Getter
 @SuppressWarnings("rawtypes")
 public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A extends IDemonAttacker> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractDemonAttack.class);
 
     // Configuration from moveset - NO DEFAULT VALUES - MUST be configured
     protected float damage;
@@ -121,15 +125,13 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
     public void start(LivingEntity user, Level world) {
         // CRITICAL: Check configuration first
         if (!configured) {
-            System.err.println("WARNING: Demon attack " + this.getClass().getSimpleName() +
-                    " not configured before start()");
+            LOGGER.warn("Demon attack {} not configured before start()", this.getClass().getSimpleName());
             return;
         }
 
         // Validate only that duration exists (attacks need to run for some time)
         if (duration <= 0) {
-            System.err.println("WARNING: Demon attack " + this.getClass().getSimpleName() +
-                    " has invalid duration: " + duration);
+            LOGGER.warn("Demon attack {} has invalid duration: {}", this.getClass().getSimpleName(), duration);
             return;
         }
 
@@ -153,8 +155,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
         try {
             onStart();
         } catch (Exception e) {
-            System.err.println("ERROR in demon attack " + this.getClass().getSimpleName() + " onStart()");
-            e.printStackTrace();
+            LOGGER.error("Error in demon attack {} onStart()", this.getClass().getSimpleName(), e);
             // Clean up on error
             this.isActive = false;
             return;
@@ -844,8 +845,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
                             toRemove.add(attack);
                         }
                     } catch (Exception e) {
-                        System.err.println("Error ticking demon attack: " + e.getMessage());
-                        e.printStackTrace();
+                        LOGGER.error("Error ticking demon attack: {}", e.getMessage(), e);
                         toRemove.add(attack);
                     }
                 }

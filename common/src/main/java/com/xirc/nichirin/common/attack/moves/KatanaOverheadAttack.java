@@ -92,7 +92,7 @@ public class KatanaOverheadAttack extends AbstractKatanaAttack {
         public Builder() {
             startup = 4; active = 8; recovery = 10;
             cooldown = 40; damage = 10.0f; range = 2.8f;
-            knockback = 1.0f; hitboxSize = 1.5f; hitStun = 10;
+            knockback = 1.0f; hitboxSize = 2.0f; hitStun = 10;
         }
 
         @Override

@@ -1,6 +1,5 @@
 package com.xirc.nichirin.common.attack.moveset;
 
-import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.*;
 import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
@@ -76,14 +75,14 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
 
                 // ── Wheel move 0: Check ──────────────────────────────────────
                 .withMove(new MoveBuilder("check", "Check")
-                        .withDescription("Quick pommel strike. Stuns the target.")
+                        .withDescription("Shoulder bash with the katana handle. Close-range stun.")
                         .withTiming(0, 1, 4)
                         .withCooldown(30)
                         .withStaminaCost(SPECIAL_STAMINA_COST)
                         .withDamage(2.0f)
-                        .withRange(2.0f)
+                        .withRange(0.9f)
                         .withKnockback(2.2f)
-                        .withHitboxSize(1.2f)
+                        .withHitboxSize(2.0f)
                         .withAction(entity -> { if (entity instanceof Player p) performWheelMove(p, 0); })
                 )
 
@@ -96,7 +95,7 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
                         .withDamage(10.0f)
                         .withRange(2.8f)
                         .withKnockback(1.0f)
-                        .withHitboxSize(1.5f)
+                        .withHitboxSize(2.0f)
                         .withAction(entity -> { if (entity instanceof Player p) performWheelMove(p, 1); })
                 )
 
@@ -109,7 +108,7 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
                         .withDamage(8.0f)
                         .withRange(7.0f)
                         .withKnockback(1.2f)
-                        .withHitboxSize(1.2f)
+                        .withHitboxSize(2.0f)
                         .withAction(entity -> { if (entity instanceof Player p) performWheelMove(p, 2); })
                 );
     }
@@ -140,7 +139,8 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
             state.comboCount = 0;
         }
 
-        // Periodically remove inactive state entries (keeps the map tidy)
+        // Periodically remove inactive state entries (keeps the map tidy).
+        // Do NOT remove while any cooldown is still active — that would wipe the timestamps.
         if (now % 100 == 0) {
             playerStates.entrySet().removeIf(e -> {
                 KatanaState s = e.getValue();
@@ -150,7 +150,14 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
                     && (s.currentCheck       == null || !s.currentCheck.isActive())
                     && (s.currentOverhead    == null || !s.currentOverhead.isActive())
                     && (s.currentThrust      == null || !s.currentThrust.isActive())
-                    && s.comboCount == 0;
+                    && s.comboCount == 0
+                    && now >= s.slash1CooldownUntil
+                    && now >= s.slash2CooldownUntil
+                    && now >= s.doubleSlashCooldownUntil
+                    && now >= s.risingSlashCooldownUntil
+                    && now >= s.checkCooldownUntil
+                    && now >= s.overheadCooldownUntil
+                    && now >= s.thrustCooldownUntil;
             });
         }
     }
@@ -275,7 +282,6 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
                 state.currentCheck.start(player);
                 int checkCd = state.currentCheck.getCooldown();
                 state.checkCooldownUntil = now + checkCd;
-                MoveExecutor.sendCooldownDisplay(player, "Check", checkCd);
                 if (player instanceof ServerPlayer sp)
                     NichirinPacketRegistry.broadcastPlayerAnimation(sp, new PlayerAnimationPacket(sp.getId(), "sword.check"));
             }
@@ -286,7 +292,6 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
                 state.currentOverhead.start(player);
                 int overheadCd = state.currentOverhead.getCooldown();
                 state.overheadCooldownUntil = now + overheadCd;
-                MoveExecutor.sendCooldownDisplay(player, "Overhead", overheadCd);
                 if (player instanceof ServerPlayer sp)
                     NichirinPacketRegistry.broadcastPlayerAnimation(sp, new PlayerAnimationPacket(sp.getId(), "sword.vertical"));
             }
@@ -297,7 +302,6 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
                 state.currentThrust.start(player);
                 int thrustCd = state.currentThrust.getCooldown();
                 state.thrustCooldownUntil = now + thrustCd;
-                MoveExecutor.sendCooldownDisplay(player, "Thrust", thrustCd);
                 if (player instanceof ServerPlayer sp)
                     NichirinPacketRegistry.broadcastPlayerAnimation(sp, new PlayerAnimationPacket(sp.getId(), "sword.thrust"));
             }
@@ -330,7 +334,7 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
     private static SimpleSlashAttack createLightSlash1() {
         return new SimpleSlashAttack.Builder()
                 .withTiming(0, 7, 2).withCooldown(0).withDamage(4.0f).withRange(2.5f)
-                .withKnockback(0.3f).withHitbox(1.5f, new net.minecraft.world.phys.Vec3(0, 0, 1.0))
+                .withKnockback(0.3f).withHitbox(2.0f, new net.minecraft.world.phys.Vec3(0, 0, 1.0))
                 .withHitStun(5).withSounds(SoundEvents.PLAYER_ATTACK_SWEEP, SoundEvents.PLAYER_ATTACK_STRONG)
                 .build();
     }
@@ -338,7 +342,7 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
     private static SimpleSlashAttack createLightSlash2() {
         return new SimpleSlashAttack.Builder()
                 .withTiming(0, 10, 3).withCooldown(0).withDamage(5.0f).withRange(2.5f)
-                .withKnockback(0.5f).withHitbox(1.5f, new net.minecraft.world.phys.Vec3(0, 0, 1.0))
+                .withKnockback(0.5f).withHitbox(2.0f, new net.minecraft.world.phys.Vec3(0, 0, 1.0))
                 .withHitStun(5).withSounds(SoundEvents.PLAYER_ATTACK_SWEEP, SoundEvents.PLAYER_ATTACK_STRONG)
                 .build();
     }
@@ -346,7 +350,7 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
     private static DoubleSlashAttack createDoubleSlashAttack() {
         return new DoubleSlashAttack.Builder()
                 .withTiming(0, 16, 6).withCooldown(20).withDamage(3.5f).withRange(2.8f)
-                .withKnockback(0.4f).withHitbox(1.6f, new net.minecraft.world.phys.Vec3(0, 0, 1.0))
+                .withKnockback(0.4f).withHitbox(2.0f, new net.minecraft.world.phys.Vec3(0, 0, 1.0))
                 .withHitStun(7).withSlashDelay(2)
                 .withSounds(SoundEvents.PLAYER_ATTACK_SWEEP, SoundEvents.PLAYER_ATTACK_STRONG)
                 .build();
@@ -356,7 +360,7 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
         return new RisingSlashAttack.Builder()
                 .withTiming(0, 10, 8).withCooldown(25).withDamage(4.0f).withRange(2.5f)
                 .withLaunchPower(0.8f).withKnockback(0.2f)
-                .withHitbox(1.5f, new net.minecraft.world.phys.Vec3(0, 0.5, 1.0))
+                .withHitbox(2.0f, new net.minecraft.world.phys.Vec3(0, 0.5, 1.0))
                 .withHitStun(10).withSounds(SoundEvents.PLAYER_ATTACK_SWEEP, SoundEvents.PLAYER_ATTACK_CRIT)
                 .build();
     }

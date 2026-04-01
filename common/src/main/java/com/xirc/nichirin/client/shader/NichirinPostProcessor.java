@@ -13,6 +13,8 @@ import net.minecraft.client.renderer.PostPass;
 import net.minecraft.resources.ResourceLocation;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.mojang.blaze3d.platform.GlConst.GL_DRAW_FRAMEBUFFER;
 
@@ -20,6 +22,7 @@ import static com.mojang.blaze3d.platform.GlConst.GL_DRAW_FRAMEBUFFER;
  * Base class for post-processing shader effects
  */
 public abstract class NichirinPostProcessor {
+    private static final Logger LOGGER = LoggerFactory.getLogger(NichirinPostProcessor.class);
     protected static final Minecraft MC = Minecraft.getInstance();
 
     protected PostChain shaderEffect;
@@ -64,7 +67,7 @@ public abstract class NichirinPostProcessor {
                     "shaders/post/" + id.getPath() + ".json"
             );
 
-            System.out.println("DEBUG: Loading shader from: " + file);
+            LOGGER.debug("Loading shader from: {}", file);
 
             shaderEffect = new PostChain(
                     MC.getTextureManager(),
@@ -83,7 +86,7 @@ public abstract class NichirinPostProcessor {
                 }
             } catch (IllegalAccessError e) {
                 // Fallback to reflection if access widener didn't work
-                System.out.println("DEBUG: Access widener not working, using reflection fallback");
+                LOGGER.debug("Access widener not working, using reflection fallback");
                 try {
                     var passesField = PostChain.class.getDeclaredField("passes");
                     passesField.setAccessible(true);
@@ -98,11 +101,10 @@ public abstract class NichirinPostProcessor {
                 }
             }
 
-            System.out.println("DEBUG: Shader loaded successfully! Effects count: " + effects.length);
+            LOGGER.debug("Shader loaded successfully! Effects count: {}", effects.length);
 
         } catch (Exception ex) {
-            System.err.println("Failed to load shader: " + getShaderEffectId());
-            ex.printStackTrace();
+            LOGGER.error("Failed to load shader: {}", getShaderEffectId(), ex);
         }
     }
 
@@ -183,12 +185,12 @@ public abstract class NichirinPostProcessor {
         if (!active) return;
 
         if (!initialized) {
-            System.out.println("DEBUG: Initializing shader on first process call");
+            LOGGER.debug("Initializing shader on first process call");
             init();
         }
 
         if (shaderEffect == null) {
-            System.out.println("ERROR: Shader effect is null, cannot process!");
+            LOGGER.error("Shader effect is null, cannot process!");
             return;
         }
 

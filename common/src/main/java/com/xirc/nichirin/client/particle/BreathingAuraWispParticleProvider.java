@@ -38,13 +38,13 @@ public class BreathingAuraWispParticleProvider implements ParticleProvider<Simpl
             this.quadSize = 0.045f + this.random.nextFloat() * 0.02f;
             this.setColor(r, g, b);
             this.setAlpha(0.7f);
-            this.setSpriteFromAge(sprites);
+            this.pickSprite(sprites);
         }
 
         @Override
         public void tick() {
             super.tick();
-            this.setSpriteFromAge(this.animatedSprites);
+            this.pickSprite(this.animatedSprites);
             float progress = (float) this.age / (float) this.lifetime;
             // fade in quickly, hold, fade out
             float alpha;

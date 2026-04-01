@@ -76,7 +76,7 @@ public class RisingSlashAttack {
         private float damage = 6.0f;
         private float range = 2.5f;
         private float knockback = 0.2f;
-        private float hitboxSize = 1.5f;
+        private float hitboxSize = 2.0f;
         private Vec3 hitboxOffset = new Vec3(0, 0.5, 0); // Slightly higher hitbox
         private int hitStun = 20;
         private float launchPower = 0.8f; // Default launch power (blocks)

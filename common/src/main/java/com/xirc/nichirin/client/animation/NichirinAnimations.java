@@ -36,6 +36,12 @@ public class NichirinAnimations {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft == null || minecraft.level == null) return;
 
+        // Empty name is the stop signal — clear the animation layer and return
+        if (animationName == null || animationName.isEmpty()) {
+            stopAnimation(clientPlayer);
+            return;
+        }
+
         try {
             KeyframeAnimation animation = findAnimation(animationName);
             if (animation == null) return;

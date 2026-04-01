@@ -30,8 +30,7 @@ dependencies {
     implementation "io.github.llamalad7:mixinextras-forge:0.4.1"
 
     // Use implementation with files() to bypass module system entirely
-    implementation files(project(':common').sourceSets.main.output.classesDirs)
-    implementation files(project(':common').sourceSets.main.output.resourcesDir)
+    implementation project(':common')
 }
 
 // Make sure common is built before forge compiles

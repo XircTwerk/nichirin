@@ -70,7 +70,7 @@ public class SimpleSlashAttack {
         private float damage = 4.0f;
         private float range = 2.5f;
         private float knockback = 0.3f;
-        private float hitboxSize = 1.5f;
+        private float hitboxSize = 2.0f;
         private Vec3 hitboxOffset = Vec3.ZERO;
         private int hitStun = 15;
         private SoundEvent startSound = null;

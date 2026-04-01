@@ -23,9 +23,12 @@ import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLConstructModEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Mod.EventBusSubscriber(modid = "nichirin", bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class BreathOfNichirinForgeClient {
+    private static final Logger LOGGER = LoggerFactory.getLogger(BreathOfNichirinForgeClient.class);
 
     @SubscribeEvent
     public static void onConstructMod(FMLConstructModEvent event) {
@@ -79,7 +82,7 @@ public class BreathOfNichirinForgeClient {
             ParticleProviderRegistry.register(NichirinParticleRegistry.SLASH_IMPACT_SPARK, SlashImpactSparkParticleProvider::new);
         } catch (Exception e) {
             // Log but don't crash
-            System.err.println("Failed to register particles: " + e.getMessage());
+            LOGGER.error("Failed to register particles: {}", e.getMessage());
         }
     }
 }

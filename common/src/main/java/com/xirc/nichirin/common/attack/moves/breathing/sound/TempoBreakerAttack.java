@@ -11,6 +11,9 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +24,7 @@ import java.util.UUID;
  * Creates TNT-like explosions at hit entities 2 seconds after impact
  */
 public class TempoBreakerAttack extends SoundBreathingAttackBase {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TempoBreakerAttack.class);
 
     private boolean hasExecuted = false;
 
@@ -115,8 +119,7 @@ public class TempoBreakerAttack extends SoundBreathingAttackBase {
                         SoundEvents.WARDEN_ATTACK_IMPACT, SoundSource.PLAYERS, 1.0f, 1.5f);
             }
         } catch (Exception e) {
-            System.err.println("TempoBreakerAttack error in executeTempoBreaker(): " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.error("TempoBreakerAttack error in executeTempoBreaker()", e);
         }
     }
 
@@ -154,13 +157,12 @@ public class TempoBreakerAttack extends SoundBreathingAttackBase {
 
                     return false; // Keep in map
                 } catch (Exception e) {
-                    System.err.println("Error processing pending explosion: " + e.getMessage());
+                    LOGGER.warn("Error processing pending explosion: {}", e.getMessage());
                     return true; // Remove problematic entry
                 }
             });
         } catch (Exception e) {
-            System.err.println("Error in processPendingExplosions: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.error("Error in processPendingExplosions", e);
         }
     }
 

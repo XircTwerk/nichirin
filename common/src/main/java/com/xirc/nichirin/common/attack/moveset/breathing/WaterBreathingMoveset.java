@@ -168,7 +168,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withKnockback(0.8f)
                         .withBreathCost(45.0f)
                         .withHitStun(30)
-                        .withHitboxSize(1.0f) // Very small precise hitbox
+                        .withHitboxSize(2.0f) // Minimum hitbox size
                         .withDashSpeed(12.0f) // Fast dash
                         .withDescription("High-speed precision dash strike dealing 20 damage.")
                         .withAction(entity -> {

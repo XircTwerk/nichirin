@@ -484,12 +484,6 @@ public class TempleDemonEntity extends DemonNPCEntity {
          *   Far         → dash strike → slash
          */
         private int selectAttack(double distance, boolean movingAway, boolean inAir, boolean lowHp) {
-            // ── While currently grabbing someone ──────────────────────────────
-            // Don't attack during the hold — GrabManager auto-releases after GRAB_DURATION
-            if (GrabManager.isGrabbing(demon)) {
-                return ATTACK_NONE;
-            }
-
             // ── High jump to intercept airborne target ─────────────────────
             if (inAir && distance <= 4.0 && cooldownHighJump == 0 && demon.onGround()) {
                 return ATTACK_HIGH_JUMP;

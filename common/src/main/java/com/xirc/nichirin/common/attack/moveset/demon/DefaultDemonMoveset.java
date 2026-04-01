@@ -82,7 +82,7 @@ public class DefaultDemonMoveset extends AbstractMoveset {
                         .withRange(1.5f)
                         .withKnockback(0.1f)
                         .withHitStun(15)
-                        .withHitboxSize(1.5f)
+                        .withHitboxSize(2.0f)
                         .withDescription("Powerful close-range punch that stuns enemies")
                 )
 
@@ -145,7 +145,7 @@ public class DefaultDemonMoveset extends AbstractMoveset {
                         .withRange(2.0f)
                         .withKnockback(0.1f)
                         .withHitStun(20)
-                        .withHitboxSize(1.8f)
+                        .withHitboxSize(2.0f)
                         .withDescription("Bite attack that steals blood")
                         .withAction(entity -> {
                             DemonBiteAttack biteAttack = new DemonBiteAttack();
@@ -158,7 +158,7 @@ public class DefaultDemonMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("demon_grab", "Grab")
                         .withAnimation("nichirin:demon_grab", 5)
                         .withTiming(80, 3, 12)
-                        .withDescription("Grab the target; use again while grabbing to launch them")
+                        .withDescription("Grab and instantly throw the target forward")
                         .withAction(entity -> {
                             new DemonGrabAttack().execute(entity);
                         })
@@ -410,6 +410,9 @@ public class DefaultDemonMoveset extends AbstractMoveset {
             }
             return;
         }
+
+        // Don't execute or consume cooldown if stunned
+        if (entity.hasEffect(NichirinEffectRegistry.STUNNED.get())) return;
 
         CURRENT_MOVESET.set(this);
         try {

@@ -160,6 +160,12 @@ public class KatanaBlock {
         // Remove blocking effect
         removeBlockingEffect(player);
 
+        // Stop the block animation on all nearby clients
+        if (player instanceof ServerPlayer serverPlayer) {
+            NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer,
+                    new PlayerAnimationPacket(serverPlayer.getId(), ""));
+        }
+
         // Reset state
         state.reset();
     }

@@ -7,12 +7,15 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * FIXED: Packet for executing demon art moves from the attack wheel
  * Now uses the specific demon moveset methods instead of primary moveset
  */
 public class DemonMovePacket {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DemonMovePacket.class);
 
     private final int moveIndex;
     private final boolean fromWheel;
@@ -50,7 +53,7 @@ public class DemonMovePacket {
                             .withStyle(style -> style.withColor(0xFF5555)),
                     true
             );
-            System.out.println("DEBUG: DemonMovePacket - Player " + player.getName().getString() + " has no demon moveset");
+            LOGGER.debug("DemonMovePacket - Player {} has no demon moveset", player.getName().getString());
             return;
         }
 
@@ -61,11 +64,11 @@ public class DemonMovePacket {
                             .withStyle(style -> style.withColor(0xFF5555)),
                     true
             );
-            System.out.println("DEBUG: DemonMovePacket - Failed to get demon moveset for " + player.getName().getString());
+            LOGGER.debug("DemonMovePacket - Failed to get demon moveset for {}", player.getName().getString());
             return;
         }
 
-        System.out.println("DEBUG: DemonMovePacket - Using demon moveset: " + moveset.getMovesetId() + " for move " + moveIndex);
+        LOGGER.debug("DemonMovePacket - Using demon moveset: {} for move {}", moveset.getMovesetId(), moveIndex);
 
         // Validate move index
         if (moveIndex < 0 || moveIndex >= moveset.getMoveCount()) {
@@ -74,7 +77,7 @@ public class DemonMovePacket {
                             .withStyle(style -> style.withColor(0xFF5555)),
                     true
             );
-            System.out.println("DEBUG: DemonMovePacket - Invalid move index " + moveIndex + " for moveset with " + moveset.getMoveCount() + " moves");
+            LOGGER.debug("DemonMovePacket - Invalid move index {} for moveset with {} moves", moveIndex, moveset.getMoveCount());
             return;
         }
 
@@ -86,11 +89,11 @@ public class DemonMovePacket {
                             .withStyle(style -> style.withColor(0xFF5555)),
                     true
             );
-            System.out.println("DEBUG: DemonMovePacket - Move config null for index " + moveIndex);
+            LOGGER.debug("DemonMovePacket - Move config null for index {}", moveIndex);
             return;
         }
 
-        System.out.println("DEBUG: DemonMovePacket - Executing demon move: " + moveConfig.getDisplayName());
+        LOGGER.debug("DemonMovePacket - Executing demon move: {}", moveConfig.getDisplayName());
 
         try {
             // Execute the demon art move
@@ -99,7 +102,7 @@ public class DemonMovePacket {
             // Block inputs after execution (same as breathing moves)
             com.xirc.nichirin.common.util.MultiplayerInputHandler.blockInputsAfterMoveExecution(player);
 
-            System.out.println("DEBUG: DemonMovePacket - Successfully executed " + moveConfig.getDisplayName());
+            LOGGER.debug("DemonMovePacket - Successfully executed {}", moveConfig.getDisplayName());
 
         } catch (Exception e) {
             player.displayClientMessage(
@@ -107,8 +110,7 @@ public class DemonMovePacket {
                             .withStyle(style -> style.withColor(0xFF5555)),
                     true
             );
-            System.err.println("ERROR: DemonMovePacket execution failed:");
-            e.printStackTrace();
+            LOGGER.error("DemonMovePacket execution failed", e);
         }
     }
 

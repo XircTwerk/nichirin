@@ -62,7 +62,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                 .withKnockback(0f)
                 .withBreathCost(10.0f)
                 .withHitStun(15)
-                .withHitboxSize(1.5f)
+                .withHitboxSize(2.0f)
                 .withDescription("Fast low-damage thrust that poisons on hit.")
                 .build();
         this.captureRightClickConfig(tempConfig, false);
@@ -256,10 +256,8 @@ public class InsectBreathingMoveset extends AbstractMoveset {
             }
         }
 
-        // Removed range checks - all moves should execute regardless of targets
-
-        // Mark that we're executing a move
-        executingMove.put(entity.getUUID(), true);
+        // Don't execute or consume cooldown if stunned
+        if (entity.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.STUNNED.get())) return;
 
         // Store current moveset instance for access by actions
         CURRENT_MOVESET.set(this);
@@ -272,12 +270,8 @@ public class InsectBreathingMoveset extends AbstractMoveset {
             CURRENT_MOVESET.remove();
         }
 
-        // Check if move actually executed by seeing if breath was consumed
-        boolean moveExecuted = !executingMove.getOrDefault(entity.getUUID(), false);
-        executingMove.remove(entity.getUUID());
-
-        if (moveExecuted && config != null) {
-            // Set cooldown after successful execution
+        // Always set cooldown after execution attempt
+        if (config != null) {
             setMoveCooldown(entity, moveIndex);
 
             // Send cooldown display packet if on server and has cooldown

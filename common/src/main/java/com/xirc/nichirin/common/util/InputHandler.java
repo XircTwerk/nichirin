@@ -18,6 +18,9 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -26,6 +29,7 @@ import java.util.UUID;
  * Simple input handler - blocks custom inputs when player is interacting with something
  */
 public class InputHandler {
+    private static final Logger LOGGER = LoggerFactory.getLogger(InputHandler.class);
 
     // Server-side data
     private static final Map<UUID, SimpleKatana> PLAYER_KATANAS = new HashMap<>();
@@ -53,7 +57,7 @@ public class InputHandler {
                 Class<?> clientHandlerClass = Class.forName("com.xirc.nichirin.client.util.ClientInputHandler");
                 clientHandlerClass.getMethod("registerClientEvents").invoke(null);
             } catch (Exception e) {
-                System.err.println("Failed to register client katana events: " + e.getMessage());
+                LOGGER.error("Failed to register client katana events: {}", e.getMessage());
             }
         }
     }

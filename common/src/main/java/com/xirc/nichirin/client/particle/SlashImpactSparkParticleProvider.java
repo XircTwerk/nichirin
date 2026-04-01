@@ -37,13 +37,13 @@ public class SlashImpactSparkParticleProvider implements ParticleProvider<Simple
             this.quadSize = 0.8f + this.random.nextFloat() * 0.4f;
             this.setColor(1.0f, 1.0f, 1.0f);
             this.setAlpha(1.0f);
-            this.setSpriteFromAge(sprites);
+            this.pickSprite(sprites);
         }
 
         @Override
         public void tick() {
             super.tick();
-            this.setSpriteFromAge(this.animatedSprites);
+            this.pickSprite(this.animatedSprites);
             float progress = (float) this.age / (float) this.lifetime;
             this.setAlpha(1.0f - progress);
         }
