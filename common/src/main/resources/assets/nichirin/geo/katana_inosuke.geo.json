@@ -1,0 +1,59 @@
+{
+	"format_version": "1.12.0",
+	"minecraft:geometry": [
+		{
+			"description": {
+				"identifier": "geometry.katana_inosuke - Converted",
+				"texture_width": 32,
+				"texture_height": 32,
+				"visible_bounds_width": 2,
+				"visible_bounds_height": 3.5,
+				"visible_bounds_offset": [0, 1.25, 0]
+			},
+			"bones": [
+				{
+					"name": "Sword",
+					"pivot": [0, 0, 0],
+					"cubes": [
+						{"origin": [-0.5, 2, 1], "size": [1, 8, 2], "uv": [6, 12]},
+						{"origin": [0, 1.25, -1.325], "size": [0, 3, 4], "pivot": [-0.5, 2.75, 0.675], "rotation": [22.5, 0, 0], "uv": [8, 22]}
+					]
+				},
+				{
+					"name": "Handle",
+					"parent": "Sword",
+					"pivot": [0, 0, 0]
+				},
+				{
+					"name": "Guard",
+					"parent": "Handle",
+					"pivot": [0, 0, 0]
+				},
+				{
+					"name": "Blade",
+					"parent": "Sword",
+					"pivot": [0, 0, 0],
+					"cubes": [
+						{"origin": [-0.5, 11, 2], "size": [1, 18, 1], "inflate": 0.01, "uv": [1, 1]},
+						{"origin": [-0.5, 29, 2], "size": [1, 2.4, 1], "inflate": 0.01, "uv": [16, 11]},
+						{"origin": [-0.5, 29.02738, 1.84234], "size": [1, 2.4, 1], "pivot": [0.25, 31.02738, 1.84234], "rotation": [-22.5, 0, 0], "uv": [24, 0]},
+						{"origin": [-0.51, 25.41, 0.99], "size": [1, 2, 1], "uv": [24, 0]},
+						{"origin": [-0.51, 22.41, 0.99], "size": [1, 2, 1], "uv": [24, 0]},
+						{"origin": [-0.51, 19.41, 0.99], "size": [1, 2, 1], "uv": [24, 0]},
+						{"origin": [-0.51, 16.41, 0.99], "size": [1, 2, 1], "uv": [24, 0]},
+						{"origin": [-0.51, 13.41, 0.99], "size": [1, 2, 1], "uv": [24, 0]},
+						{"origin": [-0.51, 11.41, 0.99], "size": [1, 1, 1], "uv": [24, 0]}
+					]
+				},
+				{
+					"name": "bone",
+					"pivot": [8, 0, -8],
+					"cubes": [
+						{"origin": [-0.775, 9.5, 0.725], "size": [1.55, 2, 2.55], "uv": [18, 14]},
+						{"origin": [-0.75, 3, 0.75], "size": [1.5, 7, 2.5], "inflate": -0.15, "uv": [0, 20]}
+					]
+				}
+			]
+		}
+	]
+}
