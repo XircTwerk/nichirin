@@ -4,6 +4,7 @@ import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.common.entity.animal.BoarEntity;
 import com.xirc.nichirin.common.entity.projectile.FlashBombEntity;
 import com.xirc.nichirin.common.entity.projectile.SmokeBombEntity;
+import com.xirc.nichirin.common.entity.projectile.ThrownKatanaEntity;
 import com.xirc.nichirin.common.entity.attack.ThunderBallEntity;
 import com.xirc.nichirin.common.entity.npc.TempleDemonEntity;
 import dev.architectury.registry.level.entity.EntityAttributeRegistry;
@@ -48,6 +49,14 @@ public interface NichirinEntityRegistry {
                     .clientTrackingRange(10)
                     .updateInterval(3)
                     .build("boar"));
+
+    RegistrySupplier<EntityType<ThrownKatanaEntity>> THROWN_KATANA =
+            ENTITY_TYPES.register("thrown_katana", () -> EntityType.Builder.<ThrownKatanaEntity>of(
+                            ThrownKatanaEntity::new, MobCategory.MISC)
+                    .sized(0.5f, 0.5f)
+                    .clientTrackingRange(64)
+                    .updateInterval(1)
+                    .build("thrown_katana"));
 
     RegistrySupplier<EntityType<TempleDemonEntity>> TEMPLE_DEMON =
             ENTITY_TYPES.register("temple_demon", () -> EntityType.Builder.<TempleDemonEntity>of(

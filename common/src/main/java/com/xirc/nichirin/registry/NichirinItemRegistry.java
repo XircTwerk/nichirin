@@ -1,7 +1,10 @@
 package com.xirc.nichirin.registry;
 
 import com.xirc.nichirin.BreathOfNichirin;
+import com.xirc.nichirin.common.item.armor.BoarHeadItem;
 import com.xirc.nichirin.common.item.armor.NichirinArmorItem;
+import com.xirc.nichirin.common.item.katana.BeastKatana;
+import com.xirc.nichirin.common.item.katana.IndividualBeastKatana;
 import com.xirc.nichirin.common.item.katana.IndividualSoundKatana;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.item.katana.SoundKatana;
@@ -275,6 +278,16 @@ public interface NichirinItemRegistry {
             () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.LEGGINGS, settings().stacksTo(1)));
     RegistrySupplier<Item> UROKODAKI_BOOTS = register("urokodaki_boots",
             () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.BOOTS, settings().stacksTo(1)));
+
+    // Beast Breathing - Inosuke's dual katanas and boar head
+    RegistrySupplier<Item> BEAST_KATANAS = register("beast_katanas",
+            () -> new BeastKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
+    RegistrySupplier<Item> RIGHT_BEAST_KATANA = register("right_beast_katana",
+            () -> new IndividualBeastKatana(settings().rarity(Rarity.RARE).stacksTo(1), true));
+    RegistrySupplier<Item> LEFT_BEAST_KATANA = register("left_beast_katana",
+            () -> new IndividualBeastKatana(settings().rarity(Rarity.RARE).stacksTo(1), false));
+    RegistrySupplier<Item> BOAR_HEAD = register("boar_head",
+            () -> new BoarHeadItem(settings().stacksTo(1)));
 
     // Spawn egg for Temple Demon (dark body, blood-red spots)
     RegistrySupplier<Item> TEMPLE_DEMON_SPAWN_EGG = register("temple_demon_spawn_egg",

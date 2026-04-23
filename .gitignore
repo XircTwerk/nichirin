@@ -3,7 +3,7 @@
 /fabric/build/*
 /forge/run/*
 /forge/build/*
-/.idea/*
+.idea/
 /common/run/*
 /common/build/*
 /fabric/.gradle/*
@@ -27,8 +27,6 @@ classes/
 *.iml
 *.ipr
 *.iws
-!.idea/icon.png
-!.idea/fileTemplates
 
 # vscode
 

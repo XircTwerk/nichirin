@@ -5,6 +5,7 @@ import com.xirc.nichirin.common.attack.moveset.*;
 import com.xirc.nichirin.common.attack.moveset.breathing.*;
 import com.xirc.nichirin.common.attack.moveset.demon.DefaultDemonMoveset;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -53,10 +54,10 @@ public interface NichirinMoveRegistry {
     }
 
     /**
-     * Auto-register all breathing style movesets
+     * Auto-register all movesets
      */
     private static void registerAllMovesets() {
-        BreathOfNichirin.LOGGER.info("Auto-registering breathing style movesets...");
+        BreathOfNichirin.LOGGER.info("Auto-registering movesets...");
 
         // Register all movesets here
         registerMoveset(new ThunderBreathingMoveset());
@@ -157,7 +158,7 @@ public interface NichirinMoveRegistry {
         /**
          * Execute this move for a player
          */
-        public void execute(net.minecraft.world.entity.player.Player player) {
+        public void execute(Player player) {
             moveset.performMove(player, index);
         }
 

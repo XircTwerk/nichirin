@@ -122,6 +122,8 @@ public interface MovesetRegistry {
         registerMoveset("sound_breathing", SoundBreathingMoveset::new);
         registerMoveset("water_breathing", WaterBreathingMoveset::new);
 
+        registerMoveset("beast_breathing", BeastBreathingMoveset::new);
+
         registerMoveset("default_demon", DefaultDemonMoveset::new);
     }
 }
