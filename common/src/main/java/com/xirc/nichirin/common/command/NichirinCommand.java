@@ -6,10 +6,18 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.xirc.nichirin.common.config.NichirinConfig;
+import com.xirc.nichirin.common.data.PlayerDataProvider;
+import com.xirc.nichirin.common.data.ProgressionHelper;
+import com.xirc.nichirin.common.event.BreathOfNichirinEventHandler;
 import com.xirc.nichirin.common.system.BloodMoonManager;
+import com.xirc.nichirin.common.system.perks.NichirinPerkRegistry;
+import com.xirc.nichirin.common.system.perks.PerkDefinition;
+import com.xirc.nichirin.common.system.perks.PerkManager;
+import com.xirc.nichirin.registry.MovesetRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
@@ -55,6 +63,12 @@ public class NichirinCommand {
                 .then(Commands.literal("bloodmoon")
                         .requires(src -> src.hasPermission(2))
                         .executes(ctx -> toggleBloodMoon(ctx)))
+
+                // /nichirin unlockall <player>  (op 2)
+                .then(Commands.literal("unlockall")
+                        .requires(src -> src.hasPermission(2))
+                        .then(Commands.argument("player", EntityArgument.player())
+                                .executes(ctx -> unlockAll(ctx, EntityArgument.getPlayer(ctx, "player")))))
 
                 // /nichirin config ...
                 .then(Commands.literal("config")
@@ -105,6 +119,53 @@ public class NichirinCommand {
     // Subcommand handlers
     // -------------------------------------------------------------------------
 
+    private static int unlockAll(CommandContext<CommandSourceStack> ctx, ServerPlayer player) {
+        CommandSourceStack src = ctx.getSource();
+        String name = player.getName().getString();
+
+        // ── Unlock all breathing styles ──────────────────────────────────────
+        int stylesUnlocked = 0;
+        String firstStyle = null;
+        for (String id : MovesetRegistry.getAllMovesetIds()) {
+            if (!ProgressionHelper.isMovesetUnlocked(player, id)) {
+                ProgressionHelper.unlockMoveset(player, id);
+                if (firstStyle == null && id.contains("breathing")) firstStyle = id;
+                stylesUnlocked++;
+            } else if (firstStyle == null && id.contains("breathing")) {
+                firstStyle = id;
+            }
+        }
+        // Set an active style if the player has none
+        String currentStyle = PlayerDataProvider.getData(player).getMovesetData().getMovesetId();
+        if ((currentStyle == null || currentStyle.isEmpty()) && firstStyle != null) {
+            PlayerDataProvider.updateAndSync(player, firstStyle);
+        }
+
+        // ── Discover all perks ───────────────────────────────────────────────
+        int perksDiscovered = 0;
+        for (PerkDefinition def : NichirinPerkRegistry.allPerks()) {
+            if (PerkManager.discover(player, def.id)) perksDiscovered++;
+        }
+
+        // ── Unlock all perk slots ────────────────────────────────────────────
+        PlayerDataProvider.getData(player).getPerkData().setPerkSlots(5);
+
+        // ── Sync to client ───────────────────────────────────────────────────
+        BreathOfNichirinEventHandler.syncPerksToPlayer(player);
+
+        int finalStyles = stylesUnlocked;
+        int finalPerks = perksDiscovered;
+        src.sendSuccess(() -> Component.literal("Unlocked everything for " + name + ": " +
+                finalStyles + " style(s), " + finalPerks + " perk(s), 5 perk slots.")
+                .withStyle(s -> s.withColor(COL_OK)), true);
+
+        player.displayClientMessage(
+                Component.literal("All breathing styles and perks unlocked! Perk slots: 5.")
+                        .withStyle(s -> s.withColor(0x55FFFF)), false);
+
+        return 1;
+    }
+
     private static int toggleBloodMoon(CommandContext<CommandSourceStack> ctx) {
         var src = ctx.getSource();
         var server = src.getServer();
@@ -138,6 +199,7 @@ public class NichirinCommand {
 
         src.sendSuccess(() -> header("— Breath of Nichirin Help —"), false);
         src.sendSuccess(() -> line(COL_DIM,  "Operator commands (permission level 2):"), false);
+        src.sendSuccess(() -> cmd("/nichirin unlockall <player>",                  "Unlock all styles, perks, and perk slots"), false);
         src.sendSuccess(() -> cmd("/nichirin config",                              "Open config GUI"), false);
         src.sendSuccess(() -> cmd("/nichirin config list",                         "List all config values"), false);
         src.sendSuccess(() -> cmd("/nichirin config get <key>",                    "Show a single config value"), false);

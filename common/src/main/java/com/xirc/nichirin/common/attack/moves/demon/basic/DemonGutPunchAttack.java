@@ -35,19 +35,16 @@ public class DemonGutPunchAttack extends AbstractDemonAttack<DemonGutPunchAttack
         if (hasExecuted) return; // Only execute once
         hasExecuted = true;
 
-        // Simple close-range attack - hit targets right in front of player
-        Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
-        Vec3 lookDir = user.getLookAngle();
-        Vec3 punchCenter = userPos.add(lookDir.scale(1.5)); // Very close range
-
-        // Get targets in a small area in front of player
-        List<LivingEntity> targets = getTargetsInHitbox(punchCenter);
+        // Use the configured range so the hitbox matches what was set in the moveset
+        List<LivingEntity> targets = getTargetsAtRange();
 
         for (LivingEntity target : targets) {
             hitTargetNoImmunity(target); // Use no immunity for guaranteed hit
         }
 
-        // Impact effects
+        // Impact effects at the punch center
+        Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
+        Vec3 punchCenter = userPos.add(user.getLookAngle().scale(range));
         createImpactEffects(punchCenter);
 
         // Impact sound

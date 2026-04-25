@@ -77,12 +77,12 @@ public class DefaultDemonMoveset extends AbstractMoveset {
 
                 .withLeftClickMove(new MoveBuilder("demon_gut_punch", "Gut Punch")
                         .withAnimation("nichirin:demon_gut_punch", 6)
-                        .withTiming(15, 5, 10)
+                        .withTiming(15, 1, 10)
                         .withDamage(8.0f)
-                        .withRange(1.5f)
+                        .withRange(2.0f)
                         .withKnockback(0.1f)
                         .withHitStun(15)
-                        .withHitboxSize(2.0f)
+                        .withHitboxSize(2.8f)
                         .withDescription("Powerful close-range punch that stuns enemies")
                 )
 

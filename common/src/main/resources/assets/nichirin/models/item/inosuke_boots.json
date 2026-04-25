@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "nichirin:item/rice"
+    "layer0": "nichirin:item/inosuke_boots"
   }
 }

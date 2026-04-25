@@ -88,6 +88,9 @@ public class NichirinModelProvider extends FabricModelProvider {
         generator.generateFlatItem(NichirinItemRegistry.FLASH_BOMB.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.BENTO_BOX.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.DRINKING_GOURD.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.RICE.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.PERK_SCROLL.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.CURSED_SCROLL.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinBlockRegistry.WYSTERIA_SAPLING_ITEM.get(), ModelTemplates.FLAT_ITEM);
 
         // Armor items
@@ -136,5 +139,8 @@ public class NichirinModelProvider extends FabricModelProvider {
         generator.generateFlatItem(NichirinItemRegistry.UROKODAKI_CAPE.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.UROKODAKI_LEGGINGS.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.UROKODAKI_BOOTS.get(), ModelTemplates.FLAT_ITEM);
+
+        // Inosuke armor
+        generator.generateFlatItem(NichirinItemRegistry.BOAR_HEAD.get(), ModelTemplates.FLAT_ITEM);
     }
 }

@@ -126,8 +126,8 @@ public class ThrownKatanaEntity extends Entity {
 
     private void createFlightParticles() {
         if (!(level() instanceof ServerLevel sl)) return;
-        if (lifeTicks % 2 != 0) return;
-        sl.sendParticles(ParticleTypes.CRIT, getX(), getY(), getZ(), 3, 0.1, 0.1, 0.1, 0.05);
+        if (lifeTicks % 3 != 0) return;
+        sl.sendParticles(ParticleTypes.ENCHANTED_HIT, getX(), getY(), getZ(), 2, 0.05, 0.05, 0.05, 0.01);
     }
 
     private void createSpinParticles() {

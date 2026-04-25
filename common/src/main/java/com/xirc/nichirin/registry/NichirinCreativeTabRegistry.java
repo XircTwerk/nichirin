@@ -50,6 +50,10 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinItemRegistry.SCARLET_GEM.get());
                         entries.accept(NichirinItemRegistry.SMOKE_BOMB.get());
                         entries.accept(NichirinItemRegistry.FLASH_BOMB.get());
+                        entries.accept(NichirinItemRegistry.PERK_SCROLL.get());
+                        entries.accept(NichirinItemRegistry.CURSED_SCROLL.get());
+                        entries.accept(NichirinItemRegistry.TEMPLE_DEMON_SPAWN_EGG.get());
+                        entries.accept(NichirinItemRegistry.WATER_BREATHING_TRAINER_SPAWN_EGG.get());
                     })
                     .build();
         });
@@ -67,6 +71,7 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinItemRegistry.FLAME_KATANA.get());
                         entries.accept(NichirinItemRegistry.INSECT_KATANA.get());
                         entries.accept(NichirinItemRegistry.SOUND_KATANAS.get());
+                        entries.accept(NichirinItemRegistry.BEAST_KATANAS.get());
                         entries.accept(NichirinItemRegistry.SABITO_KATANA.get());
                     })
                     .build();
@@ -114,6 +119,11 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinItemRegistry.UROKODAKI_CAPE.get());
                         entries.accept(NichirinItemRegistry.UROKODAKI_LEGGINGS.get());
                         entries.accept(NichirinItemRegistry.UROKODAKI_BOOTS.get());
+
+                        entries.accept(NichirinItemRegistry.BOAR_HEAD.get());
+                        entries.accept(NichirinItemRegistry.INOSUKE_UNIFORM.get());
+                        entries.accept(NichirinItemRegistry.INOSUKE_LEGGINGS.get());
+                        entries.accept(NichirinItemRegistry.INOSUKE_BOOTS.get());
 
                     })
                     .build();

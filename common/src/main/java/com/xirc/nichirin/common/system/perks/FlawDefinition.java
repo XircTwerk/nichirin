@@ -1,0 +1,18 @@
+package com.xirc.nichirin.common.system.perks;
+
+/**
+ * A negative perk (flaw) the player must equip when equipping more than
+ * {@code PerkConfig.perksBeforeFlaws} perks.
+ */
+public class FlawDefinition {
+
+    public final String id;
+    public final String name;
+    public final String description;
+
+    public FlawDefinition(String id, String name, String description) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+    }
+}

@@ -1,0 +1,30 @@
+package com.xirc.nichirin.client.renderer.entity.animator;
+
+import com.xirc.nichirin.BreathOfNichirin;
+import com.xirc.nichirin.common.entity.npc.WaterBreathingTrainerEntity;
+import mod.azure.azurelib.animation.controller.AzAnimationController;
+import mod.azure.azurelib.animation.controller.AzAnimationControllerContainer;
+import mod.azure.azurelib.animation.impl.AzEntityAnimator;
+import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.NotNull;
+
+public class WaterBreathingTrainerAnimator extends AzEntityAnimator<WaterBreathingTrainerEntity> {
+
+    private static final ResourceLocation ANIMATIONS = new ResourceLocation(
+            BreathOfNichirin.MOD_ID,
+            "animations/temple_demon.animation.json"
+    );
+
+    @Override
+    public void registerControllers(AzAnimationControllerContainer<WaterBreathingTrainerEntity> container) {
+        container.add(
+                AzAnimationController.<WaterBreathingTrainerEntity>builder(this, "main_controller")
+                        .build()
+        );
+    }
+
+    @Override
+    public @NotNull ResourceLocation getAnimationLocation(WaterBreathingTrainerEntity animatable) {
+        return ANIMATIONS;
+    }
+}

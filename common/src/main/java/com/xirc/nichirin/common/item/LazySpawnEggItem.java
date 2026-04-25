@@ -1,8 +1,8 @@
 package com.xirc.nichirin.common.item;
 
-import com.xirc.nichirin.common.entity.npc.TempleDemonEntity;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.flag.FeatureFlagSet;
 import net.minecraft.world.flag.FeatureFlags;
@@ -14,9 +14,9 @@ import net.minecraft.world.item.SpawnEggItem;
  * fires before entity type RegisterEvent.
  */
 public class LazySpawnEggItem extends SpawnEggItem {
-    private final RegistrySupplier<EntityType<TempleDemonEntity>> entityTypeSupplier;
+    private final RegistrySupplier<? extends EntityType<? extends Entity>> entityTypeSupplier;
 
-    public LazySpawnEggItem(RegistrySupplier<EntityType<TempleDemonEntity>> entityTypeSupplier, int primaryColor, int secondaryColor, Properties properties) {
+    public LazySpawnEggItem(RegistrySupplier<? extends EntityType<? extends Entity>> entityTypeSupplier, int primaryColor, int secondaryColor, Properties properties) {
         super(null, primaryColor, secondaryColor, properties);
         this.entityTypeSupplier = entityTypeSupplier;
     }
