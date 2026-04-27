@@ -11,12 +11,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Fourth Form: Shifting Flow Slash
- * 10-tick low-stance windup, then an 18-block dash completed in ~10 ticks.
- * Slashes all enemies in the dash path, then delivers a powerful final slash at the end.
- * Good stun on both path hits and finisher.
- */
+// Form 4: Low-stance windup into a long dash. Slashes through the path and finishes with a wide sweep.
 public class ShiftingFlowSlashAttack extends MistBreathingAttackBase {
 
     private boolean dashStarted = false;
@@ -33,7 +28,6 @@ public class ShiftingFlowSlashAttack extends MistBreathingAttackBase {
         dashDirection = user.getLookAngle().normalize();
         startPosition = user.position();
 
-        // Low stance startup: mist pooling at feet
         if (world instanceof ServerLevel serverLevel) {
             Vec3 pos = user.position();
             for (int i = 0; i < 20; i++) {
@@ -62,7 +56,6 @@ public class ShiftingFlowSlashAttack extends MistBreathingAttackBase {
         sustainDash();
         slashEnemiesInPath();
 
-        // Final slash triggers in the last 2 ticks of the dash
         if (!finisherExecuted && tickCount >= windup + duration - 2) {
             executeFinisher();
             finisherExecuted = true;
@@ -87,7 +80,6 @@ public class ShiftingFlowSlashAttack extends MistBreathingAttackBase {
             user.hurtMarked = true;
         }
 
-        // Low mist trail hugging the ground during dash
         if (world instanceof ServerLevel serverLevel) {
             Vec3 pos = user.position();
             serverLevel.sendParticles(ParticleTypes.CLOUD,
@@ -119,7 +111,6 @@ public class ShiftingFlowSlashAttack extends MistBreathingAttackBase {
     private void executeFinisher() {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
-        // Wide sweeping final slash at the end of the dash
         List<LivingEntity> sweepTargets = getTargetsInSweep(100f, range * 0.35f, 6);
 
         for (LivingEntity target : sweepTargets) {

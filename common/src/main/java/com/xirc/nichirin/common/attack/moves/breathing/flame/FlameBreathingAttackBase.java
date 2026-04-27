@@ -9,13 +9,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
-/**
- * Base class for Flame Breathing attacks
- * Extends AbstractBreathingAttack for unified interface
- *
- * Flame-specific functionality includes fire effects, burning, and crowd control
- * All Flame Breathing attacks set targets on fire and excel at hitting multiple enemies
- */
+// Base for Flame Breathing attacks. All hits apply fire and burning effects.
 @SuppressWarnings("rawtypes")
 public abstract class FlameBreathingAttackBase extends AbstractBreathingAttack<FlameBreathingAttackBase, IBreathingAttacker> {
 
@@ -24,45 +18,21 @@ public abstract class FlameBreathingAttackBase extends AbstractBreathingAttack<F
     private static final int FLAME_PARTICLE_COUNT = 15;
     private static final float FLAME_PARTICLE_SPREAD = 1.5f;
 
-    /**
-     * Apply Flame Breathing specific damage and effects to a target
-     * Overrides the base hitTarget to add Flame-specific effects
-     */
     @Override
     protected void hitTarget(LivingEntity target) {
         if (world.isClientSide) return;
-
-        // Apply base damage and knockback
         super.hitTarget(target);
-
-        // Apply Flame Breathing specific fire effect
         applyFireEffect(target);
-
-        // Create flame particles at target location
         createFlameHitParticles(target.position());
-
-        // Play flame hit sound
         playFlameHitSound(target.position());
     }
 
-    /**
-     * Special Flame Breathing hit method that removes immunity frames
-     * Used for multi-hit attacks like Flame Tiger
-     */
     @Override
     protected void hitTargetNoImmunity(LivingEntity target) {
         if (world.isClientSide) return;
-
-        // Apply base no-immunity hit
         super.hitTargetNoImmunity(target);
-
-        // Apply Flame Breathing specific fire effect
         applyFireEffect(target);
-
-        // Create flame particles at target location
         createFlameHitParticles(target.position());
-
-        // Play flame hit sound
         playFlameHitSound(target.position());
     }
 
@@ -89,31 +59,21 @@ public abstract class FlameBreathingAttackBase extends AbstractBreathingAttack<F
         target.setSecondsOnFire(fireSeconds);
         target.setRemainingFireTicks(Math.max(target.getRemainingFireTicks(), fireSeconds * 20));
 
-        // ALSO apply Burning status effect for visual feedback and extended burning
-        int burningDurationTicks = fireSeconds * 20; // Same duration as fire
+        int burningDurationTicks = fireSeconds * 20;
         target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
                 com.xirc.nichirin.registry.NichirinEffectRegistry.BURNING.get(),
                 burningDurationTicks,
-                0, // Amplifier 0
-                false, // Not ambient
-                true   // Show particles
+                0, false, true
         ));
     }
 
-    /**
-     * Create flame particles around the user
-     * Called during attack startup and execution
-     */
     protected void createFlameParticles() {
         if (!(world instanceof ServerLevel serverLevel) || user == null) return;
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDir = user.getLookAngle();
-
-        // Use ServerLevel's random instead of world.random to avoid threading issues
         net.minecraft.util.RandomSource random = serverLevel.getRandom();
 
-        // Create flame particles around the user
         for (int i = 0; i < FLAME_PARTICLE_COUNT; i++) {
             double offsetX = (random.nextDouble() - 0.5) * FLAME_PARTICLE_SPREAD;
             double offsetY = random.nextDouble() * FLAME_PARTICLE_SPREAD;
@@ -121,7 +81,6 @@ public abstract class FlameBreathingAttackBase extends AbstractBreathingAttack<F
 
             Vec3 particlePos = userPos.add(offsetX, offsetY, offsetZ);
 
-            // Mix of flame and smoke particles
             serverLevel.sendParticles(ParticleTypes.FLAME,
                     particlePos.x, particlePos.y, particlePos.z,
                     1, 0.1, 0.1, 0.1, 0.05);
@@ -133,7 +92,6 @@ public abstract class FlameBreathingAttackBase extends AbstractBreathingAttack<F
             }
         }
 
-        // Create flame trail in look direction
         for (int i = 1; i <= 5; i++) {
             Vec3 trailPos = userPos.add(lookDir.scale(i * 0.8));
             serverLevel.sendParticles(ParticleTypes.FLAME,
@@ -142,23 +100,15 @@ public abstract class FlameBreathingAttackBase extends AbstractBreathingAttack<F
         }
     }
 
-    /**
-     * Create flame particles at a specific hit location
-     */
     protected void createFlameHitParticles(Vec3 hitPosition) {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
-        // Explosion of flame particles at hit location
         serverLevel.sendParticles(ParticleTypes.FLAME,
                 hitPosition.x, hitPosition.y + 1, hitPosition.z,
                 20, 0.5, 0.5, 0.5, 0.2);
-
-        // Smoke particles
         serverLevel.sendParticles(ParticleTypes.LARGE_SMOKE,
                 hitPosition.x, hitPosition.y + 1, hitPosition.z,
                 8, 0.3, 0.3, 0.3, 0.1);
-
-        // Lava particles for extra flair
         serverLevel.sendParticles(ParticleTypes.LAVA,
                 hitPosition.x, hitPosition.y + 0.5, hitPosition.z,
                 5, 0.2, 0.2, 0.2, 0.1);

@@ -12,12 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Fifth Form: Sea of Clouds and Haze
- * A zigzag charge like Dance of the Centipede, but with bigger hitboxes and more hops.
- * 5 zigzag dashes + a straight finisher, slashing enemies continuously.
- * Each hop catches and drags enemies, with a powerful final burst.
- */
+// Form 5: 5-hop zigzag charge with large hitboxes. Drags enemies into a straight finisher.
 public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
 
     private static final int ZIGZAG_COUNT = 5;
@@ -85,7 +80,6 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
             user.hasImpulse = true;
         }
 
-        // Brief invincibility during each hop
         user.setInvulnerable(true);
 
         catchAndDragEnemies();
@@ -96,17 +90,6 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
                 SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 0.7f, 1.3f + zigzagsExecuted * 0.1f);
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.8f, 1.2f);
-    }
-
-    private Vec3 rotateDirection(Vec3 direction, double degrees) {
-        double radians = Math.toRadians(degrees);
-        double cos = Math.cos(radians);
-        double sin = Math.sin(radians);
-        return new Vec3(
-                direction.x * cos - direction.z * sin,
-                direction.y,
-                direction.x * sin + direction.z * cos
-        ).normalize();
     }
 
     private void catchAndDragEnemies() {

@@ -22,18 +22,15 @@ public class SmokeBombItem extends Item {
         ItemStack itemStack = player.getItemInHand(hand);
 
         if (!level.isClientSide) {
-            // Create and throw smoke bomb entity
             SmokeBombEntity smokeBomb = new SmokeBombEntity(level, player);
             smokeBomb.setItem(itemStack);
             smokeBomb.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, 1.5F, 1.0F);
             level.addFreshEntity(smokeBomb);
         }
 
-        // Play snowball throw sound
         level.playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.SNOWBALL_THROW, SoundSource.NEUTRAL, 1F, 0.4F);
 
-        // Update stats and consume item
         player.awardStat(Stats.ITEM_USED.get(this));
         if (!player.getAbilities().instabuild) {
             itemStack.shrink(1);

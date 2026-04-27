@@ -76,22 +76,18 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
             return; // Prevent double-configuration
         }
 
-        // Combat Stats - REMOVED defaults - these MUST be provided by moveset
         this.damage = config.getDamageOrDefault(0f);
         this.range = config.getRangeOrDefault(0f);
         this.knockback = config.getKnockbackOrDefault(0f);
         this.hitStun = config.getHitStunOrDefault(0);
         this.hitboxSize = config.getHitboxSizeOrDefault(0f);
 
-        // Timing
         this.cooldown = config.getCooldownOrDefault(0);
         this.windup = config.getWindupOrDefault(0);
         this.duration = config.getDurationOrDefault(0);
 
-        // Resources
         this.breathCost = config.getBreathCostOrDefault(0f);
 
-        // Movement (nullable - only set if configured in moveset)
         this.teleportDistance = config.getTeleportDistance();
         this.dashSpeed = config.getDashSpeed();
         this.teleportWindup = config.getTeleportWindup();
@@ -104,15 +100,8 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
      */
     public void start(Player user, Level world) {
 
-        // CRITICAL: Check configuration first
-        if (!configured) {
-            return;
-        }
-
-        // Validate only that duration exists (attacks need to run for some time)
-        if (duration <= 0) {
-            return;
-        }
+        if (!configured) return;
+        if (duration <= 0) return;
 
         this.user = user;
         this.world = world;
@@ -121,7 +110,6 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         this.hitEntities.clear();
         this.hitCount = 0;
 
-        // Check breath cost BEFORE marking as active
         if (breathCost > 0 && !BreathingManager.hasBreath(user, breathCost)) {
             user.displayClientMessage(
                     Component.literal("Not enough breath!")
@@ -131,7 +119,6 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
             return;
         }
 
-        // Consume breath BEFORE calling onStart()
         if (breathCost > 0) {
             if (BreathingManager.consume(user, breathCost)) {
                 breathConsumed = true;
@@ -145,18 +132,13 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
             }
         }
 
-        // Mark as active AFTER breath consumption
         this.isActive = true;
-
-        // Register for self-ticking
         registerForTicking();
 
-        // Call onStart() - if this calls stop(), we'll handle it
         try {
             onStart();
         } catch (Exception e) {
             e.printStackTrace();
-            // Clean up on error
             this.isActive = false;
             if (breathConsumed) {
                 BreathingManager.restore(user, breathCost);
@@ -165,7 +147,6 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
             return;
         }
 
-        // If onStart() called stop(), refund breath
         if (!isActive && breathConsumed) {
             BreathingManager.restore(user, breathCost);
             breathConsumed = false;

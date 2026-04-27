@@ -27,18 +27,10 @@ public class SimpleKatana extends Item {
         super(properties);
     }
 
-    // =========================================================================
-    //  Item overrides (boilerplate)
-    // =========================================================================
-
     public boolean isDamageable(ItemStack stack) { return false; }
     @Override public boolean isBarVisible(ItemStack stack) { return false; }
     @Override public boolean isEnchantable(ItemStack stack) { return false; }
     public void setDamage(ItemStack stack, int damage) { /* immutable */ }
-
-    // =========================================================================
-    //  inventoryTick → tick active attacks each game tick
-    // =========================================================================
 
     @Override
     public void inventoryTick(ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {
@@ -54,16 +46,10 @@ public class SimpleKatana extends Item {
         DefaultKatanaMoveset.tick(player);
     }
 
-    // =========================================================================
-    //  Left-click (M1) — called by server packet handler
-    // =========================================================================
-
     /**
      * SERVER ONLY: Called by MultiplayerInputHandler after network validation.
-     *
-     * <p>M1 routing: if the player's breathing style defines a left-click move it fires that;
-     * otherwise (no style, or style has no left-click move) falls back to the default slash combo
-     * from {@link DefaultKatanaMoveset}.</p>
+     * Routes to breathing moveset left-click if available, otherwise falls back to
+     * the default slash combo from {@link DefaultKatanaMoveset}.
      */
     public void performAttack(Player player) {
         if (player.level().isClientSide) return;
@@ -77,10 +63,6 @@ public class SimpleKatana extends Item {
         if (moveset != null && moveset.handleLeftClick(player)) return;
         DefaultKatanaMoveset.INSTANCE.handleLeftClick(player);
     }
-
-    // =========================================================================
-    //  Right-click — vanilla item interaction entry-point
-    // =========================================================================
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
@@ -104,24 +86,15 @@ public class SimpleKatana extends Item {
         return InteractionResultHolder.success(getActiveHandItem(player));
     }
 
-    // =========================================================================
-    //  Wheel moves (0 = Check, 1 = Overhead, 2 = Thrust)
-    //  Called by MoveHotkeyPacket when the player has no breathing style.
-    // =========================================================================
-
+    // Wheel moves (0 = Check, 1 = Overhead, 2 = Thrust)
+    // Called by MoveHotkeyPacket when the player has no breathing style.
     public void performWheelMove(Player player, int moveIndex) {
         if (player.level().isClientSide()) return;
         if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) return;
         if (player.hasEffect(NichirinEffectRegistry.BLOCKING.get())) return;
 
-        // MoveHotkeyPacket already routes to the breathing moveset when one is present,
-        // so this path is only reached for players with no breathing style.
         DefaultKatanaMoveset.INSTANCE.performMove(player, moveIndex);
     }
-
-    // =========================================================================
-    //  Client-side HUD feedback
-    // =========================================================================
 
     /** CLIENT ONLY: Update the cooldown HUD and play the attack animation. */
     public void displayClientCooldown(Player player) {
@@ -152,10 +125,6 @@ public class SimpleKatana extends Item {
             CooldownHUD.setCooldown("Double Slash", 20);
         }
     }
-
-    // =========================================================================
-    //  Private helpers
-    // =========================================================================
 
     /**
      * Returns true only if this katana instance is the one that should be handling attacks

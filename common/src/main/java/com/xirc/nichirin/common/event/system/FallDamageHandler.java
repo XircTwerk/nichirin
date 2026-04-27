@@ -16,17 +16,10 @@ public class FallDamageHandler {
     private static EventResult onEntityHurt(LivingEntity entity, DamageSource damageSource, float damage) {
         if (!(entity instanceof Player player)) return EventResult.pass();
 
-        // Only modify fall damage
         if (damageSource == player.damageSources().fall()) {
-            // Check if player used double jump
             if (PlayerDoubleJump.hasDoubleJumped(player)) {
                 float reducedDamage = Math.max(0, damage - 6.0f);
-
-                // Reset the double jump state after using the benefit
                 PlayerDoubleJump.resetDoubleJump(player);
-
-                // Note: This event might not allow damage modification
-                // You may need to use a different approach or keep the mixin for this specific case
                 return EventResult.interruptDefault();
             }
         }

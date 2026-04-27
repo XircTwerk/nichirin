@@ -21,31 +21,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * Balanced Thunder Breathing moveset implementation
- * Thunder Clap Flash is right-click only, remaining 6 forms for attack wheel
- * Icons are handled by the MoveIcon system using moveset ID and move IDs
- */
+// Thunder Clap Flash is right-click only; remaining 6 forms go in the attack wheel.
 public class ThunderBreathingMoveset extends AbstractMoveset {
 
-    // Track cooldowns per player per move
     private static final Map<UUID, Map<Integer, Long>> entityCooldowns = new HashMap<>();
-
-    // Track active attacks to prevent breath consumption on failed attempts
     private static final Map<UUID, Boolean> executingMove = new HashMap<>();
-
-    // Thread-local to store current moveset instance for action access
     private static final ThreadLocal<ThunderBreathingMoveset> CURRENT_MOVESET = new ThreadLocal<>();
 
     public ThunderBreathingMoveset() {
         super("thunder_breathing", "Thunder Breathing", MovesetType.BREATHING, createBuilder());
-
-        // Auto-capture configs for GUI display
         captureInitialConfigs();
     }
 
     private void captureInitialConfigs() {
-        // Execute the config creation logic without actually performing the moves
         createAndCaptureThunderclapFlashConfig();
     }
 
@@ -67,7 +55,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
     private static MovesetBuilder createBuilder() {
         return new MovesetBuilder()
                 .withIdleAnimation("nichirin:thunder_idle")
-                .withSpeedMultiplier(1.5f) // Slight speed boost for Thunder Breathing
+                .withSpeedMultiplier(1.5f)
 
                 // SKIP INDEX 0 - Thunder Clap Flash is right-click only, not in attack wheel
 
@@ -198,12 +186,11 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
 
     @Override
     public int getMoveCount() {
-        return 6; // Only 6 moves in attack wheel (excluding Thunder Clap Flash)
+        return 6;
     }
 
     @Override
     public boolean handleRightClick(LivingEntity entity, boolean isCrouching) {
-        // Thunder Clap Flash - right-click exclusive move
         if (entity instanceof Player player) {
             ThunderClapFlashAttack.setCrouchDash(player, isCrouching);
         }
@@ -211,7 +198,6 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
         triggerAnimation(entity, "thunderclap_flash");
         ThunderClapFlashAttack attack = new ThunderClapFlashAttack();
 
-        // Use the same config creation method and sync to client
         createAndCaptureThunderclapFlashConfig();
         MoveConfiguration tempConfig = getRightClickConfiguration();
 
@@ -232,9 +218,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
 
     @Override
     public void performMove(LivingEntity entity, int moveIndex) {
-        // Check cooldown before allowing move
         if (!canUseMove(entity, moveIndex)) {
-            // Show cooldown message
             MoveConfiguration config = getMove(moveIndex);
             if (config != null) {
                 Map<Integer, Long> cooldowns = entityCooldowns.get(entity.getUUID());
@@ -253,10 +237,8 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
             return;
         }
 
-        // Check breath BEFORE executing
         MoveConfiguration config = getMove(moveIndex);
         if (config != null) {
-            // Get the breath cost from the move configuration
             float breathCost = config.getBreathCostOrDefault(0.0f);
 
             if (breathCost > 0 && !BreathingManager.hasBreath((Player) entity, breathCost)) {
@@ -270,40 +252,32 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
         }
 
         // SPECIAL CHECK FOR RICE SPIRIT - Don't execute if no targets in range
-        if (moveIndex == 0) { // Rice Spirit is index 0 in the wheel
+        if (moveIndex == 0) {
             if (!hasTargetsInRange(entity, config.getRangeOrDefault(5.0f))) {
                 showMessage(entity,
                         Component.literal("Rice Spirit: No enemies in range!")
                                 .withStyle(style -> style.withColor(0xFFAA00)),
                         true
                 );
-                return; // Don't execute at all - no breath consumed, no cooldown
+                return;
             }
         }
 
-        // Mark that we're executing a move
         executingMove.put(entity.getUUID(), true);
-
-        // Store current moveset instance for access by actions
         CURRENT_MOVESET.set(this);
 
         try {
-            // Execute the move
             super.performMove(entity, moveIndex);
         } finally {
-            // Always clean up the thread local
             CURRENT_MOVESET.remove();
         }
 
-        // Check if move actually executed by seeing if breath was consumed
         boolean moveExecuted = !executingMove.getOrDefault(entity.getUUID(), false);
         executingMove.remove(entity.getUUID());
 
         if (moveExecuted && config != null) {
-            // Set cooldown after successful execution
             setMoveCooldown(entity, moveIndex);
 
-            // Send cooldown display packet if on server and has cooldown
             if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer
                     && config.getCooldownOrDefault(0) > 0) {
                 FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
@@ -315,9 +289,6 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
         }
     }
 
-    /**
-     * Check if there are valid targets within range for Rice Spirit
-     */
     private boolean hasTargetsInRange(LivingEntity entity, float range) {
         net.minecraft.world.phys.AABB searchBox = new net.minecraft.world.phys.AABB(
                 entity.getX() - range, entity.getY() - range, entity.getZ() - range,
@@ -329,44 +300,26 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
         return !entities.isEmpty();
     }
 
-    /**
-     * Get the current moveset instance (for use in action lambdas)
-     */
     public static ThunderBreathingMoveset getCurrentMoveset() {
         return CURRENT_MOVESET.get();
     }
 
-    /**
-     * Check if a player can use a specific move (not on cooldown)
-     */
     private boolean canUseMove(LivingEntity entity, int moveIndex) {
         MoveConfiguration config = getMove(moveIndex);
-        if (config == null || config.getCooldownOrDefault(0) <= 0) {
-            return true; // No cooldown
-        }
+        if (config == null || config.getCooldownOrDefault(0) <= 0) return true;
 
         Map<Integer, Long> cooldowns = entityCooldowns.get(entity.getUUID());
-        if (cooldowns == null) {
-            return true; // No cooldowns tracked yet
-        }
+        if (cooldowns == null) return true;
 
         Long cooldownEnd = cooldowns.get(moveIndex);
-        if (cooldownEnd == null) {
-            return true; // Move never used
-        }
+        if (cooldownEnd == null) return true;
 
-        long currentTime = entity.level().getGameTime();
-        return currentTime >= cooldownEnd;
+        return entity.level().getGameTime() >= cooldownEnd;
     }
 
-    /**
-     * Set a move on cooldown
-     */
     private void setMoveCooldown(LivingEntity entity, int moveIndex) {
         MoveConfiguration config = getMove(moveIndex);
-        if (config == null || config.getCooldownOrDefault(0) <= 0) {
-            return; // No cooldown
-        }
+        if (config == null || config.getCooldownOrDefault(0) <= 0) return;
 
         long cooldownEnd = entity.level().getGameTime() + config.getCooldownOrDefault(0);
         entityCooldowns.computeIfAbsent(entity.getUUID(), k -> new HashMap<>())
@@ -390,15 +343,8 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
 
     @Override
     public void onMovePerformed(LivingEntity entity, int moveIndex, boolean isCrouching) {
-        // Special handling for Thunder Clap and Flash when used while initially crouching
-        if (moveIndex == -1 && isCrouching) {
-            // The crouch state is already stored in ThunderClapFlashAttack via setCrouchDash
-        }
     }
 
-    /**
-     * Called when a player logs out - clean up their data
-     */
     public static void resetCooldowns(LivingEntity entity) {
         entityCooldowns.remove(entity.getUUID());
     }
@@ -408,11 +354,6 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
         executingMove.remove(entity.getUUID());
     }
 
-    // ==================== NPC-PLAYER HELPER METHODS ====================
-
-    /**
-     * Check if entity has enough breath (works for both Players and NPCs)
-     */
     private boolean hasEnoughBreath(LivingEntity entity, float amount) {
         if (entity instanceof Player player) {
             return BreathingManager.hasBreath(player, amount);
@@ -422,13 +363,9 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
         return false;
     }
 
-    /**
-     * Show message to entity (only works for Players)
-     */
     private void showMessage(LivingEntity entity, Component message, boolean actionBar) {
         if (entity instanceof Player player) {
             player.displayClientMessage(message, actionBar);
         }
-        // NPCs don't need messages
     }
 }

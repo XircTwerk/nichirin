@@ -25,17 +25,14 @@ public class FlashBombItem extends Item {
             FlashBombEntity flashBomb = new FlashBombEntity(level, player);
             flashBomb.setItem(itemStack);
 
-            // Throw straight up with low upward velocity (about 2 blocks high)
-            flashBomb.setDeltaMovement(0, 0.4, 0); // Lower throw height
+            flashBomb.setDeltaMovement(0, 0.4, 0);
 
             level.addFreshEntity(flashBomb);
         }
 
-        // Play throw sound
         level.playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.SNOWBALL_THROW, SoundSource.NEUTRAL, 1F, 0.4F);
 
-        // Update stats and consume item
         player.awardStat(Stats.ITEM_USED.get(this));
         if (!player.getAbilities().instabuild) {
             itemStack.shrink(1);

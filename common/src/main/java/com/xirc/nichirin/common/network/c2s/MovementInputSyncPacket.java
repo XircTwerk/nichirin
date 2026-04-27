@@ -41,7 +41,6 @@ public class MovementInputSyncPacket {
 
     public void handle(ServerPlayer player) {
         if (player != null) {
-            // Update the movement context with current input state
             MovementContext.updatePlayerInput(player.getUUID(), forward, backward, left, right, jump);
         }
     }

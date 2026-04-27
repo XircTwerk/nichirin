@@ -31,7 +31,6 @@ public class BreathingMovePacket {
     }
 
     public void handle(ServerPlayer player) {
-        // Get player's breathing moveset specifically
         AbstractMoveset moveset = MovesetHelper.getBreathingMoveset(player);
         if (moveset == null) {
             player.displayClientMessage(
@@ -42,7 +41,6 @@ public class BreathingMovePacket {
             return;
         }
 
-        // Check if move index is valid
         if (moveIndex < 0 || moveIndex >= moveset.getMoveCount()) {
             player.displayClientMessage(
                     Component.literal("Invalid move selection!")
@@ -52,17 +50,11 @@ public class BreathingMovePacket {
             return;
         }
 
-        // Execute the move if pressed
         if (pressed) {
             AbstractMoveset.MoveConfiguration config = moveset.getMove(moveIndex);
             if (config != null) {
-                // FIRST: Block inputs in MultiplayerInputHandler to prevent race conditions
                 MultiplayerInputHandler.blockInputsAfterBreathingMove(player);
-
-                // THEN: Execute the breathing move
                 moveset.performMove(player, moveIndex);
-
-                // Also block katana inputs (redundant but safe)
                 InputHandler.blockAfterBreathingMove(player);
             }
         }

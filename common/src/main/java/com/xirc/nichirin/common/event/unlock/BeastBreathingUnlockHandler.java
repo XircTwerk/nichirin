@@ -37,22 +37,18 @@ public class BeastBreathingUnlockHandler {
 
     private static void onEntityDeath(LivingEntity entity, net.minecraft.world.damagesource.DamageSource source) {
         if (entity == null || source == null) return;
-        // Check if a boar was killed by a player
         if (entity.getType() != NichirinEntityRegistry.BOAR.get()) return;
 
         Entity attacker = source.getEntity();
         if (!(attacker instanceof Player player)) return;
 
-        // Drop the boar head
         ItemStack boarHead = new ItemStack(NichirinItemRegistry.BOAR_HEAD.get());
         entity.spawnAtLocation(boarHead);
     }
 
     private static void checkBoarHeadEquipped(ServerPlayer player) {
-        // Already unlocked - skip
         if (ProgressionHelper.isStyleUnlocked(player, "beast_breathing")) return;
 
-        // Check if wearing the boar head
         ItemStack helmet = player.getInventory().getArmor(3); // Head slot
         if (helmet.getItem() != NichirinItemRegistry.BOAR_HEAD.get()) return;
 

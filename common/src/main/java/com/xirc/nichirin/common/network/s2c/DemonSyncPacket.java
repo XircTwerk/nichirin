@@ -3,10 +3,7 @@ package com.xirc.nichirin.common.network.s2c;
 import lombok.Getter;
 import net.minecraft.network.FriendlyByteBuf;
 
-/**
- * S2C packet to sync demon blood data to client for display
- * Updated to work with mixin-based rendering system
- */
+// S2C packet to sync demon blood data to client for display.
 @Getter
 public class DemonSyncPacket {
 
@@ -33,8 +30,6 @@ public class DemonSyncPacket {
     }
 
     public void handleClient() {
-        // Update client-side blood display using DemonComponent
-        // This works with the new mixin-based rendering
         com.xirc.nichirin.common.system.DemonComponent.updateBloodFromSync(bloodPoints, halfBloodPoints, isDemon);
     }
 }

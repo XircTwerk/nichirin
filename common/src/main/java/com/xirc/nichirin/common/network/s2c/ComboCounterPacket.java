@@ -32,7 +32,6 @@ public class ComboCounterPacket {
     }
 
     public void handleClient() {
-        // Update client-side combo display
         com.xirc.nichirin.client.gui.ComboHUD.updateCombo(comboCount, stunDurationTicks);
         if (damage > 0) {
             com.xirc.nichirin.client.gui.ComboHUD.addDamage(damage);

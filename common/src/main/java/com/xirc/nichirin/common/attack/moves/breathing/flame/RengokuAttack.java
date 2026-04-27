@@ -12,23 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Ninth Form: Rengoku
- * The most powerful Flame Breathing technique. The user assumes a high stance before
- * performing an extremely high-speed dash towards the target and unleashing a singular,
- * devastating slash. The technique is powerful enough to completely carve out the ground
- * in its wake. This technique seemingly takes the form of a flaming Japanese dragon
- * that envelopes the user as they are charging towards the target.
- *
- * Mechanics:
- * - Summons a flaming dragon effect during the dash
- * - Creates massive ground damage in its wake
- * - Ultimate technique with massive damage and range
- * - SUPER FAST dash with constant damage along entire path
- *
- * All configuration comes from the moveset builder.
- * This class handles only the behavior and visual/audio effects.
- */
+// Ninth Form: Rengoku. High-stance windup into a flaming dragon dash with massive damage.
 public class RengokuAttack extends FlameBreathingAttackBase {
 
     private static final int DASH_DURATION = 20; // Fast dragon dash - 5 ticks
@@ -40,10 +24,7 @@ public class RengokuAttack extends FlameBreathingAttackBase {
     private Vec3 dashDirection;
     private final Set<LivingEntity> hitEntities = new HashSet<>();
 
-    public RengokuAttack() {
-        // No configuration here - everything comes from moveset
-        // All values will be set via configure() method
-    }
+    public RengokuAttack() {}
 
     @Override
     protected void onStart() {

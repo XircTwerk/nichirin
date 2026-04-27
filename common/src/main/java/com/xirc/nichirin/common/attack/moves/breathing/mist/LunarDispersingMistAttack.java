@@ -11,12 +11,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Sixth Form: Lunar Dispersing Mist
- * The user leaps into the air and charges forward, unleashing a barrage of slashes.
- * A large hitbox surrounds the player throughout the flight, catching everything in the path.
- * Finishes with a single powerful vertical slash (big hitbox) that deals massive damage.
- */
+// Form 6: Jump + horizontal charge, slashing everything in the path. Ends with a massive vertical AoE.
 public class LunarDispersingMistAttack extends MistBreathingAttackBase {
 
     private boolean launched = false;
@@ -105,7 +100,6 @@ public class LunarDispersingMistAttack extends MistBreathingAttackBase {
     private void performMidFlightSlash() {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
-        // Large hitbox centered on the player — catches everything in the flight path
         List<LivingEntity> targets = getTargetsInCustomHitbox(
                 userPos, hitboxSize * 2.0, user.getBbHeight() + 1.5, hitboxSize * 2.0);
 
@@ -114,7 +108,6 @@ public class LunarDispersingMistAttack extends MistBreathingAttackBase {
                 hitTarget(target);
                 hitDuringFlight.add(target);
             } else {
-                // Subsequent hits at reduced damage, no immunity
                 float originalDamage = damage;
                 damage = damage * 0.5f;
                 hitTargetNoImmunity(target);
@@ -141,13 +134,11 @@ public class LunarDispersingMistAttack extends MistBreathingAttackBase {
     }
 
     private void executeVerticalFinisher() {
-        // Slow horizontal movement for the final downward slash
         Vec3 current = user.getDeltaMovement();
         user.setDeltaMovement(current.x * 0.2, current.y, current.z * 0.2);
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
-        // Very large hitbox on the player for the finisher
         List<LivingEntity> finisherTargets = getTargetsInCustomHitbox(
                 userPos, hitboxSize * 3.0, user.getBbHeight() + 2.0, hitboxSize * 3.0);
 
@@ -162,7 +153,6 @@ public class LunarDispersingMistAttack extends MistBreathingAttackBase {
             createMistHitParticles(target.position());
         }
 
-        // Massive vertical slash visual
         createMistCircle(userPos, hitboxSize * 2.5f, 32);
         if (world instanceof ServerLevel serverLevel) {
             serverLevel.sendParticles(ParticleTypes.CLOUD, userPos.x, userPos.y, userPos.z,

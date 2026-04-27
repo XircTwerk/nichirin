@@ -17,9 +17,7 @@ import net.minecraft.world.entity.player.Player;
 public class ThunderBreathingUnlockHandler {
 
     public static void register() {
-        // Register entity hurt event to detect lightning damage
         EntityEvent.LIVING_HURT.register((entity, source, amount) -> {
-            // Check if damage is from lightning and entity is a player
             if ((source.getDirectEntity() instanceof LightningBolt ||
                     source.getEntity() instanceof LightningBolt ||
                     source.getMsgId().equals("lightningBolt"))
@@ -28,40 +26,23 @@ public class ThunderBreathingUnlockHandler {
 
                 Player player = (Player) entity;
 
-                // Check if wearing no armor
                 if (isWearingNoArmor(player)) {
-                    // Unlock immediately when struck
                     if (player instanceof ServerPlayer serverPlayer) {
                         checkThunderBreathingUnlock(serverPlayer);
                     }
                 }
             }
 
-            return dev.architectury.event.EventResult.pass(); // Pass the event through
+            return dev.architectury.event.EventResult.pass();
         });
     }
 
-    /**
-     * Checks if player should unlock Thunder Breathing
-     */
     private static void checkThunderBreathingUnlock(ServerPlayer player) {
-        // Check if player already has Thunder Breathing unlocked
-        if (ProgressionHelper.isStyleUnlocked(player, "thunder_breathing")) {
-            return; // Already unlocked
-        }
-
-        // Check if player is wearing no armor (double check)
-        if (!isWearingNoArmor(player)) {
-            return;
-        }
-
-        // Unlock Thunder Breathing!
+        if (ProgressionHelper.isStyleUnlocked(player, "thunder_breathing")) return;
+        if (!isWearingNoArmor(player)) return;
         unlockThunderBreathing(player);
     }
 
-    /**
-     * Checks if player has no armor equipped
-     */
     private static boolean isWearingNoArmor(Player player) {
         return player.getItemBySlot(EquipmentSlot.HEAD).isEmpty() &&
                 player.getItemBySlot(EquipmentSlot.CHEST).isEmpty() &&
@@ -69,29 +50,20 @@ public class ThunderBreathingUnlockHandler {
                 player.getItemBySlot(EquipmentSlot.FEET).isEmpty();
     }
 
-    /**
-     * Unlocks Thunder Breathing for the player
-     */
     private static void unlockThunderBreathing(ServerPlayer player) {
-        // Record the unlock in progression system (this handles all advancement triggers)
         ProgressionHelper.unlockStyle(player, "thunder_breathing");
-
-        // Set Thunder Breathing as the player's style
         PlayerDataProvider.updateAndSync(player, "thunder_breathing");
 
-        // Send success message
         player.displayClientMessage(
                 Component.literal("⚡ You have been baptized by the storm! Thunder Breathing unlocked! ⚡")
                         .withStyle(style -> style.withColor(0xFFFF55).withBold(true)),
                 false
         );
 
-        // Play thunder sound
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 net.minecraft.sounds.SoundEvents.LIGHTNING_BOLT_THUNDER,
                 net.minecraft.sounds.SoundSource.PLAYERS, 1.0f, 1.0f);
 
-        // Spawn thunder particles around the player
         if (player.level() instanceof ServerLevel serverLevel) {
             for (int i = 0; i < 20; i++) {
                 double offsetX = (player.getRandom().nextDouble() - 0.5) * 3.0;

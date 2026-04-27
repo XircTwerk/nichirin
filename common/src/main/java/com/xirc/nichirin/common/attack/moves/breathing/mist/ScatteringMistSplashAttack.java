@@ -14,11 +14,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Third Form: Scattering Mist Splash
- * A powerful circular slash that blows away incoming projectiles and knocks back all nearby enemies.
- * 8 damage in a 3.5-block radius. Similar to Blooming Flame Undulation.
- */
+// Form 3: 360° circular slash. Deflects projectiles, brief invuln on active frames.
 public class ScatteringMistSplashAttack extends MistBreathingAttackBase {
 
     private final Set<LivingEntity> hitEnemies = new HashSet<>();
@@ -72,7 +68,6 @@ public class ScatteringMistSplashAttack extends MistBreathingAttackBase {
                 hitTarget(target);
                 hitEnemies.add(target);
 
-                // Knock enemies outward
                 Vec3 pushDir = target.position().subtract(userPos).normalize();
                 target.push(pushDir.x * knockback, 0.15, pushDir.z * knockback);
             }

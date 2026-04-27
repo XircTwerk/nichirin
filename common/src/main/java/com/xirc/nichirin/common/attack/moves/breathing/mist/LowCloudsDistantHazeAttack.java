@@ -9,12 +9,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 
-/**
- * First Form: Low Clouds, Distant Haze
- * A lightning-fast thrusting lunge that skewers enemies in a straight line.
- * 10 damage, medium reach, slight piercing effect (hits multiple enemies in path).
- * Triggered by Crouch + Right Click.
- */
+// Form 1: Thrusting skewer dash. Pierces all enemies in a straight line.
 public class LowCloudsDistantHazeAttack extends MistBreathingAttackBase {
 
     private boolean dashStarted = false;
@@ -25,7 +20,7 @@ public class LowCloudsDistantHazeAttack extends MistBreathingAttackBase {
         dashStarted = false;
         dashDirection = user.getLookAngle().normalize();
 
-        // Low crouch startup: mist coils around feet
+        // mist coils at feet during crouch windup
         if (world instanceof ServerLevel serverLevel) {
             Vec3 feetPos = user.position();
             for (int i = 0; i < 16; i++) {
@@ -51,17 +46,14 @@ public class LowCloudsDistantHazeAttack extends MistBreathingAttackBase {
 
         if (!dashStarted) return;
 
-        // Sustain dash velocity
         if (dashSpeed != null) {
             user.setDeltaMovement(dashDirection.scale(dashSpeed / Math.max(duration, 1) * 8.0));
             user.hurtMarked = true;
             user.hasImpulse = true;
         }
 
-        // Mist trail during dash
         createMistTrail(user.position(), user.position().subtract(dashDirection.scale(2)));
 
-        // Pierce-style hit: all enemies along the thrust line
         List<LivingEntity> targets = getTargetsInRangeLine(1.2f);
         for (LivingEntity target : targets) {
             hitTarget(target);
@@ -84,7 +76,6 @@ public class LowCloudsDistantHazeAttack extends MistBreathingAttackBase {
     protected void onStop() {
         user.setDeltaMovement(Vec3.ZERO);
 
-        // Impact burst at end of thrust
         if (world instanceof ServerLevel serverLevel) {
             Vec3 pos = user.position().add(0, 1, 0);
             serverLevel.sendParticles(ParticleTypes.CLOUD, pos.x, pos.y, pos.z,

@@ -21,29 +21,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * Water Breathing moveset implementation with manual combo system
- * Water Breathing excels at close-range pressure with high average damage and lenient hitboxes
- * Features telegraphed mobility options and continuous pressure attacks
- *
- * Right-click: Water Surface Slash combo (3-stage combo system)
- * Crouch + Right-click: Water Wheel (lunging wheel attack)
- */
+// Right-click: Water Surface Slash combo (3-stage combo system)
+// Crouch + Right-click: Water Wheel (lunging wheel attack)
 public class WaterBreathingMoveset extends AbstractMoveset {
 
-    // Track cooldowns per player per move
     private static final Map<UUID, Map<Integer, Long>> entityCooldowns = new HashMap<>();
-
-    // Track active attacks to prevent breath consumption on failed attempts
     private static final Map<UUID, Boolean> executingMove = new HashMap<>();
-
-    // Manual combo system
     private static final Map<UUID, ComboState> playerComboStates = new HashMap<>();
-
-    // Thread-local to store current moveset instance for action access
     private static final ThreadLocal<WaterBreathingMoveset> CURRENT_MOVESET = new ThreadLocal<>();
 
-    // Combo state tracking
     private static class ComboState {
         int currentStage = 0;
         long lastAttackTime = 0;
@@ -70,13 +56,10 @@ public class WaterBreathingMoveset extends AbstractMoveset {
 
     public WaterBreathingMoveset() {
         super("water_breathing", "Water Breathing", MovesetType.BREATHING, createBuilder());
-
-        // Auto-capture configs for GUI display
         captureInitialConfigs();
     }
 
     private void captureInitialConfigs() {
-        // Execute the config creation logic without actually performing the moves
         createAndCaptureWaterSurfaceSlashConfig();
         createAndCaptureWaterWheelConfig();
     }
@@ -115,7 +98,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
     private static MovesetBuilder createBuilder() {
         return new MovesetBuilder()
                 .withIdleAnimation("nichirin:water_idle")
-                .withSpeedMultiplier(1.1f) // Faster than normal for pressure
+                .withSpeedMultiplier(1.1f)
 
                 // Third Form: Flowing Dance - Empowerment and trail attack (INDEX 0)
                 .withMove(new MoveBuilder("flowing_dance", "Flowing Dance")
@@ -311,20 +294,18 @@ public class WaterBreathingMoveset extends AbstractMoveset {
 
     @Override
     public int getMoveCount() {
-        return 9; // 9 forms in the wheel (3rd through 11th forms)
+        return 9;
     }
 
     @Override
     public boolean handleRightClick(LivingEntity entity, boolean isCrouching) {
         if (entity.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
-            return true; // Block the move by overriding
+            return true;
         }
 
         if (isCrouching) {
-            // Crouch + Right-click: Water Wheel (separate from combo)
             return executeWaterWheel(entity);
         } else {
-            // Regular Right-click: Water Surface Slash combo system
             return executeWaterSurfaceSlashCombo(entity);
         }
     }
@@ -335,28 +316,23 @@ public class WaterBreathingMoveset extends AbstractMoveset {
         int nextStage;
 
         if (comboState.currentStage == 0 || !comboState.canContinueCombo()) {
-            // Start new combo or restart if window expired
             nextStage = 1;
             comboState.reset();
         } else {
-            // Continue existing combo
             nextStage = comboState.currentStage + 1;
         }
 
-        // Cap at stage 3
         if (nextStage > 3) {
             comboState.reset();
             nextStage = 1;
         }
 
-        // Execute the appropriate stage
         boolean success = executeWaterSurfaceSlashStage(entity, nextStage);
 
         if (success) {
             comboState.currentStage = nextStage;
             comboState.updateAttackTime();
 
-            // Reset combo after final stage
             if (nextStage == 3) {
                 comboState.reset();
             }
@@ -376,10 +352,8 @@ public class WaterBreathingMoveset extends AbstractMoveset {
         WaterSurfaceSlashAttack attack = new WaterSurfaceSlashAttack();
         attack.setComboStage(stage);
 
-        // Different configurations for each stage
         MoveConfiguration config = createStageConfig(stage);
 
-        // Use the same config creation method and sync to client
         createAndCaptureWaterSurfaceSlashConfig();
         if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer) {
             MovesetConfigSyncPacket packet = new MovesetConfigSyncPacket(
@@ -402,10 +376,10 @@ public class WaterBreathingMoveset extends AbstractMoveset {
             case 1 -> {
                 return new MoveBuilder("water_surface_slash_1", "Water Surface Slash I")
                         .withAnimation("nichirin:water_surface_slash", 6)
-                        .withTiming(0, 0, 18) // No cooldown, instant, 18 ticks duration
+                        .withTiming(0, 0, 18)
                         .withDamage(5.0f)
                         .withRange(3.5f)
-                        .withKnockback(0f) // No knockback for first hit
+                        .withKnockback(0f)
                         .withBreathCost(8.0f)
                         .withHitStun(20)
                         .withHitboxSize(3.0f)
@@ -414,25 +388,25 @@ public class WaterBreathingMoveset extends AbstractMoveset {
             case 2 -> {
                 return new MoveBuilder("water_surface_slash_2", "Water Surface Slash II")
                         .withAnimation("nichirin:water_surface_slash_2", 6)
-                        .withTiming(0, 0, 18) // No windup, 18 tick duration
-                        .withDamage(6.0f) // Slightly more damage
+                        .withTiming(0, 0, 18)
+                        .withDamage(6.0f)
                         .withRange(3.5f)
-                        .withKnockback(0f) // Still no knockback
-                        .withBreathCost(10.0f) // Higher breath cost
-                        .withHitStun(22) // Slightly more stun
+                        .withKnockback(0f)
+                        .withBreathCost(10.0f)
+                        .withHitStun(22)
                         .withHitboxSize(3.0f)
                         .build();
             }
             case 3 -> {
                 return new MoveBuilder("water_slam_finisher", "Water Slam")
                         .withAnimation("nichirin:water_slam", 10)
-                        .withTiming(0, 0, 25) // No windup, longer duration for slam impact
-                        .withDamage(12.0f) // High damage finisher
-                        .withRange(4.0f) // Larger range for slam
-                        .withKnockback(0.8f) // High knockback for finisher
-                        .withBreathCost(15.0f) // Expensive finisher
-                        .withHitStun(30) // High stun for finisher
-                        .withHitboxSize(4.0f) // Larger slam area
+                        .withTiming(0, 0, 25)
+                        .withDamage(12.0f)
+                        .withRange(4.0f)
+                        .withKnockback(0.8f)
+                        .withBreathCost(15.0f)
+                        .withHitStun(30)
+                        .withHitboxSize(4.0f)
                         .build();
             }
             default -> throw new IllegalArgumentException("Invalid stage: " + stage);
@@ -443,7 +417,6 @@ public class WaterBreathingMoveset extends AbstractMoveset {
         triggerAnimation(entity, "water_wheel");
         WaterWheelAttack attack = new WaterWheelAttack();
 
-        // Use the same config creation method and sync to client
         createAndCaptureWaterWheelConfig();
         MoveConfiguration tempConfig = getCrouchRightClickConfiguration();
 
@@ -464,9 +437,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
 
     @Override
     public void performMove(LivingEntity entity, int moveIndex) {
-        // Check cooldown before allowing move
         if (!canUseMove(entity, moveIndex)) {
-            // Show cooldown message
             MoveConfiguration config = getMove(moveIndex);
             if (config != null) {
                 Map<Integer, Long> cooldowns = entityCooldowns.get(entity.getUUID());
@@ -476,7 +447,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         long remaining = (cooldownEnd - entity.level().getGameTime()) / 20;
                         showMessage(entity,
                                 Component.literal(config.getDisplayName() + " on cooldown! " + remaining + "s remaining")
-                                        .withStyle(style -> style.withColor(0x4A90E2)), // Blue color for water
+                                        .withStyle(style -> style.withColor(0x4A90E2)),
                                 true
                         );
                     }
@@ -485,45 +456,36 @@ public class WaterBreathingMoveset extends AbstractMoveset {
             return;
         }
 
-        // Check breath BEFORE executing
         MoveConfiguration config = getMove(moveIndex);
         if (config != null) {
             float breathCost = config.getBreathCostOrDefault(0.0f);
 
-            // Add small buffer to prevent race conditions
+            // Small buffer to prevent race conditions
             if (breathCost > 0 && !BreathingManager.hasBreath((Player) entity, breathCost + 0.1f)) {
                 showMessage(entity,
                         Component.literal("Not enough breath for " + config.getDisplayName() + "!")
-                                .withStyle(style -> style.withColor(0xFF3333)), // Red for no breath
+                                .withStyle(style -> style.withColor(0xFF3333)),
                         true
                 );
                 return;
             }
         }
 
-        // Mark that we're executing a move
         executingMove.put(entity.getUUID(), true);
-
-        // Store current moveset instance for access by actions
         CURRENT_MOVESET.set(this);
 
         try {
-            // Execute the move
             super.performMove(entity, moveIndex);
         } finally {
-            // Always clean up the thread local
             CURRENT_MOVESET.remove();
         }
 
-        // Check if move actually executed by seeing if breath was consumed
         boolean moveExecuted = !executingMove.getOrDefault(entity.getUUID(), false);
         executingMove.remove(entity.getUUID());
 
         if (moveExecuted && config != null) {
-            // Set cooldown after successful execution
             setMoveCooldown(entity, moveIndex);
 
-            // Send cooldown display packet if on server and has cooldown
             if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer
                     && config.getCooldownOrDefault(0) > 0) {
                 FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
@@ -535,44 +497,26 @@ public class WaterBreathingMoveset extends AbstractMoveset {
         }
     }
 
-    /**
-     * Get the current moveset instance (for use in action lambdas)
-     */
     public static WaterBreathingMoveset getCurrentMoveset() {
         return CURRENT_MOVESET.get();
     }
 
-    /**
-     * Check if a player can use a specific move (not on cooldown)
-     */
     private boolean canUseMove(LivingEntity entity, int moveIndex) {
         MoveConfiguration config = getMove(moveIndex);
-        if (config == null || config.getCooldownOrDefault(0) <= 0) {
-            return true; // No cooldown
-        }
+        if (config == null || config.getCooldownOrDefault(0) <= 0) return true;
 
         Map<Integer, Long> cooldowns = entityCooldowns.get(entity.getUUID());
-        if (cooldowns == null) {
-            return true; // No cooldowns tracked yet
-        }
+        if (cooldowns == null) return true;
 
         Long cooldownEnd = cooldowns.get(moveIndex);
-        if (cooldownEnd == null) {
-            return true; // Move never used
-        }
+        if (cooldownEnd == null) return true;
 
-        long currentTime = entity.level().getGameTime();
-        return currentTime >= cooldownEnd;
+        return entity.level().getGameTime() >= cooldownEnd;
     }
 
-    /**
-     * Set a move on cooldown
-     */
     private void setMoveCooldown(LivingEntity entity, int moveIndex) {
         MoveConfiguration config = getMove(moveIndex);
-        if (config == null || config.getCooldownOrDefault(0) <= 0) {
-            return; // No cooldown
-        }
+        if (config == null || config.getCooldownOrDefault(0) <= 0) return;
 
         long cooldownEnd = entity.level().getGameTime() + config.getCooldownOrDefault(0);
         entityCooldowns.computeIfAbsent(entity.getUUID(), k -> new HashMap<>())
@@ -596,14 +540,8 @@ public class WaterBreathingMoveset extends AbstractMoveset {
 
     @Override
     public void onMovePerformed(LivingEntity entity, int moveIndex, boolean isCrouching) {
-        // Water Breathing specific post-move effects can be added here
-        // moveIndex -1 = Water Surface Slash (right-click)
-        // moveIndex -2 = Water Wheel (crouch + right-click)
     }
 
-    /**
-     * Called when a player logs out - clean up their data
-     */
     public static void resetCooldowns(LivingEntity entity) {
         entityCooldowns.remove(entity.getUUID());
     }
@@ -614,11 +552,6 @@ public class WaterBreathingMoveset extends AbstractMoveset {
         playerComboStates.remove(entity.getUUID());
     }
 
-    // ==================== NPC-PLAYER HELPER METHODS ====================
-
-    /**
-     * Check if entity has enough breath (works for both Players and NPCs)
-     */
     private boolean hasEnoughBreath(LivingEntity entity, float amount) {
         if (entity instanceof Player player) {
             return BreathingManager.hasBreath(player, amount);
@@ -628,13 +561,9 @@ public class WaterBreathingMoveset extends AbstractMoveset {
         return false;
     }
 
-    /**
-     * Show message to entity (only works for Players)
-     */
     private void showMessage(LivingEntity entity, Component message, boolean actionBar) {
         if (entity instanceof Player player) {
             player.displayClientMessage(message, actionBar);
         }
-        // NPCs don't need messages
     }
 }

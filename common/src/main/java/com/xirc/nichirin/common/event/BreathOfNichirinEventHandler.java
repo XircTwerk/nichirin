@@ -28,17 +28,10 @@ import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
 
 import java.util.Set;
 
-/**
- * Event handler for Breath of Nichirin mod using Architectury API
- * Updated to work with mixin-based demon blood rendering
- */
 public class BreathOfNichirinEventHandler {
 
     private static MinecraftServer currentServer;
 
-    /**
-     * Initialize event listeners
-     */
     public static void init() {
         LifecycleEvent.SERVER_STARTING.register(BreathOfNichirinEventHandler::onServerStarting);
         LifecycleEvent.SERVER_STOPPING.register(BreathOfNichirinEventHandler::onServerStopping);
@@ -110,18 +103,10 @@ public class BreathOfNichirinEventHandler {
         DemonManager.clearAll();
     }
 
-    /**
-     * Process delayed explosions - CRITICAL for TempoBreakerAttack
-     */
     private static void onServerTick(MinecraftServer server) {
         if (server != null) {
-            // Blood Moon system
             BloodMoonManager.onServerTick(server);
-
-            // CRITICAL: Tick all breathing attacks
             MoveExecutor.tickAllAttacks(server);
-
-            // CRITICAL: Tick all demon attacks
             AbstractDemonAttack.tickAllActiveAttacks(server);
 
             // Check for demon players with 0 blood and kill them
@@ -138,9 +123,6 @@ public class BreathOfNichirinEventHandler {
         }
     }
 
-    /**
-     * Called when a player respawns - handle both death cleanup and respawn restoration
-     */
     private static void handlePlayerRespawn(Player player) {
         try {
             AbstractDemonAttack.clearSelfTickingAttacks(player);
@@ -152,9 +134,6 @@ public class BreathOfNichirinEventHandler {
         }
     }
 
-    /**
-     * Called when a player disconnects
-     */
     private static void handlePlayerDisconnect(Player player) {
         try {
             AbstractDemonAttack.clearSelfTickingAttacks(player);
@@ -166,17 +145,11 @@ public class BreathOfNichirinEventHandler {
         }
     }
 
-    /**
-     * Call this when a mob is killed by a player (hook into your damage/death events)
-     */
     public static void onMobKilled(ServerPlayer player, LivingEntity killedEntity) {
         DemonManager.onMobKilled((Player) player, killedEntity);
         KillRewardManager.onKill(player, killedEntity);
     }
 
-    /**
-     * Call this when bite attack hits (hook into your bite attack execution)
-     */
     public static void onBiteHit(ServerPlayer player, LivingEntity target) {
         DemonManager.onBiteHit((Player) player, target);
     }

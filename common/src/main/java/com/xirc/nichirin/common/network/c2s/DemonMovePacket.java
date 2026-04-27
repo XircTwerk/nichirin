@@ -10,10 +10,7 @@ import net.minecraft.world.entity.player.Player;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * FIXED: Packet for executing demon art moves from the attack wheel
- * Now uses the specific demon moveset methods instead of primary moveset
- */
+// Packet for executing demon art moves from the attack wheel.
 public class DemonMovePacket {
     private static final Logger LOGGER = LoggerFactory.getLogger(DemonMovePacket.class);
 
@@ -41,12 +38,10 @@ public class DemonMovePacket {
     }
 
     public void handle(ServerPlayer player) {
-        // Check if player is stunned
         if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
             return;
         }
 
-        // FIXED: Use specific demon moveset methods instead of primary moveset
         if (!MovesetHelper.hasDemonMoveset(player)) {
             player.displayClientMessage(
                     Component.literal("No demon art equipped!")
@@ -70,7 +65,6 @@ public class DemonMovePacket {
 
         LOGGER.debug("DemonMovePacket - Using demon moveset: {} for move {}", moveset.getMovesetId(), moveIndex);
 
-        // Validate move index
         if (moveIndex < 0 || moveIndex >= moveset.getMoveCount()) {
             player.displayClientMessage(
                     Component.literal("Invalid demon art move! (Index: " + moveIndex + ", Max: " + (moveset.getMoveCount() - 1) + ")")
@@ -81,7 +75,6 @@ public class DemonMovePacket {
             return;
         }
 
-        // Get the move configuration
         var moveConfig = moveset.getMove(moveIndex);
         if (moveConfig == null) {
             player.displayClientMessage(
@@ -96,10 +89,7 @@ public class DemonMovePacket {
         LOGGER.debug("DemonMovePacket - Executing demon move: {}", moveConfig.getDisplayName());
 
         try {
-            // Execute the demon art move
             moveset.performMove(player, moveIndex);
-
-            // Block inputs after execution (same as breathing moves)
             com.xirc.nichirin.common.util.MultiplayerInputHandler.blockInputsAfterMoveExecution(player);
 
             LOGGER.debug("DemonMovePacket - Successfully executed {}", moveConfig.getDisplayName());
@@ -114,7 +104,6 @@ public class DemonMovePacket {
         }
     }
 
-    // Getters for packet registry
     public int getMoveIndex() {
         return moveIndex;
     }

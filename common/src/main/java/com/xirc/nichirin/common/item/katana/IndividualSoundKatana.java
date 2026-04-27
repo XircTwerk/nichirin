@@ -18,7 +18,6 @@ public class IndividualSoundKatana extends SimpleKatana {
 
     private final boolean isRightKatana;
 
-    // Track which players have active katana pairs
     private static final Map<UUID, Integer> activePairTicks = new HashMap<>();
 
     public IndividualSoundKatana(Properties properties, boolean isRightKatana) {
@@ -28,12 +27,12 @@ public class IndividualSoundKatana extends SimpleKatana {
 
     @Override
     public boolean canFitInsideContainerItems() {
-        return false; // Prevent moving to containers
+        return false;
     }
 
     @Override
     public boolean isValidRepairItem(ItemStack stack, ItemStack repairCandidate) {
-        return false; // Prevent use in anvils/smithing tables
+        return false;
     }
 
     @Override
@@ -43,22 +42,17 @@ public class IndividualSoundKatana extends SimpleKatana {
         if (!(entity instanceof Player player)) return;
         if (level.isClientSide) return;
 
-        // Additional check: If individual katana is found in any non-player inventory slot, convert to sound katanas
         if (slotId < 0 || slotId > 40) {
-            // This indicates the item is in a non-standard inventory (chest, hopper, etc.)
-            // Convert to sound katanas and drop it
+            // Item is in a non-standard inventory (chest, hopper, etc.) — convert and drop
             ItemStack soundKatanas = new ItemStack(NichirinItemRegistry.SOUND_KATANAS.get());
             if (entity.level().getBlockEntity(entity.blockPosition()) != null) {
-                // If there's a block entity at this position, try to place the sound katanas there
                 entity.spawnAtLocation(soundKatanas);
             }
-            stack.shrink(stack.getCount()); // Remove the individual katana
+            stack.shrink(stack.getCount());
             return;
         }
 
-        // MUTUAL EXCLUSION: Check if player has sound_katanas item
         if (hasSoundKatanasItem(player)) {
-            // Convert this individual katana back to air since player already has sound_katanas
             stack.shrink(stack.getCount());
             return;
         }
@@ -67,19 +61,15 @@ public class IndividualSoundKatana extends SimpleKatana {
         ItemStack mainHand = player.getMainHandItem();
         ItemStack offHand = player.getOffhandItem();
 
-        // Check if we have any pair of individual katanas (regardless of which is in which hand)
         boolean properPair = (isRightSoundKatana(mainHand) || isLeftSoundKatana(mainHand)) &&
                 (isRightSoundKatana(offHand) || isLeftSoundKatana(offHand)) &&
-                !mainHand.equals(offHand); // Make sure they're different items
+                !mainHand.equals(offHand);
 
         if (properPair) {
-            // We have a proper pair, increment ticks
             activePairTicks.put(playerId, activePairTicks.getOrDefault(playerId, 0) + 1);
         } else {
-            // No proper pair
             int previousTicks = activePairTicks.getOrDefault(playerId, 0);
 
-            // If we had a pair for at least 5 ticks and now we don't, handle it
             if (previousTicks >= 5) {
                 handlePairLoss(player, stack, slotId);
             }

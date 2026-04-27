@@ -9,20 +9,13 @@ import net.minecraft.server.level.ServerPlayer;
  */
 public class MovementInputPacket {
 
-    public MovementInputPacket() {
-        // Empty constructor for client->server packet
-    }
+    public MovementInputPacket() {}
 
-    public MovementInputPacket(FriendlyByteBuf buf) {
-        // No data to read - this is just a trigger packet
-    }
+    public MovementInputPacket(FriendlyByteBuf buf) {}
 
-    public void toBytes(FriendlyByteBuf buf) {
-        // No data to write - this is just a trigger packet
-    }
+    public void toBytes(FriendlyByteBuf buf) {}
 
     public void handle(ServerPlayer player) {
-        // Handle on server side
         if (player != null) {
             MovementContext.handleMovementInput(player);
         }

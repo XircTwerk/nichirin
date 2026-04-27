@@ -9,11 +9,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
-/**
- * Base class for Mist Breathing attacks.
- * Mist Breathing is a quick, pressure-based style that relies on speed and disorientation.
- * Applies mist/cloud visual effects and uses water-themed particles.
- */
+// Base for all Mist Breathing attacks. Provides shared particle helpers and hit overrides.
 @SuppressWarnings("rawtypes")
 public abstract class MistBreathingAttackBase extends AbstractBreathingAttack<MistBreathingAttackBase, IBreathingAttacker> {
 
@@ -132,14 +128,20 @@ public abstract class MistBreathingAttackBase extends AbstractBreathingAttack<Mi
         }
     }
 
+    protected Vec3 rotateDirection(Vec3 direction, double degrees) {
+        double rad = Math.toRadians(degrees);
+        double cos = Math.cos(rad);
+        double sin = Math.sin(rad);
+        return new Vec3(
+                direction.x * cos - direction.z * sin,
+                direction.y,
+                direction.x * sin + direction.z * cos
+        ).normalize();
+    }
+
     @Override
     protected abstract void onStart();
 
     @Override
     protected abstract void perform();
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-    }
 }

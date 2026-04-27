@@ -9,13 +9,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 
-/**
- * Second Form: Eight-Layered Mist
- * Eight rapid slashes in quick succession.
- * 2 damage per slash with super-small knockback. Removes immunity frames between hits
- * so all 8 slashes land for up to 16 total damage.
- * Triggered by Right Click.
- */
+// Form 2: 8 rapid slashes bypassing immunity frames. Right Click.
 public class EightLayeredMistAttack extends MistBreathingAttackBase {
 
     private static final int TOTAL_SLASHES = 8;
@@ -61,15 +55,13 @@ public class EightLayeredMistAttack extends MistBreathingAttackBase {
         List<LivingEntity> targets = getTargetsInCustomHitbox(slashCenter, 1.8, 2.5, 1.5);
 
         for (LivingEntity target : targets) {
-            // Key mechanic: remove immunity frames so all 8 slashes register
             hitTargetNoImmunity(target);
 
-            // Tiny knockback — the form relies on fake pressure, not displacement
+            // fake pressure — barely any displacement
             Vec3 tinyKnockback = target.position().subtract(userPos).normalize().scale(knockback * 0.15f);
             target.push(tinyKnockback.x, 0.02, tinyKnockback.z);
         }
 
-        // Pitch increases through the combo
         float pitch = 1.2f + (slashIndex * 0.08f);
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.6f, pitch);

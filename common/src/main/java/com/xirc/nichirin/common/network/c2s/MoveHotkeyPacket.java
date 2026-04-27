@@ -39,18 +39,9 @@ public class MoveHotkeyPacket {
         });
     }
 
-    /**
-     * Handle move hotkey execution on server side
-     * If no breathing style equipped or invalid index, does nothing
-     * Requires a katana to be held in the main hand
-     * Performs the same validation checks as the attack wheel
-     */
     private static void handleMoveHotkey(ServerPlayer player, int moveIndex) {
-        // Check if holding katana in main hand - REQUIRED
         ItemStack mainHand = player.getMainHandItem();
-        if (!(mainHand.getItem() instanceof SimpleKatana)) {
-            return; // No katana in hand - hotkey does nothing
-        }
+        if (!(mainHand.getItem() instanceof SimpleKatana)) return;
 
         if (player.hasEffect(NichirinEffectRegistry.BLOCKING.get())) {
             return;
@@ -60,27 +51,23 @@ public class MoveHotkeyPacket {
             return;
         }
 
-        // Get current breathing style - if none (or only demon moveset), use base katana wheel moves
+        // No breathing style — delegate to SimpleKatana wheel moves
         String currentBreathingStyle = MovesetHelper.getBreathingMovesetId(player);
         if (currentBreathingStyle == null || currentBreathingStyle.isEmpty()) {
-            // No breathing style — delegate to SimpleKatana wheel moves
             SimpleKatana katana = (SimpleKatana) mainHand.getItem();
             katana.performWheelMove(player, moveIndex);
             return;
         }
 
-        // Use MovesetHelper for consistency with how left/right click resolve the moveset
         AbstractMoveset moveset = MovesetHelper.getBreathingMoveset(player);
         if (moveset == null) {
             return;
         }
 
-        // Bounds check
         if (moveIndex < 0 || moveIndex >= moveset.getMoveCount()) {
             return;
         }
 
-        // Let the moveset handle its own validation (cooldowns, stamina, etc.)
         moveset.performMove(player, moveIndex);
     }
 }

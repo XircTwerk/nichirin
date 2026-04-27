@@ -12,21 +12,17 @@ public class PlayerTickHandler {
     public static void register() {
         TickEvent.PLAYER_POST.register(PlayerTickHandler::onPlayerTick);
 
-        // Register server tick for global systems
         TickEvent.SERVER_POST.register(server -> {
-            Dodge.tick(); // Global cleanup
-            Dash.tickAllDashes(); // Move this here - once per server tick
+            Dodge.tick();
+            Dash.tickAllDashes();
         });
     }
 
     private static void onPlayerTick(Player player) {
         PlayerDoubleJump.tickPlayer(player);
 
-        // Only per-player systems on server side
         if (!player.level().isClientSide) {
             Dodge.tickForPlayer(player);
-
-            // Tick demon passives (sun damage, blood regen, infinite stamina, blood drain)
             DemonManager.tickDemon(player);
         }
     }

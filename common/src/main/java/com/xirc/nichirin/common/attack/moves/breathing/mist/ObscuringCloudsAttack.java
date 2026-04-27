@@ -11,23 +11,16 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 
-/**
- * Seventh Form: Obscuring Clouds — Muichiro Tokito's personal creation.
- * The user becomes invisible and pulses a large hitbox around themselves every few ticks,
- * hitting all enemies in range repeatedly for 5 seconds. Water particles trail from the
- * player throughout, and the big hitbox punishes anyone who stays close.
- */
+// Form 7: Become invisible for 5s and pulse a large hitbox that repeatedly hits everything nearby.
 public class ObscuringCloudsAttack extends MistBreathingAttackBase {
 
     private static final int HIT_INTERVAL = 6; // pulse every 6 ticks
 
     @Override
     protected void onStart() {
-        // Apply invisibility for the full duration
         user.addEffect(new MobEffectInstance(
                 MobEffects.INVISIBILITY, windup + duration + 10, 0, false, false, false));
 
-        // Startup: dissolve into mist
         if (world instanceof ServerLevel serverLevel) {
             Vec3 pos = user.position().add(0, user.getBbHeight() / 2, 0);
             serverLevel.sendParticles(ParticleTypes.CLOUD, pos.x, pos.y, pos.z,
@@ -46,10 +39,8 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
-        // Water particle trail every tick — marks the invisible player's position subtly
         createWaterTrailParticles(userPos);
 
-        // Ambient mist cloud while invisible
         if (tickCount % 3 == 0) {
             emitAmbientMist(userPos);
         }
@@ -61,7 +52,6 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
     }
 
     private void pulseHitbox(Vec3 userPos) {
-        // Large hitbox centered on the player — range is the 8-block radius from moveset
         List<LivingEntity> targets = getTargetsInCustomHitbox(
                 userPos, range * 2.0, user.getBbHeight() + 1.0, range * 2.0);
 
@@ -70,7 +60,6 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
             createWaterTrailParticles(target.position());
         }
 
-        // Pulse visual — brief expanding mist ring from player
         createMistCircle(userPos, range * 0.6f, 14);
 
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
@@ -93,7 +82,6 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
 
     @Override
     protected void onStop() {
-        // Reappear from mist
         if (world instanceof ServerLevel serverLevel) {
             Vec3 pos = user.position().add(0, user.getBbHeight() / 2, 0);
             serverLevel.sendParticles(ParticleTypes.CLOUD, pos.x, pos.y, pos.z,

@@ -21,34 +21,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * Sound Breathing moveset implementation
- * Sound Breathing excels at combo building and explosive burst damage
- * All attacks build momentum with consecutive hits and create particle explosions
- *
- * Right-click: Tempo Breaker (wide sweep with delayed explosion)
- * Crouch + Right-click: Rhythmic Step (8 block instant dash with trail damage)
- */
+// Right-click: Tempo Breaker (wide sweep with delayed explosion)
+// Crouch + Right-click: Rhythmic Step (8 block instant dash with trail damage)
 public class SoundBreathingMoveset extends AbstractMoveset {
 
-    // Track cooldowns per player per move
     private static final Map<UUID, Map<Integer, Long>> entityCooldowns = new HashMap<>();
-
-    // Track active attacks to prevent breath consumption on failed attempts
     private static final Map<UUID, Boolean> executingMove = new HashMap<>();
-
-    // Thread-local to store current moveset instance for action access
     private static final ThreadLocal<SoundBreathingMoveset> CURRENT_MOVESET = new ThreadLocal<>();
 
     public SoundBreathingMoveset() {
         super("sound_breathing", "Sound Breathing", MovesetType.BREATHING, createBuilder());
-
-        // Auto-capture configs for GUI display
         captureInitialConfigs();
     }
 
     private void captureInitialConfigs() {
-        // Execute the config creation logic without actually performing the moves
         createAndCaptureTempoBreakerConfig();
         createAndCaptureRhythmicStepConfig();
     }
@@ -87,7 +73,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
     private static MovesetBuilder createBuilder() {
         return new MovesetBuilder()
                 .withIdleAnimation("nichirin:sound_idle")
-                .withSpeedMultiplier(1.1f) // Slightly faster for combo building
+                .withSpeedMultiplier(1.1f)
 
                 // First Form: Roar - AOE slam (INDEX 0 in wheel)
                 .withMove(new MoveBuilder("roar", "Roar")
@@ -156,16 +142,14 @@ public class SoundBreathingMoveset extends AbstractMoveset {
 
     @Override
     public int getMoveCount() {
-        return 3; // Amount of moves in wheel
+        return 3;
     }
 
     @Override
     public boolean handleRightClick(LivingEntity entity, boolean isCrouching) {
         if (isCrouching) {
-            // Crouch + Right-click: Rhythmic Step
             return executeRhythmicStep(entity);
         } else {
-            // Regular Right-click: Tempo Breaker
             return executeTempoBreaker(entity);
         }
     }
@@ -174,7 +158,6 @@ public class SoundBreathingMoveset extends AbstractMoveset {
         triggerAnimation(entity, "tempo_breaker");
         TempoBreakerAttack attack = new TempoBreakerAttack();
 
-        // Use the same config creation method and sync to client
         createAndCaptureTempoBreakerConfig();
         MoveConfiguration tempConfig = getRightClickConfiguration();
 
@@ -197,7 +180,6 @@ public class SoundBreathingMoveset extends AbstractMoveset {
         triggerAnimation(entity, "rhythmic_step");
         RhythmicStepAttack attack = new RhythmicStepAttack();
 
-        // Use the same config creation method and sync to client
         createAndCaptureRhythmicStepConfig();
         MoveConfiguration tempConfig = getCrouchRightClickConfiguration();
 
@@ -218,9 +200,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
 
     @Override
     public void performMove(LivingEntity entity, int moveIndex) {
-        // Check cooldown before allowing move
         if (!canUseMove(entity, moveIndex)) {
-            // Show cooldown message
             MoveConfiguration config = getMove(moveIndex);
             if (config != null) {
                 Map<Integer, Long> cooldowns = entityCooldowns.get(entity.getUUID());
@@ -230,7 +210,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                         long remaining = (cooldownEnd - entity.level().getGameTime()) / 20;
                         showMessage(entity,
                                 Component.literal(config.getDisplayName() + " on cooldown! " + remaining + "s remaining")
-                                        .withStyle(style -> style.withColor(0x9900FF)), // Purple color for sound
+                                        .withStyle(style -> style.withColor(0x9900FF)),
                                 true
                         );
                     }
@@ -239,48 +219,36 @@ public class SoundBreathingMoveset extends AbstractMoveset {
             return;
         }
 
-        // Check breath BEFORE executing
         MoveConfiguration config = getMove(moveIndex);
         if (config != null) {
             float breathCost = config.getBreathCostOrDefault(0.0f);
 
-            // Add small buffer to prevent race conditions
+            // Small buffer to prevent race conditions
             if (breathCost > 0 && !BreathingManager.hasBreath((Player) entity, breathCost + 0.1f)) {
                 showMessage(entity,
                         Component.literal("Not enough breath for " + config.getDisplayName() + "!")
-                                .withStyle(style -> style.withColor(0xFF3333)), // Red for no breath
+                                .withStyle(style -> style.withColor(0xFF3333)),
                         true
                 );
                 return;
             }
         }
 
-        // Check if there are valid targets for offensive moves (only for defensive moves that need them)
-        // Most Sound Breathing moves should work without targets
-
-        // Mark that we're executing a move
         executingMove.put(entity.getUUID(), true);
-
-        // Store current moveset instance for access by actions
         CURRENT_MOVESET.set(this);
 
         try {
-            // Execute the move
             super.performMove(entity, moveIndex);
         } finally {
-            // Always clean up the thread local
             CURRENT_MOVESET.remove();
         }
 
-        // Check if move actually executed by seeing if breath was consumed
         boolean moveExecuted = !executingMove.getOrDefault(entity.getUUID(), false);
         executingMove.remove(entity.getUUID());
 
         if (moveExecuted && config != null) {
-            // Set cooldown after successful execution
             setMoveCooldown(entity, moveIndex);
 
-            // Send cooldown display packet if on server and has cooldown
             if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer
                     && config.getCooldownOrDefault(0) > 0) {
                 FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
@@ -292,9 +260,6 @@ public class SoundBreathingMoveset extends AbstractMoveset {
         }
     }
 
-    /**
-     * Check if there are valid targets within range
-     */
     private boolean hasTargetsInRange(LivingEntity entity, float range) {
         net.minecraft.world.phys.AABB searchBox = new net.minecraft.world.phys.AABB(
                 entity.getX() - range, entity.getY() - range, entity.getZ() - range,
@@ -306,44 +271,26 @@ public class SoundBreathingMoveset extends AbstractMoveset {
         return !entities.isEmpty();
     }
 
-    /**
-     * Get the current moveset instance (for use in action lambdas)
-     */
     public static SoundBreathingMoveset getCurrentMoveset() {
         return CURRENT_MOVESET.get();
     }
 
-    /**
-     * Check if a player can use a specific move (not on cooldown)
-     */
     private boolean canUseMove(LivingEntity entity, int moveIndex) {
         MoveConfiguration config = getMove(moveIndex);
-        if (config == null || config.getCooldownOrDefault(0) <= 0) {
-            return true; // No cooldown
-        }
+        if (config == null || config.getCooldownOrDefault(0) <= 0) return true;
 
         Map<Integer, Long> cooldowns = entityCooldowns.get(entity.getUUID());
-        if (cooldowns == null) {
-            return true; // No cooldowns tracked yet
-        }
+        if (cooldowns == null) return true;
 
         Long cooldownEnd = cooldowns.get(moveIndex);
-        if (cooldownEnd == null) {
-            return true; // Move never used
-        }
+        if (cooldownEnd == null) return true;
 
-        long currentTime = entity.level().getGameTime();
-        return currentTime >= cooldownEnd;
+        return entity.level().getGameTime() >= cooldownEnd;
     }
 
-    /**
-     * Set a move on cooldown
-     */
     private void setMoveCooldown(LivingEntity entity, int moveIndex) {
         MoveConfiguration config = getMove(moveIndex);
-        if (config == null || config.getCooldownOrDefault(0) <= 0) {
-            return; // No cooldown
-        }
+        if (config == null || config.getCooldownOrDefault(0) <= 0) return;
 
         long cooldownEnd = entity.level().getGameTime() + config.getCooldownOrDefault(0);
         entityCooldowns.computeIfAbsent(entity.getUUID(), k -> new HashMap<>())
@@ -367,16 +314,8 @@ public class SoundBreathingMoveset extends AbstractMoveset {
 
     @Override
     public void onMovePerformed(LivingEntity entity, int moveIndex, boolean isCrouching) {
-        // Sound Breathing specific post-move effects can be added here
-        // moveIndex -1 = Tempo Breaker (right-click)
-        // moveIndex -2 = Rhythmic Step (crouch + right-click)
-
-        // Could add combo tracking or other Sound-specific mechanics here
     }
 
-    /**
-     * Called when a player logs out - clean up their data
-     */
     public static void resetCooldowns(LivingEntity entity) {
         entityCooldowns.remove(entity.getUUID());
     }
@@ -384,23 +323,13 @@ public class SoundBreathingMoveset extends AbstractMoveset {
     public static void cleanupPlayer(LivingEntity entity) {
         entityCooldowns.remove(entity.getUUID());
         executingMove.remove(entity.getUUID());
-
-        // Also clean up combo tracking from the base class
         SoundBreathingAttackBase.resetCombo(entity.getUUID());
     }
 
-    /**
-     * Reset combo for a player (can be called externally)
-     */
     public static void resetPlayerCombo(LivingEntity entity) {
         SoundBreathingAttackBase.resetCombo(entity.getUUID());
     }
 
-    // ==================== NPC-PLAYER HELPER METHODS ====================
-
-    /**
-     * Check if entity has enough breath (works for both Players and NPCs)
-     */
     private boolean hasEnoughBreath(LivingEntity entity, float amount) {
         if (entity instanceof Player player) {
             return BreathingManager.hasBreath(player, amount);
@@ -410,13 +339,9 @@ public class SoundBreathingMoveset extends AbstractMoveset {
         return false;
     }
 
-    /**
-     * Show message to entity (only works for Players)
-     */
     private void showMessage(LivingEntity entity, Component message, boolean actionBar) {
         if (entity instanceof Player player) {
             player.displayClientMessage(message, actionBar);
         }
-        // NPCs don't need messages
     }
 }
