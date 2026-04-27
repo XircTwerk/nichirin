@@ -123,6 +123,7 @@ public interface MovesetRegistry {
         registerMoveset("water_breathing", WaterBreathingMoveset::new);
 
         registerMoveset("beast_breathing", BeastBreathingMoveset::new);
+        registerMoveset("mist_breathing", MistBreathingMoveset::new);
 
         registerMoveset("default_demon", DefaultDemonMoveset::new);
     }
