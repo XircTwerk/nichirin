@@ -10,10 +10,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 
-/**
- * Ninth Fang: Extending Bendy Slash - Long range forward slash with no windup.
- * Covers everything in front of the user in a single wide sweep.
- */
+// Ninth Fang: Extending Bendy Slash. Long-range forward sweep, covers everything in front in one wide slash.
 public class BeastBendySlashAttack extends BeastBreathingAttackBase {
 
     private boolean slashDone = false;
@@ -36,7 +33,6 @@ public class BeastBendySlashAttack extends BeastBreathingAttackBase {
         Vec3 origin = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 look = user.getLookAngle();
 
-        // Sweep a wide arc in front - multiple offset hitboxes spanning the full width
         for (int dist = 1; dist <= (int) range; dist++) {
             Vec3 center = origin.add(look.scale(dist));
             List<LivingEntity> targets = getTargetsInCustomHitbox(center, hitboxSize, HitboxData.HitboxShape.WIDE);

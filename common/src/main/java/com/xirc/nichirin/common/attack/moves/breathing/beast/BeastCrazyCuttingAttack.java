@@ -11,10 +11,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 
-/**
- * Fifth Fang: Crazy Cutting - Omnidirectional slicing while mid-air.
- * Levitates the user during the attack, hits all directions.
- */
+// Fifth Fang: Crazy Cutting. Levitates the user and slashes omnidirectionally every 3 ticks.
 public class BeastCrazyCuttingAttack extends BeastBreathingAttackBase {
 
     private boolean levitationApplied = false;
@@ -22,8 +19,6 @@ public class BeastCrazyCuttingAttack extends BeastBreathingAttackBase {
     @Override
     protected void onStart() {
         levitationApplied = false;
-
-        // Apply levitation to float during attack
         user.addEffect(new MobEffectInstance(MobEffects.LEVITATION, windup + duration + 5, 1, false, false, false));
         levitationApplied = true;
 
@@ -37,7 +32,6 @@ public class BeastCrazyCuttingAttack extends BeastBreathingAttackBase {
 
         Vec3 center = user.position().add(0, user.getBbHeight() / 2, 0);
 
-        // Every 3 ticks, sweep in all directions
         if (tickCount % 3 == 0) {
             List<LivingEntity> targets = getTargetsInCircle(range, 12);
             for (LivingEntity target : targets) {
@@ -67,20 +61,16 @@ public class BeastCrazyCuttingAttack extends BeastBreathingAttackBase {
             }
         }
 
-        // Central burst
         sl.sendParticles(ParticleTypes.ENCHANTED_HIT, center.x, center.y, center.z,
                 10, 0.5, 0.5, 0.5, 0.3);
     }
 
     @Override
     protected void onStop() {
-        // Remove levitation early if attack ended before natural expiry
         if (levitationApplied && user.hasEffect(MobEffects.LEVITATION)) {
             user.removeEffect(MobEffects.LEVITATION);
         }
         levitationApplied = false;
-
-        // Slow fall after attack
         user.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 20, 0, false, false, false));
     }
 }

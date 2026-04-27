@@ -9,10 +9,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 
-/**
- * First Fang: Pierce - Left click thrust attack.
- * Stabs forward with good knockback that is DELAYED by a few ticks.
- */
+// First Fang: Pierce. Forward thrust with knockback intentionally delayed by a few ticks.
 public class BeastPierceAttack extends BeastBreathingAttackBase {
 
     private boolean slashExecuted = false;
@@ -38,7 +35,6 @@ public class BeastPierceAttack extends BeastBreathingAttackBase {
             slashExecuted = true;
         }
 
-        // Apply delayed knockback
         if (!knockbackApplied && storedTarget != null && tickCount >= KNOCKBACK_DELAY) {
             Vec3 dir = storedTarget.position().subtract(user.position()).normalize();
             storedTarget.push(dir.x * 2.0, 0.3, dir.z * 2.0);
@@ -56,7 +52,7 @@ public class BeastPierceAttack extends BeastBreathingAttackBase {
 
         List<LivingEntity> targets = getTargetsInThrust();
         for (LivingEntity target : targets) {
-            // Override knockback from config - delay it manually
+            // Suppress knockback here — applied manually after KNOCKBACK_DELAY ticks
             float savedKnockback = knockback;
             knockback = 0;
             hitTarget(target);

@@ -10,10 +10,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 
-/**
- * Fourth Fang: Slice 'n' Dice - 8 rapid diagonal double slashes.
- * Close range multi-hit, bypasses immunity frames.
- */
+// Fourth Fang: Slice 'n' Dice. 8 rapid diagonal slashes that bypass immunity frames.
 public class BeastSliceNDiceAttack extends BeastBreathingAttackBase {
 
     private static final int TOTAL_SLASHES = 8;
@@ -45,7 +42,6 @@ public class BeastSliceNDiceAttack extends BeastBreathingAttackBase {
         Vec3 look = user.getLookAngle();
         Vec3 perp = new Vec3(-look.z, 0, look.x).normalize();
 
-        // Alternate diagonal directions
         double diagOffset = (slashIndex % 2 == 0) ? 1.0 : -1.0;
         Vec3 diagDir = look.add(perp.scale(diagOffset)).normalize();
         Vec3 slashCenter = origin.add(diagDir.scale(1.5));

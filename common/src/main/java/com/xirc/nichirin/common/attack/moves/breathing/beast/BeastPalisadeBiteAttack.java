@@ -10,10 +10,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 
-/**
- * Sixth Fang: Palisade Bite - Four wide progressing slashes from both directions.
- * Like a saw motion - slashes advance forward in alternating wide sweeps.
- */
+// Sixth Fang: Palisade Bite. Four wide slashes advancing forward in alternating left/right sweeps.
 public class BeastPalisadeBiteAttack extends BeastBreathingAttackBase {
 
     private static final int SLASH_COUNT = 4;
@@ -43,11 +40,9 @@ public class BeastPalisadeBiteAttack extends BeastBreathingAttackBase {
         Vec3 look = user.getLookAngle();
         Vec3 perp = new Vec3(-look.z, 0, look.x).normalize();
 
-        // Each slash progresses forward and alternates left/right dominance
         float baseDistance = 1.5f + slashIndex * 1.2f;
         double perpOffset = (slashIndex % 2 == 0) ? 1.5 : -1.5;
 
-        // Wide sweep across the target area
         for (int i = -3; i <= 3; i++) {
             Vec3 center = origin
                     .add(look.scale(baseDistance))

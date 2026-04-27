@@ -21,34 +21,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * Flame Breathing moveset implementation
- * Flame Breathing excels at crowd control and burning effects
- * All attacks hit multiple enemies and apply fire damage
- *
- * Right-click: Pommel Slash (6 rapid slashes)
- * Crouch + Right-click: Thrust Attack (dash forward with thrust)
- */
+// Flame Breathing moveset. RC=Pommel Slash, Crouch+RC=Unknowing Fire, Wheel 0-4=breathing forms.
 public class FlameBreathingMoveset extends AbstractMoveset {
 
-    // Track cooldowns per player per move
     private static final Map<UUID, Map<Integer, Long>> entityCooldowns = new HashMap<>();
-
-    // Track active attacks to prevent breath consumption on failed attempts
     private static final Map<UUID, Boolean> executingMove = new HashMap<>();
-
-    // Thread-local to store current moveset instance for action access
     private static final ThreadLocal<FlameBreathingMoveset> CURRENT_MOVESET = new ThreadLocal<>();
 
     public FlameBreathingMoveset() {
         super("flame_breathing", "Flame Breathing", MovesetType.BREATHING, createBuilder());
-
-        // Auto-capture configs for GUI display using existing execution methods
         captureInitialConfigs();
     }
 
     private void captureInitialConfigs() {
-        // Execute the config creation logic without actually performing the moves
         createAndCapturePommelSlashConfig();
         createAndCaptureUnknowingFireConfig();
     }
@@ -86,11 +71,9 @@ public class FlameBreathingMoveset extends AbstractMoveset {
     private static MovesetBuilder createBuilder() {
         return new MovesetBuilder()
                 .withIdleAnimation("nichirin:flame_idle")
-                .withSpeedMultiplier(1.15f) // Slightly slower but more powerful
+                .withSpeedMultiplier(1.15f)
 
-                //skip unknowing fire (index 0)
-
-                // Second Form: Rising Scorching Sun - Upward arc (INDEX 1 in wheel)
+                // INDEX 0: Rising Scorching Sun — upward arc, launches enemies
                 .withMove(new MoveBuilder("rising_scorching_sun", "Scorching Sun")
                         .withAnimation("nichirin:rising_scorching_sun", 8)
                         .withTiming(100, 12, 25) // 5 second cooldown
@@ -111,7 +94,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         })
                 )
 
-                // Third Form: Blazing Universe - Heavy downward strike (INDEX 2 in wheel)
+                // INDEX 1: Blazing Universe — charged downward strike, explodes on impact
                 .withMove(new MoveBuilder("blazing_universe", "Blazing Universe")
                         .withAnimation("nichirin:blazing_universe", 12)
                         .withTiming(160, 13, 50) // 8 second cooldown, windup, explosive finish
@@ -132,7 +115,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         })
                 )
 
-                // Fourth Form: Blooming Flame Undulation - 360° defense (INDEX 3 in wheel)
+                // INDEX 2: Blooming Flame Undulation — 360° defense
                 .withMove(new MoveBuilder("blooming_flame_undulation", "Blooming Flame")
                         .withAnimation("nichirin:blooming_flame_undulation", 10)
                         .withTiming(140, 11, 35) // 7 second cooldown
@@ -153,7 +136,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         })
                 )
 
-                // Fifth Form: Flame Tiger - Multi-hit dash (INDEX 4 in wheel)
+                // INDEX 3: Flame Tiger — dashing multi-hit strike
                 .withMove(new MoveBuilder("flame_tiger", "Flame Tiger")
                         .withAnimation("nichirin:flame_tiger", 11)
                         .withTiming(120, 10, 40) // 6 second cooldown, dash duration
@@ -175,7 +158,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         })
                 )
 
-                // Ninth Form: Rengoku - Ultimate dragon technique (INDEX 5 in wheel)
+                // INDEX 4: Rengoku — ultimate dragon dash, 30-second cooldown
                 .withMove(new MoveBuilder("rengoku", "Rengoku")
                         .withAnimation("nichirin:rengoku", 20)
                         .withTiming(600, 18, 60) // 30 second cooldown, windup, dragon dash
@@ -200,16 +183,14 @@ public class FlameBreathingMoveset extends AbstractMoveset {
 
     @Override
     public int getMoveCount() {
-        return 5; //amount of moves in wheel
+        return 5;
     }
 
     @Override
     public boolean handleRightClick(LivingEntity entity, boolean isCrouching) {
         if (isCrouching) {
-            // Crouch + Right-click: Unknowing Fire
             return executeUnknowingFire(entity);
         } else {
-            // Regular Right-click: Pommel Slash
             return executePommelSlash(entity);
         }
     }
@@ -218,11 +199,9 @@ public class FlameBreathingMoveset extends AbstractMoveset {
         triggerAnimation(entity, "pommel_slash");
         PommelSlashAttack attack = new PommelSlashAttack();
 
-        // Use the same config creation method
         createAndCapturePommelSlashConfig();
         MoveConfiguration tempConfig = getRightClickConfiguration();
 
-        // Send config sync packet to client
         if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer) {
             MovesetConfigSyncPacket packet = new MovesetConfigSyncPacket(
                     "flame_breathing",
@@ -242,11 +221,9 @@ public class FlameBreathingMoveset extends AbstractMoveset {
         triggerAnimation(entity, "unknowing_fire");
         UnknowingFireAttack attack = new UnknowingFireAttack();
 
-        // Use the same config creation method
         createAndCaptureUnknowingFireConfig();
         MoveConfiguration tempConfig = getCrouchRightClickConfiguration();
 
-        // Send config sync packet to client
         if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer) {
             MovesetConfigSyncPacket packet = new MovesetConfigSyncPacket(
                     "flame_breathing",
@@ -301,32 +278,21 @@ public class FlameBreathingMoveset extends AbstractMoveset {
             }
         }
 
-        // Remove the range check for Flame Breathing - it's designed for crowd control
-        // and should work even without enemies nearby (unlike Thunder's targeted attacks)
-
-        // Mark that we're executing a move
         executingMove.put(entity.getUUID(), true);
-
-        // Store current moveset instance for access by actions
         CURRENT_MOVESET.set(this);
 
         try {
-            // Execute the move
             super.performMove(entity, moveIndex);
         } finally {
-            // Always clean up the thread local
             CURRENT_MOVESET.remove();
         }
 
-        // Check if move actually executed by seeing if breath was consumed
+        // breath consumption is how we detect if the move actually fired
         boolean moveExecuted = !executingMove.getOrDefault(entity.getUUID(), false);
         executingMove.remove(entity.getUUID());
 
         if (moveExecuted && config != null) {
-            // Set cooldown after successful execution
             setMoveCooldown(entity, moveIndex);
-
-            // Send cooldown display packet if on server and has cooldown
             if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer
                     && config.getCooldownOrDefault(0) > 0) {
                 FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
@@ -338,9 +304,6 @@ public class FlameBreathingMoveset extends AbstractMoveset {
         }
     }
 
-    /**
-     * Check if there are valid targets within range for crowd control moves
-     */
     private boolean hasTargetsInRange(LivingEntity entity, float range) {
         net.minecraft.world.phys.AABB searchBox = new net.minecraft.world.phys.AABB(
                 entity.getX() - range, entity.getY() - range, entity.getZ() - range,
@@ -352,16 +315,10 @@ public class FlameBreathingMoveset extends AbstractMoveset {
         return !entities.isEmpty();
     }
 
-    /**
-     * Get the current moveset instance (for use in action lambdas)
-     */
     public static FlameBreathingMoveset getCurrentMoveset() {
         return CURRENT_MOVESET.get();
     }
 
-    /**
-     * Check if a player can use a specific move (not on cooldown)
-     */
     private boolean canUseMove(LivingEntity entity, int moveIndex) {
         MoveConfiguration config = getMove(moveIndex);
         if (config == null || config.getCooldownOrDefault(0) <= 0) {
@@ -382,14 +339,9 @@ public class FlameBreathingMoveset extends AbstractMoveset {
         return currentTime >= cooldownEnd;
     }
 
-    /**
-     * Set a move on cooldown
-     */
     private void setMoveCooldown(LivingEntity entity, int moveIndex) {
         MoveConfiguration config = getMove(moveIndex);
-        if (config == null || config.getCooldownOrDefault(0) <= 0) {
-            return; // No cooldown
-        }
+        if (config == null || config.getCooldownOrDefault(0) <= 0) return;
 
         long cooldownEnd = entity.level().getGameTime() + config.getCooldownOrDefault(0);
         entityCooldowns.computeIfAbsent(entity.getUUID(), k -> new HashMap<>())
@@ -398,7 +350,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
 
     @Override
     public int getRightClickMoveIndex(boolean isCrouching) {
-        return isCrouching ? -2 : -1; // Not in attack wheel, handled separately
+        return isCrouching ? -2 : -1;
     }
 
     @Override
@@ -412,15 +364,8 @@ public class FlameBreathingMoveset extends AbstractMoveset {
     }
 
     @Override
-    public void onMovePerformed(LivingEntity entity, int moveIndex, boolean isCrouching) {
-        // Flame Breathing specific post-move effects can be added here
-        // moveIndex -1 = Pommel Slash (right-click)
-        // moveIndex -2 = Unknowing Fire (crouch + right-click)
-    }
+    public void onMovePerformed(LivingEntity entity, int moveIndex, boolean isCrouching) {}
 
-    /**
-     * Called when a player logs out - clean up their data
-     */
     public static void resetCooldowns(LivingEntity entity) {
         entityCooldowns.remove(entity.getUUID());
     }
@@ -430,11 +375,6 @@ public class FlameBreathingMoveset extends AbstractMoveset {
         executingMove.remove(entity.getUUID());
     }
 
-    // ==================== NPC-PLAYER HELPER METHODS ====================
-
-    /**
-     * Check if entity has enough breath (works for both Players and NPCs)
-     */
     private boolean hasEnoughBreath(LivingEntity entity, float amount) {
         if (entity instanceof Player player) {
             return BreathingManager.hasBreath(player, amount);
@@ -444,13 +384,9 @@ public class FlameBreathingMoveset extends AbstractMoveset {
         return false;
     }
 
-    /**
-     * Show message to entity (only works for Players)
-     */
     private void showMessage(LivingEntity entity, Component message, boolean actionBar) {
         if (entity instanceof Player player) {
             player.displayClientMessage(message, actionBar);
         }
-        // NPCs don't need messages
     }
 }

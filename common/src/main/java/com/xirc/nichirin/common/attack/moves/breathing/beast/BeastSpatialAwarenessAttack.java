@@ -14,13 +14,10 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 
-/**
- * Seventh Form: Spatial Awareness - Detects all entities through walls via glowing.
- * Applies glowing effect to all nearby enemies so the user can sense them.
- */
+// Seventh Form: Spatial Awareness. Applies glowing to all nearby enemies so the user can track them through walls.
 public class BeastSpatialAwarenessAttack extends BeastBreathingAttackBase {
 
-    private static final int GLOW_DURATION = 200; // 10 seconds
+    private static final int GLOW_DURATION = 200;
     private boolean activated = false;
 
     @Override
@@ -72,7 +69,6 @@ public class BeastSpatialAwarenessAttack extends BeastBreathingAttackBase {
         if (!(world instanceof ServerLevel sl)) return;
         Vec3 center = user.position().add(0, user.getBbHeight() / 2, 0);
 
-        // Expanding ring effect
         for (int ring = 1; ring <= 5; ring++) {
             double r = ring * (range / 5.0);
             int steps = ring * 8;

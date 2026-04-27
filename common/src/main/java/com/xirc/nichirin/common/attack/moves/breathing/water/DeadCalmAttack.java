@@ -14,11 +14,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Eleventh Form: Dead Calm
- * Plain multihit auto-target AoE
- * 240 TICKS duration
- */
+// Eleventh Form: Dead Calm. Establishes a persistent field that auto-slashes all enemies who enter or remain in range.
 public class DeadCalmAttack extends WaterBreathingAttackBase {
 
     private boolean fieldActive = false;
@@ -27,29 +23,20 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
     private final Set<LivingEntity> recentlyTriggered = new HashSet<>();
     private int calmTicks = 0;
 
-    public DeadCalmAttack() {
-        // No configuration here - everything comes from moveset
-    }
-
     @Override
     protected void onStart() {
-        System.out.println("DEBUG: DeadCalmAttack.onStart() called! isClientSide=" + world.isClientSide);
-
         fieldActive = false;
         fieldCenter = null;
         entitiesInField.clear();
         recentlyTriggered.clear();
         calmTicks = 0;
 
-        // Dead calm startup sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.WATER_AMBIENT, SoundSource.PLAYERS, 0.6f, 0.5f);
 
         createCalmWaterGathering();
 
-        // Trigger shader effect - send packet from SERVER to all clients
         if (!world.isClientSide) {
-            System.out.println("DEBUG: Server side, sending shader packet to all players!");
             sendShaderPacketToNearbyPlayers();
         }
     }
@@ -57,14 +44,9 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
     private void sendShaderPacketToNearbyPlayers() {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
-        System.out.println("DEBUG: Preparing to send shader packets...");
-
         Vec3 userPos = user.position();
-        int playerCount = 0;
         for (net.minecraft.server.level.ServerPlayer player : serverLevel.players()) {
-            if (player.distanceToSqr(userPos) < 10000) { // 100 block range
-                playerCount++;
-                System.out.println("DEBUG: Sending shader packet to player: " + player.getName().getString());
+            if (player.distanceToSqr(userPos) < 10000) {
                 com.xirc.nichirin.registry.NichirinPacketRegistry.sendToPlayer(
                         new com.xirc.nichirin.common.network.s2c.TriggerShaderPacket(
                                 "com.xirc.nichirin.client.shader.DeadCalmShaderEffect",
@@ -74,20 +56,17 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
                 );
             }
         }
-        System.out.println("DEBUG: Sent shader packet to " + playerCount + " players");
     }
 
     @Override
     protected void perform() {
         if (world.isClientSide) return;
 
-        // Establish the calm field after windup
         if (!fieldActive && tickCount == windup + 1) {
             establishCalmField();
             fieldActive = true;
         }
 
-        // Maintain the persistent area effect during duration (240 ticks total)
         if (fieldActive && tickCount > windup && tickCount < windup + duration) {
             calmTicks++;
             maintainCalmField();
@@ -99,7 +78,6 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
-        // Calm water gathering
         for (int ring = 1; ring <= 12; ring++) {
             float radius = ring * 1.2f;
             int particlesInRing = 8 * ring;
@@ -134,14 +112,8 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
     }
 
     private void applySlowdown() {
-        int slowDuration = duration / 2; // Use the full duration from moveset
-        user.addEffect(new MobEffectInstance(
-                MobEffects.MOVEMENT_SLOWDOWN,
-                slowDuration,
-                220, // Max slowness (can't move but can't be knocked back)
-                false, // Not ambient
-                false  // Don't show particles (too much visual noise)
-        ));
+        // Max slowness (220) immobilizes the user during the field without applying knockback resistance
+        user.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, duration / 2, 220, false, false));
     }
 
     private void maintainCalmField() {

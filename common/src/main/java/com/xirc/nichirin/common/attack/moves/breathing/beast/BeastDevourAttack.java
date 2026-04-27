@@ -10,10 +10,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 
-/**
- * Third Fang: Devour - Two simultaneous horizontal slashes at the throat.
- * No knockback; applies strong stun instead.
- */
+// Third Fang: Devour. Two horizontal slashes at the throat — no knockback, strong stun instead.
 public class BeastDevourAttack extends BeastBreathingAttackBase {
 
     private boolean slash1Done = false;
@@ -30,7 +27,6 @@ public class BeastDevourAttack extends BeastBreathingAttackBase {
     protected void perform() {
         if (world.isClientSide) return;
 
-        // First horizontal slash
         if (!slash1Done && tickCount == 1) {
             executeHorizontalSlash(0.2f);
             slash1Done = true;
@@ -38,7 +34,6 @@ public class BeastDevourAttack extends BeastBreathingAttackBase {
                     SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0f, 0.8f);
         }
 
-        // Second horizontal slash slightly after
         if (!slash2Done && tickCount == 4) {
             executeHorizontalSlash(-0.1f);
             slash2Done = true;
@@ -52,12 +47,11 @@ public class BeastDevourAttack extends BeastBreathingAttackBase {
         Vec3 look = user.getLookAngle();
         Vec3 perp = new Vec3(-look.z, 0, look.x).normalize();
 
-        // Wide horizontal sweep
         for (int i = -3; i <= 3; i++) {
             Vec3 center = origin.add(perp.scale(i * 0.6)).add(look.scale(1.5));
             List<LivingEntity> targets = getTargetsInCustomHitbox(center, 1.5f, HitboxData.HitboxShape.WIDE);
             for (LivingEntity target : targets) {
-                // Override to suppress knockback but apply heavy stun
+                // Suppress knockback so stun pins the target in place
                 float savedKnockback = knockback;
                 knockback = 0;
                 hitTarget(target);

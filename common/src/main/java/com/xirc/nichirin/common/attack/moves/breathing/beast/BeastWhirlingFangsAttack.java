@@ -12,10 +12,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 
-/**
- * Tenth Fang: Whirling Fangs - Rapid spinning that deflects all projectiles.
- * Creates wind particles; acts as a defensive spin barrier.
- */
+// Tenth Fang: Whirling Fangs. Rapid spinning that deflects all projectiles and hits nearby enemies.
 public class BeastWhirlingFangsAttack extends BeastBreathingAttackBase {
 
     private double spinAngle = 0;
@@ -31,14 +28,12 @@ public class BeastWhirlingFangsAttack extends BeastBreathingAttackBase {
     protected void perform() {
         if (world.isClientSide) return;
 
-        spinAngle += 45; // 45 degrees per tick = 2 full rotations over 16 ticks
+        spinAngle += 45; // 45° per tick = 2 full rotations over 16 ticks
 
         Vec3 center = user.position().add(0, user.getBbHeight() / 2, 0);
 
-        // Deflect all nearby projectiles
         deflectProjectiles();
 
-        // Hit nearby enemies with spinning slashes every 2 ticks
         if (tickCount % 2 == 0) {
             List<LivingEntity> targets = getTargetsInCircle(range, 8);
             for (LivingEntity target : targets) {

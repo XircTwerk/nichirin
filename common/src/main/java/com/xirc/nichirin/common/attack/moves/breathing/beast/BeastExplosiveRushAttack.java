@@ -13,11 +13,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 
-/**
- * Eighth Form: Explosive Rush - Blinding speed dash, ignores all attacks.
- * Invulnerable during dash; deflects all projectiles.
- * Bound to crouch + right click.
- */
+// Eighth Form: Explosive Rush. Invulnerable blinding dash that deflects all projectiles.
 public class BeastExplosiveRushAttack extends BeastBreathingAttackBase {
 
     private boolean wasInvulnerable = false;
@@ -41,7 +37,6 @@ public class BeastExplosiveRushAttack extends BeastBreathingAttackBase {
     protected void perform() {
         if (world.isClientSide) return;
 
-        // Dash on first active tick
         if (!dashStarted) {
             Vec3 velocity = dashDirection.scale(dashSpeed != null ? dashSpeed : 12.0f);
             user.setDeltaMovement(velocity);
@@ -50,7 +45,6 @@ public class BeastExplosiveRushAttack extends BeastBreathingAttackBase {
             dashStarted = true;
         }
 
-        // Maintain velocity during dash
         Vec3 current = user.getDeltaMovement();
         float speed = dashSpeed != null ? dashSpeed : 12.0f;
         if (current.length() < speed * 0.5) {
@@ -58,10 +52,8 @@ public class BeastExplosiveRushAttack extends BeastBreathingAttackBase {
             user.hurtMarked = true;
         }
 
-        // Deflect all nearby projectiles
         deflectProjectiles();
 
-        // Hit enemies during dash
         Vec3 center = user.position().add(0, user.getBbHeight() / 2, 0);
         List<LivingEntity> targets = getTargetsInCustomHitbox(center, 2.5f, HitboxData.HitboxShape.LONG);
         for (LivingEntity target : targets) {

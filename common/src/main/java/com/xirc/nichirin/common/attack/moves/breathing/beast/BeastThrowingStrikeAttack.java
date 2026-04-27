@@ -9,10 +9,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.phys.Vec3;
 
-/**
- * Eleventh Fang: Sudden Throwing Strike - Throws both katanas as spinning projectiles.
- * Two katana entities are launched; they pierce entities, stick to blocks, expire after 10s.
- */
+// Eleventh Fang: Sudden Throwing Strike. Throws both katanas as piercing projectiles.
 public class BeastThrowingStrikeAttack extends BeastBreathingAttackBase {
 
     private boolean thrown = false;
@@ -38,10 +35,7 @@ public class BeastThrowingStrikeAttack extends BeastBreathingAttackBase {
 
         Vec3 origin = user.getEyePosition();
 
-        // First katana - slightly left
         spawnKatana(origin.add(perp.scale(-0.3)), look, damage);
-
-        // Second katana - slightly right
         spawnKatana(origin.add(perp.scale(0.3)), look, damage);
 
         createThrowEffect();

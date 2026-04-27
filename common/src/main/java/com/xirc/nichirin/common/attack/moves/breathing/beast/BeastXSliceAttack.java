@@ -10,10 +10,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 
-/**
- * Second Fang: Slice - Two progressing X-shaped slash projectiles.
- * Hitboxes advance forward over ticks in an X pattern.
- */
+// Second Fang: Slice. Two X-shaped slashes that advance forward over ticks.
 public class BeastXSliceAttack extends BeastBreathingAttackBase {
 
     private static final int SLASH_1_START = 1;
@@ -35,13 +32,11 @@ public class BeastXSliceAttack extends BeastBreathingAttackBase {
         Vec3 look = user.getLookAngle();
         Vec3 perp = new Vec3(-look.z, 0, look.x).normalize();
 
-        // First X-slash: advancing forward, slicing diagonally
         if (t >= SLASH_1_START && t <= SLASH_1_END) {
             float progress = (float)(t - SLASH_1_START) / (SLASH_1_END - SLASH_1_START);
             float dist = 1.0f + progress * 4.0f;
             Vec3 center = origin.add(look.scale(dist));
 
-            // X-pattern: two diagonal slashes
             Vec3 diagA = origin.add(look.add(perp).normalize().scale(dist));
             Vec3 diagB = origin.add(look.subtract(perp).normalize().scale(dist));
 
@@ -49,7 +44,6 @@ public class BeastXSliceAttack extends BeastBreathingAttackBase {
             createXSlashParticles(center, look, perp, 1);
         }
 
-        // Second X-slash: starts slightly after first, advances further
         if (t >= SLASH_2_START && t <= SLASH_2_END) {
             float progress = (float)(t - SLASH_2_START) / (SLASH_2_END - SLASH_2_START);
             float dist = 3.0f + progress * 5.0f;
@@ -80,11 +74,9 @@ public class BeastXSliceAttack extends BeastBreathingAttackBase {
         float spread = 2.5f;
         for (int i = -3; i <= 3; i++) {
             double t = i / 3.0;
-            // Diagonal 1: top-left to bottom-right
             Vec3 p1 = center.add(look.scale(t * 0.5)).add(perp.scale(t * spread));
             sl.sendParticles(ParticleTypes.SWEEP_ATTACK, p1.x, p1.y, p1.z, 1, 0.05, 0.05, 0.05, 0);
 
-            // Diagonal 2: top-right to bottom-left
             Vec3 p2 = center.add(look.scale(t * 0.5)).add(perp.scale(-t * spread));
             sl.sendParticles(ParticleTypes.SWEEP_ATTACK, p2.x, p2.y, p2.z, 1, 0.05, 0.05, 0.05, 0);
 

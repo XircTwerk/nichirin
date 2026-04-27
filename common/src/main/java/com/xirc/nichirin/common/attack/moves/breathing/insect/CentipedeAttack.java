@@ -13,29 +13,21 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Fourth Form: Dance of the Centipede – Hundred-Legged Zigzag
- * 22.5° -> -22.5° -> 22.5° -> 0° dash pattern with enemy dragging and massive finisher.
- */
+// Fourth Form: Dance of the Centipede. Zigzag dash (22.5° / -22.5° / 22.5°) drags caught enemies into a straight finisher.
 public class CentipedeAttack extends InsectBreathingAttackBase {
 
     private static final int ZIGZAG_COUNT = 3;
-    private static final int DASH_DURATION = 10; // 1/3 of 6
-    private static final int DASH_INTERVAL = 10; // 1/3 of 6
+    private static final int DASH_DURATION = 10;
+    private static final int DASH_INTERVAL = 10;
 
     private int zigzagsExecuted = 0;
     private int nextZigzagTick = 0;
     private boolean finisherExecuted = false;
-    private Vec3 baseDirection; // Forward direction when attack starts
+    private Vec3 baseDirection;
     private final Set<LivingEntity> caughtEnemies = new HashSet<>();
     private final List<LivingEntity> draggedEnemies = new ArrayList<>();
 
-    // Invulnerability tracking
     private boolean wasInvulnerable = false;
-
-    public CentipedeAttack() {
-        // Configuration comes from moveset
-    }
 
     @Override
     protected void onStart() {
@@ -45,17 +37,11 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
         caughtEnemies.clear();
         draggedEnemies.clear();
 
-        // Set base direction from user's facing when attack starts
         baseDirection = user.getLookAngle().normalize();
-
-        // Store invulnerability state
         wasInvulnerable = user.isInvulnerable();
 
-        // Centipede startup sounds
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.SPIDER_AMBIENT, SoundSource.PLAYERS, 1.0f, 0.8f);
-
-        // Create coiling effect
         createCentipedeCoilEffect();
     }
 
@@ -63,21 +49,18 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
     protected void perform() {
         if (world.isClientSide) return;
 
-        // Execute zigzag dashes
         if (zigzagsExecuted < ZIGZAG_COUNT && tickCount >= windup + nextZigzagTick) {
             executeZigzagDash();
             zigzagsExecuted++;
             nextZigzagTick += DASH_DURATION + DASH_INTERVAL;
         }
 
-        // Execute finisher after all zigzags
         if (!finisherExecuted && zigzagsExecuted >= ZIGZAG_COUNT &&
                 tickCount >= windup + (ZIGZAG_COUNT * (DASH_DURATION + DASH_INTERVAL)) + 5) {
             executeFinisher();
             finisherExecuted = true;
         }
 
-        // During dashes, maintain drag effect
         if (zigzagsExecuted > 0 && !finisherExecuted) {
             continueDragEffect();
         }
@@ -85,38 +68,25 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
 
     private void executeZigzagDash() {
         Vec3 zigzagDirection;
-
-        // Calculate zigzag direction: 22.5° -> -22.5° -> 22.5° -> 0° (finisher)
+        // 22.5° / -22.5° / 22.5° alternating pattern
         if (zigzagsExecuted == 0) {
-            // First dash: +22.5° from forward
             zigzagDirection = rotateDirection(baseDirection, 22.5);
         } else if (zigzagsExecuted == 1) {
-            // Second dash: -22.5° from forward
             zigzagDirection = rotateDirection(baseDirection, -22.5);
         } else {
-            // Third dash: +22.5° from forward
             zigzagDirection = rotateDirection(baseDirection, 22.5);
         }
 
-        // Fast dash with invincibility - 1/3 speed
-        Vec3 dashVelocity = zigzagDirection.scale(dashSpeed * 0.67); // 1/3 of 2.0
+        Vec3 dashVelocity = zigzagDirection.scale(dashSpeed * 0.67);
         user.setDeltaMovement(dashVelocity);
         user.hurtMarked = true;
         user.hasImpulse = true;
-
-        // Grant invincibility during dash
         user.setInvulnerable(true);
 
-        // Catch and drag enemies (like Flame Tiger)
         catchAndDragEnemies();
-
-        // Hit enemies along path
         hitEnemiesAlongPath();
-
-        // Zigzag effects with butterfly particles
         createZigzagTrail(zigzagsExecuted);
 
-        // Sounds
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 0.8f, 1.5f + zigzagsExecuted * 0.3f);
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
@@ -127,27 +97,19 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
         double radians = Math.toRadians(degrees);
         double cos = Math.cos(radians);
         double sin = Math.sin(radians);
-
-        // Rotate around Y axis (horizontal rotation)
         double newX = direction.x * cos - direction.z * sin;
         double newZ = direction.x * sin + direction.z * cos;
-
         return new Vec3(newX, direction.y, newZ).normalize();
     }
 
     private void catchAndDragEnemies() {
         Vec3 userPos = user.position();
-
-        // Large hitbox to catch enemies (like Flame Tiger) - 1/3
-        List<LivingEntity> pathEnemies = getTargetsInCustomHitbox(
-                userPos, 2.0, 1.33, 2.0); // 1/3 of 6.0, 4.0, 6.0
+        List<LivingEntity> pathEnemies = getTargetsInCustomHitbox(userPos, 2.0, 1.33, 2.0);
 
         for (LivingEntity enemy : pathEnemies) {
             if (!caughtEnemies.contains(enemy)) {
                 caughtEnemies.add(enemy);
                 draggedEnemies.add(enemy);
-
-                // Catch sound and effect
                 world.playSound(null, enemy.getX(), enemy.getY(), enemy.getZ(),
                         SoundEvents.SPIDER_HURT, SoundSource.PLAYERS, 0.8f, 1.5f);
                 createCatchEffect(enemy.position());
@@ -157,19 +119,13 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
 
     private void continueDragEffect() {
         Vec3 userPos = user.position();
-
-        // Drag caught enemies (like Flame Tiger)
         for (LivingEntity draggedEnemy : new ArrayList<>(draggedEnemies)) {
             if (draggedEnemy.isAlive()) {
-                // Pull enemy toward user - 1/3 distance
-                Vec3 dragPosition = userPos.subtract(baseDirection.scale(0.67)); // 1/3 of 2.0
-                Vec3 dragVelocity = dragPosition.subtract(draggedEnemy.position()).scale(0.3); // 1/3 of 0.9
-
+                Vec3 dragPosition = userPos.subtract(baseDirection.scale(0.67));
+                Vec3 dragVelocity = dragPosition.subtract(draggedEnemy.position()).scale(0.3);
                 draggedEnemy.setDeltaMovement(dragVelocity);
                 draggedEnemy.hurtMarked = true;
                 draggedEnemy.hasImpulse = true;
-
-                // Drag trail effect with butterfly particles
                 createDragTrailEffect(draggedEnemy.position());
             } else {
                 draggedEnemies.remove(draggedEnemy);
@@ -179,25 +135,19 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
 
     private void hitEnemiesAlongPath() {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
-
-        // Hit enemies in large area during zigzag - 1/3
-        List<LivingEntity> targets = getTargetsInCustomHitbox(userPos, 1.67, 1.0, 1.67); // 1/3 of 5.0, 3.0, 5.0
+        List<LivingEntity> targets = getTargetsInCustomHitbox(userPos, 1.67, 1.0, 1.67);
 
         for (LivingEntity target : targets) {
-            // Reduced damage per zigzag hit (like Flame Tiger)
             float originalDamage = damage;
-            damage = damage * 0.4f; // 40% damage per zigzag
+            damage = damage * 0.4f;
             hitTarget(target);
             damage = originalDamage;
 
-            // Light knockback to keep enemies close - 1/3
-            Vec3 lightKnockback = target.position().subtract(userPos).normalize().scale(knockback * 0.1); // 1/3 of 0.3
-            target.push(lightKnockback.x, 0.033, lightKnockback.z); // 1/3 of 0.1
-
+            Vec3 lightKnockback = target.position().subtract(userPos).normalize().scale(knockback * 0.1);
+            target.push(lightKnockback.x, 0.033, lightKnockback.z);
             createZigzagImpactEffect(target.position());
         }
 
-        // Also hit dragged enemies
         for (LivingEntity draggedEnemy : draggedEnemies) {
             if (draggedEnemy.isAlive()) {
                 float originalDamage = damage;
@@ -210,55 +160,40 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
     }
 
     private void executeFinisher() {
-        // Massive forward dash for finisher (0° - straight forward) - 1/3 speed
-        Vec3 finisherVelocity = baseDirection.scale(dashSpeed * 0.83); // 1/3 of 2.5
+        Vec3 finisherVelocity = baseDirection.scale(dashSpeed * 0.83);
         user.setDeltaMovement(finisherVelocity);
         user.hurtMarked = true;
         user.hasImpulse = true;
 
-        // Hit all enemies in huge finisher area - 1/3
         List<LivingEntity> finisherTargets = getTargetsInCustomHitbox(
                 user.position().add(0, user.getBbHeight() / 2, 0),
-                hitboxSize * 0.83, 1.33, hitboxSize * 0.83); // 1/3 of 2.5, 4.0, 2.5
+                hitboxSize * 0.83, 1.33, hitboxSize * 0.83);
 
         for (LivingEntity target : finisherTargets) {
-            // Full finisher damage
             hitTarget(target);
-
-            // Strong knockback - 1/3
             Vec3 finisherKnockback = target.position().subtract(user.position()).normalize();
-            target.push(finisherKnockback.x * knockback * 0.5, 0.27, finisherKnockback.z * knockback * 0.5); // 1/3 of 1.5, 0.8
-
+            target.push(finisherKnockback.x * knockback * 0.5, 0.27, finisherKnockback.z * knockback * 0.5);
             createFinisherImpactEffect(target.position());
         }
 
-        // Release dragged enemies with massive damage
         for (LivingEntity draggedEnemy : draggedEnemies) {
             if (draggedEnemy.isAlive()) {
-                // Extra finisher damage for dragged enemies
                 float originalDamage = damage;
-                damage = damage * 1.5f; // 150% damage
+                damage = damage * 1.5f;
                 hitTarget(draggedEnemy);
                 damage = originalDamage;
-
-                // Massive knockback - 1/3
-                Vec3 finalKnockback = baseDirection.scale(knockback * 1.0); // 1/3 of 3.0
-                draggedEnemy.push(finalKnockback.x, 0.33, finalKnockback.z); // 1/3 of 1.0
-
+                Vec3 finalKnockback = baseDirection.scale(knockback * 1.0);
+                draggedEnemy.push(finalKnockback.x, 0.33, finalKnockback.z);
                 createFinisherImpactEffect(draggedEnemy.position());
             }
         }
 
-        // Massive venom burst
         createVenomBurst();
-
-        // Finisher sounds
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.PLAYERS, 1.5f, 0.8f);
         playPoisonSound(user.position());
     }
 
-    // Visual effects
     private void createCentipedeCoilEffect() {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
@@ -274,7 +209,6 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
             double z = userPos.z + Math.sin(angle) * radius;
             double y = userPos.y + height;
 
-            // Use butterfly particles like Bee Sting
             serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(),
                     x, y, z, 1, 0.05, 0.05, 0.05, 0.02);
             if (i % 3 == 0) {
@@ -289,16 +223,13 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
         for (int i = 1; i <= 6; i++) {
-            Vec3 trailPos = userPos.subtract(baseDirection.scale(i * 0.13)); // 1/3 of 0.4
-
-            // Butterfly trail particles like Bee Sting
+            Vec3 trailPos = userPos.subtract(baseDirection.scale(i * 0.13));
             serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(),
                     trailPos.x, trailPos.y, trailPos.z, 3, 0.2, 0.2, 0.2, 0.1);
             serverLevel.sendParticles(ParticleTypes.PORTAL,
                     trailPos.x, trailPos.y, trailPos.z, 2, 0.15, 0.15, 0.15, 0.08);
         }
 
-        // Invulnerability sparkles
         serverLevel.sendParticles(ParticleTypes.ENCHANT,
                 userPos.x, userPos.y, userPos.z, 8, 0.5, 0.5, 0.5, 0.1);
     }
@@ -306,7 +237,6 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
     private void createCatchEffect(Vec3 enemyPos) {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
-        // Butterfly catch effect
         serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(),
                 enemyPos.x, enemyPos.y + 1, enemyPos.z, 10, 0.5, 0.5, 0.5, 0.2);
         serverLevel.sendParticles(ParticleTypes.PORTAL,
@@ -316,7 +246,6 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
     private void createDragTrailEffect(Vec3 enemyPos) {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
-        // Butterfly drag trail
         serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(),
                 enemyPos.x, enemyPos.y + 0.5, enemyPos.z, 2, 0.3, 0.3, 0.3, 0.1);
         if (tickCount % 3 == 0) {
@@ -331,7 +260,6 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
         Vec3 targetPos = impactPos.add(0, 1, 0);
         serverLevel.sendParticles(ParticleTypes.CRIT,
                 targetPos.x, targetPos.y, targetPos.z, 5, 0.2, 0.2, 0.2, 0.1);
-        // Butterfly impact particles
         serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(),
                 targetPos.x, targetPos.y, targetPos.z, 8, 0.3, 0.3, 0.3, 0.12);
     }
@@ -342,8 +270,7 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
         Vec3 targetPos = impactPos.add(0, 1, 0);
         serverLevel.sendParticles(ParticleTypes.CRIT,
                 targetPos.x, targetPos.y, targetPos.z, 20, 0.6, 0.6, 0.6, 0.3);
-        createPoisonBurst(targetPos, 0.67f); // 1/3 of 2.0f
-        // Butterfly finisher particles
+        createPoisonBurst(targetPos, 0.67f);
         serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(),
                 targetPos.x, targetPos.y, targetPos.z, 25, 0.8, 0.8, 0.8, 0.4);
     }
@@ -353,22 +280,20 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
-        // Butterfly venom burst
         serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(),
-                userPos.x, userPos.y, userPos.z, 60, 0.83, 0.83, 0.83, 0.17); // 1/3 of 2.5
+                userPos.x, userPos.y, userPos.z, 60, 0.83, 0.83, 0.83, 0.17);
         serverLevel.sendParticles(ParticleTypes.PORTAL,
-                userPos.x, userPos.y, userPos.z, 40, 0.67, 0.67, 0.67, 0.13); // 1/3 of 2.0
+                userPos.x, userPos.y, userPos.z, 40, 0.67, 0.67, 0.67, 0.13);
 
-        // Centipede dissipation effect with butterflies
         for (int i = 0; i < 30; i++) {
             double angle = (i / 30.0) * 2 * Math.PI;
-            double radius = 1.67; // 1/3 of 5.0
+            double radius = 1.67;
             double x = userPos.x + Math.cos(angle) * radius;
             double z = userPos.z + Math.sin(angle) * radius;
             double y = userPos.y;
 
             serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(),
-                    x, y, z, 8, 0.2, 0.4, 0.2, 0.1); // 1/3 of 0.6, 1.2, 0.6, 0.3
+                    x, y, z, 8, 0.2, 0.4, 0.2, 0.1);
         }
     }
 
@@ -384,18 +309,11 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
 
     @Override
     protected void onStop() {
-        // Restore invulnerability
         user.setInvulnerable(wasInvulnerable);
         user.setDeltaMovement(Vec3.ZERO);
-
-        // Final centipede dissolution
         createVenomBurst();
-
-        // Final sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.SPIDER_DEATH, SoundSource.PLAYERS, 1.0f, 1.2f);
-
-        // Clear state
         zigzagsExecuted = 0;
         nextZigzagTick = 0;
         finisherExecuted = false;
