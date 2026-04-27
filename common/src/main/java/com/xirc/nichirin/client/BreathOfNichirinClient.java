@@ -3,6 +3,8 @@ package com.xirc.nichirin.client;
 import com.xirc.nichirin.client.animation.NichirinAnimations;
 import com.xirc.nichirin.client.config.NichirinClientConfig;
 import com.xirc.nichirin.client.handler.*;
+import com.xirc.nichirin.client.shader.FlameBreathingAuraShader;
+import com.xirc.nichirin.client.shader.WaterBreathingAuraShader;
 import dev.architectury.event.events.client.ClientGuiEvent;
 import com.xirc.nichirin.client.particle.*;
 import com.xirc.nichirin.client.renderer.armor.ArmorRendererManager;
@@ -40,6 +42,8 @@ public class BreathOfNichirinClient {
 
     // Store shader effect for easy access
     private static DeadCalmShaderEffect deadCalmEffect;
+    private static FlameBreathingAuraShader flameAuraShader;
+    private static WaterBreathingAuraShader waterAuraShader;
 
     private static void registerParticles() {
         try {
@@ -65,6 +69,10 @@ public class BreathOfNichirinClient {
         try {
             // Register Dead Calm shader effect
             deadCalmEffect = new DeadCalmShaderEffect();
+            flameAuraShader = new FlameBreathingAuraShader();
+            waterAuraShader = new WaterBreathingAuraShader();
+            NichirinShaderManager.getInstance().register(flameAuraShader);
+            NichirinShaderManager.getInstance().register(waterAuraShader);
             NichirinShaderManager.getInstance().register(deadCalmEffect);
 
             LOGGER.info("Dead Calm shader registered successfully");
@@ -133,7 +141,7 @@ public class BreathOfNichirinClient {
 
             // Register critical systems first
             BlockingInputHandler.register();
-            BreathingAuraHandler.register();
+            BreathingAuraWispHandler.register();
             PlayerStats.initialize();
             ItemPropertiesHelper.registerBentoBoxProperty();
             CooldownClearEventHandler.register();

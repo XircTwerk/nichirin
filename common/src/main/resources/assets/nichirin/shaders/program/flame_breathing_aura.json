@@ -1,21 +1,21 @@
 {
   "blend": {
     "func": "add",
-    "srcrgb": "srcalpha",
-    "dstrgb": "1-srcalpha"
+    "srcrgb": "one",
+    "dstrgb": "zero"
   },
-  "vertex": "sobek:rendertype_quad",
+  "vertex": "nichirin:breathing_aura",
   "fragment": "nichirin:flame_breathing_aura",
-  "attributes": ["Position"],
+  "attributes": [ "Position", "UV0" ],
   "samplers": [
-    {"name": "DiffuseSampler"}
+    { "name": "DiffuseSampler" }
   ],
   "uniforms": [
-    {"name": "ProjMat",                  "type": "matrix4x4", "count": 16, "values": [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]},
-    {"name": "OutSize",                  "type": "float",     "count": 2,  "values": [1.0, 1.0]},
-    {"name": "Progress",                 "type": "float",     "count": 1,  "values": [0.0]},
-    {"name": "Intensity",                "type": "float",     "count": 1,  "values": [1.0]},
-    {"name": "InverseProjectionMatrix",  "type": "matrix4x4", "count": 16, "values": [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]},
-    {"name": "InverseViewMatrix",        "type": "matrix4x4", "count": 16, "values": [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]}
+    { "name": "ProjMat",     "type": "matrix4x4", "count": 16, "values": [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1] },
+    { "name": "Time",        "type": "float",     "count": 1,  "values": [ 0.0 ] },
+    { "name": "Intensity",   "type": "float",     "count": 1,  "values": [ 0.0 ] },
+    { "name": "PulseSpeed",  "type": "float",     "count": 1,  "values": [ 1.0 ] },
+    { "name": "AuraColor",   "type": "float",     "count": 3,  "values": [ 1.0, 0.28, 0.0 ] },
+    { "name": "InnerRadius", "type": "float",     "count": 1,  "values": [ 0.65 ] }
   ]
 }

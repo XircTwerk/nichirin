@@ -6,9 +6,8 @@ import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import dev.architectury.event.events.client.ClientTickEvent;
-import net.minecraft.client.Minecraft;
 
-public class BreathingAuraHandler {
+public class BreathingAuraWispHandler {
 
     public static void register() {
         ClientTickEvent.CLIENT_POST.register(minecraft -> {
