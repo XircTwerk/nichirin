@@ -18,11 +18,11 @@ import java.util.UUID;
 
 /**
  * Beast Breathing moveset.
- *
+ * <p>
  * Left click:         First Fang: Pierce (skewer thrust, delayed knockback)
  * Right click:        Second Fang: Slice (progressing X-slashes)
  * Crouch+Right click: Eighth Form: Explosive Rush (invulnerable dash, deflects projectiles)
- *
+ * <p>
  * Wheel (index 0-7):
  *   0 - Third Fang: Devour (horizontal slashes, stun)
  *   1 - Fourth Fang: Slice 'n' Dice (8 rapid slashes)
@@ -303,7 +303,7 @@ public class BeastBreathingMoveset extends AbstractMoveset {
         if (cfg == null) return false;
 
         // Check cooldown
-        if (!canUseRightClickMove(entity, true)) {
+        if (!canUseRightClickMove(entity)) {
             if (entity instanceof Player player) {
                 player.displayClientMessage(
                         Component.literal("Explosive Rush on cooldown!")
@@ -316,7 +316,7 @@ public class BeastBreathingMoveset extends AbstractMoveset {
         attack.configure(cfg);
         triggerAnimation(entity, "beast_explosive_rush");
         MoveExecutor.executeAttack(entity, attack, "beast_breathing", "explosive_rush");
-        setRightClickCooldown(entity, true);
+        setRightClickCooldown(entity);
         onMovePerformed(entity, -2, true);
         return true;
     }
@@ -333,7 +333,7 @@ public class BeastBreathingMoveset extends AbstractMoveset {
                         long remaining = (cd - entity.level().getGameTime()) / 20;
                         showMessage(entity,
                                 Component.literal(config.getDisplayName() + " on cooldown! " + remaining + "s remaining")
-                                        .withStyle(s -> s.withColor(0xBB6600)), true);
+                                        .withStyle(s -> s.withColor(0xBB6600)));
                     }
                 }
             }
@@ -345,7 +345,7 @@ public class BeastBreathingMoveset extends AbstractMoveset {
             float breathCost = config.getBreathCostOrDefault(0.0f);
             if (breathCost > 0 && !hasEnoughBreath(entity, breathCost + 0.1f)) {
                 showMessage(entity, Component.literal("Not enough breath for " + config.getDisplayName() + "!")
-                        .withStyle(s -> s.withColor(0xFF3333)), true);
+                        .withStyle(s -> s.withColor(0xFF3333)));
                 return;
             }
         }
@@ -367,15 +367,13 @@ public class BeastBreathingMoveset extends AbstractMoveset {
     private static final Map<UUID, Long> rightClickCooldownEnd = new HashMap<>();
     private static final long RIGHT_CLICK_COOLDOWN = 80L;
 
-    private boolean canUseRightClickMove(LivingEntity entity, boolean isCrouching) {
-        if (!isCrouching) return true;
+    private boolean canUseRightClickMove(LivingEntity entity) {
         Long end = rightClickCooldownEnd.get(entity.getUUID());
         if (end == null) return true;
         return entity.level().getGameTime() >= end;
     }
 
-    private void setRightClickCooldown(LivingEntity entity, boolean isCrouching) {
-        if (!isCrouching) return;
+    private void setRightClickCooldown(LivingEntity entity) {
         rightClickCooldownEnd.put(entity.getUUID(), entity.level().getGameTime() + RIGHT_CLICK_COOLDOWN);
     }
 
@@ -413,13 +411,8 @@ public class BeastBreathingMoveset extends AbstractMoveset {
         return false;
     }
 
-    private void showMessage(LivingEntity entity, net.minecraft.network.chat.Component msg, boolean actionBar) {
-        if (entity instanceof Player player) player.displayClientMessage(msg, actionBar);
-    }
-
-    @Override
-    public int getRightClickMoveIndex(boolean isCrouching) {
-        return isCrouching ? -2 : -1;
+    private void showMessage(LivingEntity entity, Component msg) {
+        if (entity instanceof Player player) player.displayClientMessage(msg, true);
     }
 
     @Override
@@ -431,9 +424,6 @@ public class BeastBreathingMoveset extends AbstractMoveset {
     public String getCrouchRightClickMoveName() {
         return "Eighth Form: Explosive Rush";
     }
-
-    @Override
-    public void onMovePerformed(LivingEntity entity, int moveIndex, boolean isCrouching) {}
 
     public static BeastBreathingMoveset getCurrentMoveset() {
         return CURRENT_MOVESET.get();
