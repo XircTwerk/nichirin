@@ -5,8 +5,10 @@ import com.xirc.nichirin.client.renderer.block.KatanaHolderBlockRenderer;
 import com.xirc.nichirin.client.renderer.entity.animal.BoarEntityRenderer;
 import com.xirc.nichirin.client.renderer.entity.attack.ThunderBallRenderer;
 import com.xirc.nichirin.client.renderer.entity.npc.TempleDemonRenderer;
+import com.xirc.nichirin.client.renderer.entity.npc.WaterBreathingTrainerRenderer;
 import com.xirc.nichirin.client.renderer.entity.projectile.FlashBombRenderer;
 import com.xirc.nichirin.client.renderer.entity.projectile.SmokeBombRenderer;
+import com.xirc.nichirin.client.renderer.entity.projectile.ThrownKatanaRenderer;
 import com.xirc.nichirin.client.util.ItemPropertiesHelper;
 import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.registry.NichirinBlockEntityRegistry;
@@ -60,6 +62,8 @@ public class BreathOfNichirinForgeClient {
             EntityRenderers.register(NichirinEntityRegistry.SMOKE_BOMB.get(), SmokeBombRenderer::new);
             EntityRenderers.register(NichirinEntityRegistry.BOAR.get(), BoarEntityRenderer::new);
             EntityRenderers.register(NichirinEntityRegistry.TEMPLE_DEMON.get(), TempleDemonRenderer::new);
+            EntityRenderers.register(NichirinEntityRegistry.WATER_BREATHING_TRAINER.get(), WaterBreathingTrainerRenderer::new);
+            EntityRenderers.register(NichirinEntityRegistry.THROWN_KATANA.get(), ThrownKatanaRenderer::new);
 
             // BentoBoxBlockRenderer not yet implemented
             BlockEntityRenderers.register(NichirinBlockEntityRegistry.KATANA_HOLDER_BLOCK_ENTITY.get(), KatanaHolderBlockRenderer::new);

@@ -9,7 +9,12 @@ import com.xirc.nichirin.common.event.system.DemonFoodHandler;
 import com.xirc.nichirin.common.system.DemonManager;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.data.MovesetHelper;
+import com.xirc.nichirin.common.network.s2c.PerkSyncPacket;
 import com.xirc.nichirin.registry.NichirinItemRegistry;
+import com.xirc.nichirin.registry.NichirinPacketRegistry;
+import dev.architectury.networking.NetworkManager;
+import io.netty.buffer.Unpooled;
+import net.minecraft.network.FriendlyByteBuf;
 import dev.architectury.event.events.common.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -41,6 +46,7 @@ public class BreathOfNichirinEventHandler {
 
         PlayerDataProvider.register();
         registerDemonEvents();
+        registerPerkSyncEvents();
         RiceInteractionHandler.register();
         registerRiceLootInjection();
     }
@@ -65,6 +71,22 @@ public class BreathOfNichirinEventHandler {
                         .build());
             }
         });
+    }
+
+    private static void registerPerkSyncEvents() {
+        // Sync perk data to client on join and respawn
+        PlayerEvent.PLAYER_JOIN.register(player -> syncPerksToPlayer((ServerPlayer) player));
+        PlayerEvent.PLAYER_RESPAWN.register((player, keepEverything) -> syncPerksToPlayer((ServerPlayer) player));
+    }
+
+    public static void syncPerksToPlayer(ServerPlayer player) {
+        try {
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+            new PerkSyncPacket(PlayerDataProvider.getData(player).getPerkData()).toBytes(buf);
+            NetworkManager.sendToPlayer(player, NichirinPacketRegistry.PERK_SYNC_ID, buf);
+        } catch (Exception e) {
+            // ignore
+        }
     }
 
     private static void registerDemonEvents() {

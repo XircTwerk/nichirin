@@ -5,6 +5,9 @@ import me.shedaniel.autoconfig.ConfigData;
 import me.shedaniel.autoconfig.annotation.Config;
 import me.shedaniel.autoconfig.annotation.ConfigEntry;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Cloth Config / AutoConfig-backed configuration for Breath of Nichirin.
  *
@@ -164,6 +167,44 @@ public class NichirinModConfig implements ConfigData {
         @ConfigEntry.Gui.Tooltip
         @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
         public int demonSpawnBoostPercent = 50;
+    }
+
+    // =========================================================================
+    // Perks
+    // =========================================================================
+
+    @ConfigEntry.Gui.CollapsibleObject
+    public PerkConfig perks = new PerkConfig();
+
+    public static class PerkConfig {
+
+        @ConfigEntry.Gui.Tooltip
+        public boolean enablePerks = true;
+
+        @ConfigEntry.Gui.Tooltip
+        public boolean enableFlawSystem = true;
+
+        @ConfigEntry.Gui.Tooltip
+        @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
+        public int maxEquippedPerks = 1;
+
+        /** Number of perks a player can equip before they must also equip a flaw. */
+        @ConfigEntry.Gui.Tooltip
+        @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
+        public int perksBeforeFlaws = 3;
+
+        @ConfigEntry.Gui.Tooltip
+        @ConfigEntry.BoundedDiscrete(min = 1, max = 5)
+        public int maxFlaws = 3;
+
+        /** Maximum tier level (0=Common … 4=Legendary) perks can be upgraded to. */
+        @ConfigEntry.Gui.Tooltip
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 4)
+        public int maxTier = 4;
+
+        /** List of perk IDs that are disabled and cannot be discovered or equipped. */
+        @ConfigEntry.Gui.Tooltip
+        public List<String> disabledPerkIds = new ArrayList<>();
     }
 
     // =========================================================================

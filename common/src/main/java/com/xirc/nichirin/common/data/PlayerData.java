@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.data;
 
+import com.xirc.nichirin.common.system.perks.PerkData;
 import lombok.Getter;
 import net.minecraft.nbt.CompoundTag;
 
@@ -24,6 +25,11 @@ public class PlayerData {
      */
     private final MovesetStatistics statistics = new MovesetStatistics();
 
+    /**
+     * Gets perk system data (discovered, equipped, flaws, presets)
+     */
+    private final PerkData perkData = new PerkData();
+
     public PlayerData() {
         // Constructor
     }
@@ -35,6 +41,7 @@ public class PlayerData {
         this.movesetData.copyFrom(other.movesetData);
         this.progression.copyFrom(other.progression);
         this.statistics.copyFrom(other.statistics);
+        this.perkData.copyFrom(other.perkData);
     }
 
     /**
@@ -45,6 +52,7 @@ public class PlayerData {
         tag.put("MovesetData", movesetData.save());
         tag.put("Progression", progression.save());
         tag.put("Statistics", statistics.save());
+        tag.put("PerkData", perkData.save());
         return tag;
     }
 
@@ -66,6 +74,9 @@ public class PlayerData {
         }
         if (tag.contains("Statistics")) {
             statistics.load(tag.getCompound("Statistics"));
+        }
+        if (tag.contains("PerkData")) {
+            perkData.load(tag.getCompound("PerkData"));
         }
     }
 

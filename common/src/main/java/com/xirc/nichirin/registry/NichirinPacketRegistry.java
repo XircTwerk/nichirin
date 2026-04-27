@@ -57,6 +57,10 @@ public interface NichirinPacketRegistry {
     ResourceLocation PARRY_SPARK_ID        = new ResourceLocation(BreathOfNichirin.MOD_ID, "parry_spark");
     ResourceLocation OPEN_CONFIG_SCREEN_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "open_config_screen");
     ResourceLocation BLOOD_MOON_SYNC_ID    = new ResourceLocation(BreathOfNichirin.MOD_ID, "blood_moon_sync");
+    ResourceLocation PERK_SYNC_ID                  = new ResourceLocation(BreathOfNichirin.MOD_ID, "perk_sync");
+    ResourceLocation PERK_ACTION_ID                = new ResourceLocation(BreathOfNichirin.MOD_ID, "perk_action");
+    ResourceLocation OPEN_TRAINER_DIALOGUE_ID      = new ResourceLocation(BreathOfNichirin.MOD_ID, "open_trainer_dialogue");
+    ResourceLocation TRAINER_ACTION_ID             = new ResourceLocation(BreathOfNichirin.MOD_ID, "trainer_action");
 
     // Packet class mappings
     Map<Class<?>, ResourceLocation> PACKET_IDS = new HashMap<>();
@@ -207,6 +211,21 @@ public interface NichirinPacketRegistry {
                 context.queue(() -> packet.handle(context));
             }
         });
+
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, PERK_ACTION_ID, (buf, context) -> {
+            PerkActionPacket packet = new PerkActionPacket(buf);
+            if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
+                context.queue(() -> packet.handle(serverPlayer));
+            }
+        });
+
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, TRAINER_ACTION_ID, (buf, context) -> {
+            com.xirc.nichirin.common.network.c2s.TrainerActionPacket packet =
+                    new com.xirc.nichirin.common.network.c2s.TrainerActionPacket(buf);
+            if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
+                context.queue(() -> packet.handle(serverPlayer));
+            }
+        });
     }
 
     static void registerS2CPacketsWithFallback() {
@@ -336,6 +355,17 @@ public interface NichirinPacketRegistry {
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, BLOOD_MOON_SYNC_ID, (buf, context) -> {
                 com.xirc.nichirin.common.network.s2c.BloodMoonSyncPacket packet =
                         new com.xirc.nichirin.common.network.s2c.BloodMoonSyncPacket(buf);
+                context.queue(() -> packet.handleClient());
+            });
+
+            NetworkManager.registerReceiver(NetworkManager.Side.S2C, PERK_SYNC_ID, (buf, context) -> {
+                PerkSyncPacket packet = new PerkSyncPacket(buf);
+                context.queue(() -> packet.handleClient());
+            });
+
+            NetworkManager.registerReceiver(NetworkManager.Side.S2C, OPEN_TRAINER_DIALOGUE_ID, (buf, context) -> {
+                com.xirc.nichirin.common.network.s2c.OpenTrainerDialoguePacket packet =
+                        new com.xirc.nichirin.common.network.s2c.OpenTrainerDialoguePacket(buf);
                 context.queue(() -> packet.handleClient());
             });
 

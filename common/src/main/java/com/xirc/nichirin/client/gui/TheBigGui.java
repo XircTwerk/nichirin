@@ -183,7 +183,7 @@ public class TheBigGui extends Screen {
         // Render current section content
         switch (currentSection) {
             case HOME -> homeSection.render(graphics, adjustedMouseX, adjustedMouseY, player, contentWidth, contentHeight, this.font);
-            case SKILLS -> skillsSection.render(graphics, player, this.font);
+            case SKILLS -> skillsSection.render(graphics, player, this.font, contentWidth, contentHeight, adjustedMouseX, adjustedMouseY);
             case BESTIARY -> bestiarySection.render(graphics, player, this.font);
             case QUESTS -> questsSection.render(graphics, player, this.font);
             case REPUTATION -> reputationSection.render(graphics, player, this.font);
@@ -230,7 +230,30 @@ public class TheBigGui extends Screen {
             return true;
         }
 
+        // Forward to skills section for search bar
+        if (currentSection == GuiSection.SKILLS) {
+            if (skillsSection.handleKeyTyped((char) 0, keyCode)) return true;
+        }
+
         return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    @Override
+    public boolean charTyped(char c, int modifiers) {
+        if (currentSection == GuiSection.SKILLS) {
+            if (skillsSection.handleKeyTyped(c, 0)) return true;
+        }
+        return super.charTyped(c, modifiers);
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+        if (currentSection == GuiSection.SKILLS) {
+            assert minecraft != null;
+            double scaleRatio = FIXED_GUI_SCALE / minecraft.getWindow().getGuiScale();
+            if (skillsSection.handleScroll(mouseX / scaleRatio, mouseY / scaleRatio, delta)) return true;
+        }
+        return super.mouseScrolled(mouseX, mouseY, delta);
     }
 
     @Override
@@ -251,7 +274,7 @@ public class TheBigGui extends Screen {
         // Handle section-specific clicks
         boolean handled = switch (currentSection) {
             case HOME -> homeSection.handleClick(adjustedMouseX, adjustedMouseY, player);
-            case SKILLS -> skillsSection.handleClick(adjustedMouseX, adjustedMouseY, player);
+            case SKILLS -> skillsSection.handleClick(adjustedMouseX, adjustedMouseY, player, clickContentWidth, clickContentHeight);
             case BESTIARY -> bestiarySection.handleClick(adjustedMouseX, adjustedMouseY, player);
             case QUESTS -> questsSection.handleClick(adjustedMouseX, adjustedMouseY, player);
             case REPUTATION -> reputationSection.handleClick(adjustedMouseX, adjustedMouseY, player);

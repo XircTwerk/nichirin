@@ -1,0 +1,52 @@
+package com.xirc.nichirin.common.network.s2c;
+
+import com.xirc.nichirin.common.entity.npc.TrainerType;
+import net.minecraft.network.FriendlyByteBuf;
+
+import java.util.UUID;
+
+/**
+ * S2C — tells the client to open the trainer dialogue screen.
+ */
+public class OpenTrainerDialoguePacket {
+
+    public enum DialogueState {
+        /** Player hasn't brought the prerequisite items yet. */
+        STRANGER,
+        /** Player has the prerequisite items — offer to start the duel. */
+        PREREQ_MET,
+        /** Player already has the breathing style — offer a practice spar. */
+        STUDENT,
+        /** Trainer recently dueled — resting. */
+        DUEL_COOLDOWN
+    }
+
+    public final UUID          trainerUUID;
+    public final TrainerType   trainerType;
+    public final DialogueState state;
+
+    public OpenTrainerDialoguePacket(UUID trainerUUID, TrainerType trainerType, DialogueState state) {
+        this.trainerUUID = trainerUUID;
+        this.trainerType = trainerType;
+        this.state       = state;
+    }
+
+    public OpenTrainerDialoguePacket(FriendlyByteBuf buf) {
+        this.trainerUUID = buf.readUUID();
+        this.trainerType = buf.readEnum(TrainerType.class);
+        this.state       = buf.readEnum(DialogueState.class);
+    }
+
+    public void toBytes(FriendlyByteBuf buf) {
+        buf.writeUUID(trainerUUID);
+        buf.writeEnum(trainerType);
+        buf.writeEnum(state);
+    }
+
+    public void handleClient() {
+        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        mc.execute(() -> mc.setScreen(
+                new com.xirc.nichirin.client.gui.trainer.TrainerDialogueScreen(
+                        trainerUUID, trainerType, state)));
+    }
+}

@@ -7,6 +7,7 @@ import com.xirc.nichirin.common.entity.projectile.SmokeBombEntity;
 import com.xirc.nichirin.common.entity.projectile.ThrownKatanaEntity;
 import com.xirc.nichirin.common.entity.attack.ThunderBallEntity;
 import com.xirc.nichirin.common.entity.npc.TempleDemonEntity;
+import com.xirc.nichirin.common.entity.npc.WaterBreathingTrainerEntity;
 import dev.architectury.registry.level.entity.EntityAttributeRegistry;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
@@ -66,10 +67,18 @@ public interface NichirinEntityRegistry {
                     .updateInterval(2)
                     .build("temple_demon"));
 
+    RegistrySupplier<EntityType<WaterBreathingTrainerEntity>> WATER_BREATHING_TRAINER =
+            ENTITY_TYPES.register("water_breathing_trainer", () -> EntityType.Builder.<WaterBreathingTrainerEntity>of(
+                            WaterBreathingTrainerEntity::new, MobCategory.CREATURE)
+                    .sized(0.6f, 1.95f)
+                    .clientTrackingRange(10)
+                    .updateInterval(3)
+                    .build("water_breathing_trainer"));
 
     static void registerAttributes() {
         EntityAttributeRegistry.register(BOAR, BoarEntity::createAttributes);
         EntityAttributeRegistry.register(TEMPLE_DEMON, TempleDemonEntity::createAttributes);
+        EntityAttributeRegistry.register(WATER_BREATHING_TRAINER, WaterBreathingTrainerEntity::createAttributes);
     }
 
     static void init() {

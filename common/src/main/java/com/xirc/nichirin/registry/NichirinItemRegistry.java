@@ -15,6 +15,8 @@ import com.xirc.nichirin.common.item.throwable.SmokeBombItem;
 import com.xirc.nichirin.common.item.tool.BentoBoxItem;
 import com.xirc.nichirin.common.item.LazySpawnEggItem;
 import com.xirc.nichirin.common.item.tool.DrinkingGourdItem;
+import com.xirc.nichirin.common.item.scroll.PerkScrollItem;
+import com.xirc.nichirin.common.item.scroll.CursedScrollItem;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.minecraft.core.registries.Registries;
@@ -288,10 +290,27 @@ public interface NichirinItemRegistry {
             () -> new IndividualBeastKatana(settings().rarity(Rarity.RARE).stacksTo(1), false));
     RegistrySupplier<Item> BOAR_HEAD = register("boar_head",
             () -> new BoarHeadItem(settings().stacksTo(1)));
+    RegistrySupplier<Item> INOSUKE_UNIFORM = register("inosuke_uniform",
+            () -> new NichirinArmorItem(ArmorMaterials.DIAMOND, NichirinArmorItem.Type.CHESTPLATE, settings().stacksTo(1)));
+    RegistrySupplier<Item> INOSUKE_LEGGINGS = register("inosuke_leggings",
+            () -> new NichirinArmorItem(ArmorMaterials.DIAMOND, NichirinArmorItem.Type.LEGGINGS, settings().stacksTo(1)));
+    RegistrySupplier<Item> INOSUKE_BOOTS = register("inosuke_boots",
+            () -> new NichirinArmorItem(ArmorMaterials.DIAMOND, NichirinArmorItem.Type.BOOTS, settings().stacksTo(1)));
 
     // Spawn egg for Temple Demon (dark body, blood-red spots)
     RegistrySupplier<Item> TEMPLE_DEMON_SPAWN_EGG = register("temple_demon_spawn_egg",
             () -> new LazySpawnEggItem(NichirinEntityRegistry.TEMPLE_DEMON, 0x1a1a2e, 0x8b0000, settings()));
+
+    // Spawn egg for Water Breathing Trainer (deep teal body, white mask spots)
+    RegistrySupplier<Item> WATER_BREATHING_TRAINER_SPAWN_EGG = register("water_breathing_trainer_spawn_egg",
+            () -> new LazySpawnEggItem(NichirinEntityRegistry.WATER_BREATHING_TRAINER, 0x1a3a4a, 0xffffff, settings()));
+
+    // Perk scrolls
+    RegistrySupplier<Item> PERK_SCROLL = register("perk_scroll",
+            () -> new PerkScrollItem(settings().rarity(Rarity.UNCOMMON)));
+
+    RegistrySupplier<Item> CURSED_SCROLL = register("cursed_scroll",
+            () -> new CursedScrollItem(settings().rarity(Rarity.EPIC)));
 
 
     static <T extends Item> RegistrySupplier<T> register(String id, Supplier<? extends T> supplier) {

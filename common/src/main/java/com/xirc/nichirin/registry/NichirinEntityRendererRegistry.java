@@ -4,8 +4,10 @@ import com.xirc.nichirin.client.renderer.block.KatanaHolderBlockRenderer;
 import com.xirc.nichirin.client.renderer.entity.animal.BoarEntityRenderer;
 import com.xirc.nichirin.client.renderer.entity.attack.ThunderBallRenderer;
 import com.xirc.nichirin.client.renderer.entity.npc.TempleDemonRenderer;
+import com.xirc.nichirin.client.renderer.entity.npc.WaterBreathingTrainerRenderer;
 import com.xirc.nichirin.client.renderer.entity.projectile.FlashBombRenderer;
 import com.xirc.nichirin.client.renderer.entity.projectile.SmokeBombRenderer;
+import com.xirc.nichirin.client.renderer.entity.projectile.ThrownKatanaRenderer;
 import dev.architectury.registry.client.level.entity.EntityRendererRegistry;
 import dev.architectury.registry.client.rendering.BlockEntityRendererRegistry;
 import dev.architectury.registry.registries.RegistrySupplier;
@@ -40,7 +42,9 @@ public interface NichirinEntityRendererRegistry {
             new RendererData<>(NichirinEntityRegistry.FLASH_BOMB, FlashBombRenderer::new),
             new RendererData<>(NichirinEntityRegistry.SMOKE_BOMB, SmokeBombRenderer::new),
             new RendererData<>(NichirinEntityRegistry.BOAR, BoarEntityRenderer::new),
-            new RendererData<>(NichirinEntityRegistry.TEMPLE_DEMON, TempleDemonRenderer::new)
+            new RendererData<>(NichirinEntityRegistry.TEMPLE_DEMON, TempleDemonRenderer::new),
+            new RendererData<>(NichirinEntityRegistry.WATER_BREATHING_TRAINER, WaterBreathingTrainerRenderer::new),
+            new RendererData<>(NichirinEntityRegistry.THROWN_KATANA, ThrownKatanaRenderer::new)
     };
 
     BlockEntityRendererData<?>[] blockEntityEntries = {

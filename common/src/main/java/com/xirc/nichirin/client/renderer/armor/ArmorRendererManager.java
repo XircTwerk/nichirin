@@ -1,9 +1,11 @@
 package com.xirc.nichirin.client.renderer.armor;
 
+import com.xirc.nichirin.client.renderer.item.BeastKatanaItemRenderer;
 import com.xirc.nichirin.registry.NichirinItemRegistry;
+import mod.azure.azurelib.animation.cache.AzIdentityRegistry;
 import mod.azure.azurelib.render.armor.AzArmorRenderer;
 import mod.azure.azurelib.render.armor.AzArmorRendererRegistry;
-import mod.azure.azurelib.animation.cache.AzIdentityRegistry;
+import mod.azure.azurelib.render.item.AzItemRendererRegistry;
 import net.minecraft.world.item.Item;
 
 import java.util.function.Supplier;
@@ -56,6 +58,20 @@ public class ArmorRendererManager {
         registerArmor(NichirinItemRegistry.UROKODAKI_CAPE.get(), UrokodakiCapeRenderer::new);
         registerArmor(NichirinItemRegistry.UROKODAKI_LEGGINGS.get(), UrokodakiUniformRenderer::new);
         registerArmor(NichirinItemRegistry.UROKODAKI_BOOTS.get(), UrokodakiUniformRenderer::new);
+
+        // Inosuke armor
+        registerArmor(NichirinItemRegistry.BOAR_HEAD.get(), InosukeUniformRenderer::new);
+        registerArmor(NichirinItemRegistry.INOSUKE_UNIFORM.get(), InosukeUniformRenderer::new);
+        registerArmor(NichirinItemRegistry.INOSUKE_LEGGINGS.get(), InosukeUniformRenderer::new);
+        registerArmor(NichirinItemRegistry.INOSUKE_BOOTS.get(), InosukeUniformRenderer::new);
+
+        // Beast katana item renderers
+        AzItemRendererRegistry.register(NichirinItemRegistry.RIGHT_BEAST_KATANA.get(), BeastKatanaItemRenderer::new);
+        AzItemRendererRegistry.register(NichirinItemRegistry.LEFT_BEAST_KATANA.get(), BeastKatanaItemRenderer::new);
+        AzIdentityRegistry.register(
+            NichirinItemRegistry.RIGHT_BEAST_KATANA.get(),
+            NichirinItemRegistry.LEFT_BEAST_KATANA.get()
+        );
     }
 
     private static void registerArmor(Item item, Supplier<AzArmorRenderer> rendererSupplier) {
