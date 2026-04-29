@@ -1,5 +1,169 @@
 {
-	"parent": "minecraft:builtin/entity",
+	"format_version": "1.9.0",
+	"credit": "Made with Blockbench",
+	"texture_size": [32, 32],
+	"textures": {
+		"0": "nichirin:item/inosuke_katana",
+		"particle": "nichirin:item/inosuke_katana"
+	},
+	"elements": [
+		{
+			"name": "Sword",
+			"from": [7.5, 2, 9],
+			"to": [8.5, 10, 11],
+			"faces": {
+				"north": {"uv": [4, 7, 4.5, 11], "texture": "#0"},
+				"east": {"uv": [3, 7, 4, 11], "texture": "#0"},
+				"south": {"uv": [5.5, 7, 6, 11], "texture": "#0"},
+				"west": {"uv": [4.5, 7, 5.5, 11], "texture": "#0"},
+				"up": {"uv": [4.5, 7, 4, 6], "texture": "#0"},
+				"down": {"uv": [5, 6, 4.5, 7], "texture": "#0"}
+			}
+		},
+		{
+			"name": "Sword",
+			"from": [8, 1.25, 8.075],
+			"to": [8, 4.25, 12.075],
+			"faces": {
+				"north": {"uv": [6, 13, 6, 14.5], "texture": "#0"},
+				"east": {"uv": [4, 13, 6, 14.5], "texture": "#0"},
+				"south": {"uv": [8, 13, 8, 14.5], "texture": "#0"},
+				"west": {"uv": [6, 13, 8, 14.5], "texture": "#0"},
+				"up": {"uv": [6, 13, 6, 11], "texture": "#0"},
+				"down": {"uv": [6, 11, 6, 13], "texture": "#0"}
+			}
+		},
+		{
+			"name": "bone",
+			"from": [7.225, 9.5, 8.725],
+			"to": [8.775, 11.5, 11.275],
+			"faces": {
+				"north": {"uv": [10, 8, 10.5, 9], "texture": "#0"},
+				"east": {"uv": [9, 8, 10, 9], "texture": "#0"},
+				"south": {"uv": [11.5, 8, 12, 9], "texture": "#0"},
+				"west": {"uv": [10.5, 8, 11.5, 9], "texture": "#0"},
+				"up": {"uv": [10.5, 8, 10, 7], "texture": "#0"},
+				"down": {"uv": [11, 7, 10.5, 8], "texture": "#0"}
+			}
+		},
+		{
+			"name": "bone",
+			"from": [7.4, 3.15, 8.9],
+			"to": [8.6, 9.85, 11.1],
+			"faces": {
+				"north": {"uv": [1, 11, 1.5, 14.5], "texture": "#0"},
+				"east": {"uv": [0, 11, 1, 14.5], "texture": "#0"},
+				"south": {"uv": [2.5, 11, 3, 14.5], "texture": "#0"},
+				"west": {"uv": [1.5, 11, 2.5, 14.5], "texture": "#0"},
+				"up": {"uv": [1.5, 11, 1, 10], "texture": "#0"},
+				"down": {"uv": [2, 10, 1.5, 11], "texture": "#0"}
+			}
+		},
+		{
+			"name": "Blade",
+			"from": [7.49, 10.99, 8.99],
+			"to": [8.51, 29.01, 10.01],
+			"faces": {
+				"north": {"uv": [1, 1, 1.5, 10], "texture": "#0"},
+				"east": {"uv": [0.5, 1, 1, 10], "texture": "#0"},
+				"south": {"uv": [2, 1, 2.5, 10], "texture": "#0"},
+				"west": {"uv": [1.5, 1, 2, 10], "texture": "#0"},
+				"up": {"uv": [1.5, 1, 1, 0.5], "texture": "#0"},
+				"down": {"uv": [2, 0.5, 1.5, 1], "texture": "#0"}
+			}
+		},
+		{
+			"name": "Blade",
+			"from": [7.49, 28.99, 8.99],
+			"to": [8.51, 31.41, 10.01],
+			"faces": {
+				"north": {"uv": [8.5, 6, 9, 7], "texture": "#0"},
+				"east": {"uv": [8, 6, 8.5, 7], "texture": "#0"},
+				"south": {"uv": [9.5, 6, 10, 7], "texture": "#0"},
+				"west": {"uv": [9, 6, 9.5, 7], "texture": "#0"},
+				"up": {"uv": [9, 6, 8.5, 5.5], "texture": "#0"},
+				"down": {"uv": [9.5, 5.5, 9, 6], "texture": "#0"}
+			}
+		},
+		{
+			"name": "Blade",
+			"from": [7.51, 25.41, 10.01],
+			"to": [8.51, 27.41, 11.01],
+			"faces": {
+				"north": {"uv": [12.5, 0.5, 13, 1.5], "texture": "#0"},
+				"east": {"uv": [12, 0.5, 12.5, 1.5], "texture": "#0"},
+				"south": {"uv": [13.5, 0.5, 14, 1.5], "texture": "#0"},
+				"west": {"uv": [13, 0.5, 13.5, 1.5], "texture": "#0"},
+				"up": {"uv": [13, 0.5, 12.5, 0], "texture": "#0"},
+				"down": {"uv": [13.5, 0, 13, 0.5], "texture": "#0"}
+			}
+		},
+		{
+			"name": "Blade",
+			"from": [7.51, 22.41, 10.01],
+			"to": [8.51, 24.41, 11.01],
+			"faces": {
+				"north": {"uv": [12.5, 0.5, 13, 1.5], "texture": "#0"},
+				"east": {"uv": [12, 0.5, 12.5, 1.5], "texture": "#0"},
+				"south": {"uv": [13.5, 0.5, 14, 1.5], "texture": "#0"},
+				"west": {"uv": [13, 0.5, 13.5, 1.5], "texture": "#0"},
+				"up": {"uv": [13, 0.5, 12.5, 0], "texture": "#0"},
+				"down": {"uv": [13.5, 0, 13, 0.5], "texture": "#0"}
+			}
+		},
+		{
+			"name": "Blade",
+			"from": [7.51, 19.41, 10.01],
+			"to": [8.51, 21.41, 11.01],
+			"faces": {
+				"north": {"uv": [12.5, 0.5, 13, 1.5], "texture": "#0"},
+				"east": {"uv": [12, 0.5, 12.5, 1.5], "texture": "#0"},
+				"south": {"uv": [13.5, 0.5, 14, 1.5], "texture": "#0"},
+				"west": {"uv": [13, 0.5, 13.5, 1.5], "texture": "#0"},
+				"up": {"uv": [13, 0.5, 12.5, 0], "texture": "#0"},
+				"down": {"uv": [13.5, 0, 13, 0.5], "texture": "#0"}
+			}
+		},
+		{
+			"name": "Blade",
+			"from": [7.51, 16.41, 10.01],
+			"to": [8.51, 18.41, 11.01],
+			"faces": {
+				"north": {"uv": [12.5, 0.5, 13, 1.5], "texture": "#0"},
+				"east": {"uv": [12, 0.5, 12.5, 1.5], "texture": "#0"},
+				"south": {"uv": [13.5, 0.5, 14, 1.5], "texture": "#0"},
+				"west": {"uv": [13, 0.5, 13.5, 1.5], "texture": "#0"},
+				"up": {"uv": [13, 0.5, 12.5, 0], "texture": "#0"},
+				"down": {"uv": [13.5, 0, 13, 0.5], "texture": "#0"}
+			}
+		},
+		{
+			"name": "Blade",
+			"from": [7.51, 13.41, 10.01],
+			"to": [8.51, 15.41, 11.01],
+			"faces": {
+				"north": {"uv": [12.5, 0.5, 13, 1.5], "texture": "#0"},
+				"east": {"uv": [12, 0.5, 12.5, 1.5], "texture": "#0"},
+				"south": {"uv": [13.5, 0.5, 14, 1.5], "texture": "#0"},
+				"west": {"uv": [13, 0.5, 13.5, 1.5], "texture": "#0"},
+				"up": {"uv": [13, 0.5, 12.5, 0], "texture": "#0"},
+				"down": {"uv": [13.5, 0, 13, 0.5], "texture": "#0"}
+			}
+		},
+		{
+			"name": "Blade",
+			"from": [7.51, 11.41, 10.01],
+			"to": [8.51, 12.41, 11.01],
+			"faces": {
+				"north": {"uv": [12.5, 0.5, 13, 1], "texture": "#0"},
+				"east": {"uv": [12, 0.5, 12.5, 1], "texture": "#0"},
+				"south": {"uv": [13.5, 0.5, 14, 1], "texture": "#0"},
+				"west": {"uv": [13, 0.5, 13.5, 1], "texture": "#0"},
+				"up": {"uv": [13, 0.5, 12.5, 0], "texture": "#0"},
+				"down": {"uv": [13.5, 0, 13, 0.5], "texture": "#0"}
+			}
+		}
+	],
 	"display": {
 		"thirdperson_righthand": {
 			"rotation": [-180, -180, 0],
@@ -9,11 +173,11 @@
 			"translation": [0, -1.25, 0]
 		},
 		"firstperson_righthand": {
-			"rotation": [150, -180, 0],
-			"translation": [-1, 2.75, -0.5]
+			"scale": [0.8, 0.8, 0.8]
 		},
 		"firstperson_lefthand": {
-			"scale": [0.8, 0.8, 0.8]
+			"rotation": [150, -180, 0],
+			"translation": [-1, 2.75, -0.5]
 		},
 		"ground": {
 			"rotation": [0, 0, 90],
@@ -29,5 +193,35 @@
 			"translation": [-7.75, -4.5, 0],
 			"scale": [0.9, 0.9, 0.9]
 		}
-	}
+	},
+	"groups": [
+		{
+			"name": "Sword",
+			"origin": [8, 0, 8],
+			"color": 0,
+			"children": [
+				{
+					"name": "Handle",
+					"origin": [8, 0, 8],
+					"color": 0,
+					"children": [
+						{
+							"name": "Guard",
+							"origin": [8, 0, 8],
+							"color": 0,
+							"children": [0, 1]
+						},
+						2,
+						3
+					]
+				},
+				{
+					"name": "Blade",
+					"origin": [8, 0, 8],
+					"color": 0,
+					"children": [4, 5, 6, 7, 8, 9, 10, 11]
+				}
+			]
+		}
+	]
 }

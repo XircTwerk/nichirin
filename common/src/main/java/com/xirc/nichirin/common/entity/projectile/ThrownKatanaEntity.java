@@ -2,11 +2,15 @@ package com.xirc.nichirin.common.entity.projectile;
 
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.Mth;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
-import net.minecraft.server.level.ServerLevel;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
@@ -15,7 +19,10 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -32,6 +39,8 @@ public class ThrownKatanaEntity extends Entity {
 
     private static final int MAX_LIFE_TICKS = 200; // 10 seconds
     private static final double HIT_RADIUS = 0.4;
+    private static final EntityDataAccessor<Boolean> STUCK =
+            SynchedEntityData.defineId(ThrownKatanaEntity.class, EntityDataSerializers.BOOLEAN);
 
     private int lifeTicks = 0;
     private boolean stuck = false;
@@ -53,8 +62,14 @@ public class ThrownKatanaEntity extends Entity {
         this.hitStun = hitStun;
     }
 
+    public boolean isStuck() {
+        return entityData.get(STUCK);
+    }
+
     @Override
-    public void defineSynchedData() {}
+    public void defineSynchedData() {
+        entityData.define(STUCK, false);
+    }
 
     @Override
     public void tick() {
@@ -67,8 +82,6 @@ public class ThrownKatanaEntity extends Entity {
         }
 
         if (stuck) {
-            // Stuck in block - just spin in place until expiry
-            createSpinParticles();
             return;
         }
 
@@ -77,9 +90,29 @@ public class ThrownKatanaEntity extends Entity {
         // Move forward
         this.setPos(getX() + motion.x, getY() + motion.y, getZ() + motion.z);
 
+        // Point toward travel direction
+        double horizDist = Math.sqrt(motion.x * motion.x + motion.z * motion.z);
+        this.yRotO = this.getYRot();
+        this.xRotO = this.getXRot();
+        this.setYRot((float) (Mth.atan2(motion.x, motion.z) * (180.0 / Math.PI)));
+        this.setXRot((float) (Mth.atan2(-motion.y, horizDist) * (180.0 / Math.PI)));
+
         // Check block collision
         if (!this.level().noCollision(this, this.getBoundingBox().move(motion))) {
+            // Raycast to exact surface, then back off so tip sits at the surface
+            // (blade tip is 31/16 blocks from model origin along travel direction)
+            BlockHitResult hit = level().clip(new ClipContext(
+                    position(), position().add(motion),
+                    ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+            if (hit.getType() != HitResult.Type.MISS) {
+                Vec3 dir = motion.normalize();
+                Vec3 surface = hit.getLocation();
+                setPos(surface.x - dir.x * (31.0 / 16.0),
+                       surface.y - dir.y * (31.0 / 16.0),
+                       surface.z - dir.z * (31.0 / 16.0));
+            }
             stuck = true;
+            entityData.set(STUCK, true);
             setDeltaMovement(Vec3.ZERO);
             level().playSound(null, getX(), getY(), getZ(),
                     SoundEvents.ARROW_HIT, SoundSource.NEUTRAL, 1.0f, 1.2f);
@@ -91,7 +124,9 @@ public class ThrownKatanaEntity extends Entity {
             hitNearbyEntities();
         }
 
-        createFlightParticles();
+        if (level() instanceof ServerLevel sl && lifeTicks % 3 == 0) {
+            sl.sendParticles(ParticleTypes.ENCHANTED_HIT, getX(), getY(), getZ(), 2, 0.05, 0.05, 0.05, 0.01);
+        }
     }
 
     private void hitNearbyEntities() {
@@ -122,18 +157,6 @@ public class ThrownKatanaEntity extends Entity {
                         SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.PLAYERS, 0.8f, 1.4f);
             }
         }
-    }
-
-    private void createFlightParticles() {
-        if (!(level() instanceof ServerLevel sl)) return;
-        if (lifeTicks % 3 != 0) return;
-        sl.sendParticles(ParticleTypes.ENCHANTED_HIT, getX(), getY(), getZ(), 2, 0.05, 0.05, 0.05, 0.01);
-    }
-
-    private void createSpinParticles() {
-        if (!(level() instanceof ServerLevel sl)) return;
-        if (lifeTicks % 5 != 0) return;
-        sl.sendParticles(ParticleTypes.SWEEP_ATTACK, getX(), getY(), getZ(), 1, 0.1, 0.1, 0.1, 0);
     }
 
     @Override

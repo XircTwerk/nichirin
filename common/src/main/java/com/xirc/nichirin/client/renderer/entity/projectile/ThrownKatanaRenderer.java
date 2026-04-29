@@ -35,6 +35,14 @@ public class ThrownKatanaRenderer extends BaseAZNichirinEntityRenderer<ThrownKat
         poseStack.mulPose(Axis.YP.rotationDegrees(yRot - 90.0F));
         poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F - xRot));
 
+        // End-over-end tumble; freeze when embedded in a block
+        if (!entity.isStuck()) {
+            float spinAngle = (entity.tickCount + partialTick) * 36.0F;
+            poseStack.mulPose(Axis.YP.rotationDegrees(spinAngle));
+        }
+        // Flip blade to face travel direction (model is oriented backwards)
+        poseStack.mulPose(Axis.ZP.rotationDegrees(180.0F));
+
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
 
         poseStack.popPose();
