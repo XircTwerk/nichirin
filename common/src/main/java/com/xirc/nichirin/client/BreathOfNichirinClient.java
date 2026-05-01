@@ -136,6 +136,9 @@ public class BreathOfNichirinClient {
             // Register post-processing shaders
             registerShaders();
 
+            // Wire up the tick-driven intensity for breathing aura shaders
+            BreathingAuraShaderHandler.register();
+
             // Register rendering hooks for shaders
             registerRenderingHooks();
 
