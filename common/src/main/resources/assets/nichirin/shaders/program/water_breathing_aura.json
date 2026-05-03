@@ -6,7 +6,7 @@
   },
   "vertex": "nichirin:breathing_aura",
   "fragment": "nichirin:water_breathing_aura",
-  "attributes": [ "Position", "UV0" ],
+  "attributes": [ "Position" ],
   "samplers": [
     { "name": "DiffuseSampler" }
   ],

@@ -73,6 +73,7 @@ public class BreathOfNichirinClient {
             NichirinShaderManager.getInstance().register(flameAuraShader);
             NichirinShaderManager.getInstance().register(waterAuraShader);
             NichirinShaderManager.getInstance().register(deadCalmEffect);
+            NichirinShaderManager.getInstance().register(impactShakeShaderEffect);
 
             LOGGER.info("Dead Calm shader registered successfully");
             System.out.println("DEBUG: Dead Calm shader registered!");

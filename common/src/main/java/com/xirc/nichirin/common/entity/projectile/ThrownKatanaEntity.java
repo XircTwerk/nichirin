@@ -16,8 +16,10 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
@@ -39,6 +41,11 @@ public class ThrownKatanaEntity extends Entity {
 
     private static final int MAX_LIFE_TICKS = 200; // 10 seconds
     private static final double HIT_RADIUS = 0.4;
+    /** Half the visual blade length in blocks (model is 31/16 blocks long). */
+    private static final float KATANA_HALF_LEN = 31.0f / 32.0f;
+    /** Blade cross-section thickness for the hitbox. */
+    private static final float KATANA_THICKNESS = 0.08f;
+
     private static final EntityDataAccessor<Boolean> STUCK =
             SynchedEntityData.defineId(ThrownKatanaEntity.class, EntityDataSerializers.BOOLEAN);
 
@@ -48,6 +55,8 @@ public class ThrownKatanaEntity extends Entity {
     private int hitStun = 20;
     private Entity owner;
     private final Set<UUID> hitEntities = new HashSet<>();
+    /** Last known normalised travel direction — kept so stuck katanas preserve their orientation. */
+    private Vec3 travelDir = new Vec3(0, 0, 1);
 
     public ThrownKatanaEntity(EntityType<? extends ThrownKatanaEntity> entityType, Level level) {
         super(entityType, level);
@@ -60,6 +69,34 @@ public class ThrownKatanaEntity extends Entity {
         this.owner = owner;
         this.damage = damage;
         this.hitStun = hitStun;
+    }
+
+    /**
+     * Override EntityDimensions so Minecraft uses a near-zero base size.
+     * The actual collision AABB is computed dynamically in makeBoundingBox().
+     */
+    @Override
+    public EntityDimensions getDimensions(Pose pose) {
+        return EntityDimensions.fixed(KATANA_THICKNESS * 2, KATANA_THICKNESS * 2);
+    }
+
+    /**
+     * Builds an oriented AABB that follows the katana's travel direction.
+     * The box extends KATANA_HALF_LEN blocks along the flight axis and
+     * KATANA_THICKNESS blocks on the cross axes, so it tightly wraps the model.
+     */
+    @Override
+    public AABB makeBoundingBox() {
+        Vec3 pos = position();
+        Vec3 dir = travelDir.scale(KATANA_HALF_LEN);
+        return new AABB(
+                pos.x - Math.abs(dir.x) - KATANA_THICKNESS,
+                pos.y - Math.abs(dir.y) - KATANA_THICKNESS,
+                pos.z - Math.abs(dir.z) - KATANA_THICKNESS,
+                pos.x + Math.abs(dir.x) + KATANA_THICKNESS,
+                pos.y + Math.abs(dir.y) + KATANA_THICKNESS,
+                pos.z + Math.abs(dir.z) + KATANA_THICKNESS
+        );
     }
 
     public boolean isStuck() {
@@ -87,8 +124,15 @@ public class ThrownKatanaEntity extends Entity {
 
         Vec3 motion = getDeltaMovement();
 
+        // Keep travelDir current so makeBoundingBox() stays accurate in flight.
+        if (motion.lengthSqr() > 0.001) {
+            travelDir = motion.normalize();
+        }
+
         // Move forward
         this.setPos(getX() + motion.x, getY() + motion.y, getZ() + motion.z);
+        // Refresh AABB after moving so the oriented hitbox tracks the new position.
+        this.setBoundingBox(makeBoundingBox());
 
         // Point toward travel direction
         double horizDist = Math.sqrt(motion.x * motion.x + motion.z * motion.z);
@@ -114,6 +158,8 @@ public class ThrownKatanaEntity extends Entity {
             stuck = true;
             entityData.set(STUCK, true);
             setDeltaMovement(Vec3.ZERO);
+            // Refresh hitbox at stick position with final orientation.
+            this.setBoundingBox(makeBoundingBox());
             level().playSound(null, getX(), getY(), getZ(),
                     SoundEvents.ARROW_HIT, SoundSource.NEUTRAL, 1.0f, 1.2f);
             return;

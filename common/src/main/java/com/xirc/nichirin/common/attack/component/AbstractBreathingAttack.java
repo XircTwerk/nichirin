@@ -1,13 +1,16 @@
 package com.xirc.nichirin.common.attack.component;
 
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset.MoveConfiguration;
+import com.xirc.nichirin.common.network.s2c.TriggerShaderPacket;
 import com.xirc.nichirin.common.util.BreathingManager;
 import com.xirc.nichirin.common.util.HitboxData;
 import com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
+import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
@@ -266,6 +269,15 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         hitEntities.add(target.getUUID());
         hitCount++;
 
+        // Trigger impact shake on the attacking player's screen (server → client packet).
+        // Magnitude is derived from configured damage and hitStun so heavier hits feel stronger.
+        if (damaged && user instanceof ServerPlayer sp) {
+            float mag = (damage / 20.0f + hitStun / 20.0f) * 0.5f;
+            mag = Math.max(0.2f, Math.min(2.0f, mag));
+            TriggerShaderPacket impactPacket = new TriggerShaderPacket(
+                    "com.xirc.nichirin.client.shader.ImpactShakeShaderEffect", true, mag);
+            NichirinPacketRegistry.sendToPlayer(impactPacket, sp);
+        }
     }
 
     /**

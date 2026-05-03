@@ -31,7 +31,7 @@ public class TempleDemonEntity extends DemonNPCEntity {
     // Client-side animation state
     private String consumedAttackAnim = ""; // which attack anim we already dispatched this cycle
     private int animCooldownTicks = 0;
-    private boolean lastWasWalking = false;
+    private Boolean lastWasWalking = null; // null = uninitialized, forces idle dispatch on first tick
 
     // Server-side animation auto-clear countdown
     private int serverAnimTicksRemaining = 0;
@@ -82,7 +82,7 @@ public class TempleDemonEntity extends DemonNPCEntity {
 
     public static AttributeSupplier.Builder createAttributes() {
         return createDemonAttributes()
-                .add(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH, 100.0)
+                .add(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH, 50.0)
                 .add(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE, 12.0)
                 .add(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED, 0.3)
                 .add(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR, 8.0)
@@ -137,9 +137,9 @@ public class TempleDemonEntity extends DemonNPCEntity {
             consumedAttackAnim = "";
         }
 
-        // Idle/walk — only re-dispatch when state changes
+        // Idle/walk — only re-dispatch when state changes (lastWasWalking == null on first tick)
         boolean walking = moveAnalysis.isMovingHorizontally();
-        if (walking != lastWasWalking) {
+        if (!Boolean.valueOf(walking).equals(lastWasWalking)) {
             if (walking) {
                 dispatcher.walk();
             } else {

@@ -121,10 +121,32 @@ public class ImpactShakeShaderEffect extends NichirinPostProcessor {
      *                   0.5 = light M1 hit. Values above 2.0 not recommended.
      */
     public void trigger(float magnitude) {
+        float remaining = isActive() ? Math.max(0f, DURATION - elapsedSeconds) : 0f;
+        // Anti-spam: skip retrigger if still playing more than half the duration
+        // AND the incoming hit is not significantly stronger.
+        if (remaining > DURATION * 0.5f && magnitude < shakeMagnitude * 1.3f) {
+            return;
+        }
         elapsedSeconds   = 0f;
         intensity        = 0f;
         shakeMagnitude   = Math.max(0f, magnitude);
         setActive(true);
+    }
+
+    /**
+     * Trigger the effect scaled by raw damage and stun ticks.
+     * Magnitude formula:
+     *   base = (damage/20 + stunTicks/20) * 0.5
+     *   clamped to [0.2, 2.0]
+     * Light hits (~5 dmg / 10 stun) → ~0.4
+     * Medium  (~12 dmg / 15 stun)   → ~0.7
+     * Heavy   (~20 dmg / 25 stun)   → ~1.1
+     * Ultimate (~35 dmg / 40 stun)  → ~1.9
+     */
+    public void triggerWithDamageStun(float damage, int stunTicks) {
+        float mag = (damage / 20.0f + stunTicks / 20.0f) * 0.5f;
+        mag = Math.max(0.2f, Math.min(2.0f, mag));
+        trigger(mag);
     }
 
     @Override

@@ -13,20 +13,29 @@ public class TriggerShaderPacket {
 
     private final String shaderEffectClass;
     private final boolean activate;
+    /** For impact shake: precomputed magnitude (damage/stun formula). -1 = use default trigger(). */
+    private final float magnitude;
 
     public TriggerShaderPacket(String shaderEffectClass, boolean activate) {
+        this(shaderEffectClass, activate, -1f);
+    }
+
+    public TriggerShaderPacket(String shaderEffectClass, boolean activate, float magnitude) {
         this.shaderEffectClass = shaderEffectClass;
         this.activate = activate;
+        this.magnitude = magnitude;
     }
 
     public TriggerShaderPacket(FriendlyByteBuf buf) {
         this.shaderEffectClass = buf.readUtf();
         this.activate = buf.readBoolean();
+        this.magnitude = buf.readFloat();
     }
 
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeUtf(shaderEffectClass);
         buf.writeBoolean(activate);
+        buf.writeFloat(magnitude);
     }
 
     public void handleClient() {
@@ -41,10 +50,20 @@ public class TriggerShaderPacket {
 
             if (shader != null) {
                 if (activate) {
-                    LOGGER.debug("Activating shader: {}", shaderEffectClass);
-                    // Use reflection to call trigger() method
-                    var triggerMethod = shader.getClass().getMethod("trigger");
-                    triggerMethod.invoke(shader);
+                    LOGGER.debug("Activating shader: {} magnitude={}", shaderEffectClass, magnitude);
+                    if (magnitude >= 0f) {
+                        // Magnitude-based trigger (e.g. impact shake with damage/stun scaling)
+                        try {
+                            var triggerMethod = shader.getClass().getMethod("trigger", float.class);
+                            triggerMethod.invoke(shader, magnitude);
+                        } catch (NoSuchMethodException e) {
+                            var triggerMethod = shader.getClass().getMethod("trigger");
+                            triggerMethod.invoke(shader);
+                        }
+                    } else {
+                        var triggerMethod = shader.getClass().getMethod("trigger");
+                        triggerMethod.invoke(shader);
+                    }
                 } else {
                     LOGGER.debug("Deactivating shader: {}", shaderEffectClass);
                     shader.setActive(false);
