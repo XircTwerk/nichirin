@@ -12,7 +12,7 @@ uniform float InnerRadius;
 in vec2 texCoord;
 out vec4 fragColor;
 
-// ── Noise helpers ──────────────────────────────────────────────────────────────
+// Noise helpers
 float hash(vec2 p) {
     p = fract(p * vec2(127.1, 311.7));
     p += dot(p, p + 19.19);
@@ -41,13 +41,11 @@ void main() {
     vec2  uv   = texCoord * 2.0 - 1.0;
     float dist = length(uv);
 
-    // ── Rim mask ───────────────────────────────────────────────────────────────
     float rim = smoothstep(InnerRadius, 1.40, dist);
 
     float t = Time;
 
-    // ── Flowing water ripple on rim ────────────────────────────────────────────
-    // Angle around the screen drives a travelling wave
+    // Travelling wave: angle around the screen drives overlapping sine/cosine ripples
     float angle    = atan(uv.y, uv.x);
     float ripple   = sin(angle * WaveFrequency + t * 2.0)
                    * cos(angle * (WaveFrequency * 0.5) - t * 1.3)
@@ -58,17 +56,16 @@ void main() {
 
     float waterRim = rim * mix(ripple, ripple2, 0.4);
 
-    // ── Gentle surface shimmer ─────────────────────────────────────────────────
+    // Gentle surface shimmer
     float shimmer  = noise(texCoord * 12.0 + vec2(t * 0.5, t * 0.3)) * 0.4 + 0.6;
 
-    // ── Pulse (slow, like breathing itself) ───────────────────────────────────
+    // Pulse (slow, like breathing itself)
     float pulse    = 0.88 + 0.12 * sin(t * 1.2);
 
     float alpha    = waterRim * shimmer * Intensity * pulse;
     alpha          = clamp(alpha, 0.0, 1.0);
 
-    // ── Refraction / caustic warping of the scene ─────────────────────────────
-    // Near the rim, bend the sample UV like light through water
+    // Bend the sample UV near the rim to simulate refraction through water
     float warp     = WaveAmplitude * rim * Intensity;
     vec2 warpDir   = vec2(
         sin(angle * WaveFrequency * 0.7 + t * 1.8),
@@ -77,12 +74,8 @@ void main() {
     vec2 warpedUv  = texCoord + warpDir * warp;
     vec4 warpedScene = texture(DiffuseSampler, clamp(warpedUv, 0.001, 0.999));
 
-    // ── Colour output ──────────────────────────────────────────────────────────
-    // Slight caustic brightness modulation
     vec3 caustic  = AuraColor * (0.85 + 0.15 * ripple * shimmer);
     vec3 result   = mix(warpedScene.rgb, caustic, alpha * 0.70);
-
-    // Soft emissive layer
     result += caustic * alpha * 0.28;
 
     fragColor = vec4(result, warpedScene.a);

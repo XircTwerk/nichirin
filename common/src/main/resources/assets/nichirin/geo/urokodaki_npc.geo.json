@@ -1,0 +1,133 @@
+{
+	"format_version": "1.12.0",
+	"minecraft:geometry": [
+		{
+			"description": {
+				"identifier": "geometry.Kimono",
+				"texture_width": 128,
+				"texture_height": 128,
+				"visible_bounds_width": 3,
+				"visible_bounds_height": 4.5,
+				"visible_bounds_offset": [0, 1.75, 0]
+			},
+			"bones": [
+				{
+					"name": "Head",
+					"pivot": [0, 28.275, 0.175],
+					"cubes": [
+						{"origin": [-4, 24, -4], "size": [8, 8, 8], "inflate": 0.4, "uv": [24, 92]},
+						{"origin": [-4, 24, -4], "size": [8, 8, 8], "inflate": 0.63, "uv": [24, 109]},
+						{"origin": [-4, 24, -4], "size": [8, 8, 8], "uv": [86, 3]}
+					]
+				},
+				{
+					"name": "Mask",
+					"parent": "Head",
+					"pivot": [0, 0, 0],
+					"cubes": [
+						{"origin": [-4.5, 23.5, -5], "size": [9, 9, 1], "uv": [0, 94]},
+						{"origin": [-1, 26.5, -10], "size": [2, 2, 5], "inflate": 0.001, "uv": [1, 87]},
+						{"origin": [-2, 26.5, -6], "size": [4, 1, 1], "uv": [1, 105]},
+						{"origin": [-5, 28.2, -4], "size": [10, 2, 9], "uv": [31, 1]},
+						{"origin": [-4, 22.6, 5.04], "size": [8, 9, 0], "uv": [23, 1]}
+					]
+				},
+				{
+					"name": "chestplate",
+					"pivot": [0, 24, 0],
+					"cubes": [
+						{"origin": [-2, 23.75, -2], "size": [4, 1, 4], "uv": [0, 111]},
+						{"origin": [-4, 12, -2], "size": [8, 12, 4], "inflate": 0.281, "uv": [0, 21]},
+						{"origin": [-4, 12, -2], "size": [8, 12, 4], "inflate": 0.45, "uv": [0, 5]},
+						{"origin": [-4, 12, -2], "size": [8, 12, 4], "uv": [0, 66]}
+					]
+				},
+				{
+					"name": "leftArm",
+					"pivot": [5, 22, 0],
+					"cubes": [
+						{"origin": [4, 11.9, -2], "size": [3, 12, 4], "inflate": 0.28, "uv": [42, 16], "mirror": true},
+						{"origin": [4, 11.9, -2], "size": [3, 12, 4], "inflate": 0.38, "uv": [25, 21], "mirror": true},
+						{"origin": [4, 12, -2], "size": [3, 12, 4], "uv": [18, 48], "mirror": true}
+					]
+				},
+				{
+					"name": "rightArm",
+					"pivot": [-6, 22, 0],
+					"cubes": [
+						{"origin": [-7, 11.9, -2], "size": [3, 12, 4], "inflate": 0.28, "uv": [42, 16]},
+						{"origin": [-7, 11.9, -2], "size": [3, 12, 4], "inflate": 0.38, "uv": [25, 21]},
+						{"origin": [-7, 12, -2], "size": [3, 12, 4], "uv": [18, 48]}
+					]
+				},
+				{
+					"name": "leftLeg",
+					"pivot": [1.9, 12, 0],
+					"cubes": [
+						{"origin": [0, 5, -2], "size": [4, 8, 4], "inflate": 0.6, "uv": [40, 32], "mirror": true},
+						{"origin": [0, 0, -2], "size": [4, 12, 4], "inflate": 0.29, "uv": [0, 48], "mirror": true},
+						{"origin": [0, 0, -2], "size": [4, 12, 4], "uv": [18, 48], "mirror": true}
+					]
+				},
+				{
+					"name": "rightLeg",
+					"pivot": [-1.9, 12, 0],
+					"cubes": [
+						{"origin": [-4, 0, -2], "size": [4, 12, 4], "inflate": 0.29, "uv": [0, 48]},
+						{"origin": [-4, 5, -2], "size": [4, 8, 4], "inflate": 0.6, "uv": [40, 32]},
+						{"origin": [-4, 0, -2], "size": [4, 12, 4], "uv": [18, 48]}
+					]
+				},
+				{
+					"name": "leftBoot",
+					"pivot": [1.9, 12, 0],
+					"cubes": [
+						{"origin": [0, 0, -2], "size": [4, 2, 4], "inflate": 0.35, "uv": [40, 45], "mirror": true},
+						{"origin": [0, 0, -2], "size": [4, 2, 4], "inflate": 0.4, "uv": [56, 45], "mirror": true}
+					]
+				},
+				{
+					"name": "rightBoot",
+					"pivot": [-1.9, 12, 0],
+					"cubes": [
+						{"origin": [-4, 0, -2], "size": [4, 2, 4], "inflate": 0.35, "uv": [40, 45]},
+						{"origin": [-4, 0, -2], "size": [4, 2, 4], "inflate": 0.4, "uv": [56, 45]}
+					]
+				},
+				{
+					"name": "Cape",
+					"pivot": [0, 18.35361, -0.35284],
+					"cubes": [
+						{"origin": [-2, 23.25, -2], "size": [4, 2, 4], "inflate": 0.1, "uv": [67, 71]},
+						{"origin": [-4, 13.95, -2], "size": [8, 10, 4], "inflate": 0.55, "uv": [99, 107]},
+						{"origin": [-4, 13.95, -2], "size": [8, 10, 4], "inflate": 0.72, "uv": [99, 71]}
+					]
+				},
+				{
+					"name": "Lowerpartsback",
+					"parent": "Cape",
+					"pivot": [0, 14.45, 1.7],
+					"cubes": [
+						{"origin": [-4, 9.75, -2.4], "size": [8, 4, 4], "inflate": 0.681, "pivot": [0, 11.95, -0.3], "rotation": [180, 0, 180], "uv": [99, 94]}
+					]
+				},
+				{
+					"name": "Lowerpartsfront",
+					"parent": "Cape",
+					"pivot": [0, 9.45, -0.3],
+					"cubes": [
+						{"origin": [-4, 9.75, -1.8], "size": [8, 4, 4], "inflate": 0.68, "uv": [99, 83]}
+					]
+				},
+				{
+					"name": "bb_main",
+					"pivot": [0, 0, 0],
+					"cubes": [
+						{"origin": [-7, 11.9, -2], "size": [3, 12, 4], "inflate": 0.48, "uv": [83, 107]},
+						{"origin": [4, 11.9, -2], "size": [3, 12, 4], "inflate": 0.48, "uv": [84, 89], "mirror": true}
+					]
+				}
+			]
+		}
+	]
+}

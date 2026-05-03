@@ -59,7 +59,7 @@ public class EightLayeredMistAttack extends MistBreathingAttackBase {
 
             // fake pressure — barely any displacement
             Vec3 tinyKnockback = target.position().subtract(userPos).normalize().scale(knockback * 0.15f);
-            target.push(tinyKnockback.x, 0.02, tinyKnockback.z);
+            target.push(tinyKnockback.x, 0, tinyKnockback.z);
         }
 
         float pitch = 1.2f + (slashIndex * 0.08f);

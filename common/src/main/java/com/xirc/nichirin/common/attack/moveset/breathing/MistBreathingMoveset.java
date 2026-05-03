@@ -51,13 +51,13 @@ public class MistBreathingMoveset extends AbstractMoveset {
     private MoveConfiguration buildEightLayeredMistConfig() {
         return new MoveBuilder("eight_layered_mist", "Eight-Layered Mist")
                 .withAnimation("nichirin:mist_rapid_slash", 6)
-                .withTiming(0, 3, 24)
-                .withDamage(2.0f)
-                .withRange(3.5f)
+                .withTiming(0, 9, 24)
+                .withDamage(1.5f)
+                .withRange(2.5f)
                 .withKnockback(0.05f)
                 .withBreathCost(12.0f)
                 .withHitStun(4)
-                .withHitboxSize(1.8f)
+                .withHitboxSize(1.0f)
                 .withDescription("Eight rapid slashes that ignore immunity frames.")
                 .build();
     }

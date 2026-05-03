@@ -199,10 +199,23 @@ public abstract class NichirinPostProcessor {
         applyCommonUniforms(viewModelStack);
         beforeProcess(viewModelStack);
 
-        if (!active) return; // May be deactivated in beforeProcess
+        if (!active) return;
+
+        // Match the GL state vanilla uses for its own post effects.
+        // Depth testing and blending left over from world rendering will
+        // either kill the fullscreen quad (depth fail) or blend it against
+        // black — both produce a black screen.
+        RenderSystem.disableDepthTest();
+        RenderSystem.disableBlend();
+        RenderSystem.resetTextureMatrix();
 
         shaderEffect.process(MC.getFrameTime());
-        GlStateManager._glBindFramebuffer(GL_DRAW_FRAMEBUFFER, MC.getMainRenderTarget().frameBufferId);
+
+        // Restore the main render target as the active draw FBO and reset
+        // the GL viewport, then re-enable depth testing for any subsequent
+        // world rendering that may still need it.
+        MC.getMainRenderTarget().bindWrite(true);
+        RenderSystem.enableDepthTest();
 
         afterProcess();
     }
