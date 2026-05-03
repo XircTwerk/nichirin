@@ -3,13 +3,10 @@ package com.xirc.nichirin.client;
 import com.xirc.nichirin.client.animation.NichirinAnimations;
 import com.xirc.nichirin.client.config.NichirinClientConfig;
 import com.xirc.nichirin.client.handler.*;
-import com.xirc.nichirin.client.shader.FlameBreathingAuraShader;
-import com.xirc.nichirin.client.shader.WaterBreathingAuraShader;
+import com.xirc.nichirin.client.shader.*;
 import dev.architectury.event.events.client.ClientGuiEvent;
 import com.xirc.nichirin.client.particle.*;
 import com.xirc.nichirin.client.renderer.armor.ArmorRendererManager;
-import com.xirc.nichirin.client.shader.DeadCalmShaderEffect;
-import com.xirc.nichirin.client.shader.NichirinShaderManager;
 import com.xirc.nichirin.common.util.InputHandler;
 import com.xirc.nichirin.registry.NichirinKeybindRegistry;
 import com.xirc.nichirin.client.renderer.gui.BreathingBarRenderer;
@@ -42,6 +39,7 @@ public class BreathOfNichirinClient {
 
     // Store shader effect for easy access
     private static DeadCalmShaderEffect deadCalmEffect;
+    private static ImpactShakeShaderEffect impactShakeShaderEffect;
     private static FlameBreathingAuraShader flameAuraShader;
     private static WaterBreathingAuraShader waterAuraShader;
 
@@ -69,6 +67,7 @@ public class BreathOfNichirinClient {
         try {
             // Register Dead Calm shader effect
             deadCalmEffect = new DeadCalmShaderEffect();
+            impactShakeShaderEffect = new ImpactShakeShaderEffect();
             flameAuraShader = new FlameBreathingAuraShader();
             waterAuraShader = new WaterBreathingAuraShader();
             NichirinShaderManager.getInstance().register(flameAuraShader);

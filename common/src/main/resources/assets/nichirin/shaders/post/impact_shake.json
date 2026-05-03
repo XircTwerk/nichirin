@@ -1,0 +1,24 @@
+{
+  "targets": [
+    "swap"
+  ],
+  "passes": [
+    {
+      "name": "nichirin:impact_shake",
+      "intarget": "minecraft:main",
+      "outtarget": "swap",
+      "uniforms": [
+        { "name": "Progress",   "values": [0.0] },
+        { "name": "Intensity",  "values": [1.0] },
+        { "name": "ShakeX",     "values": [0.0] },
+        { "name": "ShakeY",     "values": [0.0] },
+        { "name": "ChromaSplit","values": [0.0] }
+      ]
+    },
+    {
+      "name": "minecraft:blit",
+      "intarget": "swap",
+      "outtarget": "minecraft:main"
+    }
+  ]
+}
