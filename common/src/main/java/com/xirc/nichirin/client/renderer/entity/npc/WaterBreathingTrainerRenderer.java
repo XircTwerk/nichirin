@@ -10,8 +10,8 @@ import net.minecraft.resources.ResourceLocation;
 
 public class WaterBreathingTrainerRenderer extends BaseAZNichirinEntityRenderer<WaterBreathingTrainerEntity> {
 
-    private static final ResourceLocation GEO = new ResourceLocation(BreathOfNichirin.MOD_ID, "geo/temple_demon.geo.json");
-    private static final ResourceLocation TEX = new ResourceLocation(BreathOfNichirin.MOD_ID, "textures/entity/npc/temple_demon.png");
+    private static final ResourceLocation GEO = new ResourceLocation(BreathOfNichirin.MOD_ID, "geo/urokodaki_npc.geo.json");
+    private static final ResourceLocation TEX = new ResourceLocation(BreathOfNichirin.MOD_ID, "textures/entity/npc/urokodaki_skin.png");
 
     public WaterBreathingTrainerRenderer(EntityRendererProvider.Context context) {
         super(

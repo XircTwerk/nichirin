@@ -5,6 +5,7 @@ import com.xirc.nichirin.common.network.s2c.OpenTrainerDialoguePacket;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
+import lombok.Getter;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -25,6 +26,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
 import java.util.Objects;
@@ -51,26 +53,26 @@ import java.util.UUID;
  */
 public abstract class BaseBreathingTrainerEntity extends PathfinderMob {
 
-    // ── Constants ─────────────────────────────────────────────────────────────
-
+    // Constants
     protected static final float DUEL_HP              = 100.0f;
     protected static final float PEACEFUL_HP          = 200.0f;
     protected static final float DUEL_WIN_HP_THRESHOLD = 1.0f;
     protected static final float PLAYER_DUEL_MIN_HP   = 1.0f;
     protected static final int   DUEL_COOLDOWN_TICKS  = 20 * 60 * 3; // 3 minutes
 
-    // ── State ─────────────────────────────────────────────────────────────────
-
+    // State
     public enum TrainerMode { PEACEFUL, DUELING }
 
+    @Getter
     protected final TrainerType trainerType;
 
+    @Getter
     private TrainerMode mode           = TrainerMode.PEACEFUL;
     private UUID        duelPlayerId   = null;
+    @Getter
     private int         duelCooldownTicks = 0;
 
-    // ── Construction ──────────────────────────────────────────────────────────
-
+    // Construction
     protected BaseBreathingTrainerEntity(EntityType<? extends BaseBreathingTrainerEntity> type,
                                          Level level, TrainerType trainerType) {
         super(type, level);
@@ -79,8 +81,7 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob {
         this.setPersistenceRequired();
     }
 
-    // ── Attributes ────────────────────────────────────────────────────────────
-
+    // Attributes
     public static AttributeSupplier.Builder createAttributes() {
         return PathfinderMob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH,          PEACEFUL_HP)
@@ -91,8 +92,7 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob {
                 .add(Attributes.KNOCKBACK_RESISTANCE, 0.5);
     }
 
-    // ── Goals ─────────────────────────────────────────────────────────────────
-
+    // Goals
     @Override
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
@@ -107,11 +107,10 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob {
         });
     }
 
-    // ── Spawn setup ───────────────────────────────────────────────────────────
-
+    // Spawn setup
     @Override
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty,
-                                        MobSpawnType spawnType, SpawnGroupData data, CompoundTag tag) {
+    public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor level, @NotNull DifficultyInstance difficulty,
+                                        @NotNull MobSpawnType spawnType, SpawnGroupData data, CompoundTag tag) {
         SpawnGroupData result = super.finalizeSpawn(level, difficulty, spawnType, data, tag);
         equipArmor();
         return result;
@@ -120,10 +119,9 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob {
     /** Override to equip trainer-specific armor / weapons. Default: no armor. */
     protected void equipArmor() {}
 
-    // ── Interaction ───────────────────────────────────────────────────────────
-
+    // Interaction
     @Override
-    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+    public @NotNull InteractionResult mobInteract(@NotNull Player player, @NotNull InteractionHand hand) {
         if (hand != InteractionHand.MAIN_HAND) return InteractionResult.PASS;
         if (!(player instanceof ServerPlayer sp)) return InteractionResult.sidedSuccess(true);
 
@@ -167,8 +165,7 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob {
         return have >= trainerType.prerequisiteCount;
     }
 
-    // ── Duel system ───────────────────────────────────────────────────────────
-
+    // Duel system
     /** Called from {@link com.xirc.nichirin.common.network.c2s.TrainerActionPacket}. */
     public void startDuel(ServerPlayer challenger) {
         if (mode == TrainerMode.DUELING) return;
@@ -212,12 +209,11 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob {
         duelPlayerId = null;
     }
 
-    // ── Attack override — cap so player never dies during spar ────────────────
-
+    // Attack override — cap so player never dies during spar
     @Override
-    public boolean doHurtTarget(net.minecraft.world.entity.Entity target) {
+    public boolean doHurtTarget(net.minecraft.world.entity.@NotNull Entity target) {
         if (mode == TrainerMode.DUELING && target instanceof Player p
-                && duelPlayerId != null && p.getUUID().equals(duelPlayerId)) {
+                && p.getUUID().equals(duelPlayerId)) {
             float atk = (float) getAttributeValue(Attributes.ATTACK_DAMAGE);
             if (p.getHealth() - atk <= PLAYER_DUEL_MIN_HP) {
                 p.setHealth(PLAYER_DUEL_MIN_HP);
@@ -231,10 +227,9 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob {
         return super.doHurtTarget(target);
     }
 
-    // ── Damage override — trainer never dies; duel ends at threshold ──────────
-
+    // Damage override — trainer never dies; duel ends at threshold
     @Override
-    public boolean hurt(DamageSource source, float amount) {
+    public boolean hurt(@NotNull DamageSource source, float amount) {
         if (mode != TrainerMode.DUELING) return false;
 
         float safe = Math.min(amount, Math.max(0, getHealth() - 1.0f));
@@ -242,7 +237,6 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob {
 
         if (hit && getHealth() <= DUEL_WIN_HP_THRESHOLD) {
             boolean won = source.getEntity() instanceof Player atk
-                    && duelPlayerId != null
                     && atk.getUUID().equals(duelPlayerId);
             endDuel(won);
         }
@@ -250,8 +244,7 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob {
         return hit;
     }
 
-    // ── Tick ──────────────────────────────────────────────────────────────────
-
+    // Tick
     @Override
     public void tick() {
         super.tick();
@@ -273,10 +266,9 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob {
         }
     }
 
-    // ── NBT ───────────────────────────────────────────────────────────────────
-
+    // NBT
     @Override
-    public void addAdditionalSaveData(CompoundTag tag) {
+    public void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putString("TrainerMode", mode.name());
         tag.putInt("DuelCooldown", duelCooldownTicks);
@@ -284,7 +276,7 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob {
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag tag) {
+    public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         try { mode = TrainerMode.valueOf(tag.getString("TrainerMode")); }
         catch (Exception e) { mode = TrainerMode.PEACEFUL; }
@@ -294,18 +286,12 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob {
         if (mode == TrainerMode.DUELING) { mode = TrainerMode.PEACEFUL; duelPlayerId = null; }
     }
 
-    // ── Misc ──────────────────────────────────────────────────────────────────
-
-    @Override public boolean canBeLeashed(Player p)                            { return false; }
+    // Misc
+    @Override public boolean canBeLeashed(@NotNull Player p)                            { return false; }
     @Override protected boolean shouldDespawnInPeaceful()                      { return false; }
     @Override public boolean removeWhenFarAway(double dist)                    { return false; }
 
-    public TrainerMode getMode()          { return mode; }
-    public int getDuelCooldownTicks()     { return duelCooldownTicks; }
-    public TrainerType getTrainerType()   { return trainerType; }
-
-    // ── Inner goal ────────────────────────────────────────────────────────────
-
+    // Inner goal
     private static class TrainerDuelGoal extends MeleeAttackGoal {
         private final BaseBreathingTrainerEntity trainer;
 
@@ -318,7 +304,7 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob {
         @Override public boolean canUse()          { return trainer.mode == TrainerMode.DUELING && super.canUse(); }
         @Override public boolean canContinueToUse() { return trainer.mode == TrainerMode.DUELING && super.canContinueToUse(); }
 
-        @Override protected double getAttackReachSqr(net.minecraft.world.entity.LivingEntity t) { return 9.0; }
+        @Override protected double getAttackReachSqr(net.minecraft.world.entity.@NotNull LivingEntity t) { return 9.0; }
         @Override protected int getAttackInterval() { return 25; }
     }
 }
