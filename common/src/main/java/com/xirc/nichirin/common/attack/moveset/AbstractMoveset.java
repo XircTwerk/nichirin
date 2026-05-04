@@ -2,10 +2,9 @@ package com.xirc.nichirin.common.attack.moveset;
 
 import com.xirc.nichirin.common.entity.MovesetCapableNPC;
 import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
-import com.xirc.nichirin.common.system.NPCResourceManager;
+import com.xirc.nichirin.common.util.EntityResources;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
-import com.xirc.nichirin.common.util.BreathingManager;
 import lombok.Getter;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -266,14 +265,8 @@ public abstract class AbstractMoveset {
             if (queue != null && queue.isAttackActive(System.currentTimeMillis()) && queue.canQueueNext()) {
                 queue.queueNext();
 
-                // Show feedback that followup was queued
-                if (entity instanceof Player player) {
-                    player.displayClientMessage(
-                            Component.literal("Followup queued!")
-                                    .withStyle(style -> style.withColor(0x55FF55)),
-                            true
-                    );
-                }
+                EntityResources.sendMessage(entity,
+                        Component.literal("Followup queued!").withStyle(style -> style.withColor(0x55FF55)), true);
             }
             return true; // Block the move by overriding
         }
@@ -621,45 +614,18 @@ public abstract class AbstractMoveset {
     public boolean hasResourcesForMove(LivingEntity entity, MoveConfiguration config) {
         if (config == null) return false;
 
-        // Check breath cost
         if (config.hasBreathCost()) {
-            float breathCost = config.getBreathCostOrDefault(0f);
-
-            if (entity instanceof Player player) {
-                // Player breath system
-                if (!BreathingManager.hasBreath(player, breathCost)) {
-                    return false;
-                }
-            } else if (entity instanceof MovesetCapableNPC npc) {
-                // NPC breath system
-                if (npc.getBreathGauge() < breathCost) {
-                    return false;
-                }
-            }
+            if (!EntityResources.hasBreath(entity, config.getBreathCostOrDefault(0f))) return false;
         }
 
         return true;
     }
 
-    /**
-     * Consume resources for a move - WORKS FOR NPCs TOO
-     */
     public boolean consumeResourcesForMove(LivingEntity entity, MoveConfiguration config) {
         if (config == null) return false;
 
-        // Consume breath
         if (config.hasBreathCost()) {
-            float breathCost = config.getBreathCostOrDefault(0f);
-
-            if (entity instanceof Player player) {
-                if (!BreathingManager.consume(player, breathCost)) {
-                    return false;
-                }
-            } else if (entity instanceof MovesetCapableNPC npc) {
-                if (!NPCResourceManager.consumeBreath(npc, breathCost)) {
-                    return false;
-                }
-            }
+            if (!EntityResources.consumeBreath(entity, config.getBreathCostOrDefault(0f))) return false;
         }
 
         return true;

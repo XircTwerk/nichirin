@@ -343,7 +343,9 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
     }
 
     private void ensureEquipment() {
-        if (getItemBySlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND).isEmpty()) equipArmor();
+        if (getItemBySlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND).isEmpty()) {
+            equipArmor();
+        }
     }
 
 

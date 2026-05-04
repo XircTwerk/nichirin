@@ -37,13 +37,11 @@ public class WaterBreathingAttackGoal extends MeleeAttackGoal {
 
     @Override
     public boolean canUse() {
-        if (trainer.getMode() == WaterBreathingTrainerEntity.TrainerMode.DUELING) return false;
         return trainer.getTarget() != null && trainer.getTarget().isAlive();
     }
 
     @Override
     public boolean canContinueToUse() {
-        if (trainer.getMode() == WaterBreathingTrainerEntity.TrainerMode.DUELING) return false;
         return trainer.getTarget() != null && trainer.getTarget().isAlive();
     }
 
