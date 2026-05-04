@@ -89,7 +89,6 @@ public class PerkDefinition {
         return upgradeCosts.get(next);
     }
 
-    // ── Builder ───────────────────────────────────────────────────────────────
 
     public static Builder builder(String id, String name) {
         return new Builder(id, name);

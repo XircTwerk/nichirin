@@ -4,7 +4,7 @@ import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.breathing.flame.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.network.s2c.MovesetConfigSyncPacket;
-import com.xirc.nichirin.common.util.BreathingManager;
+import com.xirc.nichirin.common.util.EntityResources;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
@@ -13,8 +13,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
-import com.xirc.nichirin.common.entity.MovesetCapableNPC;
-import net.minecraft.world.entity.player.Player;
 
 import java.util.HashMap;
 import java.util.List;
@@ -251,11 +249,9 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                     Long cooldownEnd = cooldowns.get(moveIndex);
                     if (cooldownEnd != null) {
                         long remaining = (cooldownEnd - entity.level().getGameTime()) / 20;
-                        showMessage(entity,
+                        EntityResources.sendMessage(entity,
                                 Component.literal(config.getDisplayName() + " on cooldown! " + remaining + "s remaining")
-                                        .withStyle(style -> style.withColor(0xFF6600)), // Orange color for flame
-                                true
-                        );
+                                        .withStyle(style -> style.withColor(0xFF6600)), true);
                     }
                 }
             }
@@ -268,12 +264,10 @@ public class FlameBreathingMoveset extends AbstractMoveset {
             float breathCost = config.getBreathCostOrDefault(0.0f);
 
             // Add small buffer to prevent race conditions
-            if (breathCost > 0 && !hasEnoughBreath(entity, breathCost + 0.1f)) {
-                showMessage(entity,
+            if (breathCost > 0 && !EntityResources.hasBreath(entity, breathCost + 0.1f)) {
+                EntityResources.sendMessage(entity,
                         Component.literal("Not enough breath for " + config.getDisplayName() + "!")
-                                .withStyle(style -> style.withColor(0xFF3333)), // Red for no breath
-                        true
-                );
+                                .withStyle(style -> style.withColor(0xFF3333)), true);
                 return;
             }
         }
@@ -375,18 +369,4 @@ public class FlameBreathingMoveset extends AbstractMoveset {
         executingMove.remove(entity.getUUID());
     }
 
-    private boolean hasEnoughBreath(LivingEntity entity, float amount) {
-        if (entity instanceof Player player) {
-            return BreathingManager.hasBreath(player, amount);
-        } else if (entity instanceof MovesetCapableNPC npc) {
-            return npc.getBreathGauge() >= amount;
-        }
-        return false;
-    }
-
-    private void showMessage(LivingEntity entity, Component message, boolean actionBar) {
-        if (entity instanceof Player player) {
-            player.displayClientMessage(message, actionBar);
-        }
-    }
 }

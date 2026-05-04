@@ -25,9 +25,7 @@ public class KatanaCheckAttack extends AbstractKatanaAttack {
               hitboxSize, hitboxOffset, hitStun, startSound, hitSound);
     }
 
-    // ── Hooks ─────────────────────────────────────────────────────────────────
 
-    // ── Hitbox ────────────────────────────────────────────────────────────────
 
     /**
      * Override hitbox to sit right at the player's torso — a tight, close-range box
@@ -45,7 +43,6 @@ public class KatanaCheckAttack extends AbstractKatanaAttack {
         );
     }
 
-    // ── Hooks ─────────────────────────────────────────────────────────────────
 
     @Override
     protected void onStart(Player player) {
@@ -69,7 +66,6 @@ public class KatanaCheckAttack extends AbstractKatanaAttack {
         }
     }
 
-    // ── Builder ───────────────────────────────────────────────────────────────
 
     public static class Builder extends AbstractKatanaAttack.Builder<Builder, KatanaCheckAttack> {
         public Builder() {

@@ -18,19 +18,19 @@ uniform float ChromaSplit;
 in vec2 texCoord;
 out vec4 fragColor;
 
-// ─── constants ────────────────────────────────────────────────────────────────
+// constants
 const float FLASH_WHITEOUT_END  = 0.05;   // Progress at which hard flash ends
 const float FLASH_BLOOM_END     = 0.175;  // Progress at which bloom hold ends
 const float FLASH_FADE_END      = 0.35;   // Progress at which all flash is gone
 const vec3  BLOOM_COLOR         = vec3(0.63, 0.86, 1.0); // blue-white bloom tint
 
-// ─── helpers ─────────────────────────────────────────────────────────────────
+// helpers
 float remap(float v, float inLo, float inHi, float outLo, float outHi) {
     return outLo + (outHi - outLo) * clamp((v - inLo) / (inHi - inLo), 0.0, 1.0);
 }
 
 void main() {
-    // ── 1. SHAKE + CHROMATIC ABERRATION ─────────────────────────────────────
+    // 1. SHAKE + CHROMATIC ABERRATION
     // ShakeX/ShakeY are already in UV space (normalized 0..1) from Java.
     // ChromaSplit is the half-split distance in UV space.
 
@@ -44,7 +44,7 @@ void main() {
 
     vec3 color = vec3(r, g, b);
 
-    // ── 2. TWO-STAGE FLASH ───────────────────────────────────────────────────
+    // 2. TWO-STAGE FLASH
 
     // Distance from screen center (for bloom radial falloff)
     vec2  toCenter = texCoord - vec2(0.5);
@@ -86,7 +86,7 @@ void main() {
         color = mix(color, BLOOM_COLOR, residual);
     }
 
-    // ── 3. INTENSITY MASTER ──────────────────────────────────────────────────
+    // 3. INTENSITY MASTER
     // Intensity is driven by Java for fade-in / fade-out of the whole effect.
     // We lerp toward original (un-shaken) sample when Intensity < 1.
     vec3 original = texture(DiffuseSampler, texCoord).rgb;

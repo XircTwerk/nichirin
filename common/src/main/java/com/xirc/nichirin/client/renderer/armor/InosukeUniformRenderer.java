@@ -69,14 +69,15 @@ public class InosukeUniformRenderer extends NichirinArmorRenderer {
                 setBoneVisible(getBone("eyeRight"), true);
             }
             case CHEST -> {
-                AzBone fur = getBone("Fur");
-                if (fur != null) setAllBonesRecursive(fur, true);
             }
             case LEGS -> {
                 // Hide back katanas when holding beast katanas
                 if (!isHoldingBeastKatanas()) {
                     setBoneVisible(getBone("bb_main"), true);
                 }
+                AzBone fur = getBone("Fur");
+                if (fur != null) setAllBonesRecursive(fur, true);
+
                 setBoneVisible(getBone("chestplate"), true);
                 setBoneVisible(getBone("leftArm"), true);
                 setBoneVisible(getBone("rightArm"), true);

@@ -41,7 +41,6 @@ public class KatanaThrustAttack extends AbstractKatanaAttack {
         this.stopAfterFirstHit = false;
     }
 
-    // ── Hooks ─────────────────────────────────────────────────────────────────
 
     @Override
     protected void onStart(Player player) {
@@ -111,7 +110,6 @@ public class KatanaThrustAttack extends AbstractKatanaAttack {
         }
     }
 
-    // ── Builder ───────────────────────────────────────────────────────────────
 
     public static class Builder extends AbstractKatanaAttack.Builder<Builder, KatanaThrustAttack> {
         public Builder() {

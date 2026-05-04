@@ -28,7 +28,6 @@ import java.util.List;
  */
 public class KatanaGrabAttack {
 
-    // ── Constants ─────────────────────────────────────────────────────────────
     private static final int   GRAB_DURATION = 16; // ticks held (~0.8 s)
     private static final int   RECOVERY      = 6;
     private static final float GRAB_RANGE    = 3.5f;
@@ -37,13 +36,11 @@ public class KatanaGrabAttack {
     private static final float LAUNCH_V      = 0.6f;
     private static final int   COOLDOWN      = 60;
 
-    // ── State ─────────────────────────────────────────────────────────────────
     @Getter private boolean isActive  = false;
     private int             holdTick  = 0;
     private boolean         hitFired  = false;
     @Getter private final int cooldown = COOLDOWN;
 
-    // ── Entry point ───────────────────────────────────────────────────────────
 
     public boolean start(Player player) {
         if (player.level().isClientSide()) return false;
@@ -68,7 +65,6 @@ public class KatanaGrabAttack {
         return true;
     }
 
-    // ── Tick ─────────────────────────────────────────────────────────────────
 
     public void tick(Player player) {
         if (!isActive) return;
@@ -97,7 +93,6 @@ public class KatanaGrabAttack {
         }
     }
 
-    // ── Hit move ─────────────────────────────────────────────────────────────
 
     private void executeHitMove(Player player, LivingEntity target) {
         DamageSource src = player.damageSources().playerAttack(player);
@@ -125,7 +120,6 @@ public class KatanaGrabAttack {
                 SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.PLAYERS, 1.0f, 0.75f);
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private LivingEntity findTarget(Player player) {
         Vec3 eye    = player.getEyePosition();

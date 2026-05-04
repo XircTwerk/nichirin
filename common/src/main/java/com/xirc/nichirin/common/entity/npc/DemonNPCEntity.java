@@ -20,45 +20,35 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-/**
- * Base class for demon NPCs with moveset support
- * Implements MovesetCapableNPC for full moveset integration
- */
 public abstract class DemonNPCEntity extends Monster implements MovesetCapableNPC {
 
-    private static final EntityDataAccessor<String> CURRENT_ANIMATION =
+    private static final EntityDataAccessor<String>  CURRENT_ANIMATION =
             SynchedEntityData.defineId(DemonNPCEntity.class, EntityDataSerializers.STRING);
-
-    private static final EntityDataAccessor<Float> ANIMATION_SPEED =
+    private static final EntityDataAccessor<Float>   ANIMATION_SPEED   =
             SynchedEntityData.defineId(DemonNPCEntity.class, EntityDataSerializers.FLOAT);
-
-    private static final EntityDataAccessor<Boolean> ANIMATION_RESET =
+    private static final EntityDataAccessor<Boolean> ANIMATION_RESET   =
             SynchedEntityData.defineId(DemonNPCEntity.class, EntityDataSerializers.BOOLEAN);
-
-    private static final EntityDataAccessor<String> DEMON_TYPE =
+    private static final EntityDataAccessor<String>  DEMON_TYPE        =
             SynchedEntityData.defineId(DemonNPCEntity.class, EntityDataSerializers.STRING);
-
-    private static final EntityDataAccessor<Float> RENDER_SCALE =
+    private static final EntityDataAccessor<Float>   RENDER_SCALE      =
             SynchedEntityData.defineId(DemonNPCEntity.class, EntityDataSerializers.FLOAT);
 
-    // Moveset system
     protected AbstractMoveset moveset;
 
-    // Configurable NPC properties
-    protected int maxBloodPoints = 10;
-    protected float maxBreathGauge = 100.0f;
-    protected float aggression = 0.8f; // 80% aggressive by default
-    protected float damageMultiplier = 1.0f;
-    protected float attackSpeedMultiplier = 1.0f;
-    protected float moveSpeedMultiplier = 1.0f;
-    protected boolean canRegenBlood = true;
-    protected float bloodRegenMultiplier = 1.5f; // Faster regen than players
-    protected float breathRegenMultiplier = 2.0f; // Much faster breath regen
+    protected int   maxBloodPoints         = 10;
+    protected float maxBreathGauge         = 100.0f;
+    protected float maxStamina             = 100.0f;
+    protected float aggression             = 0.8f;
+    protected float damageMultiplier       = 1.0f;
+    protected float attackSpeedMultiplier  = 1.0f;
+    protected float moveSpeedMultiplier    = 1.0f;
+    protected boolean canRegenBlood        = true;
+    protected float bloodRegenMultiplier   = 1.5f;
+    protected float breathRegenMultiplier  = 2.0f;
+    protected float staminaRegenMultiplier = 1.5f;
 
-    // Blacklisted moves (by index)
     protected final Set<Integer> blacklistedMoves = new HashSet<>();
 
-    // Cooldown tracking per NPC
     private static final Map<UUID, Map<Integer, Long>> npcCooldowns = new HashMap<>();
 
     public DemonNPCEntity(EntityType<? extends Monster> entityType, Level level) {
@@ -68,21 +58,20 @@ public abstract class DemonNPCEntity extends Monster implements MovesetCapableNP
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
-        this.entityData.define(CURRENT_ANIMATION, "");
-        this.entityData.define(ANIMATION_SPEED, 1.0f);
-        this.entityData.define(ANIMATION_RESET, false);
-        this.entityData.define(DEMON_TYPE, getDefaultDemonType());
-        this.entityData.define(RENDER_SCALE, 1.0f);
+        entityData.define(CURRENT_ANIMATION, "");
+        entityData.define(ANIMATION_SPEED, 1.0f);
+        entityData.define(ANIMATION_RESET, false);
+        entityData.define(DEMON_TYPE, getDefaultDemonType());
+        entityData.define(RENDER_SCALE, 1.0f);
     }
 
     protected abstract String getDefaultDemonType();
 
-    // ========== ANIMATION METHODS ==========
 
     public void setAnimation(String animationID, float animationSpeed) {
-        this.entityData.set(ANIMATION_RESET, this.entityData.get(CURRENT_ANIMATION).equals(animationID));
-        this.entityData.set(CURRENT_ANIMATION, animationID);
-        this.entityData.set(ANIMATION_SPEED, animationSpeed);
+        entityData.set(ANIMATION_RESET, entityData.get(CURRENT_ANIMATION).equals(animationID));
+        entityData.set(CURRENT_ANIMATION, animationID);
+        entityData.set(ANIMATION_SPEED, animationSpeed);
     }
 
     public void stopAnimation() {
@@ -90,115 +79,57 @@ public abstract class DemonNPCEntity extends Monster implements MovesetCapableNP
     }
 
     public String getCurrentAnimation() {
-        return this.entityData.get(CURRENT_ANIMATION);
+        return entityData.get(CURRENT_ANIMATION);
     }
 
     public float getAnimationSpeed() {
-        return this.entityData.get(ANIMATION_SPEED);
+        return entityData.get(ANIMATION_SPEED);
     }
 
     public boolean wasAnimationReset() {
-        return this.entityData.get(ANIMATION_RESET);
+        return entityData.get(ANIMATION_RESET);
     }
 
     public String getDemonType() {
-        return this.entityData.get(DEMON_TYPE);
+        return entityData.get(DEMON_TYPE);
     }
 
     public void setDemonType(String demonType) {
-        this.entityData.set(DEMON_TYPE, demonType);
+        entityData.set(DEMON_TYPE, demonType);
     }
 
     public float getRenderScale() {
-        return this.entityData.get(RENDER_SCALE);
+        return entityData.get(RENDER_SCALE);
     }
 
     public void setRenderScale(float scale) {
-        this.entityData.set(RENDER_SCALE, scale);
+        entityData.set(RENDER_SCALE, scale);
     }
 
-    // ========== MOVESET CAPABLE NPC IMPLEMENTATION ==========
 
-    @Override
-    public AbstractMoveset getMoveset() {
-        return moveset;
-    }
-
-    @Override
-    public void setMoveset(AbstractMoveset moveset) {
-        this.moveset = moveset;
-    }
-
-    @Override
-    public UUID getEntityUUID() {
-        return this.getUUID();
-    }
-
-    @Override
-    public Level getEntityLevel() {
-        return this.level();
-    }
-
-    @Override
-    public LivingEntity asLivingEntity() {
-        return this;
-    }
+    @Override public AbstractMoveset getMoveset()                { return moveset; }
+    @Override public void setMoveset(AbstractMoveset m)          { moveset = m; }
+    @Override public UUID getEntityUUID()                        { return getUUID(); }
+    @Override public Level getEntityLevel()                      { return level(); }
+    @Override public LivingEntity asLivingEntity()               { return this; }
 
     @Override
     public boolean canUseMove(int moveIndex) {
-        // Check if move is blacklisted
-        if (isMoveBlacklisted(moveIndex)) {
-            return false;
-        }
-
-        // Check if moveset exists
-        if (moveset == null) {
-            return false;
-        }
-
-        // Check if move exists
-        AbstractMoveset.MoveConfiguration config = moveset.getMove(moveIndex);
-        if (config == null) {
-            return false;
-        }
-
-        // Check cooldown
-        if (isOnCooldown(moveIndex)) {
-            return false;
-        }
-
-        // Check breath cost
-        if (config.hasBreathCost()) {
-            float breathCost = config.getBreathCostOrDefault(0f);
-            if (getBreathGauge() < breathCost) {
-                return false;
-            }
-        }
-
+        if (isMoveBlacklisted(moveIndex) || moveset == null) return false;
+        AbstractMoveset.MoveConfiguration cfg = moveset.getMove(moveIndex);
+        if (cfg == null) return false;
+        if (isOnCooldown(moveIndex)) return false;
+        if (cfg.hasBreathCost() && getBreathGauge() < cfg.getBreathCostOrDefault(0f)) return false;
         return true;
     }
 
     @Override
     public void performMovesetMove(int moveIndex) {
-        if (!canUseMove(moveIndex)) {
-            return;
-        }
-
-        AbstractMoveset.MoveConfiguration config = moveset.getMove(moveIndex);
-        if (config == null) {
-            return;
-        }
-
-        // Consume breath
-        if (config.hasBreathCost()) {
-            float breathCost = config.getBreathCostOrDefault(0f);
-            NPCResourceManager.consumeBreath(this, breathCost);
-        }
-
-        // Set cooldown
-        setCooldown(moveIndex, config.getCooldownOrDefault(0));
-
-        // Execute the move
+        if (!canUseMove(moveIndex)) return;
+        AbstractMoveset.MoveConfiguration cfg = moveset.getMove(moveIndex);
+        if (cfg == null) return;
+        if (cfg.hasBreathCost()) NPCResourceManager.consumeBreath(this, cfg.getBreathCostOrDefault(0f));
+        setCooldown(moveIndex, cfg.getCooldownOrDefault(0));
         moveset.performMove(this, moveIndex);
     }
 
@@ -207,150 +138,87 @@ public abstract class DemonNPCEntity extends Monster implements MovesetCapableNP
         setAnimation(animationName, 1.0f);
     }
 
-    @Override
-    public int getBloodPoints() {
-        return NPCResourceManager.getBloodPoints(getEntityUUID(), maxBloodPoints);
-    }
 
-    @Override
-    public void setBloodPoints(int bloodPoints) {
-        NPCResourceManager.setBloodPoints(getEntityUUID(), bloodPoints, maxBloodPoints);
-    }
+    @Override public int   getBloodPoints()                       { return NPCResourceManager.getBloodPoints(getUUID(), maxBloodPoints); }
+    @Override public void  setBloodPoints(int v)                  { NPCResourceManager.setBloodPoints(getUUID(), v, maxBloodPoints); }
+    @Override public int   getMaxBloodPoints()                    { return maxBloodPoints; }
+    @Override public boolean canRegenBlood()                      { return canRegenBlood; }
+    @Override public float getBloodRegenMultiplier()              { return bloodRegenMultiplier; }
 
-    @Override
-    public int getMaxBloodPoints() {
-        return maxBloodPoints;
-    }
 
-    @Override
-    public float getBreathGauge() {
-        return NPCResourceManager.getBreathGauge(getEntityUUID(), maxBreathGauge);
-    }
+    @Override public float getBreathGauge()                       { return NPCResourceManager.getBreathGauge(getUUID(), maxBreathGauge); }
+    @Override public void  setBreathGauge(float v)                { NPCResourceManager.setBreathGauge(getUUID(), v, maxBreathGauge); }
+    @Override public float getMaxBreathGauge()                    { return maxBreathGauge; }
+    @Override public float getBreathRegenMultiplier()             { return breathRegenMultiplier; }
 
-    @Override
-    public void setBreathGauge(float breath) {
-        NPCResourceManager.setBreathGauge(getEntityUUID(), breath, maxBreathGauge);
-    }
 
-    @Override
-    public float getMaxBreathGauge() {
-        return maxBreathGauge;
-    }
+    @Override public float getStamina()                           { return NPCResourceManager.getStamina(getUUID(), maxStamina); }
+    @Override public void  setStamina(float v)                    { NPCResourceManager.setStamina(getUUID(), v, maxStamina); }
+    @Override public float getMaxStamina()                        { return maxStamina; }
+    @Override public float getStaminaRegenMultiplier()            { return staminaRegenMultiplier; }
 
-    @Override
-    public float getAggression() {
-        return aggression;
-    }
 
-    @Override
-    public float getDamageMultiplier() {
-        return damageMultiplier;
-    }
+    @Override public boolean canDoubleJump()                      { return !onGround() && NPCResourceManager.canDoubleJump(getUUID()); }
+    @Override public void    markDoubleJumped()                   { NPCResourceManager.markDoubleJumped(getUUID()); }
+    @Override public void    resetDoubleJump()                    { NPCResourceManager.resetDoubleJump(getUUID()); }
+    // isSprinting() / setSprinting() are satisfied by LivingEntity inheritance
 
-    @Override
-    public float getAttackSpeedMultiplier() {
-        return attackSpeedMultiplier;
-    }
 
-    @Override
-    public float getMoveSpeedMultiplier() {
-        return moveSpeedMultiplier;
-    }
+    @Override public float getAggression()                        { return aggression; }
+    @Override public float getDamageMultiplier()                  { return damageMultiplier; }
+    @Override public float getAttackSpeedMultiplier()             { return attackSpeedMultiplier; }
+    @Override public float getMoveSpeedMultiplier()               { return moveSpeedMultiplier; }
+    @Override public Set<Integer> getBlacklistedMoves()           { return blacklistedMoves; }
 
-    @Override
-    public boolean canRegenBlood() {
-        return canRegenBlood;
-    }
-
-    @Override
-    public float getBloodRegenMultiplier() {
-        return bloodRegenMultiplier;
-    }
-
-    @Override
-    public float getBreathRegenMultiplier() {
-        return breathRegenMultiplier;
-    }
-
-    @Override
-    public Set<Integer> getBlacklistedMoves() {
-        return blacklistedMoves;
-    }
-
-    @Override
-    public void tickMovesetSystems() {
-        if (!this.level().isClientSide) {
-            NPCResourceManager.tickNPC(this);
-        }
-    }
-
-    // ========== COOLDOWN SYSTEM ==========
 
     private boolean isOnCooldown(int moveIndex) {
-        Map<Integer, Long> cooldowns = npcCooldowns.get(this.getUUID());
+        Map<Integer, Long> cooldowns = npcCooldowns.get(getUUID());
         if (cooldowns == null) return false;
-
-        Long cooldownEnd = cooldowns.get(moveIndex);
-        if (cooldownEnd == null) return false;
-
-        return this.level().getGameTime() < cooldownEnd;
+        Long end = cooldowns.get(moveIndex);
+        return end != null && level().getGameTime() < end;
     }
 
     private void setCooldown(int moveIndex, int ticks) {
         if (ticks <= 0) return;
-
-        long cooldownEnd = this.level().getGameTime() + ticks;
-        npcCooldowns.computeIfAbsent(this.getUUID(), k -> new HashMap<>())
-                .put(moveIndex, cooldownEnd);
+        npcCooldowns.computeIfAbsent(getUUID(), k -> new HashMap<>())
+                .put(moveIndex, level().getGameTime() + ticks);
     }
 
-    // ========== TICK AND LIFECYCLE ==========
 
     @Override
     public void tick() {
         super.tick();
-
         if (level().isClientSide()) return;
 
-        // Reset animation flag
         entityData.set(ANIMATION_RESET, false);
-
-        // Tick moveset systems (blood regen, breath regen)
         tickMovesetSystems();
-
-        // Custom demon systems
         tickDemonSystems();
 
-        // Handle animation tick
-        if (!getCurrentAnimation().isEmpty()) {
-            handleAnimationTick();
-        }
-    }
+        if (!getCurrentAnimation().isEmpty()) handleAnimationTick();
 
-    protected void tickDemonSystems() {
-        // Override in subclasses for custom behavior
-    }
-
-    protected void handleAnimationTick() {
-        // Override in subclasses for animation handling
-    }
-
-    protected void onAnimationComplete(String animationName) {
-        // Override in subclasses
+        if (onGround()) resetDoubleJump();
     }
 
     @Override
+    public void tickMovesetSystems() {
+        if (!level().isClientSide) NPCResourceManager.tickNPC(this);
+    }
+
+    protected void tickDemonSystems() {}
+    protected void handleAnimationTick() {}
+    protected void onAnimationComplete(String animationName) {}
+
+
+    @Override
     public void remove(RemovalReason reason) {
-        if (!this.level().isClientSide) {
-            npcCooldowns.remove(this.getUUID());
-            NPCResourceManager.cleanupNPC(this.getUUID());
+        if (!level().isClientSide) {
+            npcCooldowns.remove(getUUID());
+            NPCResourceManager.cleanupNPC(getUUID());
             AbstractMoveset.cleanupEntity(this);
         }
-
         super.remove(reason);
     }
 
-    // ========== NBT SAVE/LOAD ==========
 
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
@@ -359,19 +227,13 @@ public abstract class DemonNPCEntity extends Monster implements MovesetCapableNP
         tag.putFloat("animation_speed", getAnimationSpeed());
         tag.putString("demon_type", getDemonType());
         tag.putFloat("render_scale", getRenderScale());
-
-        // Save moveset data
-        if (moveset != null) {
-            tag.putString("moveset_id", moveset.getMovesetId());
-        }
-
-        // Save blood and breath
+        if (moveset != null) tag.putString("moveset_id", moveset.getMovesetId());
         tag.putInt("blood_points", getBloodPoints());
         tag.putFloat("breath_gauge", getBreathGauge());
-
-        // Save configuration
+        tag.putFloat("stamina", getStamina());
         tag.putInt("max_blood_points", maxBloodPoints);
         tag.putFloat("max_breath_gauge", maxBreathGauge);
+        tag.putFloat("max_stamina", maxStamina);
         tag.putFloat("aggression", aggression);
         tag.putFloat("damage_multiplier", damageMultiplier);
         tag.putFloat("attack_speed_multiplier", attackSpeedMultiplier);
@@ -379,70 +241,39 @@ public abstract class DemonNPCEntity extends Monster implements MovesetCapableNP
         tag.putBoolean("can_regen_blood", canRegenBlood);
         tag.putFloat("blood_regen_multiplier", bloodRegenMultiplier);
         tag.putFloat("breath_regen_multiplier", breathRegenMultiplier);
+        tag.putFloat("stamina_regen_multiplier", staminaRegenMultiplier);
     }
 
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        if (tag.contains("current_animation")) {
-            this.entityData.set(CURRENT_ANIMATION, tag.getString("current_animation"));
-        }
-        if (tag.contains("animation_speed")) {
-            this.entityData.set(ANIMATION_SPEED, tag.getFloat("animation_speed"));
-        }
-        if (tag.contains("demon_type")) {
-            this.entityData.set(DEMON_TYPE, tag.getString("demon_type"));
-        }
-        if (tag.contains("render_scale")) {
-            this.entityData.set(RENDER_SCALE, tag.getFloat("render_scale"));
-        }
-
-        // Load blood and breath
-        if (tag.contains("blood_points")) {
-            setBloodPoints(tag.getInt("blood_points"));
-        }
-        if (tag.contains("breath_gauge")) {
-            setBreathGauge(tag.getFloat("breath_gauge"));
-        }
-
-        // Load configuration
-        if (tag.contains("max_blood_points")) {
-            maxBloodPoints = tag.getInt("max_blood_points");
-        }
-        if (tag.contains("max_breath_gauge")) {
-            maxBreathGauge = tag.getFloat("max_breath_gauge");
-        }
-        if (tag.contains("aggression")) {
-            aggression = tag.getFloat("aggression");
-        }
-        if (tag.contains("damage_multiplier")) {
-            damageMultiplier = tag.getFloat("damage_multiplier");
-        }
-        if (tag.contains("attack_speed_multiplier")) {
-            attackSpeedMultiplier = tag.getFloat("attack_speed_multiplier");
-        }
-        if (tag.contains("move_speed_multiplier")) {
-            moveSpeedMultiplier = tag.getFloat("move_speed_multiplier");
-        }
-        if (tag.contains("can_regen_blood")) {
-            canRegenBlood = tag.getBoolean("can_regen_blood");
-        }
-        if (tag.contains("blood_regen_multiplier")) {
-            bloodRegenMultiplier = tag.getFloat("blood_regen_multiplier");
-        }
-        if (tag.contains("breath_regen_multiplier")) {
-            breathRegenMultiplier = tag.getFloat("breath_regen_multiplier");
-        }
+        if (tag.contains("current_animation"))        entityData.set(CURRENT_ANIMATION, tag.getString("current_animation"));
+        if (tag.contains("animation_speed"))          entityData.set(ANIMATION_SPEED, tag.getFloat("animation_speed"));
+        if (tag.contains("demon_type"))               entityData.set(DEMON_TYPE, tag.getString("demon_type"));
+        if (tag.contains("render_scale"))             entityData.set(RENDER_SCALE, tag.getFloat("render_scale"));
+        if (tag.contains("blood_points"))             setBloodPoints(tag.getInt("blood_points"));
+        if (tag.contains("breath_gauge"))             setBreathGauge(tag.getFloat("breath_gauge"));
+        if (tag.contains("stamina"))                  setStamina(tag.getFloat("stamina"));
+        if (tag.contains("max_blood_points"))         maxBloodPoints = tag.getInt("max_blood_points");
+        if (tag.contains("max_breath_gauge"))         maxBreathGauge = tag.getFloat("max_breath_gauge");
+        if (tag.contains("max_stamina"))              maxStamina = tag.getFloat("max_stamina");
+        if (tag.contains("aggression"))               aggression = tag.getFloat("aggression");
+        if (tag.contains("damage_multiplier"))        damageMultiplier = tag.getFloat("damage_multiplier");
+        if (tag.contains("attack_speed_multiplier"))  attackSpeedMultiplier = tag.getFloat("attack_speed_multiplier");
+        if (tag.contains("move_speed_multiplier"))    moveSpeedMultiplier = tag.getFloat("move_speed_multiplier");
+        if (tag.contains("can_regen_blood"))          canRegenBlood = tag.getBoolean("can_regen_blood");
+        if (tag.contains("blood_regen_multiplier"))   bloodRegenMultiplier = tag.getFloat("blood_regen_multiplier");
+        if (tag.contains("breath_regen_multiplier"))  breathRegenMultiplier = tag.getFloat("breath_regen_multiplier");
+        if (tag.contains("stamina_regen_multiplier")) staminaRegenMultiplier = tag.getFloat("stamina_regen_multiplier");
     }
 
-    // ========== ATTRIBUTES ==========
 
     public static AttributeSupplier.Builder createDemonAttributes() {
         return Monster.createMonsterAttributes()
-                .add(Attributes.MAX_HEALTH, 40.0)
+                .add(Attributes.MAX_HEALTH,    40.0)
                 .add(Attributes.MOVEMENT_SPEED, 0.25)
-                .add(Attributes.ATTACK_DAMAGE, 6.0)
-                .add(Attributes.ARMOR, 2.0)
-                .add(Attributes.FOLLOW_RANGE, 16.0);
+                .add(Attributes.ATTACK_DAMAGE,  6.0)
+                .add(Attributes.ARMOR,          2.0)
+                .add(Attributes.FOLLOW_RANGE,  16.0);
     }
 }

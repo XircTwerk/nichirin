@@ -10,17 +10,13 @@ import java.util.Map;
  */
 public class NichirinConfig {
 
-    // -------------------------------------------------------------------------
     // Keys (string constants so the command can reference them)
-    // -------------------------------------------------------------------------
 
     public static final String COMBO_WINDOW_TICKS      = "combo_window_ticks";
     public static final String PARRY_WINDOW_TICKS      = "parry_window_ticks";
     public static final String STAMINA_REGEN_RATE      = "stamina_regen_rate";
 
-    // -------------------------------------------------------------------------
     // Defaults
-    // -------------------------------------------------------------------------
 
     private static final Map<String, Entry> entries = new LinkedHashMap<>();
 
@@ -40,9 +36,7 @@ public class NichirinConfig {
         entries.put(key, new Entry(def, def, 0, 1, description, true));
     }
 
-    // -------------------------------------------------------------------------
     // Accessors
-    // -------------------------------------------------------------------------
 
     public static int getInt(String key) {
         // Prefer the file-backed Cloth Config value when available
@@ -115,9 +109,7 @@ public class NichirinConfig {
         return entries.containsKey(key);
     }
 
-    // -------------------------------------------------------------------------
     // Entry record
-    // -------------------------------------------------------------------------
 
     public record Entry(int value, int defaultValue, int min, int max, String description, boolean isBoolean) {
         /** Returns the display string: "true"/"false" for boolean entries, otherwise the raw int. */

@@ -22,7 +22,6 @@ import java.util.*;
  */
 public class PerkData {
 
-    // ── State ─────────────────────────────────────────────────────────────────
 
     /** All perk IDs the player has discovered (not necessarily equipped). */
     private final Set<String> discovered = new LinkedHashSet<>();
@@ -45,7 +44,6 @@ public class PerkData {
     /** Named preset loadouts. */
     private final List<PerkPreset> presets = new ArrayList<>();
 
-    // ── Discovery ─────────────────────────────────────────────────────────────
 
     public boolean hasDiscovered(String perkId) {
         return discovered.contains(perkId);
@@ -63,7 +61,6 @@ public class PerkData {
         return Collections.unmodifiableSet(discovered);
     }
 
-    // ── Equipped perks ────────────────────────────────────────────────────────
 
     public boolean isEquipped(String perkId) {
         return equippedPerks.containsKey(perkId);
@@ -107,7 +104,6 @@ public class PerkData {
         return Collections.unmodifiableMap(equippedPerks);
     }
 
-    // ── Flaws ─────────────────────────────────────────────────────────────────
 
     public boolean hasFlaw(String flawId) {
         return equippedFlaws.contains(flawId);
@@ -129,7 +125,6 @@ public class PerkData {
         return Collections.unmodifiableSet(equippedFlaws);
     }
 
-    // ── Toggle ────────────────────────────────────────────────────────────────
 
     public boolean isPerksEnabled() {
         return perksEnabled;
@@ -155,7 +150,6 @@ public class PerkData {
         return true;
     }
 
-    // ── Presets ───────────────────────────────────────────────────────────────
 
     public List<PerkPreset> getPresets() {
         return Collections.unmodifiableList(presets);
@@ -204,7 +198,6 @@ public class PerkData {
         }
     }
 
-    // ── Copy ──────────────────────────────────────────────────────────────────
 
     public void copyFrom(PerkData other) {
         this.discovered.clear();
@@ -221,7 +214,6 @@ public class PerkData {
         }
     }
 
-    // ── NBT ───────────────────────────────────────────────────────────────────
 
     public CompoundTag save() {
         CompoundTag tag = new CompoundTag();

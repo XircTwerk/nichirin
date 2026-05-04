@@ -29,7 +29,6 @@ public class PerkPreset {
         this.name = name;
     }
 
-    // ── NBT ───────────────────────────────────────────────────────────────────
 
     public CompoundTag save() {
         CompoundTag tag = new CompoundTag();

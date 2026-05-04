@@ -19,9 +19,7 @@ import java.util.List;
 @Config(name = "nichirin")
 public class NichirinModConfig implements ConfigData {
 
-    // =========================================================================
     // Combat
-    // =========================================================================
 
     @ConfigEntry.Gui.CollapsibleObject(startExpanded = true)
     public CombatConfig combat = new CombatConfig();
@@ -44,9 +42,7 @@ public class NichirinModConfig implements ConfigData {
         public int staminaRegenRate = 2;
     }
 
-    // =========================================================================
     // Breathing
-    // =========================================================================
 
     @ConfigEntry.Gui.CollapsibleObject
     public BreathingConfig breathing = new BreathingConfig();
@@ -65,9 +61,7 @@ public class NichirinModConfig implements ConfigData {
         public boolean unlimitedStamina = false;
     }
 
-    // =========================================================================
     // Demon
-    // =========================================================================
 
     @ConfigEntry.Gui.CollapsibleObject
     public DemonConfig demon = new DemonConfig();
@@ -97,9 +91,7 @@ public class NichirinModConfig implements ConfigData {
         public int bloodDrainIntervalSeconds = 30;
     }
 
-    // =========================================================================
     // Kill Rewards
-    // =========================================================================
 
     @ConfigEntry.Gui.CollapsibleObject
     public KillRewardsConfig killRewards = new KillRewardsConfig();
@@ -136,9 +128,7 @@ public class NichirinModConfig implements ConfigData {
         public boolean resetStanceOnKill = false;
     }
 
-    // =========================================================================
     // Blood Moon
-    // =========================================================================
 
     @ConfigEntry.Gui.CollapsibleObject
     public BloodMoonConfig bloodMoon = new BloodMoonConfig();
@@ -169,9 +159,7 @@ public class NichirinModConfig implements ConfigData {
         public int demonSpawnBoostPercent = 50;
     }
 
-    // =========================================================================
     // Perks
-    // =========================================================================
 
     @ConfigEntry.Gui.CollapsibleObject
     public PerkConfig perks = new PerkConfig();
@@ -207,9 +195,7 @@ public class NichirinModConfig implements ConfigData {
         public List<String> disabledPerkIds = new ArrayList<>();
     }
 
-    // =========================================================================
     // Accessor
-    // =========================================================================
 
     /**
      * Returns the live config instance. Safe to call at any time; returns a

@@ -28,7 +28,6 @@ public class KatanaOverheadAttack extends AbstractKatanaAttack {
               hitboxSize, hitboxOffset, hitStun, startSound, hitSound);
     }
 
-    // ── Hooks ─────────────────────────────────────────────────────────────────
 
     @Override
     protected void onStart(Player player) {
@@ -86,7 +85,6 @@ public class KatanaOverheadAttack extends AbstractKatanaAttack {
         }
     }
 
-    // ── Builder ───────────────────────────────────────────────────────────────
 
     public static class Builder extends AbstractKatanaAttack.Builder<Builder, KatanaOverheadAttack> {
         public Builder() {

@@ -35,9 +35,7 @@ public class GrabManager {
         }
     }
 
-    // -------------------------------------------------------------------------
     // Public API
-    // -------------------------------------------------------------------------
 
     public static void startGrab(LivingEntity demon, LivingEntity target, int durationTicks) {
         releaseGrab(demon, false); // clean up any previous grab first
@@ -107,9 +105,7 @@ public class GrabManager {
         activeGrabs.entrySet().removeIf(e -> e.getValue().grabbedEntityId.equals(id));
     }
 
-    // -------------------------------------------------------------------------
     // Helpers
-    // -------------------------------------------------------------------------
 
     private static LivingEntity resolveTarget(LivingEntity demon, GrabData data) {
         LivingEntity target = findEntity(demon, data.grabbedEntityId);

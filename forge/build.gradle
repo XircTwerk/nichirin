@@ -86,7 +86,7 @@ remapJar {
     archiveClassifier = null
 }
 
-// ── AzureLib Forge Compatibility Patch ──────────────────────────────────────
+// AzureLib Forge Compatibility Patch
 // AzureLib Neo 3.x ships a mods.toml claiming Forge support, but its main
 // class (NeoForgeAzureLibMod) uses NeoForge constructor injection that Forge
 // FML cannot satisfy (FMLModContainer calls getDeclaredConstructor() with

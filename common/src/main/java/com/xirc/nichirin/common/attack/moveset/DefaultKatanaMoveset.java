@@ -45,35 +45,29 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
     // Per-player attack state (server-side)
     private static final Map<UUID, KatanaState> playerStates = new ConcurrentHashMap<>();
 
-    // =========================================================================
     //  Constructor / builder
-    // =========================================================================
 
     private DefaultKatanaMoveset() {
-        super("default_katana", "Katana Arts", MovesetType.BREATHING, createBuilder());
+        super("default_katana", "Katana Arts", MovesetType.NEUTRAL, createBuilder());
     }
 
     private static MovesetBuilder createBuilder() {
         return new MovesetBuilder()
-                // ── Left-click: slash combo ──────────────────────────────────
                 .withLeftClickMove(new MoveBuilder("slash", "Slash")
                         .withDescription("Light slash — combo for a heavier follow-up.")
                         .withAction(entity -> { if (entity instanceof Player p) performLeftClick(p); })
                 )
 
-                // ── Right-click: double slash ────────────────────────────────
                 .withRightClickMove(new MoveBuilder("double_slash", "Double Slash")
                         .withDescription("Powerful double slash. Costs stamina.")
                         .withAction(entity -> { if (entity instanceof Player p) performRightClick(p, false); })
                 )
 
-                // ── Crouch + right-click: rising slash ───────────────────────
                 .withCrouchRightClickMove(new MoveBuilder("rising_slash", "Rising Slash")
                         .withDescription("Launches the target upward. Costs stamina.")
                         .withAction(entity -> { if (entity instanceof Player p) performRightClick(p, true); })
                 )
 
-                // ── Wheel move 0: Check ──────────────────────────────────────
                 .withMove(new MoveBuilder("check", "Check")
                         .withDescription("Shoulder bash with the katana handle. Close-range stun.")
                         .withTiming(0, 1, 4)
@@ -86,7 +80,6 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
                         .withAction(entity -> { if (entity instanceof Player p) performWheelMove(p, 0); })
                 )
 
-                // ── Wheel move 1: Overhead ───────────────────────────────────
                 .withMove(new MoveBuilder("overhead", "Overhead")
                         .withDescription("Heavy downward slash. Slams airborne targets.")
                         .withTiming(4, 8, 10)
@@ -99,7 +92,6 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
                         .withAction(entity -> { if (entity instanceof Player p) performWheelMove(p, 1); })
                 )
 
-                // ── Wheel move 2: Thrust ─────────────────────────────────────
                 .withMove(new MoveBuilder("thrust", "Thrust")
                         .withDescription("Forward dash attack. Great knockback.")
                         .withTiming(3, 10, 8)
@@ -113,9 +105,7 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
                 );
     }
 
-    // =========================================================================
     //  State management
-    // =========================================================================
 
     public static KatanaState getOrCreateState(Player player) {
         return playerStates.computeIfAbsent(player.getUUID(), u -> new KatanaState());
@@ -162,9 +152,7 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
         }
     }
 
-    // =========================================================================
     //  Attack entry points (called by SimpleKatana)
-    // =========================================================================
 
     /**
      * Left-click handler — slash combo.
@@ -308,9 +296,7 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
         }
     }
 
-    // =========================================================================
     //  Private helpers
-    // =========================================================================
 
     private static boolean isAnyAttackActive(KatanaState s) {
         return (s.currentSlash       != null && s.currentSlash.isActive())
@@ -329,7 +315,6 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
                 e -> e != player && e.isAlive() && !e.isSpectator());
     }
 
-    // ── Attack factories ──────────────────────────────────────────────────────
 
     private static SimpleSlashAttack createLightSlash1() {
         return new SimpleSlashAttack.Builder()
@@ -365,9 +350,7 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
                 .build();
     }
 
-    // =========================================================================
     //  Per-player state
-    // =========================================================================
 
     public static class KatanaState {
         public long lastAttackTime = 0;

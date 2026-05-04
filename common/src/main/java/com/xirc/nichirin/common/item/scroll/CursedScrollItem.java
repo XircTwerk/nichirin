@@ -39,7 +39,6 @@ public class CursedScrollItem extends Item {
         super(properties.stacksTo(4));
     }
 
-    // ── NBT helpers ───────────────────────────────────────────────────────────
 
     public static ItemStack forPerk(Item scrollItem, String perkId) {
         ItemStack stack = new ItemStack(scrollItem);
@@ -54,7 +53,6 @@ public class CursedScrollItem extends Item {
         return id.isEmpty() ? null : id;
     }
 
-    // ── Use ───────────────────────────────────────────────────────────────────
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
@@ -122,7 +120,6 @@ public class CursedScrollItem extends Item {
         return InteractionResultHolder.consume(stack);
     }
 
-    // ── Tooltip ───────────────────────────────────────────────────────────────
 
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {

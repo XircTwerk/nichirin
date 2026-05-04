@@ -65,7 +65,6 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
     protected Float dashSpeed;
     protected Integer teleportWindup;
 
-    // ========== GETTERS (Lombok not working) ==========
     // Runtime state - CHANGED FROM Player TO LivingEntity for NPC support
     @Setter
     protected boolean isActive = false;

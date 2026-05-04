@@ -24,19 +24,19 @@ import java.util.*;
  *  EQUIPPED  n/slots                         [Sort ▾] [Perks: ON]
  *  [eq] [eq] [ ] [🔒] [🔒]
  *  FLAWS: [f1] [+]
- *  ─────────────────────────────────────────────────────────────────
+ *
  *  DISCOVERED  (n / total)              [Search...]
  *  [icon][icon][icon]...   (scrollable)
- *  ─────────────────────────────────────────────────────────────────
+ *
  *  UNDISCOVERED  (n remaining)
  *  [ ?? ][ ?? ]...          (dimmed, scrollable)
- *  ─────────────────────────────────────────────────────────────────
+ *
  *  ═ Selected perk detail + upgrade / equip buttons  (only when selected)
  * </pre>
  */
 public class PerksTab {
 
-    // ── Layout ────────────────────────────────────────────────────────────────
+    // Layout
     private static final int PAD        = 8;
     private static final int ICON_SZ    = 36;
     private static final int ICON_GAP   = 5;
@@ -45,7 +45,7 @@ public class PerksTab {
     private static final int SEC_H      = 14;
     private static final int DETAIL_H   = 82;  // bottom detail panel height when visible
 
-    // ── Colours — BigGui dark palette ─────────────────────────────────────────
+    // Colours — BigGui dark palette
     private static final int C_BG           = 0xFF0E0E0E;
     private static final int C_PANEL        = 0xFF181818;
     private static final int C_PANEL2       = 0xFF1E1E1E;
@@ -68,7 +68,7 @@ public class PerksTab {
     private static final int OV_HOVER2      = 0x2EFFFFFF;
     private static final int OV_LOCKED      = 0xAA080808;
 
-    // ── State ─────────────────────────────────────────────────────────────────
+    // State
     private int      discScroll    = 0;
     private int      lockScroll    = 0;
     private SortMode sort          = SortMode.TIER;
@@ -93,11 +93,9 @@ public class PerksTab {
         SortMode next() { SortMode[] v = values(); return v[(ordinal() + 1) % v.length]; }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
     // RENDER
-    // ═══════════════════════════════════════════════════════════════════════════
 
-    // ── Equipped + Flaws ──────────────────────────────────────────────────────
+    // Equipped + Flaws
 
     private int renderEquippedSection(GuiGraphics g, Font font, PerkData data, int cw, int y, int mx, int my) {
         int slots  = data.getPerkSlots();
@@ -230,7 +228,7 @@ public class PerksTab {
         g.drawString(font, earn, x + (sz - font.width(earn)) / 2, y + sz - font.lineHeight - 2, C_TEXT_FAINT, false);
     }
 
-    // ── Section header ────────────────────────────────────────────────────────
+    // Section header
 
     private void renderSectionHeader(GuiGraphics g, Font font, int cw, int y,
                                      String title, String badge, boolean showSearch,
@@ -262,7 +260,7 @@ public class PerksTab {
         }
     }
 
-    // ── Discovered grid ───────────────────────────────────────────────────────
+    // Discovered grid
 
     private void renderDiscGrid(GuiGraphics g, Font font, PerkData data,
                                 List<PerkDefinition> all, int cols,
@@ -345,7 +343,7 @@ public class PerksTab {
         if (def.cursed) g.fill(x + 1, y + h - 4, x + 5, y + h, 0xFFAA1111);
     }
 
-    // ── Locked grid ───────────────────────────────────────────────────────────
+    // Locked grid
 
     private void renderLockGrid(GuiGraphics g, Font font, PerkData data,
                                 List<PerkDefinition> perks, int cols,
@@ -385,7 +383,7 @@ public class PerksTab {
         if (def.cursed) g.fill(x + 1, y + h - 4, x + 5, y + h, 0xFF881111);
     }
 
-    // ── Detail panel (bottom strip) ───────────────────────────────────────────
+    // Detail panel (bottom strip)
 
     private void renderDetailPanel(GuiGraphics g, Font font, PerkData data, String id, int cw, int ch, int mx, int my) {
         PerkDefinition def = NichirinPerkRegistry.getPerk(id);
@@ -493,14 +491,14 @@ public class PerksTab {
         }
     }
 
-    // ── Perk icon ─────────────────────────────────────────────────────────────
+    // Perk icon
 
     private static void renderPerkIcon(GuiGraphics g, String perkId, PerkTier tier, int x, int y) {
         ResourceLocation tex = PerkIcon.get(perkId, tier);
         g.blit(tex, x, y, 0, 0, 32, 32, 32, 32);
     }
 
-    // ── Tooltip ───────────────────────────────────────────────────────────────
+    // Tooltip
 
     private void renderTooltip(GuiGraphics g, Font font, PerkData data, String id,
                                int cw, int ch, int mx, int my) {
@@ -583,7 +581,7 @@ public class PerksTab {
         g.pose().popPose();
     }
 
-    // ── Scrollbar ─────────────────────────────────────────────────────────────
+    // Scrollbar
 
     private void renderScrollBar(GuiGraphics g, int x, int y, int w, int h, int scroll, int maxScroll) {
         g.fill(x, y, x + w, y + h, C_BORDER);
@@ -601,9 +599,7 @@ public class PerksTab {
         g.fill(x + 2, y + 6, x + 4, y + 9, C_SLOT_LOCKED);
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
     // INPUT
-    // ═══════════════════════════════════════════════════════════════════════════
 
     public boolean handleClick(double mx, double my, Player player) {
         PerkData data = ClientPerkCache.get();
@@ -763,9 +759,7 @@ public class PerksTab {
         return true;
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
     // HELPERS
-    // ═══════════════════════════════════════════════════════════════════════════
 
     private List<PerkDefinition> getDiscovered(PerkData data) {
         List<PerkDefinition> r = new ArrayList<>();

@@ -62,7 +62,6 @@ public enum TrainerType {
         "Not flashy enough! Come back with more flair!"
     );
 
-    // ── Fields ────────────────────────────────────────────────────────────────
 
     /** NPC display name shown in the dialogue screen header. */
     public final String npcName;
@@ -84,7 +83,6 @@ public enum TrainerType {
     /** Shown to loser in chat. */
     public final String duelLoseMsg;
 
-    // ── Constructor ───────────────────────────────────────────────────────────
 
     TrainerType(String npcName, String movesetId, int styleColor,
                 Item prerequisiteItem, int prerequisiteCount,

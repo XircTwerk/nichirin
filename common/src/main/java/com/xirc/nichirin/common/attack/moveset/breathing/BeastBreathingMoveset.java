@@ -4,13 +4,11 @@ import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.breathing.beast.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.network.s2c.MovesetConfigSyncPacket;
-import com.xirc.nichirin.common.util.BreathingManager;
+import com.xirc.nichirin.common.util.EntityResources;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
-import com.xirc.nichirin.common.entity.MovesetCapableNPC;
-import net.minecraft.world.entity.player.Player;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -304,11 +302,8 @@ public class BeastBreathingMoveset extends AbstractMoveset {
 
         // Check cooldown
         if (!canUseRightClickMove(entity)) {
-            if (entity instanceof Player player) {
-                player.displayClientMessage(
-                        Component.literal("Explosive Rush on cooldown!")
-                                .withStyle(s -> s.withColor(0xFF5500)), true);
-            }
+            EntityResources.sendMessage(entity,
+                    Component.literal("Explosive Rush on cooldown!").withStyle(s -> s.withColor(0xFF5500)), true);
             return true;
         }
 
@@ -331,9 +326,8 @@ public class BeastBreathingMoveset extends AbstractMoveset {
                     Long cd = cooldowns.get(moveIndex);
                     if (cd != null) {
                         long remaining = (cd - entity.level().getGameTime()) / 20;
-                        showMessage(entity,
-                                Component.literal(config.getDisplayName() + " on cooldown! " + remaining + "s remaining")
-                                        .withStyle(s -> s.withColor(0xBB6600)));
+                        EntityResources.sendMessage(entity, Component.literal(config.getDisplayName() + " on cooldown! " + remaining + "s remaining")
+                                        .withStyle(s -> s.withColor(0xBB6600)), true);
                     }
                 }
             }
@@ -343,9 +337,9 @@ public class BeastBreathingMoveset extends AbstractMoveset {
         MoveConfiguration config = getMove(moveIndex);
         if (config != null) {
             float breathCost = config.getBreathCostOrDefault(0.0f);
-            if (breathCost > 0 && !hasEnoughBreath(entity, breathCost + 0.1f)) {
-                showMessage(entity, Component.literal("Not enough breath for " + config.getDisplayName() + "!")
-                        .withStyle(s -> s.withColor(0xFF3333)));
+            if (breathCost > 0 && !EntityResources.hasBreath(entity, breathCost + 0.1f)) {
+                EntityResources.sendMessage(entity, Component.literal("Not enough breath for " + config.getDisplayName() + "!")
+                        .withStyle(s -> s.withColor(0xFF3333)), true);
                 return;
             }
         }
@@ -362,7 +356,6 @@ public class BeastBreathingMoveset extends AbstractMoveset {
         if (config != null) setMoveCooldown(entity, moveIndex);
     }
 
-    // --- Cooldown helpers ---
 
     private static final Map<UUID, Long> rightClickCooldownEnd = new HashMap<>();
     private static final long RIGHT_CLICK_COOLDOWN = 80L;
@@ -405,15 +398,7 @@ public class BeastBreathingMoveset extends AbstractMoveset {
         }
     }
 
-    private boolean hasEnoughBreath(LivingEntity entity, float amount) {
-        if (entity instanceof Player player) return BreathingManager.hasBreath(player, amount);
-        if (entity instanceof MovesetCapableNPC npc) return npc.getBreathGauge() >= amount;
-        return false;
-    }
 
-    private void showMessage(LivingEntity entity, Component msg) {
-        if (entity instanceof Player player) player.displayClientMessage(msg, true);
-    }
 
     @Override
     public String getRightClickMoveName() {

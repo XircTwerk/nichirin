@@ -4,7 +4,7 @@ import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.breathing.insect.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.network.s2c.MovesetConfigSyncPacket;
-import com.xirc.nichirin.common.util.BreathingManager;
+import com.xirc.nichirin.common.util.EntityResources;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
@@ -13,8 +13,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
-import com.xirc.nichirin.common.entity.MovesetCapableNPC;
-import net.minecraft.world.entity.player.Player;
 
 import java.util.HashMap;
 import java.util.List;
@@ -229,8 +227,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                     Long cooldownEnd = cooldowns.get(moveIndex);
                     if (cooldownEnd != null) {
                         long remaining = (cooldownEnd - entity.level().getGameTime()) / 20;
-                        showMessage(entity,
-                                Component.literal(config.getDisplayName() + " on cooldown! " + remaining + "s remaining")
+                        EntityResources.sendMessage(entity, Component.literal(config.getDisplayName() + " on cooldown! " + remaining + "s remaining")
                                         .withStyle(style -> style.withColor(0xAA00FF)), // Purple color for insect
                                 true
                         );
@@ -246,9 +243,8 @@ public class InsectBreathingMoveset extends AbstractMoveset {
             float breathCost = config.getBreathCostOrDefault(0.0f);
 
             // Add small buffer to prevent race conditions
-            if (breathCost > 0 && !BreathingManager.hasBreath((Player) entity, breathCost + 0.1f)) {
-                showMessage(entity,
-                        Component.literal("Not enough breath for " + config.getDisplayName() + "!")
+            if (breathCost > 0 && !EntityResources.hasBreath(entity, breathCost + 0.1f)) {
+                EntityResources.sendMessage(entity, Component.literal("Not enough breath for " + config.getDisplayName() + "!")
                                 .withStyle(style -> style.withColor(0xFF3333)), // Red for no breath
                         true
                 );
@@ -384,27 +380,4 @@ public class InsectBreathingMoveset extends AbstractMoveset {
         executingMove.remove(entity.getUUID());
     }
 
-    // ==================== NPC-PLAYER HELPER METHODS ====================
-
-    /**
-     * Check if entity has enough breath (works for both Players and NPCs)
-     */
-    private boolean hasEnoughBreath(LivingEntity entity, float amount) {
-        if (entity instanceof Player player) {
-            return BreathingManager.hasBreath(player, amount);
-        } else if (entity instanceof MovesetCapableNPC npc) {
-            return npc.getBreathGauge() >= amount;
-        }
-        return false;
-    }
-
-    /**
-     * Show message to entity (only works for Players)
-     */
-    private void showMessage(LivingEntity entity, Component message, boolean actionBar) {
-        if (entity instanceof Player player) {
-            player.displayClientMessage(message, actionBar);
-        }
-        // NPCs don't need messages
-    }
 }

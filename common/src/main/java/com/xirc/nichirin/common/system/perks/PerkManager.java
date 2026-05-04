@@ -24,7 +24,6 @@ import java.util.Map;
  */
 public final class PerkManager {
 
-    // ── Equip / Unequip ───────────────────────────────────────────────────────
 
     /**
      * Attempts to equip a discovered perk for the player.
@@ -73,7 +72,6 @@ public final class PerkManager {
         return Result.ok();
     }
 
-    // ── Upgrade ───────────────────────────────────────────────────────────────
 
     /**
      * Attempts to upgrade an equipped perk to the next tier.
@@ -120,7 +118,6 @@ public final class PerkManager {
         return Result.ok();
     }
 
-    // ── Flaw equip / unequip ─────────────────────────────────────────────────
 
     public static Result tryEquipFlaw(ServerPlayer player, String flawId) {
         NichirinModConfig.PerkConfig cfg = NichirinModConfig.get().perks;
@@ -152,7 +149,6 @@ public final class PerkManager {
         return Result.ok();
     }
 
-    // ── Discovery ─────────────────────────────────────────────────────────────
 
     /**
      * Grants discovery of a perk (e.g. from reading a scroll). Safe to call even if already
@@ -165,7 +161,6 @@ public final class PerkManager {
         return PlayerDataProvider.getData(player).getPerkData().discover(perkId);
     }
 
-    // ── Effect queries (called at damage/movement/etc callsites) ──────────────
 
     /**
      * Returns the total outgoing damage multiplier from all equipped perks.
@@ -268,7 +263,6 @@ public final class PerkManager {
         return Math.max(0f, mult);
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private static boolean isPerkSystemActive(ServerPlayer player, PerkData data) {
         return NichirinModConfig.get().perks.enablePerks && data.isPerksEnabled();
@@ -307,7 +301,6 @@ public final class PerkManager {
         }
     }
 
-    // ── Result ────────────────────────────────────────────────────────────────
 
     public static final class Result {
         public final boolean success;

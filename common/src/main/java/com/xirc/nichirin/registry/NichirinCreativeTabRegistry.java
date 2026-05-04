@@ -122,7 +122,6 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinItemRegistry.UROKODAKI_BOOTS.get());
 
                         entries.accept(NichirinItemRegistry.BOAR_HEAD.get());
-                        entries.accept(NichirinItemRegistry.INOSUKE_UNIFORM.get());
                         entries.accept(NichirinItemRegistry.INOSUKE_LEGGINGS.get());
                         entries.accept(NichirinItemRegistry.INOSUKE_BOOTS.get());
 

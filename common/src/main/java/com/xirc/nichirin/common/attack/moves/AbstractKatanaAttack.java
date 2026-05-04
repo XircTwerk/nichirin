@@ -33,7 +33,6 @@ import java.util.Set;
  */
 public abstract class AbstractKatanaAttack {
 
-    // ── Configuration (immutable after construction) ──────────────────────────
     protected final int startup;
     protected final int active;
     protected final int recovery;
@@ -54,7 +53,6 @@ public abstract class AbstractKatanaAttack {
      */
     protected boolean stopAfterFirstHit = true;
 
-    // ── State ─────────────────────────────────────────────────────────────────
     protected int tickCount  = 0;
     protected boolean isActive = false;
     protected boolean hasHit   = false;
@@ -78,7 +76,6 @@ public abstract class AbstractKatanaAttack {
         this.hitSound     = hitSound;
     }
 
-    // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     public final void start(Player player) {
         if (player.level().isClientSide()) return;
@@ -113,7 +110,6 @@ public abstract class AbstractKatanaAttack {
         }
     }
 
-    // ── Hit detection ─────────────────────────────────────────────────────────
 
     protected final void performHitDetection(Player user, Level world) {
         AABB hitbox = buildHitbox(user);
@@ -182,7 +178,6 @@ public abstract class AbstractKatanaAttack {
         onEnd(player);
     }
 
-    // ── Hook methods ──────────────────────────────────────────────────────────
 
     /** Called at the start of the attack (after state reset). Play sounds / start particles here. */
     protected void onStart(Player player) {}
@@ -202,13 +197,11 @@ public abstract class AbstractKatanaAttack {
     /** Called when the attack expires. */
     protected void onEnd(Player player) {}
 
-    // ── Accessors ─────────────────────────────────────────────────────────────
 
     public boolean isActive()     { return isActive; }
     public int getTotalDuration() { return startup + active + recovery; }
     public int getCooldown()      { return cooldown; }
 
-    // ── Shared builder ────────────────────────────────────────────────────────
 
     /**
      * Generic builder base.  Each concrete attack provides a thin subclass that

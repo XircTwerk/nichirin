@@ -392,13 +392,11 @@ public class TempleDemonEntity extends DemonNPCEntity {
             boolean targetInAir = !target.onGround();
             boolean targetLowHp = target.getHealth() < target.getMaxHealth() * 0.4f;
 
-            // ── Slash combo chain: fire right-click again immediately ──
             if (slashChainWindow > 0 && cooldownRight == 0 && distance <= 5.0) {
                 fireRightClick();
                 return;
             }
 
-            // ── Pick the best attack for this situation ──
             int chosen = selectAttack(distance, targetMovingAway, targetInAir, targetLowHp);
             if (chosen == ATTACK_NONE) return;
 
@@ -414,7 +412,6 @@ public class TempleDemonEntity extends DemonNPCEntity {
             }
         }
 
-        // ── Execution helpers ──────────────────────────────────────────
 
         private void fireLeftClick() {
             demon.getMoveset().handleLeftClick(demon);
@@ -473,7 +470,6 @@ public class TempleDemonEntity extends DemonNPCEntity {
             };
         }
 
-        // ── Attack selection ───────────────────────────────────────────
 
         /**
          * Returns the attack constant/index to use, or ATTACK_NONE.
@@ -484,12 +480,10 @@ public class TempleDemonEntity extends DemonNPCEntity {
          *   Far         → dash strike → slash
          */
         private int selectAttack(double distance, boolean movingAway, boolean inAir, boolean lowHp) {
-            // ── High jump to intercept airborne target ─────────────────────
             if (inAir && distance <= 4.0 && cooldownHighJump == 0 && demon.onGround()) {
                 return ATTACK_HIGH_JUMP;
             }
 
-            // ── Very close: grab / gut-punch / bite range ─────────────────
             // Effective ranges: gut-punch 3.0, grab 3.5, bite 3.8
             if (distance <= 3.5) {
                 if (cooldownMove3 == 0 && canWheelMove(3))            return ATTACK_GRAB;
@@ -500,7 +494,6 @@ public class TempleDemonEntity extends DemonNPCEntity {
                 if (cooldownMove2 == 0 && canWheelMove(2))            return 2;
             }
 
-            // ── Close: slash + kick range ─────────────────────────────────
             // Effective: slash 5.0, kick 4.5
             if (distance <= 4.5) {
                 if (cooldownRight == 0)                                return ATTACK_RIGHT;
@@ -509,7 +502,6 @@ public class TempleDemonEntity extends DemonNPCEntity {
                 if (cooldownMove2 == 0 && canWheelMove(2) && distance <= 3.8) return 2;
             }
 
-            // ── Medium: slash or dash-strike ──────────────────────────────
             if (distance <= 5.5) {
                 if (movingAway || inAir) {
                     if (cooldownMove1 == 0 && canWheelMove(1))        return 1;
@@ -520,7 +512,6 @@ public class TempleDemonEntity extends DemonNPCEntity {
                 if (cooldownMove1 == 0 && canWheelMove(1))            return 1;
             }
 
-            // ── Far: close the gap ─────────────────────────────────────────
             if (distance <= 9.0) {
                 if (cooldownMove1 == 0 && canWheelMove(1))            return 1;
                 if (cooldownHighJump == 0 && demon.onGround())        return ATTACK_HIGH_JUMP;
@@ -533,7 +524,6 @@ public class TempleDemonEntity extends DemonNPCEntity {
             return demon.canUseMove(index);
         }
 
-        // ── Utility ───────────────────────────────────────────────────
 
         private boolean isLookingAtTarget(LivingEntity target) {
             Vec3 demonLook = demon.getLookAngle();

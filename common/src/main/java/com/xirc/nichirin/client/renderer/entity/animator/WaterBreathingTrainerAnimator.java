@@ -12,7 +12,7 @@ public class WaterBreathingTrainerAnimator extends AzEntityAnimator<WaterBreathi
 
     private static final ResourceLocation ANIMATIONS = new ResourceLocation(
             BreathOfNichirin.MOD_ID,
-            "animations/temple_demon.animation.json"
+            "animations/urokodaki_npc.animation.json"
     );
 
     @Override

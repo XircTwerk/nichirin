@@ -33,7 +33,6 @@ public class SkillsSection {
     private final AbilitiesTab  abilitiesTab  = new AbilitiesTab();
     private final BloodlinesTab bloodlinesTab = new BloodlinesTab();
 
-    // ── Render ────────────────────────────────────────────────────────────────
 
     public void render(GuiGraphics graphics, Player player, Font font, int contentWidth, int contentHeight, int mouseX, int mouseY) {
         renderTabBar(graphics, font, mouseX, mouseY);
@@ -57,7 +56,6 @@ public class SkillsSection {
         render(graphics, player, font, 320, 200, -1, -1);
     }
 
-    // ── Click ─────────────────────────────────────────────────────────────────
 
     public boolean handleClick(double mouseX, double mouseY, Player player, int contentWidth, int contentHeight) {
         // Tab bar
@@ -93,7 +91,6 @@ public class SkillsSection {
         return currentTab == SkillsTab.PERKS && perksTab.handleScroll(delta);
     }
 
-    // ── Tab bar ───────────────────────────────────────────────────────────────
 
     private void renderTabBar(GuiGraphics g, Font font, int mx, int my) {
         int x = 8;

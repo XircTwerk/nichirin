@@ -59,7 +59,6 @@ public class ArmorRendererManager {
 
         // Inosuke armor
         registerArmor(NichirinItemRegistry.BOAR_HEAD.get(), InosukeUniformRenderer::new);
-        registerArmor(NichirinItemRegistry.INOSUKE_UNIFORM.get(), InosukeUniformRenderer::new);
         registerArmor(NichirinItemRegistry.INOSUKE_LEGGINGS.get(), InosukeUniformRenderer::new);
         registerArmor(NichirinItemRegistry.INOSUKE_BOOTS.get(), InosukeUniformRenderer::new);
 

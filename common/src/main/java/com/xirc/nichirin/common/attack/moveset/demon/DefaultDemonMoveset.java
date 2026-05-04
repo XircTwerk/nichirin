@@ -356,7 +356,6 @@ public class DefaultDemonMoveset extends AbstractMoveset {
         return true;
     }
 
-    // ============================= HELPER METHODS =============================
 
     private void showCooldownMessage(Player player, int moveIndex, String moveName) {
         Map<Integer, Long> cooldowns = entityCooldowns.get(player.getUUID());

@@ -38,7 +38,6 @@ public class PerkScrollItem extends Item {
         super(properties.stacksTo(16));
     }
 
-    // ── NBT helpers ───────────────────────────────────────────────────────────
 
     public static ItemStack forPerk(Item scrollItem, String perkId) {
         ItemStack stack = new ItemStack(scrollItem);
@@ -53,7 +52,6 @@ public class PerkScrollItem extends Item {
         return id.isEmpty() ? null : id;
     }
 
-    // ── Use ───────────────────────────────────────────────────────────────────
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
@@ -94,7 +92,6 @@ public class PerkScrollItem extends Item {
         return InteractionResultHolder.consume(stack);
     }
 
-    // ── Tooltip ───────────────────────────────────────────────────────────────
 
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {

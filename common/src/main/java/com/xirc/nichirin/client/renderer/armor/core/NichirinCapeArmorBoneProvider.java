@@ -10,13 +10,7 @@ import org.jetbrains.annotations.Nullable;
  * Maps the root cape bone to the body slot so the pipeline applies body rotation
  * and position. Optionally maps arm bones for capes that have arm parts (e.g. Urokodaki).
  */
-public class NichirinCapeArmorBoneProvider implements AzArmorBoneProvider {
-
-    private final String bodyBoneName;
-
-    public NichirinCapeArmorBoneProvider(String bodyBoneName) {
-        this.bodyBoneName = bodyBoneName;
-    }
+public record NichirinCapeArmorBoneProvider(String bodyBoneName) implements AzArmorBoneProvider {
 
     @Override
     public @Nullable AzBone getHeadBone(AzBakedModel model) {

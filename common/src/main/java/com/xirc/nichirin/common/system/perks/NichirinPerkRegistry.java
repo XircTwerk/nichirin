@@ -17,7 +17,6 @@ public final class NichirinPerkRegistry {
 
     static {
 
-        // ── Breathing perks ───────────────────────────────────────────────────
 
         register(PerkDefinition.builder("breath_efficiency", "Breath Efficiency")
                 .description("Reduced breathing cost for techniques.")
@@ -97,7 +96,6 @@ public final class NichirinPerkRegistry {
                 .upgradeCost(PerkTier.LEGENDARY, PerkUpgradeCost.builder(25).item(Items.BLAZE_ROD, 10).item(Items.DIAMOND, 4).item(Items.NETHER_STAR, 1).build())
                 .build());
 
-        // ── Combat perks ───────────────────────────────────────────────────────
 
         register(PerkDefinition.builder("iron_will", "Iron Will")
                 .description("Take reduced damage when below 30% HP.")
@@ -181,7 +179,6 @@ public final class NichirinPerkRegistry {
                 .upgradeCost(PerkTier.LEGENDARY, PerkUpgradeCost.builder(18).item(Items.PHANTOM_MEMBRANE, 6).item(Items.ENDER_PEARL, 4).build())
                 .build());
 
-        // ── Stamina / Movement perks ───────────────────────────────────────────
 
         register(PerkDefinition.builder("enduring_spirit", "Enduring Spirit")
                 .description("Reduced stamina drain from anything.")
@@ -265,7 +262,6 @@ public final class NichirinPerkRegistry {
                 .upgradeCost(PerkTier.LEGENDARY, PerkUpgradeCost.builder(20).item(Items.DIAMOND, 6).item(Items.NETHERITE_SCRAP, 2).build())
                 .build());
 
-        // ── Awareness perks ────────────────────────────────────────────────────
 
         register(PerkDefinition.builder("hunters_instinct", "Hunter's Instinct")
                 .description("Passive enemy detection at short range.")
@@ -343,7 +339,6 @@ public final class NichirinPerkRegistry {
                 .upgradeCost(PerkTier.RARE,      PerkUpgradeCost.builder(8).item(Items.PHANTOM_MEMBRANE, 4).item(Items.SLIME_BALL, 8).build())
                 .build());
 
-        // ── Wildcard perks ─────────────────────────────────────────────────────
 
         register(PerkDefinition.builder("glass_cannon", "Glass Cannon")
                 .description("Increased attack power but takes more damage.")
@@ -403,7 +398,6 @@ public final class NichirinPerkRegistry {
                 .upgradeCost(PerkTier.LEGENDARY, PerkUpgradeCost.builder(18).item(Items.BLAZE_ROD, 6).item(Items.GOLDEN_APPLE, 1).item(Items.GHAST_TEAR, 1).build())
                 .build());
 
-        // ── Legendary / Special perks ──────────────────────────────────────────
 
         register(PerkDefinition.builder("vermilion_soul", "Vermilion Soul")
                 .description("If you die, revive once per night with half HP.")
@@ -463,7 +457,6 @@ public final class NichirinPerkRegistry {
                 .tierDesc(PerkTier.LEGENDARY, "For every 1% HP missing, deal 0.5% more damage. At 50% HP: +25% damage. At 10% HP: +45% damage.")
                 .build());
 
-        // ── Flaws ──────────────────────────────────────────────────────────────
 
         registerFlaw(new FlawDefinition("brittle_bones",  "Brittle Bones",  "Your bones fracture more easily. Fall damage is doubled and knockback sends you further."));
         registerFlaw(new FlawDefinition("demon_bait",     "Demon Bait",     "Demons are innately drawn to you. You have a permanent 30% aggro increase from all demons."));

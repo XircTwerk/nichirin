@@ -170,11 +170,13 @@ public abstract class AbstractMoveset {
     public List<MoveConfiguration> getMoves() { return moves; }
 
     /**
-     * Enum to distinguish between breathing and demon movesets
+     * Distinguishes moveset resource type: breathing styles use breath gauge,
+     * demon arts use blood points, neutral uses neither.
      */
     public enum MovesetType {
         BREATHING,
-        DEMON
+        DEMON,
+        NEUTRAL
     }
 
     /**
@@ -529,6 +531,10 @@ public abstract class AbstractMoveset {
      */
     public boolean isDemonMoveset() {
         return movesetType == MovesetType.DEMON;
+    }
+
+    public boolean isNeutralMoveset() {
+        return movesetType == MovesetType.NEUTRAL;
     }
 
     /**
@@ -1203,7 +1209,6 @@ public abstract class AbstractMoveset {
         }
     }
 
-    // ==================== PLAYER WRAPPER METHODS ====================
     // These provide Player-specific convenience methods that delegate to LivingEntity versions
 
     /**

@@ -115,15 +115,12 @@ public class NichirinCommand {
         );
     }
 
-    // -------------------------------------------------------------------------
     // Subcommand handlers
-    // -------------------------------------------------------------------------
 
     private static int unlockAll(CommandContext<CommandSourceStack> ctx, ServerPlayer player) {
         CommandSourceStack src = ctx.getSource();
         String name = player.getName().getString();
 
-        // ── Unlock all breathing styles ──────────────────────────────────────
         int stylesUnlocked = 0;
         String firstStyle = null;
         for (String id : MovesetRegistry.getAllMovesetIds()) {
@@ -141,16 +138,13 @@ public class NichirinCommand {
             PlayerDataProvider.updateAndSync(player, firstStyle);
         }
 
-        // ── Discover all perks ───────────────────────────────────────────────
         int perksDiscovered = 0;
         for (PerkDefinition def : NichirinPerkRegistry.allPerks()) {
             if (PerkManager.discover(player, def.id)) perksDiscovered++;
         }
 
-        // ── Unlock all perk slots ────────────────────────────────────────────
         PlayerDataProvider.getData(player).getPerkData().setPerkSlots(5);
 
-        // ── Sync to client ───────────────────────────────────────────────────
         BreathOfNichirinEventHandler.syncPerksToPlayer(player);
 
         int finalStyles = stylesUnlocked;
@@ -300,9 +294,7 @@ public class NichirinCommand {
         return 1;
     }
 
-    // -------------------------------------------------------------------------
     // Suggestions
-    // -------------------------------------------------------------------------
 
     private static CompletableFuture<Suggestions> suggestConfigKeys(
             CommandContext<CommandSourceStack> ctx, SuggestionsBuilder builder) {
@@ -326,9 +318,7 @@ public class NichirinCommand {
         return builder.buildFuture();
     }
 
-    // -------------------------------------------------------------------------
     // Formatting helpers
-    // -------------------------------------------------------------------------
 
     private static MutableComponent header(String text) {
         return Component.literal(text).withStyle(s -> s.withColor(COL_HEADER).withBold(true));

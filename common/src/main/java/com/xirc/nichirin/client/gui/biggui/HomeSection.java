@@ -23,7 +23,7 @@ public class HomeSection {
         int contentY = TOP_MARGIN + 10;
         int centerX = (contentWidth - 20) / 2;
 
-        // === 3D Player Model ===
+        // 3D Player Model
         int modelX = centerX;
         int modelY = contentY + 110; // Moved up 30 pixels from 140 to 110
         int modelSize = 60;
@@ -38,7 +38,7 @@ public class HomeSection {
         PlayerModelRenderer.renderPlayerFollowingMouse(graphics, modelX, modelY, modelSize,
                 mouseX, mouseY, player);
 
-        // === Player Stats Section ===
+        // Player Stats Section
         int statsY = contentY + 120 + modelSize + 20; // Fixed position independent of modelY
         int statLineHeight = 16;
         MovesetProgression progression = ProgressionHelper.getProgression(player);
@@ -77,7 +77,7 @@ public class HomeSection {
         statsY += 15;
 
         if (movesetData.hasDemonMoveset()) {
-            // === DEMON STATS ===
+            // DEMON STATS
 
             // Humans eaten - coming soon
             drawStatLine(graphics, contentX, statsY, Component.translatable("gui.nichirin.home.humans_eaten"),
@@ -99,7 +99,7 @@ public class HomeSection {
             statsY += statLineHeight;
 
         } else {
-            // === SLAYER STATS ===
+            // SLAYER STATS
 
             // Total breathing arts mastered - coming soon
             drawStatLine(graphics, contentX, statsY, Component.translatable("gui.nichirin.home.breathing_arts_mastered"),

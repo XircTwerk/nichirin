@@ -293,8 +293,6 @@ public interface NichirinItemRegistry {
             () -> new IndividualBeastKatana(settings().rarity(Rarity.RARE).stacksTo(1), false));
     RegistrySupplier<Item> BOAR_HEAD = register("boar_head",
             () -> new BoarHeadItem(settings().stacksTo(1)));
-    RegistrySupplier<Item> INOSUKE_UNIFORM = register("inosuke_uniform",
-            () -> new NichirinArmorItem(ArmorMaterials.DIAMOND, NichirinArmorItem.Type.CHESTPLATE, settings().stacksTo(1)));
     RegistrySupplier<Item> INOSUKE_LEGGINGS = register("inosuke_leggings",
             () -> new NichirinArmorItem(ArmorMaterials.DIAMOND, NichirinArmorItem.Type.LEGGINGS, settings().stacksTo(1)));
     RegistrySupplier<Item> INOSUKE_BOOTS = register("inosuke_boots",

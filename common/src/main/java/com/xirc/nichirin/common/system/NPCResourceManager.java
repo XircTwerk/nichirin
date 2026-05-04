@@ -8,187 +8,180 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * Manages blood and breath resources for NPCs with movesets
- * Simplified version of player systems for NPC use
- */
 public class NPCResourceManager {
 
-    // Track blood points per NPC
-    private static final Map<UUID, Integer> npcBloodPoints = new HashMap<>();
+    private static final Map<UUID, Integer> npcBloodPoints   = new HashMap<>();
+    private static final Map<UUID, Float>   npcBreathGauge   = new HashMap<>();
+    private static final Map<UUID, Float>   npcStamina       = new HashMap<>();
 
-    // Track breath gauge per NPC
-    private static final Map<UUID, Float> npcBreathGauge = new HashMap<>();
+    private static final Map<UUID, Long> lastBloodRegenTick   = new HashMap<>();
+    private static final Map<UUID, Long> lastBreathRegenTick  = new HashMap<>();
+    private static final Map<UUID, Long> lastStaminaRegenTick = new HashMap<>();
 
-    // Track last regen tick
-    private static final Map<UUID, Long> lastBloodRegenTick = new HashMap<>();
-    private static final Map<UUID, Long> lastBreathRegenTick = new HashMap<>();
+    private static final Map<UUID, Boolean> doubleJumpUsed = new HashMap<>();
 
-    // Simplified constants for NPCs
-    private static final int BLOOD_REGEN_INTERVAL = 20; // 1 second (slower than players)
-    private static final int BREATH_REGEN_INTERVAL = 10; // 0.5 seconds
-    private static final float BASE_BREATH_REGEN = 2.0f; // Faster than players
+    private static final int   BLOOD_REGEN_INTERVAL   = 20;
+    private static final int   BREATH_REGEN_INTERVAL  = 10;
+    private static final int   STAMINA_REGEN_INTERVAL = 8;
+    private static final float BASE_BREATH_REGEN      = 2.0f;
+    private static final float BASE_STAMINA_REGEN     = 3.0f;
 
-    /**
-     * Tick an NPC's resource systems
-     */
+
     public static void tickNPC(MovesetCapableNPC npc) {
         if (npc == null) return;
-
         LivingEntity entity = npc.asLivingEntity();
         if (entity.level().isClientSide) return;
 
-        // Tick blood regen for demon NPCs
         if (npc.getMoveset() != null && npc.getMoveset().isDemonMoveset()) {
             tickBloodRegen(npc, entity);
         }
-
-        // Tick breath regen for all NPCs with movesets
         if (npc.getMoveset() != null) {
             tickBreathRegen(npc, entity);
+            tickStaminaRegen(npc, entity);
         }
     }
 
-    /**
-     * Handle blood regeneration for demon NPCs
-     */
+
     private static void tickBloodRegen(MovesetCapableNPC npc, LivingEntity entity) {
         if (!npc.canRegenBlood()) return;
+        if (entity.hasEffect(NichirinEffectRegistry.STUNNED.get())) return;
+        if (entity.getRemainingFireTicks() > 0) return;
 
-        // Block regen if stunned
-        if (entity.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
-            return;
-        }
+        long now = entity.level().getGameTime();
+        UUID id  = npc.getEntityUUID();
+        Long last = lastBloodRegenTick.get(id);
 
-        // Block regen if on fire
-        if (entity.getRemainingFireTicks() > 0) {
-            return;
-        }
+        if (last == null || now - last >= BLOOD_REGEN_INTERVAL) {
+            int   blood  = npc.getBloodPoints();
+            float health = entity.getHealth();
+            float max    = entity.getMaxHealth();
 
-        long currentTime = entity.level().getGameTime();
-        UUID entityUUID = npc.getEntityUUID();
-        Long lastRegen = lastBloodRegenTick.get(entityUUID);
-
-        if (lastRegen == null || currentTime - lastRegen >= BLOOD_REGEN_INTERVAL) {
-            int bloodPoints = npc.getBloodPoints();
-            float currentHealth = entity.getHealth();
-            float maxHealth = entity.getMaxHealth();
-
-            if (currentHealth < maxHealth && bloodPoints > 0) {
-                float regenRate = getBloodRegenRate(bloodPoints) * npc.getBloodRegenMultiplier();
-
-                if (regenRate > 0) {
-                    entity.heal(regenRate);
-                    lastBloodRegenTick.put(entityUUID, currentTime);
+            if (health < max && blood > 0) {
+                float rate = bloodRegenRate(blood) * npc.getBloodRegenMultiplier();
+                if (rate > 0) {
+                    entity.heal(rate);
+                    lastBloodRegenTick.put(id, now);
                 }
             }
         }
     }
 
-    /**
-     * Handle breath regeneration for NPCs
-     */
-    private static void tickBreathRegen(MovesetCapableNPC npc, LivingEntity entity) {
-        long currentTime = entity.level().getGameTime();
-        UUID entityUUID = npc.getEntityUUID();
-        Long lastRegen = lastBreathRegenTick.get(entityUUID);
-
-        if (lastRegen == null || currentTime - lastRegen >= BREATH_REGEN_INTERVAL) {
-            float breath = npc.getBreathGauge();
-            float maxBreath = npc.getMaxBreathGauge();
-
-            if (breath < maxBreath) {
-                float regenRate = BASE_BREATH_REGEN * npc.getBreathRegenMultiplier();
-                float newBreath = Math.min(maxBreath, breath + regenRate);
-                npc.setBreathGauge(newBreath);
-                lastBreathRegenTick.put(entityUUID, currentTime);
-            }
-        }
-    }
-
-    /**
-     * Gets blood regeneration rate based on blood points
-     */
-    private static float getBloodRegenRate(int bloodPoints) {
-        if (bloodPoints == 0) return 0.0f;
-        // Simplified scaling: 0.3 to 2.0 hp/s
+    private static float bloodRegenRate(int bloodPoints) {
+        if (bloodPoints == 0) return 0f;
         return 0.3f + (bloodPoints - 1) * 0.188f;
     }
 
-    /**
-     * Gets blood points for an NPC
-     */
-    public static int getBloodPoints(UUID entityUUID, int defaultMax) {
-        return npcBloodPoints.getOrDefault(entityUUID, defaultMax);
+    public static int getBloodPoints(UUID id, int defaultMax) {
+        return npcBloodPoints.getOrDefault(id, defaultMax);
     }
 
-    /**
-     * Sets blood points for an NPC
-     */
-    public static void setBloodPoints(UUID entityUUID, int bloodPoints, int maxBlood) {
-        npcBloodPoints.put(entityUUID, Math.max(0, Math.min(bloodPoints, maxBlood)));
+    public static void setBloodPoints(UUID id, int value, int max) {
+        npcBloodPoints.put(id, Math.max(0, Math.min(value, max)));
     }
 
-    /**
-     * Gets breath gauge for an NPC
-     */
-    public static float getBreathGauge(UUID entityUUID, float defaultMax) {
-        return npcBreathGauge.getOrDefault(entityUUID, defaultMax);
-    }
-
-    /**
-     * Sets breath gauge for an NPC
-     */
-    public static void setBreathGauge(UUID entityUUID, float breath, float maxBreath) {
-        npcBreathGauge.put(entityUUID, Math.max(0, Math.min(breath, maxBreath)));
-    }
-
-    /**
-     * Consume breath for an NPC move
-     */
-    public static boolean consumeBreath(MovesetCapableNPC npc, float amount) {
-        float currentBreath = npc.getBreathGauge();
-        if (currentBreath >= amount) {
-            npc.setBreathGauge(currentBreath - amount);
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Remove blood points from an NPC
-     */
     public static void removeBloodPoints(MovesetCapableNPC npc, int amount) {
-        int current = npc.getBloodPoints();
-        npc.setBloodPoints(Math.max(0, current - amount));
+        npc.setBloodPoints(Math.max(0, npc.getBloodPoints() - amount));
     }
 
-    /**
-     * Add blood points to an NPC
-     */
     public static void addBloodPoints(MovesetCapableNPC npc, int amount) {
-        int current = npc.getBloodPoints();
-        int max = npc.getMaxBloodPoints();
-        npc.setBloodPoints(Math.min(max, current + amount));
+        npc.setBloodPoints(Math.min(npc.getMaxBloodPoints(), npc.getBloodPoints() + amount));
     }
 
-    /**
-     * Clean up NPC data
-     */
-    public static void cleanupNPC(UUID entityUUID) {
-        npcBloodPoints.remove(entityUUID);
-        npcBreathGauge.remove(entityUUID);
-        lastBloodRegenTick.remove(entityUUID);
-        lastBreathRegenTick.remove(entityUUID);
+
+    private static void tickBreathRegen(MovesetCapableNPC npc, LivingEntity entity) {
+        float breath = npc.getBreathGauge();
+        float max    = npc.getMaxBreathGauge();
+        if (breath >= max) return;
+
+        long now  = entity.level().getGameTime();
+        UUID id   = npc.getEntityUUID();
+        Long last = lastBreathRegenTick.get(id);
+
+        if (last == null || now - last >= BREATH_REGEN_INTERVAL) {
+            float rate = BASE_BREATH_REGEN * npc.getBreathRegenMultiplier();
+            npc.setBreathGauge(Math.min(max, breath + rate));
+            lastBreathRegenTick.put(id, now);
+        }
     }
 
-    /**
-     * Clear all data
-     */
+    public static float getBreathGauge(UUID id, float defaultMax) {
+        return npcBreathGauge.getOrDefault(id, defaultMax);
+    }
+
+    public static void setBreathGauge(UUID id, float value, float max) {
+        npcBreathGauge.put(id, Math.max(0f, Math.min(value, max)));
+    }
+
+    public static boolean consumeBreath(MovesetCapableNPC npc, float amount) {
+        float current = npc.getBreathGauge();
+        if (current < amount) return false;
+        npc.setBreathGauge(current - amount);
+        return true;
+    }
+
+
+    private static void tickStaminaRegen(MovesetCapableNPC npc, LivingEntity entity) {
+        float stamina = npc.getStamina();
+        float max     = npc.getMaxStamina();
+        if (stamina >= max) return;
+
+        long now  = entity.level().getGameTime();
+        UUID id   = npc.getEntityUUID();
+        Long last = lastStaminaRegenTick.get(id);
+
+        if (last == null || now - last >= STAMINA_REGEN_INTERVAL) {
+            float rate = BASE_STAMINA_REGEN * npc.getStaminaRegenMultiplier();
+            npc.setStamina(Math.min(max, stamina + rate));
+            lastStaminaRegenTick.put(id, now);
+        }
+    }
+
+    public static float getStamina(UUID id, float defaultMax) {
+        return npcStamina.getOrDefault(id, defaultMax);
+    }
+
+    public static void setStamina(UUID id, float value, float max) {
+        npcStamina.put(id, Math.max(0f, Math.min(value, max)));
+    }
+
+    public static boolean consumeStamina(MovesetCapableNPC npc, float amount) {
+        float current = npc.getStamina();
+        if (current < amount) return false;
+        npc.setStamina(current - amount);
+        return true;
+    }
+
+
+    public static boolean canDoubleJump(UUID id) {
+        return !doubleJumpUsed.getOrDefault(id, false);
+    }
+
+    public static void markDoubleJumped(UUID id) {
+        doubleJumpUsed.put(id, true);
+    }
+
+    public static void resetDoubleJump(UUID id) {
+        doubleJumpUsed.put(id, false);
+    }
+
+
+    public static void cleanupNPC(UUID id) {
+        npcBloodPoints.remove(id);
+        npcBreathGauge.remove(id);
+        npcStamina.remove(id);
+        lastBloodRegenTick.remove(id);
+        lastBreathRegenTick.remove(id);
+        lastStaminaRegenTick.remove(id);
+        doubleJumpUsed.remove(id);
+    }
+
     public static void clearAll() {
         npcBloodPoints.clear();
         npcBreathGauge.clear();
+        npcStamina.clear();
         lastBloodRegenTick.clear();
         lastBreathRegenTick.clear();
+        lastStaminaRegenTick.clear();
+        doubleJumpUsed.clear();
     }
 }

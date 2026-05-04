@@ -22,7 +22,7 @@ import java.util.UUID;
  */
 public class TrainerDialogueScreen extends Screen {
 
-    // ── Colors — BigGui dark palette ──────────────────────────────────────────
+    // Colors — BigGui dark palette
     private static final int COL_BG           = 0xE8101010;
     private static final int COL_BORDER       = 0xFF3A3A3A;
     private static final int COL_BORDER_INNER = 0xFF1E1E1E;
@@ -35,12 +35,12 @@ public class TrainerDialogueScreen extends Screen {
     private static final int COL_BTN_BORDER   = 0xFF4A4A4A;
     private static final int COL_BTN_TEXT     = 0xFFEEEEEE;
 
-    // ── State ─────────────────────────────────────────────────────────────────
+    // State
     private final UUID trainerUUID;
     private final TrainerType trainerType;
     private final OpenTrainerDialoguePacket.DialogueState state;
 
-    // ── Layout ────────────────────────────────────────────────────────────────
+    // Layout
     private int dialogX, dialogY, dialogW, dialogH;
 
     public TrainerDialogueScreen(UUID trainerUUID, TrainerType trainerType,
@@ -92,7 +92,7 @@ public class TrainerDialogueScreen extends Screen {
         return list;
     }
 
-    // ── Rendering ─────────────────────────────────────────────────────────────
+    // Rendering
 
     @Override
     public void render(GuiGraphics g, int mx, int my, float pt) {
@@ -246,7 +246,7 @@ public class TrainerDialogueScreen extends Screen {
         };
     }
 
-    // ── Actions ───────────────────────────────────────────────────────────────
+    // Actions
 
     private void requestDuel() {
         sendAction(TrainerActionPacket.Action.REQUEST_DUEL);
@@ -266,7 +266,7 @@ public class TrainerDialogueScreen extends Screen {
     @Override
     public boolean isPauseScreen() { return false; }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    // Helpers
 
     private List<String> wordWrap(String text, int maxW) {
         List<String> result = new ArrayList<>();
