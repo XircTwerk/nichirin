@@ -73,6 +73,7 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinItemRegistry.SOUND_KATANAS.get());
                         entries.accept(NichirinItemRegistry.BEAST_KATANAS.get());
                         entries.accept(NichirinItemRegistry.SABITO_KATANA.get());
+                        entries.accept(NichirinItemRegistry.UROKODAKI_KATANA.get());
                     })
                     .build();
         });

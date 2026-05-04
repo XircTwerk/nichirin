@@ -3,8 +3,8 @@
 	"credit": "Made with Blockbench",
 	"texture_size": [32, 32],
 	"textures": {
-		"0": "katana_inosuke",
-		"particle": "katana_inosuke"
+		"0": "nichirin:item/inosuke_katana",
+		"particle": "nichirin:item/inosuke_katana"
 	},
 	"elements": [
 		{
