@@ -2,6 +2,7 @@ package com.xirc.nichirin.common.attack.moves.breathing.water;
 
 import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
 import com.xirc.nichirin.common.attack.component.IBreathingAttacker;
+import com.xirc.nichirin.common.entity.npc.BaseBreathingTrainerEntity;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -19,7 +20,10 @@ public abstract class WaterBreathingAttackBase extends AbstractBreathingAttack<W
     @Override
     protected void hitTarget(LivingEntity target) {
         if (world.isClientSide) return;
+        float savedDamage = damage;
+        if (user instanceof BaseBreathingTrainerEntity) damage *= 0.5f;
         super.hitTarget(target);
+        damage = savedDamage;
         applyWaterEffect(target);
         createWaterHitParticles(target.position());
         playWaterHitSound(target.position());
@@ -28,7 +32,10 @@ public abstract class WaterBreathingAttackBase extends AbstractBreathingAttack<W
     @Override
     protected void hitTargetNoImmunity(LivingEntity target) {
         if (world.isClientSide) return;
+        float savedDamage = damage;
+        if (user instanceof BaseBreathingTrainerEntity) damage *= 0.5f;
         super.hitTargetNoImmunity(target);
+        damage = savedDamage;
         applyWaterEffect(target);
         createWaterHitParticles(target.position());
         playWaterHitSound(target.position());

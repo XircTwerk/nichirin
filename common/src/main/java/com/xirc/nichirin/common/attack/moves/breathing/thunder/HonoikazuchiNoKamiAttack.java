@@ -230,13 +230,6 @@ public class HonoikazuchiNoKamiAttack extends ThunderBreathingAttackBase {
 
         // Also give brief regeneration as a bonus
         user.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 100, 1, false, true));
-
-        // Notification
-        user.displayClientMessage(
-                net.minecraft.network.chat.Component.literal("Thunder God's blessing grants you speed!")
-                        .withStyle(style -> style.withColor(0xFFFF00).withBold(true)),
-                true
-        );
     }
 
     @Override

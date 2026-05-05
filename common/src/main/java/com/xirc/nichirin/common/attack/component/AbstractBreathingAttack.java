@@ -3,13 +3,16 @@ package com.xirc.nichirin.common.attack.component;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset.MoveConfiguration;
 import com.xirc.nichirin.common.network.s2c.TriggerShaderPacket;
 import com.xirc.nichirin.common.util.BreathingManager;
+import com.xirc.nichirin.common.util.ComboIntegration;
 import com.xirc.nichirin.common.util.HitboxData;
+import com.xirc.nichirin.common.util.enums.MoveClass;
 import com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -54,11 +57,11 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     // Runtime state
     protected boolean isActive = false;
     protected int tickCount = 0;
-    protected Player user;
+    protected LivingEntity user;
     protected Level world;
 
-    // Self-ticking system - attacks register themselves for automatic ticking
-    private static final java.util.concurrent.ConcurrentHashMap<Player, java.util.List<AbstractBreathingAttack<?, ?>>> selfTickingAttacks = new java.util.concurrent.ConcurrentHashMap<>();
+    // Self-ticking system - attacks register themselves for automatic ticking (Players only)
+    private static final java.util.concurrent.ConcurrentHashMap<java.util.UUID, java.util.List<AbstractBreathingAttack<?, ?>>> selfTickingAttacks = new java.util.concurrent.ConcurrentHashMap<>();
 
     // Hit tracking
     @Setter
@@ -99,22 +102,21 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     }
 
     /**
-     * Start the attack - unified interface (legacy compatibility)
+     * Start the attack for a Player (handles breath cost and client messages).
      */
-    public void start(Player user, Level world) {
-
+    public void start(Player player, Level world) {
         if (!configured) return;
         if (duration <= 0) return;
 
-        this.user = user;
+        this.user = player;
         this.world = world;
         this.tickCount = 0;
         this.breathConsumed = false;
         this.hitEntities.clear();
         this.hitCount = 0;
 
-        if (breathCost > 0 && !BreathingManager.hasBreath(user, breathCost)) {
-            user.displayClientMessage(
+        if (breathCost > 0 && !BreathingManager.hasBreath(player, breathCost)) {
+            player.displayClientMessage(
                     Component.literal("Not enough breath!")
                             .withStyle(style -> style.withColor(0xFF5555)),
                     true
@@ -123,10 +125,10 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         }
 
         if (breathCost > 0) {
-            if (BreathingManager.consume(user, breathCost)) {
+            if (BreathingManager.consume(player, breathCost)) {
                 breathConsumed = true;
             } else {
-                user.displayClientMessage(
+                player.displayClientMessage(
                         Component.literal("Failed to consume breath!")
                                 .withStyle(style -> style.withColor(0xFF5555)),
                         true
@@ -144,17 +146,45 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
             e.printStackTrace();
             this.isActive = false;
             if (breathConsumed) {
-                BreathingManager.restore(user, breathCost);
+                BreathingManager.restore(player, breathCost);
                 breathConsumed = false;
             }
             return;
         }
 
         if (!isActive && breathConsumed) {
-            BreathingManager.restore(user, breathCost);
+            BreathingManager.restore(player, breathCost);
             breathConsumed = false;
         }
+    }
 
+    /**
+     * Start the attack for any LivingEntity (NPC path — breath already consumed by caller).
+     */
+    public void start(LivingEntity entity, Level world) {
+        if (entity instanceof Player player) {
+            start(player, world);
+            return;
+        }
+        if (!configured) return;
+        if (duration <= 0) return;
+
+        this.user = entity;
+        this.world = world;
+        this.tickCount = 0;
+        this.breathConsumed = false;
+        this.hitEntities.clear();
+        this.hitCount = 0;
+
+        this.isActive = true;
+        registerForTicking();
+
+        try {
+            onStart();
+        } catch (Exception e) {
+            e.printStackTrace();
+            this.isActive = false;
+        }
     }
 
     /**
@@ -235,12 +265,14 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         }
 
         // Apply damage using configured values
-        DamageSource source = user.damageSources().playerAttack(user);
+        DamageSource source = user instanceof Player p
+                ? user.damageSources().playerAttack(p)
+                : user.damageSources().mobAttack(user);
         boolean damaged = target.hurt(source, damage);
 
-        if (damaged) {
-            // Add combo tracking for breathing attacks
-            com.xirc.nichirin.common.util.ComboIntegration.handleSuccessfulHit(user, target, hitStun, damage);
+        if (damaged && user instanceof Player player) {
+            // Add combo tracking for breathing attacks (players only)
+            ComboIntegration.handleSuccessfulHit(player, target, hitStun, damage);
         }
 
         // Apply hit stun if configured
@@ -291,12 +323,14 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         target.hurtTime = 0;
 
         // Apply damage
-        DamageSource source = user.damageSources().playerAttack(user);
+        DamageSource source = user instanceof Player p
+                ? user.damageSources().playerAttack(p)
+                : user.damageSources().mobAttack(user);
         boolean damaged = target.hurt(source, damage);
 
-        if (damaged) {
-            // Add combo tracking for breathing attacks (no immunity version)
-            com.xirc.nichirin.common.util.ComboIntegration.handleSuccessfulHit(user, target, hitStun, damage);
+        if (damaged && user instanceof Player player) {
+            // Add combo tracking for breathing attacks (players only, no immunity version)
+            ComboIntegration.handleSuccessfulHit(player, target, hitStun, damage);
         }
 
         // Apply hit stun
@@ -345,8 +379,8 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
             AttackHitboxRenderer.addHitbox(hitbox);
         } else {
             // Server side - send packet to client for visual debugging
-            if (user instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-                com.xirc.nichirin.registry.NichirinPacketRegistry.sendHitboxToClient(
+            if (user instanceof ServerPlayer serverPlayer) {
+                NichirinPacketRegistry.sendHitboxToClient(
                         serverPlayer, hitbox, 2500L
                 );
             }
@@ -374,8 +408,8 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
             AttackHitboxRenderer.addHitbox(hitbox);
         } else {
             // Server side - send packet to client
-            if (user instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-                com.xirc.nichirin.registry.NichirinPacketRegistry.sendHitboxToClient(
+            if (user instanceof ServerPlayer serverPlayer) {
+                NichirinPacketRegistry.sendHitboxToClient(
                         serverPlayer, hitbox, 2500L
                 );
             }
@@ -444,9 +478,9 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
             AttackHitboxRenderer.addHitboxes(lineHitboxes);
         } else {
             // Server side - send packets for each hitbox
-            if (user instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            if (user instanceof ServerPlayer serverPlayer) {
                 for (AABB hitbox : lineHitboxes) {
-                    com.xirc.nichirin.registry.NichirinPacketRegistry.sendHitboxToClient(
+                    NichirinPacketRegistry.sendHitboxToClient(
                             serverPlayer, hitbox, 2500L
                     );
                 }
@@ -477,8 +511,8 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
             AttackHitboxRenderer.addHitbox(hitbox);
         } else {
             // Server side - send packet to client
-            if (user instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-                com.xirc.nichirin.registry.NichirinPacketRegistry.sendHitboxToClient(
+            if (user instanceof ServerPlayer serverPlayer) {
+                NichirinPacketRegistry.sendHitboxToClient(
                         serverPlayer, hitbox, 2500L
                 );
             }
@@ -554,9 +588,9 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
             AttackHitboxRenderer.addHitboxes(coneHitboxes);
         } else {
             // Server side - send packets
-            if (user instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            if (user instanceof ServerPlayer serverPlayer) {
                 for (AABB hitbox : coneHitboxes) {
-                    com.xirc.nichirin.registry.NichirinPacketRegistry.sendHitboxToClient(
+                    NichirinPacketRegistry.sendHitboxToClient(
                             serverPlayer, hitbox, 2500L
                     );
                 }
@@ -603,9 +637,9 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         if (user.level().isClientSide) {
             AttackHitboxRenderer.addHitboxes(sweepHitboxes);
         } else {
-            if (user instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            if (user instanceof ServerPlayer serverPlayer) {
                 for (AABB hitbox : sweepHitboxes) {
-                    com.xirc.nichirin.registry.NichirinPacketRegistry.sendHitboxToClient(
+                    NichirinPacketRegistry.sendHitboxToClient(
                             serverPlayer, hitbox, 2500L
                     );
                 }
@@ -638,8 +672,8 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         if (user.level().isClientSide) {
             AttackHitboxRenderer.addHitbox(hitbox);
         } else {
-            if (user instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-                com.xirc.nichirin.registry.NichirinPacketRegistry.sendHitboxToClient(
+            if (user instanceof ServerPlayer serverPlayer) {
+                NichirinPacketRegistry.sendHitboxToClient(
                         serverPlayer, hitbox, 2500L
                 );
             }
@@ -688,9 +722,9 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         if (user.level().isClientSide) {
             AttackHitboxRenderer.addHitboxes(circleHitboxes);
         } else {
-            if (user instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            if (user instanceof ServerPlayer serverPlayer) {
                 for (AABB hitbox : circleHitboxes) {
-                    com.xirc.nichirin.registry.NichirinPacketRegistry.sendHitboxToClient(
+                    NichirinPacketRegistry.sendHitboxToClient(
                             serverPlayer, hitbox, 2500L
                     );
                 }
@@ -783,7 +817,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     /**
      * Legacy method support for MoveClass registration
      */
-    public void onRegister(com.xirc.nichirin.common.util.enums.MoveClass moveClass) {
+    public void onRegister(MoveClass moveClass) {
         // Override if needed - default implementation does nothing
     }
 
@@ -791,8 +825,9 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
      * Register this attack for automatic ticking
      */
     private void registerForTicking() {
-        if (user != null) {
-            selfTickingAttacks.computeIfAbsent(user, k -> new java.util.ArrayList<>()).add(this);
+        // Only Player attacks self-tick; NPC attacks are ticked via MoveExecutor.tickAttacks.
+        if (user instanceof Player) {
+            selfTickingAttacks.computeIfAbsent(user.getUUID(), k -> new java.util.ArrayList<>()).add(this);
         }
     }
 
@@ -800,12 +835,12 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
      * Unregister this attack from automatic ticking
      */
     private void unregisterFromTicking() {
-        if (user != null) {
-            var attacks = selfTickingAttacks.get(user);
+        if (user instanceof Player) {
+            var attacks = selfTickingAttacks.get(user.getUUID());
             if (attacks != null) {
                 attacks.remove(this);
                 if (attacks.isEmpty()) {
-                    selfTickingAttacks.remove(user);
+                    selfTickingAttacks.remove(user.getUUID());
                 }
             }
         }
@@ -814,19 +849,20 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     /**
      * Tick all self-registered attacks - CALL THIS FROM YOUR MAIN TICK HANDLER
      */
-    public static void tickAllActiveAttacks(net.minecraft.server.MinecraftServer server) {
+    public static void tickAllActiveAttacks(MinecraftServer server) {
         if (selfTickingAttacks.isEmpty()) {
             return;
         }
 
-        java.util.List<Player> playersToClean = new java.util.ArrayList<>();
+        java.util.List<java.util.UUID> toClean = new java.util.ArrayList<>();
 
         for (var entry : selfTickingAttacks.entrySet()) {
-            Player player = entry.getKey();
+            java.util.UUID uuid = entry.getKey();
             var attacks = entry.getValue();
 
-            if (player == null || !player.isAlive()) {
-                playersToClean.add(player);
+            // Remove stale entries for UUIDs with no active attacks
+            if (attacks.isEmpty()) {
+                toClean.add(uuid);
                 continue;
             }
 
@@ -845,14 +881,12 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
                     }
                 }
 
-                // Remove inactive attacks
                 attacks.removeAll(toRemove);
             }
         }
 
-        // Clean up disconnected players
-        for (Player player : playersToClean) {
-            selfTickingAttacks.remove(player);
+        for (java.util.UUID uuid : toClean) {
+            selfTickingAttacks.remove(uuid);
         }
     }
 
@@ -860,7 +894,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
      * Clear all self-ticking attacks for a player (on disconnect, death, etc.)
      */
     public static void clearSelfTickingAttacks(Player player) {
-        var attacks = selfTickingAttacks.remove(player);
+        var attacks = selfTickingAttacks.remove(player.getUUID());
         if (attacks != null) {
             for (var attack : attacks) {
                 try {

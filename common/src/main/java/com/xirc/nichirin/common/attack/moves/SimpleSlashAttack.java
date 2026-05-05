@@ -126,7 +126,7 @@ public class SimpleSlashAttack {
         }
     }
 
-    public void start(Player player) {
+    public void start(LivingEntity player) {
 
         // Only run on server side
         if (player.level().isClientSide()) {
@@ -149,7 +149,7 @@ public class SimpleSlashAttack {
         }
     }
 
-    public void tick(Player player) {
+    public void tick(LivingEntity player) {
         if (!isActive) return;
 
         // Only run on server side
@@ -173,7 +173,7 @@ public class SimpleSlashAttack {
         }
     }
 
-    private void performHitDetection(Player user, Level world) {
+    private void performHitDetection(LivingEntity user, Level world) {
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDir = user.getLookAngle();
@@ -195,7 +195,9 @@ public class SimpleSlashAttack {
 
         if (!targets.isEmpty()) {
             hasHit = true;
-            DamageSource damageSource = user.damageSources().playerAttack(user);
+            DamageSource damageSource = user instanceof Player p
+                    ? user.damageSources().playerAttack(p)
+                    : user.damageSources().mobAttack(user);
 
             for (LivingEntity target : targets) {
                 // Deal damage
@@ -232,7 +234,7 @@ public class SimpleSlashAttack {
         }
     }
 
-    private void createSlashParticles(Player user, Level world) {
+    private void createSlashParticles(LivingEntity user, Level world) {
         if (!(world instanceof ServerLevel serverLevel)) {
             return;
         }
@@ -253,7 +255,7 @@ public class SimpleSlashAttack {
         }
     }
 
-    private void end(Player player) {
+    private void end(LivingEntity player) {
         isActive = false;
         hitEntities.clear();
     }

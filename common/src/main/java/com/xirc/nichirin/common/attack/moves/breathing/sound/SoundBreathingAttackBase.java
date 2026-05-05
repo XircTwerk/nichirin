@@ -2,12 +2,20 @@ package com.xirc.nichirin.common.attack.moves.breathing.sound;
 
 import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
 import com.xirc.nichirin.common.attack.component.IBreathingAttacker;
+import com.xirc.nichirin.common.effect.StunnedStatusEffect;
+import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.HashMap;
@@ -35,11 +43,13 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
 
         applyComboBonus();
 
-        net.minecraft.world.damagesource.DamageSource source = user.damageSources().playerAttack(user);
+        DamageSource source = user instanceof Player p
+                ? user.damageSources().playerAttack(p)
+                : user.damageSources().mobAttack(user);
         boolean damaged = target.hurt(source, damage);
 
         if (knockback > 0) {
-            com.xirc.nichirin.common.effect.StunnedStatusEffect.markRecentKnockback(target);
+            StunnedStatusEffect.markRecentKnockback(target);
             Vec3 knockbackDir = target.position().subtract(user.position()).normalize();
             target.push(knockbackDir.x * knockback, 0.3, knockbackDir.z * knockback);
             target.hurtMarked = true;
@@ -55,8 +65,8 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
         Objects.requireNonNull(world.getServer()).execute(() -> {
             if (target.isAlive() && hitStun > 0) {
                 target.invulnerableTime = hitStun;
-                target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-                        com.xirc.nichirin.registry.NichirinEffectRegistry.STUNNED.get(),
+                target.addEffect(new MobEffectInstance(
+                        NichirinEffectRegistry.STUNNED.get(),
                         hitStun, 2, false, true, true));
             }
         });
@@ -72,11 +82,13 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
 
         applyComboBonus();
 
-        net.minecraft.world.damagesource.DamageSource source = user.damageSources().playerAttack(user);
+        DamageSource source = user instanceof Player p
+                ? user.damageSources().playerAttack(p)
+                : user.damageSources().mobAttack(user);
         boolean damaged = target.hurt(source, damage);
 
         if (knockback > 0) {
-            com.xirc.nichirin.common.effect.StunnedStatusEffect.markRecentKnockback(target);
+            StunnedStatusEffect.markRecentKnockback(target);
             Vec3 knockbackDir = target.position().subtract(user.position()).normalize();
             target.push(knockbackDir.x * knockback, 0.3, knockbackDir.z * knockback);
             target.hurtMarked = true;
@@ -91,8 +103,8 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
         Objects.requireNonNull(world.getServer()).execute(() -> {
             if (target.isAlive() && hitStun > 0) {
                 target.invulnerableTime = hitStun;
-                target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-                        com.xirc.nichirin.registry.NichirinEffectRegistry.STUNNED.get(),
+                target.addEffect(new MobEffectInstance(
+                        NichirinEffectRegistry.STUNNED.get(),
                         hitStun, 2, false, true, true));
             }
         });
@@ -111,11 +123,13 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
         target.invulnerableTime = 0;
         target.hurtTime = 0;
 
-        net.minecraft.world.damagesource.DamageSource source = user.damageSources().playerAttack(user);
+        DamageSource source = user instanceof Player p
+                ? user.damageSources().playerAttack(p)
+                : user.damageSources().mobAttack(user);
         boolean damaged = target.hurt(source, damage);
 
         if (knockback > 0) {
-            com.xirc.nichirin.common.effect.StunnedStatusEffect.markRecentKnockback(target);
+            StunnedStatusEffect.markRecentKnockback(target);
             Vec3 knockbackDir = target.position().subtract(user.position()).normalize();
             target.push(knockbackDir.x * knockback, 0.3, knockbackDir.z * knockback);
             target.hurtMarked = true;
@@ -125,8 +139,8 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
         Objects.requireNonNull(world.getServer()).execute(() -> {
             if (target.isAlive() && hitStun > 0) {
                 target.invulnerableTime = hitStun;
-                target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-                        com.xirc.nichirin.registry.NichirinEffectRegistry.STUNNED.get(),
+                target.addEffect(new MobEffectInstance(
+                        NichirinEffectRegistry.STUNNED.get(),
                         hitStun, 2, false, true, true));
             }
         });
@@ -151,15 +165,15 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
     }
 
     protected void applyStunEffect(LivingEntity target) {
-        if (target instanceof net.minecraft.world.entity.player.Player player && player.isCreative()) return;
+        if (target instanceof Player player && player.isCreative()) return;
 
         Objects.requireNonNull(world.getServer()).execute(() -> {
             if (target.isAlive()) {
-                target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-                        net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN,
+                target.addEffect(new MobEffectInstance(
+                        MobEffects.MOVEMENT_SLOWDOWN,
                         DEFAULT_STUN_DURATION, 5, false, false));
-                target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-                        net.minecraft.world.effect.MobEffects.DIG_SLOWDOWN,
+                target.addEffect(new MobEffectInstance(
+                        MobEffects.DIG_SLOWDOWN,
                         DEFAULT_STUN_DURATION, 5, false, false));
             }
         });
@@ -191,9 +205,9 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
     }
 
     protected void applyDisorientedEffect(LivingEntity target) {
-        if (target instanceof net.minecraft.world.entity.player.Player player && player.isCreative()) return;
-        target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-                com.xirc.nichirin.registry.NichirinEffectRegistry.DISORIENTED.get(),
+        if (target instanceof Player player && player.isCreative()) return;
+        target.addEffect(new MobEffectInstance(
+                NichirinEffectRegistry.DISORIENTED.get(),
                 30, 0, false, true, true));
     }
 
@@ -201,7 +215,7 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
         if (!(world instanceof ServerLevel serverLevel) || user == null) return;
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
-        net.minecraft.util.RandomSource random = serverLevel.getRandom();
+        RandomSource random = serverLevel.getRandom();
 
         for (int i = 0; i < SOUND_PARTICLE_COUNT; i++) {
             double offsetX = (random.nextDouble() - 0.5) * SOUND_PARTICLE_SPREAD;
@@ -260,13 +274,13 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
                 center.x, center.y + 1, center.z, 1, 0.5, 0.5, 0.5, 0);
 
         java.util.List<LivingEntity> nearbyTargets = world.getEntitiesOfClass(LivingEntity.class,
-                new net.minecraft.world.phys.AABB(center.subtract(3, 3, 3), center.add(3, 3, 3)),
+                new AABB(center.subtract(3, 3, 3), center.add(3, 3, 3)),
                 entity -> entity != user && entity.isAlive());
 
         for (LivingEntity target : nearbyTargets) {
             target.hurt(world.damageSources().explosion(null, user), damage * 0.3f);
-            target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-                    net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN,
+            target.addEffect(new MobEffectInstance(
+                    MobEffects.MOVEMENT_SLOWDOWN,
                     DEFAULT_STUN_DURATION, 5, false, false));
         }
 

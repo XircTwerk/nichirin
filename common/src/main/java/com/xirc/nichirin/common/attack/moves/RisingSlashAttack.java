@@ -138,7 +138,7 @@ public class RisingSlashAttack {
         }
     }
 
-    public void start(Player player) {
+    public void start(LivingEntity player) {
         // Only run on server side
         if (player.level().isClientSide()) {
             return;
@@ -159,7 +159,7 @@ public class RisingSlashAttack {
         }
     }
 
-    public void tick(Player player) {
+    public void tick(LivingEntity player) {
         if (!isActive) return;
 
         // Only run on server side
@@ -180,7 +180,7 @@ public class RisingSlashAttack {
         }
     }
 
-    private void performHitDetection(Player user, Level world) {
+    private void performHitDetection(LivingEntity user, Level world) {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDir = user.getLookAngle();
         Vec3 hitboxCenter = userPos.add(lookDir.scale(range)).add(hitboxOffset);
@@ -200,7 +200,9 @@ public class RisingSlashAttack {
                 entity -> entity != user && entity.isAlive() && !hitEntities.contains(entity));
 
         if (!targets.isEmpty()) {
-            DamageSource damageSource = user.damageSources().playerAttack(user);
+            DamageSource damageSource = user instanceof Player p
+                    ? user.damageSources().playerAttack(p)
+                    : user.damageSources().mobAttack(user);
 
             for (LivingEntity target : targets) {
                 // Launch the target
@@ -218,7 +220,7 @@ public class RisingSlashAttack {
         }
     }
 
-    private void launchTarget(LivingEntity target, Player user, DamageSource damageSource) {
+    private void launchTarget(LivingEntity target, LivingEntity user, DamageSource damageSource) {
         // Apply damage first so vanilla knockback fires before we overwrite velocity
         target.hurt(damageSource, damage);
 
@@ -254,7 +256,7 @@ public class RisingSlashAttack {
         }
     }
 
-    private void createRisingParticles(Player user, Level world) {
+    private void createRisingParticles(LivingEntity user, Level world) {
         if (!(world instanceof ServerLevel sl)) return;
         Vec3 base = user.position().add(0, user.getBbHeight() * 0.3, 0)
                 .add(user.getLookAngle().scale(range * 0.5));
@@ -268,7 +270,7 @@ public class RisingSlashAttack {
                 base.x, base.y + 0.8, base.z, 3, 0.2, 0.2, 0.2, 0.0);
     }
 
-    private void end(Player player) {
+    private void end(LivingEntity player) {
         isActive = false;
         hitEntities.clear();
     }

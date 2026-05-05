@@ -77,7 +77,7 @@ public abstract class AbstractKatanaAttack {
     }
 
 
-    public final void start(Player player) {
+    public final void start(LivingEntity player) {
         if (player.level().isClientSide()) return;
 
         tickCount = 0;
@@ -88,7 +88,7 @@ public abstract class AbstractKatanaAttack {
         onStart(player);
     }
 
-    public final void tick(Player player) {
+    public final void tick(LivingEntity player) {
         if (!isActive) return;
         if (player.level().isClientSide()) return;
 
@@ -111,7 +111,7 @@ public abstract class AbstractKatanaAttack {
     }
 
 
-    protected final void performHitDetection(Player user, Level world) {
+    protected final void performHitDetection(LivingEntity user, Level world) {
         AABB hitbox = buildHitbox(user);
 
         NichirinPacketRegistry.sendHitboxToTracking(user, hitbox, Math.max(active * 50L, 1500L));
@@ -122,7 +122,9 @@ public abstract class AbstractKatanaAttack {
         if (targets.isEmpty()) return;
 
         hasHit = true;
-        DamageSource damageSource = user.damageSources().playerAttack(user);
+        DamageSource damageSource = user instanceof Player p
+                ? user.damageSources().playerAttack(p)
+                : user.damageSources().mobAttack(user);
 
         for (LivingEntity target : targets) {
             if (hitEntities.contains(target)) continue;
@@ -149,7 +151,7 @@ public abstract class AbstractKatanaAttack {
      * of the player (plus {@code hitboxOffset}).  Override in Thrust to use a fixed
      * 1-block-ahead box that tracks the dashing player's position each tick.</p>
      */
-    protected AABB buildHitbox(Player user) {
+    protected AABB buildHitbox(LivingEntity user) {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDir = user.getLookAngle();
         Vec3 center  = userPos.add(lookDir.scale(range)).add(hitboxOffset);
@@ -165,14 +167,14 @@ public abstract class AbstractKatanaAttack {
      * <p>Default: pushes the target directly away from the player.
      * Override in Overhead to slam airborne targets straight down.</p>
      */
-    protected void applyKnockback(Player user, LivingEntity target) {
+    protected void applyKnockback(LivingEntity user, LivingEntity target) {
         if (knockback > 0) {
             Vec3 knockVec = target.position().subtract(user.position()).normalize();
             target.knockback(knockback, -knockVec.x, -knockVec.z);
         }
     }
 
-    private void end(Player player) {
+    private void end(LivingEntity player) {
         isActive = false;
         hitEntities.clear();
         onEnd(player);
@@ -180,22 +182,22 @@ public abstract class AbstractKatanaAttack {
 
 
     /** Called at the start of the attack (after state reset). Play sounds / start particles here. */
-    protected void onStart(Player player) {}
+    protected void onStart(LivingEntity player) {}
 
     /** Called on the first active tick ({@code tickCount == startup}). Apply dash velocity here. */
-    protected void onActiveStart(Player player) {}
+    protected void onActiveStart(LivingEntity player) {}
 
     /** Called every tick while in active frames. Emit trail particles here. */
-    protected void onActiveTick(Player player) {}
+    protected void onActiveTick(LivingEntity player) {}
 
     /**
      * Called for every newly-struck target.
      * Apply unique hit effects (e.g. STUNNED), extra particles, and hit sounds here.
      */
-    protected abstract void onHitTarget(Player user, LivingEntity target, Level world);
+    protected abstract void onHitTarget(LivingEntity user, LivingEntity target, Level world);
 
     /** Called when the attack expires. */
-    protected void onEnd(Player player) {}
+    protected void onEnd(LivingEntity player) {}
 
 
     public boolean isActive()     { return isActive; }

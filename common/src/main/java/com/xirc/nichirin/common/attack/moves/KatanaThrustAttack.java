@@ -10,7 +10,6 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -43,7 +42,7 @@ public class KatanaThrustAttack extends AbstractKatanaAttack {
 
 
     @Override
-    protected void onStart(Player player) {
+    protected void onStart(LivingEntity player) {
         if (startSound != null) {
             player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                     startSound, SoundSource.PLAYERS, 1.0f, 1.1f);
@@ -52,7 +51,7 @@ public class KatanaThrustAttack extends AbstractKatanaAttack {
 
     /** First active tick: apply the forward dash velocity and sync to the client. */
     @Override
-    protected void onActiveStart(Player player) {
+    protected void onActiveStart(LivingEntity player) {
         Vec3 lookDir = player.getLookAngle();
         player.setDeltaMovement(new Vec3(lookDir.x * 3.0, player.getDeltaMovement().y, lookDir.z * 3.0));
         player.hurtMarked = true;
@@ -64,7 +63,7 @@ public class KatanaThrustAttack extends AbstractKatanaAttack {
 
     /** Every active tick: emit a cloud trail behind the player. */
     @Override
-    protected void onActiveTick(Player player) {
+    protected void onActiveTick(LivingEntity player) {
         if (!(player.level() instanceof ServerLevel sl)) return;
         Vec3 behind = player.position().add(player.getLookAngle().scale(-0.5)).add(0, player.getBbHeight() * 0.5, 0);
         sl.sendParticles(ParticleTypes.CLOUD,
@@ -78,7 +77,7 @@ public class KatanaThrustAttack extends AbstractKatanaAttack {
      * rather than a static box at full range.
      */
     @Override
-    protected AABB buildHitbox(Player user) {
+    protected AABB buildHitbox(LivingEntity user) {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 center  = userPos.add(user.getLookAngle().scale(1.0));
         return new AABB(
@@ -88,7 +87,7 @@ public class KatanaThrustAttack extends AbstractKatanaAttack {
     }
 
     @Override
-    protected void onHitTarget(Player user, LivingEntity target, Level world) {
+    protected void onHitTarget(LivingEntity user, LivingEntity target, Level world) {
         // Hit sound
         if (hitSound != null) {
             world.playSound(null, target.getX(), target.getY(), target.getZ(),

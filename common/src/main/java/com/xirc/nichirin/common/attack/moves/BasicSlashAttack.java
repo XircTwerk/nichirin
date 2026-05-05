@@ -46,7 +46,7 @@ public class BasicSlashAttack<A extends IPhysicalAttacker<A, ?>> extends Abstrac
     }
 
     @Override
-    protected void onStart(Player user, Level world) {
+    protected void onStart(LivingEntity user, Level world) {
 
         // Reset state
         tickCount = 0;
@@ -64,7 +64,7 @@ public class BasicSlashAttack<A extends IPhysicalAttacker<A, ?>> extends Abstrac
     }
 
     @Override
-    protected void onTick(Player user, Level world) {
+    protected void onTick(LivingEntity user, Level world) {
         tickCount++;
 
         // Check if we're in the active frames
@@ -82,7 +82,7 @@ public class BasicSlashAttack<A extends IPhysicalAttacker<A, ?>> extends Abstrac
         }
     }
 
-    private void performHitDetection(Player user, Level world) {
+    private void performHitDetection(LivingEntity user, Level world) {
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDir = user.getLookAngle();
@@ -104,7 +104,9 @@ public class BasicSlashAttack<A extends IPhysicalAttacker<A, ?>> extends Abstrac
 
         if (!targets.isEmpty()) {
             hasHit = true;
-            DamageSource damageSource = user.damageSources().playerAttack(user);
+            DamageSource damageSource = user instanceof Player p
+                    ? user.damageSources().playerAttack(p)
+                    : user.damageSources().mobAttack(user);
 
             for (LivingEntity target : targets) {
                 // Deal damage
@@ -137,12 +139,12 @@ public class BasicSlashAttack<A extends IPhysicalAttacker<A, ?>> extends Abstrac
     }
 
     @Override
-    protected void onHit(Player user, LivingEntity target) {
+    protected void onHit(LivingEntity user, LivingEntity target) {
         // Target effects are handled internally by AbstractSimpleAttack
     }
 
     @Override
-    protected void onEnd(Player user, Level world) {
+    protected void onEnd(LivingEntity user, Level world) {
         // Cleanup
         hitEntities.clear();
     }
@@ -159,7 +161,7 @@ public class BasicSlashAttack<A extends IPhysicalAttacker<A, ?>> extends Abstrac
     /**
      * Creates visual slash effect
      */
-    private void createSlashParticles(Player user, Level world) {
+    private void createSlashParticles(LivingEntity user, Level world) {
         if (!(world instanceof ServerLevel sl)) return;
         Vec3 pos = user.position().add(0, user.getBbHeight() * 0.5, 0)
                 .add(user.getLookAngle().scale(getRange() * 0.7));

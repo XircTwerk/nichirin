@@ -134,7 +134,7 @@ public class DoubleSlashAttack {
         }
     }
 
-    public void start(Player player) {
+    public void start(LivingEntity player) {
 
         // Only run on server side
         if (player.level().isClientSide()) {
@@ -163,7 +163,7 @@ public class DoubleSlashAttack {
         }
     }
 
-    public void tick(Player player) {
+    public void tick(LivingEntity player) {
         if (!isActive) return;
 
         // Only run on server side
@@ -210,7 +210,7 @@ public class DoubleSlashAttack {
         }
     }
 
-    private void performHitDetection(Player user, Level world) {
+    private void performHitDetection(LivingEntity user, Level world) {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDir = user.getLookAngle();
         Vec3 hitboxCenter = userPos.add(lookDir.scale(range)).add(hitboxOffset);
@@ -230,7 +230,9 @@ public class DoubleSlashAttack {
                 entity -> entity != user && entity.isAlive() && !hitCooldowns.containsKey(entity));
 
         if (!targets.isEmpty()) {
-            DamageSource damageSource = user.damageSources().playerAttack(user);
+            DamageSource damageSource = user instanceof Player p
+                    ? user.damageSources().playerAttack(p)
+                    : user.damageSources().mobAttack(user);
 
             for (LivingEntity target : targets) {
                 // Deal damage
@@ -265,7 +267,7 @@ public class DoubleSlashAttack {
         }
     }
 
-    private void createDiagonalSlashParticles(Player user, Level world, boolean isFirstDiagonal) {
+    private void createDiagonalSlashParticles(LivingEntity user, Level world, boolean isFirstDiagonal) {
         if (!(world instanceof ServerLevel sl)) return;
         Vec3 centre = user.position().add(0, user.getBbHeight() * 0.5, 0)
                 .add(user.getLookAngle().scale(range * 0.6));
@@ -283,7 +285,7 @@ public class DoubleSlashAttack {
                 centre.x, centre.y, centre.z, 2, 0.2, 0.2, 0.2, 0.0);
     }
 
-    private void end(Player player) {
+    private void end(LivingEntity player) {
         isActive = false;
         hitCooldowns.clear();
         hitCount.clear();

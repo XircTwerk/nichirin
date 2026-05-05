@@ -277,7 +277,8 @@ public abstract class AbstractSimpleAttack<T extends AbstractSimpleAttack<T, A>,
     /**
      * Called every tick while the attack is active
      */
-    public void tick(Player attacker) {
+    @SuppressWarnings("unchecked")
+    public void tick(LivingEntity attacker) {
         if (!active) return;
 
         Level world = attacker.level();
@@ -304,6 +305,11 @@ public abstract class AbstractSimpleAttack<T extends AbstractSimpleAttack<T, A>,
         onTick(attacker, world);
     }
 
+    @SuppressWarnings("unused")
+    public void tick(Player attacker) {
+        tick((LivingEntity) attacker);
+    }
+
     /**
      * Checks for followup input after active frames
      */
@@ -315,7 +321,7 @@ public abstract class AbstractSimpleAttack<T extends AbstractSimpleAttack<T, A>,
     /**
      * Performs hit detection
      */
-    protected void performHitCheck(Player user, Level world) {
+    protected void performHitCheck(LivingEntity user, Level world) {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDir = user.getLookAngle();
         Vec3 hitboxCenter = userPos.add(lookDir.scale(range)).add(hitboxOffset);
@@ -345,16 +351,18 @@ public abstract class AbstractSimpleAttack<T extends AbstractSimpleAttack<T, A>,
     /**
      * Validates if a target can be hit
      */
-    protected boolean validateHit(Player user, LivingEntity target) {
+    protected boolean validateHit(LivingEntity user, LivingEntity target) {
         return user.hasLineOfSight(target);
     }
 
     /**
      * Applies damage and effects to a target
      */
-    protected void hitTarget(Player user, LivingEntity target) {
+    protected void hitTarget(LivingEntity user, LivingEntity target) {
         // Deal damage
-        DamageSource source = user.damageSources().playerAttack(user);
+        DamageSource source = user instanceof Player p
+                ? user.damageSources().playerAttack(p)
+                : user.damageSources().mobAttack(user);
         target.hurt(source, damage);
 
         // Apply knockback
@@ -402,22 +410,22 @@ public abstract class AbstractSimpleAttack<T extends AbstractSimpleAttack<T, A>,
     /**
      * Called when the attack starts
      */
-    protected void onStart(Player user, Level world) {}
+    protected void onStart(LivingEntity user, Level world) {}
 
     /**
      * Called every tick during the attack
      */
-    protected void onTick(Player user, Level world) {}
+    protected void onTick(LivingEntity user, Level world) {}
 
     /**
      * Called when the attack ends
      */
-    protected void onEnd(Player user, Level world) {}
+    protected void onEnd(LivingEntity user, Level world) {}
 
     /**
      * Called when a target is hit
      */
-    protected void onHit(Player user, LivingEntity target) {}
+    protected void onHit(LivingEntity user, LivingEntity target) {}
 
     /**
      * Helper class for effect data

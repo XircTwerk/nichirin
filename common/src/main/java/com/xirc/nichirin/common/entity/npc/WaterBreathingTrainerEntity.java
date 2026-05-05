@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.entity.npc;
 
 import com.xirc.nichirin.client.renderer.entity.dispatcher.WaterBreathingTrainerDispatcher;
+import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moveset.breathing.WaterBreathingMoveset;
 import com.xirc.nichirin.common.entity.ai.WaterBreathingAttackGoal;
 import com.xirc.nichirin.registry.NichirinItemRegistry;
@@ -8,7 +9,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -79,8 +79,7 @@ public class WaterBreathingTrainerEntity extends BaseBreathingTrainerEntity {
 
     @Override
     protected void equipArmor() {
-        setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(NichirinItemRegistry.UROKODAKI_KATANA.get()));
-        setDropChance(EquipmentSlot.MAINHAND, 0.0f);
+        // Katana is embedded in the model; no held item needed.
     }
 
     @Override
@@ -115,6 +114,7 @@ public class WaterBreathingTrainerEntity extends BaseBreathingTrainerEntity {
         }
 
         if (moveset == null) moveset = new WaterBreathingMoveset();
+        MoveExecutor.tickAttacks(this);
     }
 
     private void updateAnimations() {

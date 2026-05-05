@@ -124,7 +124,7 @@ public class SimpleSliceAttack {
         }
     }
 
-    public void start(Player player) {
+    public void start(LivingEntity player) {
 
         // Only run on server side
         if (player.level().isClientSide()) {
@@ -147,7 +147,7 @@ public class SimpleSliceAttack {
         }
     }
 
-    public void tick(Player player) {
+    public void tick(LivingEntity player) {
         if (!isActive) return;
 
         // Only run on server side
@@ -171,7 +171,7 @@ public class SimpleSliceAttack {
         }
     }
 
-    private void performHitDetection(Player user, Level world) {
+    private void performHitDetection(LivingEntity user, Level world) {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDir = user.getLookAngle();
         Vec3 hitboxCenter = userPos.add(lookDir.scale(range)).add(hitboxOffset);
@@ -192,7 +192,9 @@ public class SimpleSliceAttack {
 
         if (!targets.isEmpty()) {
             hasHit = true;
-            DamageSource damageSource = user.damageSources().playerAttack(user);
+            DamageSource damageSource = user instanceof Player p
+                    ? user.damageSources().playerAttack(p)
+                    : user.damageSources().mobAttack(user);
 
             for (LivingEntity target : targets) {
                 // Deal damage
@@ -228,7 +230,7 @@ public class SimpleSliceAttack {
         }
     }
 
-    private void createSliceParticles(Player user, Level world) {
+    private void createSliceParticles(LivingEntity user, Level world) {
         if (!(world instanceof ServerLevel serverLevel)) {
             return;
         }
@@ -250,7 +252,7 @@ public class SimpleSliceAttack {
         }
     }
 
-    private void end(Player player) {
+    private void end(LivingEntity player) {
         isActive = false;
         hitEntities.clear();
     }

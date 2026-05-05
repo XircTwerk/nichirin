@@ -6,6 +6,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
@@ -197,7 +198,9 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
         }
 
         // Apply damage directly using DamageSource
-        target.hurt(world.damageSources().playerAttack(user), damage);
+        target.hurt(user instanceof Player p
+                ? user.damageSources().playerAttack(p)
+                : user.damageSources().mobAttack(user), damage);
 
         // Apply knockback manually
         Vec3 knockbackDirection = target.position().subtract(user.position()).normalize();
@@ -296,7 +299,9 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
         }
 
         // Apply full damage for finale
-        target.hurt(world.damageSources().playerAttack(user), damage);
+        target.hurt(user instanceof Player p
+                ? user.damageSources().playerAttack(p)
+                : user.damageSources().mobAttack(user), damage);
 
         // Apply status effects if configured
         applyDisorientedEffect(target);

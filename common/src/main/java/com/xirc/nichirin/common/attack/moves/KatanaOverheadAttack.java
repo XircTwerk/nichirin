@@ -10,7 +10,6 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
@@ -30,7 +29,7 @@ public class KatanaOverheadAttack extends AbstractKatanaAttack {
 
 
     @Override
-    protected void onStart(Player player) {
+    protected void onStart(LivingEntity player) {
         if (startSound != null) {
             player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                     startSound, SoundSource.PLAYERS, 1.0f, 0.7f);
@@ -51,7 +50,7 @@ public class KatanaOverheadAttack extends AbstractKatanaAttack {
      * Aerial slam: drives airborne targets downward; grounded targets get normal knockback.
      */
     @Override
-    protected void applyKnockback(Player user, LivingEntity target) {
+    protected void applyKnockback(LivingEntity user, LivingEntity target) {
         if (!target.onGround()) {
             Vec3 current = target.getDeltaMovement();
             target.setDeltaMovement(new Vec3(current.x * knockback, current.y - 0.5, current.z * knockback));
@@ -63,7 +62,7 @@ public class KatanaOverheadAttack extends AbstractKatanaAttack {
     }
 
     @Override
-    protected void onHitTarget(Player user, LivingEntity target, Level world) {
+    protected void onHitTarget(LivingEntity user, LivingEntity target, Level world) {
         // Hit sound (low pitch = heavy impact)
         if (hitSound != null) {
             world.playSound(null, target.getX(), target.getY(), target.getZ(),
