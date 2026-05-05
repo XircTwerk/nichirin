@@ -15,9 +15,9 @@ import java.util.Set;
 // Form 5: 5-hop zigzag charge with large hitboxes. Drags enemies into a straight finisher.
 public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
 
-    private static final int ZIGZAG_COUNT = 5;
+    private static final int ZIGZAG_COUNT = 10;
     private static final int DASH_DURATION = 8;
-    private static final int DASH_INTERVAL = 8;
+    private static final int DASH_INTERVAL = 2;
 
     private int zigzagsExecuted = 0;
     private int nextZigzagTick = 0;
@@ -69,13 +69,13 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
 
     private void executeZigzagDash() {
         // 5-hop pattern: +30° / -30° / +30° / -30° / 0° approach
-        double[] angles = {30, -30, 30, -30, 0};
+        double[] angles = {30, -30, 30, -30, 30, -30, 30, -30,  0};
         double angle = zigzagsExecuted < angles.length ? angles[zigzagsExecuted] : 0;
         Vec3 zigzagDirection = rotateDirection(baseDirection, angle);
 
         // Larger dash speed than Centipede
         if (dashSpeed != null) {
-            user.setDeltaMovement(zigzagDirection.scale(dashSpeed * 0.75));
+            user.setDeltaMovement(zigzagDirection.scale(dashSpeed * 0.25));
             user.hurtMarked = true;
             user.hasImpulse = true;
         }
