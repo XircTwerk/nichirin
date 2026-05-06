@@ -76,7 +76,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                 // First Form: Roar - AOE slam (INDEX 0 in wheel)
                 .withMove(new MoveBuilder("roar", "Roar")
                         .withAnimation("nichirin:roar", 10)
-                        .withTiming(160, 8, 20) // 5 second cooldown, windup
+                        .withTiming(160, 50, 20) // 5 second cooldown, windup
                         .withDamage(23.0f) // Good AOE damage
                         .withRange(13.5f) // Tripled from 4.5f (4.5 * 3 = 13.5)
                         .withKnockback(0.3f) // Strong knockback

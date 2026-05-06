@@ -131,7 +131,7 @@ public class MistBreathingMoveset extends AbstractMoveset {
                         .withDashSpeed(10.0f)
                         .withBreathCost(38.0f)
                         .withHitStun(15)
-                        .withHitboxSize(3.5f)
+                        .withHitboxSize(7.5f)
                         .withDescription("5-hop zigzag charge with large hitboxes. Drags and slashes enemies into a powerful finisher.")
                         .withAction(entity -> {
                             MistBreathingMoveset moveset = getCurrentMoveset();
