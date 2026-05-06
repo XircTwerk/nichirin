@@ -74,6 +74,7 @@ public final class BreathOfNichirin {
         StaminaEventHandler.register();
         BlockingEventHandler.register();
         DodgeEventHandler.register();
+        PerkDamageHandler.register();
         DemonFoodHandler.register();
         DrinkingGourdInteractionHandler.register();
 

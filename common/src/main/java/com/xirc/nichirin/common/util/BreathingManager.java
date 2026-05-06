@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.util;
 
 import com.xirc.nichirin.common.network.s2c.SyncBreathPacket;
+import com.xirc.nichirin.common.system.perks.PerkManager;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.server.level.ServerPlayer;
@@ -55,9 +56,25 @@ public class BreathingManager {
         // Always increment time since use
         data.timeSinceUse++;
 
+        // breath_efficiency LEGENDARY: passive 0.5 breath/second (= 0.025/tick)
+        if (player instanceof ServerPlayer sp) {
+            if (data.current < data.max) {
+                float passiveRegen = PerkManager.getBreathEfficiencyPassiveRegen(sp);
+                if (passiveRegen > 0f) {
+                    data.current = Math.min(data.max, data.current + passiveRegen);
+                }
+            }
+        }
+
         // Regeneration logic (slower than stamina)
         if (data.timeSinceUse >= data.regenDelay && data.current < data.max) {
             float regenAmount = data.regenRate;
+
+            // Apply breath_recovery + zen_mastery regen multiplier
+            if (player instanceof ServerPlayer sp) {
+                float healthFrac = sp.getHealth() / sp.getMaxHealth();
+                regenAmount *= PerkManager.getBreathRegenMultiplier(sp, healthFrac);
+            }
 
             // Slow down regen as we approach max
             float missingBreath = data.max - data.current;
@@ -92,6 +109,25 @@ public class BreathingManager {
         }
 
         BreathingData data = getOrCreateData(player);
+
+        // Apply breath cost perks (breath_efficiency, zen_mastery, breath_overflow)
+        if (player instanceof ServerPlayer sp) {
+            float healthFrac = sp.getHealth() / sp.getMaxHealth();
+
+            // breath_overflow: chance to cast for free
+            float overflowChance = PerkManager.getBreathOverflowChance(sp);
+            if (overflowChance > 0f && player.level().random.nextFloat() < overflowChance) {
+                // Free cast — optionally restore 8% breath for LEGENDARY
+                if (PerkManager.isBreathOverflowLegendary(sp)) {
+                    data.current = Math.min(data.max, data.current + data.max * 0.08f);
+                    syncToClient(player, data);
+                }
+                return true;
+            }
+
+            amount *= PerkManager.getBreathCostMultiplier(sp, healthFrac);
+        }
+
         if (data.current >= amount) {
             data.current = Math.max(0, data.current - amount);
             data.timeSinceUse = 0; // Reset regeneration timer
