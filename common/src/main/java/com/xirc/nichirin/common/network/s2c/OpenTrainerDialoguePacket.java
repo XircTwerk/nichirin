@@ -24,29 +24,37 @@ public class OpenTrainerDialoguePacket {
     public final UUID          trainerUUID;
     public final TrainerType   trainerType;
     public final DialogueState state;
+    public final boolean       hasBeatenTrainer;
 
     public OpenTrainerDialoguePacket(UUID trainerUUID, TrainerType trainerType, DialogueState state) {
-        this.trainerUUID = trainerUUID;
-        this.trainerType = trainerType;
-        this.state       = state;
+        this(trainerUUID, trainerType, state, false);
+    }
+
+    public OpenTrainerDialoguePacket(UUID trainerUUID, TrainerType trainerType, DialogueState state, boolean hasBeatenTrainer) {
+        this.trainerUUID      = trainerUUID;
+        this.trainerType      = trainerType;
+        this.state            = state;
+        this.hasBeatenTrainer = hasBeatenTrainer;
     }
 
     public OpenTrainerDialoguePacket(FriendlyByteBuf buf) {
-        this.trainerUUID = buf.readUUID();
-        this.trainerType = buf.readEnum(TrainerType.class);
-        this.state       = buf.readEnum(DialogueState.class);
+        this.trainerUUID      = buf.readUUID();
+        this.trainerType      = buf.readEnum(TrainerType.class);
+        this.state            = buf.readEnum(DialogueState.class);
+        this.hasBeatenTrainer = buf.readBoolean();
     }
 
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeUUID(trainerUUID);
         buf.writeEnum(trainerType);
         buf.writeEnum(state);
+        buf.writeBoolean(hasBeatenTrainer);
     }
 
     public void handleClient() {
         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
         mc.execute(() -> mc.setScreen(
                 new com.xirc.nichirin.client.gui.trainer.TrainerDialogueScreen(
-                        trainerUUID, trainerType, state)));
+                        trainerUUID, trainerType, state, hasBeatenTrainer)));
     }
 }

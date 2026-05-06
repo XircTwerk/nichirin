@@ -18,20 +18,34 @@ public class TrainerActionPacket {
 
     public final UUID   trainerUUID;
     public final Action action;
+    public final BaseBreathingTrainerEntity.DuelDifficulty difficulty;
 
     public TrainerActionPacket(UUID trainerUUID, Action action) {
+        this(trainerUUID, action, BaseBreathingTrainerEntity.DuelDifficulty.EASY);
+    }
+
+    public TrainerActionPacket(UUID trainerUUID, Action action, BaseBreathingTrainerEntity.DuelDifficulty difficulty) {
         this.trainerUUID = trainerUUID;
         this.action      = action;
+        this.difficulty  = difficulty != null ? difficulty : BaseBreathingTrainerEntity.DuelDifficulty.EASY;
     }
 
     public TrainerActionPacket(FriendlyByteBuf buf) {
         this.trainerUUID = buf.readUUID();
         this.action      = buf.readEnum(Action.class);
+        if (this.action == Action.REQUEST_DUEL) {
+            this.difficulty = buf.readEnum(BaseBreathingTrainerEntity.DuelDifficulty.class);
+        } else {
+            this.difficulty = BaseBreathingTrainerEntity.DuelDifficulty.EASY;
+        }
     }
 
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeUUID(trainerUUID);
         buf.writeEnum(action);
+        if (action == Action.REQUEST_DUEL) {
+            buf.writeEnum(difficulty);
+        }
     }
 
     public void handle(ServerPlayer player) {
@@ -39,7 +53,7 @@ public class TrainerActionPacket {
 
         Entity entity = serverLevel.getEntity(trainerUUID);
         if (entity instanceof BaseBreathingTrainerEntity trainer && action == Action.REQUEST_DUEL) {
-            trainer.startDuel(player);
+            trainer.startDuel(player, difficulty);
         }
     }
 }

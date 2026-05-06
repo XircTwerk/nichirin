@@ -42,11 +42,11 @@ public class ImpactShakeShaderEffect extends NichirinPostProcessor {
 
     // Shake internals
     /** Max shake offset in pixels at magnitude 1.0. */
-    private static final float MAX_SHAKE_PX    = 10f;
+    private static final float MAX_SHAKE_PX    = 14f;
     /** Decay rate for exponential shake envelope. Higher = faster decay. */
-    private static final float SHAKE_DECAY     = 13f;
+    private static final float SHAKE_DECAY     = 11f;
     /** Max chromatic split in UV units. */
-    private static final float MAX_CHROMA_SPLIT = 0.006f;
+    private static final float MAX_CHROMA_SPLIT = 0.012f;
 
     @Override
     public ResourceLocation getShaderEffectId() {

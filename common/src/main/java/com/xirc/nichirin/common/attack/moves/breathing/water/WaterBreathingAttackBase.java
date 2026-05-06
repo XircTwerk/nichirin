@@ -21,7 +21,7 @@ public abstract class WaterBreathingAttackBase extends AbstractBreathingAttack<W
     protected void hitTarget(LivingEntity target) {
         if (world.isClientSide) return;
         float savedDamage = damage;
-        if (user instanceof BaseBreathingTrainerEntity) damage *= 0.5f;
+        if (user instanceof BaseBreathingTrainerEntity trainer) damage *= trainer.getDifficultyDamageMultiplier();
         super.hitTarget(target);
         damage = savedDamage;
         applyWaterEffect(target);
@@ -33,7 +33,7 @@ public abstract class WaterBreathingAttackBase extends AbstractBreathingAttack<W
     protected void hitTargetNoImmunity(LivingEntity target) {
         if (world.isClientSide) return;
         float savedDamage = damage;
-        if (user instanceof BaseBreathingTrainerEntity) damage *= 0.5f;
+        if (user instanceof BaseBreathingTrainerEntity trainer) damage *= trainer.getDifficultyDamageMultiplier();
         super.hitTargetNoImmunity(target);
         damage = savedDamage;
         applyWaterEffect(target);

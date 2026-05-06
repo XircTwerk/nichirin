@@ -21,7 +21,7 @@ public class StaminaManager {
 
     private static final float DEFAULT_MAX_STAMINA = 100f;
     private static final float DEFAULT_REGEN_RATE = 1.2f;
-    private static final int DEFAULT_REGEN_DELAY = 60;
+    private static final int DEFAULT_REGEN_DELAY = 20; // 1 second before regen kicks in after use
     private static final float MIN_REGEN_THRESHOLD = 0.1f;
 
     private static boolean hasUnlimitedStamina(Player player) {

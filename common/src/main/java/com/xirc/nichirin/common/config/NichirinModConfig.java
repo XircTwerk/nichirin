@@ -39,7 +39,7 @@ public class NichirinModConfig implements ConfigData {
 
         @ConfigEntry.Gui.Tooltip
         @ConfigEntry.BoundedDiscrete(min = 1, max = 20)
-        public int staminaRegenRate = 2;
+        public int staminaRegenRate = 8;
     }
 
     // Breathing

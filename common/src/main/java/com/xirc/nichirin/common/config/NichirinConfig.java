@@ -23,7 +23,7 @@ public class NichirinConfig {
     static {
         register(COMBO_WINDOW_TICKS,      20,   5, 100, "How long the STUNNED effect lasts (combo window in ticks)");
         register(PARRY_WINDOW_TICKS,      10,   1,  30, "How many ticks after raising block count as a parry window");
-        register(STAMINA_REGEN_RATE,       2,   1,  20, "Stamina points regenerated per second");
+        register(STAMINA_REGEN_RATE,       8,   1,  20, "Stamina points regenerated per second");
 
     }
 

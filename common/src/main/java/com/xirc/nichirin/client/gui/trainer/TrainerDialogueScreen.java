@@ -1,5 +1,6 @@
 package com.xirc.nichirin.client.gui.trainer;
 
+import com.xirc.nichirin.common.entity.npc.BaseBreathingTrainerEntity;
 import com.xirc.nichirin.common.entity.npc.TrainerType;
 import com.xirc.nichirin.common.network.c2s.TrainerActionPacket;
 import com.xirc.nichirin.common.network.s2c.OpenTrainerDialoguePacket;
@@ -39,16 +40,24 @@ public class TrainerDialogueScreen extends Screen {
     private final UUID trainerUUID;
     private final TrainerType trainerType;
     private final OpenTrainerDialoguePacket.DialogueState state;
+    private final boolean hasBeatenTrainer;
 
     // Layout
     private int dialogX, dialogY, dialogW, dialogH;
 
     public TrainerDialogueScreen(UUID trainerUUID, TrainerType trainerType,
                                  OpenTrainerDialoguePacket.DialogueState state) {
+        this(trainerUUID, trainerType, state, false);
+    }
+
+    public TrainerDialogueScreen(UUID trainerUUID, TrainerType trainerType,
+                                 OpenTrainerDialoguePacket.DialogueState state,
+                                 boolean hasBeatenTrainer) {
         super(Component.empty());
-        this.trainerUUID = trainerUUID;
-        this.trainerType = trainerType;
-        this.state       = state;
+        this.trainerUUID      = trainerUUID;
+        this.trainerType      = trainerType;
+        this.state            = state;
+        this.hasBeatenTrainer = hasBeatenTrainer;
     }
 
     @Override
@@ -80,12 +89,19 @@ public class TrainerDialogueScreen extends Screen {
         List<OptionButton> list = new ArrayList<>();
         switch (state) {
             case PREREQ_MET -> {
-                list.add(new OptionButton("I'm ready.", this::requestDuel));
-                list.add(new OptionButton("Farewell",   this::onClose));
+                list.add(new OptionButton("Fight (Easy)", () -> requestDuel(BaseBreathingTrainerEntity.DuelDifficulty.EASY)));
+                list.add(new OptionButton("Farewell",     this::onClose));
             }
             case STUDENT -> {
-                list.add(new OptionButton("Let's spar.", this::requestDuel));
-                list.add(new OptionButton("Farewell",    this::onClose));
+                if (hasBeatenTrainer) {
+                    list.add(new OptionButton("Fight (Easy)",   () -> requestDuel(BaseBreathingTrainerEntity.DuelDifficulty.EASY)));
+                    list.add(new OptionButton("Fight (Medium)", () -> requestDuel(BaseBreathingTrainerEntity.DuelDifficulty.MEDIUM)));
+                    list.add(new OptionButton("Fight (Hard)",   () -> requestDuel(BaseBreathingTrainerEntity.DuelDifficulty.HARD)));
+                    list.add(new OptionButton("Farewell",       this::onClose));
+                } else {
+                    list.add(new OptionButton("Fight (Easy)", () -> requestDuel(BaseBreathingTrainerEntity.DuelDifficulty.EASY)));
+                    list.add(new OptionButton("Farewell",     this::onClose));
+                }
             }
             case STRANGER, DUEL_COOLDOWN -> list.add(new OptionButton("Farewell", this::onClose));
         }
@@ -248,15 +264,15 @@ public class TrainerDialogueScreen extends Screen {
 
     // Actions
 
-    private void requestDuel() {
-        sendAction(TrainerActionPacket.Action.REQUEST_DUEL);
+    private void requestDuel(BaseBreathingTrainerEntity.DuelDifficulty difficulty) {
+        sendAction(TrainerActionPacket.Action.REQUEST_DUEL, difficulty);
         onClose();
     }
 
-    private void sendAction(TrainerActionPacket.Action action) {
+    private void sendAction(TrainerActionPacket.Action action, BaseBreathingTrainerEntity.DuelDifficulty difficulty) {
         try {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-            new TrainerActionPacket(trainerUUID, action).toBytes(buf);
+            new TrainerActionPacket(trainerUUID, action, difficulty).toBytes(buf);
             NetworkManager.sendToServer(NichirinPacketRegistry.TRAINER_ACTION_ID, buf);
         } catch (Exception e) {
             // ignore

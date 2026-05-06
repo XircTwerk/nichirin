@@ -19,9 +19,9 @@ in vec2 texCoord;
 out vec4 fragColor;
 
 // constants
-const float FLASH_WHITEOUT_END  = 0.05;   // Progress at which hard flash ends
-const float FLASH_BLOOM_END     = 0.175;  // Progress at which bloom hold ends
-const float FLASH_FADE_END      = 0.35;   // Progress at which all flash is gone
+const float FLASH_WHITEOUT_END  = 0.03;   // Progress at which hard flash ends (shorter)
+const float FLASH_BLOOM_END     = 0.10;   // Progress at which bloom hold ends (tighter)
+const float FLASH_FADE_END      = 0.22;   // Progress at which all flash is gone (faster)
 const vec3  BLOOM_COLOR         = vec3(0.63, 0.86, 1.0); // blue-white bloom tint
 
 // helpers
@@ -50,10 +50,10 @@ void main() {
     vec2  toCenter = texCoord - vec2(0.5);
     float dist     = length(toCenter);
 
-    // Stage 1 — hard white-out (instant, no ramp)
+    // Stage 1 — partial white-out (softer flash, not blinding)
     if (Progress < FLASH_WHITEOUT_END) {
-        // Completely overwrite color with white; no fade-in so it hits instantly.
-        color = vec3(1.0);
+        // Blend toward white instead of hard override — keeps image readable.
+        color = mix(color, vec3(1.0), 0.55);
     }
 
     // Stage 2 — bloom hold: center stays bright, edges clear first

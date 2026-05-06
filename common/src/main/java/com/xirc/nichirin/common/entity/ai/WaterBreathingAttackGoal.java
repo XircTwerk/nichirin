@@ -1,5 +1,8 @@
 package com.xirc.nichirin.common.entity.ai;
 
+import com.xirc.nichirin.common.attack.moveset.AbstractMoveset.MoveConfiguration;
+import com.xirc.nichirin.common.entity.npc.BaseBreathingTrainerEntity.DuelDifficulty;
+import com.xirc.nichirin.common.entity.npc.BaseBreathingTrainerEntity.TrainerMode;
 import com.xirc.nichirin.common.entity.npc.WaterBreathingTrainerEntity;
 import com.xirc.nichirin.common.system.movement.EntityMovement;
 import net.minecraft.world.entity.LivingEntity;
@@ -11,54 +14,54 @@ import java.util.EnumSet;
 /**
  * AI goal for the Water Breathing Trainer.
  *
- * Movement is tactical:
- *  - Backstep is used as a wind-up for heavy/slow moves. The trainer creates space
- *    then immediately unleashes a charged attack.
- *  - Dash is used to close distance quickly and apply pressure with fast moves.
- *  - The trainer does not move randomly.
+ * Pacing: after using a move, globalCooldown = move's (windup+duration) from frame data
+ * + a difficulty-based padding. Hard adds almost nothing (immediate follow-up pressure).
+ * Easy adds enough that the full moveset cooldown has expired by the time the AI acts again,
+ * so the move is guaranteed to be ready and Easy actually attacks.
  *
- * Move index mapping (WaterBreathingMoveset):
- *  0 – Flowing Dance     (fast, close)
- *  1 – Striking Tide     (360°, close-mid, heavy)
- *  2 – Blessed Rain      (long dash strike, mid-long)
- *  3 – Whirlpool         (multi-hit spin, close, heavy)
- *  4 – Drop Ripple Thrust(thrust, mid)
- *  5 – Waterfall Basin   (large multi-hit, mid)
- *  6 – Splashing Water Flow (zigzag dash, mid)
- *  7 – Constant Flux     (5-hit combo finisher, close-mid, heavy)
- *  8 – Dead Calm         (AoE field, situational)
+ * All difficulties can use all moves — difficulty only controls timing and think pauses.
+ * Damage reduction is handled by getDifficultyDamageMultiplier() in WaterBreathingAttackBase.
+ *
+ * Move indices (WaterBreathingMoveset):
+ *  0 – Flowing Dance        windup=15, duration=60, cooldown=240
+ *  1 – Striking Tide        windup=12, duration=40, cooldown=360
+ *  2 – Blessed Rain         windup=9,  duration=25, cooldown=500
+ *  3 – Whirlpool            windup=14, duration=70, cooldown=380
+ *  4 – Drop Ripple Thrust   windup=10, duration=35, cooldown=300
+ *  5 – Waterfall Basin      windup=16, duration=60, cooldown=400
+ *  6 – Splashing Water Flow windup=10, duration=40, cooldown=380
+ *  7 – Constant Flux        windup=20, duration=80, cooldown=420
  */
 public class WaterBreathingAttackGoal extends MeleeAttackGoal {
 
-    // --- Cooldowns per move (ticks) ---
-    private static final int CD_FLOWING_DANCE        = 50;   // 0
-    private static final int CD_STRIKING_TIDE        = 70;   // 1
-    private static final int CD_BLESSED_RAIN         = 140;  // 2
-    private static final int CD_WHIRLPOOL            = 90;   // 3
-    private static final int CD_DROP_RIPPLE_THRUST   = 60;   // 4
-    private static final int CD_WATERFALL_BASIN      = 100;  // 5
-    private static final int CD_SPLASHING_WATER_FLOW = 80;   // 6
-    private static final int CD_CONSTANT_FLUX        = 120;  // 7
+    // Extra ticks added AFTER a move's (windup+duration) before the next decision.
+    // Easy: wait well past the moveset cooldown — move is ready when AI next acts.
+    // Hard: 0-3 ticks — re-evaluates the instant the animation ends, chains immediately.
+    private static final int PADDING_EASY_MIN   = 100;
+    private static final int PADDING_EASY_MAX   = 180;
+    private static final int PADDING_MED_MIN    =  15;
+    private static final int PADDING_MED_MAX    =  35;
+    private static final int PADDING_HARD_MIN   =   0;
+    private static final int PADDING_HARD_MAX   =   3;
 
-    private static final int GLOBAL_COOLDOWN_MIN = 10;
-    private static final int GLOBAL_COOLDOWN_MAX = 20;
-
-    // Ticks to wait after a backstep before releasing the queued heavy move.
-    // Keeps the trainer mid-air / still backing up while the move starts.
+    // Backstep release delay — ticks into the backstep before the heavy fires
     private static final int BACKSTEP_RELEASE_DELAY = 12;
+
+    // Chance per decision cycle to spontaneously hesitate ("think pause")
+    private static final float THINK_CHANCE_EASY   = 0.15f;
+    private static final float THINK_CHANCE_MED    = 0.06f;
+    private static final float THINK_CHANCE_HARD   = 0.02f;
 
     private final WaterBreathingTrainerEntity trainer;
 
     private int globalCooldown      = 0;
-    private int[] moveCooldowns     = new int[8];
     private int backstepCooldown    = 0;
     private int doubleJumpCooldown  = 0;
+    private int thinkPauseTicks     = 0;
 
-    // Pending heavy move: queued after a backstep so it fires mid-backstep
     private int pendingMoveIndex    = -1;
     private int pendingMoveDelay    = 0;
 
-    // Stuck detection
     private int    stuckCheckTimer  = 0;
     private double lastDistSq       = 0;
     private int    timesStuck       = 0;
@@ -71,35 +74,36 @@ public class WaterBreathingAttackGoal extends MeleeAttackGoal {
 
     @Override
     public boolean canUse() {
-        return trainer.getTarget() != null && trainer.getTarget().isAlive();
+        TrainerMode mode = trainer.getMode();
+        return (mode == TrainerMode.DUELING || mode == TrainerMode.SELF_DEFENSE)
+                && trainer.getTarget() != null && trainer.getTarget().isAlive();
     }
 
     @Override
     public boolean canContinueToUse() {
-        return trainer.getTarget() != null && trainer.getTarget().isAlive();
+        TrainerMode mode = trainer.getMode();
+        return (mode == TrainerMode.DUELING || mode == TrainerMode.SELF_DEFENSE)
+                && trainer.getTarget() != null && trainer.getTarget().isAlive();
     }
 
     @Override
     public void tick() {
         super.tick();
 
-        // Tick down all cooldowns
-        if (globalCooldown   > 0) globalCooldown--;
-        if (backstepCooldown > 0) backstepCooldown--;
+        if (globalCooldown     > 0) globalCooldown--;
+        if (backstepCooldown   > 0) backstepCooldown--;
         if (doubleJumpCooldown > 0) doubleJumpCooldown--;
-        if (pendingMoveDelay > 0) pendingMoveDelay--;
-        for (int i = 0; i < moveCooldowns.length; i++) {
-            if (moveCooldowns[i] > 0) moveCooldowns[i]--;
-        }
+        if (pendingMoveDelay   > 0) pendingMoveDelay--;
+        if (thinkPauseTicks    > 0) thinkPauseTicks--;
 
         LivingEntity target = trainer.getTarget();
         if (target == null || !target.isAlive()) return;
 
-        trainer.getLookControl().setLookAt(target, 30f, 30f);
+        trainer.getLookControl().setLookAt(target, 360f, 360f);
 
         double distSq = trainer.distanceToSqr(target);
 
-        // Stuck detection — nudge navigation if the trainer hasn't moved
+        // Stuck detection
         stuckCheckTimer++;
         if (stuckCheckTimer >= 40) {
             stuckCheckTimer = 0;
@@ -115,19 +119,28 @@ public class WaterBreathingAttackGoal extends MeleeAttackGoal {
             lastDistSq = distSq;
         }
 
-        // Fire pending heavy move once the delay expires (set up after a backstep)
+        // Fire pending heavy move after backstep wind-up
         if (pendingMoveIndex >= 0 && pendingMoveDelay == 0) {
             int idx = pendingMoveIndex;
             pendingMoveIndex = -1;
             if (trainer.getMoveset() != null && trainer.canUseMove(idx)) {
+                snapToFaceTarget();
                 trainer.performMovesetMove(idx);
-                moveCooldowns[idx] = getCooldownForMove(idx);
-                globalCooldown = randomGlobalCooldown();
+                globalCooldown = cooldownAfterMove(idx);
             }
             return;
         }
 
-        if (globalCooldown > 0 || pendingMoveIndex >= 0) return;
+        if (thinkPauseTicks > 0 || pendingMoveIndex >= 0) return;
+
+        // While counting down, approach player — Hard sprints, others walk
+        if (globalCooldown > 0) {
+            if (distSq > 6.0 * 6.0) {
+                double approachSpeed = trainer.getDuelDifficulty() == DuelDifficulty.HARD ? 1.3 : 0.7;
+                trainer.getNavigation().moveTo(target, approachSpeed);
+            }
+            return;
+        }
 
         // Air dodge toward target while airborne
         if (!trainer.onGround() && doubleJumpCooldown == 0) {
@@ -144,54 +157,51 @@ public class WaterBreathingAttackGoal extends MeleeAttackGoal {
 
         if (trainer.getMoveset() == null) return;
 
-        // --- Tactical decision tree ---
-
-        if (distSq < 4.0 * 4.0) {
-            // Very close — decide between a fast attack or backstep-into-heavy
-            boolean heavyReady = canUseAnyHeavyMove();
-            if (heavyReady && backstepCooldown == 0 && trainer.getRandom().nextInt(3) != 0) {
-                // Backstep to create space, then release a heavy move
-                queueHeavyMoveAfterBackstep(distSq);
-            } else {
-                // Fast attack: Flowing Dance or Drop Ripple Thrust
-                tryUseMove(0, CD_FLOWING_DANCE);
+        // Spontaneous hesitation beat
+        if (trainer.getRandom().nextFloat() < thinkChance()) {
+            thinkPauseTicks = 8 + trainer.getRandom().nextInt(14);
+            if (trainer.getRandom().nextBoolean() && distSq > 3.0 * 3.0 && backstepCooldown == 0) {
+                EntityMovement.applyBackstep(trainer);
+                backstepCooldown = 30;
             }
+            return;
+        }
+
+        decideAction(target, distSq);
+    }
+
+    // -------------------------------------------------------------------------
+    // Decision tree — no difficulty gating on move availability.
+    // Difficulty only affects timing (cooldowns) and think-pause frequency.
+    // -------------------------------------------------------------------------
+
+    private void decideAction(LivingEntity target, double distSq) {
+        if (distSq < 4.0 * 4.0) {
+            // Close — backstep into heavy, or fast jab
+            if (canUseAnyHeavy() && backstepCooldown == 0 && trainer.getRandom().nextInt(3) != 0) {
+                queueHeavyAfterBackstep();
+            } else if (canDo(0)) useMove(0);
+            else if (canDo(4)) useMove(4);
+            else applyDash(target);
 
         } else if (distSq < 8.0 * 8.0) {
-            // Close-mid range — Striking Tide, Water Wheel setup, or Flowing Dance
-            if (canDoMove(1) && trainer.getRandom().nextBoolean()) {
-                // Striking Tide — 360° sweep; backstep slightly first
-                queueMoveAfterBackstep(1, CD_STRIKING_TIDE);
-            } else if (canDoMove(4)) {
-                tryUseMove(4, CD_DROP_RIPPLE_THRUST);
-            } else if (canDoMove(0)) {
-                tryUseMove(0, CD_FLOWING_DANCE);
-            } else {
-                // Apply pressure with a dash to stay in melee
-                applyDashPressure(target, distSq);
-            }
+            // Close-mid
+            if (canDo(1) && trainer.getRandom().nextBoolean()) queueAfterBackstep(1);
+            else if (canDo(4)) useMove(4);
+            else if (canDo(0)) useMove(0);
+            else applyDash(target);
 
         } else if (distSq < 16.0 * 16.0) {
-            // Mid range — ranged / area moves, or dash into melee
-            if (canDoMove(5) && trainer.getRandom().nextBoolean()) {
-                tryUseMove(5, CD_WATERFALL_BASIN);
-            } else if (canDoMove(6)) {
-                // Splashing Water Flow zigzag dash — pure pressure
-                tryUseMove(6, CD_SPLASHING_WATER_FLOW);
-            } else if (canDoMove(2)) {
-                // Blessed Rain — long dash strike, no backstep needed
-                tryUseMove(2, CD_BLESSED_RAIN);
-            } else {
-                applyDashPressure(target, distSq);
-            }
+            // Mid
+            if (canDo(5) && trainer.getRandom().nextBoolean()) useMove(5);
+            else if (canDo(6)) useMove(6);
+            else if (canDo(2)) useMove(2);
+            else applyDash(target);
 
         } else {
-            // Long range — dash to close or Blessed Rain
-            if (canDoMove(2) && trainer.getRandom().nextInt(3) == 0) {
-                tryUseMove(2, CD_BLESSED_RAIN);
-            } else {
-                applyDashPressure(target, distSq);
-            }
+            // Long
+            if (canDo(2) && trainer.getRandom().nextInt(3) == 0) useMove(2);
+            else applyDash(target);
         }
     }
 
@@ -199,67 +209,83 @@ public class WaterBreathingAttackGoal extends MeleeAttackGoal {
     // Helpers
     // -------------------------------------------------------------------------
 
-    private boolean canDoMove(int idx) {
-        return moveCooldowns[idx] == 0 && trainer.canUseMove(idx);
+    private boolean canDo(int idx) {
+        return trainer.canUseMove(idx);
     }
 
-    private boolean canUseAnyHeavyMove() {
-        // Heavy moves: Whirlpool (3), Striking Tide (1), Constant Flux (7), Blessed Rain (2)
-        return canDoMove(3) || canDoMove(1) || canDoMove(7) || canDoMove(2);
+    private boolean canUseAnyHeavy() {
+        return canDo(3) || canDo(1) || canDo(7) || canDo(2);
     }
 
-    private void tryUseMove(int idx, int cd) {
-        if (!canDoMove(idx)) return;
+    private void useMove(int idx) {
+        if (!canDo(idx)) return;
+        snapToFaceTarget();
         trainer.performMovesetMove(idx);
-        moveCooldowns[idx] = cd;
-        globalCooldown = randomGlobalCooldown();
+        globalCooldown = cooldownAfterMove(idx);
     }
 
-    /** Backstep then queue a move to fire after BACKSTEP_RELEASE_DELAY ticks. */
-    private void queueMoveAfterBackstep(int moveIdx, int cd) {
+    /** Instantly aligns trainer's yRot/yBodyRot to face the current target so hitboxes land. */
+    private void snapToFaceTarget() {
+        LivingEntity target = trainer.getTarget();
+        if (target == null) return;
+        double dx = target.getX() - trainer.getX();
+        double dz = target.getZ() - trainer.getZ();
+        float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
+        trainer.setYRot(yaw);
+        trainer.yRotO = yaw;
+        trainer.setYBodyRot(yaw);
+        trainer.setYHeadRot(yaw);
+    }
+
+    private void queueAfterBackstep(int idx) {
         EntityMovement.applyBackstep(trainer);
-        backstepCooldown    = 60;
-        pendingMoveIndex    = moveIdx;
-        pendingMoveDelay    = BACKSTEP_RELEASE_DELAY;
-        moveCooldowns[moveIdx] = cd;
+        backstepCooldown = 60;
+        pendingMoveIndex = idx;
+        pendingMoveDelay = BACKSTEP_RELEASE_DELAY;
     }
 
-    /** Choose the best available heavy move and backstep into it. */
-    private void queueHeavyMoveAfterBackstep(double distSq) {
-        // Prefer Constant Flux when very close, then Whirlpool, Striking Tide, Blessed Rain
-        if (canDoMove(7)) {
-            queueMoveAfterBackstep(7, CD_CONSTANT_FLUX);
-        } else if (canDoMove(3)) {
-            queueMoveAfterBackstep(3, CD_WHIRLPOOL);
-        } else if (canDoMove(1)) {
-            queueMoveAfterBackstep(1, CD_STRIKING_TIDE);
-        } else if (canDoMove(2)) {
-            queueMoveAfterBackstep(2, CD_BLESSED_RAIN);
-        }
+    private void queueHeavyAfterBackstep() {
+        if      (canDo(7)) queueAfterBackstep(7);
+        else if (canDo(3)) queueAfterBackstep(3);
+        else if (canDo(1)) queueAfterBackstep(1);
+        else if (canDo(2)) queueAfterBackstep(2);
     }
 
-    /** Dash toward the target to close distance, readying a quick follow-up. */
-    private void applyDashPressure(LivingEntity target, double distSq) {
+    private void applyDash(LivingEntity target) {
         Vec3 toTarget = target.position().subtract(trainer.position()).normalize();
         EntityMovement.applyDash(trainer, toTarget);
-        globalCooldown = 12;
+        globalCooldown = 14;
     }
 
-    private int getCooldownForMove(int idx) {
-        return switch (idx) {
-            case 0 -> CD_FLOWING_DANCE;
-            case 1 -> CD_STRIKING_TIDE;
-            case 2 -> CD_BLESSED_RAIN;
-            case 3 -> CD_WHIRLPOOL;
-            case 4 -> CD_DROP_RIPPLE_THRUST;
-            case 5 -> CD_WATERFALL_BASIN;
-            case 6 -> CD_SPLASHING_WATER_FLOW;
-            case 7 -> CD_CONSTANT_FLUX;
-            default -> 60;
+    /**
+     * Global cooldown after firing move idx.
+     *
+     * Easy:   moveset CD + padding — guarantees move IS ready when AI acts again.
+     *         Trainer attacks slowly but reliably.
+     * Medium: animation (windup+duration) + small padding. Move may not be ready;
+     *         trainer dashes until it is.
+     * Hard:   barely more than animation time. Trainer applies constant dash pressure
+     *         and attacks the moment a move becomes available.
+     */
+    private int cooldownAfterMove(int idx) {
+        MoveConfiguration cfg = trainer.getMoveset() != null ? trainer.getMoveset().getMove(idx) : null;
+        if (cfg == null) return 40;
+
+        int animBase   = cfg.getWindupOrDefault(10) + cfg.getDurationOrDefault(20);
+        int movesetCd  = cfg.getCooldownOrDefault(120);
+
+        return switch (trainer.getDuelDifficulty()) {
+            case EASY   -> movesetCd  + PADDING_EASY_MIN + trainer.getRandom().nextInt(PADDING_EASY_MAX - PADDING_EASY_MIN);
+            case MEDIUM -> animBase   + PADDING_MED_MIN  + trainer.getRandom().nextInt(PADDING_MED_MAX  - PADDING_MED_MIN);
+            case HARD   -> animBase   + PADDING_HARD_MIN + trainer.getRandom().nextInt(PADDING_HARD_MAX - PADDING_HARD_MIN);
         };
     }
 
-    private int randomGlobalCooldown() {
-        return GLOBAL_COOLDOWN_MIN + trainer.getRandom().nextInt(GLOBAL_COOLDOWN_MAX - GLOBAL_COOLDOWN_MIN);
+    private float thinkChance() {
+        return switch (trainer.getDuelDifficulty()) {
+            case EASY   -> THINK_CHANCE_EASY;
+            case MEDIUM -> THINK_CHANCE_MED;
+            case HARD   -> 0f; // Hard never hesitates
+        };
     }
 }

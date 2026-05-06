@@ -62,7 +62,12 @@ public class WaterBreathingTrainerEntity extends BaseBreathingTrainerEntity {
         goalSelector.addGoal(3, new WaterAvoidingRandomStrollGoal(this, 0.7));
         goalSelector.addGoal(4, new RandomLookAroundGoal(this));
 
-        targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        targetSelector.addGoal(1, new HurtByTargetGoal(this) {
+            @Override public boolean canUse() {
+                TrainerMode m = getMode();
+                return (m == TrainerMode.DUELING || m == TrainerMode.SELF_DEFENSE) && super.canUse();
+            }
+        });
         targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Monster.class, 10, true, false, null));
         targetSelector.addGoal(3, new ProvokedPlayerTargetGoal(this));
     }
@@ -103,6 +108,17 @@ public class WaterBreathingTrainerEntity extends BaseBreathingTrainerEntity {
     }
 
     public UUID getProvokedByPlayer() { return provokedByPlayer; }
+
+    @Override
+    protected net.minecraft.world.BossEvent.BossBarColor getBossBarColor() {
+        return net.minecraft.world.BossEvent.BossBarColor.BLUE;
+    }
+
+    @Override
+    protected void endDuel(boolean playerWon) {
+        provokedByPlayer = null;
+        super.endDuel(playerWon);
+    }
 
     @Override
     public void tick() {
