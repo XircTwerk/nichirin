@@ -1,5 +1,6 @@
 package com.xirc.nichirin.client.gui;
 
+import com.xirc.nichirin.client.gui.NichirinPalette;
 import lombok.Getter;
 import lombok.Setter;
 import net.fabricmc.api.EnvType;
@@ -27,9 +28,9 @@ public class BreathingBarHUD {
     // Configuration
     @Setter
     private static BarPosition position = BarPosition.ABOVE_HOTBAR_LEFT;  // Default to left side
-    private static final int BREATHING_COLOR = 0xFF55AAFF; // Light blue
-    private static final int BACKGROUND_COLOR = 0x80000000; // Semi-transparent black
-    private static final int BORDER_COLOR = 0xFF000000; // Full black for outline
+    private static final int BREATHING_COLOR  = NichirinPalette.BAR_BREATHING;
+    private static final int BACKGROUND_COLOR = NichirinPalette.BAR_BG;
+    private static final int BORDER_COLOR     = NichirinPalette.BAR_BORDER;
 
     // Bar dimensions (same as stamina)
     private static final int BAR_WIDTH = 40;
@@ -147,7 +148,7 @@ public class BreathingBarHUD {
         int borderColor = (alpha) | (BORDER_COLOR & 0x00FFFFFF);
         int backgroundColor = (int)(fadeAlpha * 0x80) << 24; // Semi-transparent background
         int breathingColor = alpha | (BREATHING_COLOR & 0x00FFFFFF);
-        int highlightColor = alpha | 0x0088DDFF;  // Lighter blue highlight
+        int highlightColor = alpha | NichirinPalette.BAR_BREATHING_HIGHLIGHT;
         int textColor = alpha | 0x00FFFFFF;
 
         // Draw background with border

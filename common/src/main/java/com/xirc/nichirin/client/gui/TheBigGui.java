@@ -1,6 +1,7 @@
 package com.xirc.nichirin.client.gui;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.xirc.nichirin.client.gui.NichirinPalette;
 import com.xirc.nichirin.client.gui.biggui.*;
 import com.xirc.nichirin.registry.NichirinKeybindRegistry;
 import com.xirc.nichirin.common.util.PlayerStats;
@@ -31,8 +32,8 @@ public class TheBigGui extends Screen {
     private static final int TOP_MARGIN = 40;
 
     // Colors
-    private static final int BACKGROUND_COLOR = 0xC0101010; // Dark gray with transparency
-    private static final int ACTIVE_BUTTON_COLOR = 0xFF3F3F3F;
+    private static final int BACKGROUND_COLOR    = NichirinPalette.BG_DARK;
+    private static final int ACTIVE_BUTTON_COLOR = NichirinPalette.BG_BOX_ACTIVE;
 
     // Fixed scale constants
     private static final double FIXED_GUI_SCALE = 2.0;
@@ -174,7 +175,7 @@ public class TheBigGui extends Screen {
 
         // Draw content area background (slightly lighter) - 20 pixels higher
         int contentRight = this.scaledWidth - BUTTON_WIDTH - RIGHT_MARGIN - 10;
-        graphics.fill(10, TOP_MARGIN - 20, contentRight, this.scaledHeight - 10, 0xB0202020);
+        graphics.fill(10, TOP_MARGIN - 20, contentRight, this.scaledHeight - 10, NichirinPalette.BG_CONTENT);
 
         // Calculate content area dimensions
         int contentWidth = contentRight - 10;

@@ -170,11 +170,8 @@ public class WaterBreathingAttackGoal extends MeleeAttackGoal {
         decideAction(target, distSq);
     }
 
-    // -------------------------------------------------------------------------
     // Decision tree — no difficulty gating on move availability.
-    // Difficulty only affects timing (cooldowns) and think-pause frequency.
-    // -------------------------------------------------------------------------
-
+    // Difficulty only affects timing (cooldowns) and think-pause frequency
     private void decideAction(LivingEntity target, double distSq) {
         if (distSq < 4.0 * 4.0) {
             // Close — backstep into heavy, or fast jab
@@ -205,10 +202,7 @@ public class WaterBreathingAttackGoal extends MeleeAttackGoal {
         }
     }
 
-    // -------------------------------------------------------------------------
     // Helpers
-    // -------------------------------------------------------------------------
-
     private boolean canDo(int idx) {
         return trainer.canUseMove(idx);
     }

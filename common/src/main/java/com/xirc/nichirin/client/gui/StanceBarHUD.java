@@ -1,5 +1,6 @@
 package com.xirc.nichirin.client.gui;
 
+import com.xirc.nichirin.client.gui.NichirinPalette;
 import lombok.Getter;
 import lombok.Setter;
 import net.fabricmc.api.EnvType;
@@ -13,9 +14,9 @@ import net.minecraft.util.Mth;
 public class StanceBarHUD {
 
     // Configuration - simplified since we only need one position
-    private static final int STANCE_COLOR = 0xFFFF8C00; // Orange color (DarkOrange)
-    private static final int BACKGROUND_COLOR = 0x80000000; // Semi-transparent black
-    private static final int BORDER_COLOR = 0xFF000000; // Full black for outline
+    private static final int STANCE_COLOR     = NichirinPalette.BAR_STANCE;
+    private static final int BACKGROUND_COLOR = NichirinPalette.BAR_BG;
+    private static final int BORDER_COLOR     = NichirinPalette.BAR_BORDER;
 
     // Bar dimensions (same size as stamina bar)
     private static final int BAR_WIDTH = 40; // Same as stamina
@@ -108,7 +109,7 @@ public class StanceBarHUD {
         int borderColor = (alpha) | (BORDER_COLOR & 0x00FFFFFF);
         int backgroundColor = (int)(fadeAlpha * 0x80) << 24; // Semi-transparent background
         int stanceColor = alpha | (STANCE_COLOR & 0x00FFFFFF);
-        int highlightColor = alpha | 0x00FFAA55; // Orange highlight
+        int highlightColor = alpha | NichirinPalette.BAR_STANCE_HIGHLIGHT;
         int textColor = alpha | 0x00FFFFFF;
 
         // Draw background with border

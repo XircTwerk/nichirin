@@ -1,6 +1,7 @@
 package com.xirc.nichirin.client.gui.biggui;
 
 import com.xirc.nichirin.client.data.ClientProgressionCache;
+import com.xirc.nichirin.client.gui.NichirinPalette;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.data.ProgressionHelper;
 import com.xirc.nichirin.registry.MovesetRegistry;
@@ -8,324 +9,268 @@ import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.player.Player;
 
 import static com.xirc.nichirin.common.data.ProgressionHelper.getUnlockRequirement;
 
 /**
- * Breathing Styles section that uses the same data sources as the BreathingCommand
- * Now properly checks MovesetRegistry for available styles and ProgressionHelper for unlocks
+ * Breathing Styles selection panel inside the MOVESET section.
+ *
+ * Layout: 3-column grid so all 7 styles fit within the visible content area
+ * without scrolling on typical screen sizes.
  */
 public class BreathingStylesSection {
 
-    private static final int TOP_MARGIN = 20;
+    // All registered breathing styles in display order.
+    static final String[] BREATHING_STYLES = {
+            "water_breathing",
+            "flame_breathing",
+            "thunder_breathing",
+            "insect_breathing",
+            "sound_breathing",
+            "mist_breathing",
+            "beast_breathing",
+    };
 
-    public void render(GuiGraphics graphics, Player player, int contentWidth, int contentHeight, Font font, int mouseX, int mouseY) {
-        int contentX = 20;
-        int contentY = TOP_MARGIN + 10;
-        int centerX = (contentWidth - 20) / 2;
+    private static final int TOP_MARGIN   = 20;
+    private static final int COLS         = 3;
+    private static final int BOX_WIDTH    = 130;
+    private static final int BOX_HEIGHT   = 70;
+    private static final int SPACING      = 15;
+
+    // Render
+    public void render(GuiGraphics graphics, Player player, int contentWidth, int contentHeight,
+                       Font font, int mouseX, int mouseY) {
+
+        int centerX    = (contentWidth - 20) / 2;
+        int contentY   = TOP_MARGIN + 10;
 
         // Title
-        Component title = Component.translatable("gui.nichirin.breathing_styles.title").withStyle(style -> style.withBold(true));
-        graphics.drawString(font, title,
-                centerX - font.width(title) / 2, contentY, 0xFFFFFF);
+        Component title = Component.translatable("gui.nichirin.breathing_styles.title")
+                .withStyle(s -> s.withBold(true));
+        graphics.drawString(font, title, centerX - font.width(title) / 2, contentY,
+                NichirinPalette.TEXT_WHITE);
         contentY += 30;
 
-        // Current style - use same data source as command
+        // Current style line (only when a style is active)
         String currentStyle = MovesetHelper.getMovesetId(player);
         if (currentStyle != null) {
             Component current = Component.translatable("gui.nichirin.breathing_styles.current",
-                            Component.translatable("breathing_style." + currentStyle))
-                    .withStyle(style -> style.withColor(0x55FFFF));
-            graphics.drawString(font, current, contentX, contentY, 0x55FFFF);
+                    Component.translatable("breathing_style." + currentStyle))
+                    .withStyle(s -> s.withColor(NichirinPalette.TEXT_ACCENT));
+            graphics.drawString(font, current, 20, contentY, NichirinPalette.TEXT_ACCENT);
             contentY += 25;
         }
 
         // Instructions
         Component instructions = Component.translatable("gui.nichirin.breathing_styles.instructions");
-        graphics.drawString(font, instructions, contentX, contentY, 0xAAAAAA);
+        graphics.drawString(font, instructions, 20, contentY, NichirinPalette.TEXT_MUTED);
         contentY += 20;
 
-        // Show all 5 breathing styles
-        String[] breathingStyles = {
-                "thunder_breathing",
-                "flame_breathing",
-                "insect_breathing",
-                "sound_breathing",
-                "water_breathing"
-        };
+        // Grid
+        int gridY      = contentY + 10;
+        int totalWidth = (BOX_WIDTH * COLS) + (SPACING * (COLS - 1));
+        int startX     = centerX - totalWidth / 2;
 
-        if (breathingStyles.length == 0) {
-            Component noStyles = Component.literal("No breathing styles registered").withStyle(style -> style.withColor(0xFF5555));
-            graphics.drawString(font, noStyles, centerX - font.width(noStyles) / 2, contentY + 50, 0xFF5555);
-            return;
-        }
+        String hoveredLocked = null;
 
-        // Style grid - dynamic based on available styles
-        int gridY = contentY + 10;
-        int boxWidth = 140;
-        int boxHeight = 80;
-        int spacing = 20;
+        for (int i = 0; i < BREATHING_STYLES.length; i++) {
+            String styleId = BREATHING_STYLES[i];
+            int row = i / COLS;
+            int col = i % COLS;
 
-        // Calculate grid layout
-        int cols = Math.min(2, breathingStyles.length);
-        int rows = (int) Math.ceil((double) breathingStyles.length / cols);
-        int totalWidth = (boxWidth * cols) + (spacing * (cols - 1));
-        int startX = centerX - totalWidth / 2;
+            int x = startX + col * (BOX_WIDTH + SPACING);
+            int y = gridY  + row * (BOX_HEIGHT + SPACING);
 
-        // Check what's being hovered
-        String hoveredLockedStyle = null;
-
-        // Render style boxes dynamically
-        for (int i = 0; i < breathingStyles.length; i++) {
-            String styleId = breathingStyles[i];
-            int row = i / cols;
-            int col = i % cols;
-
-            int x = startX + col * (boxWidth + spacing);
-            int y = gridY + row * (boxHeight + spacing);
-
-            // Check if this box is being hovered and is locked
-            if (mouseX >= x && mouseX <= x + boxWidth && mouseY >= y && mouseY <= y + boxHeight) {
-                if (!isStyleUnlocked(player, styleId)) {
-                    hoveredLockedStyle = styleId;
-                }
+            if (mouseX >= x && mouseX <= x + BOX_WIDTH && mouseY >= y && mouseY <= y + BOX_HEIGHT
+                    && !isStyleUnlocked(player, styleId)) {
+                hoveredLocked = styleId;
             }
 
-            renderBreathingStyleBox(graphics, font, player, currentStyle, styleId, x, y, boxWidth, boxHeight);
+            renderBox(graphics, font, player, currentStyle, styleId, x, y);
         }
 
-        // Show tooltip at top if hovering over locked style
-        if (hoveredLockedStyle != null) {
-            String requirement = getUnlockRequirement(hoveredLockedStyle);
-            Component tooltip = Component.literal(requirement).withStyle(style -> style.withColor(0xFFAA00).withBold(true));
-            int tooltipY = 50;
-            graphics.drawString(font, tooltip, centerX - font.width(tooltip) / 2, tooltipY, 0xFFAA00);
+        // Tooltip for hovered-locked style
+        if (hoveredLocked != null) {
+            String req = getUnlockRequirement(hoveredLocked);
+            Component tooltip = Component.literal(req)
+                    .withStyle(s -> s.withColor(NichirinPalette.TEXT_WARNING).withBold(true));
+            graphics.drawString(font, tooltip, centerX - font.width(tooltip) / 2, 50,
+                    NichirinPalette.TEXT_WARNING);
         }
 
-        // "None" button - positioned below the grid
-        int lastRow = (breathingStyles.length - 1) / cols;
-        int noneButtonY = gridY + (lastRow + 1) * (boxHeight + spacing) + 20;
-        int noneButtonX = centerX - 75;
-        int noneButtonWidth = 150;
-        int noneButtonHeight = 20;
+        // "None" button
+        int lastRow      = (BREATHING_STYLES.length - 1) / COLS;
+        int noneY        = gridY + (lastRow + 1) * (BOX_HEIGHT + SPACING) + 20;
+        int noneX        = centerX - 75;
+        int noneW        = 150;
+        int noneH        = 20;
 
-        // None button background
-        int noneButtonBg = (currentStyle == null) ? 0xFF3A3A3A : 0xFF2A2A2A;
-        int noneButtonBorder = (currentStyle == null) ? 0xFF55FFFF : 0xFF4A4A4A;
+        int noneBg     = currentStyle == null ? NichirinPalette.BG_BOX_ACTIVE : NichirinPalette.BG_BOX;
+        int noneBorder = currentStyle == null ? NichirinPalette.BORDER_ACCENT  : NichirinPalette.BORDER_DEFAULT;
 
-        graphics.fill(noneButtonX - 1, noneButtonY - 1,
-                noneButtonX + noneButtonWidth + 1, noneButtonY + noneButtonHeight + 1, noneButtonBorder);
-        graphics.fill(noneButtonX, noneButtonY,
-                noneButtonX + noneButtonWidth, noneButtonY + noneButtonHeight, noneButtonBg);
+        graphics.fill(noneX - 1, noneY - 1, noneX + noneW + 1, noneY + noneH + 1, noneBorder);
+        graphics.fill(noneX, noneY, noneX + noneW, noneY + noneH, noneBg);
 
-        Component noneText = Component.translatable("gui.nichirin.breathing_styles.none");
-        int noneTextColor = (currentStyle == null) ? 0x55FFFF : 0xAAAAAA;
+        Component noneText  = Component.translatable("gui.nichirin.breathing_styles.none");
+        int noneTextColor   = currentStyle == null ? NichirinPalette.TEXT_ACCENT : NichirinPalette.TEXT_MUTED;
         graphics.drawString(font, noneText,
-                noneButtonX + (noneButtonWidth - font.width(noneText)) / 2,
-                noneButtonY + 6, noneTextColor);
+                noneX + (noneW - font.width(noneText)) / 2,
+                noneY + 6, noneTextColor);
     }
 
-    /**
-     * Renders a single breathing style selection box
-     */
-    private void renderBreathingStyleBox(GuiGraphics graphics, Font font, Player player, String currentStyle,
-                                         String styleName, int x, int y, int width, int height) {
+    /** Renders a single breathing-style selection box. */
+    private void renderBox(GuiGraphics graphics, Font font, Player player,
+                           String currentStyle, String styleId, int x, int y) {
+        boolean unlocked  = isStyleUnlocked(player, styleId);
+        boolean selected  = styleId.equals(currentStyle);
 
-        // Use same unlock check as command
-        boolean isUnlocked = isStyleUnlocked(player, styleName);
-        boolean isSelected = styleName.equals(currentStyle);
+        int bg     = unlocked ? (selected ? NichirinPalette.BG_BOX_ACTIVE : NichirinPalette.BG_BOX)
+                              : NichirinPalette.BG_BOX_LOCKED;
+        int border = unlocked ? (selected ? NichirinPalette.BORDER_ACCENT : NichirinPalette.BORDER_DEFAULT)
+                              : NichirinPalette.BORDER_LOCKED;
 
-        // Draw box with different colors based on unlock status
-        int bgColor;
-        int borderColor;
+        graphics.fill(x - 1, y - 1, x + BOX_WIDTH + 1, y + BOX_HEIGHT + 1, border);
+        graphics.fill(x, y, x + BOX_WIDTH, y + BOX_HEIGHT, bg);
 
-        if (!isUnlocked) {
-            bgColor = 0xFF1A1A1A; // Darker for locked
-            borderColor = 0xFF666666; // Gray border for locked
-        } else if (isSelected) {
-            bgColor = 0xFF3A3A3A;
-            borderColor = 0xFF55FFFF; // Cyan for selected
-        } else {
-            bgColor = 0xFF2A2A2A;
-            borderColor = 0xFF4A4A4A; // Normal border
-        }
+        Component name = Component.literal(formatStyleName(styleId));
+        int nameColor  = unlocked ? NichirinPalette.TEXT_WHITE : NichirinPalette.TEXT_LOCKED;
+        graphics.drawString(font, name,
+                x + (BOX_WIDTH - font.width(name)) / 2, y + 8, nameColor);
 
-        // Border
-        graphics.fill(x - 1, y - 1, x + width + 1, y + height + 1, borderColor);
-        // Background
-        graphics.fill(x, y, x + width, y + height, bgColor);
-
-        // Style name - format same as command
-        Component displayName = Component.literal(formatStyleName(styleName));
-        int nameColor = isUnlocked ? 0xFFFFFF : 0x888888;
-        graphics.drawString(font, displayName,
-                x + (width - font.width(displayName)) / 2,
-                y + 10, nameColor);
-
-        // Status
-        if (!isUnlocked) {
+        if (!unlocked) {
             Component locked = Component.translatable("gui.nichirin.breathing_styles.locked_status")
-                    .withStyle(style -> style.withColor(0xFF5555));
+                    .withStyle(s -> s.withColor(NichirinPalette.TEXT_ERROR));
             graphics.drawString(font, locked,
-                    x + (width - font.width(locked)) / 2,
-                    y + 30, 0xFF5555);
-        } else if (isSelected) {
+                    x + (BOX_WIDTH - font.width(locked)) / 2, y + 26,
+                    NichirinPalette.TEXT_ERROR);
+        } else if (selected) {
             Component equipped = Component.translatable("gui.nichirin.breathing_styles.equipped")
-                    .withStyle(style -> style.withColor(0x55FFFF));
+                    .withStyle(s -> s.withColor(NichirinPalette.TEXT_ACCENT));
             graphics.drawString(font, equipped,
-                    x + (width - font.width(equipped)) / 2,
-                    y + 30, 0x55FFFF);
+                    x + (BOX_WIDTH - font.width(equipped)) / 2, y + 26,
+                    NichirinPalette.TEXT_ACCENT);
         } else {
-            Component clickToSelect = Component.translatable("gui.nichirin.breathing_styles.click_to_select")
-                    .withStyle(style -> style.withColor(0xAAAAAA));
-            graphics.drawString(font, clickToSelect,
-                    x + (width - font.width(clickToSelect)) / 2,
-                    y + 30, 0xAAAAAA);
+            Component click = Component.translatable("gui.nichirin.breathing_styles.click_to_select")
+                    .withStyle(s -> s.withColor(NichirinPalette.TEXT_MUTED));
+            graphics.drawString(font, click,
+                    x + (BOX_WIDTH - font.width(click)) / 2, y + 26,
+                    NichirinPalette.TEXT_MUTED);
         }
 
         // Icon placeholder
-        int iconColor = isUnlocked ? 0xFF3A3A3A : 0xFF2A2A2A;
-        graphics.fill(x + width/2 - 16, y + 50, x + width/2 + 16, y + 75, iconColor);
+        int iconBg = unlocked ? NichirinPalette.BG_BOX_ACTIVE : NichirinPalette.BG_BOX;
+        graphics.fill(x + BOX_WIDTH / 2 - 12, y + 44, x + BOX_WIDTH / 2 + 12, y + 64, iconBg);
     }
 
-    /**
-     * Check if a style is unlocked - uses same method as command
-     */
-    private boolean isStyleUnlocked(Player player, String styleId) {
-        if (player.level().isClientSide()) {
-            return ClientProgressionCache.isUnlocked(styleId);
-        }
-
-        // Server side
-        if (!MovesetRegistry.isRegistered(styleId)) {
-            return false;
-        }
-        return ProgressionHelper.isStyleUnlocked(player, styleId);
-    }
-    /**
-     * Format style name same as command
-     */
-    private String formatStyleName(String styleId) {
-        String[] parts = styleId.split("_");
-        StringBuilder formatted = new StringBuilder();
-        for (String part : parts) {
-            if (formatted.length() > 0) formatted.append(" ");
-            formatted.append(part.substring(0, 1).toUpperCase()).append(part.substring(1));
-        }
-        return formatted.toString();
-    }
-
+    // Click handling
     private long lastClickTime = 0;
-    private static final long CLICK_COOLDOWN = 500; // 500ms cooldown
+    private static final long CLICK_COOLDOWN_MS = 500;
 
     public boolean handleClick(double mouseX, double mouseY, Player player, int contentWidth) {
-        // Prevent click spam
-        long currentTime = System.currentTimeMillis();
-        if (currentTime - lastClickTime < CLICK_COOLDOWN) {
-            return false;
-        }
+        long now = System.currentTimeMillis();
+        if (now - lastClickTime < CLICK_COOLDOWN_MS) return false;
 
         String currentStyle = MovesetHelper.getMovesetId(player);
-        int centerX = (contentWidth - 20) / 2;
+        int    centerX      = (contentWidth - 20) / 2;
+        int    totalWidth   = (BOX_WIDTH * COLS) + (SPACING * (COLS - 1));
+        int    startX       = centerX - totalWidth / 2;
 
-        // Use the same 5 breathing styles
-        String[] breathingStyles = {
-                "thunder_breathing",
-                "flame_breathing",
-                "insect_breathing",
-                "sound_breathing",
-                "water_breathing"
-        };
+        int gridY = TOP_MARGIN + 10 + 30 + 20 + 10;
+        if (currentStyle != null) gridY += 25;
 
-        if (breathingStyles.length == 0) {
-            return false;
-        }
+        // Style boxes
+        for (int i = 0; i < BREATHING_STYLES.length; i++) {
+            String styleId = BREATHING_STYLES[i];
+            int row = i / COLS;
+            int col = i % COLS;
 
-        // Calculate click areas dynamically
-        int boxWidth = 140;
-        int boxHeight = 80;
-        int spacing = 20;
-        int cols = Math.min(2, breathingStyles.length);
-        int totalWidth = (boxWidth * cols) + (spacing * (cols - 1));
-        int startX = centerX - totalWidth / 2;
-        // Base Y matches render(): TOP_MARGIN+10 (30) + title (30) + instructions (20) + grid offset (10)
-        // Only add 25 when the current-style line is drawn (same condition as render())
-        int topRowY = TOP_MARGIN + 10 + 30 + 20 + 10;
-        if (currentStyle != null) topRowY += 25;
+            int x = startX + col * (BOX_WIDTH + SPACING);
+            int y = gridY  + row * (BOX_HEIGHT + SPACING);
 
-        // Check clicks on style boxes
-        for (int i = 0; i < breathingStyles.length; i++) {
-            String styleId = breathingStyles[i];
-            int row = i / cols;
-            int col = i % cols;
-
-            int x = startX + col * (boxWidth + spacing);
-            int y = topRowY + row * (boxHeight + spacing);
-
-            if (mouseX >= x && mouseX <= x + boxWidth && mouseY >= y && mouseY <= y + boxHeight) {
-                return handleStyleClick(player, styleId, currentStyle, currentTime);
+            if (mouseX >= x && mouseX <= x + BOX_WIDTH && mouseY >= y && mouseY <= y + BOX_HEIGHT) {
+                return handleStyleClick(player, styleId, currentStyle, now);
             }
         }
 
-        // Check for "None" button click
-        int lastRow = (breathingStyles.length - 1) / cols;
-        int noneButtonY = topRowY + (lastRow + 1) * (boxHeight + spacing) + 20;
-        int noneButtonX = centerX - 75;
-        int noneButtonWidth = 150;
-        int noneButtonHeight = 20;
+        // "None" button
+        int lastRow = (BREATHING_STYLES.length - 1) / COLS;
+        int noneY   = gridY + (lastRow + 1) * (BOX_HEIGHT + SPACING) + 20;
+        int noneX   = centerX - 75;
+        int noneW   = 150;
+        int noneH   = 20;
 
-        if (mouseX >= noneButtonX && mouseX <= noneButtonX + noneButtonWidth &&
-                mouseY >= noneButtonY && mouseY <= noneButtonY + noneButtonHeight) {
-
-            // Clear breathing style regardless of current state
+        if (mouseX >= noneX && mouseX <= noneX + noneW && mouseY >= noneY && mouseY <= noneY + noneH) {
             NichirinPacketRegistry.requestStyleChange(null);
-
-            // Play click sound
-            Minecraft.getInstance().getSoundManager().play(
-                    net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
-                            net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 1.0F
-                    )
-            );
-
-            lastClickTime = currentTime;
+            playClick(1.0f);
+            lastClickTime = now;
             return true;
         }
 
         return false;
     }
 
-    /**
-     * Handle clicking on a breathing style
-     */
-    private boolean handleStyleClick(Player player, String styleName, String currentStyle, long currentTime) {
-        // Check if the style is unlocked (same as command logic)
-        if (!isStyleUnlocked(player, styleName)) {
-            // Style is locked - just play error sound
-            Minecraft.getInstance().getSoundManager().play(
-                    net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
-                            net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 0.5F, 0.8F
-                    )
-            );
-            lastClickTime = currentTime;
+    private boolean handleStyleClick(Player player, String styleId, String currentStyle, long now) {
+        if (!isStyleUnlocked(player, styleId)) {
+            playClick(0.5f, 0.8f);
+            lastClickTime = now;
             return true;
         }
-
-        // Style is unlocked - only set if not already selected
-        if (!styleName.equals(currentStyle)) {
-            // Use packet to request style change from server
-            NichirinPacketRegistry.requestStyleChange(styleName);
-
-            // Play success sound
-            Minecraft.getInstance().getSoundManager().play(
-                    net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
-                            net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 1.0F
-                    )
-            );
+        if (!styleId.equals(currentStyle)) {
+            NichirinPacketRegistry.requestStyleChange(styleId);
+            playClick(1.0f);
         }
-
-        lastClickTime = currentTime;
+        lastClickTime = now;
         return true;
+    }
+
+    // Helpers
+    /** Computes the Y coordinate of the grid top row, matching render(). */
+    static int gridTopY(String currentStyle) {
+        int y = TOP_MARGIN + 10 + 30 + 20 + 10;
+        if (currentStyle != null) y += 25;
+        return y;
+    }
+
+    /** Number of rows the grid occupies (used by MovesetSection for subtab placement). */
+    static int gridRows() {
+        return (int) Math.ceil((double) BREATHING_STYLES.length / COLS);
+    }
+
+    /** Y coordinate of the bottom of the "None" button. */
+    static int noneButtonBottomY(String currentStyle) {
+        int gridY   = gridTopY(currentStyle);
+        int lastRow = (BREATHING_STYLES.length - 1) / COLS;
+        return gridY + (lastRow + 1) * (BOX_HEIGHT + SPACING) + 20 + 20; // +20 = button height
+    }
+
+    private boolean isStyleUnlocked(Player player, String styleId) {
+        if (player.level().isClientSide()) {
+            return ClientProgressionCache.isUnlocked(styleId);
+        }
+        if (!MovesetRegistry.isRegistered(styleId)) return false;
+        return ProgressionHelper.isStyleUnlocked(player, styleId);
+    }
+
+    private String formatStyleName(String styleId) {
+        String[] parts = styleId.split("_");
+        StringBuilder sb = new StringBuilder();
+        for (String part : parts) {
+            if (!sb.isEmpty()) sb.append(' ');
+            sb.append(Character.toUpperCase(part.charAt(0))).append(part.substring(1));
+        }
+        return sb.toString();
+    }
+
+    private static void playClick(float volume) {
+        playClick(volume, 1.0f);
+    }
+
+    private static void playClick(float volume, float pitch) {
+        Minecraft.getInstance().getSoundManager().play(
+                SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK.value(), volume, pitch));
     }
 }

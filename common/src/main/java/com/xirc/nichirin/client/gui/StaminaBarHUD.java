@@ -1,5 +1,6 @@
 package com.xirc.nichirin.client.gui;
 
+import com.xirc.nichirin.client.gui.NichirinPalette;
 import lombok.Getter;
 import lombok.Setter;
 import net.fabricmc.api.EnvType;
@@ -27,9 +28,9 @@ public class StaminaBarHUD {
     // Configuration
     @Setter
     private static BarPosition position = BarPosition.ABOVE_HOTBAR_RIGHT;
-    private static final int STAMINA_COLOR = 0xFFFFD700; // Gold
-    private static final int BACKGROUND_COLOR = 0x80000000; // Semi-transparent black
-    private static final int BORDER_COLOR = 0xFF000000; // Full black for outline
+    private static final int STAMINA_COLOR    = NichirinPalette.BAR_STAMINA;
+    private static final int BACKGROUND_COLOR = NichirinPalette.BAR_BG;
+    private static final int BORDER_COLOR     = NichirinPalette.BAR_BORDER;
 
     // Bar dimensions
     private static final int BAR_WIDTH = 40;
@@ -147,7 +148,7 @@ public class StaminaBarHUD {
         int borderColor = (alpha) | (BORDER_COLOR & 0x00FFFFFF);
         int backgroundColor = (int)(fadeAlpha * 0x80) << 24; // Semi-transparent background
         int staminaColor = alpha | (STAMINA_COLOR & 0x00FFFFFF);
-        int highlightColor = alpha | 0x00FFFF80;
+        int highlightColor = alpha | NichirinPalette.BAR_STAMINA_HIGHLIGHT;
         int textColor = alpha | 0x00FFFFFF;
 
         // Draw background with border
