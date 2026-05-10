@@ -3,6 +3,7 @@ package com.xirc.nichirin.common.util;
 import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.network.s2c.StaminaSyncPacket;
+import com.xirc.nichirin.common.system.perks.PerkManager;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.server.level.ServerPlayer;
@@ -51,12 +52,37 @@ public class StaminaManager {
 
         StaminaData data = getOrCreateData(player);
 
+        // second_wind tick
+        if (player instanceof ServerPlayer sp) {
+            PerkManager.tickSecondWind(sp);
+            // Detect stamina depletion → trigger second_wind
+            boolean depleted = data.current <= 0f;
+            if (PerkManager.checkAndUpdateDepletionState(sp, depleted) && depleted) {
+                float instant = PerkManager.triggerSecondWind(sp);
+                if (instant > 0f) {
+                    data.current = Math.min(data.max, data.current + instant);
+                    syncToClient(player, data);
+                }
+            }
+        }
+
         // Always increment time since use
         data.timeSinceUse++;
 
+        // iron_core: adds extra delay ticks before regen kicks in
+        int effectiveDelay = data.regenDelay;
+        if (player instanceof ServerPlayer sp) {
+            effectiveDelay += PerkManager.getIronCoreDelayBonus(sp);
+        }
+
         // Enhanced regeneration logic
-        if (data.timeSinceUse >= data.regenDelay && data.current < data.max) {
+        if (data.timeSinceUse >= effectiveDelay && data.current < data.max) {
             float regenAmount = NichirinModConfig.get().combat.staminaRegenRate / 20.0f;
+
+            // Apply perk regen multiplier (iron_core, enduring_spirit LEGENDARY, second_wind)
+            if (player instanceof ServerPlayer sp) {
+                regenAmount *= PerkManager.getStaminaRegenMultiplier(sp);
+            }
 
             // Scale regen by hunger: empty = 0x, full (20) = 2x
             float hungerMultiplier = player.getFoodData().getFoodLevel() / 10.0f;
@@ -92,6 +118,12 @@ public class StaminaManager {
         }
 
         StaminaData data = getOrCreateData(player);
+
+        // Apply perk cost multiplier (enduring_spirit, lightfoot, stamina_seeker flaw)
+        if (player instanceof ServerPlayer sp) {
+            amount *= PerkManager.getStaminaCostMultiplier(sp);
+        }
+
         if (data.current >= amount) {
             data.current = Math.max(0, data.current - amount);
             data.timeSinceUse = 0; // Reset regeneration timer
