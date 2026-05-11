@@ -107,7 +107,7 @@ public class RisingScorchingSunAttack extends FlameBreathingAttackBase {
                     3, 0.1, 0.1, 0.1, 0.05);
 
             // Create hitbox at each particle position
-            List<LivingEntity> targets = getTargetsInCustomHitbox(rimPos, 1.5, 1.5, 1.5);
+            List<LivingEntity> targets = getTargetsInCustomHitbox(rimPos, hitboxSize * 0.75, hitboxSize * 0.75, hitboxSize * 0.75);
 
             for (LivingEntity target : targets) {
                 // Only hit each target every 10 ticks to prevent spam

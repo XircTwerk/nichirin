@@ -78,7 +78,7 @@ public class PommelSlashAttack extends FlameBreathingAttackBase {
         Vec3 slashOffset = rightDir.scale(isLeftSlash ? -0.5 : 0.5);
         Vec3 slashCenter = userPos.add(lookDir.scale(range * 0.8)).add(slashOffset);
 
-        List<LivingEntity> targets = getTargetsInCustomHitbox(slashCenter, 2.0, 2.5, 1.5);
+        List<LivingEntity> targets = getTargetsInCustomHitbox(slashCenter, hitboxSize, hitboxSize * 1.25, hitboxSize * 0.75);
 
         for (LivingEntity target : targets) {
             // Allow multiple hits but with reduced damage after first hit

@@ -52,7 +52,7 @@ public class EightLayeredMistAttack extends MistBreathingAttackBase {
         Vec3 slashOffset = rightDir.scale(isLeftSlash ? -0.4 : 0.4);
         Vec3 slashCenter = userPos.add(lookDir.scale(range * 0.9)).add(slashOffset);
 
-        List<LivingEntity> targets = getTargetsInCustomHitbox(slashCenter, 1.8, 2.5, 1.5);
+        List<LivingEntity> targets = getTargetsInCustomHitbox(slashCenter, hitboxSize, hitboxSize * 1.4, hitboxSize * 0.85);
 
         for (LivingEntity target : targets) {
             hitTargetNoImmunity(target);

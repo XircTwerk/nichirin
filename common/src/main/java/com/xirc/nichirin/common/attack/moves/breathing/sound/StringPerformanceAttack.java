@@ -160,7 +160,7 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
         // Hit enemies around the user (spinning chain effect)
-        List<LivingEntity> nearbyTargets = getTargetsInCustomHitbox(userPos, 3.0, 2.5, 3.0);
+        List<LivingEntity> nearbyTargets = getTargetsInCustomHitbox(userPos, hitboxSize, hitboxSize * 0.83, hitboxSize);
 
         for (LivingEntity target : nearbyTargets) {
             // Reduced damage per hit since it's multi-hit
@@ -216,7 +216,7 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
         Vec3 userPos = user.position();
 
         // Find enemies around current position
-        List<LivingEntity> nearbyEnemies = getTargetsInCustomHitbox(userPos, 3.0, 2.5, 3.0);
+        List<LivingEntity> nearbyEnemies = getTargetsInCustomHitbox(userPos, hitboxSize, hitboxSize * 0.83, hitboxSize);
 
         for (LivingEntity enemy : nearbyEnemies) {
             if (!caughtEnemies.contains(enemy)) {

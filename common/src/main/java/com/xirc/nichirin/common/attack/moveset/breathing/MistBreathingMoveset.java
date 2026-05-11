@@ -124,7 +124,7 @@ public class MistBreathingMoveset extends AbstractMoveset {
                 // Form 5: Sea of Clouds and Haze (INDEX 2 in wheel)
                 .withMove(new MoveBuilder("sea_of_clouds_and_haze", "Sea of Clouds")
                         .withAnimation("nichirin:mist_zigzag", 13)
-                        .withTiming(160, 8, 50)
+                        .withTiming(160, 8, 80)
                         .withDamage(7.0f)
                         .withRange(12.0f)
                         .withKnockback(0.25f)

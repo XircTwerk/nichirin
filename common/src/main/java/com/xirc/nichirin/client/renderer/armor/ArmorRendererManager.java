@@ -57,6 +57,11 @@ public class ArmorRendererManager {
         registerArmor(NichirinItemRegistry.UROKODAKI_LEGGINGS.get(), UrokodakiUniformRenderer::new);
         registerArmor(NichirinItemRegistry.UROKODAKI_BOOTS.get(), UrokodakiUniformRenderer::new);
 
+        // Muichiro armor
+        registerArmor(NichirinItemRegistry.MUICHIRO_HEADPIECE.get(), MuichiroUniformRenderer::new);
+        registerArmor(NichirinItemRegistry.MUICHIRO_CHESTPLATE.get(), MuichiroUniformRenderer::new);
+        registerArmor(NichirinItemRegistry.MUICHIRO_BOOTS.get(), MuichiroUniformRenderer::new);
+
         // Inosuke armor
         registerArmor(NichirinItemRegistry.BOAR_HEAD.get(), InosukeUniformRenderer::new);
         registerArmor(NichirinItemRegistry.INOSUKE_LEGGINGS.get(), InosukeUniformRenderer::new);

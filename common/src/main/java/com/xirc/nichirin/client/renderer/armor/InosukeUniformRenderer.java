@@ -23,23 +23,6 @@ public class InosukeUniformRenderer extends NichirinArmorRenderer {
         super("inosuke_uniform", "inosuke_uniform", INOSUKE_BONE_PROVIDER);
     }
 
-    @Override
-    protected void applyBoneTransformations() {
-        super.applyBoneTransformations();
-        // The "head" bone in inosuke's geo has a non-standard pivot [0, 28, 4].
-        // AzureLib's applyBaseTransformations copies head rotation correctly but leaves
-        // updatePosition at [0,0,0]. Combined with the pivot offset this places the
-        // rotation centre 1.75 blocks above the player's head, causing the boar head mask
-        // to swivel away from the head when the player looks around.
-        // Compensate: shift updatePosition to [0, -(28-24), -4] = [0, -4, -4] so the
-        // effective rotation pivot lands at vanilla's head centre [0, 24, 0] in bedrock space.
-        AzBone head = getBone("head");
-        if (head != null && currentBaseModel != null) {
-            matchRotation(currentBaseModel.head, head);
-            head.updatePosition(0, -4, -4);
-        }
-    }
-
     private boolean isHoldingBeastKatanas() {
         if (!(currentEntity instanceof LivingEntity living)) return false;
         Item mainhand = living.getMainHandItem().getItem();

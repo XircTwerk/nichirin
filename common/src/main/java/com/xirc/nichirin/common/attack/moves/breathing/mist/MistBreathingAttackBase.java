@@ -2,11 +2,14 @@ package com.xirc.nichirin.common.attack.moves.breathing.mist;
 
 import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
 import com.xirc.nichirin.common.attack.component.IBreathingAttacker;
+import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 // Base for all Mist Breathing attacks. Provides shared particle helpers and hit overrides.
@@ -98,12 +101,26 @@ public abstract class MistBreathingAttackBase extends AbstractBreathingAttack<Mi
                 position.x, position.y + 0.5, position.z, 3, 0.2, 0.2, 0.2, 0.02);
     }
 
+    /** Apply the Blurry effect to all living entities within (range + 4) of the user. */
+    protected void applyBlurryEffect(int durationTicks) {
+        if (world == null || user == null || world.isClientSide) return;
+        double r = range + 4.0;
+        Vec3 pos = user.position();
+        world.getEntitiesOfClass(LivingEntity.class,
+                new AABB(pos.subtract(r, r, r), pos.add(r, r, r)),
+                e -> e.isAlive())
+            .forEach(e -> e.addEffect(new MobEffectInstance(
+                    NichirinEffectRegistry.BLURRY.get(),
+                    durationTicks, 0, false, false, false)));
+    }
+
     @Override
     protected void hitTarget(LivingEntity target) {
         if (world.isClientSide) return;
         super.hitTarget(target);
         createMistHitParticles(target.position());
         playMistHitSound(target.position());
+        applyBlurryEffect(60); // 3 seconds on hit
     }
 
     @Override
@@ -112,6 +129,7 @@ public abstract class MistBreathingAttackBase extends AbstractBreathingAttack<Mi
         super.hitTargetNoImmunity(target);
         createMistHitParticles(target.position());
         playMistHitSound(target.position());
+        applyBlurryEffect(60);
     }
 
     protected void playMistSound() {

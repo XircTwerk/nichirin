@@ -58,13 +58,13 @@ public class BeastXSliceAttack extends BeastBreathingAttackBase {
     }
 
     private void hitInXPattern(Vec3 center, Vec3 diagA, Vec3 diagB, Vec3 look, Vec3 perp) {
-        List<LivingEntity> targets = getTargetsInCustomHitbox(center, 2.5f, HitboxData.HitboxShape.WIDE);
+        List<LivingEntity> targets = getTargetsInCustomHitbox(center, hitboxSize * 1.25f, HitboxData.HitboxShape.WIDE);
         for (LivingEntity t : targets) {
             hitTarget(t);
         }
-        List<LivingEntity> targetsA = getTargetsInCustomHitbox(diagA, 1.5f, HitboxData.HitboxShape.CUBE);
+        List<LivingEntity> targetsA = getTargetsInCustomHitbox(diagA, hitboxSize * 0.75f, HitboxData.HitboxShape.CUBE);
         for (LivingEntity t : targetsA) hitTarget(t);
-        List<LivingEntity> targetsB = getTargetsInCustomHitbox(diagB, 1.5f, HitboxData.HitboxShape.CUBE);
+        List<LivingEntity> targetsB = getTargetsInCustomHitbox(diagB, hitboxSize * 0.75f, HitboxData.HitboxShape.CUBE);
         for (LivingEntity t : targetsB) hitTarget(t);
     }
 

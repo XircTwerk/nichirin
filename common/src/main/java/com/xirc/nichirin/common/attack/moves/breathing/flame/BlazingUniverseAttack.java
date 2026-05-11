@@ -114,7 +114,7 @@ public class BlazingUniverseAttack extends FlameBreathingAttackBase {
             double forward = progress * range;
 
             Vec3 slashPoint = userPos.add(lookDir.scale(forward)).add(0, height, 0);
-            List<LivingEntity> targets = getTargetsInCustomHitbox(slashPoint, 3.0, 2.0, 3.0);
+            List<LivingEntity> targets = getTargetsInCustomHitbox(slashPoint, hitboxSize, hitboxSize * 0.67, hitboxSize);
 
             for (LivingEntity target : targets) {
                 if (!hitEntities.contains(target)) {

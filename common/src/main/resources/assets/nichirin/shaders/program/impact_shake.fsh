@@ -36,11 +36,16 @@ void main() {
 
     vec2 shakeOffset = vec2(ShakeX, ShakeY);
 
-    // Sample three slightly offset UVs for R, G, B
-    float r = texture(DiffuseSampler, texCoord + shakeOffset + vec2( ChromaSplit, 0.0)).r;
-    float g = texture(DiffuseSampler, texCoord + shakeOffset).g;
-    float b = texture(DiffuseSampler, texCoord + shakeOffset + vec2(-ChromaSplit, 0.0)).b;
-    float a = texture(DiffuseSampler, texCoord + shakeOffset).a;
+    // Clamp shaken UVs so we never sample outside the framebuffer (prevents sky artifacts).
+    const vec2 UV_MIN = vec2(0.001);
+    const vec2 UV_MAX = vec2(0.999);
+    vec2 baseUV = clamp(texCoord + shakeOffset, UV_MIN, UV_MAX);
+
+    // Sample three slightly offset UVs for R, G, B (chromatic aberration)
+    float r = texture(DiffuseSampler, clamp(baseUV + vec2( ChromaSplit, 0.0), UV_MIN, UV_MAX)).r;
+    float g = texture(DiffuseSampler, baseUV).g;
+    float b = texture(DiffuseSampler, clamp(baseUV + vec2(-ChromaSplit, 0.0), UV_MIN, UV_MAX)).b;
+    float a = texture(DiffuseSampler, baseUV).a;
 
     vec3 color = vec3(r, g, b);
 

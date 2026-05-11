@@ -284,6 +284,14 @@ public interface NichirinItemRegistry {
     RegistrySupplier<Item> UROKODAKI_BOOTS = register("urokodaki_boots",
             () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.BOOTS, settings().stacksTo(1)));
 
+    // Muichiro Tokito uniform
+    RegistrySupplier<Item> MUICHIRO_HEADPIECE = register("muichiro_headpiece",
+            () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.HELMET, settings().stacksTo(1)));
+    RegistrySupplier<Item> MUICHIRO_CHESTPLATE = register("muichiro_chestplate",
+            () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.CHESTPLATE, settings().stacksTo(1)));
+    RegistrySupplier<Item> MUICHIRO_BOOTS = register("muichiro_boots",
+            () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.BOOTS, settings().stacksTo(1)));
+
     // Beast Breathing - Inosuke's dual katanas and boar head
     RegistrySupplier<Item> BEAST_KATANAS = register("beast_katanas",
             () -> new BeastKatana(settings().rarity(Rarity.RARE).stacksTo(1)));

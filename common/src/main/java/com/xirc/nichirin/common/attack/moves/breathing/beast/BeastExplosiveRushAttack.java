@@ -23,7 +23,8 @@ public class BeastExplosiveRushAttack extends BeastBreathingAttackBase {
     @Override
     protected void onStart() {
         dashStarted = false;
-        dashDirection = user.getLookAngle().normalize();
+        Vec3 look = user.getLookAngle();
+        dashDirection = new Vec3(look.x, 0, look.z).normalize();
         wasInvulnerable = user.isInvulnerable();
         user.setInvulnerable(true);
 
@@ -38,7 +39,7 @@ public class BeastExplosiveRushAttack extends BeastBreathingAttackBase {
         if (world.isClientSide) return;
 
         if (!dashStarted) {
-            Vec3 velocity = dashDirection.scale(dashSpeed != null ? dashSpeed : 12.0f);
+            Vec3 velocity = dashDirection.scale(dashSpeed != null ? dashSpeed : 14.0f);
             user.setDeltaMovement(velocity);
             user.hurtMarked = true;
             user.hasImpulse = true;
@@ -46,7 +47,7 @@ public class BeastExplosiveRushAttack extends BeastBreathingAttackBase {
         }
 
         Vec3 current = user.getDeltaMovement();
-        float speed = dashSpeed != null ? dashSpeed : 12.0f;
+        float speed = dashSpeed != null ? dashSpeed : 14.0f;
         if (current.length() < speed * 0.5) {
             user.setDeltaMovement(dashDirection.scale(speed));
             user.hurtMarked = true;
@@ -55,7 +56,7 @@ public class BeastExplosiveRushAttack extends BeastBreathingAttackBase {
         deflectProjectiles();
 
         Vec3 center = user.position().add(0, user.getBbHeight() / 2, 0);
-        List<LivingEntity> targets = getTargetsInCustomHitbox(center, 2.5f, HitboxData.HitboxShape.LONG);
+        List<LivingEntity> targets = getTargetsInCustomHitbox(center, hitboxSize, HitboxData.HitboxShape.LONG);
         for (LivingEntity target : targets) {
             hitTarget(target);
         }

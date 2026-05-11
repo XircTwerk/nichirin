@@ -5,13 +5,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Manager for all Nichirin post-processing effects
+ * Manager for all Nichirin post-processing effects.
+ *
+ * Depth handling:
+ *   MC's main render target exposes its depth buffer as a regular GL texture
+ *   via RenderTarget.depthBufferId.  We bind that texture as "DiffuseDepthSampler"
+ *   on every active processor before running shader passes.
+ *
+ *   This works because:
+ *   - processAll() runs at TAIL of LevelRenderer.renderLevel() — all geometry is
+ *     done, sky pixels have depth 1.0, world pixels have depth < 1.0.
+ *   - During PostChain processing, RenderSystem.disableDepthTest() is called, so
+ *     the depth buffer is not written to.  The depth values we bind are stable.
+ *   - No custom mixin or freeze/snapshot needed.
  */
 public class NichirinShaderManager {
     private static final NichirinShaderManager INSTANCE = new NichirinShaderManager();
     private final List<NichirinPostProcessor> processors = new ArrayList<>();
-
-    private boolean didCopyDepth = false;
 
     private NichirinShaderManager() {}
 
@@ -19,10 +29,6 @@ public class NichirinShaderManager {
         return INSTANCE;
     }
 
-    /**
-     * Register a post processor to be managed
-     * Call this during client initialization
-     */
     public void register(NichirinPostProcessor processor) {
         if (!processors.contains(processor)) {
             processors.add(processor);
@@ -30,49 +36,30 @@ public class NichirinShaderManager {
     }
 
     /**
-     * Copy depth buffer for all active processors
-     * Should be called once per frame after world rendering
+     * Bind MC's main depth texture to all active processors.
+     * Called at the start of processAll(), before any shader pass runs.
      */
-    public void copyDepthBuffer() {
-        if (didCopyDepth) return;
-
-        processors.forEach(NichirinPostProcessor::copyDepthBuffer);
-        didCopyDepth = true;
-    }
-
     /**
-     * Process all active shaders
-     * Call this at the end of rendering
+     * Process all active shaders.
+     * Call this at the end of rendering (TAIL of LevelRenderer.renderLevel).
      */
     public void processAll(PoseStack viewModelStack) {
-        copyDepthBuffer(); // Ensure depth is copied
 
         for (NichirinPostProcessor processor : processors) {
             if (processor.isActive()) {
                 processor.process(viewModelStack);
             }
         }
-
-        didCopyDepth = false; // Reset for next frame
     }
 
-    /**
-     * Handle window resize for all processors
-     */
     public void resize(int width, int height) {
         processors.forEach(p -> p.resize(width, height));
     }
 
-    /**
-     * Reload all shaders (useful for resource pack changes)
-     */
     public void reloadAll() {
         processors.forEach(NichirinPostProcessor::loadShader);
     }
 
-    /**
-     * Get a specific processor by class
-     */
     @SuppressWarnings("unchecked")
     public <T extends NichirinPostProcessor> T getProcessor(Class<T> clazz) {
         for (NichirinPostProcessor processor : processors) {

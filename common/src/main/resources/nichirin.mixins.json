@@ -9,7 +9,8 @@
     "client.KeyboardInputMixin",
     "client.LevelRendererMixin",
     "client.MouseHandlerMixin",
-    "client.PlayerModelAccessor"
+    "client.PlayerModelAccessor",
+    "client.RenderTargetDepthMixin"
   ],
   "mixins": [
     "LivingEntityMixin",

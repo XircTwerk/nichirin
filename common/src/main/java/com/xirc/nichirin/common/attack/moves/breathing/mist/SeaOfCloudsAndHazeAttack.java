@@ -15,8 +15,8 @@ import java.util.Set;
 // Form 5: 5-hop zigzag charge with large hitboxes. Drags enemies into a straight finisher.
 public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
 
-    private static final int ZIGZAG_COUNT = 10;
-    private static final int DASH_DURATION = 8;
+    private static final int ZIGZAG_COUNT = 7;
+    private static final int DASH_DURATION = 6;
     private static final int DASH_INTERVAL = 2;
 
     private int zigzagsExecuted = 0;
@@ -34,7 +34,8 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
         finisherExecuted = false;
         caughtEnemies.clear();
         draggedEnemies.clear();
-        baseDirection = user.getLookAngle().normalize();
+        Vec3 look = user.getLookAngle();
+        baseDirection = new Vec3(look.x, 0, look.z).normalize();
         wasInvulnerable = user.isInvulnerable();
 
         // Mist coil startup
@@ -68,8 +69,8 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
     }
 
     private void executeZigzagDash() {
-        // 5-hop pattern: +30° / -30° / +30° / -30° / 0° approach
-        double[] angles = {30, -30, 30, -30, 30, -30, 30, -30,  0};
+        // 7-hop pattern: alternating ±45° closing in to 0° for the final approach
+        double[] angles = {45, -45, 35, -35, 20, -20, 0};
         double angle = zigzagsExecuted < angles.length ? angles[zigzagsExecuted] : 0;
         Vec3 zigzagDirection = rotateDirection(baseDirection, angle);
 
@@ -95,7 +96,7 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
     private void catchAndDragEnemies() {
         Vec3 userPos = user.position();
         // Bigger hitbox than Centipede
-        List<LivingEntity> pathEnemies = getTargetsInCustomHitbox(userPos, 3.5, 2.0, 3.5);
+        List<LivingEntity> pathEnemies = getTargetsInCustomHitbox(userPos, hitboxSize * 1.75, hitboxSize, hitboxSize * 1.75);
 
         for (LivingEntity enemy : pathEnemies) {
             if (!caughtEnemies.contains(enemy)) {
@@ -130,7 +131,7 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
     private void hitEnemiesAlongPath() {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         // Bigger hitbox than Centipede
-        List<LivingEntity> targets = getTargetsInCustomHitbox(userPos, 3.0, 2.0, 3.0);
+        List<LivingEntity> targets = getTargetsInCustomHitbox(userPos, hitboxSize * 1.5, hitboxSize, hitboxSize * 1.5);
 
         for (LivingEntity target : targets) {
             float originalDamage = damage;

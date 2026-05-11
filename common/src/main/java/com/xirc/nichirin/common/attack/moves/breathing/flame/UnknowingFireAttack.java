@@ -154,7 +154,7 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
         // Hit enemies during dash with light damage - using constant hitboxes like Flame Tiger
         List<LivingEntity> dashTargets = getTargetsInCustomHitbox(
                 user.position().add(0, user.getBbHeight() / 2, 0),
-                2.0, 2.5, 2.0);
+                hitboxSize, hitboxSize * 1.25, hitboxSize);
 
         for (LivingEntity target : dashTargets) {
             if (!hitEntities.contains(target)) {
@@ -189,7 +189,7 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
             double offset = i * (SLASH_WIDTH / 8.0);
             Vec3 slashCenter = userPos.add(lookDir.scale(SLASH_DEPTH / 2)).add(rightDir.scale(offset));
 
-            List<LivingEntity> targets = getTargetsInCustomHitbox(slashCenter, 2.0, 3.0, 2.0);
+            List<LivingEntity> targets = getTargetsInCustomHitbox(slashCenter, hitboxSize, hitboxSize * 1.5, hitboxSize);
 
             for (LivingEntity target : targets) {
                 // Full power slash damage - RESPECTS IMMUNITY FRAMES

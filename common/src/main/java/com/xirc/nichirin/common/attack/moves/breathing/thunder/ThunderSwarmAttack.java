@@ -121,7 +121,7 @@ public class ThunderSwarmAttack extends ThunderBreathingAttackBase {
         createSlashVisuals(slash.position);
 
         // Check for entity hits FIRST (before ground)
-        List<LivingEntity> nearbyEntities = getTargetsInCustomHitbox(slash.position, 1.8, 1.8, 1.8);
+        List<LivingEntity> nearbyEntities = getTargetsInCustomHitbox(slash.position, hitboxSize, hitboxSize, hitboxSize);
         for (LivingEntity target : nearbyEntities) {
 
             // Hit the target WITHOUT immunity frames (so all 4 slashes can hit same target)

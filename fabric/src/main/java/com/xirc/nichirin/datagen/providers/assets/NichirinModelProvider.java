@@ -140,6 +140,11 @@ public class NichirinModelProvider extends FabricModelProvider {
         generator.generateFlatItem(NichirinItemRegistry.UROKODAKI_LEGGINGS.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.UROKODAKI_BOOTS.get(), ModelTemplates.FLAT_ITEM);
 
+        // Muichiro armor
+        generator.generateFlatItem(NichirinItemRegistry.MUICHIRO_HEADPIECE.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.MUICHIRO_CHESTPLATE.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.MUICHIRO_BOOTS.get(), ModelTemplates.FLAT_ITEM);
+
         // Inosuke armor
         generator.generateFlatItem(NichirinItemRegistry.BOAR_HEAD.get(), ModelTemplates.FLAT_ITEM);
     }

@@ -1,7 +1,5 @@
 package com.xirc.nichirin.client.shader;
 
-import com.mojang.blaze3d.pipeline.RenderTarget;
-import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.shaders.Uniform;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -16,7 +14,6 @@ import org.joml.Vector3f;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.mojang.blaze3d.platform.GlConst.GL_DRAW_FRAMEBUFFER;
 
 /**
  * Base class for post-processing shader effects
@@ -25,9 +22,12 @@ public abstract class NichirinPostProcessor {
     private static final Logger LOGGER = LoggerFactory.getLogger(NichirinPostProcessor.class);
     protected static final Minecraft MC = Minecraft.getInstance();
 
+    public static int getMainDepthTexId() {
+        return ((com.xirc.nichirin.mixin_logic.NichirinDepthHolder) MC.getMainRenderTarget()).nichirin$getDepthTexId();
+    }
+
     protected PostChain shaderEffect;
     protected EffectInstance[] effects;
-    private RenderTarget tempDepthBuffer;
 
     private boolean initialized = false;
     private boolean active = false;
@@ -43,10 +43,6 @@ public abstract class NichirinPostProcessor {
      */
     public void init() {
         loadShader();
-
-        if (shaderEffect != null) {
-            tempDepthBuffer = shaderEffect.getTempTarget("depthMain");
-        }
 
         initialized = true;
     }
@@ -109,15 +105,14 @@ public abstract class NichirinPostProcessor {
     }
 
     /**
-     * Copy depth buffer from main render target
+     * Bind a frozen depth texture as the DiffuseDepthSampler for all passes.
+     * Called by NichirinShaderManager after it freezes the main render target's depth.
      */
-    public final void copyDepthBuffer() {
-        if (!active || shaderEffect == null || tempDepthBuffer == null) {
-            return;
+    public final void bindDepthTexture(int texId) {
+        if (effects == null || texId == 0) return;
+        for (EffectInstance effect : effects) {
+            effect.setSampler("DiffuseDepthSampler", () -> texId);
         }
-
-        tempDepthBuffer.copyDepthFrom(MC.getMainRenderTarget());
-        GlStateManager._glBindFramebuffer(GL_DRAW_FRAMEBUFFER, MC.getMainRenderTarget().frameBufferId);
     }
 
     /**
@@ -126,9 +121,6 @@ public abstract class NichirinPostProcessor {
     public void resize(int width, int height) {
         if (shaderEffect != null) {
             shaderEffect.resize(width, height);
-            if (tempDepthBuffer != null) {
-                tempDepthBuffer.resize(width, height, Minecraft.ON_OSX);
-            }
         }
     }
 
@@ -193,6 +185,10 @@ public abstract class NichirinPostProcessor {
             LOGGER.error("Shader effect is null, cannot process!");
             return;
         }
+
+        // Bind MC's depth buffer every frame so DiffuseDepthSampler is always current.
+        // Must happen after init() since effects[] is populated there.
+        bindDepthTexture(getMainDepthTexId());
 
         time += MC.getDeltaFrameTime() / 20.0;
 

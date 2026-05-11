@@ -116,6 +116,10 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinItemRegistry.GIYU_LEGGINGS.get());
                         entries.accept(NichirinItemRegistry.GIYU_BOOTS.get());
 
+                        entries.accept(NichirinItemRegistry.MUICHIRO_HEADPIECE.get());
+                        entries.accept(NichirinItemRegistry.MUICHIRO_CHESTPLATE.get());
+                        entries.accept(NichirinItemRegistry.MUICHIRO_BOOTS.get());
+
                         entries.accept(NichirinItemRegistry.UROKODAKI_HEADPIECE.get());
                         entries.accept(NichirinItemRegistry.UROKODAKI_CAPE.get());
                         entries.accept(NichirinItemRegistry.UROKODAKI_LEGGINGS.get());

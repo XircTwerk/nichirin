@@ -79,11 +79,11 @@ public class SimpleKatana extends Item {
         // Otherwise fall through to the default double-slash / rising-slash.
         AbstractMoveset moveset = MovesetHelper.getBreathingMoveset(player);
         if (moveset != null && moveset.handleRightClick(player, isCrouching)) {
-            return InteractionResultHolder.success(getActiveHandItem(player));
+            return InteractionResultHolder.consume(getActiveHandItem(player));
         }
 
         DefaultKatanaMoveset.INSTANCE.handleRightClick(player, isCrouching);
-        return InteractionResultHolder.success(getActiveHandItem(player));
+        return InteractionResultHolder.consume(getActiveHandItem(player));
     }
 
     // Wheel moves (0 = Check, 1 = Overhead, 2 = Thrust)

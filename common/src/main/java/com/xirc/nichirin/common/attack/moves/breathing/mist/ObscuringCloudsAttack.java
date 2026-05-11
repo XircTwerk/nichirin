@@ -2,22 +2,45 @@ package com.xirc.nichirin.common.attack.moves.breathing.mist;
 
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.Comparator;
 import java.util.List;
 
-// Form 7: Become invisible for 5s and pulse a large hitbox that repeatedly hits everything nearby.
+/**
+ * Form 7: Obscuring Clouds.
+ * Become invisible and dash at extreme speed in an orbiting pattern around nearby enemies,
+ * slashing from all angles. Accurate to the anime (Muichiro's Seventh Form).
+ * No teleports — pure velocity-based movement, no tick interval.
+ */
 public class ObscuringCloudsAttack extends MistBreathingAttackBase {
 
-    private static final int HIT_INTERVAL = 6; // pulse every 6 ticks
+    private Vec3 initPos;
+    private float initYRot;
+    private float initXRot;
+
+    // Orbit state
+    private double orbitAngle = 0.0;
+    private LivingEntity orbitTarget = null;
+    // How many radians to advance per tick — fast enough to look blurring-fast
+    private static final double ORBIT_SPEED = Math.PI / 3.0; // ~60°/tick
+    private static final double ORBIT_RADIUS = 1.5;
 
     @Override
     protected void onStart() {
+        initPos = user.position();
+        initYRot = user.getYRot();
+        initXRot = user.getXRot();
+        orbitAngle = 0.0;
+        orbitTarget = null;
+
         user.addEffect(new MobEffectInstance(
                 MobEffects.INVISIBILITY, windup + duration + 10, 0, false, false, false));
 
@@ -37,51 +60,76 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
     protected void perform() {
         if (world.isClientSide) return;
 
-        Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
+        int ticksSinceWindup = tickCount - windup;
+        if (ticksSinceWindup < 0) return;
 
-        createWaterTrailParticles(userPos);
-
-        if (tickCount % 3 == 0) {
-            emitAmbientMist(userPos);
-        }
-
-        // Pulse a large hitbox on the player every HIT_INTERVAL ticks
-        if ((tickCount - windup) % HIT_INTERVAL == 0) {
-            pulseHitbox(userPos);
-        }
-    }
-
-    private void pulseHitbox(Vec3 userPos) {
-        List<LivingEntity> targets = getTargetsInCustomHitbox(
-                userPos, range * 2.0, user.getBbHeight() + 1.0, range * 2.0);
-
-        for (LivingEntity target : targets) {
-            hitTargetNoImmunity(target); // pulses repeatedly, so bypass immunity frames
-            createWaterTrailParticles(target.position());
-        }
-
-        createMistCircle(userPos, range * 0.6f, 14);
-
-        world.playSound(null, user.getX(), user.getY(), user.getZ(),
-                SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.4f, 1.6f);
-    }
-
-    private void emitAmbientMist(Vec3 userPos) {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
-        var random = serverLevel.getRandom();
-        for (int i = 0; i < 4; i++) {
-            double offsetX = (random.nextDouble() - 0.5) * 3.0;
-            double offsetY = random.nextDouble() * 2.0;
-            double offsetZ = (random.nextDouble() - 0.5) * 3.0;
-            serverLevel.sendParticles(ParticleTypes.CLOUD,
-                    userPos.x + offsetX, userPos.y + offsetY, userPos.z + offsetZ,
-                    1, 0.05, 0.05, 0.05, 0.01);
+        Vec3 userPos = user.position();
+
+        // Re-acquire target every 10 ticks or if current target died
+        if (ticksSinceWindup % 10 == 0 || orbitTarget == null || !orbitTarget.isAlive()) {
+            List<LivingEntity> nearby = world.getEntitiesOfClass(LivingEntity.class,
+                    new AABB(userPos.subtract(range, 3, range), userPos.add(range, 3, range)),
+                    e -> e != user && e.isAlive());
+            orbitTarget = nearby.isEmpty() ? null
+                    : nearby.stream().min(Comparator.comparingDouble(e -> e.distanceToSqr(user))).orElse(null);
+        }
+
+        // Orbit center: nearest enemy, else initPos
+        Vec3 center = orbitTarget != null
+                ? orbitTarget.position().add(0, orbitTarget.getBbHeight() * 0.5, 0)
+                : initPos;
+
+        // Advance orbit angle
+        orbitAngle += ORBIT_SPEED;
+
+        // Compute the target orbit position
+        Vec3 orbitPos = center.add(
+                Math.cos(orbitAngle) * ORBIT_RADIUS,
+                0,
+                Math.sin(orbitAngle) * ORBIT_RADIUS
+        );
+
+        // Velocity toward the next orbit point
+        Vec3 delta = orbitPos.subtract(userPos);
+        double speed = dashSpeed != null ? dashSpeed : 3.0;
+        Vec3 velocity = delta.length() > 0.01 ? delta.normalize().scale(speed / 20.0) : Vec3.ZERO;
+        user.setDeltaMovement(velocity);
+        user.hurtMarked = true;
+
+        // Slash at current position — hits all targets in hitbox
+        Vec3 slashCenter = user.position().add(0, user.getBbHeight() / 2, 0);
+        List<LivingEntity> targets = getTargetsInCustomHitbox(slashCenter, hitboxSize, hitboxSize, hitboxSize);
+        for (LivingEntity target : targets) {
+            hitTargetNoImmunity(target);
+        }
+
+        // Light mist trail every tick
+        serverLevel.sendParticles(ParticleTypes.CLOUD,
+                slashCenter.x, slashCenter.y, slashCenter.z,
+                3, 0.15, 0.15, 0.15, 0.03);
+        if (ticksSinceWindup % 3 == 0) {
+            serverLevel.sendParticles(ParticleTypes.WHITE_ASH,
+                    slashCenter.x, slashCenter.y, slashCenter.z,
+                    2, 0.1, 0.1, 0.1, 0.02);
         }
     }
 
     @Override
     protected void onStop() {
+        // Halt all movement and snap back near start
+        user.setDeltaMovement(Vec3.ZERO);
+
+        if (user instanceof ServerPlayer sp) {
+            sp.teleportTo(initPos.x, initPos.y, initPos.z);
+        } else {
+            user.absMoveTo(initPos.x, initPos.y, initPos.z, initYRot, initXRot);
+        }
+        user.hurtMarked = true;
+
+        user.removeEffect(MobEffects.INVISIBILITY);
+
         if (world instanceof ServerLevel serverLevel) {
             Vec3 pos = user.position().add(0, user.getBbHeight() / 2, 0);
             serverLevel.sendParticles(ParticleTypes.CLOUD, pos.x, pos.y, pos.z,
@@ -89,8 +137,6 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
             serverLevel.sendParticles(ParticleTypes.FALLING_WATER, pos.x, pos.y, pos.z,
                     30, 1.0, 0.8, 1.0, 0.05);
         }
-
-        user.removeEffect(MobEffects.INVISIBILITY);
 
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 1.0f, 0.7f);

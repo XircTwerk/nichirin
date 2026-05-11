@@ -37,7 +37,8 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
         caughtEnemies.clear();
         draggedEnemies.clear();
 
-        baseDirection = user.getLookAngle().normalize();
+        Vec3 look = user.getLookAngle();
+        baseDirection = new Vec3(look.x, 0, look.z).normalize();
         wasInvulnerable = user.isInvulnerable();
 
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
@@ -104,7 +105,7 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
 
     private void catchAndDragEnemies() {
         Vec3 userPos = user.position();
-        List<LivingEntity> pathEnemies = getTargetsInCustomHitbox(userPos, 2.0, 1.33, 2.0);
+        List<LivingEntity> pathEnemies = getTargetsInCustomHitbox(userPos, hitboxSize, hitboxSize * 0.67, hitboxSize);
 
         for (LivingEntity enemy : pathEnemies) {
             if (!caughtEnemies.contains(enemy)) {
@@ -135,7 +136,7 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
 
     private void hitEnemiesAlongPath() {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
-        List<LivingEntity> targets = getTargetsInCustomHitbox(userPos, 1.67, 1.0, 1.67);
+        List<LivingEntity> targets = getTargetsInCustomHitbox(userPos, hitboxSize * 0.84, hitboxSize * 0.5, hitboxSize * 0.84);
 
         for (LivingEntity target : targets) {
             float originalDamage = damage;

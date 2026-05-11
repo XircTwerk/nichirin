@@ -108,34 +108,41 @@ public class ScatteringMistSplashAttack extends MistBreathingAttackBase {
                 4, 0.15, 0.15, 0.15, 0.02);
     }
 
+    /**
+     * Horizontal whirlwind disc — distinct from M2's rapid-slash visuals.
+     * Particles spiral outward from center in a flat disc at waist height,
+     * alternating clockwise/counter-clockwise arms to create a pinwheel shape.
+     */
     private void createSpinningMistEffect() {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
-        Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
+        Vec3 userPos = user.position().add(0, user.getBbHeight() * 0.45, 0);
+        double spinAngle = spinTicks * 0.35; // rotation offset accumulates each tick
 
-        for (int ring = 0; ring < 2; ring++) {
-            float ringRadius = range * (0.5f + ring * 0.5f);
-            int particlesInRing = 10 + ring * 6;
+        int arms = 4; // whirlwind arms
+        int pointsPerArm = 6;
 
-            for (int i = 0; i < particlesInRing; i++) {
-                double baseAngle = (2 * Math.PI * i) / particlesInRing;
-                double spinOffset = spinTicks * 0.25 * (ring % 2 == 0 ? 1 : -1);
-                double angle = baseAngle + spinOffset;
+        for (int arm = 0; arm < arms; arm++) {
+            double armBase = spinAngle + (arm * 2 * Math.PI / arms);
+            for (int p = 0; p < pointsPerArm; p++) {
+                // r increases along the arm; angle curls outward (whirlwind shape)
+                double r = range * (p + 1.0) / pointsPerArm;
+                double curl = armBase + p * 0.3; // outward curl per point
+                double x = userPos.x + Math.cos(curl) * r;
+                double z = userPos.z + Math.sin(curl) * r;
 
-                double x = userPos.x + Math.cos(angle) * ringRadius;
-                double z = userPos.z + Math.sin(angle) * ringRadius;
-                double y = userPos.y + ring * 0.9;
-
-                serverLevel.sendParticles(ParticleTypes.CLOUD, x, y, z, 1, 0.05, 0.05, 0.05, 0.01);
-                if (i % 4 == 0) {
-                    serverLevel.sendParticles(ParticleTypes.WHITE_ASH, x, y, z, 1, 0.03, 0.03, 0.03, 0.01);
+                serverLevel.sendParticles(ParticleTypes.ENCHANT,
+                        x, userPos.y, z, 1, 0.03, 0.02, 0.03, 0.01);
+                if (p % 2 == 0) {
+                    serverLevel.sendParticles(ParticleTypes.WHITE_ASH,
+                            x, userPos.y + 0.1, z, 1, 0.02, 0.01, 0.02, 0.008);
                 }
             }
         }
 
-        // Central mist pillar
-        serverLevel.sendParticles(ParticleTypes.CLOUD,
-                userPos.x, userPos.y, userPos.z, 4, 0.2, 0.8, 0.2, 0.02);
+        // Central flash point
+        serverLevel.sendParticles(ParticleTypes.CRIT,
+                userPos.x, userPos.y, userPos.z, 3, 0.15, 0.05, 0.15, 0.02);
     }
 
     @Override

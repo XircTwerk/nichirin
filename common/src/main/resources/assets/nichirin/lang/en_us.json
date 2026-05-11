@@ -53,6 +53,7 @@
   "effect.nichirin.shocked": "Shocked",
   "effect.nichirin.stunned": "Stunned",
   "effect.nichirin.burning": "Burning",
+  "effect.nichirin.blurry": "Blurry",
 
   "gui.nichirin.main.title": "Nichirin Menu",
   "gui.nichirin.coming_soon": "Coming Soon",
@@ -153,6 +154,10 @@
   "item.nichirin.giyu_cape": "Giyu Haori",
   "item.nichirin.giyu_leggings": "Giyu Leggings",
   "item.nichirin.giyu_boots": "Giyu Geta",
+
+  "item.nichirin.muichiro_headpiece": "Muichiro Wig",
+  "item.nichirin.muichiro_chestplate": "Muichiro Uniform",
+  "item.nichirin.muichiro_boots": "Muichiro Geta",
 
   "item.nichirin.urokodaki_headpiece": "Urokodaki Mask",
   "item.nichirin.urokodaki_cape": "Urokodaki Haori",

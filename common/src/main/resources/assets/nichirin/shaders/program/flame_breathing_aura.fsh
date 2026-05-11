@@ -1,6 +1,7 @@
 #version 150
 
 uniform sampler2D DiffuseSampler;
+uniform sampler2D DiffuseDepthSampler;
 
 uniform float Time;
 uniform float Intensity;
@@ -44,7 +45,9 @@ float fbm(vec2 p) {
 void main() {
     vec4 original = texture(DiffuseSampler, texCoord);
 
-    if (Intensity < 0.005) {
+    // Skip sky pixels entirely — depth == 1.0 means no geometry was drawn there.
+    float sceneDepth = texture(DiffuseDepthSampler, texCoord).r;
+    if (sceneDepth >= 0.9999994 || Intensity < 0.005) {
         fragColor = original;
         return;
     }
@@ -64,14 +67,9 @@ void main() {
     float pulse    = 0.85 + 0.15 * sin(t * 2.5 + flame * 3.0);
     float alpha    = clamp(flameRim * Intensity * pulse, 0.0, 1.0);
 
-    // Warp the sample coord near the rim boundary for a heat-haze effect
-    float warpStrength = rim * Intensity * 0.008 * (0.5 + 0.5 * flame);
-    vec2 warpedUv = texCoord + normalize(uv) * warpStrength * (0.5 + 0.5 * noise(noiseUv));
-    vec4 warpedScene = texture(DiffuseSampler, clamp(warpedUv, 0.001, 0.999));
-
     vec3 aura   = AuraColor * (0.9 + 0.1 * flame);
-    vec3 result = mix(warpedScene.rgb, aura, alpha * 0.75);
+    vec3 result = mix(original.rgb, aura, alpha * 0.75);
     result += aura * alpha * 0.35;
 
-    fragColor = vec4(result, warpedScene.a);
+    fragColor = vec4(result, original.a);
 }

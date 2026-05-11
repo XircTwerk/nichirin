@@ -8,6 +8,11 @@ import org.jetbrains.annotations.Nullable;
 public class BreathingAuraWispParticleProvider implements ParticleProvider<SimpleParticleType> {
     private final SpriteSet sprites;
 
+    // Set immediately before addParticle to pass outward lateral drift direction.
+    // Safe since particle creation is synchronous on the main thread.
+    public static double pendingLateralX = 0.0;
+    public static double pendingLateralZ = 0.0;
+
     public BreathingAuraWispParticleProvider(SpriteSet sprites) {
         this.sprites = sprites;
     }
@@ -17,24 +22,28 @@ public class BreathingAuraWispParticleProvider implements ParticleProvider<Simpl
     public Particle createParticle(SimpleParticleType type, ClientLevel level, double x, double y, double z,
                                    double xSpeed, double ySpeed, double zSpeed) {
         // xSpeed/ySpeed/zSpeed are repurposed as r/g/b color (0.0-1.0)
-        return new BreathingAuraWispParticle(level, x, y, z, (float) xSpeed, (float) ySpeed, (float) zSpeed, sprites);
+        double lx = pendingLateralX;
+        double lz = pendingLateralZ;
+        pendingLateralX = 0.0;
+        pendingLateralZ = 0.0;
+        return new BreathingAuraWispParticle(level, x, y, z, (float) xSpeed, (float) ySpeed, (float) zSpeed, lx, lz, sprites);
     }
 
     public static class BreathingAuraWispParticle extends TextureSheetParticle {
         private final SpriteSet animatedSprites;
 
         protected BreathingAuraWispParticle(ClientLevel level, double x, double y, double z,
-                                            float r, float g, float b, SpriteSet sprites) {
+                                            float r, float g, float b, double lateralX, double lateralZ, SpriteSet sprites) {
             super(level, x, y, z, 0, 0, 0);
             this.animatedSprites = sprites;
             this.lifetime = 10;
             this.hasPhysics = false;
             this.friction = 1.0f;
             this.gravity = 0.0f;
-            // slow upward float with tiny random drift
-            this.xd = (this.random.nextDouble() - 0.5) * 0.006;
+            // slow upward float with tiny random drift plus outward lateral bias
+            this.xd = (this.random.nextDouble() - 0.5) * 0.006 + lateralX;
             this.yd = 0.003 + this.random.nextDouble() * 0.003;
-            this.zd = (this.random.nextDouble() - 0.5) * 0.006;
+            this.zd = (this.random.nextDouble() - 0.5) * 0.006 + lateralZ;
             this.quadSize = 0.045f + this.random.nextFloat() * 0.02f;
             this.setColor(r, g, b);
             this.setAlpha(0.7f);

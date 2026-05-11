@@ -1,0 +1,22 @@
+{
+  "targets": [
+    "swap"
+  ],
+  "passes": [
+    {
+      "name": "nichirin:mist_blur",
+      "intarget": "minecraft:main",
+      "outtarget": "swap",
+      "uniforms": [
+        { "name": "Time",      "values": [ 0.0 ] },
+        { "name": "Intensity", "values": [ 0.0 ] },
+        { "name": "MistColor", "values": [ 0.72, 0.85, 0.95 ] }
+      ]
+    },
+    {
+      "name": "minecraft:blit",
+      "intarget": "swap",
+      "outtarget": "minecraft:main"
+    }
+  ]
+}

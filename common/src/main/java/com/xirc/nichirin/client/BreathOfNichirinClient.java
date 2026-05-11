@@ -139,6 +139,9 @@ public class BreathOfNichirinClient {
             // Wire up the tick-driven intensity for breathing aura shaders
             BreathingAuraShaderHandler.register();
 
+            // Wire up the Blurry effect screen shader
+            MistBlurShaderHandler.register();
+
             // Register rendering hooks for shaders
             registerRenderingHooks();
 

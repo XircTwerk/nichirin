@@ -116,7 +116,7 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
         // Hit enemies during dash with constant hitboxes - using UnknowingFireAttack's method
         List<LivingEntity> dashTargets = getTargetsInCustomHitbox(
                 user.position().add(0, user.getBbHeight() / 2, 0),
-                2.0, 2.5, 2.0);
+                hitboxSize, hitboxSize * 1.25, hitboxSize);
 
         for (LivingEntity target : dashTargets) {
             if (!hitEntities.contains(target)) {
@@ -157,7 +157,7 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
             double offset = i * (SLASH_WIDTH / 6.0);
             Vec3 slashCenter = userPos.add(lookDir.scale(SLASH_DEPTH / 2)).add(rightDir.scale(offset));
 
-            List<LivingEntity> targets = getTargetsInCustomHitbox(slashCenter, 2.0, 3.0, 2.0);
+            List<LivingEntity> targets = getTargetsInCustomHitbox(slashCenter, hitboxSize, hitboxSize * 1.5, hitboxSize);
 
             for (LivingEntity target : targets) {
                 // Enhanced damage for finishing slash

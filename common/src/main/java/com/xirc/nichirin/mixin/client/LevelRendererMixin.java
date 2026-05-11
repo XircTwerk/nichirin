@@ -76,7 +76,7 @@ public class LevelRendererMixin {
      * Reset shader colour after the sky pass so nothing rendered afterward is tinted.
      */
     @Inject(method = "renderSky", at = @At("TAIL"))
-    private void nichirin$bloodMoonResetColor(
+    private void nichirin$afterSkyRender(
             PoseStack poseStack, Matrix4f projectionMatrix, float partialTick,
             Camera camera, boolean isFoggy, Runnable setupFog, CallbackInfo ci) {
         if (BloodMoonClientState.isActive()) {
@@ -85,7 +85,7 @@ public class LevelRendererMixin {
     }
 
     /**
-     * Hook into sky rendering to replace with Dead Calm skybox when active
+     * Hook into sky rendering to replace with Dead Calm skybox when active.
      */
     @Inject(
             method = "renderSky",
@@ -112,32 +112,10 @@ public class LevelRendererMixin {
     }
 
     /**
-     * Hook after entities are rendered to copy depth buffer
-     */
-    @Inject(
-            method = "renderLevel",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/client/renderer/LevelRenderer;renderChunkLayer(Lnet/minecraft/client/renderer/RenderType;Lcom/mojang/blaze3d/vertex/PoseStack;DDDLorg/joml/Matrix4f;)V",
-                    ordinal = 0
-            )
-    )
-    private void nichirin$copyDepthBuffer(
-            PoseStack poseStack,
-            float partialTick,
-            long finishNanoTime,
-            boolean renderBlockOutline,
-            Camera camera,
-            GameRenderer gameRenderer,
-            LightTexture lightTexture,
-            Matrix4f projectionMatrix,
-            CallbackInfo ci
-    ) {
-        NichirinShaderManager.getInstance().copyDepthBuffer();
-    }
-
-    /**
-     * Hook at the end of level rendering to process post-processing shaders
+     * Hook at the end of level rendering to process post-processing shaders.
+     * At this point all geometry has rendered: sky pixels have depth 1.0,
+     * world pixels have depth < 1.0.  NichirinShaderManager will snapshot
+     * the depth before running any shader passes.
      */
     @Inject(
             method = "renderLevel",

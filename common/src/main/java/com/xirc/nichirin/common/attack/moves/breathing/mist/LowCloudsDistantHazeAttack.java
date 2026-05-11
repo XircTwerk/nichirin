@@ -18,7 +18,9 @@ public class LowCloudsDistantHazeAttack extends MistBreathingAttackBase {
     @Override
     protected void onStart() {
         dashStarted = false;
-        dashDirection = user.getLookAngle().normalize();
+        // Flatten to horizontal so pitch doesn't cause diagonal drift (#3)
+        Vec3 look = user.getLookAngle();
+        dashDirection = new Vec3(look.x, 0, look.z).normalize();
 
         // mist coils at feet during crouch windup
         if (world instanceof ServerLevel serverLevel) {
