@@ -16,7 +16,7 @@ import java.util.List;
 /**
  * Data section for moveset - shows move icons in a grid with detailed tooltips on hover
  */
-public class MovesetDataSection {
+public class MovesetDataSection extends AbstractGuiPage {
 
     private static final int TOP_MARGIN = 20;
     private static final int ICON_SIZE = 32;
@@ -30,15 +30,15 @@ public class MovesetDataSection {
 
         // Title
         Component title = Component.translatable("gui.nichirin.moveset.data.title").withStyle(style -> style.withBold(true));
-        graphics.drawString(font, title,
-                centerX - font.width(title) / 2, contentY, 0xFFFFFF);
+        drawAccentTitle(graphics, font, title, centerX, contentY, COLOR_PALETTE.BREATH_CYAN.argb());
         contentY += 30;
 
         // Get current moveset
         String currentStyle = MovesetHelper.getMovesetId(player);
         if (currentStyle == null) {
             Component noMoveset = Component.translatable("gui.nichirin.moveset.data.no_moveset");
-            graphics.drawString(font, noMoveset, contentX, contentY, 0xAAAAAA);
+            drawPopPanel(graphics, contentX, contentY, Math.max(160, font.width(noMoveset) + 28), 32, COLOR_PALETTE.BREATH_CYAN.argb());
+            graphics.drawString(font, noMoveset, contentX + 14, contentY + 12, COLOR_PALETTE.TEXT_DIM.rgb());
             return;
         }
 
@@ -46,19 +46,21 @@ public class MovesetDataSection {
         AbstractMoveset moveset = MovesetRegistry.getMoveset(currentStyle);
         if (moveset == null) {
             Component invalidMoveset = Component.literal("Invalid moveset: " + currentStyle);
-            graphics.drawString(font, invalidMoveset, contentX, contentY, 0xFF5555);
+            drawPopPanel(graphics, contentX, contentY, Math.max(174, font.width(invalidMoveset) + 28), 32, COLOR_PALETTE.DANGER.argb());
+            graphics.drawString(font, invalidMoveset, contentX + 14, contentY + 12, COLOR_PALETTE.DANGER.rgb());
             return;
         }
 
         // Display moveset info
         Component styleLabel = Component.translatable("gui.nichirin.moveset.data.current_moveset",
                 Component.translatable(getTranslationKey(currentStyle)));
-        graphics.drawString(font, styleLabel, contentX, contentY, 0x55FFFF);
+        graphics.fill(contentX - 5, contentY - 2, contentX - 3, contentY + font.lineHeight + 2, COLOR_PALETTE.BREATH_CYAN.argb());
+        graphics.drawString(font, styleLabel, contentX, contentY, COLOR_PALETTE.BREATH_CYAN.rgb());
         contentY += 20;
 
         // Instructions
         Component instructions = Component.literal("Hover over move icons to see detailed information");
-        graphics.drawString(font, instructions, contentX, contentY, 0xAAAAAA);
+        graphics.drawString(font, instructions, contentX, contentY, COLOR_PALETTE.GRAY.rgb());
         contentY += 25;
 
         // Calculate grid layout
@@ -81,7 +83,7 @@ public class MovesetDataSection {
             hoveredIsRightClick = true;
         }
         ResourceLocation rightClickIcon = MoveIcon.getIcon(currentStyle, "right_click");
-        renderMoveIcon(graphics, currentX, currentY, rightClickIcon, 0xFF4444FF); // Blue border
+        renderMoveIcon(graphics, currentX, currentY, rightClickIcon, COLOR_PALETTE.SLAYER_BLUE.argb());
 
         currentX += ICON_SIZE + ICON_SPACING;
         iconsInCurrentRow++;
@@ -91,7 +93,7 @@ public class MovesetDataSection {
             hoveredIsCrouchRightClick = true;
         }
         ResourceLocation crouchRightClickIcon = MoveIcon.getIcon(currentStyle, "crouch_right_click");
-        renderMoveIcon(graphics, currentX, currentY, crouchRightClickIcon, 0xFF44FF44); // Green border
+        renderMoveIcon(graphics, currentX, currentY, crouchRightClickIcon, COLOR_PALETTE.GREEN.argb());
 
         currentX += ICON_SIZE + ICON_SPACING;
         iconsInCurrentRow++;
@@ -115,7 +117,7 @@ public class MovesetDataSection {
 
             // Get move icon using your MoveIcon system
             ResourceLocation moveIcon = MoveIcon.getIcon(currentStyle, move.getMoveId());
-            renderMoveIcon(graphics, currentX, currentY, moveIcon, 0xFF666666); // Gray border
+            renderMoveIcon(graphics, currentX, currentY, moveIcon, COLOR_PALETTE.BORDER_HI.argb());
 
             currentX += ICON_SIZE + ICON_SPACING;
             iconsInCurrentRow++;
@@ -146,8 +148,11 @@ public class MovesetDataSection {
      * Render a move icon using your MoveIcon system
      */
     private void renderMoveIcon(GuiGraphics graphics, int x, int y, ResourceLocation iconTexture, int borderColor) {
+        graphics.fill(x - 2, y - 2, x + ICON_SIZE + 2, y + ICON_SIZE + 2, withAlpha(borderColor, 0x26));
         // Draw border
         graphics.fill(x - 1, y - 1, x + ICON_SIZE + 1, y + ICON_SIZE + 1, borderColor);
+        graphics.fill(x, y, x + ICON_SIZE, y + ICON_SIZE, COLOR_PALETTE.PANEL_MID.argb());
+        graphics.fill(x, y, x + ICON_SIZE, y + 2, withAlpha(borderColor, 0xCC));
 
         // Draw the actual icon texture
         graphics.blit(iconTexture, x, y, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
@@ -335,14 +340,14 @@ public class MovesetDataSection {
         }
 
         // Draw tooltip background
-        graphics.fill(tooltipX - 1, tooltipY - 1, tooltipX + tooltipWidth + 1, tooltipY + tooltipHeight + 1, 0xFF000000);
-        graphics.fill(tooltipX, tooltipY, tooltipX + tooltipWidth, tooltipY + tooltipHeight, 0xE0202020);
+        graphics.fill(tooltipX - 1, tooltipY - 1, tooltipX + tooltipWidth + 1, tooltipY + tooltipHeight + 1, COLOR_PALETTE.BLACK.argb());
+        graphics.fill(tooltipX, tooltipY, tooltipX + tooltipWidth, tooltipY + tooltipHeight, COLOR_PALETTE.TOOLTIP_FILL.argb());
 
         // Draw tooltip text
         int textY = tooltipY + 3;
         for (String line : lines) {
             if (!line.isEmpty()) {
-                graphics.drawString(font, line, tooltipX + 4, textY, 0xFFFFFF);
+                graphics.drawString(font, line, tooltipX + 4, textY, COLOR_PALETTE.WHITE.rgb());
             }
             textY += font.lineHeight;
         }

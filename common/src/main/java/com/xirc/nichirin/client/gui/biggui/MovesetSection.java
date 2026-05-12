@@ -1,6 +1,5 @@
 package com.xirc.nichirin.client.gui.biggui;
 
-import com.xirc.nichirin.client.gui.NichirinPalette;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -8,12 +7,12 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 
 /**
- * Moveset section — hosts subtabs for Breathing Styles, Demon Arts, and Data.
+ * Moveset section - hosts subtabs for Breathing Styles, Demon Arts, and Data.
  */
-public class MovesetSection {
+public class MovesetSection extends AbstractGuiPage {
 
-    private static final int TAB_WIDTH   = 120;
-    private static final int TAB_HEIGHT  = 25;
+    private static final int TAB_WIDTH = 120;
+    private static final int TAB_HEIGHT = 25;
     private static final int TAB_SPACING = 5;
 
     public enum MovesetTab {
@@ -22,48 +21,68 @@ public class MovesetSection {
         DATA("gui.nichirin.moveset.tab.data");
 
         private final String translationKey;
-        MovesetTab(String key) { this.translationKey = key; }
-        public String getTranslationKey() { return translationKey; }
+
+        MovesetTab(String key) {
+            this.translationKey = key;
+        }
+
+        public String getTranslationKey() {
+            return translationKey;
+        }
     }
 
     private MovesetTab currentTab = MovesetTab.BREATHING_STYLES;
 
     private final BreathingStylesSection breathingStylesSection = new BreathingStylesSection();
-    private final DemonArtSection        demonArtSection        = new DemonArtSection();
-    private final MovesetDataSection     dataSection            = new MovesetDataSection();
+    private final DemonArtSection demonArtSection = new DemonArtSection();
+    private final MovesetDataSection dataSection = new MovesetDataSection();
 
     // Render
     public void render(GuiGraphics graphics, Player player, Font font,
                        int contentWidth, int contentHeight, int mouseX, int mouseY) {
-        // Content first, tabs on top
+        drawWorkspaceChrome(graphics, font, contentWidth, contentHeight,
+                "Moveset", "Breathing styles, demon arts, and move data.",
+                currentTabLabel(), "Select a tab to inspect your kit", "ready");
+        renderSubtabs(graphics, font, tabsStartX(contentWidth), 22, mouseX, mouseY);
+
+        int bodyY = workspaceBodyY();
+        int bodyH = workspaceBodyHeight(contentHeight);
+        int bodyMouseY = mouseY - bodyY;
+        graphics.pose().pushPose();
+        graphics.pose().translate(0, bodyY, 0);
         switch (currentTab) {
             case BREATHING_STYLES -> breathingStylesSection.render(
-                    graphics, player, contentWidth, contentHeight, font, mouseX, mouseY);
+                    graphics, player, contentWidth, bodyH, font, mouseX, bodyMouseY);
             case DEMON_ARTS -> demonArtSection.render(
-                    graphics, player, contentWidth, contentHeight, font, mouseX, mouseY);
+                    graphics, player, contentWidth, bodyH, font, mouseX, bodyMouseY);
             case DATA -> dataSection.render(
-                    graphics, player, contentWidth, contentHeight, font, mouseX, mouseY);
+                    graphics, player, contentWidth, bodyH, font, mouseX, bodyMouseY);
         }
-
-        renderSubtabs(graphics, font, tabsStartX(contentWidth), tabsY(player), mouseX, mouseY);
+        graphics.pose().popPose();
     }
 
     private void renderSubtabs(GuiGraphics graphics, Font font, int startX, int y, int mouseX, int mouseY) {
         int x = startX;
         for (MovesetTab tab : MovesetTab.values()) {
-            boolean active  = tab == currentTab;
+            boolean active = tab == currentTab;
             boolean hovered = mouseX >= x && mouseX <= x + TAB_WIDTH
-                           && mouseY >= y && mouseY <= y + TAB_HEIGHT;
+                    && mouseY >= y && mouseY <= y + TAB_HEIGHT;
 
-            int bg     = active ? NichirinPalette.BG_BOX_ACTIVE
-                       : hovered ? 0xFF2F2F2F : NichirinPalette.BG_BOX;
-            int border = active ? NichirinPalette.BORDER_ACCENT
-                       : hovered ? NichirinPalette.BORDER_HOVER : NichirinPalette.BORDER_DEFAULT;
-            int text   = active ? NichirinPalette.TEXT_ACCENT
-                       : hovered ? NichirinPalette.TEXT_WHITE : NichirinPalette.TEXT_MUTED;
+            int bg = active ? COLOR_PALETTE.PILL_BG.argb()
+                    : hovered ? COLOR_PALETTE.PANEL_HOVER.argb() : COLOR_PALETTE.PANEL_MID.argb();
+            int border = active ? COLOR_PALETTE.ACCENT.argb()
+                    : hovered ? COLOR_PALETTE.BORDER_HI.argb() : COLOR_PALETTE.BORDER.argb();
+            int text = active ? COLOR_PALETTE.ACCENT_LIGHT.rgb()
+                    : hovered ? COLOR_PALETTE.TEXT.rgb() : COLOR_PALETTE.TEXT_DIM.rgb();
 
+            if (active) {
+                graphics.fill(x - 3, y - 3, x + TAB_WIDTH + 3, y + TAB_HEIGHT + 3, withAlpha(border, 0x22));
+            }
             graphics.fill(x - 1, y - 1, x + TAB_WIDTH + 1, y + TAB_HEIGHT + 1, border);
             graphics.fill(x, y, x + TAB_WIDTH, y + TAB_HEIGHT, bg);
+            if (active || hovered) {
+                graphics.fill(x, y, x + TAB_WIDTH, y + 2, border);
+            }
 
             Component label = Component.translatable(tab.getTranslationKey());
             graphics.drawString(font, label,
@@ -79,8 +98,8 @@ public class MovesetSection {
     public boolean handleClick(double mouseX, double mouseY, Player player,
                                int contentWidth, int contentHeight) {
         int startX = tabsStartX(contentWidth);
-        int y      = tabsY(player);
-        int x      = startX;
+        int y = 22;
+        int x = startX;
 
         for (MovesetTab tab : MovesetTab.values()) {
             if (mouseX >= x && mouseX <= x + TAB_WIDTH && mouseY >= y && mouseY <= y + TAB_HEIGHT) {
@@ -90,14 +109,17 @@ public class MovesetSection {
             x += TAB_WIDTH + TAB_SPACING;
         }
 
+        int bodyY = workspaceBodyY();
+        if (mouseY < bodyY || mouseY >= contentHeight - WORKSPACE_FOOTER_H) return false;
+        double bodyMouseY = mouseY - bodyY;
         return switch (currentTab) {
-            case BREATHING_STYLES -> breathingStylesSection.handleClick(mouseX, mouseY, player, contentWidth);
-            case DEMON_ARTS       -> demonArtSection.handleClick(mouseX, mouseY, player, contentWidth);
-            case DATA             -> dataSection.handleClick(mouseX, mouseY, player, contentWidth);
+            case BREATHING_STYLES -> breathingStylesSection.handleClick(mouseX, bodyMouseY, player, contentWidth);
+            case DEMON_ARTS -> demonArtSection.handleClick(mouseX, bodyMouseY, player, contentWidth);
+            case DATA -> dataSection.handleClick(mouseX, bodyMouseY, player, contentWidth);
         };
     }
 
-    // Position helpers — derived from BreathingStylesSection layout constants
+    // Position helpers - derived from BreathingStylesSection layout constants
     /** X coordinate where the subtab row starts (centred in content area). */
     private int tabsStartX(int contentWidth) {
         int totalTabWidth = TAB_WIDTH * MovesetTab.values().length
@@ -106,13 +128,21 @@ public class MovesetSection {
     }
 
     /**
-     * Y coordinate for the subtab row — sits 40px below the "None" button,
+     * Y coordinate for the subtab row - sits 40px below the "None" button,
      * which is itself derived from the breathing-styles grid height.
      * Uses the current player's style to match render() exactly.
      */
     private int tabsY(Player player) {
-        String current = MovesetHelper.getMovesetId(player);
+        String current = MovesetHelper.getBreathingMovesetId(player);
         return BreathingStylesSection.noneButtonBottomY(current) + 20;
+    }
+
+    private String currentTabLabel() {
+        return switch (currentTab) {
+            case BREATHING_STYLES -> "Breathing Styles";
+            case DEMON_ARTS -> "Demon Arts";
+            case DATA -> "Move Data";
+        };
     }
 
     // Legacy compatibility

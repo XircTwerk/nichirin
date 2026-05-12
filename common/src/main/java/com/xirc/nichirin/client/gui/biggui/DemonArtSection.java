@@ -16,7 +16,7 @@ import static com.xirc.nichirin.common.data.ProgressionHelper.getUnlockRequireme
 /**
  * Demon Arts section that mirrors the breathing styles system but for demon arts
  */
-public class DemonArtSection {
+public class DemonArtSection extends AbstractGuiPage {
 
     private static final int TOP_MARGIN = 20;
 
@@ -27,23 +27,22 @@ public class DemonArtSection {
 
         // Title
         Component title = Component.translatable("gui.nichirin.demon_arts.title").withStyle(style -> style.withBold(true));
-        graphics.drawString(font, title,
-                centerX - font.width(title) / 2, contentY, 0xFFFFFF);
+        drawAccentTitle(graphics, font, title, centerX, contentY, COLOR_PALETTE.DANGER.argb());
         contentY += 30;
 
         // Current demon art - show if player has a demon moveset
-        String currentStyle = MovesetHelper.getMovesetId(player);
+        String currentStyle = MovesetHelper.getDemonMovesetId(player);
         if (currentStyle != null && isDemonArt(currentStyle)) {
             Component current = Component.translatable("gui.nichirin.demon_arts.current",
                             Component.literal(formatArtName(currentStyle)))
-                    .withStyle(style -> style.withColor(0xFF5555));
-            graphics.drawString(font, current, contentX, contentY, 0xFF5555);
+                    .withStyle(style -> style.withColor(COLOR_PALETTE.DANGER.rgb()));
+            graphics.drawString(font, current, contentX, contentY, COLOR_PALETTE.DANGER.rgb());
             contentY += 25;
         }
 
         // Instructions
         Component instructions = Component.translatable("gui.nichirin.demon_arts.instructions");
-        graphics.drawString(font, instructions, contentX, contentY, 0xAAAAAA);
+        graphics.drawString(font, instructions, contentX, contentY, COLOR_PALETTE.GRAY.rgb());
         contentY += 20;
 
         // Show demon arts (if any additional ones exist beyond default)
@@ -89,9 +88,9 @@ public class DemonArtSection {
         // Show tooltip if hovering over locked art
         if (hoveredLockedArt != null) {
             String requirement = getUnlockRequirement(hoveredLockedArt);
-            Component tooltip = Component.literal(requirement).withStyle(style -> style.withColor(0xFF5555).withBold(true));
+            Component tooltip = Component.literal(requirement).withStyle(style -> style.withColor(COLOR_PALETTE.DANGER.rgb()).withBold(true));
             int tooltipY = 50;
-            graphics.drawString(font, tooltip, centerX - font.width(tooltip) / 2, tooltipY, 0xFF5555);
+            graphics.drawString(font, tooltip, centerX - font.width(tooltip) / 2, tooltipY, COLOR_PALETTE.DANGER.rgb());
         }
 
         // "None" button - gives default demon moveset
@@ -102,16 +101,22 @@ public class DemonArtSection {
 
         // None button is selected when player has default_demon moveset
         boolean isNoneSelected = "default_demon".equals(currentStyle);
-        int noneButtonBg = isNoneSelected ? 0xFF3A3A3A : 0xFF2A2A2A;
-        int noneButtonBorder = isNoneSelected ? 0xFF5555 : 0xFF4A4A4A;
+        int noneButtonBg = isNoneSelected ? COLOR_PALETTE.PANEL_HOVER.argb() : COLOR_PALETTE.PANEL_MID.argb();
+        int noneButtonBorder = isNoneSelected ? COLOR_PALETTE.DANGER.argb() : COLOR_PALETTE.BORDER_HI.argb();
 
+        if (isNoneSelected) {
+            graphics.fill(noneButtonX - 3, noneButtonY - 3,
+                    noneButtonX + noneButtonWidth + 3, noneButtonY + noneButtonHeight + 3, withAlpha(noneButtonBorder, 0x24));
+        }
         graphics.fill(noneButtonX - 1, noneButtonY - 1,
                 noneButtonX + noneButtonWidth + 1, noneButtonY + noneButtonHeight + 1, noneButtonBorder);
         graphics.fill(noneButtonX, noneButtonY,
                 noneButtonX + noneButtonWidth, noneButtonY + noneButtonHeight, noneButtonBg);
+        graphics.fill(noneButtonX, noneButtonY, noneButtonX + noneButtonWidth, noneButtonY + 2,
+                withAlpha(noneButtonBorder, isNoneSelected ? 0xEE : 0x70));
 
-        Component noneText = Component.translatable("gui.nichirin.demon_arts.none");
-        int noneTextColor = isNoneSelected ? 0xFF5555 : 0xAAAAAA;
+        Component noneText = Component.literal("Basic Demon Arts");
+        int noneTextColor = isNoneSelected ? COLOR_PALETTE.DANGER.rgb() : COLOR_PALETTE.GRAY.rgb();
         graphics.drawString(font, noneText,
                 noneButtonX + (noneButtonWidth - font.width(noneText)) / 2,
                 noneButtonY + 6, noneTextColor);
@@ -131,24 +136,31 @@ public class DemonArtSection {
         int borderColor;
 
         if (!isUnlocked) {
-            bgColor = 0xFF1A1A1A; // Darker for locked
-            borderColor = 0xFF666666; // Gray border for locked
+            bgColor = COLOR_PALETTE.PANEL_DARK.argb();
+            borderColor = COLOR_PALETTE.BORDER.argb();
         } else if (isSelected) {
-            bgColor = 0xFF3A1A1A; // Dark red for selected
-            borderColor = 0xFFFF5555; // Red for selected
+            bgColor = COLOR_PALETTE.PANEL_HOVER.argb();
+            borderColor = COLOR_PALETTE.DANGER.argb();
         } else {
-            bgColor = 0xFF2A2A2A;
-            borderColor = 0xFF4A4A4A; // Normal border
+            bgColor = COLOR_PALETTE.PANEL_MID.argb();
+            borderColor = COLOR_PALETTE.BORDER_HI.argb();
         }
 
         // Border
+        if (isSelected) {
+            graphics.fill(x - 3, y - 3, x + width + 3, y + height + 3, withAlpha(borderColor, 0x24));
+        }
         graphics.fill(x - 1, y - 1, x + width + 1, y + height + 1, borderColor);
         // Background
         graphics.fill(x, y, x + width, y + height, bgColor);
+        if (isUnlocked) {
+            graphics.fill(x, y, x + width, y + 2, withAlpha(borderColor, isSelected ? 0xEE : 0x80));
+            graphics.fill(x, y, x + 2, y + height, withAlpha(borderColor, isSelected ? 0xDD : 0x55));
+        }
 
         // Art name
         Component displayName = Component.literal(formatArtName(artName));
-        int nameColor = isUnlocked ? 0xFFFFFF : 0x888888;
+        int nameColor = isUnlocked ? COLOR_PALETTE.WHITE.rgb() : COLOR_PALETTE.TEXT_DIM.rgb();
         graphics.drawString(font, displayName,
                 x + (width - font.width(displayName)) / 2,
                 y + 10, nameColor);
@@ -156,26 +168,28 @@ public class DemonArtSection {
         // Status
         if (!isUnlocked) {
             Component locked = Component.translatable("gui.nichirin.demon_arts.locked_status")
-                    .withStyle(style -> style.withColor(0xFF5555));
+                    .withStyle(style -> style.withColor(COLOR_PALETTE.DANGER.rgb()));
             graphics.drawString(font, locked,
                     x + (width - font.width(locked)) / 2,
-                    y + 30, 0xFF5555);
+                    y + 30, COLOR_PALETTE.DANGER.rgb());
         } else if (isSelected) {
             Component equipped = Component.translatable("gui.nichirin.demon_arts.equipped")
-                    .withStyle(style -> style.withColor(0xFF5555));
+                    .withStyle(style -> style.withColor(COLOR_PALETTE.DANGER.rgb()));
             graphics.drawString(font, equipped,
                     x + (width - font.width(equipped)) / 2,
-                    y + 30, 0xFF5555);
+                    y + 30, COLOR_PALETTE.DANGER.rgb());
         } else {
             Component clickToSelect = Component.translatable("gui.nichirin.demon_arts.click_to_select")
-                    .withStyle(style -> style.withColor(0xAAAAAA));
+                    .withStyle(style -> style.withColor(COLOR_PALETTE.GRAY.rgb()));
             graphics.drawString(font, clickToSelect,
                     x + (width - font.width(clickToSelect)) / 2,
-                    y + 30, 0xAAAAAA);
+                    y + 30, COLOR_PALETTE.GRAY.rgb());
         }
 
-        // Icon placeholder (red tinted for demon arts)
-        int iconColor = isUnlocked ? 0xFF3A1A1A : 0xFF2A1A1A;
+        // Icon placeholder
+        int iconColor = isUnlocked ? COLOR_PALETTE.PANEL_HOVER.argb() : COLOR_PALETTE.PANEL_MID.argb();
+        graphics.fill(x + width / 2 - 17, y + 49, x + width / 2 + 17, y + 76,
+                isUnlocked ? withAlpha(borderColor, 0xAA) : COLOR_PALETTE.BORDER.argb());
         graphics.fill(x + width/2 - 16, y + 50, x + width/2 + 16, y + 75, iconColor);
     }
 
@@ -230,7 +244,7 @@ public class DemonArtSection {
             return false;
         }
 
-        String currentStyle = MovesetHelper.getMovesetId(player);
+        String currentStyle = MovesetHelper.getDemonMovesetId(player);
         int centerX = (contentWidth - 20) / 2;
 
         // Additional demon arts (future ones beyond default)

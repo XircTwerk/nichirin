@@ -30,6 +30,9 @@ public class TheBigGui extends Screen {
     private static final int BUTTON_SPACING = 4;
     private static final int RIGHT_MARGIN = 10;
     private static final int TOP_MARGIN = 40;
+    private static final int CONTENT_X = 10;
+    private static final int CONTENT_Y = TOP_MARGIN - 20;
+    private static final int BOTTOM_MARGIN = 10;
 
     // Colors
     private static final int BACKGROUND_COLOR    = NichirinPalette.BG_DARK;
@@ -173,23 +176,27 @@ public class TheBigGui extends Screen {
         // Draw dark background
         graphics.fill(0, 0, this.scaledWidth, this.scaledHeight, BACKGROUND_COLOR);
 
-        // Draw content area background (slightly lighter) - 20 pixels higher
         int contentRight = this.scaledWidth - BUTTON_WIDTH - RIGHT_MARGIN - 10;
-        graphics.fill(10, TOP_MARGIN - 20, contentRight, this.scaledHeight - 10, NichirinPalette.BG_CONTENT);
+        graphics.fill(CONTENT_X, CONTENT_Y, contentRight, this.scaledHeight - BOTTOM_MARGIN, 0xFF1A1817);
 
         // Calculate content area dimensions
-        int contentWidth = contentRight - 10;
-        int contentHeight = this.scaledHeight - 10;
+        int contentWidth = contentRight - CONTENT_X;
+        int contentHeight = this.scaledHeight - BOTTOM_MARGIN - CONTENT_Y;
 
         // Render current section content
+        poseStack.pushPose();
+        poseStack.translate(CONTENT_X, CONTENT_Y, 0);
+        int contentMouseX = adjustedMouseX - CONTENT_X;
+        int contentMouseY = adjustedMouseY - CONTENT_Y;
         switch (currentSection) {
-            case HOME -> homeSection.render(graphics, adjustedMouseX, adjustedMouseY, player, contentWidth, contentHeight, this.font);
-            case SKILLS -> skillsSection.render(graphics, player, this.font, contentWidth, contentHeight, adjustedMouseX, adjustedMouseY);
-            case BESTIARY -> bestiarySection.render(graphics, player, this.font);
-            case QUESTS -> questsSection.render(graphics, player, this.font);
-            case REPUTATION -> reputationSection.render(graphics, player, this.font);
-            case MOVESET -> movesetSection.render(graphics, player, this.font, contentWidth, contentHeight, adjustedMouseX, adjustedMouseY);
+            case HOME -> homeSection.render(graphics, contentMouseX, contentMouseY, player, contentWidth, contentHeight, this.font);
+            case SKILLS -> skillsSection.render(graphics, player, this.font, contentWidth, contentHeight, contentMouseX, contentMouseY);
+            case BESTIARY -> bestiarySection.render(graphics, player, this.font, contentWidth, contentHeight, contentMouseX, contentMouseY);
+            case QUESTS -> questsSection.render(graphics, player, this.font, contentWidth, contentHeight, contentMouseX, contentMouseY);
+            case REPUTATION -> reputationSection.render(graphics, player, this.font, contentWidth, contentHeight, contentMouseX, contentMouseY);
+            case MOVESET -> movesetSection.render(graphics, player, this.font, contentWidth, contentHeight, contentMouseX, contentMouseY);
         }
+        poseStack.popPose();
 
         // Restore pose stack before rendering buttons (they handle their own scaling)
         poseStack.popPose();
@@ -252,7 +259,7 @@ public class TheBigGui extends Screen {
         if (currentSection == GuiSection.SKILLS) {
             assert minecraft != null;
             double scaleRatio = FIXED_GUI_SCALE / minecraft.getWindow().getGuiScale();
-            if (skillsSection.handleScroll(mouseX / scaleRatio, mouseY / scaleRatio, delta)) return true;
+            if (skillsSection.handleScroll(mouseX / scaleRatio - CONTENT_X, mouseY / scaleRatio - CONTENT_Y, delta)) return true;
         }
         return super.mouseScrolled(mouseX, mouseY, delta);
     }
@@ -269,17 +276,19 @@ public class TheBigGui extends Screen {
 
         // Compute content dimensions (must match render())
         int contentRight = this.scaledWidth - BUTTON_WIDTH - RIGHT_MARGIN - 10;
-        int clickContentWidth = contentRight - 10;
-        int clickContentHeight = this.scaledHeight - 10;
+        int clickContentWidth = contentRight - CONTENT_X;
+        int clickContentHeight = this.scaledHeight - BOTTOM_MARGIN - CONTENT_Y;
+        double contentMouseX = adjustedMouseX - CONTENT_X;
+        double contentMouseY = adjustedMouseY - CONTENT_Y;
 
         // Handle section-specific clicks
         boolean handled = switch (currentSection) {
-            case HOME -> homeSection.handleClick(adjustedMouseX, adjustedMouseY, player);
-            case SKILLS -> skillsSection.handleClick(adjustedMouseX, adjustedMouseY, player, clickContentWidth, clickContentHeight);
-            case BESTIARY -> bestiarySection.handleClick(adjustedMouseX, adjustedMouseY, player);
-            case QUESTS -> questsSection.handleClick(adjustedMouseX, adjustedMouseY, player);
-            case REPUTATION -> reputationSection.handleClick(adjustedMouseX, adjustedMouseY, player);
-            case MOVESET -> movesetSection.handleClick(adjustedMouseX, adjustedMouseY, player, clickContentWidth, clickContentHeight);
+            case HOME -> homeSection.handleClick(contentMouseX, contentMouseY, player);
+            case SKILLS -> skillsSection.handleClick(contentMouseX, contentMouseY, player, clickContentWidth, clickContentHeight);
+            case BESTIARY -> bestiarySection.handleClick(contentMouseX, contentMouseY, player);
+            case QUESTS -> questsSection.handleClick(contentMouseX, contentMouseY, player);
+            case REPUTATION -> reputationSection.handleClick(contentMouseX, contentMouseY, player);
+            case MOVESET -> movesetSection.handleClick(contentMouseX, contentMouseY, player, clickContentWidth, clickContentHeight);
         };
 
         if (handled) {

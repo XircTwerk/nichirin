@@ -1,7 +1,6 @@
 package com.xirc.nichirin.client.gui.biggui;
 
 import com.xirc.nichirin.client.data.ClientProgressionCache;
-import com.xirc.nichirin.client.gui.NichirinPalette;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.data.ProgressionHelper;
 import com.xirc.nichirin.registry.MovesetRegistry;
@@ -22,7 +21,7 @@ import static com.xirc.nichirin.common.data.ProgressionHelper.getUnlockRequireme
  * Layout: 3-column grid so all 7 styles fit within the visible content area
  * without scrolling on typical screen sizes.
  */
-public class BreathingStylesSection {
+public class BreathingStylesSection extends AbstractGuiPage {
 
     // All registered breathing styles in display order.
     static final String[] BREATHING_STYLES = {
@@ -51,23 +50,22 @@ public class BreathingStylesSection {
         // Title
         Component title = Component.translatable("gui.nichirin.breathing_styles.title")
                 .withStyle(s -> s.withBold(true));
-        graphics.drawString(font, title, centerX - font.width(title) / 2, contentY,
-                NichirinPalette.TEXT_WHITE);
+        drawAccentTitle(graphics, font, title, centerX, contentY, COLOR_PALETTE.ACCENT.argb());
         contentY += 30;
 
         // Current style line (only when a style is active)
-        String currentStyle = MovesetHelper.getMovesetId(player);
+        String currentStyle = MovesetHelper.getBreathingMovesetId(player);
         if (currentStyle != null) {
             Component current = Component.translatable("gui.nichirin.breathing_styles.current",
                     Component.translatable("breathing_style." + currentStyle))
-                    .withStyle(s -> s.withColor(NichirinPalette.TEXT_ACCENT));
-            graphics.drawString(font, current, 20, contentY, NichirinPalette.TEXT_ACCENT);
+                    .withStyle(s -> s.withColor(COLOR_PALETTE.ACCENT.rgb()));
+            graphics.drawString(font, current, 20, contentY, COLOR_PALETTE.ACCENT.rgb());
             contentY += 25;
         }
 
         // Instructions
         Component instructions = Component.translatable("gui.nichirin.breathing_styles.instructions");
-        graphics.drawString(font, instructions, 20, contentY, NichirinPalette.TEXT_MUTED);
+        graphics.drawString(font, instructions, 20, contentY, COLOR_PALETTE.TEXT_DIM.rgb());
         contentY += 20;
 
         // Grid
@@ -97,9 +95,9 @@ public class BreathingStylesSection {
         if (hoveredLocked != null) {
             String req = getUnlockRequirement(hoveredLocked);
             Component tooltip = Component.literal(req)
-                    .withStyle(s -> s.withColor(NichirinPalette.TEXT_WARNING).withBold(true));
+                    .withStyle(s -> s.withColor(COLOR_PALETTE.ACCENT_LIGHT.rgb()).withBold(true));
             graphics.drawString(font, tooltip, centerX - font.width(tooltip) / 2, 50,
-                    NichirinPalette.TEXT_WARNING);
+                    COLOR_PALETTE.ACCENT_LIGHT.rgb());
         }
 
         // "None" button
@@ -109,14 +107,14 @@ public class BreathingStylesSection {
         int noneW        = 150;
         int noneH        = 20;
 
-        int noneBg     = currentStyle == null ? NichirinPalette.BG_BOX_ACTIVE : NichirinPalette.BG_BOX;
-        int noneBorder = currentStyle == null ? NichirinPalette.BORDER_ACCENT  : NichirinPalette.BORDER_DEFAULT;
+        int noneBg     = currentStyle == null ? COLOR_PALETTE.PANEL_HOVER.argb() : COLOR_PALETTE.PANEL_MID.argb();
+        int noneBorder = currentStyle == null ? COLOR_PALETTE.ACCENT.argb()      : COLOR_PALETTE.BORDER_HI.argb();
 
         graphics.fill(noneX - 1, noneY - 1, noneX + noneW + 1, noneY + noneH + 1, noneBorder);
         graphics.fill(noneX, noneY, noneX + noneW, noneY + noneH, noneBg);
 
         Component noneText  = Component.translatable("gui.nichirin.breathing_styles.none");
-        int noneTextColor   = currentStyle == null ? NichirinPalette.TEXT_ACCENT : NichirinPalette.TEXT_MUTED;
+        int noneTextColor   = currentStyle == null ? COLOR_PALETTE.ACCENT.rgb() : COLOR_PALETTE.TEXT_DIM.rgb();
         graphics.drawString(font, noneText,
                 noneX + (noneW - font.width(noneText)) / 2,
                 noneY + 6, noneTextColor);
@@ -128,41 +126,50 @@ public class BreathingStylesSection {
         boolean unlocked  = isStyleUnlocked(player, styleId);
         boolean selected  = styleId.equals(currentStyle);
 
-        int bg     = unlocked ? (selected ? NichirinPalette.BG_BOX_ACTIVE : NichirinPalette.BG_BOX)
-                              : NichirinPalette.BG_BOX_LOCKED;
-        int border = unlocked ? (selected ? NichirinPalette.BORDER_ACCENT : NichirinPalette.BORDER_DEFAULT)
-                              : NichirinPalette.BORDER_LOCKED;
+        int bg     = unlocked ? (selected ? COLOR_PALETTE.PANEL_HOVER.argb() : COLOR_PALETTE.PANEL_MID.argb())
+                              : COLOR_PALETTE.PANEL_DARK.argb();
+        int border = unlocked ? (selected ? COLOR_PALETTE.ACCENT.argb() : COLOR_PALETTE.BORDER_HI.argb())
+                              : COLOR_PALETTE.BORDER.argb();
 
+        if (selected) {
+            graphics.fill(x - 3, y - 3, x + BOX_WIDTH + 3, y + BOX_HEIGHT + 3, withAlpha(border, 0x24));
+        }
         graphics.fill(x - 1, y - 1, x + BOX_WIDTH + 1, y + BOX_HEIGHT + 1, border);
         graphics.fill(x, y, x + BOX_WIDTH, y + BOX_HEIGHT, bg);
+        if (unlocked) {
+            graphics.fill(x, y, x + BOX_WIDTH, y + 2, withAlpha(border, selected ? 0xEE : 0x80));
+            graphics.fill(x, y, x + 2, y + BOX_HEIGHT, withAlpha(border, selected ? 0xDD : 0x55));
+        }
 
         Component name = Component.literal(formatStyleName(styleId));
-        int nameColor  = unlocked ? NichirinPalette.TEXT_WHITE : NichirinPalette.TEXT_LOCKED;
+        int nameColor  = unlocked ? COLOR_PALETTE.TEXT.rgb() : COLOR_PALETTE.TEXT_FAINT.rgb();
         graphics.drawString(font, name,
                 x + (BOX_WIDTH - font.width(name)) / 2, y + 8, nameColor);
 
         if (!unlocked) {
             Component locked = Component.translatable("gui.nichirin.breathing_styles.locked_status")
-                    .withStyle(s -> s.withColor(NichirinPalette.TEXT_ERROR));
+                    .withStyle(s -> s.withColor(COLOR_PALETTE.TEXT_FAINT.rgb()));
             graphics.drawString(font, locked,
                     x + (BOX_WIDTH - font.width(locked)) / 2, y + 26,
-                    NichirinPalette.TEXT_ERROR);
+                    COLOR_PALETTE.TEXT_FAINT.rgb());
         } else if (selected) {
             Component equipped = Component.translatable("gui.nichirin.breathing_styles.equipped")
-                    .withStyle(s -> s.withColor(NichirinPalette.TEXT_ACCENT));
+                    .withStyle(s -> s.withColor(COLOR_PALETTE.ACCENT.rgb()));
             graphics.drawString(font, equipped,
                     x + (BOX_WIDTH - font.width(equipped)) / 2, y + 26,
-                    NichirinPalette.TEXT_ACCENT);
+                    COLOR_PALETTE.ACCENT.rgb());
         } else {
             Component click = Component.translatable("gui.nichirin.breathing_styles.click_to_select")
-                    .withStyle(s -> s.withColor(NichirinPalette.TEXT_MUTED));
+                    .withStyle(s -> s.withColor(COLOR_PALETTE.TEXT_DIM.rgb()));
             graphics.drawString(font, click,
                     x + (BOX_WIDTH - font.width(click)) / 2, y + 26,
-                    NichirinPalette.TEXT_MUTED);
+                    COLOR_PALETTE.TEXT_DIM.rgb());
         }
 
         // Icon placeholder
-        int iconBg = unlocked ? NichirinPalette.BG_BOX_ACTIVE : NichirinPalette.BG_BOX;
+        int iconBg = unlocked ? COLOR_PALETTE.PANEL_HOVER.argb() : COLOR_PALETTE.PANEL_MID.argb();
+        int iconBorder = unlocked ? withAlpha(border, 0xAA) : COLOR_PALETTE.BORDER.argb();
+        graphics.fill(x + BOX_WIDTH / 2 - 13, y + 43, x + BOX_WIDTH / 2 + 13, y + 65, iconBorder);
         graphics.fill(x + BOX_WIDTH / 2 - 12, y + 44, x + BOX_WIDTH / 2 + 12, y + 64, iconBg);
     }
 
@@ -174,7 +181,7 @@ public class BreathingStylesSection {
         long now = System.currentTimeMillis();
         if (now - lastClickTime < CLICK_COOLDOWN_MS) return false;
 
-        String currentStyle = MovesetHelper.getMovesetId(player);
+        String currentStyle = MovesetHelper.getBreathingMovesetId(player);
         int    centerX      = (contentWidth - 20) / 2;
         int    totalWidth   = (BOX_WIDTH * COLS) + (SPACING * (COLS - 1));
         int    startX       = centerX - totalWidth / 2;

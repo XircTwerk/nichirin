@@ -1,16 +1,20 @@
 package com.xirc.nichirin.client.gui.biggui.skills;
 
+import com.xirc.nichirin.client.gui.biggui.AbstractGuiPage;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 
 /** Bloodlines / Traits sub-tab placeholder — coming soon. */
-public class BloodlinesTab {
+public class BloodlinesTab extends AbstractGuiPage {
 
     public void render(GuiGraphics graphics, Player player, Font font, int contentWidth, int contentHeight, int mouseX, int mouseY) {
-        graphics.drawString(font, Component.literal("Bloodlines — Coming Soon").withStyle(style -> style.withColor(0xAAAAAA)), 20, 30, 0xFFFFFF, false);
-        graphics.drawString(font, Component.literal("Rare bloodline traits and passive bonuses will appear here.").withStyle(style -> style.withColor(0x666666)), 20, 50, 0xFFFFFF, false);
+        int cx = contentWidth / 2;
+        int cy = contentHeight / 2 - 14;
+        String title = "Bloodlines";
+        String body = "Rare bloodline traits and passive bonuses will appear here.";
+        graphics.drawString(font, title, cx - font.width(title) / 2, cy, COLOR_PALETTE.TEXT.rgb(), false);
+        graphics.drawString(font, body, cx - font.width(body) / 2, cy + 16, COLOR_PALETTE.TEXT_DIM.rgb(), false);
     }
 
     public boolean handleClick(double mouseX, double mouseY, Player player) {

@@ -2,789 +2,942 @@ package com.xirc.nichirin.client.gui.biggui.skills;
 
 import com.xirc.nichirin.client.data.ClientPerkCache;
 import com.xirc.nichirin.client.gui.PerkIcon;
+import com.xirc.nichirin.client.gui.biggui.AbstractGuiPage;
 import com.xirc.nichirin.common.network.c2s.PerkActionPacket;
-import com.xirc.nichirin.common.system.perks.*;
+import com.xirc.nichirin.common.system.perks.FlawDefinition;
+import com.xirc.nichirin.common.system.perks.NichirinPerkRegistry;
+import com.xirc.nichirin.common.system.perks.PerkData;
+import com.xirc.nichirin.common.system.perks.PerkDefinition;
+import com.xirc.nichirin.common.system.perks.PerkTag;
+import com.xirc.nichirin.common.system.perks.PerkTier;
+import com.xirc.nichirin.common.system.perks.PerkUpgradeCost;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
-import net.minecraft.resources.ResourceLocation;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 /**
- * Perks sub-tab — icon grid layout.
- *
- * <pre>
- *  EQUIPPED  n/slots                         [Sort ▾] [Perks: ON]
- *  [eq] [eq] [ ] [🔒] [🔒]
- *  FLAWS: [f1] [+]
- *
- *  DISCOVERED  (n / total)              [Search...]
- *  [icon][icon][icon]...   (scrollable)
- *
- *  UNDISCOVERED  (n remaining)
- *  [ ?? ][ ?? ]...          (dimmed, scrollable)
- *
- *  ═ Selected perk detail + upgrade / equip buttons  (only when selected)
- * </pre>
+ * Perks tab rendered as a three-column workspace.
  */
-public class PerksTab {
+public class PerksTab extends AbstractGuiPage {
 
-    // Layout
-    private static final int PAD        = 8;
-    private static final int ICON_SZ    = 36;
-    private static final int ICON_GAP   = 5;
-    private static final int EQ_SZ      = 44;
-    private static final int EQ_GAP     = 6;
-    private static final int SEC_H      = 14;
-    private static final int DETAIL_H   = 82;  // bottom detail panel height when visible
+    private static final int PAD = 16;
+    private static final int GAP = 14;
+    private static final int LEFT_W = 200;
+    private static final int RIGHT_W = 340;
+    private static final int MIN_MID_W = 280;
+    private static final int SUBHEADER_H = 46;
+    private static final int ROW_H = 70;
+    private static final int DETAIL_FOOTER_H = 36;
 
-    // Colours — BigGui dark palette
-    private static final int C_BG           = 0xFF0E0E0E;
-    private static final int C_PANEL        = 0xFF181818;
-    private static final int C_PANEL2       = 0xFF1E1E1E;
-    private static final int C_PANEL_LITE   = 0xFF262626;
-    private static final int C_BORDER       = 0xFF303030;
-    private static final int C_BORDER_MID   = 0xFF3A3A3A;
-    private static final int C_BORDER_HI    = 0xFF505050;
-    private static final int C_TEXT         = 0xFFDDDDDD;
-    private static final int C_TEXT_DIM     = 0xFF777777;
-    private static final int C_TEXT_FAINT   = 0xFF383838;
-    private static final int C_ACCENT       = 0xFFAAAAAA;
-    private static final int C_ACCENT_DIM   = 0xFF2A2A2A;
-    private static final int C_GREEN        = 0xFF55AA55;
-    private static final int C_RED          = 0xFFAA4444;
-    private static final int C_GOLD         = 0xFFCCAA33;
-    private static final int C_SLOT_EMPTY   = 0xFF111111;
-    private static final int C_SLOT_EQ      = 0xFF202020;
-    private static final int C_SLOT_LOCKED  = 0xFF0A0A0A;
-    private static final int OV_HOVER       = 0x1FFFFFFF;
-    private static final int OV_HOVER2      = 0x2EFFFFFF;
-    private static final int OV_LOCKED      = 0xAA080808;
+    private static final int BG = COLOR_PALETTE.BG.argb();
+    private static final int PANEL = COLOR_PALETTE.PANEL.argb();
+    private static final int PANEL_2 = COLOR_PALETTE.PANEL_MID.argb();
+    private static final int PANEL_3 = COLOR_PALETTE.PANEL_HOVER.argb();
+    private static final int BORDER = COLOR_PALETTE.BORDER.argb();
+    private static final int BORDER_HI = COLOR_PALETTE.BORDER_HI.argb();
+    private static final int TEXT = COLOR_PALETTE.TEXT.rgb();
+    private static final int TEXT_DIM = COLOR_PALETTE.TEXT_DIM.rgb();
+    private static final int TEXT_FAINT = COLOR_PALETTE.TEXT_FAINT.rgb();
+    private static final int ACCENT = COLOR_PALETTE.ACCENT.argb();
+    private static final int RED = COLOR_PALETTE.RED.argb();
+    private static final int GREEN = COLOR_PALETTE.GREEN.argb();
 
-    // State
-    private int      discScroll    = 0;
-    private int      lockScroll    = 0;
-    private SortMode sort          = SortMode.TIER;
-    private boolean  searchActive  = false;
-    private String   searchText    = "";
-    private String   hoverPerkId   = null;
-    private int      hoverMx, hoverMy;
-    private boolean  mouseInDisc   = false;
-    private boolean  mouseInLock   = false;
-    private String   selectedId    = null;  // clicked perk → detail panel
+    private Category activeCategory = Category.ALL;
+    private SortMode sort = SortMode.TIER;
+    private FilterMode filter = FilterMode.ALL;
+    private boolean searchActive;
+    private String searchText = "";
+    private String selectedId;
+    private int activePresetIndex;
 
-    // Cached layout
-    private int cachedCw;
-    private int eqSectionBottom;
-    private int discGridY, discGridH;
-    private int lockGridY, lockGridH;
+    private int categoryScroll;
+    private int listScroll;
+    private int detailScroll;
 
-    enum SortMode {
-        TIER("Tier"), NAME("Name"), CURSED("Cursed");
+    private int cachedW;
+    private int cachedH;
+    private int leftW;
+    private int middleW;
+    private int rightW;
+    private int middleX;
+    private int rightX;
+    private int listViewportY;
+    private int listViewportH;
+
+    private enum SortMode {
+        TIER("Tier"),
+        NAME("Name"),
+        TAG("Tag");
+
         final String label;
-        SortMode(String l) { this.label = l; }
-        SortMode next() { SortMode[] v = values(); return v[(ordinal() + 1) % v.length]; }
-    }
 
-    // RENDER
-
-    // Equipped + Flaws
-
-    private int renderEquippedSection(GuiGraphics g, Font font, PerkData data, int cw, int y, int mx, int my) {
-        int slots  = data.getPerkSlots();
-        boolean on = data.isPerksEnabled();
-        Map<String, PerkTier> eqMap = data.getEquippedPerks();
-        List<Map.Entry<String, PerkTier>> eList = new ArrayList<>(eqMap.entrySet());
-
-        int flawsNeeded  = Math.max(0, data.equippedCount() - 3);
-        int flawsHave    = data.equippedFlawCount();
-        boolean hasFlaws = flawsNeeded > 0 || flawsHave > 0;
-        int sectionH     = SEC_H + 4 + EQ_SZ + PAD + (hasFlaws ? EQ_SZ / 2 + 6 : 0);
-
-        g.fill(0, y, cw, y + sectionH, C_PANEL);
-        g.fill(0, y + sectionH, cw, y + sectionH + 1, C_BORDER_MID);
-        g.fill(0, y + sectionH + 1, cw, y + sectionH + 2, C_BORDER);
-
-        // Header row
-        g.drawString(font, "EQUIPPED  " + eList.size() + " / " + slots, PAD + 2, y + 3, C_ACCENT, false);
-
-        String sortLabel = "Sort: " + sort.label + " \u25be";
-        int sortW  = font.width(sortLabel) + 10;
-        int togW   = font.width("Perks: OFF") + 14;
-        int togX   = cw - PAD - togW;
-        int sortX  = togX - 4 - sortW;
-
-        boolean sortHov = inRect(mx, my, sortX, y + 2, sortW, 11);
-        drawPillBtn(g, font, sortX, y + 2, sortW, 11, sortLabel, C_BORDER_MID, sortHov ? C_TEXT : C_TEXT_DIM, sortHov);
-
-        boolean togHov = inRect(mx, my, togX, y + 2, togW, 11);
-        drawPillBtn(g, font, togX, y + 2, togW, 11, "Perks: " + (on ? "ON" : "OFF"),
-                on ? C_GREEN : C_BORDER_MID, on ? 0xFFAAFFBB : C_TEXT_DIM, togHov);
-
-        // Equipped slots
-        int slotY = y + SEC_H + 4;
-        for (int i = 0; i < 5; i++) {
-            int sx = PAD + i * (EQ_SZ + EQ_GAP);
-            if (i >= slots) {
-                renderLockedEqSlot(g, font, sx, slotY, EQ_SZ, mx, my);
-            } else if (i < eList.size()) {
-                PerkDefinition def = NichirinPerkRegistry.getPerk(eList.get(i).getKey());
-                renderFilledEqSlot(g, font, def, eList.get(i).getValue(), sx, slotY, EQ_SZ, mx, my);
-            } else {
-                renderEmptyEqSlot(g, font, sx, slotY, EQ_SZ, mx, my);
-            }
+        SortMode(String label) {
+            this.label = label;
         }
 
-        // Flaws row
-        if (hasFlaws) {
-            int fy = slotY + EQ_SZ + 4;
-            int fx = PAD;
-            g.drawString(font, "FLAWS:", fx, fy + (EQ_SZ / 2 - font.lineHeight) / 2, C_RED, false);
-            fx += font.width("FLAWS:") + 5;
-
-            List<String> flawList = new ArrayList<>(data.getEquippedFlaws());
-            int flawSz = EQ_SZ / 2;
-            for (int i = 0; i < Math.max(flawsNeeded, flawsHave); i++) {
-                boolean filled    = i < flawList.size();
-                boolean required  = i < flawsNeeded;
-                int borderCol = filled ? C_RED : (required ? 0xFFAA2222 : C_BORDER);
-
-                g.fill(fx + 2, fy + 2, fx + flawSz + 2, fy + flawSz + 2, 0x35000000);
-                g.fill(fx - 1, fy - 1, fx + flawSz + 1, fy + flawSz + 1, borderCol);
-                g.fill(fx, fy, fx + flawSz, fy + flawSz, filled ? 0xFF1A0808 : C_SLOT_LOCKED);
-
-                if (filled) {
-                    FlawDefinition flaw = NichirinPerkRegistry.getFlaw(flawList.get(i));
-                    String abbr = flaw != null ? flaw.name.substring(0, Math.min(2, flaw.name.length())).toUpperCase() : "?";
-                    g.drawString(font, abbr, fx + (flawSz - font.width(abbr)) / 2, fy + (flawSz - font.lineHeight) / 2, C_RED, false);
-                } else if (required) {
-                    g.drawString(font, "!", fx + (flawSz - font.width("!")) / 2, fy + (flawSz - font.lineHeight) / 2, 0xFFAA2222, false);
-                } else {
-                    g.drawString(font, "+", fx + (flawSz - font.width("+")) / 2, fy + (flawSz - font.lineHeight) / 2, C_BORDER_HI, false);
-                }
-                fx += flawSz + 3;
-            }
-
-            if (flawsNeeded > flawsHave) {
-                int missing = flawsNeeded - flawsHave;
-                String warn = "Equip " + missing + " more flaw" + (missing > 1 ? "s" : "") + " to support extra perks";
-                g.drawString(font, warn, fx + 6, fy + (flawSz - font.lineHeight) / 2, 0xFFAA4444, false);
-            }
-        }
-
-        return y + sectionH;
-    }
-
-    private void renderFilledEqSlot(GuiGraphics g, Font font, PerkDefinition def, PerkTier tier,
-                                    int x, int y, int sz, int mx, int my) {
-        boolean hov = inRect(mx, my, x - 2, y - 2, sz + 4, sz + 4);
-        int tc = tier.primaryColor | 0xFF000000;
-
-        g.fill(x + 3, y + 3, x + sz + 3, y + sz + 3, 0x55000000);
-        g.fill(x - 2, y - 2, x + sz + 2, y + sz + 2, (tc & 0x00FFFFFF) | 0x66000000);
-        g.fill(x - 1, y - 1, x + sz + 1, y + sz + 1, tc);
-        g.fill(x, y, x + sz, y + sz, C_SLOT_EQ);
-        g.fill(x, y, x + sz, y + 3, tc);
-        g.fill(x, y, x + sz / 2, y + 2, (tc & 0x00FFFFFF) | 0x55FFFFFF);
-
-        if (hov) {
-            g.fill(x, y + 3, x + sz, y + sz, OV_HOVER2);
-            if (hoverPerkId == null && def != null) { hoverPerkId = def.id; hoverMx = mx; hoverMy = my; }
-        }
-
-        // Perk icon texture
-        if (def != null) {
-            renderPerkIcon(g, def.id, tier, x + (sz - 32) / 2, y + (sz - 32) / 2 + 1);
-        }
-
-        g.fill(x + sz - 6, y + sz - 5, x + sz - 1, y + sz - 1, tc);
-    }
-
-    private void renderEmptyEqSlot(GuiGraphics g, Font font, int x, int y, int sz, int mx, int my) {
-        boolean hov = inRect(mx, my, x, y, sz, sz);
-        g.fill(x + 2, y + 2, x + sz + 2, y + sz + 2, 0x30000000);
-        g.fill(x - 1, y - 1, x + sz + 1, y + sz + 1, C_BORDER);
-        g.fill(x, y, x + sz, y + sz, hov ? C_PANEL_LITE : C_SLOT_EMPTY);
-        if (hov) g.fill(x, y, x + sz, y + sz, OV_HOVER);
-        int cx = x + sz / 2, cy = y + sz / 2;
-        g.fill(cx - 6, cy - 1, cx + 7, cy + 2, C_BORDER_HI);
-        g.fill(cx - 1, cy - 6, cx + 2, cy + 7, C_BORDER_HI);
-    }
-
-    private void renderLockedEqSlot(GuiGraphics g, Font font, int x, int y, int sz, int mx, int my) {
-        g.fill(x + 2, y + 2, x + sz + 2, y + sz + 2, 0x25000000);
-        g.fill(x - 1, y - 1, x + sz + 1, y + sz + 1, C_BORDER);
-        g.fill(x, y, x + sz, y + sz, C_SLOT_LOCKED);
-        g.fill(x, y, x + sz, y + sz, OV_LOCKED);
-        renderLockIcon(g, x + sz / 2 - 4, y + sz / 2 - 6, C_TEXT_FAINT);
-        String earn = "EARN";
-        g.drawString(font, earn, x + (sz - font.width(earn)) / 2, y + sz - font.lineHeight - 2, C_TEXT_FAINT, false);
-    }
-
-    // Section header
-
-    private void renderSectionHeader(GuiGraphics g, Font font, int cw, int y,
-                                     String title, String badge, boolean showSearch,
-                                     PerkData data, int mx, int my) {
-        g.drawString(font, title, PAD + 2, y + 1, C_ACCENT, false);
-        int afterX = PAD + 2 + font.width(title) + 5;
-        if (badge != null) {
-            g.drawString(font, badge, afterX, y + 1, C_TEXT_DIM, false);
-            afterX += font.width(badge) + 5;
-        }
-        int lineEndX = cw - PAD;
-        if (showSearch && data != null) {
-            int sw = 95; int sx = cw - PAD - sw; int sy = y - 1;
-            lineEndX = sx - 5;
-            boolean shov = inRect(mx, my, sx, sy, sw, 11);
-            int sbg = searchActive ? 0xFF182038 : (shov ? C_PANEL_LITE : C_PANEL2);
-            g.fill(sx - 1, sy - 1, sx + sw + 1, sy + 12, C_BORDER_MID);
-            g.fill(sx, sy, sx + sw, sy + 11, sbg);
-            String sdisp = (searchText.isEmpty() && !searchActive) ? "Search..."
-                    : searchText + (searchActive ? "\u258c" : "");
-            g.drawString(font, sdisp, sx + 3, sy + 2, searchText.isEmpty() ? C_TEXT_DIM : C_TEXT, false);
-        }
-        int lineY = y + SEC_H / 2;
-        g.fill(afterX, lineY, lineEndX, lineY + 1, C_BORDER);
-        int fl = Math.min(30, lineEndX - afterX);
-        for (int i = 0; i < fl; i++) {
-            int a = (int)(0x44 * (i / (double) fl));
-            g.fill(afterX + i, lineY, afterX + i + 1, lineY + 1, (a << 24) | (C_ACCENT & 0xFFFFFF));
+        SortMode next() {
+            SortMode[] values = values();
+            return values[(ordinal() + 1) % values.length];
         }
     }
 
-    // Discovered grid
+    private enum FilterMode {
+        ALL("All"),
+        EQUIPPED("Equipped"),
+        CURSED("Cursed");
 
-    private void renderDiscGrid(GuiGraphics g, Font font, PerkData data,
-                                List<PerkDefinition> all, int cols,
-                                int gx, int gy, int gw, int gh, int mx, int my) {
-        g.fill(gx, gy, gx + gw, gy + gh, C_PANEL2);
-        g.fill(gx, gy, gx + gw, gy + 1, C_BORDER);
-        g.fill(gx, gy + gh - 1, gx + gw, gy + gh, C_BORDER);
+        final String label;
 
-        String search = searchText.toLowerCase();
-        List<PerkDefinition> perks = new ArrayList<>();
-        for (PerkDefinition d : all) {
-            if (!search.isEmpty()) {
-                boolean m = d.name.toLowerCase().contains(search)
-                        || d.description.toLowerCase().contains(search)
-                        || Arrays.stream(d.tags).anyMatch(t -> t.displayName.toLowerCase().contains(search));
-                if (!m) continue;
-            }
-            perks.add(d);
-        }
-        sortPerks(perks, data);
-
-        int rowsVisible = Math.max(1, gh / (ICON_SZ + ICON_GAP));
-        int maxScroll = Math.max(0, (perks.size() + cols - 1) / cols - rowsVisible);
-        discScroll = Math.max(0, Math.min(discScroll, maxScroll));
-        if (inRect(mx, my, gx, gy, gw, gh)) mouseInDisc = true;
-
-        for (int i = discScroll * cols; i < Math.min(perks.size(), (discScroll + rowsVisible + 1) * cols); i++) {
-            int col = i % cols, row = i / cols - discScroll;
-            int ix = gx + col * (ICON_SZ + ICON_GAP), iy = gy + row * (ICON_SZ + ICON_GAP) + 1;
-            if (iy + ICON_SZ > gy + gh) break;
-
-            PerkDefinition def = perks.get(i);
-            boolean equipped = data.isEquipped(def.id);
-            PerkTier tier    = equipped ? data.getTier(def.id) : def.minTier;
-            boolean sel      = def.id.equals(selectedId);
-            boolean hov      = inRect(mx, my, ix, iy, ICON_SZ, ICON_SZ);
-            renderDiscCell(g, font, def, tier, equipped, sel, ix, iy, ICON_SZ, ICON_SZ, hov);
-            if (hov && hoverPerkId == null) { hoverPerkId = def.id; hoverMx = mx; hoverMy = my; }
+        FilterMode(String label) {
+            this.label = label;
         }
 
-        if (maxScroll > 0) renderScrollBar(g, gx + gw - 3, gy + 1, 2, gh - 2, discScroll, maxScroll);
-        if (perks.isEmpty()) {
-            String msg = search.isEmpty() ? "No discovered perks yet." : "No matches.";
-            g.drawString(font, msg, gx + (gw - font.width(msg)) / 2, gy + gh / 2 - 4, C_TEXT_DIM, false);
+        FilterMode next() {
+            FilterMode[] values = values();
+            return values[(ordinal() + 1) % values.length];
         }
     }
 
-    private void renderDiscCell(GuiGraphics g, Font font, PerkDefinition def, PerkTier tier,
-                                boolean equipped, boolean selected,
-                                int x, int y, int w, int h, boolean hov) {
-        int tc = tier.primaryColor | 0xFF000000;
+    private enum Category {
+        ALL("A", "All Perks", null, false, false),
+        BREATH("B", "Breath", PerkTag.BREATH, false, false),
+        COMBAT("C", "Combat", PerkTag.COMBAT, false, false),
+        MOVEMENT("M", "Movement", PerkTag.MOVEMENT, false, false),
+        DEFENSE("D", "Defense", PerkTag.DEFENSE, false, false),
+        SURVIVAL("S", "Survival", PerkTag.SURVIVAL, false, false),
+        SPECIAL("*", "Special", PerkTag.SPECIAL, false, false),
+        DEMON("X", "Demon", PerkTag.DEMON, false, false),
+        FLAWS("F", "Flaws", null, true, false),
+        UNDISCOVERED("?", "Undiscovered", null, false, true);
 
-        g.fill(x + 2, y + 2, x + w + 2, y + h + 2, 0x35000000);
+        final String glyph;
+        final String label;
+        final PerkTag tag;
+        final boolean flaws;
+        final boolean locked;
 
-        if (selected) {
-            g.fill(x - 2, y - 2, x + w + 2, y + h + 2, (C_GOLD & 0x00FFFFFF) | 0x99000000);
-            g.fill(x - 1, y - 1, x + w + 1, y + h + 1, C_GOLD);
-        } else if (equipped) {
-            g.fill(x - 2, y - 2, x + w + 2, y + h + 2, (tc & 0x00FFFFFF) | 0x55000000);
-            g.fill(x - 1, y - 1, x + w + 1, y + h + 1, tc);
-        } else {
-            g.fill(x - 1, y - 1, x + w + 1, y + h + 1, C_BORDER_MID);
-        }
-
-        g.fill(x, y, x + w, y + h, equipped ? C_SLOT_EQ : C_PANEL);
-        g.fill(x, y, x + w, y + 3, tc);
-        g.fill(x, y, x + w / 2, y + 2, (tc & 0x00FFFFFF) | 0x44FFFFFF);
-
-        if (hov) g.fill(x, y + 3, x + w, y + h, OV_HOVER2);
-        if (equipped) g.fill(x, y + 3, x + w, y + h, 0x1299CCFF);
-        if (selected) g.fill(x, y + 3, x + w, y + h, 0x20FFCC44);
-
-        // Perk icon texture
-        renderPerkIcon(g, def.id, tier, x + (w - 32) / 2, y + (h - 32) / 2 + 1);
-
-        // Tier dot
-        int dotCol = equipped ? tc : ((tc & 0x00FFFFFF) | 0xAA000000);
-        g.fill(x + w - 5, y + h - 4, x + w - 1, y + h, dotCol);
-
-        if (def.cursed) g.fill(x + 1, y + h - 4, x + 5, y + h, 0xFFAA1111);
-    }
-
-    // Locked grid
-
-    private void renderLockGrid(GuiGraphics g, Font font, PerkData data,
-                                List<PerkDefinition> perks, int cols,
-                                int gx, int gy, int gw, int gh, int mx, int my) {
-        g.fill(gx, gy, gx + gw, gy + gh, C_PANEL);
-        g.fill(gx, gy, gx + gw, gy + 1, C_BORDER);
-
-        int rowsVisible = Math.max(1, gh / (ICON_SZ + ICON_GAP));
-        int maxScroll = Math.max(0, (perks.size() + cols - 1) / cols - rowsVisible);
-        lockScroll = Math.max(0, Math.min(lockScroll, maxScroll));
-        if (inRect(mx, my, gx, gy, gw, gh)) mouseInLock = true;
-
-        for (int i = lockScroll * cols; i < Math.min(perks.size(), (lockScroll + rowsVisible + 1) * cols); i++) {
-            int col = i % cols, row = i / cols - lockScroll;
-            int ix = gx + col * (ICON_SZ + ICON_GAP), iy = gy + row * (ICON_SZ + ICON_GAP) + 1;
-            if (iy + ICON_SZ > gy + gh) break;
-            boolean hov = inRect(mx, my, ix, iy, ICON_SZ, ICON_SZ);
-            renderLockCell(g, perks.get(i), ix, iy, ICON_SZ, ICON_SZ, hov);
-            if (hov && hoverPerkId == null) { hoverPerkId = perks.get(i).id; hoverMx = mx; hoverMy = my; }
-        }
-
-        if (maxScroll > 0) renderScrollBar(g, gx + gw - 3, gy + 1, 2, gh - 2, lockScroll, maxScroll);
-        if (perks.isEmpty()) {
-            String msg = "All perks discovered!";
-            g.drawString(font, msg, gx + (gw - font.width(msg)) / 2, gy + gh / 2 - 4, C_GREEN, false);
+        Category(String glyph, String label, PerkTag tag, boolean flaws, boolean locked) {
+            this.glyph = glyph;
+            this.label = label;
+            this.tag = tag;
+            this.flaws = flaws;
+            this.locked = locked;
         }
     }
 
-    private void renderLockCell(GuiGraphics g, PerkDefinition def, int x, int y, int w, int h, boolean hov) {
-        g.fill(x + 2, y + 2, x + w + 2, y + h + 2, 0x25000000);
-        g.fill(x - 1, y - 1, x + w + 1, y + h + 1, C_BORDER);
-        g.fill(x, y, x + w, y + h, C_SLOT_LOCKED);
-        g.fill(x, y, x + w, y + 3, C_BORDER);
-        g.fill(x, y, x + w, y + h, OV_LOCKED);
-        if (hov) g.fill(x, y, x + w, y + h, 0x18FFFFFF);
-        renderLockIcon(g, x + w / 2 - 4, y + h / 2 - 7, C_TEXT_FAINT);
-        if (def.cursed) g.fill(x + 1, y + h - 4, x + 5, y + h, 0xFF881111);
-    }
+    private static class RowEntry {
+        final PerkDefinition perk;
+        final FlawDefinition flaw;
+        final boolean locked;
 
-    // Detail panel (bottom strip)
-
-    private void renderDetailPanel(GuiGraphics g, Font font, PerkData data, String id, int cw, int ch, int mx, int my) {
-        PerkDefinition def = NichirinPerkRegistry.getPerk(id);
-        if (def == null) return;
-
-        boolean equipped = data.isEquipped(id);
-        PerkTier tier    = equipped ? data.getTier(id) : def.minTier;
-        int tc           = tier.primaryColor | 0xFF000000;
-
-        int panelY = ch - DETAIL_H;
-        // Separator glow
-        g.fill(0, panelY - 2, cw, panelY - 1, (tc & 0x00FFFFFF) | 0x88000000);
-        g.fill(0, panelY - 1, cw, panelY,     C_BORDER_MID);
-        // Panel bg
-        g.fill(0, panelY, cw, ch, C_PANEL);
-        // Top tier strip
-        g.fill(0, panelY, cw, panelY + 2, tc);
-        g.fill(0, panelY, cw / 2, panelY + 1, (tc & 0x00FFFFFF) | 0x55FFFFFF);
-
-        int lx = PAD + 2, ly = panelY + 5;
-
-        // Name + tier badge
-        g.drawString(font, def.name, lx + 1, ly + 1, 0x44000000, false);
-        g.drawString(font, def.name, lx, ly, 0xFFFFFFFF, false);
-        String tierBadge = "\u2605 " + tier.displayName.toUpperCase();
-        g.drawString(font, tierBadge, lx + font.width(def.name) + 6, ly, tc, false);
-        ly += font.lineHeight + 3;
-
-        // Description (one line, truncated)
-        String desc = def.getDescriptionForTier(tier);
-        if (desc != null) {
-            int maxDescW = cw - PAD * 2 - 200; // leave room for buttons
-            if (font.width(desc) > maxDescW) desc = font.plainSubstrByWidth(desc, maxDescW - 6) + "...";
-            g.drawString(font, desc, lx, ly, C_TEXT, false);
-            ly += font.lineHeight + 3;
+        RowEntry(PerkDefinition perk, boolean locked) {
+            this.perk = perk;
+            this.flaw = null;
+            this.locked = locked;
         }
 
-        // Upgrade cost
-        PerkUpgradeCost cost = def.getUpgradeCost(tier);
-        if (equipped && cost != null) {
-            PerkTier next = tier.next();
-            String nextName = next != null ? next.displayName.toUpperCase() : "MAX";
-            g.drawString(font, "UPGRADE \u2192 " + nextName + ":", lx, ly, C_GOLD, false);
-            ly += font.lineHeight + 2;
-
-            Player localPlayer = Minecraft.getInstance().player;
-            int playerXp = localPlayer != null ? localPlayer.experienceLevel : 0;
-            boolean hasXp = playerXp >= cost.xpLevels;
-            String xpLine = (hasXp ? "\u2713 " : "\u2717 ") + cost.xpLevels + " XP  (have: " + playerXp + ")";
-            g.drawString(font, xpLine, lx + 2, ly, hasXp ? C_GREEN : C_RED, false);
-            ly += font.lineHeight + 2;
-
-            for (ItemStack req : cost.requiredItems) {
-                int have = countClientItem(req.getItem());
-                boolean ok = have >= req.getCount();
-                String line = (ok ? "\u2713 " : "\u2717 ") + req.getCount() + "x " + req.getHoverName().getString() + "  (have: " + have + ")";
-                if (font.width(line) + lx > cw / 2) break; // don't overflow
-                g.drawString(font, line, lx + 2, ly, ok ? C_GREEN : C_RED, false);
-                ly += font.lineHeight + 2;
-            }
-        } else if (equipped) {
-            g.drawString(font, "Max tier reached.", lx, ly, C_TEXT_DIM, false);
-        } else {
-            // Show unlock hint abbreviated
-            g.drawString(font, "How to get: " + def.unlockHint, lx, ly, 0xFFAA9966, false);
+        RowEntry(FlawDefinition flaw) {
+            this.perk = null;
+            this.flaw = flaw;
+            this.locked = false;
         }
 
-        // Buttons on the right side of the panel
-        int btnX = cw - PAD - 80;
-        int btnY = panelY + 8;
-
-        if (equipped) {
-            // Unequip button
-            boolean unHov = inRect(mx, my, btnX, btnY, 78, 14);
-            drawPillBtn(g, font, btnX, btnY, 78, 14, "Unequip", C_RED, 0xFFFFCCCC, unHov);
-            btnY += 20;
-
-            // Upgrade button (if upgradeable)
-            if (cost != null) {
-                boolean upHov = inRect(mx, my, btnX, btnY, 78, 14);
-                drawPillBtn(g, font, btnX, btnY, 78, 14, "Upgrade \u2191", C_GOLD, 0xFFFFFFCC, upHov);
-            }
-        } else {
-            boolean eqHov = inRect(mx, my, btnX, btnY, 78, 14);
-            drawPillBtn(g, font, btnX, btnY, 78, 14, "Equip", C_GREEN, 0xFFCCFFCC, eqHov);
-        }
-
-        // Tier progression dots
-        int dotSz = 8, dotGap = 5;
-        int totalDots = PerkTier.values().length;
-        int barW = totalDots * dotSz + (totalDots - 1) * dotGap;
-        int barX = btnX - barW - 8;
-        int barY = panelY + 8;
-        g.fill(barX, barY + dotSz / 2, barX + barW, barY + dotSz / 2 + 1, C_BORDER);
-        for (int i = 0; i < totalDots; i++) {
-            PerkTier t = PerkTier.fromLevel(i);
-            int dx = barX + i * (dotSz + dotGap);
-            boolean hasTier = def.hasTier(t);
-            boolean active  = t.level == tier.level;
-            int dotCol = !hasTier ? C_BORDER : active ? (t.primaryColor | 0xFF000000) : C_BORDER_MID;
-            g.fill(dx - 1, barY - 1, dx + dotSz + 1, barY + dotSz + 1, hasTier ? (t.primaryColor | 0xFF000000) : C_BORDER);
-            g.fill(dx, barY, dx + dotSz, barY + dotSz, dotCol);
-            String abbr = t.displayName.substring(0, 1);
-            g.drawString(font, abbr, dx + (dotSz - font.width(abbr)) / 2, barY + dotSz + 2, hasTier ? (t.primaryColor | 0xFF000000) : C_TEXT_FAINT, false);
+        String id() {
+            return flaw != null ? "flaw:" + flaw.id : perk.id;
         }
     }
 
-    // Perk icon
+    public void render(GuiGraphics g, Player player, Font font, int cw, int ch, int mx, int my) {
+        cachedW = cw;
+        cachedH = ch;
+        computeColumns(cw);
+        PerkData data = ClientPerkCache.get();
 
-    private static void renderPerkIcon(GuiGraphics g, String perkId, PerkTier tier, int x, int y) {
-        ResourceLocation tex = PerkIcon.get(perkId, tier);
-        g.blit(tex, x, y, 0, 0, 32, 32, 32, 32);
+        g.fill(0, 0, cw, ch, BG);
+        g.fill(leftW, 0, leftW + 1, ch, BORDER);
+        g.fill(rightX - 1, 0, rightX, ch, BORDER);
+
+        renderCategoryRail(g, font, data, 0, 0, leftW, ch, mx, my);
+        renderPerkList(g, font, data, middleX, 0, middleW, ch, mx, my);
+        renderDetailRail(g, font, data, rightX, 0, rightW, ch, mx, my);
     }
-
-    // Tooltip
-
-    private void renderTooltip(GuiGraphics g, Font font, PerkData data, String id,
-                               int cw, int ch, int mx, int my) {
-        PerkDefinition def = NichirinPerkRegistry.getPerk(id);
-        if (def == null) return;
-
-        boolean disc     = data.hasDiscovered(id);
-        boolean equipped = data.isEquipped(id);
-        PerkTier tier    = equipped ? data.getTier(id) : def.minTier;
-        int tc           = tier.primaryColor | 0xFF000000;
-        int tw           = 200;
-
-        record L(String tag, String text) {}
-        List<L> lines = new ArrayList<>();
-
-        if (disc) {
-            lines.add(new L("name", def.name));
-            lines.add(new L("tier", "\u2605 " + tier.displayName.toUpperCase()));
-            if (def.tags.length > 0) {
-                StringBuilder sb = new StringBuilder();
-                for (PerkTag t : def.tags) { if (sb.length() > 0) sb.append("  \u00b7  "); sb.append(t.displayName); }
-                lines.add(new L("tags", sb.toString()));
-            }
-            lines.add(new L("sep", ""));
-            String desc = def.getDescriptionForTier(tier);
-            if (desc != null) for (String l : wordWrap(font, desc, tw - 14)) lines.add(new L("desc", l));
-        } else {
-            lines.add(new L("locked", "??? Undiscovered Perk"));
-            lines.add(new L("sep", ""));
-        }
-
-        if (!def.unlockHint.isEmpty()) {
-            lines.add(new L("head", "HOW TO UNLOCK"));
-            for (String l : wordWrap(font, def.unlockHint, tw - 18)) lines.add(new L("hint", l));
-        }
-        if (disc && !def.locationHint.isEmpty()) {
-            lines.add(new L("head", "WHERE TO FIND"));
-            for (String l : wordWrap(font, def.locationHint, tw - 18)) lines.add(new L("loc", l));
-        }
-
-        if (disc) {
-            lines.add(new L("sep", ""));
-            lines.add(new L("act", equipped ? "Click: Unequip  |  Click again for details" : "Click: Select  |  Click equipped to remove"));
-        }
-
-        int th = 8;
-        for (L l : lines) th += l.tag().equals("sep") ? 5 : (font.lineHeight + 1);
-
-        int tx = mx + 14, ty = my - th / 2;
-        if (tx + tw > cw - 2) tx = mx - tw - 6;
-        if (ty < 2) ty = 2;
-        if (ty + th > ch - DETAIL_H - 4) ty = ch - DETAIL_H - 4 - th - 2;
-
-        g.pose().pushPose();
-        g.pose().translate(0, 0, 400); // always render on top of icons
-
-        g.fill(tx + 4, ty + 4, tx + tw + 4, ty + th + 4, 0x70000000);
-        g.fill(tx - 2, ty - 2, tx + tw + 2, ty + th + 2, (tc & 0x00FFFFFF) | 0x88000000);
-        g.fill(tx - 1, ty - 1, tx + tw + 1, ty + th + 1, C_BORDER_MID);
-        g.fill(tx, ty, tx + tw, ty + th, C_PANEL);
-        g.fill(tx, ty, tx + tw, ty + 3, tc);
-        g.fill(tx, ty, tx + tw / 2, ty + 2, (tc & 0x00FFFFFF) | 0x55FFFFFF);
-
-        int lx = tx + 6, ly = ty + 6;
-        for (L line : lines) {
-            switch (line.tag()) {
-                case "sep"    -> { g.fill(lx, ly + 2, tx + tw - 6, ly + 3, C_BORDER_MID); ly += 5; }
-                case "name"   -> { g.drawString(font, line.text(), lx + 1, ly + 1, 0x44000000, false); g.drawString(font, line.text(), lx, ly, 0xFFFFFFFF, false); ly += font.lineHeight + 1; }
-                case "tier"   -> { g.drawString(font, line.text(), lx, ly, tc, false); ly += font.lineHeight + 1; }
-                case "tags"   -> { g.drawString(font, line.text(), lx, ly, C_TEXT_DIM, false); ly += font.lineHeight + 1; }
-                case "desc"   -> { g.drawString(font, line.text(), lx + 2, ly, C_TEXT, false); ly += font.lineHeight + 1; }
-                case "head"   -> { g.drawString(font, line.text(), lx, ly, C_ACCENT, false); ly += font.lineHeight + 1; }
-                case "hint"   -> { g.drawString(font, line.text(), lx + 2, ly, 0xFFAA9966, false); ly += font.lineHeight + 1; }
-                case "loc"    -> { g.drawString(font, line.text(), lx + 2, ly, 0xFF7799AA, false); ly += font.lineHeight + 1; }
-                case "locked" -> { g.drawString(font, line.text(), lx, ly, C_TEXT_DIM, false); ly += font.lineHeight + 1; }
-                case "act"    -> { g.drawString(font, "\u25b6  " + line.text(), lx, ly, equipped ? C_RED : C_GREEN, false); ly += font.lineHeight + 1; }
-            }
-        }
-
-        g.pose().popPose();
-    }
-
-    // Scrollbar
-
-    private void renderScrollBar(GuiGraphics g, int x, int y, int w, int h, int scroll, int maxScroll) {
-        g.fill(x, y, x + w, y + h, C_BORDER);
-        int thumbH = Math.max(8, h / Math.max(2, maxScroll + 2));
-        int thumbY = y + (int)((h - thumbH) * ((float) scroll / maxScroll));
-        g.fill(x, thumbY, x + w, thumbY + thumbH, C_ACCENT_DIM);
-        g.fill(x, thumbY, x + w, thumbY + 1, C_ACCENT);
-    }
-
-    private void renderLockIcon(GuiGraphics g, int x, int y, int col) {
-        g.fill(x + 1, y,     x + 5, y + 1, col);
-        g.fill(x,     y + 1, x + 1, y + 5, col);
-        g.fill(x + 5, y + 1, x + 6, y + 5, col);
-        g.fill(x - 1, y + 4, x + 7, y + 10, col);
-        g.fill(x + 2, y + 6, x + 4, y + 9, C_SLOT_LOCKED);
-    }
-
-    // INPUT
 
     public boolean handleClick(double mx, double my, Player player) {
         PerkData data = ClientPerkCache.get();
-        int cw = cachedCw;
 
-        // Sort button
-        String sortLabel = "Sort: " + sort.label + " \u25be";
-        int togW  = approxW("Perks: OFF") + 14;
-        int togX  = cw - 8 - togW;
-        int sortW = approxW(sortLabel) + 10;
-        int sortX = togX - 4 - sortW;
-        if (inRect(mx, my, sortX, 8 + 2, sortW, 11)) { sort = sort.next(); return true; }
+        if (mx >= 0 && mx < leftW) {
+            if (handleLeftClick(mx, my, data)) return true;
+        }
 
-        // Toggle perks
-        if (inRect(mx, my, togX, 8 + 2, togW, 11)) {
-            sendAction(new PerkActionPacket(PerkActionPacket.Action.TOGGLE_ALL, ""));
+        if (mx >= middleX && mx < rightX) {
+            if (handleMiddleClick(mx, my, data)) return true;
+        }
+
+        if (mx >= rightX && mx < cachedW) {
+            if (handleDetailClick(mx, my, data)) return true;
+        }
+
+        searchActive = false;
+        return false;
+    }
+
+    public boolean handleKeyTyped(char c, int keyCode) {
+        if (searchActive) {
+            if (keyCode == 259) {
+                if (!searchText.isEmpty()) searchText = searchText.substring(0, searchText.length() - 1);
+            } else if (keyCode == 256) {
+                searchActive = false;
+            } else if (c >= 32 && c < 127 && searchText.length() < 28) {
+                searchText += c;
+            }
+            listScroll = 0;
             return true;
         }
 
-        // Equipped slot unequip
-        if (eqSectionBottom > 0 && my > 8 + SEC_H + 4 && my < eqSectionBottom) {
-            List<Map.Entry<String, PerkTier>> eList = new ArrayList<>(data.getEquippedPerks().entrySet());
-            for (int i = 0; i < Math.min(eList.size(), data.getPerkSlots()); i++) {
-                int sx = 8 + i * (EQ_SZ + EQ_GAP);
-                if (inRect(mx, my, sx, 8 + SEC_H + 4, EQ_SZ, EQ_SZ)) {
-                    sendAction(new PerkActionPacket(PerkActionPacket.Action.UNEQUIP, eList.get(i).getKey()));
-                    if (selectedId != null && selectedId.equals(eList.get(i).getKey())) selectedId = null;
-                    return true;
-                }
+        if (keyCode == 70) {
+            activeCategory = Category.FLAWS;
+            listScroll = 0;
+            return true;
+        }
+
+        if (selectedId != null && keyCode == 69) {
+            PerkData data = ClientPerkCache.get();
+            PerkDefinition def = selectedPerk();
+            if (def != null && !data.isEquipped(def.id) && data.hasDiscovered(def.id)) {
+                sendAction(new PerkActionPacket(PerkActionPacket.Action.EQUIP, def.id, def.minTier.level));
+                return true;
+            }
+            FlawDefinition flaw = selectedFlaw();
+            if (flaw != null && !data.hasFlaw(flaw.id)) {
+                sendAction(new PerkActionPacket(PerkActionPacket.Action.EQUIP_FLAW, flaw.id));
+                return true;
             }
         }
 
-        // Search bar
-        if (discGridY > 0) {
-            int sw = 95, sx = cw - 8 - sw, sy = discGridY - SEC_H - 3;
-            if (inRect(mx, my, sx, sy, sw, 11)) { searchActive = !searchActive; return true; }
-            else if (my < discGridY) searchActive = false;
-        }
-
-        // Discovered grid click → select, equip, or unequip
-        if (discGridY > 0 && my >= discGridY && my < discGridY + discGridH) {
-            int cols = Math.max(2, (cw - 16 + ICON_GAP) / (ICON_SZ + ICON_GAP));
-            List<PerkDefinition> perks = getDiscovered(data);
-            String search = searchText.toLowerCase();
-            if (!search.isEmpty()) perks.removeIf(d ->
-                    !d.name.toLowerCase().contains(search) &&
-                    !d.description.toLowerCase().contains(search) &&
-                    Arrays.stream(d.tags).noneMatch(t -> t.displayName.toLowerCase().contains(search)));
-            sortPerks(perks, data);
-            int rv = Math.max(1, discGridH / (ICON_SZ + ICON_GAP));
-            for (int i = discScroll * cols; i < Math.min(perks.size(), (discScroll + rv + 1) * cols); i++) {
-                int col = i % cols, row = i / cols - discScroll;
-                int ix = 8 + col * (ICON_SZ + ICON_GAP), iy = discGridY + row * (ICON_SZ + ICON_GAP) + 1;
-                if (iy + ICON_SZ > discGridY + discGridH) break;
-                if (inRect(mx, my, ix, iy, ICON_SZ, ICON_SZ)) {
-                    PerkDefinition def = perks.get(i);
-                    selectedId = def.id.equals(selectedId) ? null : def.id;
-                    return true;
-                }
-            }
-        }
-
-        // Detail panel buttons
-        if (selectedId != null) {
-            PerkDefinition def = NichirinPerkRegistry.getPerk(selectedId);
-            if (def != null && data.hasDiscovered(selectedId)) {
-                boolean equipped = data.isEquipped(selectedId);
-                PerkTier tier    = equipped ? data.getTier(selectedId) : def.minTier;
-                int btnX = cw - 8 - 80;
-                int panelY = (cachedCh > 0 ? cachedCh : 250) - DETAIL_H;
-                if (equipped) {
-                    if (inRect(mx, my, btnX, panelY + 8, 78, 14)) {
-                        sendAction(new PerkActionPacket(PerkActionPacket.Action.UNEQUIP, selectedId));
-                        return true;
-                    }
-                    PerkUpgradeCost cost = def.getUpgradeCost(tier);
-                    if (cost != null && inRect(mx, my, btnX, panelY + 28, 78, 14)) {
-                        sendAction(new PerkActionPacket(PerkActionPacket.Action.UPGRADE, selectedId));
-                        return true;
-                    }
-                } else {
-                    if (inRect(mx, my, btnX, panelY + 8, 78, 14)) {
-                        sendAction(new PerkActionPacket(PerkActionPacket.Action.EQUIP, selectedId, def.minTier.level));
-                        return true;
-                    }
-                }
+        if (selectedId != null && keyCode == 85) {
+            PerkData data = ClientPerkCache.get();
+            PerkDefinition def = selectedPerk();
+            if (def != null && data.isEquipped(def.id)) {
+                sendAction(new PerkActionPacket(PerkActionPacket.Action.UPGRADE, def.id));
+                return true;
             }
         }
 
         return false;
     }
 
-    private int cachedCh = 0;
-
-    public void render(GuiGraphics g, Player player, Font font, int cw, int ch, int mx, int my) {
-        cachedCh = ch;
-        renderInternal(g, player, font, cw, ch, mx, my);
+    public boolean handleScroll(double mx, double my, double delta) {
+        int amount = (int) Math.signum(delta) * 22;
+        if (mx < leftW) {
+            categoryScroll = Math.max(0, categoryScroll - amount);
+            return true;
+        }
+        if (mx >= rightX) {
+            detailScroll = Math.max(0, detailScroll - amount);
+            return true;
+        }
+        listScroll = Math.max(0, listScroll - amount);
+        return true;
     }
 
-    // redirect so the field-setting render above works with the inner render logic
-    private void renderInternal(GuiGraphics g, Player player, Font font, int cw, int ch, int mx, int my) {
-        PerkData data = ClientPerkCache.get();
-        cachedCw = cw;
-        hoverPerkId = null;
-        mouseInDisc = false;
-        mouseInLock = false;
+    private void computeColumns(int cw) {
+        leftW = Math.min(LEFT_W, Math.max(168, cw / 4));
+        rightW = Math.min(RIGHT_W, Math.max(230, cw / 3));
+        int availableMiddle = cw - leftW - rightW - 2;
+        if (availableMiddle < MIN_MID_W) {
+            int deficit = MIN_MID_W - availableMiddle;
+            int rightReduce = Math.min(deficit, Math.max(0, rightW - 230));
+            rightW -= rightReduce;
+            deficit -= rightReduce;
+            leftW -= Math.min(deficit, Math.max(0, leftW - 168));
+        }
+        middleX = leftW + 1;
+        rightX = cw - rightW;
+        middleW = Math.max(160, rightX - middleX - 1);
+    }
 
-        g.fill(0, 0, cw, ch, C_BG);
-        for (int i = 0; i < 24; i++) {
-            int a = (int)(0x12 * (1.0 - i / 24.0));
-            g.fill(0, i, cw, i + 1, (a << 24) | 0x303030);
+    private void renderCategoryRail(GuiGraphics g, Font font, PerkData data, int x, int y, int w, int h, int mx, int my) {
+        g.fill(x, y, x + w, y + h, COLOR_PALETTE.PANEL_DARK.argb());
+        g.enableScissor(x, y, x + w, y + h);
+
+        int cy = y + PAD - categoryScroll;
+        cy = renderLoadoutCard(g, font, data, x + PAD, cy, w - PAD * 2, mx, my);
+        cy += GAP;
+
+        for (Category category : Category.values()) {
+            if (category == Category.FLAWS) {
+                g.fill(x + PAD, cy + 4, x + w - PAD, cy + 5, BORDER);
+                cy += 13;
+            }
+            renderCategoryButton(g, font, data, category, x + PAD, cy, w - PAD * 2, mx, my);
+            cy += 26;
         }
 
-        int cols = Math.max(2, (cw - PAD * 2 + ICON_GAP) / (ICON_SZ + ICON_GAP));
-        boolean showDetail = selectedId != null && data.hasDiscovered(selectedId);
-        int usableCh = showDetail ? ch - DETAIL_H - 4 : ch;
-
-        int y = PAD;
-        y = renderEquippedSection(g, font, data, cw, y, mx, my);
-        eqSectionBottom = y;
-        y += PAD;
-
-        List<PerkDefinition> disc = getDiscovered(data);
-        int remaining  = usableCh - y - PAD;
-        int discRowCnt = Math.max(1, (disc.size() + cols - 1) / cols);
-        discGridH = Math.min(remaining / 2, discRowCnt * (ICON_SZ + ICON_GAP) + 2);
-        discGridH = Math.max(ICON_SZ + 6, discGridH);
-
-        renderSectionHeader(g, font, cw, y, "DISCOVERED",
-                disc.size() + " / " + NichirinPerkRegistry.allPerks().size(), true, data, mx, my);
-        discGridY = y + SEC_H + 2;
-        renderDiscGrid(g, font, data, disc, cols, PAD, discGridY, cw - PAD * 2, discGridH, mx, my);
-        y = discGridY + discGridH + PAD;
-
-        List<PerkDefinition> locked = getLocked(data);
-        lockGridH = Math.max(ICON_SZ + 6, usableCh - y - SEC_H - PAD - 2);
-        renderSectionHeader(g, font, cw, y, "UNDISCOVERED", locked.size() + " remaining", false, null, mx, my);
-        lockGridY = y + SEC_H + 2;
-        renderLockGrid(g, font, data, locked, cols, PAD, lockGridY, cw - PAD * 2, lockGridH, mx, my);
-
-        if (showDetail) renderDetailPanel(g, font, data, selectedId, cw, ch, mx, my);
-        if (hoverPerkId != null) renderTooltip(g, font, data, hoverPerkId, cw, ch, hoverMx, hoverMy);
+        g.disableScissor();
     }
 
-    public boolean handleKeyTyped(char c, int keyCode) {
-        if (!searchActive) return false;
-        if (keyCode == 259) { if (!searchText.isEmpty()) searchText = searchText.substring(0, searchText.length() - 1); }
-        else if (keyCode == 256) { searchActive = false; }
-        else if (c >= 32 && c < 127 && searchText.length() < 22) searchText += c;
-        discScroll = 0;
-        return true;
+    private int renderLoadoutCard(GuiGraphics g, Font font, PerkData data, int x, int y, int w, int mx, int my) {
+        int h = 104;
+        g.fill(x, y, x + w, y + h, PANEL);
+        g.fill(x, y, x + w, y + 1, BORDER_HI);
+        g.fill(x, y + h - 1, x + w, y + h, BORDER);
+
+        String presetName = activePresetName(data);
+        g.drawString(font, "Loadout", x + 9, y + 8, TEXT_DIM, false);
+        g.drawString(font, trim(font, presetName, w - 18), x + 9, y + 20, TEXT, false);
+
+        List<Map.Entry<String, PerkTier>> equipped = new ArrayList<>(data.getEquippedPerks().entrySet());
+        int cellW = (w - 18 - 4 * 4) / 5;
+        int sx = x + 9;
+        int sy = y + 38;
+        for (int i = 0; i < 5; i++) {
+            int cx = sx + i * (cellW + 4);
+            if (i >= data.getPerkSlots()) {
+                drawRect(g, cx, sy, cellW, 16, BORDER, 0xFF0A0A0A);
+                g.fill(cx, sy, cx + cellW, sy + 16, COLOR_PALETTE.BLACK.withAlpha(0x99));
+            } else if (i < equipped.size()) {
+                PerkTier tier = equipped.get(i).getValue();
+                drawRect(g, cx, sy, cellW, 16, tierColor(tier), tierFill(tier, 0x46));
+            } else {
+                drawRect(g, cx, sy, cellW, 16, BORDER_HI, 0xFF111111);
+            }
+        }
+
+        String stats = data.equippedCount() + "/" + data.getPerkSlots() + " . " + data.equippedFlawCount() + " flaw";
+        g.drawString(font, stats, x + 9, y + 59, TEXT_DIM, false);
+
+        int bw = (w - 18 - 2 * 5) / 3;
+        int by = y + 77;
+        for (int i = 0; i < 3; i++) {
+            int bx = x + 9 + i * (bw + 5);
+            boolean active = i == activePresetIndex;
+            boolean hasPreset = i < data.getPresets().size();
+            int border = active ? ACCENT : BORDER;
+            int bg = active ? 0xFF2A2115 : PANEL_2;
+            drawRect(g, bx, by, bw, 16, border, bg);
+            String label = hasPreset ? trim(font, data.getPresets().get(i).name, bw - 8) : roman(i + 1);
+            g.drawString(font, label, bx + (bw - font.width(label)) / 2, by + 4, active ? COLOR_PALETTE.ACCENT_LIGHT.rgb() : TEXT_DIM, false);
+        }
+
+        return y + h;
     }
 
-    public boolean handleScroll(double delta) {
-        if (mouseInLock) lockScroll = (int) Math.max(0, lockScroll - delta);
-        else discScroll = (int) Math.max(0, discScroll - delta);
-        return true;
+    private void renderCategoryButton(GuiGraphics g, Font font, PerkData data, Category category, int x, int y, int w, int mx, int my) {
+        boolean active = category == activeCategory;
+        boolean hovered = inRect(mx, my, x, y, w, 20);
+        int bg = active ? 0xFF211B14 : hovered ? PANEL_3 : 0xFF151515;
+        g.fill(x, y, x + w, y + 20, bg);
+        if (active) {
+            g.fill(x, y, x + 2, y + 20, ACCENT);
+            for (int i = 0; i < Math.min(56, w); i++) {
+                g.fill(x + i, y, x + i + 1, y + 20, (int)(0x28 * (1.0 - i / 56.0)) << 24 | (ACCENT & 0xFFFFFF));
+            }
+        }
+        g.drawString(font, category.glyph, x + 8, y + 6, active ? ACCENT : TEXT_DIM, false);
+        g.drawString(font, category.label, x + 25, y + 6, active ? TEXT : TEXT_DIM, false);
+        String count = categoryCount(data, category);
+        g.drawString(font, count, x + w - 8 - font.width(count), y + 6, active ? TEXT : TEXT_FAINT, false);
     }
 
-    // HELPERS
+    private void renderPerkList(GuiGraphics g, Font font, PerkData data, int x, int y, int w, int h, int mx, int my) {
+        g.fill(x, y, x + w, y + h, BG);
+        renderListSubheader(g, font, data, x, y, w, mx, my);
 
-    private List<PerkDefinition> getDiscovered(PerkData data) {
-        List<PerkDefinition> r = new ArrayList<>();
-        for (PerkDefinition d : NichirinPerkRegistry.allPerks()) if (data.hasDiscovered(d.id)) r.add(d);
-        return r;
+        listViewportY = y + SUBHEADER_H;
+        listViewportH = Math.max(0, h - SUBHEADER_H);
+        List<RowEntry> rows = buildRows(data);
+        int contentH = rows.size() * (ROW_H + 8);
+        int maxScroll = Math.max(0, contentH - listViewportH + PAD);
+        listScroll = clamp(listScroll, 0, maxScroll);
+
+        g.enableScissor(x, listViewportY, x + w, y + h);
+        int ry = listViewportY + PAD - listScroll;
+        for (RowEntry row : rows) {
+            if (ry + ROW_H >= listViewportY && ry <= y + h) {
+                renderRow(g, font, data, row, x + PAD, ry, w - PAD * 2, ROW_H, mx, my);
+            }
+            ry += ROW_H + 8;
+        }
+        if (rows.isEmpty()) {
+            String empty = searchText.isEmpty() ? "No perks in this category." : "No matches.";
+            g.drawString(font, empty, x + (w - font.width(empty)) / 2, listViewportY + listViewportH / 2, TEXT_DIM, false);
+        }
+        g.disableScissor();
+
+        if (maxScroll > 0) renderScrollBar(g, x + w - 4, listViewportY + 3, 2, listViewportH - 6, listScroll, maxScroll);
     }
 
-    private List<PerkDefinition> getLocked(PerkData data) {
-        List<PerkDefinition> r = new ArrayList<>();
-        for (PerkDefinition d : NichirinPerkRegistry.allPerks()) if (!data.hasDiscovered(d.id)) r.add(d);
-        return r;
+    private void renderListSubheader(GuiGraphics g, Font font, PerkData data, int x, int y, int w, int mx, int my) {
+        g.fill(x, y, x + w, y + SUBHEADER_H, COLOR_PALETTE.PANEL_DEEP.argb());
+        g.fill(x, y + SUBHEADER_H - 1, x + w, y + SUBHEADER_H, BORDER);
+        g.drawString(font, activeCategory.label, x + PAD, y + 13, TEXT, false);
+
+        int searchW = Math.min(110, Math.max(70, w / 5));
+        int searchX = x + w - PAD - searchW;
+        int searchY = y + 12;
+        boolean searchHover = inRect(mx, my, searchX, searchY, searchW, 17);
+        drawRect(g, searchX, searchY, searchW, 17, searchActive ? ACCENT : BORDER, searchHover ? PANEL_3 : PANEL);
+        String shown = searchText.isEmpty() && !searchActive ? "Search" : searchText + (searchActive ? "|" : "");
+        g.drawString(font, trim(font, shown, searchW - 10), searchX + 5, searchY + 5, searchText.isEmpty() ? TEXT_FAINT : TEXT, false);
+
+        String filterLabel = "Filter: " + filter.label + " v";
+        int filterW = font.width(filterLabel) + 12;
+        int filterX = searchX - 6 - filterW;
+        drawRect(g, filterX, searchY, filterW, 17, BORDER, inRect(mx, my, filterX, searchY, filterW, 17) ? PANEL_3 : PANEL);
+        g.drawString(font, filterLabel, filterX + 6, searchY + 5, TEXT_DIM, false);
+
+        String sortLabel = "Sort: " + sort.label + " v";
+        int sortW = font.width(sortLabel) + 12;
+        int sortX = filterX - 6 - sortW;
+        drawRect(g, sortX, searchY, sortW, 17, BORDER, inRect(mx, my, sortX, searchY, sortW, 17) ? PANEL_3 : PANEL);
+        g.drawString(font, sortLabel, sortX + 6, searchY + 5, TEXT_DIM, false);
     }
 
-    private void sortPerks(List<PerkDefinition> list, PerkData data) {
+    private void renderRow(GuiGraphics g, Font font, PerkData data, RowEntry row, int x, int y, int w, int h, int mx, int my) {
+        boolean selected = row.id().equals(selectedId);
+        boolean hovered = inRect(mx, my, x, y, w, h);
+        int tier = row.locked ? COLOR_PALETTE.DARK_GRAY.argb() : row.flaw != null ? RED : tierColor(rowTier(data, row.perk));
+        int border = selected ? tier : hovered ? dimColor(tier, 0xB0) : BORDER;
+        int bg = selected ? 0xFF24211D : hovered ? PANEL_3 : PANEL_2;
+
+        if (selected) g.fill(x - 3, y - 3, x + w + 3, y + h + 3, dimColor(tier, 0x30));
+        g.fill(x, y, x + w, y + h, border);
+        g.fill(x + 1, y + 1, x + w - 1, y + h - 1, bg);
+        g.fill(x, y, x + 2, y + h, tier);
+
+        int iconX = x + 12;
+        int iconY = y + 11;
+        drawRect(g, iconX, iconY, 48, 48, row.locked ? BORDER : tier, row.locked ? COLOR_PALETTE.PANEL_DARK.argb() : PANEL);
+        if (row.perk != null && !row.locked) {
+            renderPerkIcon(g, row.perk.id, rowTier(data, row.perk), iconX + 8, iconY + 8);
+        } else {
+            g.drawString(font, row.flaw != null ? "!" : "?", iconX + 22, iconY + 20, row.flaw != null ? RED : TEXT_FAINT, false);
+        }
+
+        int mainX = iconX + 60;
+        int rightColW = 82;
+        int textW = w - (mainX - x) - rightColW - 8;
+        String name = row.locked ? "???" : row.flaw != null ? row.flaw.name : row.perk.name;
+        g.drawString(font, trim(font, name, textW), mainX, y + 10, row.locked ? TEXT_FAINT : TEXT, false);
+
+        int badgeX = mainX;
+        if (!row.locked && row.perk != null) {
+            badgeX = drawBadge(g, font, badgeX, y + 25, rowTier(data, row.perk).displayName.toUpperCase(Locale.ROOT), tier, false);
+            if (data.isEquipped(row.perk.id)) badgeX = drawBadge(g, font, badgeX + 4, y + 25, "EQUIPPED", GREEN, false);
+            if (row.perk.cursed) drawBadge(g, font, badgeX + 4, y + 25, "CURSED", RED, true);
+        } else if (row.flaw != null) {
+            badgeX = drawBadge(g, font, badgeX, y + 25, data.hasFlaw(row.flaw.id) ? "EQUIPPED" : "FLAW", RED, true);
+        }
+
+        String desc = row.locked ? "Undiscovered" : row.flaw != null ? row.flaw.description : row.perk.getDescriptionForTier(rowTier(data, row.perk));
+        g.drawString(font, trim(font, desc, textW), mainX, y + 41, row.locked ? TEXT_FAINT : TEXT_DIM, false);
+
+        if (!row.locked && row.perk != null) {
+            int tx = mainX;
+            for (PerkTag tag : row.perk.tags) {
+                tx = drawChip(g, font, tx, y + 57, tag.displayName, tag.color);
+                if (tx > x + w - rightColW - 20) break;
+            }
+        }
+
+        renderTierDots(g, row, data, x + w - 66, y + 25);
+    }
+
+    private void renderTierDots(GuiGraphics g, RowEntry row, PerkData data, int x, int y) {
+        for (int i = 0; i < PerkTier.values().length; i++) {
+            PerkTier tier = PerkTier.fromLevel(i);
+            int dx = x + i * 12;
+            if (row.locked || row.flaw != null || !row.perk.hasTier(tier)) {
+                g.fill(dx, y, dx + 6, y + 6, BORDER);
+                g.fill(dx + 1, y + 1, dx + 5, y + 5, PANEL_2);
+                continue;
+            }
+            PerkTier current = rowTier(data, row.perk);
+            boolean owned = tier.level <= current.level;
+            boolean active = tier.level == current.level;
+            int color = tierColor(tier);
+            g.fill(dx - (active ? 1 : 0), y - (active ? 1 : 0), dx + 6 + (active ? 1 : 0), y + 6 + (active ? 1 : 0), active ? dimColor(color, 0xA0) : BORDER);
+            g.fill(dx + 1, y + 1, dx + 5, y + 5, owned ? color : PANEL_2);
+        }
+    }
+
+    private void renderDetailRail(GuiGraphics g, Font font, PerkData data, int x, int y, int w, int h, int mx, int my) {
+        g.fill(x, y, x + w, y + h, COLOR_PALETTE.PANEL_DARK.argb());
+        PerkDefinition perk = selectedPerk();
+        FlawDefinition flaw = selectedFlaw();
+
+        if (perk == null && flaw == null) {
+            String msg = "Select a perk to view details";
+            g.drawString(font, msg, x + (w - font.width(msg)) / 2, y + h / 2, TEXT_DIM, false);
+            return;
+        }
+
+        int strip = flaw != null ? RED : tierColor(rowTier(data, perk));
+        g.fill(x, y, x + w, y + 3, strip);
+        g.fill(x, y + 3, x + w, y + 8, dimColor(strip, 0x28));
+
+        int contentBottom = h - DETAIL_FOOTER_H;
+        g.enableScissor(x, y + 3, x + w, y + contentBottom);
+        int cy = y + PAD - detailScroll;
+        if (perk != null) {
+            cy = renderPerkDetailContent(g, font, data, perk, x + PAD, cy, w - PAD * 2);
+        } else {
+            cy = renderFlawDetailContent(g, font, data, flaw, x + PAD, cy, w - PAD * 2);
+        }
+        g.disableScissor();
+
+        int maxScroll = Math.max(0, cy + detailScroll - (h - DETAIL_FOOTER_H - PAD));
+        detailScroll = clamp(detailScroll, 0, maxScroll);
+        if (maxScroll > 0) renderScrollBar(g, x + w - 4, y + 8, 2, h - DETAIL_FOOTER_H - 12, detailScroll, maxScroll);
+
+        renderActionFooter(g, font, data, perk, flaw, x, h - DETAIL_FOOTER_H, w, DETAIL_FOOTER_H, mx, my);
+    }
+
+    private int renderPerkDetailContent(GuiGraphics g, Font font, PerkData data, PerkDefinition def, int x, int y, int w) {
+        PerkTier tier = rowTier(data, def);
+        int color = tierColor(tier);
+
+        g.drawString(font, trim(font, def.name, w), x, y, TEXT, false);
+        y += 20;
+        int tx = x;
+        for (PerkTag tag : def.tags) tx = drawChip(g, font, tx, y, tag.displayName, tag.color);
+        y += 22;
+
+        int blockY = y;
+        drawRect(g, x, blockY, 64, 64, color, PANEL_2);
+        renderPerkIcon(g, def.id, tier, x + 16, blockY + 16);
+        int ex = x + 76;
+        g.drawString(font, tier.displayName.toUpperCase(Locale.ROOT), ex, blockY + 3, color, false);
+        for (String line : wordWrap(font, def.getDescriptionForTier(tier), w - 76)) {
+            g.drawString(font, line, ex, y + 17, TEXT_DIM, false);
+            y += font.lineHeight + 1;
+        }
+        y = Math.max(blockY + 64, y + 20);
+        y += GAP;
+
+        y = renderQuote(g, font, x, y, w, color, humanPerkNote(def, tier), "LOADOUT NOTE");
+        y += GAP;
+
+        g.drawString(font, "Lore", x, y, TEXT, false);
+        y += 13;
+        String lore = "In practice, this perk changes how a fight feels more than how a menu reads. The current tier is the version your character can actually rely on right now; higher tiers are shown so the next step is clear without pretending you already have it.";
+        for (String line : wordWrap(font, lore, w)) {
+            g.drawString(font, line, x, y, TEXT_DIM, false);
+            y += font.lineHeight + 2;
+        }
+        y += GAP;
+
+        g.drawString(font, "Tier Progression", x, y, TEXT, false);
+        y += 15;
+        for (PerkTier t : PerkTier.values()) {
+            boolean available = def.hasTier(t);
+            boolean current = t == tier;
+            int rowAlpha = available ? 0xFF : 0x59;
+            int c = dimColor(tierColor(t), rowAlpha);
+            g.fill(x, y + 3, x + 6, y + 9, c);
+            g.drawString(font, t.displayName.toUpperCase(Locale.ROOT), x + 13, y, available ? c : TEXT_FAINT, false);
+            int barX = x + 96;
+            int barW = w - 96;
+            g.fill(barX, y + 4, barX + barW, y + 7, BORDER);
+            if (current) {
+                g.fill(barX, y + 4, barX + barW, y + 7, c);
+                g.fill(barX, y + 3, barX + barW, y + 8, dimColor(c, 0x35));
+            } else if (available && t.level < tier.level) {
+                g.fill(barX, y + 4, barX + barW, y + 7, dimColor(c, 0x95));
+            }
+            y += 17;
+        }
+        y += GAP;
+
+        y = renderUpgradeCost(g, font, data, def, tier, x, y, w);
+        y += GAP;
+
+        g.drawString(font, "WHERE TO FIND", x, y, TEXT_DIM, false);
+        y += 13;
+        for (String line : wordWrap(font, def.locationHint, w)) {
+            g.drawString(font, line, x, y, TEXT_DIM, false);
+            y += font.lineHeight + 2;
+        }
+        return y + PAD;
+    }
+
+    private int renderFlawDetailContent(GuiGraphics g, Font font, PerkData data, FlawDefinition flaw, int x, int y, int w) {
+        g.drawString(font, trim(font, flaw.name, w), x, y, TEXT, false);
+        y += 22;
+        int blockY = y;
+        drawRect(g, x, blockY, 64, 64, RED, 0xFF1D1010);
+        g.drawString(font, "!", x + 29, blockY + 27, RED, false);
+        int ex = x + 76;
+        g.drawString(font, data.hasFlaw(flaw.id) ? "EQUIPPED FLAW" : "FLAW", ex, blockY + 3, RED, false);
+        for (String line : wordWrap(font, flaw.description, w - 76)) {
+            g.drawString(font, line, ex, y + 17, TEXT_DIM, false);
+            y += font.lineHeight + 1;
+        }
+        y = Math.max(blockY + 64, y + 20);
+        y = renderQuote(g, font, x, y, w, RED, "You take this because the extra power has to cost something.", "LOADOUT NOTE");
+        y += GAP;
+        g.drawString(font, "Lore", x, y, TEXT, false);
+        y += 13;
+        for (String line : wordWrap(font, "A flaw is not a bonus wearing a scary mask. It is a real drawback you accept so a heavier perk setup can stay balanced.", w)) {
+            g.drawString(font, line, x, y, TEXT_DIM, false);
+            y += font.lineHeight + 2;
+        }
+        return y + PAD;
+    }
+
+    private int renderQuote(GuiGraphics g, Font font, int x, int y, int w, int color, String quote, String attr) {
+        g.fill(x, y, x + 2, y + 42, color);
+        g.drawString(font, "\"", x + 10, y + 3, dimColor(color, 0x99), false);
+        g.drawString(font, trim(font, quote, w - 28), x + 24, y + 9, TEXT_DIM, false);
+        g.drawString(font, attr, x + 24, y + 25, TEXT_FAINT, false);
+        return y + 42;
+    }
+
+    private int renderUpgradeCost(GuiGraphics g, Font font, PerkData data, PerkDefinition def, PerkTier tier, int x, int y, int w) {
+        g.drawString(font, "Upgrade Cost", x, y, TEXT, false);
+        y += 15;
+        PerkUpgradeCost cost = def.getUpgradeCost(tier);
+        if (cost == null) {
+            g.drawString(font, "Max tier reached.", x, y, TEXT_DIM, false);
+            return y + 14;
+        }
+
+        int cellW = (w - 12) / 3;
+        int cellH = 48;
+        int playerXp = Minecraft.getInstance().player != null ? Minecraft.getInstance().player.experienceLevel : 0;
+        renderCostCell(g, font, x, y, cellW, cellH, "XP", cost.xpLevels, playerXp, playerXp >= cost.xpLevels, true);
+
+        int index = 1;
+        for (ItemStack stack : cost.requiredItems) {
+            int cx = x + (index % 3) * (cellW + 6);
+            int cy = y + (index / 3) * (cellH + 6);
+            int have = countClientItem(stack.getItem());
+            renderCostCell(g, font, cx, cy, cellW, cellH, stack.getHoverName().getString(), stack.getCount(), have, have >= stack.getCount(), false, stack);
+            index++;
+        }
+        int rows = Math.max(1, (index + 2) / 3);
+        return y + rows * cellH + (rows - 1) * 6;
+    }
+
+    private void renderCostCell(GuiGraphics g, Font font, int x, int y, int w, int h, String name, int need, int have, boolean ok, boolean xp) {
+        renderCostCell(g, font, x, y, w, h, name, need, have, ok, xp, ItemStack.EMPTY);
+    }
+
+    private void renderCostCell(GuiGraphics g, Font font, int x, int y, int w, int h, String name, int need, int have, boolean ok, boolean xp, ItemStack stack) {
+        drawRect(g, x, y, w, h, ok ? GREEN : RED, PANEL);
+        int iconX = x + 6;
+        int iconY = y + 6;
+        drawRect(g, iconX, iconY, 22, 22, xp ? ACCENT : BORDER, xp ? 0xFF211A10 : PANEL_2);
+        if (xp) {
+            g.drawString(font, "XP", iconX + 5, iconY + 7, ACCENT, false);
+        } else if (!stack.isEmpty()) {
+            g.renderItem(stack, iconX + 3, iconY + 3);
+        }
+        g.drawString(font, String.valueOf(need), x + 34, y + 8, TEXT, false);
+        g.drawString(font, "have: " + have, x + 6, y + 33, ok ? GREEN : RED, false);
+        g.drawString(font, trim(font, name, w - 40), x + 34, y + 21, TEXT_FAINT, false);
+    }
+
+    private void renderActionFooter(GuiGraphics g, Font font, PerkData data, PerkDefinition perk, FlawDefinition flaw, int x, int y, int w, int h, int mx, int my) {
+        g.fill(x, y, x + w, y + h, PANEL);
+        g.fill(x, y, x + w, y + 1, BORDER);
+        int bw = (w - PAD * 2 - 8) / 3;
+        int by = y + 9;
+        boolean canEquip = (perk != null && data.hasDiscovered(perk.id) && !data.isEquipped(perk.id))
+                || (flaw != null && !data.hasFlaw(flaw.id));
+        boolean canUnequip = (perk != null && data.isEquipped(perk.id)) || (flaw != null && data.hasFlaw(flaw.id));
+        boolean canUpgrade = perk != null && data.isEquipped(perk.id) && perk.getUpgradeCost(data.getTier(perk.id)) != null;
+        drawAction(g, font, x + PAD, by, bw, 17, "Equip", GREEN, canEquip, mx, my);
+        drawAction(g, font, x + PAD + bw + 4, by, bw, 17, "Unequip", RED, canUnequip, mx, my);
+        drawAction(g, font, x + PAD + (bw + 4) * 2, by, bw, 17, "Upgrade ^", ACCENT, canUpgrade, mx, my);
+    }
+
+    private void drawAction(GuiGraphics g, Font font, int x, int y, int w, int h, String label, int color, boolean enabled, int mx, int my) {
+        boolean hover = enabled && inRect(mx, my, x, y, w, h);
+        drawRect(g, x, y, w, h, enabled ? color : BORDER, hover ? PANEL_3 : PANEL_2);
+        g.drawString(font, label, x + (w - font.width(label)) / 2, y + 5, enabled ? TEXT : TEXT_FAINT, false);
+    }
+
+    private boolean handleLeftClick(double mx, double my, PerkData data) {
+        int x = PAD;
+        int y = PAD - categoryScroll;
+        int w = leftW - PAD * 2;
+        int cardH = 104;
+        int bw = (w - 18 - 2 * 5) / 3;
+        int by = y + 77;
+        for (int i = 0; i < 3; i++) {
+            int bx = x + 9 + i * (bw + 5);
+            if (inRect(mx, my, bx, by, bw, 16)) {
+                activePresetIndex = i;
+                if (i < data.getPresets().size()) {
+                    sendAction(new PerkActionPacket(PerkActionPacket.Action.LOAD_PRESET, data.getPresets().get(i).name));
+                }
+                return true;
+            }
+        }
+
+        int cy = y + cardH + GAP;
+        for (Category category : Category.values()) {
+            if (category == Category.FLAWS) cy += 13;
+            if (inRect(mx, my, x, cy, w, 20)) {
+                activeCategory = category;
+                listScroll = 0;
+                searchActive = false;
+                return true;
+            }
+            cy += 26;
+        }
+        return false;
+    }
+
+    private boolean handleMiddleClick(double mx, double my, PerkData data) {
+        int x = middleX;
+        int w = middleW;
+        int searchW = Math.min(110, Math.max(70, w / 5));
+        int searchX = x + w - PAD - searchW;
+        int searchY = 12;
+        if (inRect(mx, my, searchX, searchY, searchW, 17)) {
+            searchActive = true;
+            return true;
+        }
+
+        String filterLabel = "Filter: " + filter.label + " v";
+        int filterW = approxW(filterLabel) + 12;
+        int filterX = searchX - 6 - filterW;
+        if (inRect(mx, my, filterX, searchY, filterW, 17)) {
+            filter = filter.next();
+            listScroll = 0;
+            return true;
+        }
+
+        String sortLabel = "Sort: " + sort.label + " v";
+        int sortW = approxW(sortLabel) + 12;
+        int sortX = filterX - 6 - sortW;
+        if (inRect(mx, my, sortX, searchY, sortW, 17)) {
+            sort = sort.next();
+            listScroll = 0;
+            return true;
+        }
+
+        if (my >= listViewportY && my < listViewportY + listViewportH) {
+            List<RowEntry> rows = buildRows(data);
+            int ry = listViewportY + PAD - listScroll;
+            for (RowEntry row : rows) {
+                if (inRect(mx, my, x + PAD, ry, w - PAD * 2, ROW_H)) {
+                    if (!row.locked) {
+                        selectedId = row.id().equals(selectedId) ? null : row.id();
+                        detailScroll = 0;
+                    }
+                    return true;
+                }
+                ry += ROW_H + 8;
+            }
+        }
+
+        searchActive = false;
+        return false;
+    }
+
+    private boolean handleDetailClick(double mx, double my, PerkData data) {
+        PerkDefinition perk = selectedPerk();
+        FlawDefinition flaw = selectedFlaw();
+        if (perk == null && flaw == null) return false;
+
+        int bw = (rightW - PAD * 2 - 8) / 3;
+        int by = cachedH - DETAIL_FOOTER_H + 9;
+        int x = rightX + PAD;
+        if (inRect(mx, my, x, by, bw, 17)) {
+            if (perk != null && data.hasDiscovered(perk.id) && !data.isEquipped(perk.id)) {
+                sendAction(new PerkActionPacket(PerkActionPacket.Action.EQUIP, perk.id, perk.minTier.level));
+                return true;
+            }
+            if (flaw != null && !data.hasFlaw(flaw.id)) {
+                sendAction(new PerkActionPacket(PerkActionPacket.Action.EQUIP_FLAW, flaw.id));
+                return true;
+            }
+        }
+        if (inRect(mx, my, x + bw + 4, by, bw, 17)) {
+            if (perk != null && data.isEquipped(perk.id)) {
+                sendAction(new PerkActionPacket(PerkActionPacket.Action.UNEQUIP, perk.id));
+                return true;
+            }
+            if (flaw != null && data.hasFlaw(flaw.id)) {
+                sendAction(new PerkActionPacket(PerkActionPacket.Action.UNEQUIP_FLAW, flaw.id));
+                return true;
+            }
+        }
+        if (inRect(mx, my, x + (bw + 4) * 2, by, bw, 17) && perk != null && data.isEquipped(perk.id)) {
+            sendAction(new PerkActionPacket(PerkActionPacket.Action.UPGRADE, perk.id));
+            return true;
+        }
+        return false;
+    }
+
+    private List<RowEntry> buildRows(PerkData data) {
+        List<RowEntry> rows = new ArrayList<>();
+        String search = searchText.toLowerCase(Locale.ROOT);
+
+        if (activeCategory.flaws) {
+            for (FlawDefinition flaw : NichirinPerkRegistry.allFlaws()) {
+                if (!search.isEmpty() && !matchesFlaw(flaw, search)) continue;
+                rows.add(new RowEntry(flaw));
+            }
+            rows.sort(Comparator.comparing(row -> row.flaw.name));
+            return rows;
+        }
+
+        boolean lockedMode = activeCategory.locked;
+        for (PerkDefinition def : NichirinPerkRegistry.allPerks()) {
+            boolean discovered = data.hasDiscovered(def.id);
+            if (lockedMode != !discovered) continue;
+            if (activeCategory.tag != null && Arrays.stream(def.tags).noneMatch(t -> t == activeCategory.tag)) continue;
+            if (!lockedMode) {
+                if (filter == FilterMode.EQUIPPED && !data.isEquipped(def.id)) continue;
+                if (filter == FilterMode.CURSED && !def.cursed) continue;
+            }
+            if (!search.isEmpty() && !matchesPerk(def, search)) continue;
+            rows.add(new RowEntry(def, lockedMode));
+        }
+
+        sortRows(rows, data);
+        return rows;
+    }
+
+    private void sortRows(List<RowEntry> rows, PerkData data) {
         switch (sort) {
-            case NAME   -> list.sort(Comparator.comparing(d -> d.name));
-            case CURSED -> list.sort((a, b) -> Boolean.compare(b.cursed, a.cursed));
-            case TIER   -> list.sort((a, b) -> {
-                boolean ae = data.isEquipped(a.id), be = data.isEquipped(b.id);
+            case NAME -> rows.sort(Comparator.comparing(row -> row.perk.name));
+            case TAG -> rows.sort(Comparator.comparing(row -> row.perk.tags.length == 0 ? "" : row.perk.tags[0].displayName));
+            case TIER -> rows.sort((a, b) -> {
+                boolean ae = data.isEquipped(a.perk.id);
+                boolean be = data.isEquipped(b.perk.id);
                 if (ae != be) return ae ? -1 : 1;
-                int at = (ae ? data.getTier(a.id) : a.minTier).level;
-                int bt = (be ? data.getTier(b.id) : b.minTier).level;
-                return bt - at;
+                return rowTier(data, b.perk).level - rowTier(data, a.perk).level;
             });
         }
+    }
+
+    private String categoryCount(PerkData data, Category category) {
+        if (category.flaws) return data.equippedFlawCount() + "/" + NichirinPerkRegistry.allFlaws().size();
+        if (category.locked) return String.valueOf(countPerks(data, category, false));
+        return String.valueOf(countPerks(data, category, true));
+    }
+
+    private int countPerks(PerkData data, Category category, boolean discovered) {
+        int count = 0;
+        for (PerkDefinition def : NichirinPerkRegistry.allPerks()) {
+            if (data.hasDiscovered(def.id) != discovered) continue;
+            if (category.tag != null && Arrays.stream(def.tags).noneMatch(t -> t == category.tag)) continue;
+            count++;
+        }
+        return count;
+    }
+
+    private PerkDefinition selectedPerk() {
+        if (selectedId == null || selectedId.startsWith("flaw:")) return null;
+        return NichirinPerkRegistry.getPerk(selectedId);
+    }
+
+    private FlawDefinition selectedFlaw() {
+        if (selectedId == null || !selectedId.startsWith("flaw:")) return null;
+        return NichirinPerkRegistry.getFlaw(selectedId.substring("flaw:".length()));
+    }
+
+    private PerkTier rowTier(PerkData data, PerkDefinition def) {
+        return data.isEquipped(def.id) ? data.getTier(def.id) : def.minTier;
+    }
+
+    private String activePresetName(PerkData data) {
+        if (activePresetIndex < data.getPresets().size()) return data.getPresets().get(activePresetIndex).name;
+        return "Preset " + roman(activePresetIndex + 1);
+    }
+
+    private boolean matchesPerk(PerkDefinition def, String search) {
+        return def.name.toLowerCase(Locale.ROOT).contains(search)
+                || def.description.toLowerCase(Locale.ROOT).contains(search)
+                || Arrays.stream(def.tags).anyMatch(tag -> tag.displayName.toLowerCase(Locale.ROOT).contains(search));
+    }
+
+    private boolean matchesFlaw(FlawDefinition flaw, String search) {
+        return flaw.name.toLowerCase(Locale.ROOT).contains(search)
+                || flaw.description.toLowerCase(Locale.ROOT).contains(search);
+    }
+
+    private String humanPerkNote(PerkDefinition def, PerkTier tier) {
+        String desc = def.getDescriptionForTier(tier);
+        if (desc == null || desc.isBlank()) {
+            desc = def.description;
+        }
+        return trimPlain(desc, 86);
+    }
+
+    private static void renderPerkIcon(GuiGraphics g, String perkId, PerkTier tier, int x, int y) {
+        ResourceLocation tex = PerkIcon.get(perkId, tier);
+        g.blit(tex, x, y, 0, 0, 32, 32, 32, 32);
+    }
+
+    private int drawBadge(GuiGraphics g, Font font, int x, int y, String label, int color, boolean outlineOnly) {
+        int w = font.width(label) + 8;
+        g.fill(x, y, x + w, y + 11, color);
+        g.fill(x + 1, y + 1, x + w - 1, y + 10, outlineOnly ? PANEL_2 : dimColor(color, 0x38));
+        g.drawString(font, label, x + 4, y + 2, outlineOnly ? color : TEXT, false);
+        return x + w;
+    }
+
+    private int drawChip(GuiGraphics g, Font font, int x, int y, String label, int color) {
+        int w = font.width(label) + 9;
+        g.fill(x, y, x + w, y + 10, dimColor(color, 0x90));
+        g.fill(x + 1, y + 1, x + w - 1, y + 9, dimColor(color, 0x22));
+        g.drawString(font, label, x + 4, y + 1, dimColor(color, 0xFF), false);
+        return x + w + 4;
+    }
+
+    private static void drawRect(GuiGraphics g, int x, int y, int w, int h, int border, int fill) {
+        g.fill(x, y, x + w, y + h, border);
+        g.fill(x + 1, y + 1, x + w - 1, y + h - 1, fill);
+    }
+
+    private static void renderScrollBar(GuiGraphics g, int x, int y, int w, int h, int scroll, int maxScroll) {
+        g.fill(x, y, x + w, y + h, BORDER);
+        int thumbH = Math.max(14, h * h / Math.max(h + maxScroll, 1));
+        int thumbY = y + (int)((h - thumbH) * (scroll / (float) maxScroll));
+        g.fill(x, thumbY, x + w, thumbY + thumbH, ACCENT);
+    }
+
+    private static int tierColor(PerkTier tier) {
+        return tier.primaryColor | 0xFF000000;
+    }
+
+    private static int tierFill(PerkTier tier, int alpha) {
+        return (alpha << 24) | (tier.primaryColor & 0x00FFFFFF);
+    }
+
+    private static int dimColor(int color, int alpha) {
+        return (alpha << 24) | (color & 0x00FFFFFF);
+    }
+
+    private static int countClientItem(net.minecraft.world.item.Item item) {
+        Player p = Minecraft.getInstance().player;
+        if (p == null || item == Items.AIR) return 0;
+        int count = 0;
+        for (ItemStack stack : p.getInventory().items) {
+            if (stack.is(item)) count += stack.getCount();
+        }
+        return count;
     }
 
     private static void sendAction(PerkActionPacket packet) {
@@ -792,39 +945,55 @@ public class PerksTab {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             packet.toBytes(buf);
             NetworkManager.sendToServer(NichirinPacketRegistry.PERK_ACTION_ID, buf);
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 
-    private static int countClientItem(net.minecraft.world.item.Item item) {
-        Player p = Minecraft.getInstance().player;
-        if (p == null) return 0;
-        int n = 0;
-        for (ItemStack s : p.getInventory().items) if (s.is(item)) n += s.getCount();
-        return n;
+    private static String trim(Font font, String text, int maxW) {
+        if (text == null) return "";
+        if (font.width(text) <= maxW) return text;
+        return font.plainSubstrByWidth(text, Math.max(0, maxW - font.width("..."))) + "...";
     }
 
-    private static int approxW(String s) { return s.length() * 6; }
-
-    private static void drawPillBtn(GuiGraphics g, Font font, int x, int y, int w, int h,
-                                    String label, int borderCol, int textCol, boolean hov) {
-        g.fill(x - 1, y - 1, x + w + 1, y + h + 1, borderCol);
-        g.fill(x, y, x + w, y + h, hov ? C_PANEL_LITE : C_PANEL2);
-        if (hov) g.fill(x, y, x + w, y + h, OV_HOVER);
-        g.drawString(font, label, x + (w - font.width(label)) / 2, y + (h - font.lineHeight) / 2, textCol, false);
+    private static String trimPlain(String text, int maxChars) {
+        if (text == null) return "";
+        if (text.length() <= maxChars) return text;
+        return text.substring(0, Math.max(0, maxChars - 3)).stripTrailing() + "...";
     }
 
     private static List<String> wordWrap(Font font, String text, int maxW) {
         List<String> lines = new ArrayList<>();
         if (text == null || text.isEmpty()) return lines;
         String[] words = text.split(" ");
-        StringBuilder cur = new StringBuilder();
-        for (String w : words) {
-            String test = cur.length() == 0 ? w : cur + " " + w;
-            if (font.width(test) > maxW && cur.length() > 0) { lines.add(cur.toString()); cur = new StringBuilder(w); }
-            else cur = new StringBuilder(test);
+        StringBuilder current = new StringBuilder();
+        for (String word : words) {
+            String test = current.length() == 0 ? word : current + " " + word;
+            if (font.width(test) > maxW && current.length() > 0) {
+                lines.add(current.toString());
+                current = new StringBuilder(word);
+            } else {
+                current = new StringBuilder(test);
+            }
         }
-        if (cur.length() > 0) lines.add(cur.toString());
+        if (current.length() > 0) lines.add(current.toString());
         return lines;
+    }
+
+    private static int clamp(int value, int min, int max) {
+        return Math.max(min, Math.min(value, max));
+    }
+
+    private static int approxW(String text) {
+        return text.length() * 6;
+    }
+
+    private static String roman(int index) {
+        return switch (index) {
+            case 1 -> "I";
+            case 2 -> "II";
+            case 3 -> "III";
+            default -> String.valueOf(index);
+        };
     }
 
     private static boolean inRect(double mx, double my, int x, int y, int w, int h) {
