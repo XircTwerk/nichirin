@@ -11,6 +11,7 @@ import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
@@ -48,6 +49,8 @@ public class ThrownKatanaEntity extends Entity {
 
     private static final EntityDataAccessor<Boolean> STUCK =
             SynchedEntityData.defineId(ThrownKatanaEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<ItemStack> THROWN_ITEM =
+            SynchedEntityData.defineId(ThrownKatanaEntity.class, EntityDataSerializers.ITEM_STACK);
 
     private int lifeTicks = 0;
     private boolean stuck = false;
@@ -103,9 +106,18 @@ public class ThrownKatanaEntity extends Entity {
         return entityData.get(STUCK);
     }
 
+    public ItemStack getThrownItem() {
+        return entityData.get(THROWN_ITEM);
+    }
+
+    public void setThrownItem(ItemStack stack) {
+        entityData.set(THROWN_ITEM, stack.copy());
+    }
+
     @Override
     public void defineSynchedData() {
         entityData.define(STUCK, false);
+        entityData.define(THROWN_ITEM, ItemStack.EMPTY);
     }
 
     @Override
@@ -211,6 +223,9 @@ public class ThrownKatanaEntity extends Entity {
         stuck = tag.getBoolean("Stuck");
         damage = tag.getFloat("Damage");
         hitStun = tag.getInt("HitStun");
+        if (tag.contains("ThrownItem")) {
+            setThrownItem(ItemStack.of(tag.getCompound("ThrownItem")));
+        }
     }
 
     @Override
@@ -219,6 +234,10 @@ public class ThrownKatanaEntity extends Entity {
         tag.putBoolean("Stuck", stuck);
         tag.putFloat("Damage", damage);
         tag.putInt("HitStun", hitStun);
+        ItemStack item = getThrownItem();
+        if (!item.isEmpty()) {
+            tag.put("ThrownItem", item.save(new CompoundTag()));
+        }
     }
 
     @Override

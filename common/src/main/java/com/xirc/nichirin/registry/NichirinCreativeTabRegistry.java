@@ -74,6 +74,7 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinItemRegistry.BEAST_KATANAS.get());
                         entries.accept(NichirinItemRegistry.SABITO_KATANA.get());
                         entries.accept(NichirinItemRegistry.UROKODAKI_KATANA.get());
+                        entries.accept(NichirinItemRegistry.MIST_KATANA.get());
                     })
                     .build();
         });

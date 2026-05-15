@@ -123,18 +123,6 @@ public class SkillsSection extends AbstractGuiPage {
         int nameY = 9;
         String name = player != null ? player.getName().getString() : "Unknown Slayer";
         g.drawString(font, trimToWidth(font, name, 120), nameX, nameY, TEXT, false);
-        g.drawString(font, "Minecraft profile", nameX, nameY + 12, TEXT_DIM, false);
-
-        int pillX = nameX + Math.min(122, font.width(name) + 12);
-        drawPill(g, font, pillX, nameY, 42, 13, "LV " + (player != null ? player.experienceLevel : 0), ACCENT, COLOR_PALETTE.ACCENT_LIGHT.rgb());
-
-        int xpNeed = player != null ? Math.max(1, player.getXpNeededForNextLevel()) : 22;
-        int xpNow = player != null ? Math.min(xpNeed, Math.round(player.experienceProgress * xpNeed)) : 14;
-        int barW = 138;
-        int barY = 38;
-        g.fill(nameX, barY, nameX + barW, barY + 3, COLOR_PALETTE.XP_BAR_BG.argb());
-        g.fill(nameX, barY, nameX + Math.round(barW * (xpNow / (float) xpNeed)), barY + 3, ACCENT);
-        g.drawString(font, xpNow + " / " + xpNeed + " XP to next level", nameX, barY + 7, TEXT_DIM, false);
 
         int tabW = 86;
         int gap = 8;

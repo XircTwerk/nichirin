@@ -38,9 +38,6 @@ public class TheBigGui extends Screen {
     private static final int BACKGROUND_COLOR    = NichirinPalette.BG_DARK;
     private static final int ACTIVE_BUTTON_COLOR = NichirinPalette.BG_BOX_ACTIVE;
 
-    // Fixed scale constants
-    private static final double FIXED_GUI_SCALE = 2.0;
-
     // Current section
     private GuiSection currentSection = GuiSection.HOME;
 
@@ -57,17 +54,8 @@ public class TheBigGui extends Screen {
     private final QuestsSection questsSection = new QuestsSection();
     private final ReputationSection reputationSection = new ReputationSection();
     private final MovesetSection movesetSection = new MovesetSection();
-    /**
-     * -- GETTER --
-     *  Get scaled width for use by sections
-     */
-    // Scaled dimensions
     @Getter
     private int scaledWidth;
-    /**
-     * -- GETTER --
-     *  Get scaled height for use by sections
-     */
     @Getter
     private int scaledHeight;
 
@@ -118,23 +106,9 @@ public class TheBigGui extends Screen {
         PlayerStats.initialize();
     }
 
-    /**
-     * Calculate dimensions for fixed GUI scale of 2
-     */
     private void calculateScaledDimensions() {
-        Minecraft mc = Minecraft.getInstance();
-
-        // Get the window's framebuffer dimensions
-        int framebufferWidth = mc.getWindow().getWidth();
-        int framebufferHeight = mc.getWindow().getHeight();
-
-        // Calculate what the dimensions would be at GUI scale 2
-        this.scaledWidth = (int) (framebufferWidth / FIXED_GUI_SCALE);
-        this.scaledHeight = (int) (framebufferHeight / FIXED_GUI_SCALE);
-
-        // Ensure minimum dimensions
-        this.scaledWidth = Math.max(this.scaledWidth, 320);
-        this.scaledHeight = Math.max(this.scaledHeight, 240);
+        this.scaledWidth = Math.max(this.width, 320);
+        this.scaledHeight = Math.max(this.height, 240);
     }
 
     /**
@@ -156,38 +130,22 @@ public class TheBigGui extends Screen {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        // Get the current GUI scale factor
-        assert minecraft != null;
-        double currentScale = minecraft.getWindow().getGuiScale();
-        double scaleRatio = FIXED_GUI_SCALE / currentScale;
-
-        // Apply our fixed scaling
-        PoseStack poseStack = graphics.pose();
-        poseStack.pushPose();
-        poseStack.scale((float) scaleRatio, (float) scaleRatio, 1.0f);
-
-        // Adjust mouse coordinates for our scaling
-        int adjustedMouseX = (int) (mouseX / scaleRatio);
-        int adjustedMouseY = (int) (mouseY / scaleRatio);
-
-        // Recalculate dimensions in case of window resize
         calculateScaledDimensions();
 
-        // Draw dark background
+        PoseStack poseStack = graphics.pose();
+
         graphics.fill(0, 0, this.scaledWidth, this.scaledHeight, BACKGROUND_COLOR);
 
         int contentRight = this.scaledWidth - BUTTON_WIDTH - RIGHT_MARGIN - 10;
         graphics.fill(CONTENT_X, CONTENT_Y, contentRight, this.scaledHeight - BOTTOM_MARGIN, 0xFF1A1817);
 
-        // Calculate content area dimensions
         int contentWidth = contentRight - CONTENT_X;
         int contentHeight = this.scaledHeight - BOTTOM_MARGIN - CONTENT_Y;
 
-        // Render current section content
         poseStack.pushPose();
         poseStack.translate(CONTENT_X, CONTENT_Y, 0);
-        int contentMouseX = adjustedMouseX - CONTENT_X;
-        int contentMouseY = adjustedMouseY - CONTENT_Y;
+        int contentMouseX = mouseX - CONTENT_X;
+        int contentMouseY = mouseY - CONTENT_Y;
         switch (currentSection) {
             case HOME -> homeSection.render(graphics, contentMouseX, contentMouseY, player, contentWidth, contentHeight, this.font);
             case SKILLS -> skillsSection.render(graphics, player, this.font, contentWidth, contentHeight, contentMouseX, contentMouseY);
@@ -198,19 +156,9 @@ public class TheBigGui extends Screen {
         }
         poseStack.popPose();
 
-        // Restore pose stack before rendering buttons (they handle their own scaling)
-        poseStack.popPose();
-
-        // Scale the buttons manually using pose stack
-        poseStack.pushPose();
-        poseStack.scale((float) scaleRatio, (float) scaleRatio, 1.0f);
-
-        // Render buttons with scaled coordinates
         for (SectionButton button : sectionButtons) {
-            button.render(graphics, adjustedMouseX, adjustedMouseY, partialTick);
+            button.render(graphics, mouseX, mouseY, partialTick);
         }
-
-        poseStack.popPose();
     }
 
     @Override
@@ -257,29 +205,18 @@ public class TheBigGui extends Screen {
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
         if (currentSection == GuiSection.SKILLS) {
-            assert minecraft != null;
-            double scaleRatio = FIXED_GUI_SCALE / minecraft.getWindow().getGuiScale();
-            if (skillsSection.handleScroll(mouseX / scaleRatio - CONTENT_X, mouseY / scaleRatio - CONTENT_Y, delta)) return true;
+            if (skillsSection.handleScroll(mouseX - CONTENT_X, mouseY - CONTENT_Y, delta)) return true;
         }
         return super.mouseScrolled(mouseX, mouseY, delta);
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        // Adjust mouse coordinates for our fixed scaling
-        assert minecraft != null;
-        double currentScale = minecraft.getWindow().getGuiScale();
-        double scaleRatio = FIXED_GUI_SCALE / currentScale;
-
-        double adjustedMouseX = mouseX / scaleRatio;
-        double adjustedMouseY = mouseY / scaleRatio;
-
-        // Compute content dimensions (must match render())
         int contentRight = this.scaledWidth - BUTTON_WIDTH - RIGHT_MARGIN - 10;
         int clickContentWidth = contentRight - CONTENT_X;
         int clickContentHeight = this.scaledHeight - BOTTOM_MARGIN - CONTENT_Y;
-        double contentMouseX = adjustedMouseX - CONTENT_X;
-        double contentMouseY = adjustedMouseY - CONTENT_Y;
+        double contentMouseX = mouseX - CONTENT_X;
+        double contentMouseY = mouseY - CONTENT_Y;
 
         // Handle section-specific clicks
         boolean handled = switch (currentSection) {
@@ -321,29 +258,12 @@ public class TheBigGui extends Screen {
 
         @Override
         public boolean mouseClicked(double mouseX, double mouseY, int button) {
-            // Adjust mouse coordinates to match our fixed scaling
-            Minecraft mc = Minecraft.getInstance();
-            double currentScale = mc.getWindow().getGuiScale();
-            double scaleRatio = FIXED_GUI_SCALE / currentScale;
-
-            double adjustedMouseX = mouseX / scaleRatio;
-            double adjustedMouseY = mouseY / scaleRatio;
-
-            // Use adjusted coordinates for hit detection
-            return super.mouseClicked(adjustedMouseX, adjustedMouseY, button);
+            return super.mouseClicked(mouseX, mouseY, button);
         }
 
         @Override
         public boolean isMouseOver(double mouseX, double mouseY) {
-            // Also adjust mouse coordinates for hover detection
-            Minecraft mc = Minecraft.getInstance();
-            double currentScale = mc.getWindow().getGuiScale();
-            double scaleRatio = FIXED_GUI_SCALE / currentScale;
-
-            double adjustedMouseX = mouseX / scaleRatio;
-            double adjustedMouseY = mouseY / scaleRatio;
-
-            return super.isMouseOver(adjustedMouseX, adjustedMouseY);
+            return super.isMouseOver(mouseX, mouseY);
         }
     }
 

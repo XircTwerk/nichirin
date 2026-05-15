@@ -26,7 +26,8 @@ public class LunarDispersingMistAttack extends MistBreathingAttackBase {
         finisherExecuted = false;
         hitDuringFlight.clear();
         slashCount = 0;
-        dashDirection = user.getLookAngle().normalize();
+        Vec3 look = user.getLookAngle();
+        dashDirection = new Vec3(look.x, 0, look.z).normalize();
 
         createMistParticles();
 

@@ -3,8 +3,8 @@
 	"credit": "Made with Blockbench",
 	"texture_size": [32, 32],
 	"textures": {
-		"1": "nichirin:item/muichiro_katana",
-		"particle": "nichirin:item/muichiro_katana"
+		"1": "nichirin:item/mist_katana",
+		"particle": "nichirin:item/mist_katana"
 	},
 	"elements": [
 		{

@@ -14,13 +14,13 @@ public class ReputationSection extends AbstractGuiPage {
 
     public void render(GuiGraphics graphics, Player player, Font font, int contentWidth, int contentHeight, int mouseX, int mouseY) {
         drawWorkspaceChrome(graphics, font, contentWidth, contentHeight,
-                "Reputation", "Standing and faction trust will live here once that data exists.",
-                "no ledger", "No reputation data yet", "neutral");
+                "Factions", "Faction trust will live here once that data exists.",
+                "no ledger", "No faction data yet", null);
         int x = DEFAULT_PAD;
         int y = workspaceBodyY() + DEFAULT_PAD;
         drawInfoCard(graphics, font, x, y, contentWidth - DEFAULT_PAD * 2, 58,
-                "No reputation ledger",
-                "There is no reputation system feeding this page yet. No made-up rank, no fake standing.",
+                "No faction ledger",
+                "There is no faction system feeding this page yet.",
                 COLOR_PALETTE.BREATH_CYAN.argb());
     }
 

@@ -23,8 +23,7 @@ public class HomeSection extends AbstractGuiPage {
         int identityAccent = movesetData.hasDemonMoveset() ? COLOR_PALETTE.DANGER.argb() : COLOR_PALETTE.ACCENT.argb();
         drawWorkspaceChrome(graphics, font, contentWidth, contentHeight,
                 "Home", player.getName().getString(),
-                currentPath(movesetData), "F5 refresh stats",
-                PlayerStats.areStatsLoaded() ? "stats ready" : "loading stats");
+                currentPath(movesetData), null, null);
 
         int contentX = 20;
         int contentY = workspaceBodyY() + 12;
