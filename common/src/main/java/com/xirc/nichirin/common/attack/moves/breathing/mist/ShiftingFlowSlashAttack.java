@@ -18,6 +18,8 @@ public class ShiftingFlowSlashAttack extends MistBreathingAttackBase {
     private boolean finisherExecuted = false;
     private Vec3 dashDirection;
     private Vec3 startPosition;
+    private Vec3 dashStartPos;
+    private int dashTick = 0;
     private final Set<LivingEntity> hitDuringDash = new HashSet<>();
 
     @Override
@@ -25,8 +27,10 @@ public class ShiftingFlowSlashAttack extends MistBreathingAttackBase {
         dashStarted = false;
         finisherExecuted = false;
         hitDuringDash.clear();
-        dashDirection = user.getLookAngle().normalize();
+        dashDirection = new Vec3(user.getLookAngle().x, 0, user.getLookAngle().z).normalize();
         startPosition = user.position();
+        dashStartPos = null;
+        dashTick = 0;
 
         if (world instanceof ServerLevel serverLevel) {
             Vec3 pos = user.position();
@@ -63,11 +67,8 @@ public class ShiftingFlowSlashAttack extends MistBreathingAttackBase {
     }
 
     private void launchDash() {
-        if (dashSpeed != null) {
-            user.setDeltaMovement(dashDirection.scale(dashSpeed / Math.max(duration, 1) * 12.0));
-            user.hurtMarked = true;
-            user.hasImpulse = true;
-        }
+        dashStartPos = user.position();
+        dashTick = 0;
 
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 0.9f, 1.6f);
@@ -75,11 +76,19 @@ public class ShiftingFlowSlashAttack extends MistBreathingAttackBase {
     }
 
     private void sustainDash() {
-        if (dashSpeed != null) {
-            user.setDeltaMovement(dashDirection.scale(dashSpeed / Math.max(duration, 1) * 9.0));
-            user.hurtMarked = true;
+        // Teleport-based movement for precision
+        if (dashStartPos != null && dashSpeed != null) {
+            dashTick++;
+            double totalDistance = dashSpeed * 9.0; // matches original velocity * duration
+            float progress = (float) dashTick / Math.max(duration, 1);
+            Vec3 targetPos = dashStartPos.add(dashDirection.scale(totalDistance * progress));
+            if (user instanceof net.minecraft.server.level.ServerPlayer sp) {
+                sp.teleportTo(targetPos.x, targetPos.y, targetPos.z);
+            } else {
+                user.absMoveTo(targetPos.x, targetPos.y, targetPos.z, user.getYRot(), user.getXRot());
+            }
+            user.setDeltaMovement(Vec3.ZERO);
         }
-
         if (world instanceof ServerLevel serverLevel) {
             Vec3 pos = user.position();
             serverLevel.sendParticles(ParticleTypes.CLOUD,
@@ -131,5 +140,7 @@ public class ShiftingFlowSlashAttack extends MistBreathingAttackBase {
         hitDuringDash.clear();
         dashStarted = false;
         finisherExecuted = false;
+        dashStartPos = null;
+        dashTick = 0;
     }
 }

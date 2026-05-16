@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.attack.moves.breathing.water;
 
+import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -59,11 +60,15 @@ public class FlowingDanceAttack extends WaterBreathingAttackBase {
         // Continue dance effects during duration
         if (danceStarted && tickCount > windup && tickCount < windup + duration) {
             danceTicks++;
+            refreshEmpowermentEffects(); // Re-apply every tick so effects expire naturally on stop
             performDance();
         }
     }
 
     private void startDance() {
+        // Unlock the player from the move-stun so they can combo into other attacks
+        user.removeEffect(NichirinEffectRegistry.STUNNED.get());
+
         // Apply empowerment effects to user
         applyEmpowerment();
         empowered = true;
@@ -77,35 +82,15 @@ public class FlowingDanceAttack extends WaterBreathingAttackBase {
     }
 
     private void applyEmpowerment() {
-        // Apply strength and speed buffs
-        int empowermentDuration = duration;
+        // Effects are applied for 3 ticks only and refreshed each tick in performDance()
+        // so they expire naturally when the dance ends — no lingering effects
+        refreshEmpowermentEffects();
+    }
 
-        // Strength effect (damage boost)
-        user.addEffect(new MobEffectInstance(
-                MobEffects.DAMAGE_BOOST,
-                empowermentDuration,
-                1, // Amplifier 1 (Strength II)
-                false, // Not ambient
-                true   // Show particles
-        ));
-
-        // Speed effect
-        user.addEffect(new MobEffectInstance(
-                MobEffects.MOVEMENT_SPEED,
-                empowermentDuration,
-                1, // Amplifier 1 (Speed II)
-                false, // Not ambient
-                true   // Show particles
-        ));
-
-        // Regeneration for combo potential
-        user.addEffect(new MobEffectInstance(
-                MobEffects.REGENERATION,
-                empowermentDuration,
-                0, // Amplifier 0 (Regeneration I)
-                false, // Not ambient
-                false  // Don't show particles (too much visual noise)
-        ));
+    private void refreshEmpowermentEffects() {
+        user.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 3, 1, false, true));
+        user.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 3, 1, false, true));
+        user.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 3, 0, false, false));
     }
 
     private void performDance() {

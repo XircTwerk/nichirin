@@ -8,7 +8,9 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Ninth Form: Splashing Water Flow
@@ -30,6 +32,8 @@ public class SplashingWaterFlowAttack extends WaterBreathingAttackBase {
     private boolean finalSlashExecuted = false;
     private Vec3 baseDirection; // Forward direction when attack starts
     private List<Vec3> jumpPositions = new ArrayList<>();
+    private final Set<LivingEntity> caughtEnemies = new HashSet<>();
+    private final List<LivingEntity> draggedEnemies = new ArrayList<>();
 
     // Invulnerability tracking
     private boolean wasInvulnerable = false;
@@ -45,6 +49,8 @@ public class SplashingWaterFlowAttack extends WaterBreathingAttackBase {
         nextJumpTick = 0;
         finalSlashExecuted = false;
         jumpPositions.clear();
+        caughtEnemies.clear();
+        draggedEnemies.clear();
 
         // Force horizontal direction only (ignore Y component)
         Vec3 rawDirection = user.getLookAngle();
@@ -72,6 +78,11 @@ public class SplashingWaterFlowAttack extends WaterBreathingAttackBase {
             executeZigzagJump();
             jumpsExecuted++;
             nextJumpTick += JUMP_DURATION + JUMP_INTERVAL;
+        }
+
+        // Drag caught enemies every tick
+        if (jumpsExecuted > 0 && !finalSlashExecuted) {
+            continueDragEffect();
         }
 
         // Execute final slash after all jumps
@@ -143,11 +154,27 @@ public class SplashingWaterFlowAttack extends WaterBreathingAttackBase {
             hitTarget(target);
             damage = originalDamage;
 
-            // Light knockback to keep enemies in flow
-            Vec3 lightKnockback = baseDirection.scale(knockback * 0.2);
-            target.push(lightKnockback.x, 0.1, lightKnockback.z);
+            // Catch enemies for dragging
+            if (!caughtEnemies.contains(target)) {
+                caughtEnemies.add(target);
+                draggedEnemies.add(target);
+            }
 
             createJumpImpactEffect(target.position());
+        }
+    }
+
+    private void continueDragEffect() {
+        Vec3 userPos = user.position();
+        for (LivingEntity draggedEnemy : new ArrayList<>(draggedEnemies)) {
+            if (draggedEnemy.isAlive()) {
+                Vec3 dragPosition = userPos.subtract(baseDirection.scale(1.5));
+                draggedEnemy.absMoveTo(dragPosition.x, dragPosition.y, dragPosition.z, draggedEnemy.getYRot(), draggedEnemy.getXRot());
+                draggedEnemy.setDeltaMovement(Vec3.ZERO);
+                draggedEnemy.hurtMarked = true;
+            } else {
+                draggedEnemies.remove(draggedEnemy);
+            }
         }
     }
 
@@ -369,5 +396,7 @@ public class SplashingWaterFlowAttack extends WaterBreathingAttackBase {
         nextJumpTick = 0;
         finalSlashExecuted = false;
         jumpPositions.clear();
+        caughtEnemies.clear();
+        draggedEnemies.clear();
     }
 }

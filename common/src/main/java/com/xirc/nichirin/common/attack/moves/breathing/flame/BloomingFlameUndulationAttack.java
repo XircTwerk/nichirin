@@ -103,12 +103,12 @@ public class BloomingFlameUndulationAttack extends FlameBreathingAttackBase {
             // For spinning attack, we want to hit enemies multiple times but with reduced damage per hit
             // Check if we haven't hit this enemy recently (every 10 ticks = 0.5 seconds)
             if (spinTicks % 10 == 0 || !hitEntities.contains(target)) {
-                hitTargetNoImmunity(target); // Use no-immunity version for continuous hits
+                // Zero knockback during spin so enemies stay in range for all 4 hits
+                float savedKnockback = knockback;
+                knockback = 0;
+                hitTargetNoImmunity(target);
+                knockback = savedKnockback;
                 hitEntities.add(target);
-
-                // Minimal push so hits stay connected across the full spin
-                Vec3 pushDirection = target.position().subtract(userPos).normalize();
-                target.push(pushDirection.x * 0.05, 0.0, pushDirection.z * 0.05);
 
                 // Individual hit sound
                 world.playSound(null, target.getX(), target.getY(), target.getZ(),
@@ -246,6 +246,18 @@ public class BloomingFlameUndulationAttack extends FlameBreathingAttackBase {
     protected void onStop() {
         // Ensure invulnerability is removed
         user.setInvulnerable(false);
+
+        // Final outward knockback burst to all nearby enemies
+        if (!world.isClientSide) {
+            Vec3 userPos = user.position();
+            List<LivingEntity> finalTargets = getTargetsInCustomHitbox(
+                    userPos.add(0, user.getBbHeight() / 2, 0),
+                    range * 2, user.getBbHeight() + 1, range * 2);
+            for (LivingEntity target : finalTargets) {
+                Vec3 dir = target.position().subtract(userPos).normalize();
+                target.push(dir.x * 0.8, 0.25, dir.z * 0.8);
+            }
+        }
 
         // Clear hit entities
         hitEntities.clear();

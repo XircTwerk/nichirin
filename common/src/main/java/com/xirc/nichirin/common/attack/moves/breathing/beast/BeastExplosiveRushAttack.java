@@ -19,10 +19,14 @@ public class BeastExplosiveRushAttack extends BeastBreathingAttackBase {
     private boolean wasInvulnerable = false;
     private boolean dashStarted = false;
     private Vec3 dashDirection;
+    private Vec3 dashStartPos;
+    private int dashTick = 0;
 
     @Override
     protected void onStart() {
         dashStarted = false;
+        dashStartPos = null;
+        dashTick = 0;
         Vec3 look = user.getLookAngle();
         dashDirection = new Vec3(look.x, 0, look.z).normalize();
         wasInvulnerable = user.isInvulnerable();
@@ -38,20 +42,22 @@ public class BeastExplosiveRushAttack extends BeastBreathingAttackBase {
     protected void perform() {
         if (world.isClientSide) return;
 
+        // Teleport-based movement for precision — velocity is overridden by client prediction
         if (!dashStarted) {
-            Vec3 velocity = dashDirection.scale(dashSpeed != null ? dashSpeed : 14.0f);
-            user.setDeltaMovement(velocity);
-            user.hurtMarked = true;
-            user.hasImpulse = true;
+            dashStartPos = user.position();
             dashStarted = true;
         }
-
-        Vec3 current = user.getDeltaMovement();
+        dashTick++;
         float speed = dashSpeed != null ? dashSpeed : 14.0f;
-        if (current.length() < speed * 0.5) {
-            user.setDeltaMovement(dashDirection.scale(speed));
-            user.hurtMarked = true;
+        double totalDistance = speed; // speed is interpreted as total dash distance in blocks
+        float progress = (float) dashTick / Math.max(duration, 1);
+        Vec3 targetPos = dashStartPos.add(dashDirection.scale(totalDistance * progress));
+        if (user instanceof net.minecraft.server.level.ServerPlayer sp) {
+            sp.teleportTo(targetPos.x, targetPos.y, targetPos.z);
+        } else {
+            user.absMoveTo(targetPos.x, targetPos.y, targetPos.z, user.getYRot(), user.getXRot());
         }
+        user.setDeltaMovement(Vec3.ZERO);
 
         deflectProjectiles();
 
@@ -106,9 +112,11 @@ public class BeastExplosiveRushAttack extends BeastBreathingAttackBase {
     @Override
     protected void onStop() {
         user.setInvulnerable(wasInvulnerable);
-        user.setDeltaMovement(user.getDeltaMovement().scale(0.3));
+        user.setDeltaMovement(Vec3.ZERO);
         user.resetFallDistance();
         dashStarted = false;
+        dashStartPos = null;
+        dashTick = 0;
 
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.PLAYERS, 1.0f, 0.6f);

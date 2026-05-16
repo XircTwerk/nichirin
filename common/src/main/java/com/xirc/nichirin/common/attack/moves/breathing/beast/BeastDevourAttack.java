@@ -27,14 +27,14 @@ public class BeastDevourAttack extends BeastBreathingAttackBase {
     protected void perform() {
         if (world.isClientSide) return;
 
-        if (!slash1Done && tickCount == 1) {
+        if (!slash1Done && tickCount == windup + 1) {
             executeHorizontalSlash(0.2f);
             slash1Done = true;
             world.playSound(null, user.getX(), user.getY(), user.getZ(),
                     SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0f, 0.8f);
         }
 
-        if (!slash2Done && tickCount == 4) {
+        if (!slash2Done && tickCount == windup + 4) {
             executeHorizontalSlash(-0.1f);
             slash2Done = true;
             world.playSound(null, user.getX(), user.getY(), user.getZ(),

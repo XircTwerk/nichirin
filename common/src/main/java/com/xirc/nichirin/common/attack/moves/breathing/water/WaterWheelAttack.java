@@ -128,20 +128,29 @@ public class WaterWheelAttack extends WaterBreathingAttackBase {
         }
     }
 
+    /** Returns [rightX, rightZ] — the horizontal right vector perpendicular to the player's look direction. */
+    private double[] getWheelRightDir() {
+        Vec3 look = user.getLookAngle();
+        double fwdLen = Math.sqrt(look.x * look.x + look.z * look.z);
+        double fx = fwdLen > 0.001 ? look.x / fwdLen : 0;
+        double fz = fwdLen > 0.001 ? look.z / fwdLen : 1;
+        return new double[]{-fz, fx}; // right = (-fz, fx) perpendicular to (fx, fz)
+    }
+
     private void createWheelStartEffect() {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
+        double[] rightDir = getWheelRightDir();
 
-        // Initial wheel formation - vertical circle
+        // Initial wheel formation - vertical circle oriented to player facing
         for (int i = 0; i < 16; i++) {
             double angle = (i / 16.0) * 2 * Math.PI;
             double radius = hitboxSize * 0.8;
 
-            // Vertical wheel - rotate around Z axis (creates vertical wheel in XY plane)
-            double x = userPos.x + Math.cos(angle) * radius;
-            double y = userPos.y + Math.sin(angle) * radius;
-            double z = userPos.z;
+            double x = userPos.x + Math.sin(angle) * radius * rightDir[0];
+            double y = userPos.y + Math.cos(angle) * radius;
+            double z = userPos.z + Math.sin(angle) * radius * rightDir[1];
 
             serverLevel.sendParticles(ParticleTypes.SPLASH,
                     x, y, z, 3, 0.2, 0.2, 0.2, 0.1);
@@ -159,27 +168,24 @@ public class WaterWheelAttack extends WaterBreathingAttackBase {
     private void createVerticalWheelEffect(Vec3 userPos) {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
-        // Create rotating vertical wheel effect
-        double wheelSpeed = wheelTicks * 0.4; // Rotation speed
+        // Create rotating vertical wheel effect oriented to player facing
+        double wheelSpeed = wheelTicks * 0.4;
         int particlesPerFrame = 12;
+        double[] rightDir = getWheelRightDir();
 
         for (int i = 0; i < particlesPerFrame; i++) {
             double angle = (i / (double)particlesPerFrame) * 2 * Math.PI + wheelSpeed;
             double radius = hitboxSize * 0.7;
 
-            // Vertical wheel - particles rotate in XY plane
-            double x = userPos.x + Math.cos(angle) * radius;
-            double y = userPos.y + Math.sin(angle) * radius;
-            double z = userPos.z;
+            double x = userPos.x + Math.sin(angle) * radius * rightDir[0];
+            double y = userPos.y + Math.cos(angle) * radius;
+            double z = userPos.z + Math.sin(angle) * radius * rightDir[1];
 
-            // Main wheel particles
             serverLevel.sendParticles(ParticleTypes.SPLASH,
                     x, y, z, 2, 0.1, 0.1, 0.1, 0.08);
 
-            // Add some depth with Z offset
-            double zOffset = Math.sin(angle * 2) * 0.3; // Creates some depth variation
             serverLevel.sendParticles(ParticleTypes.DRIPPING_WATER,
-                    x, y, z + zOffset, 1, 0.05, 0.05, 0.05, 0.03);
+                    x, y, z, 1, 0.05, 0.05, 0.05, 0.03);
         }
 
         // Central water spout

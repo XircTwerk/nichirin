@@ -215,7 +215,7 @@ public class WhirlpoolAttack extends WaterBreathingAttackBase {
         // Create ascending whirlpool formation
         for (int layer = 0; layer < 8; layer++) {
             float layerHeight = (WHIRLPOOL_HEIGHT / 8) * layer;
-            float layerRadius = range * (1.0f - layer * 0.1f); // Spiral inward as it goes up
+            float layerRadius = range * (0.2f + layer * 0.1f); // Wide at top, narrow at bottom (funnel)
 
             createWaterVortex(whirlpoolCenter.add(0, layerHeight, 0), layerRadius, 0.5f, 1);
         }
@@ -232,7 +232,7 @@ public class WhirlpoolAttack extends WaterBreathingAttackBase {
         // Multi-layer spinning whirlpool
         for (int layer = 0; layer < 6; layer++) {
             float layerHeight = (WHIRLPOOL_HEIGHT / 6) * layer;
-            float layerRadius = range * (0.9f - layer * 0.12f);
+            float layerRadius = range * (0.3f + layer * 0.12f); // Wide at top, narrow at bottom (funnel shape)
             double layerSpinSpeed = whirlpoolTicks * 0.2 * (1 + layer * 0.1); // Faster at higher layers
             int particlesInLayer = Math.max(6, 12 - layer);
 

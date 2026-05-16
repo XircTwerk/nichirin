@@ -22,6 +22,7 @@ public class RengokuAttack extends FlameBreathingAttackBase {
     private boolean isDashing = false;
     private int dashTicks = 0;
     private Vec3 dashDirection;
+    private Vec3 dashStartPos;
     private final Set<LivingEntity> hitEntities = new HashSet<>();
 
     public RengokuAttack() {}
@@ -35,6 +36,7 @@ public class RengokuAttack extends FlameBreathingAttackBase {
 
         // Set dash direction in onStart, not during perform
         dashDirection = user.getLookAngle().normalize();
+        dashStartPos = null;
 
         // Epic windup effects
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
@@ -115,25 +117,29 @@ public class RengokuAttack extends FlameBreathingAttackBase {
     }
 
     private void startFastDash() {
+        // Capture start position for teleport-based dashing
+        dashStartPos = user.position();
+
         // Create dragon emergence effect
         createDragonEmergenceEffect();
 
         // Dragon roar
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.ENDER_DRAGON_GROWL, SoundSource.PLAYERS, 3.0f, 0.4f);
-
-        // Fast dash movement - cover 24 blocks in 5 ticks
-        Vec3 dashVelocity = dashDirection.scale(DASH_DISTANCE);
-        user.setDeltaMovement(dashVelocity);
-        user.hurtMarked = true;
-        user.hasImpulse = true;
     }
 
     private void continueFastDash() {
-        // Maintain fast dash velocity
-        Vec3 dashVelocity = dashDirection.scale(DASH_DISTANCE);
-        user.setDeltaMovement(dashVelocity);
-        user.hurtMarked = true;
+        // Teleport-based dash: interpolate from start to end over DASH_DURATION ticks
+        if (dashStartPos != null) {
+            float progress = (float)(dashTicks + 1) / DASH_DURATION;
+            Vec3 targetPos = dashStartPos.add(dashDirection.scale(DASH_DISTANCE * progress));
+            if (user instanceof net.minecraft.server.level.ServerPlayer sp) {
+                sp.teleportTo(targetPos.x, targetPos.y, targetPos.z);
+            } else {
+                user.absMoveTo(targetPos.x, targetPos.y, targetPos.z, user.getYRot(), user.getXRot());
+            }
+            user.setDeltaMovement(Vec3.ZERO);
+        }
 
         // Create intense dragon trail effects
         createIntenseDragonTrailEffect();

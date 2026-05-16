@@ -19,6 +19,7 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
 
     private boolean fieldActive = false;
     private Vec3 fieldCenter;
+    private Vec3 frozenPos;
     private final Set<LivingEntity> entitiesInField = new HashSet<>();
     private final Set<LivingEntity> recentlyTriggered = new HashSet<>();
     private int calmTicks = 0;
@@ -100,7 +101,7 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
     }
 
     private void establishCalmField() {
-        applySlowdown();
+        frozenPos = user.position();
 
         Vec3 lookDir = user.getLookAngle();
         fieldCenter = user.position().add(lookDir.scale(2.0));
@@ -117,12 +118,15 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
     }
 
     private void maintainCalmField() {
-        if (fieldCenter == null) return;
+        if (fieldCenter == null || frozenPos == null) return;
 
-        // Prevent jumping/movement while field is active
-        Vec3 vel = user.getDeltaMovement();
-        user.setDeltaMovement(0, Math.min(vel.y, 0), 0);
-        user.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 3, 220, false, false));
+        // Anchor the user in place — teleport overrides client-side prediction
+        if (user instanceof net.minecraft.server.level.ServerPlayer sp) {
+            sp.teleportTo(frozenPos.x, frozenPos.y, frozenPos.z);
+        } else {
+            user.absMoveTo(frozenPos.x, frozenPos.y, frozenPos.z, user.getYRot(), user.getXRot());
+        }
+        user.setDeltaMovement(Vec3.ZERO);
 
         createPersistentFieldEffect();
         updateEntitiesInField();

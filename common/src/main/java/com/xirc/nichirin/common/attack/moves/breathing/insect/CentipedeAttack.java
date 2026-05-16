@@ -123,10 +123,9 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
         for (LivingEntity draggedEnemy : new ArrayList<>(draggedEnemies)) {
             if (draggedEnemy.isAlive()) {
                 Vec3 dragPosition = userPos.subtract(baseDirection.scale(0.67));
-                Vec3 dragVelocity = dragPosition.subtract(draggedEnemy.position()).scale(0.3);
-                draggedEnemy.setDeltaMovement(dragVelocity);
+                draggedEnemy.absMoveTo(dragPosition.x, dragPosition.y, dragPosition.z, draggedEnemy.getYRot(), draggedEnemy.getXRot());
+                draggedEnemy.setDeltaMovement(Vec3.ZERO);
                 draggedEnemy.hurtMarked = true;
-                draggedEnemy.hasImpulse = true;
                 createDragTrailEffect(draggedEnemy.position());
             } else {
                 draggedEnemies.remove(draggedEnemy);

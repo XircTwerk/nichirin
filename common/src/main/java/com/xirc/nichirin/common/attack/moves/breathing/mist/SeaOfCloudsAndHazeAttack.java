@@ -116,10 +116,9 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
         for (LivingEntity draggedEnemy : new ArrayList<>(draggedEnemies)) {
             if (draggedEnemy.isAlive()) {
                 Vec3 dragPosition = userPos.subtract(baseDirection.scale(2.0));
-                Vec3 dragVelocity = dragPosition.subtract(draggedEnemy.position()).scale(0.4);
-                draggedEnemy.setDeltaMovement(dragVelocity);
+                draggedEnemy.absMoveTo(dragPosition.x, dragPosition.y, dragPosition.z, draggedEnemy.getYRot(), draggedEnemy.getXRot());
+                draggedEnemy.setDeltaMovement(Vec3.ZERO);
                 draggedEnemy.hurtMarked = true;
-                draggedEnemy.hasImpulse = true;
 
                 createWaterTrailParticles(draggedEnemy.position());
             } else {

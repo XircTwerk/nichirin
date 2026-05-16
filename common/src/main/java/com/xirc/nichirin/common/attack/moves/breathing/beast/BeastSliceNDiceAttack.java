@@ -28,10 +28,13 @@ public class BeastSliceNDiceAttack extends BeastBreathingAttackBase {
     protected void perform() {
         if (world.isClientSide) return;
 
-        int slashIndex = tickCount / TICKS_PER_SLASH;
+        int activeTick = tickCount - windup - 1; // ticks since perform() first ran
+        if (activeTick < 0) return;
+
+        int slashIndex = activeTick / TICKS_PER_SLASH;
         if (slashIndex >= TOTAL_SLASHES) return;
 
-        if (tickCount / TICKS_PER_SLASH != lastSlashTick / TICKS_PER_SLASH) {
+        if (lastSlashTick < 0 || activeTick / TICKS_PER_SLASH != (lastSlashTick - windup - 1) / TICKS_PER_SLASH) {
             lastSlashTick = tickCount;
             executeSlash(slashIndex);
         }

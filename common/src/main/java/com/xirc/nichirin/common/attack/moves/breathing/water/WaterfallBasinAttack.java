@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.attack.moves.breathing.water;
 
+import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -105,6 +106,8 @@ public class WaterfallBasinAttack extends WaterBreathingAttackBase {
     private void performBigAssMultihit() {
 
         applySlowdown();
+        // Re-apply stun each tick so the player cannot cancel into other moves
+        user.addEffect(new MobEffectInstance(NichirinEffectRegistry.STUNNED.get(), 5, 0, false, false));
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDir = user.getLookAngle();

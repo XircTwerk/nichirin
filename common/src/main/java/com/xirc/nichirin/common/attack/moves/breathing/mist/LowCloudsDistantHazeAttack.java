@@ -14,10 +14,14 @@ public class LowCloudsDistantHazeAttack extends MistBreathingAttackBase {
 
     private boolean dashStarted = false;
     private Vec3 dashDirection;
+    private Vec3 dashStartPos;
+    private int dashTick = 0;
 
     @Override
     protected void onStart() {
         dashStarted = false;
+        dashStartPos = null;
+        dashTick = 0;
         // Flatten to horizontal so pitch doesn't cause diagonal drift (#3)
         Vec3 look = user.getLookAngle();
         dashDirection = new Vec3(look.x, 0, look.z).normalize();
@@ -48,10 +52,18 @@ public class LowCloudsDistantHazeAttack extends MistBreathingAttackBase {
 
         if (!dashStarted) return;
 
-        if (dashSpeed != null) {
-            user.setDeltaMovement(dashDirection.scale(dashSpeed / Math.max(duration, 1) * 8.0));
-            user.hurtMarked = true;
-            user.hasImpulse = true;
+        // Teleport-based movement for precision (velocity is overridden by client prediction)
+        if (dashStartPos != null && dashSpeed != null) {
+            dashTick++;
+            double totalDistance = dashSpeed * 8.0; // matches original velocity * duration
+            float progress = (float) dashTick / Math.max(duration, 1);
+            Vec3 targetPos = dashStartPos.add(dashDirection.scale(totalDistance * progress));
+            if (user instanceof net.minecraft.server.level.ServerPlayer sp) {
+                sp.teleportTo(targetPos.x, targetPos.y, targetPos.z);
+            } else {
+                user.absMoveTo(targetPos.x, targetPos.y, targetPos.z, user.getYRot(), user.getXRot());
+            }
+            user.setDeltaMovement(Vec3.ZERO);
         }
 
         createMistTrail(user.position(), user.position().subtract(dashDirection.scale(2)));
@@ -63,11 +75,8 @@ public class LowCloudsDistantHazeAttack extends MistBreathingAttackBase {
     }
 
     private void launchDash() {
-        if (dashSpeed != null) {
-            user.setDeltaMovement(dashDirection.scale(dashSpeed / Math.max(duration, 1) * 10.0));
-            user.hurtMarked = true;
-            user.hasImpulse = true;
-        }
+        dashStartPos = user.position();
+        dashTick = 0;
 
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 0.8f, 1.8f);
@@ -87,5 +96,7 @@ public class LowCloudsDistantHazeAttack extends MistBreathingAttackBase {
         }
 
         dashStarted = false;
+        dashStartPos = null;
+        dashTick = 0;
     }
 }

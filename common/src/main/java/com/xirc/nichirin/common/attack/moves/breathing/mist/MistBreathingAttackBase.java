@@ -108,7 +108,7 @@ public abstract class MistBreathingAttackBase extends AbstractBreathingAttack<Mi
         Vec3 pos = user.position();
         world.getEntitiesOfClass(LivingEntity.class,
                 new AABB(pos.subtract(r, r, r), pos.add(r, r, r)),
-                e -> e.isAlive())
+                e -> e.isAlive() && e != user)
             .forEach(e -> e.addEffect(new MobEffectInstance(
                     NichirinEffectRegistry.BLURRY.get(),
                     durationTicks, 0, false, false, false)));

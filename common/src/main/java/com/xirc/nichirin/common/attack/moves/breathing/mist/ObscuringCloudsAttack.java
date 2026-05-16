@@ -28,10 +28,11 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
 
     // Orbit state
     private double orbitAngle = 0.0;
+    private boolean orbitInitialized = false;
     private LivingEntity orbitTarget = null;
     // How many radians to advance per tick
     private static final double ORBIT_SPEED = Math.PI / 8.0; // ~22.5°/tick (one full orbit per ~3 seconds)
-    private static final double ORBIT_RADIUS = 1.5;
+    private static final double ORBIT_RADIUS = 3.0;
 
     @Override
     protected void onStart() {
@@ -39,6 +40,7 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
         initYRot = user.getYRot();
         initXRot = user.getXRot();
         orbitAngle = 0.0;
+        orbitInitialized = false;
         orbitTarget = null;
 
         user.addEffect(new MobEffectInstance(
@@ -80,6 +82,13 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
         Vec3 center = orbitTarget != null
                 ? orbitTarget.position().add(0, orbitTarget.getBbHeight() * 0.5, 0)
                 : initPos;
+
+        // Initialize angle from actual position to avoid jump on first tick
+        if (!orbitInitialized) {
+            Vec3 toUser = userPos.subtract(center);
+            orbitAngle = Math.atan2(toUser.z, toUser.x);
+            orbitInitialized = true;
+        }
 
         // Advance orbit angle
         orbitAngle += ORBIT_SPEED;
