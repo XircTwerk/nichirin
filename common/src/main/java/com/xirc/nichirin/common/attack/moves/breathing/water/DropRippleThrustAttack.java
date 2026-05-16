@@ -264,10 +264,6 @@ public class DropRippleThrustAttack extends WaterBreathingAttackBase {
                 hitTargetNoImmunity(target);
                 trackRecentHit(target);
 
-                // Light knockback to push through ripples
-                Vec3 rippleKnockback = user.getLookAngle().scale(knockback * 0.4);
-                target.push(rippleKnockback.x, 0.05, rippleKnockback.z);
-
                 // Ripple hit sound
                 world.playSound(null, target.getX(), target.getY(), target.getZ(),
                         SoundEvents.PLAYER_SPLASH, SoundSource.PLAYERS, 0.5f, 1.4f);

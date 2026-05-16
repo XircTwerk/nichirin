@@ -120,8 +120,11 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
     private void executeSlash() {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
-        // Hit enemies in front of the user along the dash direction
-        Vec3 hitboxCenter = userPos.add(dashDirection != null ? dashDirection.scale(2.0) : user.getLookAngle().scale(2.0));
+        // Hit enemies in front of the user along the dash direction (strip Y to keep hitbox level)
+        Vec3 horizDir = dashDirection != null
+                ? new Vec3(dashDirection.x, 0, dashDirection.z).normalize()
+                : new Vec3(user.getLookAngle().x, 0, user.getLookAngle().z).normalize();
+        Vec3 hitboxCenter = userPos.add(horizDir.scale(2.0));
         List<LivingEntity> nearbyTargets = getTargetsInCustomHitbox(
                 hitboxCenter, 4.0, 3.0, 4.0);
 

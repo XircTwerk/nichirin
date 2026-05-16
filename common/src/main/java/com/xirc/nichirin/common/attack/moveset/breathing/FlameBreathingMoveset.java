@@ -119,7 +119,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withTiming(140, 11, 35) // 7 second cooldown
                         .withDamage(12.0f) // Multiple hits around user
                         .withRange(3.5f) // 3.5 block radius
-                        .withKnockback(0.3f)
+                        .withKnockback(0f)
                         .withBreathCost(25.0f)
                         .withHitStun(15)
                         .withHitboxSize(3.5f) // Full radius

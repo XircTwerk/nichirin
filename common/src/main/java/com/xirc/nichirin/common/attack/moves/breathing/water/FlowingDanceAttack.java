@@ -267,6 +267,10 @@ public class FlowingDanceAttack extends WaterBreathingAttackBase {
 
     @Override
     protected void onStop() {
+        user.removeEffect(MobEffects.MOVEMENT_SPEED);
+        user.removeEffect(MobEffects.DAMAGE_BOOST);
+        user.removeEffect(MobEffects.REGENERATION);
+
         // Clear hit tracking
         hitEntities.clear();
         danceTicks = 0;

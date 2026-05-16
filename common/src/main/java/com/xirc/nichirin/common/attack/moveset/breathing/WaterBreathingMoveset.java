@@ -189,7 +189,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withTiming(300, 10, 35) // 5 second cooldown, 0.5s windup, 1.75s duration
                         .withDamage(10.0f) // Good thrust damage
                         .withRange(5.0f) // Thrust range
-                        .withKnockback(0.3f)
+                        .withKnockback(0f)
                         .withBreathCost(15.0f)
                         .withHitStun(20)
                         .withHitboxSize(4.0f) // Wall of ripples

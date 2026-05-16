@@ -119,6 +119,11 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
     private void maintainCalmField() {
         if (fieldCenter == null) return;
 
+        // Prevent jumping/movement while field is active
+        Vec3 vel = user.getDeltaMovement();
+        user.setDeltaMovement(0, Math.min(vel.y, 0), 0);
+        user.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 3, 220, false, false));
+
         createPersistentFieldEffect();
         updateEntitiesInField();
         triggerAutoSlashes();

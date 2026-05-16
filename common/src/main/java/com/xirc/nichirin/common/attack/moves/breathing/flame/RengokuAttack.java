@@ -73,7 +73,6 @@ public class RengokuAttack extends FlameBreathingAttackBase {
             startFastDash();
             hasExecuted = true;
             isDashing = true;
-            dashDirection = user.getLookAngle().normalize();
         }
 
         // Continue fast dashing and hitting enemies along the path
