@@ -66,7 +66,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
         MoveConfiguration tempConfig = new MoveBuilder("water_surface_slash", "Water Surface Slash")
                 .withAnimation("nichirin:water_surface_slash", 6)
                 .withTiming(0, 0, 18)
-                .withDamage(5.0f)
+                .withDamage(3.5f)
                 .withRange(3.5f)
                 .withKnockback(0f)
                 .withBreathCost(8.0f)
@@ -207,7 +207,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 // Eighth Form: Waterfall Basin - BIG ASS MULTIHIT (INDEX 5)
                 .withMove(new MoveBuilder("waterfall_basin", "Waterfall Basin")
                         .withAnimation("nichirin:waterfall_basin", 16)
-                        .withTiming(400, 16, 60) // 9 second cooldown, windup, 3s duration
+                        .withTiming(400, 16, 120) // 9 second cooldown, windup, 3s duration
                         .withDamage(2.5f) // High DPS multi-hit
                         .withRange(6.0f) // Large waterfall area
                         .withKnockback(0.0f) // Light knockback to keep enemies in waterfall
