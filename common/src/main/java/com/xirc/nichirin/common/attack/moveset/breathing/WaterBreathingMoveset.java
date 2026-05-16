@@ -370,12 +370,14 @@ public class WaterBreathingMoveset extends AbstractMoveset {
     }
 
     private MoveConfiguration createStageConfig(int stage) {
+        MoveConfiguration baseConfig = getRightClickConfiguration();
+        float baseDmg = baseConfig != null ? baseConfig.getDamageOrDefault(5.0f) : 5.0f;
         switch (stage) {
             case 1 -> {
                 return new MoveBuilder("water_surface_slash_1", "Water Surface Slash I")
                         .withAnimation("nichirin:water_surface_slash", 6)
                         .withTiming(0, 0, 18)
-                        .withDamage(5.0f)
+                        .withDamage(baseDmg)
                         .withRange(3.5f)
                         .withKnockback(0f)
                         .withBreathCost(8.0f)
@@ -387,7 +389,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 return new MoveBuilder("water_surface_slash_2", "Water Surface Slash II")
                         .withAnimation("nichirin:water_surface_slash_2", 6)
                         .withTiming(0, 0, 18)
-                        .withDamage(6.0f)
+                        .withDamage(baseDmg * 1.2f)
                         .withRange(3.5f)
                         .withKnockback(0f)
                         .withBreathCost(10.0f)
@@ -399,7 +401,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 return new MoveBuilder("water_slam_finisher", "Water Slam")
                         .withAnimation("nichirin:water_slam", 10)
                         .withTiming(0, 0, 25)
-                        .withDamage(12.0f)
+                        .withDamage(baseDmg * 2.4f)
                         .withRange(4.0f)
                         .withKnockback(0.8f)
                         .withBreathCost(15.0f)

@@ -217,8 +217,7 @@ public class RengokuAttack extends FlameBreathingAttackBase {
                     trailPos.x, trailPos.y, trailPos.z,
                     12, 0.8, 0.8, 0.8, 0.3);
 
-            // Dragon soul fire
-            serverLevel.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
+            serverLevel.sendParticles(ParticleTypes.FLAME,
                     trailPos.x, trailPos.y + 1, trailPos.z,
                     6, 0.5, 0.5, 0.5, 0.2);
 

@@ -29,8 +29,8 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
     // Orbit state
     private double orbitAngle = 0.0;
     private LivingEntity orbitTarget = null;
-    // How many radians to advance per tick — fast enough to look blurring-fast
-    private static final double ORBIT_SPEED = Math.PI / 3.0; // ~60°/tick
+    // How many radians to advance per tick
+    private static final double ORBIT_SPEED = Math.PI / 8.0; // ~22.5°/tick (one full orbit per ~3 seconds)
     private static final double ORBIT_RADIUS = 1.5;
 
     @Override
@@ -84,22 +84,23 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
         // Advance orbit angle
         orbitAngle += ORBIT_SPEED;
 
-        // Compute the target orbit position
+        // Teleport directly to orbit position each tick for instant movement
         Vec3 orbitPos = center.add(
                 Math.cos(orbitAngle) * ORBIT_RADIUS,
                 0,
                 Math.sin(orbitAngle) * ORBIT_RADIUS
         );
 
-        // Velocity toward the next orbit point
-        Vec3 delta = orbitPos.subtract(userPos);
-        double speed = dashSpeed != null ? dashSpeed : 3.0;
-        Vec3 velocity = delta.length() > 0.01 ? delta.normalize().scale(speed / 20.0) : Vec3.ZERO;
-        user.setDeltaMovement(velocity);
+        if (user instanceof ServerPlayer sp) {
+            sp.teleportTo(orbitPos.x, orbitPos.y, orbitPos.z);
+        } else {
+            user.absMoveTo(orbitPos.x, orbitPos.y, orbitPos.z, user.getYRot(), user.getXRot());
+        }
+        user.setDeltaMovement(Vec3.ZERO);
         user.hurtMarked = true;
 
         // Slash at current position — hits all targets in hitbox
-        Vec3 slashCenter = user.position().add(0, user.getBbHeight() / 2, 0);
+        Vec3 slashCenter = orbitPos.add(0, user.getBbHeight() / 2, 0);
         List<LivingEntity> targets = getTargetsInCustomHitbox(slashCenter, hitboxSize, hitboxSize, hitboxSize);
         for (LivingEntity target : targets) {
             hitTargetNoImmunity(target);

@@ -113,9 +113,9 @@ public class DropRippleThrustAttack extends WaterBreathingAttackBase {
             hitTarget(target);
             hitEntities.add(target);
 
-            // Forward knockback
-            Vec3 thrustKnockback = lookDir.scale(knockback * 0.8);
-            target.push(thrustKnockback.x, 0.2, thrustKnockback.z);
+            // Minimal knockback on first hit so subsequent ripple hits still connect
+            Vec3 thrustKnockback = lookDir.scale(0.05f);
+            target.push(thrustKnockback.x, 0.05, thrustKnockback.z);
 
             // Individual thrust hit sound
             world.playSound(null, target.getX(), target.getY(), target.getZ(),

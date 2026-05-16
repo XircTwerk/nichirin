@@ -106,9 +106,9 @@ public class BloomingFlameUndulationAttack extends FlameBreathingAttackBase {
                 hitTargetNoImmunity(target); // Use no-immunity version for continuous hits
                 hitEntities.add(target);
 
-                // Push enemies outward from the center
+                // Minimal push so hits stay connected across the full spin
                 Vec3 pushDirection = target.position().subtract(userPos).normalize();
-                target.push(pushDirection.x * knockback * 0.5, 0.1, pushDirection.z * knockback * 0.5);
+                target.push(pushDirection.x * 0.05, 0.0, pushDirection.z * 0.05);
 
                 // Individual hit sound
                 world.playSound(null, target.getX(), target.getY(), target.getZ(),

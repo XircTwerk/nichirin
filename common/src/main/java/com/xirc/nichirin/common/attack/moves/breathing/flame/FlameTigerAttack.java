@@ -120,9 +120,10 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
     private void executeSlash() {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
-        // Hit all enemies around the user (tiger claws effect)
+        // Hit enemies in front of the user along the dash direction
+        Vec3 hitboxCenter = userPos.add(dashDirection != null ? dashDirection.scale(2.0) : user.getLookAngle().scale(2.0));
         List<LivingEntity> nearbyTargets = getTargetsInCustomHitbox(
-                userPos, 4.0, 3.0, 4.0); // Large hitbox around user
+                hitboxCenter, 4.0, 3.0, 4.0);
 
         for (LivingEntity target : nearbyTargets) {
             // Hit each enemy - NOW RESPECTS IMMUNITY FRAMES

@@ -113,7 +113,7 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
 
     private void applySlowdown() {
         // Max slowness (220) immobilizes the user during the field without applying knockback resistance
-        user.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, duration / 2, 220, false, false));
+        user.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, duration, 220, false, false));
     }
 
     private void maintainCalmField() {

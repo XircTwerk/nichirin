@@ -160,9 +160,8 @@ public abstract class FlameBreathingAttackBase extends AbstractBreathingAttack<F
             serverLevel.sendParticles(ParticleTypes.FLAME,
                     x, y, z, 2, 0.2, 0.2, 0.2, 0.1);
 
-            // Add some soul fire for variety
             if (i % 3 == 0) {
-                serverLevel.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
+                serverLevel.sendParticles(ParticleTypes.FLAME,
                         x, y, z, 1, 0.1, 0.1, 0.1, 0.05);
             }
         }

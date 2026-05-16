@@ -39,6 +39,8 @@ public class KillRewardManager {
             WaterBreathingMoveset.resetCooldowns(killer);
             InsectBreathingMoveset.resetCooldowns(killer);
             SoundBreathingMoveset.resetCooldowns(killer);
+            MistBreathingMoveset.resetCooldowns(killer);
+            BeastBreathingMoveset.resetCooldowns(killer);
             DefaultDemonMoveset.resetCooldowns(killer);
         }
 

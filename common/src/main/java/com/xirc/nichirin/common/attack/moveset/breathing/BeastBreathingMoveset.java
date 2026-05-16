@@ -414,6 +414,11 @@ public class BeastBreathingMoveset extends AbstractMoveset {
         return CURRENT_MOVESET.get();
     }
 
+    public static void resetCooldowns(LivingEntity entity) {
+        entityCooldowns.remove(entity.getUUID());
+        rightClickCooldownEnd.remove(entity.getUUID());
+    }
+
     public static void cleanupPlayer(LivingEntity entity) {
         entityCooldowns.remove(entity.getUUID());
         executingMove.remove(entity.getUUID());

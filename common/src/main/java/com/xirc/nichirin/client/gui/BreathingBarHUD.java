@@ -151,6 +151,9 @@ public class BreathingBarHUD {
         int highlightColor = alpha | NichirinPalette.BAR_BREATHING_HIGHLIGHT;
         int textColor = alpha | 0x00FFFFFF;
 
+        graphics.pose().pushPose();
+        graphics.pose().translate(0, 0, 200);
+
         // Draw background with border
         graphics.fill(x - BORDER_WIDTH, y - BORDER_WIDTH,
                 x + BAR_WIDTH + BORDER_WIDTH, y + BAR_HEIGHT + BORDER_WIDTH, borderColor);
@@ -181,6 +184,8 @@ public class BreathingBarHUD {
         int numberX = x + (BAR_WIDTH - numberWidth) / 2;
         int numberY = y + BAR_HEIGHT + 3;
         graphics.drawString(minecraft.font, breathText, numberX, numberY, textColor, true);
+
+        graphics.pose().popPose();
     }
 
     /**

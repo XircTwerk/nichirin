@@ -78,7 +78,7 @@ public class FlowingDanceAttack extends WaterBreathingAttackBase {
 
     private void applyEmpowerment() {
         // Apply strength and speed buffs
-        int empowermentDuration = duration + 40; // Lasts slightly longer than attack for comboing
+        int empowermentDuration = duration;
 
         // Strength effect (damage boost)
         user.addEffect(new MobEffectInstance(

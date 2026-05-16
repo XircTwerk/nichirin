@@ -53,6 +53,7 @@ public class SimpleKatana extends Item {
      */
     public void performAttack(Player player) {
         if (player.level().isClientSide) return;
+        if (player.isSpectator()) return;
         if (!canPerformAttack(player)) return;
         if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) return;
         if (player.hasEffect(NichirinEffectRegistry.BLOCKING.get())) return;

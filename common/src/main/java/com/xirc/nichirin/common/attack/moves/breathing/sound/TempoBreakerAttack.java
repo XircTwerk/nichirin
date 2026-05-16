@@ -76,7 +76,7 @@ public class TempoBreakerAttack extends SoundBreathingAttackBase {
                 applyDisorientedEffect(target);
 
                 Vec3 knockbackDir = target.position().subtract(userPos).normalize();
-                target.setDeltaMovement(knockbackDir.x * 2.5, 0.4, knockbackDir.z * 2.5);
+                target.setDeltaMovement(knockbackDir.x * 1.2, 0.3, knockbackDir.z * 1.2);
                 target.hurtMarked = true;
                 target.hasImpulse = true;
 
@@ -153,7 +153,7 @@ public class TempoBreakerAttack extends SoundBreathingAttackBase {
     private void createTNTExplosion(Vec3 position) {
         if (world.isClientSide) return;
 
-        world.explode(null, position.x, position.y, position.z, 3.0f, net.minecraft.world.level.Level.ExplosionInteraction.NONE);
+        world.explode(null, position.x, position.y, position.z, 1.5f, net.minecraft.world.level.Level.ExplosionInteraction.NONE);
 
         if (world instanceof ServerLevel serverLevel) {
             serverLevel.sendParticles(ParticleTypes.EXPLOSION_EMITTER,

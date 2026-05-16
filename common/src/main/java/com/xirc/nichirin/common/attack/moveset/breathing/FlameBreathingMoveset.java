@@ -159,7 +159,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                 // INDEX 4: Rengoku — ultimate dragon dash, 30-second cooldown
                 .withMove(new MoveBuilder("rengoku", "Rengoku")
                         .withAnimation("nichirin:rengoku", 20)
-                        .withTiming(600, 18, 60) // 30 second cooldown, windup, dragon dash
+                        .withTiming(600, 40, 60) // 30 second cooldown, windup, dragon dash
                         .withDamage(50.0f) // Massive damage
                         .withDashSpeed(25.0f) // Very fast dash
                         .withRange(20.0f) // Long range dash

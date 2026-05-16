@@ -170,7 +170,7 @@ public interface NichirinItemRegistry {
             () -> new MochiItem(new Item.Properties().food(
                     new FoodProperties.Builder()
                             .nutrition(2).saturationMod(1.0F).alwaysEat()
-                            .effect(new MobEffectInstance(MobEffects.HARM, 40, 0), 1.0F)
+                            .effect(new MobEffectInstance(MobEffects.HARM, 1, 0), 1.0F)
                             .build()), "Instant Damage"));
 
     RegistrySupplier<Item> PINK_MOCHI = register("pink_mochi",
