@@ -169,9 +169,7 @@ public class SplashingWaterFlowAttack extends WaterBreathingAttackBase {
         for (LivingEntity draggedEnemy : new ArrayList<>(draggedEnemies)) {
             if (draggedEnemy.isAlive()) {
                 Vec3 dragPosition = userPos.subtract(baseDirection.scale(1.5));
-                draggedEnemy.absMoveTo(dragPosition.x, dragPosition.y, dragPosition.z, draggedEnemy.getYRot(), draggedEnemy.getXRot());
-                draggedEnemy.setDeltaMovement(Vec3.ZERO);
-                draggedEnemy.hurtMarked = true;
+                moveEntitySafe(draggedEnemy, dragPosition);
             } else {
                 draggedEnemies.remove(draggedEnemy);
             }

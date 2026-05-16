@@ -100,12 +100,7 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
                 Math.sin(orbitAngle) * ORBIT_RADIUS
         );
 
-        if (user instanceof ServerPlayer sp) {
-            sp.teleportTo(orbitPos.x, orbitPos.y, orbitPos.z);
-        } else {
-            user.absMoveTo(orbitPos.x, orbitPos.y, orbitPos.z, user.getYRot(), user.getXRot());
-        }
-        user.setDeltaMovement(Vec3.ZERO);
+        teleportSafe(orbitPos);
         user.hurtMarked = true;
 
         // Slash at current position — hits all targets in hitbox
@@ -131,11 +126,7 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
         // Halt all movement and snap back near start
         user.setDeltaMovement(Vec3.ZERO);
 
-        if (user instanceof ServerPlayer sp) {
-            sp.teleportTo(initPos.x, initPos.y, initPos.z);
-        } else {
-            user.absMoveTo(initPos.x, initPos.y, initPos.z, initYRot, initXRot);
-        }
+        teleportSafe(initPos);
         user.hurtMarked = true;
 
         user.removeEffect(MobEffects.INVISIBILITY);

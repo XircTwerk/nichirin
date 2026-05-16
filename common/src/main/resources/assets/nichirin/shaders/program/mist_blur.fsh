@@ -11,7 +11,7 @@ uniform vec3  MistColor;
 in vec2 texCoord;
 out vec4 fragColor;
 
-// ---- smear / smudge helpers ----
+// smear / smudge helpers
 
 // Pseudo-random hash for per-pixel variation
 float hash(vec2 p) {

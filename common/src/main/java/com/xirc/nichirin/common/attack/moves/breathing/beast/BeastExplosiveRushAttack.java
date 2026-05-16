@@ -52,12 +52,7 @@ public class BeastExplosiveRushAttack extends BeastBreathingAttackBase {
         double totalDistance = speed; // speed is interpreted as total dash distance in blocks
         float progress = (float) dashTick / Math.max(duration, 1);
         Vec3 targetPos = dashStartPos.add(dashDirection.scale(totalDistance * progress));
-        if (user instanceof net.minecraft.server.level.ServerPlayer sp) {
-            sp.teleportTo(targetPos.x, targetPos.y, targetPos.z);
-        } else {
-            user.absMoveTo(targetPos.x, targetPos.y, targetPos.z, user.getYRot(), user.getXRot());
-        }
-        user.setDeltaMovement(Vec3.ZERO);
+        teleportSafe(targetPos);
 
         deflectProjectiles();
 

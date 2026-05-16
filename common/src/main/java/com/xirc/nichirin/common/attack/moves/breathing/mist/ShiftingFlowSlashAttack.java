@@ -82,12 +82,7 @@ public class ShiftingFlowSlashAttack extends MistBreathingAttackBase {
             double totalDistance = dashSpeed * 9.0; // matches original velocity * duration
             float progress = (float) dashTick / Math.max(duration, 1);
             Vec3 targetPos = dashStartPos.add(dashDirection.scale(totalDistance * progress));
-            if (user instanceof net.minecraft.server.level.ServerPlayer sp) {
-                sp.teleportTo(targetPos.x, targetPos.y, targetPos.z);
-            } else {
-                user.absMoveTo(targetPos.x, targetPos.y, targetPos.z, user.getYRot(), user.getXRot());
-            }
-            user.setDeltaMovement(Vec3.ZERO);
+            teleportSafe(targetPos);
         }
         if (world instanceof ServerLevel serverLevel) {
             Vec3 pos = user.position();

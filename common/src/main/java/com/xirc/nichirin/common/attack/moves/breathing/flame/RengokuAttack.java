@@ -133,12 +133,7 @@ public class RengokuAttack extends FlameBreathingAttackBase {
         if (dashStartPos != null) {
             float progress = (float)(dashTicks + 1) / DASH_DURATION;
             Vec3 targetPos = dashStartPos.add(dashDirection.scale(DASH_DISTANCE * progress));
-            if (user instanceof net.minecraft.server.level.ServerPlayer sp) {
-                sp.teleportTo(targetPos.x, targetPos.y, targetPos.z);
-            } else {
-                user.absMoveTo(targetPos.x, targetPos.y, targetPos.z, user.getYRot(), user.getXRot());
-            }
-            user.setDeltaMovement(Vec3.ZERO);
+            teleportSafe(targetPos);
         }
 
         // Create intense dragon trail effects

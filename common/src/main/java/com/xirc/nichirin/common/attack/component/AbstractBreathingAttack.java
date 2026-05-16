@@ -905,4 +905,70 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
             }
         }
     }
+
+    /**
+     * Moves an arbitrary living entity toward targetPos, stopping at the first block collision.
+     */
+    protected void moveEntitySafe(LivingEntity entity, Vec3 targetPos) {
+        Vec3 eyeHeight = new Vec3(0, entity.getBbHeight() / 2.0, 0);
+        Vec3 from = entity.position().add(eyeHeight);
+        Vec3 to   = targetPos.add(eyeHeight);
+
+        net.minecraft.world.phys.BlockHitResult hit = world.clip(
+                new net.minecraft.world.level.ClipContext(
+                        from, to,
+                        net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                        net.minecraft.world.level.ClipContext.Fluid.NONE,
+                        entity));
+
+        Vec3 safePos;
+        if (hit.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK) {
+            Vec3 dir = to.subtract(from);
+            double len = dir.length();
+            Vec3 normalized = len > 0.001 ? dir.scale(1.0 / len) : Vec3.ZERO;
+            safePos = hit.getLocation().subtract(normalized.scale(0.15)).subtract(eyeHeight);
+        } else {
+            safePos = targetPos;
+        }
+
+        entity.absMoveTo(safePos.x, safePos.y, safePos.z, entity.getYRot(), entity.getXRot());
+        entity.setDeltaMovement(Vec3.ZERO);
+        entity.hurtMarked = true;
+    }
+
+    /**
+     * Moves the user toward targetPos, stopping at the first block collision.
+     * Uses a block raycast from the user's center to the target center.
+     * Call instead of sp.teleportTo() for all dash/rush movement.
+     */
+    protected void teleportSafe(Vec3 targetPos) {
+        Vec3 eyeHeight = new Vec3(0, user.getBbHeight() / 2.0, 0);
+        Vec3 from = user.position().add(eyeHeight);
+        Vec3 to   = targetPos.add(eyeHeight);
+
+        net.minecraft.world.phys.BlockHitResult hit = world.clip(
+                new net.minecraft.world.level.ClipContext(
+                        from, to,
+                        net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                        net.minecraft.world.level.ClipContext.Fluid.NONE,
+                        user));
+
+        Vec3 safePos;
+        if (hit.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK) {
+            // Back off 0.1 blocks from the surface so the player doesn't clip in
+            Vec3 dir = to.subtract(from);
+            double len = dir.length();
+            Vec3 normalized = len > 0.001 ? dir.scale(1.0 / len) : Vec3.ZERO;
+            safePos = hit.getLocation().subtract(normalized.scale(0.15)).subtract(eyeHeight);
+        } else {
+            safePos = targetPos;
+        }
+
+        if (user instanceof ServerPlayer sp) {
+            sp.teleportTo(safePos.x, safePos.y, safePos.z);
+        } else {
+            user.absMoveTo(safePos.x, safePos.y, safePos.z, user.getYRot(), user.getXRot());
+        }
+        user.setDeltaMovement(Vec3.ZERO);
+    }
 }
