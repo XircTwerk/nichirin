@@ -55,7 +55,7 @@ public class MistBreathingMoveset extends AbstractMoveset {
                 .withKnockback(0.05f)
                 .withBreathCost(12.0f)
                 .withHitStun(4)
-                .withHitboxSize(1.0f)
+                .withHitboxSize(3.0f)
                 .withDescription("Eight rapid slashes that ignore immunity frames.")
                 .build();
     }
@@ -84,7 +84,7 @@ public class MistBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("scattering_mist_splash", "Scattering Mist Splash")
                         .withAnimation("nichirin:mist_spin", 10)
                         .withTiming(100, 8, 20)
-                        .withDamage(8.0f)
+                        .withDamage(14.0f)
                         .withRange(3.5f)
                         .withKnockback(0.4f)
                         .withBreathCost(22.0f)
