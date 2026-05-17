@@ -66,7 +66,7 @@ public class LowCloudsDistantHazeAttack extends MistBreathingAttackBase {
         if (dashTick < dashDuration) {
             dashTick++;
             float progress = (float) dashTick / dashDuration;
-            Vec3 targetPos = dashStartPos.add(dashDirection.scale(range * progress));
+            Vec3 targetPos = dashStartPos.add(dashDirection.scale(range * 10 * progress));
             teleportSafe(targetPos);
         }
 
