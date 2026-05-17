@@ -151,9 +151,6 @@ public class BreathOfNichirinClient {
                 // Don't rethrow - continue with other initialization
             }
 
-            // Register keybinds
-            NichirinKeybindRegistry.register();
-
             // Register handlers AFTER keybinds
             BigGuiKeyHandler.register();
             AttackWheelHandler.register();

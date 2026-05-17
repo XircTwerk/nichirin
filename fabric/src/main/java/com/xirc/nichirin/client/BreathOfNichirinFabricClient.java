@@ -3,6 +3,7 @@ package com.xirc.nichirin.client;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.network.FabricPacketHandler;
 import com.xirc.nichirin.client.util.fabric.ItemPropertiesHelperImpl;
+import com.xirc.nichirin.registry.NichirinKeybindRegistry;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.player.LocalPlayer;
@@ -18,7 +19,10 @@ public class BreathOfNichirinFabricClient implements ClientModInitializer {
         // Register item properties first (client-only)
         ItemPropertiesHelperImpl.registerBentoBoxProperty();
 
-        // Initialize all client-side systems (this includes keybind registration)
+        // Register keybinds before init (Fabric's onInitializeClient is the correct timing)
+        NichirinKeybindRegistry.register();
+
+        // Initialize all client-side systems
         BreathOfNichirinClient.init();
 
         // Register client tick event to detect attack key press

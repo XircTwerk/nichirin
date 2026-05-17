@@ -13,6 +13,7 @@ import com.xirc.nichirin.client.util.ItemPropertiesHelper;
 import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.registry.NichirinBlockEntityRegistry;
 import com.xirc.nichirin.registry.NichirinEntityRegistry;
+import com.xirc.nichirin.registry.NichirinKeybindRegistry;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import dev.architectury.registry.client.particle.ParticleProviderRegistry;
 import me.shedaniel.autoconfig.AutoConfig;
@@ -20,6 +21,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.ConfigScreenHandler;
+import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
@@ -36,6 +38,12 @@ public class BreathOfNichirinForgeClient {
     public static void onConstructMod(FMLConstructModEvent event) {
         // Register particles VERY early
         registerParticles();
+    }
+
+    @SubscribeEvent
+    public static void onRegisterKeyMappings(RegisterKeyMappingsEvent event) {
+        // Must happen here — Forge closes the keymapping registry before FMLClientSetupEvent
+        NichirinKeybindRegistry.register();
     }
 
     @SubscribeEvent
