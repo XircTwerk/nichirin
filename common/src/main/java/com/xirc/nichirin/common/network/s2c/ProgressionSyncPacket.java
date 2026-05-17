@@ -3,7 +3,7 @@ package com.xirc.nichirin.common.network.s2c;
 import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.client.data.ClientProgressionCache;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
-import com.xirc.nichirin.registry.MovesetRegistry;
+import com.xirc.nichirin.registry.NichirinMovesetRegistry;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
@@ -45,7 +45,7 @@ public class ProgressionSyncPacket {
         Set<String> unlockedMovesets = new HashSet<>();
 
         // Get all unlocked movesets
-        for (String movesetId : MovesetRegistry.getAllMovesetIds()) {
+        for (String movesetId : NichirinMovesetRegistry.getAllMovesetIds()) {
             if (progression.isMovesetUnlocked(movesetId)) {
                 unlockedMovesets.add(movesetId);
             }

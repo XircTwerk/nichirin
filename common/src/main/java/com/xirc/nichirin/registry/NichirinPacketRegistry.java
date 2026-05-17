@@ -274,7 +274,7 @@ public interface NichirinPacketRegistry {
 
                         if (movesetId != null) {
                             com.xirc.nichirin.common.attack.moveset.AbstractMoveset moveset =
-                                    com.xirc.nichirin.registry.MovesetRegistry.getMoveset(movesetId);
+                                    com.xirc.nichirin.registry.NichirinMovesetRegistry.getMoveset(movesetId);
 
                             if (moveset != null) {
                                 if (moveset.isBreathingMoveset()) {
@@ -458,7 +458,7 @@ public interface NichirinPacketRegistry {
 
     static void handleStyleChangeRequestFromOriginalPacket(ServerPlayer player, String movesetId) {
         try {
-            if (movesetId != null && !MovesetRegistry.isRegistered(movesetId)) {
+            if (movesetId != null && !NichirinMovesetRegistry.isRegistered(movesetId)) {
                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
                         "§cInvalid breathing style: " + movesetId
                 ));

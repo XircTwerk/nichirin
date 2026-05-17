@@ -1,7 +1,7 @@
 package com.xirc.nichirin.common.data;
 
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
-import com.xirc.nichirin.registry.MovesetRegistry;
+import com.xirc.nichirin.registry.NichirinMovesetRegistry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
@@ -131,7 +131,7 @@ public class MovesetData {
     public AbstractMoveset getBreathingMoveset() {
         if (currentBreathingMoveset == null && breathingMovesetId != null) {
             try {
-                currentBreathingMoveset = MovesetRegistry.getMoveset(breathingMovesetId);
+                currentBreathingMoveset = NichirinMovesetRegistry.getMoveset(breathingMovesetId);
                 if (currentBreathingMoveset != null && currentBreathingMoveset.isBreathingMoveset() && player != null && !isApplyingModifiers) {
                     isApplyingModifiers = true;
                     try {
@@ -158,7 +158,7 @@ public class MovesetData {
     public AbstractMoveset getDemonMoveset() {
         if (currentDemonMoveset == null && demonMovesetId != null) {
             try {
-                currentDemonMoveset = MovesetRegistry.getMoveset(demonMovesetId);
+                currentDemonMoveset = NichirinMovesetRegistry.getMoveset(demonMovesetId);
                 if (currentDemonMoveset != null && currentDemonMoveset.isDemonMoveset() && player != null && !isApplyingModifiers) {
                     var statistics = getStatistics();
                     if (statistics != null) {
@@ -260,7 +260,7 @@ public class MovesetData {
         }
 
         // Determine if it's breathing or demon based on registered moveset
-        AbstractMoveset moveset = MovesetRegistry.getMoveset(movesetId);
+        AbstractMoveset moveset = NichirinMovesetRegistry.getMoveset(movesetId);
         if (moveset != null) {
             if (moveset.isBreathingMoveset()) {
                 setBreathingMovesetId(movesetId);
@@ -445,7 +445,7 @@ public class MovesetData {
         // Backwards compatibility - convert old single moveset to appropriate type
         if (tag.contains("MovesetId") && !tag.contains("BreathingMovesetId") && !tag.contains("DemonMovesetId")) {
             String oldMovesetId = tag.getString("MovesetId");
-            AbstractMoveset moveset = MovesetRegistry.getMoveset(oldMovesetId);
+            AbstractMoveset moveset = NichirinMovesetRegistry.getMoveset(oldMovesetId);
             if (moveset != null) {
                 if (moveset.isBreathingMoveset()) {
                     this.breathingMovesetId = oldMovesetId;

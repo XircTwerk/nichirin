@@ -3,7 +3,7 @@ package com.xirc.nichirin.client.gui.biggui;
 import com.xirc.nichirin.client.data.ClientProgressionCache;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.data.ProgressionHelper;
-import com.xirc.nichirin.registry.MovesetRegistry;
+import com.xirc.nichirin.registry.NichirinMovesetRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -202,7 +202,7 @@ public class DemonArtSection extends AbstractGuiPage {
         }
 
         // Server side
-        if (!MovesetRegistry.isRegistered(artId)) {
+        if (!NichirinMovesetRegistry.isRegistered(artId)) {
             return false;
         }
         return ProgressionHelper.isStyleUnlocked(player, artId);

@@ -3,7 +3,7 @@ package com.xirc.nichirin.client.gui.biggui;
 import com.xirc.nichirin.client.gui.MoveIcon;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.data.MovesetHelper;
-import com.xirc.nichirin.registry.MovesetRegistry;
+import com.xirc.nichirin.registry.NichirinMovesetRegistry;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
@@ -43,7 +43,7 @@ public class MovesetDataSection extends AbstractGuiPage {
         }
 
         // Get the moveset instance
-        AbstractMoveset moveset = MovesetRegistry.getMoveset(currentStyle);
+        AbstractMoveset moveset = NichirinMovesetRegistry.getMoveset(currentStyle);
         if (moveset == null) {
             Component invalidMoveset = Component.literal("Invalid moveset: " + currentStyle);
             drawPopPanel(graphics, contentX, contentY, Math.max(174, font.width(invalidMoveset) + 28), 32, COLOR_PALETTE.DANGER.argb());

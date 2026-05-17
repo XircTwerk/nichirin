@@ -1,7 +1,7 @@
 package com.xirc.nichirin.common.network.s2c;
 
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
-import com.xirc.nichirin.registry.MovesetRegistry;
+import com.xirc.nichirin.registry.NichirinMovesetRegistry;
 import dev.architectury.networking.NetworkManager;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -46,7 +46,7 @@ public class MovesetConfigSyncPacket {
 
     public void handleClient() {
         // Apply on client side
-        AbstractMoveset moveset = MovesetRegistry.getMoveset(movesetId);
+        AbstractMoveset moveset = NichirinMovesetRegistry.getMoveset(movesetId);
         if (moveset != null) {
             if (rightClickConfig != null) {
                 moveset.captureRightClickConfig(rightClickConfig.toMoveConfig(), false);

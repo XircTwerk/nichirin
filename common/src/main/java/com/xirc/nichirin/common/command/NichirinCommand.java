@@ -13,7 +13,7 @@ import com.xirc.nichirin.common.system.BloodMoonManager;
 import com.xirc.nichirin.common.system.perks.NichirinPerkRegistry;
 import com.xirc.nichirin.common.system.perks.PerkDefinition;
 import com.xirc.nichirin.common.system.perks.PerkManager;
-import com.xirc.nichirin.registry.MovesetRegistry;
+import com.xirc.nichirin.registry.NichirinMovesetRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -123,7 +123,7 @@ public class NichirinCommand {
 
         int stylesUnlocked = 0;
         String firstStyle = null;
-        for (String id : MovesetRegistry.getAllMovesetIds()) {
+        for (String id : NichirinMovesetRegistry.getAllMovesetIds()) {
             if (!ProgressionHelper.isMovesetUnlocked(player, id)) {
                 ProgressionHelper.unlockMoveset(player, id);
                 if (firstStyle == null && id.contains("breathing")) firstStyle = id;

@@ -6,7 +6,7 @@ import com.xirc.nichirin.common.event.item.DrinkingGourdInteractionHandler;
 import com.xirc.nichirin.common.event.system.*;
 import com.xirc.nichirin.common.event.*;
 import com.xirc.nichirin.common.event.unlock.*;
-import com.xirc.nichirin.registry.MovesetRegistry;
+import com.xirc.nichirin.registry.NichirinMovesetRegistry;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.util.InputHandler;
 import com.xirc.nichirin.registry.*;
@@ -40,7 +40,6 @@ public final class BreathOfNichirin {
         NichirinCreativeTabRegistry.init();
         NichirinBlockRegistry.register();
         NichirinBlockEntityRegistry.register();
-        NichirinMoveRegistry.init();
         NichirinEntityRegistry.init();
         NichirinPacketRegistry.init();
         NichirinParticleRegistry.init();
@@ -79,7 +78,7 @@ public final class BreathOfNichirin {
         DrinkingGourdInteractionHandler.register();
 
         // Data
-        MovesetRegistry.init();
+        NichirinMovesetRegistry.init();
         PlayerDataProvider.register();
         NichirinCriteriaTriggers.init();
 

@@ -6,11 +6,10 @@ import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import com.xirc.nichirin.registry.MovesetRegistry;
+import com.xirc.nichirin.registry.NichirinMovesetRegistry;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.data.PlayerDataStorage;
 import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
-import com.xirc.nichirin.registry.NichirinMoveRegistry;
 import com.xirc.nichirin.common.system.DemonManager;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -232,7 +231,7 @@ public class DemonCommand {
             return 0;
         }
 
-        if (!MovesetRegistry.isRegistered(art)) {
+        if (!NichirinMovesetRegistry.isRegistered(art)) {
             source.sendFailure(Component.literal("Unknown demon art: " + art)
                     .withStyle(s -> s.withColor(0xFF5555)));
             return 0;
@@ -296,7 +295,7 @@ public class DemonCommand {
             return 0;
         }
 
-        if (!MovesetRegistry.isRegistered(art)) {
+        if (!NichirinMovesetRegistry.isRegistered(art)) {
             source.sendFailure(Component.literal("Unknown demon art: " + art)
                     .withStyle(s -> s.withColor(0xFF5555)));
             return 0;
@@ -351,7 +350,7 @@ public class DemonCommand {
 
         // Clear cooldowns for ALL moves from ALL movesets
         int clearedCount = 0;
-        for (NichirinMoveRegistry.MoveInfo moveInfo : NichirinMoveRegistry.getAllMoves().values()) {
+        for (NichirinMovesetRegistry.MoveInfo moveInfo : NichirinMovesetRegistry.getAllMoves().values()) {
             String moveName = moveInfo.displayName;
             CooldownDisplayPacket.sendToClient(player, moveName, 0);
             clearedCount++;
@@ -376,7 +375,7 @@ public class DemonCommand {
     private static CompletableFuture<Suggestions> suggestDemonArts(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
         String input = builder.getRemaining().toLowerCase();
 
-        for (String movesetId : MovesetRegistry.getAllMovesetIds()) {
+        for (String movesetId : NichirinMovesetRegistry.getAllMovesetIds()) {
             if (isDemonArt(movesetId) && movesetId.toLowerCase().startsWith(input)) {
                 builder.suggest(movesetId);
             }
@@ -392,7 +391,7 @@ public class DemonCommand {
         String input = builder.getRemaining().toLowerCase();
         var progression = PlayerDataProvider.getData(player).getProgression();
 
-        for (String movesetId : MovesetRegistry.getAllMovesetIds()) {
+        for (String movesetId : NichirinMovesetRegistry.getAllMovesetIds()) {
             if (isDemonArt(movesetId) &&
                     progression.isMovesetUnlocked(movesetId) &&
                     movesetId.toLowerCase().startsWith(input)) {

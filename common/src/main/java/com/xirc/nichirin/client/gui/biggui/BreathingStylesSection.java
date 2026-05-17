@@ -3,7 +3,7 @@ package com.xirc.nichirin.client.gui.biggui;
 import com.xirc.nichirin.client.data.ClientProgressionCache;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.data.ProgressionHelper;
-import com.xirc.nichirin.registry.MovesetRegistry;
+import com.xirc.nichirin.registry.NichirinMovesetRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -258,7 +258,7 @@ public class BreathingStylesSection extends AbstractGuiPage {
         if (player.level().isClientSide()) {
             return ClientProgressionCache.isUnlocked(styleId);
         }
-        if (!MovesetRegistry.isRegistered(styleId)) return false;
+        if (!NichirinMovesetRegistry.isRegistered(styleId)) return false;
         return ProgressionHelper.isStyleUnlocked(player, styleId);
     }
 

@@ -2,7 +2,7 @@ package com.xirc.nichirin.common.network.util;
 
 import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.common.data.MovesetData;
-import com.xirc.nichirin.registry.MovesetRegistry;
+import com.xirc.nichirin.registry.NichirinMovesetRegistry;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.data.ProgressionHelper;
 import dev.architectury.networking.NetworkManager;
@@ -49,7 +49,7 @@ public class MovesetSyncPacket {
                     ServerPlayer serverPlayer = (ServerPlayer) player;
 
                     // Validate the moveset exists
-                    if (movesetId != null && !MovesetRegistry.isRegistered(movesetId)) {
+                    if (movesetId != null && !NichirinMovesetRegistry.isRegistered(movesetId)) {
                         // Invalid moveset ID
                         serverPlayer.sendSystemMessage(Component.literal(
                                 "§cInvalid moveset: " + movesetId

@@ -9,8 +9,7 @@ import com.xirc.nichirin.common.entity.MovesetCapableNPC;
 import com.xirc.nichirin.common.system.NPCResourceManager;
 import com.xirc.nichirin.common.util.ComboTracker;
 import com.xirc.nichirin.common.util.BreathingManager;
-import com.xirc.nichirin.registry.NichirinMoveRegistry;
-import com.xirc.nichirin.registry.MovesetRegistry;
+import com.xirc.nichirin.registry.NichirinMovesetRegistry;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
@@ -75,7 +74,7 @@ public class MoveExecutor {
     }
 
     private static void configureAttackFromMoveset(LivingEntity entity, Object attack, String movesetId, String moveId) {
-        AbstractMoveset moveset = MovesetRegistry.getMoveset(movesetId);
+        AbstractMoveset moveset = NichirinMovesetRegistry.getMoveset(movesetId);
         if (moveset == null) return;
 
         AbstractMoveset.MoveConfiguration config = findMoveConfig(moveset, moveId);
@@ -114,13 +113,13 @@ public class MoveExecutor {
     }
 
     private static void executeConfiguredAttack(LivingEntity entity, Object attack, String movesetId, String moveId) {
-        NichirinMoveRegistry.MoveInfo moveInfo = NichirinMoveRegistry.getMove(movesetId, moveId);
+        NichirinMovesetRegistry.MoveInfo moveInfo = NichirinMovesetRegistry.getMove(movesetId, moveId);
         String displayName;
         if (moveInfo != null) {
             displayName = moveInfo.displayName;
         } else {
             // Fall back to looking up the name in the moveset (covers left-click / right-click moves)
-            AbstractMoveset moveset = MovesetRegistry.getMoveset(movesetId);
+            AbstractMoveset moveset = NichirinMovesetRegistry.getMoveset(movesetId);
             AbstractMoveset.MoveConfiguration config = moveset != null ? findMoveConfig(moveset, moveId) : null;
             displayName = config != null ? config.getDisplayName() : attack.getClass().getSimpleName();
         }

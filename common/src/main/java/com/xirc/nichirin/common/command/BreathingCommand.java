@@ -6,10 +6,9 @@ import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import com.xirc.nichirin.registry.MovesetRegistry;
+import com.xirc.nichirin.registry.NichirinMovesetRegistry;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
-import com.xirc.nichirin.registry.NichirinMoveRegistry;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -97,7 +96,7 @@ public class BreathingCommand {
         }
 
         // Check if the style exists
-        if (!MovesetRegistry.isRegistered(style)) {
+        if (!NichirinMovesetRegistry.isRegistered(style)) {
             source.sendFailure(Component.literal("Unknown breathing style: " + style)
                     .withStyle(s -> s.withColor(0xFF5555)));
             return 0;
@@ -167,7 +166,7 @@ public class BreathingCommand {
         }
 
         // Check if the style exists
-        if (!MovesetRegistry.isRegistered(style)) {
+        if (!NichirinMovesetRegistry.isRegistered(style)) {
             source.sendFailure(Component.literal("Unknown breathing style: " + style)
                     .withStyle(s -> s.withColor(0xFF5555)));
             return 0;
@@ -223,7 +222,7 @@ public class BreathingCommand {
 
         // Clear cooldowns for ALL moves from ALL movesets
         int clearedCount = 0;
-        for (NichirinMoveRegistry.MoveInfo moveInfo : NichirinMoveRegistry.getAllMoves().values()) {
+        for (NichirinMovesetRegistry.MoveInfo moveInfo : NichirinMovesetRegistry.getAllMoves().values()) {
             String moveName = moveInfo.displayName;
             CooldownDisplayPacket.sendToClient(player, moveName, 0);
             clearedCount++;
@@ -248,7 +247,7 @@ public class BreathingCommand {
     private static CompletableFuture<Suggestions> suggestBreathingStyles(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
         String input = builder.getRemaining().toLowerCase();
 
-        for (String movesetId : MovesetRegistry.getAllMovesetIds()) {
+        for (String movesetId : NichirinMovesetRegistry.getAllMovesetIds()) {
             if (isBreathingStyle(movesetId) && movesetId.toLowerCase().startsWith(input)) {
                 builder.suggest(movesetId);
             }
@@ -264,7 +263,7 @@ public class BreathingCommand {
         String input = builder.getRemaining().toLowerCase();
         var progression = PlayerDataProvider.getData(player).getProgression();
 
-        for (String movesetId : MovesetRegistry.getAllMovesetIds()) {
+        for (String movesetId : NichirinMovesetRegistry.getAllMovesetIds()) {
             if (isBreathingStyle(movesetId) &&
                     progression.isMovesetUnlocked(movesetId) &&
                     movesetId.toLowerCase().startsWith(input)) {

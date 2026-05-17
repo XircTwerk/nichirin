@@ -4,7 +4,7 @@ import com.xirc.nichirin.client.data.ClientProgressionCache;
 import com.xirc.nichirin.common.data.MovesetData;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.util.PlayerStats;
-import com.xirc.nichirin.registry.MovesetRegistry;
+import com.xirc.nichirin.registry.NichirinMovesetRegistry;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
@@ -96,7 +96,7 @@ public class HomeSection extends AbstractGuiPage {
         int unlockedBreathing = ClientProgressionCache.getUnlockedBreathingStyles().size();
         int unlockedDemonArts = ClientProgressionCache.getUnlockedDemonArts().size();
         int totalUnlocked = ClientProgressionCache.getUnlockedMovesets().size();
-        int totalRegistered = MovesetRegistry.getAllMovesetIds().size();
+        int totalRegistered = NichirinMovesetRegistry.getAllMovesetIds().size();
         int registeredBreathing = countRegistered("breathing");
         int registeredDemon = countRegistered("demon");
         drawStatLine(graphics, contentX, statsY, Component.literal("Breathing styles"),
@@ -230,7 +230,7 @@ public class HomeSection extends AbstractGuiPage {
 
     private int countRegistered(String token) {
         int count = 0;
-        for (String id : MovesetRegistry.getAllMovesetIds()) {
+        for (String id : NichirinMovesetRegistry.getAllMovesetIds()) {
             if (id.contains(token)) count++;
         }
         return count;
