@@ -106,7 +106,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withRange(3.0f) // Close range continuous
                         .withKnockback(0.05f) // Very light knockback
                         .withBreathCost(25.0f)
-                        .withHitStun(3) // Very short for continuous hits
+                        .withHitStun(6) // Very short for continuous hits
                         .withHitboxSize(2.5f)
                         .withDescription("Continuous attack stance hitting nearby enemies for several seconds.")
                         .withAction(entity -> {

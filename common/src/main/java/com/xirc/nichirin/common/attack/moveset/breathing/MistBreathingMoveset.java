@@ -167,12 +167,12 @@ public class MistBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("obscuring_clouds", "Obscuring Clouds")
                         .withAnimation("nichirin:mist_vanish", 16)
                         .withTiming(400, 5, 100)
-                        .withDamage(5.0f)
+                        .withDamage(0.5f)
                         .withRange(8.0f)
-                        .withKnockback(0.2f)
+                        .withKnockback(0.0f)
                         .withBreathCost(55.0f)
                         .withHitStun(8)
-                        .withHitboxSize(2.0f)
+                        .withHitboxSize(5.0f)
                         .withDescription("Become invisible and teleport around all enemies in 8 blocks for 5 seconds. 20-second cooldown.")
                         .withAction(entity -> {
                             MistBreathingMoveset moveset = getCurrentMoveset();
