@@ -17,7 +17,6 @@ public class ShiftingFlowSlashAttack extends MistBreathingAttackBase {
     private boolean dashStarted = false;
     private boolean finisherExecuted = false;
     private Vec3 dashDirection;
-    private Vec3 startPosition;
     private Vec3 dashStartPos;
     private int dashTick = 0;
     private final Set<LivingEntity> hitDuringDash = new HashSet<>();
@@ -28,7 +27,6 @@ public class ShiftingFlowSlashAttack extends MistBreathingAttackBase {
         finisherExecuted = false;
         hitDuringDash.clear();
         dashDirection = new Vec3(user.getLookAngle().x, 0, user.getLookAngle().z).normalize();
-        startPosition = user.position();
         dashStartPos = null;
         dashTick = 0;
 
@@ -76,12 +74,10 @@ public class ShiftingFlowSlashAttack extends MistBreathingAttackBase {
     }
 
     private void sustainDash() {
-        // Teleport-based movement for precision
         if (dashStartPos != null && dashSpeed != null) {
             dashTick++;
-            double totalDistance = dashSpeed * 9.0; // matches original velocity * duration
             float progress = (float) dashTick / Math.max(duration, 1);
-            Vec3 targetPos = dashStartPos.add(dashDirection.scale(totalDistance * progress));
+            Vec3 targetPos = dashStartPos.add(dashDirection.scale(range * progress));
             teleportSafe(targetPos);
         }
         if (world instanceof ServerLevel serverLevel) {
@@ -94,17 +90,14 @@ public class ShiftingFlowSlashAttack extends MistBreathingAttackBase {
     private void slashEnemiesInPath() {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
-        // Hit enemies the dash passes through
-        List<LivingEntity> targets = getTargetsInLine(
-                startPosition,
-                userPos.add(dashDirection.scale(2.5)),
-                2.0
-        );
+        // Hit enemies near the current position — fixed-size hitbox that moves with the player
+        List<LivingEntity> targets = getTargetsInCustomHitbox(userPos, hitboxSize, hitboxSize * 1.5, hitboxSize);
 
         for (LivingEntity target : targets) {
             if (!hitDuringDash.contains(target)) {
                 hitTarget(target);
                 hitDuringDash.add(target);
+                dashTick = duration; // stop dash on hit
 
                 world.playSound(null, target.getX(), target.getY(), target.getZ(),
                         SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.7f, 1.3f);

@@ -20,7 +20,6 @@ public interface NichirinStructureTypeRegistry {
                     () -> () -> UrokodakiHouseStructure.CODEC);
 
     static void init() {
-        LOGGER.info("NichirinStructureTypeRegistry.init() called");
         STRUCTURE_TYPES.register();
     }
 }

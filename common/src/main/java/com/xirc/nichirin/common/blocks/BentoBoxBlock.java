@@ -115,7 +115,6 @@ public class BentoBoxBlock extends BaseEntityBlock {
             player.drop(bentoBoxItem, false);
         }
 
-        LOGGER.info("Player {} picked up bento box block at {}", player.getName().getString(), pos);
         return InteractionResult.CONSUME;
     }
 
@@ -127,7 +126,6 @@ public class BentoBoxBlock extends BaseEntityBlock {
             BlockEntity blockEntity = level.getBlockEntity(pos);
             if (blockEntity instanceof BentoBoxBlockEntity bentoBoxEntity) {
                 bentoBoxEntity.loadFromItem(stack);
-                LOGGER.info("Placed bento box block with contents at {}", pos);
             }
         }
     }

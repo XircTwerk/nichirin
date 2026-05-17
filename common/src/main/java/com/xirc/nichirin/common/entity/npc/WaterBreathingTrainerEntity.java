@@ -33,6 +33,10 @@ public class WaterBreathingTrainerEntity extends BaseBreathingTrainerEntity {
 
     private UUID provokedByPlayer = null;
 
+    // True at duel start — trainer stands ready and lets the player strike first.
+    // Cleared the moment the duel player lands a hit.
+    private boolean waitingForFirstBlow = false;
+
     private String consumedAttackAnim = "";
     private int animCooldownTicks = 0;
     private Boolean lastWasWalking = null;
@@ -100,14 +104,26 @@ public class WaterBreathingTrainerEntity extends BaseBreathingTrainerEntity {
     @Override
     public boolean hurt(@NotNull DamageSource source, float amount) {
         boolean result = super.hurt(source, amount);
-        if (result && source.getEntity() instanceof Player attacker
-                && getMode() == TrainerMode.PEACEFUL) {
-            provokedByPlayer = attacker.getUUID();
+        if (result && source.getEntity() instanceof Player attacker) {
+            if (getMode() == TrainerMode.PEACEFUL) {
+                provokedByPlayer = attacker.getUUID();
+            } else if (getMode() == TrainerMode.DUELING && waitingForFirstBlow
+                    && getTarget() != null && attacker.getUUID().equals(getTarget().getUUID())) {
+                waitingForFirstBlow = false;
+            }
         }
         return result;
     }
 
     public UUID getProvokedByPlayer() { return provokedByPlayer; }
+
+    public boolean isWaitingForFirstBlow() { return waitingForFirstBlow; }
+
+    @Override
+    public void startDuel(net.minecraft.server.level.ServerPlayer challenger, DuelDifficulty difficulty) {
+        waitingForFirstBlow = true;
+        super.startDuel(challenger, difficulty);
+    }
 
     @Override
     protected net.minecraft.world.BossEvent.BossBarColor getBossBarColor() {
@@ -117,6 +133,7 @@ public class WaterBreathingTrainerEntity extends BaseBreathingTrainerEntity {
     @Override
     protected void endDuel(boolean playerWon) {
         provokedByPlayer = null;
+        waitingForFirstBlow = false;
         super.endDuel(playerWon);
     }
 

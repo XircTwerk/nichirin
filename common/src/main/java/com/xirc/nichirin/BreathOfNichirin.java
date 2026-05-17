@@ -23,14 +23,11 @@ public final class BreathOfNichirin {
     public static final DeferredRegister<CreativeModeTab> CREATIVE_TAB_REGISTRY = DeferredRegister.create(MOD_ID, Registries.CREATIVE_MODE_TAB);
 
     public static void init() {
-        LOGGER.info("=== STARTING NICHIRIN COMMON INITIALIZATION ===");
-
         // Register config first so all systems can read from it immediately
         try {
             me.shedaniel.autoconfig.AutoConfig.register(
                     NichirinModConfig.class,
                     me.shedaniel.autoconfig.serializer.GsonConfigSerializer::new);
-            LOGGER.info("Cloth Config registered successfully");
         } catch (Exception e) {
             LOGGER.warn("Could not register Cloth Config (cloth-config not installed?). Using hardcoded defaults.", e);
         }
@@ -82,7 +79,6 @@ public final class BreathOfNichirin {
         PlayerDataProvider.register();
         NichirinCriteriaTriggers.init();
 
-        LOGGER.info("=== NICHIRIN COMMON INITIALIZATION COMPLETE ===");
     }
 
     public static ResourceLocation id(String name) {

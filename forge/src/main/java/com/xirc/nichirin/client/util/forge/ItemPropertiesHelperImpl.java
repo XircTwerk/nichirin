@@ -34,9 +34,7 @@ public class ItemPropertiesHelperImpl {
                         return foodCount > 0 ? 1.0f : 0.0f;
                     }
             );
-            System.out.println("BENTO BOX PROPERTY REGISTERED!");
         } catch (Exception e) {
-            System.out.println("FAILED TO REGISTER BENTO BOX PROPERTY: " + e.getMessage());
             e.printStackTrace();
         }
     }

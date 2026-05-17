@@ -24,6 +24,5 @@ public interface NichirinEffectRegistry {
     static void init() {
         // Register the deferred register
         EFFECT_REGISTRY.register();
-        BreathOfNichirin.LOGGER.info("Registered Nichirin status effects");
     }
 }

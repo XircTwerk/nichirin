@@ -106,9 +106,21 @@ public class TheBigGui extends Screen {
         PlayerStats.initialize();
     }
 
+    private float getScaleFactor() {
+        return 2.0f / (float) Minecraft.getInstance().getWindow().getGuiScale();
+    }
+
     private void calculateScaledDimensions() {
-        this.scaledWidth = Math.max(this.width, 320);
-        this.scaledHeight = Math.max(this.height, 240);
+        var window = Minecraft.getInstance().getWindow();
+        // Always treat the GUI as if it were at scale 2 — virtual size = pixel_size / 2
+        this.scaledWidth  = Math.max(window.getWidth()  / 2, 320);
+        this.scaledHeight = Math.max(window.getHeight() / 2, 240);
+    }
+
+    /** Converts a raw GUI-scaled mouse coordinate to the scale-2 coordinate space. */
+    private int toScale2(double coord) {
+        double guiScale = Minecraft.getInstance().getWindow().getGuiScale();
+        return (int)(coord * guiScale / 2.0);
     }
 
     /**
@@ -132,7 +144,14 @@ public class TheBigGui extends Screen {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         calculateScaledDimensions();
 
+        float scaleFactor = getScaleFactor();
+        // Convert raw GUI-scaled mouse to scale-2 space
+        int adjMouseX = toScale2(mouseX);
+        int adjMouseY = toScale2(mouseY);
+
         PoseStack poseStack = graphics.pose();
+        poseStack.pushPose();
+        poseStack.scale(scaleFactor, scaleFactor, 1.0f);
 
         graphics.fill(0, 0, this.scaledWidth, this.scaledHeight, BACKGROUND_COLOR);
 
@@ -144,8 +163,8 @@ public class TheBigGui extends Screen {
 
         poseStack.pushPose();
         poseStack.translate(CONTENT_X, CONTENT_Y, 0);
-        int contentMouseX = mouseX - CONTENT_X;
-        int contentMouseY = mouseY - CONTENT_Y;
+        int contentMouseX = adjMouseX - CONTENT_X;
+        int contentMouseY = adjMouseY - CONTENT_Y;
         switch (currentSection) {
             case HOME -> homeSection.render(graphics, contentMouseX, contentMouseY, player, contentWidth, contentHeight, this.font);
             case SKILLS -> skillsSection.render(graphics, player, this.font, contentWidth, contentHeight, contentMouseX, contentMouseY);
@@ -157,8 +176,10 @@ public class TheBigGui extends Screen {
         poseStack.popPose();
 
         for (SectionButton button : sectionButtons) {
-            button.render(graphics, mouseX, mouseY, partialTick);
+            button.render(graphics, adjMouseX, adjMouseY, partialTick);
         }
+
+        poseStack.popPose();
     }
 
     @Override
@@ -204,19 +225,24 @@ public class TheBigGui extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+        double adjX = toScale2(mouseX);
+        double adjY = toScale2(mouseY);
         if (currentSection == GuiSection.SKILLS) {
-            if (skillsSection.handleScroll(mouseX - CONTENT_X, mouseY - CONTENT_Y, delta)) return true;
+            if (skillsSection.handleScroll(adjX - CONTENT_X, adjY - CONTENT_Y, delta)) return true;
         }
-        return super.mouseScrolled(mouseX, mouseY, delta);
+        return super.mouseScrolled(adjX, adjY, delta);
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        double adjX = toScale2(mouseX);
+        double adjY = toScale2(mouseY);
+
         int contentRight = this.scaledWidth - BUTTON_WIDTH - RIGHT_MARGIN - 10;
         int clickContentWidth = contentRight - CONTENT_X;
         int clickContentHeight = this.scaledHeight - BOTTOM_MARGIN - CONTENT_Y;
-        double contentMouseX = mouseX - CONTENT_X;
-        double contentMouseY = mouseY - CONTENT_Y;
+        double contentMouseX = adjX - CONTENT_X;
+        double contentMouseY = adjY - CONTENT_Y;
 
         // Handle section-specific clicks
         boolean handled = switch (currentSection) {
@@ -232,7 +258,8 @@ public class TheBigGui extends Screen {
             return true;
         }
 
-        return super.mouseClicked(mouseX, mouseY, button);
+        // Pass scale-2 coords to widgets (buttons are placed at scale-2 positions)
+        return super.mouseClicked(adjX, adjY, button);
     }
 
     @Getter

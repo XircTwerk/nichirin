@@ -44,12 +44,7 @@ public class NichirinShaderManager {
      * Call this at the end of rendering (TAIL of LevelRenderer.renderLevel).
      */
     public void processAll(PoseStack viewModelStack) {
-
-        for (NichirinPostProcessor processor : processors) {
-            if (processor.isActive()) {
-                processor.process(viewModelStack);
-            }
-        }
+        // Shaders temporarily disabled
     }
 
     public void resize(int width, int height) {

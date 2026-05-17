@@ -103,21 +103,24 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
         teleportSafe(orbitPos);
         user.hurtMarked = true;
 
-        // Slash at current position — hits all targets in hitbox
-        Vec3 slashCenter = orbitPos.add(0, user.getBbHeight() / 2, 0);
-        List<LivingEntity> targets = getTargetsInCustomHitbox(slashCenter, hitboxSize, hitboxSize, hitboxSize);
-        for (LivingEntity target : targets) {
-            hitTargetNoImmunity(target);
-        }
-
-        // Light mist trail every tick
+        // Mist trail at player's orbit position
+        Vec3 trailCenter = orbitPos.add(0, user.getBbHeight() / 2, 0);
         serverLevel.sendParticles(ParticleTypes.CLOUD,
-                slashCenter.x, slashCenter.y, slashCenter.z,
+                trailCenter.x, trailCenter.y, trailCenter.z,
                 3, 0.15, 0.15, 0.15, 0.03);
         if (ticksSinceWindup % 3 == 0) {
             serverLevel.sendParticles(ParticleTypes.WHITE_ASH,
-                    slashCenter.x, slashCenter.y, slashCenter.z,
+                    trailCenter.x, trailCenter.y, trailCenter.z,
                     2, 0.1, 0.1, 0.1, 0.02);
+        }
+
+        // Single large hitbox centered on the orbit target every 3 ticks
+        if (ticksSinceWindup % 3 == 0) {
+            float bigHitbox = hitboxSize * 2.5f;
+            List<LivingEntity> targets = getTargetsInCustomHitbox(center, bigHitbox, bigHitbox + 1.0f, bigHitbox);
+            for (LivingEntity target : targets) {
+                hitTargetNoImmunity(target);
+            }
         }
     }
 

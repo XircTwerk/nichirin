@@ -13,6 +13,7 @@ import com.xirc.nichirin.common.system.BloodMoonManager;
 import com.xirc.nichirin.common.system.perks.NichirinPerkRegistry;
 import com.xirc.nichirin.common.system.perks.PerkDefinition;
 import com.xirc.nichirin.common.system.perks.PerkManager;
+import com.xirc.nichirin.common.network.s2c.ProgressionSyncPacket;
 import com.xirc.nichirin.registry.NichirinMovesetRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.commands.CommandSourceStack;
@@ -146,6 +147,7 @@ public class NichirinCommand {
         PlayerDataProvider.getData(player).getPerkData().setPerkSlots(5);
 
         BreathOfNichirinEventHandler.syncPerksToPlayer(player);
+        ProgressionSyncPacket.sendToPlayer(player);
 
         int finalStyles = stylesUnlocked;
         int finalPerks = perksDiscovered;

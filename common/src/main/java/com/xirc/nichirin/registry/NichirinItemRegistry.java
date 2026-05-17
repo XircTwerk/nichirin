@@ -326,10 +326,8 @@ public interface NichirinItemRegistry {
 
 
     static <T extends Item> RegistrySupplier<T> register(String id, Supplier<? extends T> supplier) {
-        LOGGER.info("Registering item: {}", id);
         RegistrySupplier<T> item = ITEM_REGISTRY.register(id, supplier);
         ITEMS.put(item, BreathOfNichirin.id(id));
-        LOGGER.info("Successfully registered item: {} with resource location: {}", id, BreathOfNichirin.id(id));
         return item;
     }
 
@@ -337,7 +335,5 @@ public interface NichirinItemRegistry {
         return new Item.Properties();
     }
 
-    static void init() {
-        LOGGER.info("NichirinItemRegistry.init() called - Total items to register: {}", ITEMS.size());
-    }
+    static void init() {}
 }

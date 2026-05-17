@@ -7,7 +7,6 @@ import net.fabricmc.api.ModInitializer;
 public final class BreathOfNichirinFabric implements ModInitializer {
     @Override
     public void onInitialize() {
-        BreathOfNichirin.LOGGER.info("Initializing Nichirin for Fabric");
         BreathOfNichirin.init();
         NichirinTerraFabric.onModInitialized();
         NichirinBiomeModifications.addSpawns();

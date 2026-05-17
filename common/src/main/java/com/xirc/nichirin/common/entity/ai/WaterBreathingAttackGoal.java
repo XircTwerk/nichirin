@@ -35,10 +35,10 @@ import java.util.EnumSet;
 public class WaterBreathingAttackGoal extends MeleeAttackGoal {
 
     // Extra ticks added AFTER a move's (windup+duration) before the next decision.
-    // Easy: wait well past the moveset cooldown — move is ready when AI next acts.
+    // Easy: short gap — trainer still fights properly, just deals reduced damage.
     // Hard: 0-3 ticks — re-evaluates the instant the animation ends, chains immediately.
-    private static final int PADDING_EASY_MIN   = 100;
-    private static final int PADDING_EASY_MAX   = 180;
+    private static final int PADDING_EASY_MIN   =  20;
+    private static final int PADDING_EASY_MAX   =  50;
     private static final int PADDING_MED_MIN    =  15;
     private static final int PADDING_MED_MAX    =  35;
     private static final int PADDING_HARD_MIN   =   0;
@@ -48,7 +48,7 @@ public class WaterBreathingAttackGoal extends MeleeAttackGoal {
     private static final int BACKSTEP_RELEASE_DELAY = 12;
 
     // Chance per decision cycle to spontaneously hesitate ("think pause")
-    private static final float THINK_CHANCE_EASY   = 0.15f;
+    private static final float THINK_CHANCE_EASY   = 0.04f;
     private static final float THINK_CHANCE_MED    = 0.06f;
     private static final float THINK_CHANCE_HARD   = 0.02f;
 
@@ -133,10 +133,21 @@ public class WaterBreathingAttackGoal extends MeleeAttackGoal {
 
         if (thinkPauseTicks > 0 || pendingMoveIndex >= 0) return;
 
-        // While counting down, approach player — Hard sprints, others walk
+        // First-blow phase: trainer stands ready and lets the player strike first.
+        // Just approaches to melee range and faces them — no attacks.
+        if (trainer.isWaitingForFirstBlow()) {
+            if (distSq > 3.5 * 3.5) {
+                trainer.getNavigation().moveTo(target, 0.9);
+            } else {
+                trainer.getNavigation().stop();
+            }
+            return;
+        }
+
+        // While counting down, approach player
         if (globalCooldown > 0) {
-            if (distSq > 6.0 * 6.0) {
-                double approachSpeed = trainer.getDuelDifficulty() == DuelDifficulty.HARD ? 1.3 : 0.7;
+            if (distSq > 4.0 * 4.0) {
+                double approachSpeed = trainer.getDuelDifficulty() == DuelDifficulty.HARD ? 1.4 : 1.1;
                 trainer.getNavigation().moveTo(target, approachSpeed);
             }
             return;

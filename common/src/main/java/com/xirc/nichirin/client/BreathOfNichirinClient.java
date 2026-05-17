@@ -57,7 +57,6 @@ public class BreathOfNichirinClient {
             ParticleProviderRegistry.register(NichirinParticleRegistry.BLOOD_SPLAT, BloodSplatParticleProvider::new);
             ParticleProviderRegistry.register(NichirinParticleRegistry.BREATHING_AURA_WISP, BreathingAuraWispParticleProvider::new);
             ParticleProviderRegistry.register(NichirinParticleRegistry.SLASH_IMPACT_SPARK, SlashImpactSparkParticleProvider::new);
-            LOGGER.info("Particles registered successfully");
         } catch (Exception e) {
             LOGGER.error("Failed to register particles: {}", e.getMessage());
         }
@@ -75,8 +74,6 @@ public class BreathOfNichirinClient {
             NichirinShaderManager.getInstance().register(deadCalmEffect);
             NichirinShaderManager.getInstance().register(impactShakeShaderEffect);
 
-            LOGGER.info("Dead Calm shader registered successfully");
-            System.out.println("DEBUG: Dead Calm shader registered!");
         } catch (Exception e) {
             LOGGER.error("Failed to register shaders: {}", e.getMessage());
             e.printStackTrace();
@@ -88,23 +85,19 @@ public class BreathOfNichirinClient {
             // Rendering hooks are handled via LevelRendererMixin
             // See: com.xirc.nichirin.mixin.client.LevelRendererMixin
 
-            LOGGER.info("Rendering hooks will be injected via mixins");
         } catch (Exception e) {
             LOGGER.error("Failed to register rendering hooks: {}", e.getMessage());
         }
     }
 
     public static void init() {
-        LOGGER.info("DEBUG: BreathOfNichirinClient.init() called");
 
         // Register client-only visual config
         NichirinClientConfig.register();
 
         try {
             // Register armor renderers EARLY - before anything else that might need them
-            LOGGER.info("Registering armor renderers...");
             ArmorRendererManager.registerAll();
-            LOGGER.info("Armor renderers registered successfully");
 
             // Register client tick event to monitor player state
             ClientTickEvent.CLIENT_POST.register(minecraft -> {
@@ -125,13 +118,10 @@ public class BreathOfNichirinClient {
 
             // Register all client handlers and components
             ClientEventHandler.register();
-            LOGGER.info("DEBUG: About to register katana client handler");
             InputHandler.registerClient();
-            LOGGER.info("DEBUG: Katana client handler registered");
 
             // Initialize shaders early
             NichirinShaderRegistry.init();
-            LOGGER.info("Initialized Nichirin shaders");
 
             // Register post-processing shaders
             registerShaders();
@@ -155,9 +145,7 @@ public class BreathOfNichirinClient {
 
             // Register renderers AFTER block entities are fully registered
             try {
-                LOGGER.info("About to register entity renderers...");
                 NichirinEntityRendererRegistry.init();
-                LOGGER.info("Entity renderers registered successfully");
             } catch (Exception e) {
                 LOGGER.error("ERROR: Failed to initialize renderers", e);
                 // Don't rethrow - continue with other initialization
@@ -168,7 +156,6 @@ public class BreathOfNichirinClient {
 
             // Register handlers AFTER keybinds
             BigGuiKeyHandler.register();
-            LOGGER.info("DEBUG: AttackWheelHandler.register() called");
             AttackWheelHandler.register();
             ClientDoubleJumpHandler.register();
             CooldownDisplayPacket.registerClient();
@@ -206,7 +193,6 @@ public class BreathOfNichirinClient {
                     NichirinBlockRegistry.WYSTERIA_TRAPDOOR.get(),
                     NichirinBlockRegistry.WYSTERIA_SAPLING.get());
 
-            LOGGER.info("DEBUG: Client initialization complete");
             initialized = true;
 
             ClientTickEvent.CLIENT_POST.register(minecraft -> {

@@ -85,8 +85,6 @@ public interface NichirinPacketRegistry {
         PACKET_IDS.put(DemonSyncPacket.class, DEMON_SYNC_ID);
         PACKET_IDS.put(TriggerShaderPacket.class, TRIGGER_SHADER_ID);
 
-        System.out.println("DEBUG: Registered TriggerShaderPacket with ID: " + TRIGGER_SHADER_ID);
-
         registerPackets();
     }
 
@@ -340,7 +338,6 @@ public interface NichirinPacketRegistry {
             });
 
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, TRIGGER_SHADER_ID, (buf, context) -> {
-                System.out.println("DEBUG: Received TriggerShaderPacket on client!");
                 TriggerShaderPacket packet = new TriggerShaderPacket(buf);
                 context.queue(() -> packet.handleClient());
             });
@@ -740,7 +737,6 @@ public interface NichirinPacketRegistry {
         } else if (packet instanceof DemonSyncPacket p) {
             p.toBytes(buf);
         } else if (packet instanceof TriggerShaderPacket p) {
-            System.out.println("DEBUG: Encoding TriggerShaderPacket");
             p.toBytes(buf);
         }
 

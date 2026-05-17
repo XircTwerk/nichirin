@@ -20,7 +20,6 @@ public interface NichirinStructurePieceTypeRegistry {
                     () -> UrokodakiHousePiece::new);
 
     static void init() {
-        LOGGER.info("NichirinStructurePieceTypeRegistry.init() called");
         STRUCTURE_PIECE_TYPES.register();
     }
 }

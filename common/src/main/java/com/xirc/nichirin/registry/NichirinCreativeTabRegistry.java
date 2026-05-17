@@ -11,10 +11,7 @@ public interface NichirinCreativeTabRegistry {
     Logger LOGGER = LoggerFactory.getLogger("CreativeTabRegistry");
 
     static void init() {
-        LOGGER.info("Initializing CreativeTabRegistry...");
-
         BreathOfNichirin.CREATIVE_TAB_REGISTRY.register("main", () -> {
-            LOGGER.info("Creating main creative tab...");
             return CreativeModeTab.builder(CreativeModeTab.Row.TOP , 1 )
                     .title(Component.translatable("itemgroup.nichirin.main"))
                     .icon(() -> {
@@ -59,7 +56,6 @@ public interface NichirinCreativeTabRegistry {
         });
 
         BreathOfNichirin.CREATIVE_TAB_REGISTRY.register("katanas", () -> {
-            LOGGER.info("Creating katana creative tab...");
             return CreativeModeTab.builder(CreativeModeTab.Row.TOP , 1 )
                     .title(Component.translatable("itemgroup.nichirin.katanas"))
                     .icon(() -> {
@@ -80,7 +76,6 @@ public interface NichirinCreativeTabRegistry {
         });
 
         BreathOfNichirin.CREATIVE_TAB_REGISTRY.register("equipment", () -> {
-            LOGGER.info("Creating equipment creative tab...");
             return CreativeModeTab.builder(CreativeModeTab.Row.TOP , 1 )
                     .title(Component.translatable("itemgroup.nichirin.equipment"))
                     .icon(() -> {
@@ -135,7 +130,6 @@ public interface NichirinCreativeTabRegistry {
         });
 
         BreathOfNichirin.CREATIVE_TAB_REGISTRY.register("food", () -> {
-            LOGGER.info("Creating food creative tab...");
             return CreativeModeTab.builder(CreativeModeTab.Row.TOP, 1)
                     .title(Component.translatable("itemgroup.nichirin.food"))
                     .icon(() -> new ItemStack(NichirinItemRegistry.ONIGIRI.get()))
@@ -166,6 +160,5 @@ public interface NichirinCreativeTabRegistry {
                     .build();
         });
 
-        LOGGER.info("CreativeTabRegistry initialization complete");
     }
 }

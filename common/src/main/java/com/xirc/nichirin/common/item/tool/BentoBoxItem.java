@@ -51,7 +51,6 @@ public class BentoBoxItem extends BlockItem {
             Level level = context.getLevel();
             if (!level.isClientSide) {
                 level.playSound(null, context.getClickedPos(), SoundEvents.WOOD_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
-                LOGGER.info("Placed bento box block at {}", context.getClickedPos());
             }
         }
 
@@ -77,7 +76,6 @@ public class BentoBoxItem extends BlockItem {
             return InteractionResultHolder.pass(stack);
         }
 
-        LOGGER.info("Bento box use() - Hand: {}, Player: {}", hand, player.getName().getString());
 
         if (level.isClientSide) {
             return InteractionResultHolder.success(stack);
@@ -196,7 +194,6 @@ public class BentoBoxItem extends BlockItem {
                 replaceBentoBoxSlotWithDisabled(playerInventory);
             }
 
-            LOGGER.info("Created bento box menu with {} slots", BENTO_SIZE);
         }
 
         // Constructor for block entity form
@@ -212,7 +209,6 @@ public class BentoBoxItem extends BlockItem {
                 this.slots.set(i, newSlot);
             }
 
-            LOGGER.info("Created bento box block menu with {} slots at {}", BENTO_SIZE, pos);
         }
 
         private void replaceBentoBoxSlotWithDisabled(Inventory playerInventory) {
@@ -251,7 +247,6 @@ public class BentoBoxItem extends BlockItem {
                 ItemStack bentoBoxStack = player.getInventory().items.get(bentoBoxSlotIndex);
                 if (bentoBoxStack.getItem() instanceof BentoBoxItem) {
                     saveItemsToNbt(bentoBoxStack.getOrCreateTag(), (Container) this.getContainer());
-                    LOGGER.info("Saved bento box for player: {}", player.getName().getString());
                 }
             }
         }

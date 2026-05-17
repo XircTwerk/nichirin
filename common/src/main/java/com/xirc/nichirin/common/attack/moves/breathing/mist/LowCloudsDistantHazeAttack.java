@@ -16,6 +16,7 @@ public class LowCloudsDistantHazeAttack extends MistBreathingAttackBase {
 
     private boolean dashStarted = false;
     private Vec3 dashDirection;
+    private Vec3 dashStartPos;
     private int dashTick = 0;
     private int dashDuration = 0;
     private final Set<LivingEntity> hitEntities = new HashSet<>();
@@ -26,9 +27,8 @@ public class LowCloudsDistantHazeAttack extends MistBreathingAttackBase {
         dashTick = 0;
         dashDuration = 0;
         hitEntities.clear();
-
-        Vec3 look = user.getLookAngle();
-        dashDirection = new Vec3(look.x, 0, look.z).normalize();
+        dashDirection = null;
+        dashStartPos = null;
 
         // Mist coils at feet during windup
         if (world instanceof ServerLevel serverLevel) {
@@ -50,17 +50,10 @@ public class LowCloudsDistantHazeAttack extends MistBreathingAttackBase {
         if (world.isClientSide) return;
 
         if (!dashStarted && tickCount == windup + 1) {
-            float speed = dashSpeed != null ? dashSpeed : 12.0f;
-            // Duration in ticks: how long to apply velocity to cover `range` blocks at `speed`.
-            // Matches the same proportion BeeStingAttack uses (dashSpeed == range, duration from config).
-            dashDuration = dashSpeed != null && dashSpeed > 0
-                    ? Math.round(range / dashSpeed * 20f)
-                    : duration;
-            dashDuration = Math.max(1, Math.min(dashDuration, duration));
-
-            user.setDeltaMovement(dashDirection.scale(speed));
-            user.hurtMarked = true;
-            user.hasImpulse = true;
+            Vec3 look = user.getLookAngle();
+            dashDirection = new Vec3(look.x, 0, look.z).normalize();
+            dashStartPos = user.position();
+            dashDuration = Math.max(1, duration);
             dashStarted = true;
 
             world.playSound(null, user.getX(), user.getY(), user.getZ(),
@@ -68,16 +61,13 @@ public class LowCloudsDistantHazeAttack extends MistBreathingAttackBase {
             playMistSound();
         }
 
-        if (!dashStarted) return;
+        if (!dashStarted || dashDirection == null) return;
 
         if (dashTick < dashDuration) {
-            float speed = dashSpeed != null ? dashSpeed : 12.0f;
-            user.setDeltaMovement(dashDirection.scale(speed));
-            user.hurtMarked = true;
             dashTick++;
-        } else {
-            user.setDeltaMovement(Vec3.ZERO);
-            user.hurtMarked = true;
+            float progress = (float) dashTick / dashDuration;
+            Vec3 targetPos = dashStartPos.add(dashDirection.scale(range * progress));
+            teleportSafe(targetPos);
         }
 
         createMistTrail(user.position(), user.position().subtract(dashDirection.scale(1.5)));
@@ -87,6 +77,7 @@ public class LowCloudsDistantHazeAttack extends MistBreathingAttackBase {
             if (!hitEntities.contains(target)) {
                 hitTarget(target);
                 hitEntities.add(target);
+                dashTick = dashDuration; // stop dash on hit
             }
         }
     }
@@ -107,6 +98,7 @@ public class LowCloudsDistantHazeAttack extends MistBreathingAttackBase {
         dashStarted = false;
         dashTick = 0;
         dashDuration = 0;
+        dashStartPos = null;
         hitEntities.clear();
     }
 }

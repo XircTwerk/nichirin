@@ -18,6 +18,7 @@ public class LunarDispersingMistAttack extends MistBreathingAttackBase {
     private boolean finisherExecuted = false;
     private Vec3 dashDirection;
     private final Set<LivingEntity> hitDuringFlight = new HashSet<>();
+    private final java.util.List<LivingEntity> draggedEnemies = new java.util.ArrayList<>();
     private int slashCount = 0;
 
     @Override
@@ -25,6 +26,7 @@ public class LunarDispersingMistAttack extends MistBreathingAttackBase {
         launched = false;
         finisherExecuted = false;
         hitDuringFlight.clear();
+        draggedEnemies.clear();
         slashCount = 0;
         Vec3 look = user.getLookAngle();
         dashDirection = new Vec3(look.x, 0, look.z).normalize();
@@ -108,11 +110,25 @@ public class LunarDispersingMistAttack extends MistBreathingAttackBase {
             if (!hitDuringFlight.contains(target)) {
                 hitTarget(target);
                 hitDuringFlight.add(target);
+                if (!draggedEnemies.contains(target)) draggedEnemies.add(target);
             } else {
                 float originalDamage = damage;
                 damage = damage * 0.5f;
                 hitTargetNoImmunity(target);
                 damage = originalDamage;
+            }
+        }
+
+        // Drag caught enemies along the flight path
+        Vec3 dragUserPos = user.position();
+        for (LivingEntity dragged : new java.util.ArrayList<>(draggedEnemies)) {
+            if (!dragged.isAlive()) { draggedEnemies.remove(dragged); continue; }
+            Vec3 dragTarget = dragUserPos.subtract(dashDirection.scale(1.5));
+            Vec3 toDrag = dragTarget.subtract(dragged.position());
+            double dist = toDrag.length();
+            if (dist > 0.3) {
+                dragged.setDeltaMovement(toDrag.normalize().scale(Math.min(dist * 0.8, 2.5)));
+                dragged.hurtMarked = true;
             }
         }
 
@@ -189,6 +205,7 @@ public class LunarDispersingMistAttack extends MistBreathingAttackBase {
     protected void onStop() {
         user.setDeltaMovement(Vec3.ZERO);
         hitDuringFlight.clear();
+        draggedEnemies.clear();
         launched = false;
         finisherExecuted = false;
         slashCount = 0;

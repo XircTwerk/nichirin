@@ -31,6 +31,7 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
     private boolean dashStarted = false;
     private Vec3 dashDirection;
     private Vec3 startPosition;
+    private int dashTick = 0;
     private final Set<LivingEntity> caughtEnemies = new HashSet<>();
     private final List<LivingEntity> draggedEnemies = new ArrayList<>();
     private int hitCounter = 0;
@@ -49,6 +50,7 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
 
         dashDirection = user.getLookAngle().normalize();
         startPosition = user.position();
+        dashTick = 0;
 
         // Tiger roar sound at start
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
@@ -76,27 +78,17 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
     }
 
     private void startDash() {
-        // Set user velocity for dash - much more reasonable calculation
-        float actualDashSpeed = dashSpeed != null ? dashSpeed : range;
-        Vec3 dashVelocity = dashDirection.scale(actualDashSpeed / duration * 10);
-
-        user.setDeltaMovement(dashVelocity);
-        user.hurtMarked = true;
-        user.hasImpulse = true;
-
         // Dash start sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.2f, 1.0f);
     }
 
     private void continueDash() {
-        // Maintain dash velocity - same calculation as startDash
-        if (dashSpeed != null) {
-            float actualDashSpeed = dashSpeed;
-            Vec3 dashVelocity = dashDirection.scale(actualDashSpeed / duration * 6);
-            user.setDeltaMovement(dashVelocity);
-            user.hurtMarked = true;
-        }
+        // Glide toward target using teleportSafe for smooth movement
+        dashTick++;
+        float progress = (float) dashTick / Math.max(duration, 1);
+        Vec3 targetPos = startPosition.add(dashDirection.scale(range * progress));
+        teleportSafe(targetPos);
 
         // Create continuous tiger effect during dash
         createTigerTrailEffect();
@@ -345,6 +337,7 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
 
         // Clear all state
         dashStarted = false;
+        dashTick = 0;
         caughtEnemies.clear();
         draggedEnemies.clear();
         hitCounter = 0;

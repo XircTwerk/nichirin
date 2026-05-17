@@ -18,7 +18,6 @@ public interface NichirinShaderRegistry {
      * Initialize shaders - called during mod initialization
      */
     static void init() {
-        BreathOfNichirin.LOGGER.info("Initialized Nichirin shaders");
     }
 
     /**

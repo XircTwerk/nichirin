@@ -91,7 +91,7 @@ public class ThrownKatanaEntity extends Entity {
     @Override
     public AABB makeBoundingBox() {
         Vec3 pos = position();
-        Vec3 dir = travelDir.scale(KATANA_HALF_LEN);
+        Vec3 dir = (travelDir != null ? travelDir : new Vec3(0, 0, 1)).scale(KATANA_HALF_LEN);
         return new AABB(
                 pos.x - Math.abs(dir.x) - KATANA_THICKNESS,
                 pos.y - Math.abs(dir.y) - KATANA_THICKNESS,
@@ -163,9 +163,11 @@ public class ThrownKatanaEntity extends Entity {
             if (hit.getType() != HitResult.Type.MISS) {
                 Vec3 dir = motion.normalize();
                 Vec3 surface = hit.getLocation();
-                setPos(surface.x - dir.x * (31.0 / 16.0),
-                       surface.y - dir.y * (31.0 / 16.0),
-                       surface.z - dir.z * (31.0 / 16.0));
+                // Back off by (KATANA_HALF_LEN - 0.3) so the tip embeds ~0.3 blocks into the block
+                double backoff = KATANA_HALF_LEN - 0.3;
+                setPos(surface.x - dir.x * backoff,
+                       surface.y - dir.y * backoff,
+                       surface.z - dir.z * backoff);
             }
             stuck = true;
             entityData.set(STUCK, true);

@@ -133,7 +133,6 @@ public interface NichirinMovesetRegistry {
         registerMoveset("mist_breathing", MistBreathingMoveset::new);
         registerMoveset("default_demon", DefaultDemonMoveset::new);
 
-        BreathOfNichirin.LOGGER.info("NichirinMovesetRegistry initialized with {} movesets", getAllMovesetIds().size());
     }
 
     class MoveInfo {
