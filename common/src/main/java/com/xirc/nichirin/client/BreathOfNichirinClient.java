@@ -239,15 +239,9 @@ public class BreathOfNichirinClient {
 
     /** Maps a breathing style ID to an RGB color for the aura wisp particle. */
     public static float[] getBreathingStyleColor(String styleId) {
-        if (styleId == null) return new float[]{1.0f, 0.8f, 0.4f};
-        return switch (styleId) {
-            case "flame_breathing"   -> new float[]{1.0f, 0.35f, 0.0f};
-            case "water_breathing"   -> new float[]{0.1f, 0.5f, 1.0f};
-            case "thunder_breathing" -> new float[]{1.0f, 0.9f, 0.0f};
-            case "insect_breathing"  -> new float[]{0.7f, 0.2f, 0.9f};
-            case "sound_breathing"   -> new float[]{1.0f, 0.3f, 0.6f};
-            default                  -> new float[]{1.0f, 0.8f, 0.4f};
-        };
+        com.xirc.nichirin.common.util.enums.BreathingStyle style =
+                com.xirc.nichirin.common.util.enums.BreathingStyle.fromMovesetId(styleId);
+        return style != null ? style.getColorAsFloat() : new float[]{1.0f, 0.8f, 0.4f};
     }
 
     /**

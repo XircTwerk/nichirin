@@ -34,8 +34,9 @@ public class RengokuAttack extends FlameBreathingAttackBase {
         dashTicks = 0;
         hitEntities.clear();
 
-        // Set dash direction in onStart, not during perform
-        dashDirection = user.getLookAngle().normalize();
+        // Flatten to horizontal so pitch doesn't cause diagonal drift or world-clipping (#11)
+        Vec3 look = user.getLookAngle();
+        dashDirection = new Vec3(look.x, 0, look.z).normalize();
         dashStartPos = null;
 
         // Epic windup effects

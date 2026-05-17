@@ -43,23 +43,25 @@ public class BreathingAuraWispHandler {
             // Place particles at the nose/mouth — forward from center and slightly below eyes
             double forward = 0.28;
             double spread  = 0.10 + rand.nextDouble() * 0.03;
-            double py = minecraft.player.getEyeY() - 0.22 + (rand.nextDouble() - 0.5) * 0.06;
+            double py = minecraft.player.getEyeY() - 0.10 + (rand.nextDouble() - 0.5) * 0.06;
             double baseX = minecraft.player.getX() + fwdX * forward;
             double baseZ = minecraft.player.getZ() + fwdZ * forward;
 
             // Outward lateral drift: bias each nostril particle away from center
             double driftMag = 0.004;
 
-            // Left nostril — drifts in the +right direction
+            // Right nostril — drifts right, unmirrored
             BreathingAuraWispParticleProvider.pendingLateralX = rightX * driftMag;
             BreathingAuraWispParticleProvider.pendingLateralZ = rightZ * driftMag;
+            BreathingAuraWispParticleProvider.pendingMirrored = false;
             minecraft.level.addParticle(NichirinParticleRegistry.BREATHING_AURA_WISP.get(),
                     baseX + rightX * spread, py, baseZ + rightZ * spread,
                     color[0], color[1], color[2]);
 
-            // Right nostril — drifts in the -right direction
+            // Left nostril — drifts left, horizontally mirrored
             BreathingAuraWispParticleProvider.pendingLateralX = -rightX * driftMag;
             BreathingAuraWispParticleProvider.pendingLateralZ = -rightZ * driftMag;
+            BreathingAuraWispParticleProvider.pendingMirrored = true;
             minecraft.level.addParticle(NichirinParticleRegistry.BREATHING_AURA_WISP.get(),
                     baseX - rightX * spread, py, baseZ - rightZ * spread,
                     color[0], color[1], color[2]);

@@ -7,26 +7,30 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-// Form 1: Thrusting skewer dash. Pierces all enemies in a straight line.
+// Form 1: Low Clouds, Distant Haze — velocity-based lunge that pierces enemies along the path.
 public class LowCloudsDistantHazeAttack extends MistBreathingAttackBase {
 
     private boolean dashStarted = false;
     private Vec3 dashDirection;
-    private Vec3 dashStartPos;
     private int dashTick = 0;
+    private int dashDuration = 0;
+    private final Set<LivingEntity> hitEntities = new HashSet<>();
 
     @Override
     protected void onStart() {
         dashStarted = false;
-        dashStartPos = null;
         dashTick = 0;
-        // Flatten to horizontal so pitch doesn't cause diagonal drift (#3)
+        dashDuration = 0;
+        hitEntities.clear();
+
         Vec3 look = user.getLookAngle();
         dashDirection = new Vec3(look.x, 0, look.z).normalize();
 
-        // mist coils at feet during crouch windup
+        // Mist coils at feet during windup
         if (world instanceof ServerLevel serverLevel) {
             Vec3 feetPos = user.position();
             for (int i = 0; i < 16; i++) {
@@ -46,41 +50,51 @@ public class LowCloudsDistantHazeAttack extends MistBreathingAttackBase {
         if (world.isClientSide) return;
 
         if (!dashStarted && tickCount == windup + 1) {
-            launchDash();
+            float speed = dashSpeed != null ? dashSpeed : 12.0f;
+            // Duration in ticks: how long to apply velocity to cover `range` blocks at `speed`.
+            // Matches the same proportion BeeStingAttack uses (dashSpeed == range, duration from config).
+            dashDuration = dashSpeed != null && dashSpeed > 0
+                    ? Math.round(range / dashSpeed * 20f)
+                    : duration;
+            dashDuration = Math.max(1, Math.min(dashDuration, duration));
+
+            user.setDeltaMovement(dashDirection.scale(speed));
+            user.hurtMarked = true;
+            user.hasImpulse = true;
             dashStarted = true;
+
+            world.playSound(null, user.getX(), user.getY(), user.getZ(),
+                    SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 0.8f, 1.8f);
+            playMistSound();
         }
 
         if (!dashStarted) return;
 
-        // Teleport-based movement for precision (velocity is overridden by client prediction)
-        if (dashStartPos != null && dashSpeed != null) {
+        if (dashTick < dashDuration) {
+            float speed = dashSpeed != null ? dashSpeed : 12.0f;
+            user.setDeltaMovement(dashDirection.scale(speed));
+            user.hurtMarked = true;
             dashTick++;
-            double totalDistance = dashSpeed * 8.0; // matches original velocity * duration
-            float progress = (float) dashTick / Math.max(duration, 1);
-            Vec3 targetPos = dashStartPos.add(dashDirection.scale(totalDistance * progress));
-            teleportSafe(targetPos);
+        } else {
+            user.setDeltaMovement(Vec3.ZERO);
+            user.hurtMarked = true;
         }
 
-        createMistTrail(user.position(), user.position().subtract(dashDirection.scale(2)));
+        createMistTrail(user.position(), user.position().subtract(dashDirection.scale(1.5)));
 
         List<LivingEntity> targets = getTargetsInRangeLine(1.2f);
         for (LivingEntity target : targets) {
-            hitTarget(target);
+            if (!hitEntities.contains(target)) {
+                hitTarget(target);
+                hitEntities.add(target);
+            }
         }
-    }
-
-    private void launchDash() {
-        dashStartPos = user.position();
-        dashTick = 0;
-
-        world.playSound(null, user.getX(), user.getY(), user.getZ(),
-                SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 0.8f, 1.8f);
-        playMistSound();
     }
 
     @Override
     protected void onStop() {
         user.setDeltaMovement(Vec3.ZERO);
+        user.hurtMarked = true;
 
         if (world instanceof ServerLevel serverLevel) {
             Vec3 pos = user.position().add(0, 1, 0);
@@ -91,7 +105,8 @@ public class LowCloudsDistantHazeAttack extends MistBreathingAttackBase {
         }
 
         dashStarted = false;
-        dashStartPos = null;
         dashTick = 0;
+        dashDuration = 0;
+        hitEntities.clear();
     }
 }

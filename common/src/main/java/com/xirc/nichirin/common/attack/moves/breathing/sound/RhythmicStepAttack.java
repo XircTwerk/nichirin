@@ -27,15 +27,13 @@ import java.util.HashSet;
  */
 public class RhythmicStepAttack extends SoundBreathingAttackBase {
 
-    private static final float DASH_DISTANCE = 0.4f; // Distance per tick
-    private static final int DASH_DURATION = 10; // 1 second dash
-    private static final float SLASH_WIDTH = 6.0f; // Wide finishing slash
-    private static final float SLASH_DEPTH = 4.0f; // Deep finishing slash
+    private static final float SLASH_WIDTH = 6.0f;
+    private static final float SLASH_DEPTH = 4.0f;
 
     private boolean dashStarted = false;
     private boolean slashExecuted = false;
     private Vec3 dashDirection;
-    private Vec3 startPosition;
+    private int dashTick = 0;
     private final Set<LivingEntity> hitEntities = new HashSet<>();
 
     public RhythmicStepAttack() {
@@ -47,13 +45,12 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
     protected void onStart() {
         dashStarted = false;
         slashExecuted = false;
+        dashTick = 0;
         hitEntities.clear();
 
         // Force horizontal direction only (ignore Y component)
         Vec3 rawDirection = user.getLookAngle();
         dashDirection = new Vec3(rawDirection.x, 0, rawDirection.z).normalize();
-        startPosition = user.position();
-
         // Rhythmic step preparation sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.WARDEN_SONIC_CHARGE, SoundSource.PLAYERS, 0.8f, 2.0f);
@@ -72,26 +69,33 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
             dashStarted = true;
         }
 
-        // Continue dash with constant hitboxes (like UnknowingFireAttack)
-        if (dashStarted && tickCount > 0 && tickCount <= DASH_DURATION) {
-            continueDash();
+        // Continue dash for dashDuration ticks, then stop and slash
+        if (dashStarted) {
+            int dashDuration = dashSpeed != null && dashSpeed > 0
+                    ? Math.round(range / dashSpeed * 20f)
+                    : duration;
+            dashDuration = Math.max(1, Math.min(dashDuration, duration));
+
+            if (dashTick < dashDuration) {
+                continueDash();
+                dashTick++;
+            } else if (!slashExecuted) {
+                user.setDeltaMovement(Vec3.ZERO);
+                user.hurtMarked = true;
+                executeFinishingSlash();
+                slashExecuted = true;
+            }
         }
 
-        // Execute finishing slash at the end of dash
-        if (!slashExecuted && tickCount == DASH_DURATION + 5) {
-            executeFinishingSlash();
-            slashExecuted = true;
-        }
-
-        // Continue explosion trail effects throughout the duration
-        if (dashStarted && tickCount <= 50) {
+        // Explosion trail during dash
+        if (dashStarted && !slashExecuted) {
             createContinuousTrailExplosions();
         }
     }
 
     private void startDash() {
-        // Set user velocity for dash - using UnknowingFireAttack's method
-        Vec3 dashVelocity = dashDirection.scale(DASH_DISTANCE * 20); // 12 blocks over 20 ticks
+        float speed = dashSpeed != null ? dashSpeed : 4.0f;
+        Vec3 dashVelocity = dashDirection.scale(speed);
         user.setDeltaMovement(dashVelocity);
         user.hurtMarked = true;
         user.hasImpulse = true;
@@ -105,8 +109,8 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
     }
 
     private void continueDash() {
-        // Maintain dash velocity every tick - using UnknowingFireAttack's method
-        Vec3 dashVelocity = dashDirection.scale(DASH_DISTANCE * 20);
+        float speed = dashSpeed != null ? dashSpeed : 4.0f;
+        Vec3 dashVelocity = dashDirection.scale(speed);
         user.setDeltaMovement(dashVelocity);
         user.hurtMarked = true;
 
@@ -385,6 +389,7 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
         // Reset state
         dashStarted = false;
         slashExecuted = false;
+        dashTick = 0;
         hitEntities.clear();
 
         // Final rhythmic echo

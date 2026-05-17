@@ -120,7 +120,7 @@ public abstract class MistBreathingAttackBase extends AbstractBreathingAttack<Mi
         super.hitTarget(target);
         createMistHitParticles(target.position());
         playMistHitSound(target.position());
-        applyBlurryEffect(60); // 3 seconds on hit
+        target.addEffect(new MobEffectInstance(NichirinEffectRegistry.BLURRY.get(), 60, 0, false, false, false));
     }
 
     @Override
@@ -129,7 +129,7 @@ public abstract class MistBreathingAttackBase extends AbstractBreathingAttack<Mi
         super.hitTargetNoImmunity(target);
         createMistHitParticles(target.position());
         playMistHitSound(target.position());
-        applyBlurryEffect(60);
+        target.addEffect(new MobEffectInstance(NichirinEffectRegistry.BLURRY.get(), 60, 0, false, false, false));
     }
 
     protected void playMistSound() {
