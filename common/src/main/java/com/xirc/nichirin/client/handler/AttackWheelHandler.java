@@ -28,6 +28,7 @@ public class AttackWheelHandler {
 
     private static boolean wasKeyDown = false;
     private static boolean wasEscDown = false;
+    private static final boolean[] wasNumberKeyDown = new boolean[9];
     private static AttackWheelOverlay currentWheel = null;
     @Getter
     private static boolean wheelOpen = false;
@@ -110,6 +111,13 @@ public class AttackWheelHandler {
                     client.mouseHandler.grabMouse();
                 }
             }
+
+            // Consume hotbar key clicks BEFORE Minecraft.handleKeybinds() so slots don't switch
+            if (wheelOpen) {
+                for (int i = 0; i < 9; i++) {
+                    while (client.options.keyHotbarSlots[i].consumeClick()) {}
+                }
+            }
         });
 
         // Additional multiplayer-specific check in POST tick
@@ -159,11 +167,16 @@ public class AttackWheelHandler {
                 executeWheelMove(); // This closes the wheel immediately
             }
 
-            // Block ALL other inputs aggressively
+            // Keys 1-9 execute moves by index (check raw GLFW state to bypass Minecraft's input handling)
+            long window = client.getWindow().getWindow();
             for (int i = 0; i < 9; i++) {
-                while (client.options.keyHotbarSlots[i].consumeClick()) {
-                    // Consume hotbar keys
+                boolean isDown = GLFW.glfwGetKey(window, GLFW.GLFW_KEY_1 + i) == GLFW.GLFW_PRESS;
+                if (isDown && !wasNumberKeyDown[i]) {
+                    wasNumberKeyDown[i] = true;
+                    executeWheelMoveByIndex(i);
+                    return;
                 }
+                wasNumberKeyDown[i] = isDown;
             }
             while (client.options.keyDrop.consumeClick()) {
                 // Consume drop key
@@ -267,6 +280,7 @@ public class AttackWheelHandler {
         // Reset captured move state
         capturedSelectedMove = -1;
         lastHoveredMove = -1;
+        java.util.Arrays.fill(wasNumberKeyDown, false);
 
         // START BLOCKING TIMER - Record when wheel was closed
         if (mc.player != null) {
@@ -284,6 +298,12 @@ public class AttackWheelHandler {
         if (mc.screen == null) {
             mc.mouseHandler.grabMouse();
         }
+    }
+
+    /** Execute a wheel move by explicit index (from hotkeys 1-9). */
+    private static void executeWheelMoveByIndex(int index) {
+        capturedSelectedMove = index;
+        executeWheelMove();
     }
 
     /**

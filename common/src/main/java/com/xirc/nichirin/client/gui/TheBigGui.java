@@ -1,12 +1,10 @@
 package com.xirc.nichirin.client.gui;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.xirc.nichirin.client.gui.NichirinPalette;
 import com.xirc.nichirin.client.gui.biggui.*;
 import com.xirc.nichirin.registry.NichirinKeybindRegistry;
 import com.xirc.nichirin.common.util.PlayerStats;
 import lombok.Getter;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -54,10 +52,6 @@ public class TheBigGui extends Screen {
     private final QuestsSection questsSection = new QuestsSection();
     private final ReputationSection reputationSection = new ReputationSection();
     private final MovesetSection movesetSection = new MovesetSection();
-    @Getter
-    private int scaledWidth;
-    @Getter
-    private int scaledHeight;
 
     public TheBigGui(Player player) {
         super(Component.translatable("gui.nichirin.main.title"));
@@ -71,14 +65,10 @@ public class TheBigGui extends Screen {
     protected void init() {
         super.init();
 
-        // Calculate our fixed scale dimensions
-        calculateScaledDimensions();
-
         // Clear previous buttons
         sectionButtons.clear();
 
-        // Calculate button positions using scaled dimensions
-        int buttonX = this.scaledWidth - BUTTON_WIDTH - RIGHT_MARGIN;
+        int buttonX = this.width - BUTTON_WIDTH - RIGHT_MARGIN;
         int buttonY = TOP_MARGIN;
 
         // Create section buttons
@@ -106,23 +96,6 @@ public class TheBigGui extends Screen {
         PlayerStats.initialize();
     }
 
-    private float getScaleFactor() {
-        return 2.0f / (float) Minecraft.getInstance().getWindow().getGuiScale();
-    }
-
-    private void calculateScaledDimensions() {
-        var window = Minecraft.getInstance().getWindow();
-        // Always treat the GUI as if it were at scale 2 — virtual size = pixel_size / 2
-        this.scaledWidth  = Math.max(window.getWidth()  / 2, 320);
-        this.scaledHeight = Math.max(window.getHeight() / 2, 240);
-    }
-
-    /** Converts a raw GUI-scaled mouse coordinate to the scale-2 coordinate space. */
-    private int toScale2(double coord) {
-        double guiScale = Minecraft.getInstance().getWindow().getGuiScale();
-        return (int)(coord * guiScale / 2.0);
-    }
-
     /**
      * Switches to a different section
      */
@@ -142,29 +115,18 @@ public class TheBigGui extends Screen {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        calculateScaledDimensions();
+        graphics.fill(0, 0, this.width, this.height, BACKGROUND_COLOR);
 
-        float scaleFactor = getScaleFactor();
-        // Convert raw GUI-scaled mouse to scale-2 space
-        int adjMouseX = toScale2(mouseX);
-        int adjMouseY = toScale2(mouseY);
-
-        PoseStack poseStack = graphics.pose();
-        poseStack.pushPose();
-        poseStack.scale(scaleFactor, scaleFactor, 1.0f);
-
-        graphics.fill(0, 0, this.scaledWidth, this.scaledHeight, BACKGROUND_COLOR);
-
-        int contentRight = this.scaledWidth - BUTTON_WIDTH - RIGHT_MARGIN - 10;
-        graphics.fill(CONTENT_X, CONTENT_Y, contentRight, this.scaledHeight - BOTTOM_MARGIN, 0xFF1A1817);
+        int contentRight = this.width - BUTTON_WIDTH - RIGHT_MARGIN - 10;
+        graphics.fill(CONTENT_X, CONTENT_Y, contentRight, this.height - BOTTOM_MARGIN, 0xFF1A1817);
 
         int contentWidth = contentRight - CONTENT_X;
-        int contentHeight = this.scaledHeight - BOTTOM_MARGIN - CONTENT_Y;
+        int contentHeight = this.height - BOTTOM_MARGIN - CONTENT_Y;
 
-        poseStack.pushPose();
-        poseStack.translate(CONTENT_X, CONTENT_Y, 0);
-        int contentMouseX = adjMouseX - CONTENT_X;
-        int contentMouseY = adjMouseY - CONTENT_Y;
+        graphics.pose().pushPose();
+        graphics.pose().translate(CONTENT_X, CONTENT_Y, 0);
+        int contentMouseX = mouseX - CONTENT_X;
+        int contentMouseY = mouseY - CONTENT_Y;
         switch (currentSection) {
             case HOME -> homeSection.render(graphics, contentMouseX, contentMouseY, player, contentWidth, contentHeight, this.font);
             case SKILLS -> skillsSection.render(graphics, player, this.font, contentWidth, contentHeight, contentMouseX, contentMouseY);
@@ -173,13 +135,11 @@ public class TheBigGui extends Screen {
             case REPUTATION -> reputationSection.render(graphics, player, this.font, contentWidth, contentHeight, contentMouseX, contentMouseY);
             case MOVESET -> movesetSection.render(graphics, player, this.font, contentWidth, contentHeight, contentMouseX, contentMouseY);
         }
-        poseStack.popPose();
+        graphics.pose().popPose();
 
         for (SectionButton button : sectionButtons) {
-            button.render(graphics, adjMouseX, adjMouseY, partialTick);
+            button.render(graphics, mouseX, mouseY, partialTick);
         }
-
-        poseStack.popPose();
     }
 
     @Override
@@ -225,26 +185,20 @@ public class TheBigGui extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
-        double adjX = toScale2(mouseX);
-        double adjY = toScale2(mouseY);
         if (currentSection == GuiSection.SKILLS) {
-            if (skillsSection.handleScroll(adjX - CONTENT_X, adjY - CONTENT_Y, delta)) return true;
+            if (skillsSection.handleScroll(mouseX - CONTENT_X, mouseY - CONTENT_Y, delta)) return true;
         }
-        return super.mouseScrolled(adjX, adjY, delta);
+        return super.mouseScrolled(mouseX, mouseY, delta);
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        double adjX = toScale2(mouseX);
-        double adjY = toScale2(mouseY);
-
-        int contentRight = this.scaledWidth - BUTTON_WIDTH - RIGHT_MARGIN - 10;
+        int contentRight = this.width - BUTTON_WIDTH - RIGHT_MARGIN - 10;
         int clickContentWidth = contentRight - CONTENT_X;
-        int clickContentHeight = this.scaledHeight - BOTTOM_MARGIN - CONTENT_Y;
-        double contentMouseX = adjX - CONTENT_X;
-        double contentMouseY = adjY - CONTENT_Y;
+        int clickContentHeight = this.height - BOTTOM_MARGIN - CONTENT_Y;
+        double contentMouseX = mouseX - CONTENT_X;
+        double contentMouseY = mouseY - CONTENT_Y;
 
-        // Handle section-specific clicks
         boolean handled = switch (currentSection) {
             case HOME -> homeSection.handleClick(contentMouseX, contentMouseY, player);
             case SKILLS -> skillsSection.handleClick(contentMouseX, contentMouseY, player, clickContentWidth, clickContentHeight);
@@ -258,8 +212,7 @@ public class TheBigGui extends Screen {
             return true;
         }
 
-        // Pass scale-2 coords to widgets (buttons are placed at scale-2 positions)
-        return super.mouseClicked(adjX, adjY, button);
+        return super.mouseClicked(mouseX, mouseY, button);
     }
 
     @Getter
