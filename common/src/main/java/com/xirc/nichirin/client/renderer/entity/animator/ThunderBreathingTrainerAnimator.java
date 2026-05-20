@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ThunderBreathingTrainerAnimator extends AzEntityAnimator<ThunderBreathingTrainerEntity> {
     private static final ResourceLocation ANIMATIONS = new ResourceLocation(
-            BreathOfNichirin.MOD_ID, "animations/temple_demon.animation.json");
+            BreathOfNichirin.MOD_ID, "animations/jigoro.animation.json");
 
     @Override
     public void registerControllers(AzAnimationControllerContainer<ThunderBreathingTrainerEntity> container) {

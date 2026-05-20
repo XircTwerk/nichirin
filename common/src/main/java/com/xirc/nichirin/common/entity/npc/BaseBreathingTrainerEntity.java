@@ -196,6 +196,38 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
     @Override
     public void triggerMovesetAnimation(String animationName) { setAnimation(animationName, 1.0f); }
 
+    public boolean canUseRightClickMove(boolean crouching) {
+        if (moveset == null) return false;
+        AbstractMoveset.MoveConfiguration cfg = crouching
+                ? moveset.getCrouchRightClickConfiguration()
+                : moveset.getRightClickConfiguration();
+        if (cfg == null) return false;
+        int index = crouching ? -2 : -1;
+        Map<Integer, Long> cooldowns = trainerCooldowns.get(getUUID());
+        if (cooldowns != null) {
+            Long end = cooldowns.get(index);
+            if (end != null && level().getGameTime() < end) return false;
+        }
+        if (cfg.hasBreathCost() && getBreathGauge() < cfg.getBreathCostOrDefault(0f)) return false;
+        return true;
+    }
+
+    public void performRightClickMove(boolean crouching) {
+        if (!canUseRightClickMove(crouching)) return;
+        AbstractMoveset.MoveConfiguration cfg = crouching
+                ? moveset.getCrouchRightClickConfiguration()
+                : moveset.getRightClickConfiguration();
+        if (cfg == null) return;
+        if (cfg.hasBreathCost()) NPCResourceManager.consumeBreath(this, cfg.getBreathCostOrDefault(0f));
+        int index = crouching ? -2 : -1;
+        int cd = cfg.getCooldownOrDefault(0);
+        if (cd <= 0) cd = cfg.getWindupOrDefault(5) + cfg.getDurationOrDefault(10) + cfg.getRecoveryOrDefault(10);
+        int scaledCd = Math.max(1, (int)(cd * getDifficultyCooldownScale()));
+        trainerCooldowns.computeIfAbsent(getUUID(), k -> new HashMap<>())
+                .put(index, level().getGameTime() + scaledCd);
+        moveset.handleRightClick(this, crouching);
+    }
+
     @Override public int   getBloodPoints()                    { return 0; }
     @Override public void  setBloodPoints(int v)               {}
     @Override public int   getMaxBloodPoints()                 { return 0; }

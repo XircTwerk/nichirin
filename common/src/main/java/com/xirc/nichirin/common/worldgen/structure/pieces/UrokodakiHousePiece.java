@@ -1,6 +1,8 @@
 package com.xirc.nichirin.common.worldgen.structure.pieces;
 
 import com.xirc.nichirin.BreathOfNichirin;
+import com.xirc.nichirin.common.entity.npc.WaterBreathingTrainerEntity;
+import com.xirc.nichirin.registry.NichirinEntityRegistry;
 import com.xirc.nichirin.registry.NichirinStructurePieceTypeRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -26,6 +28,7 @@ public class UrokodakiHousePiece extends StructurePiece {
 
     private final Rotation rotation;
     private final BlockPos structurePos;
+    private boolean trainerSpawned = false;
 
     public UrokodakiHousePiece(BlockPos pos, int rotationIndex) {
         super(NichirinStructurePieceTypeRegistry.UROKODAKI_HOUSE_PIECE.get(), 0,
@@ -38,6 +41,7 @@ public class UrokodakiHousePiece extends StructurePiece {
         super(NichirinStructurePieceTypeRegistry.UROKODAKI_HOUSE_PIECE.get(), nbt);
         this.rotation = Rotation.valueOf(nbt.getString("Rotation"));
         this.structurePos = new BlockPos(nbt.getInt("TPX"), nbt.getInt("TPY"), nbt.getInt("TPZ"));
+        this.trainerSpawned = nbt.getBoolean("TrainerSpawned");
     }
 
     @Override
@@ -46,6 +50,7 @@ public class UrokodakiHousePiece extends StructurePiece {
         nbt.putInt("TPX", this.structurePos.getX());
         nbt.putInt("TPY", this.structurePos.getY());
         nbt.putInt("TPZ", this.structurePos.getZ());
+        nbt.putBoolean("TrainerSpawned", this.trainerSpawned);
     }
 
     @Override
@@ -69,6 +74,22 @@ public class UrokodakiHousePiece extends StructurePiece {
                 .setIgnoreEntities(false);
 
         template.placeInWorld(world, finalPos, finalPos, settings, random, 18);
+
+        if (!trainerSpawned && !world.isClientSide()) {
+            // Spawn Urokodaki near the front of the house (center X, +2 Z offset)
+            BlockPos spawnPos = new BlockPos(
+                    structurePos.getX() + 5,
+                    surfaceY,
+                    structurePos.getZ() + 2
+            );
+            WaterBreathingTrainerEntity trainer = NichirinEntityRegistry.WATER_BREATHING_TRAINER.get().create(world.getLevel());
+            if (trainer != null) {
+                trainer.moveTo(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5, 0f, 0f);
+                trainer.finalizeSpawn(world, world.getCurrentDifficultyAt(spawnPos), net.minecraft.world.entity.MobSpawnType.STRUCTURE, null, null);
+                world.addFreshEntity(trainer);
+                trainerSpawned = true;
+            }
+        }
     }
 
     private static BoundingBox calculateBoundingBox(BlockPos pos, Rotation rotation) {

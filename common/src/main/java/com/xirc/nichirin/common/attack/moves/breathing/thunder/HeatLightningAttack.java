@@ -171,7 +171,7 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
             LightningBolt lightning = EntityType.LIGHTNING_BOLT.create(world);
             if (lightning != null) {
                 lightning.moveTo(targetPos);
-                lightning.setCause((ServerPlayer) user);
+                lightning.setCause(user instanceof ServerPlayer sp ? sp : null);
 
                 // ✅ FIXED: Don't set visual only - let it be a real lightning bolt
                 // lightning.setVisualOnly(true);  // ← REMOVED THIS LINE

@@ -89,18 +89,18 @@ public class TrainerDialogueScreen extends Screen {
         List<OptionButton> list = new ArrayList<>();
         switch (state) {
             case PREREQ_MET -> {
-                list.add(new OptionButton("Fight (Easy)", () -> requestDuel(BaseBreathingTrainerEntity.DuelDifficulty.EASY)));
-                list.add(new OptionButton("Farewell",     this::onClose));
+                list.add(new OptionButton("Spar",     () -> requestDuel(BaseBreathingTrainerEntity.DuelDifficulty.EASY)));
+                list.add(new OptionButton("Farewell", this::onClose));
             }
             case STUDENT -> {
                 if (hasBeatenTrainer) {
-                    list.add(new OptionButton("Fight (Easy)",   () -> requestDuel(BaseBreathingTrainerEntity.DuelDifficulty.EASY)));
+                    list.add(new OptionButton("Spar",           () -> requestDuel(BaseBreathingTrainerEntity.DuelDifficulty.EASY)));
                     list.add(new OptionButton("Fight (Medium)", () -> requestDuel(BaseBreathingTrainerEntity.DuelDifficulty.MEDIUM)));
                     list.add(new OptionButton("Fight (Hard)",   () -> requestDuel(BaseBreathingTrainerEntity.DuelDifficulty.HARD)));
                     list.add(new OptionButton("Farewell",       this::onClose));
                 } else {
-                    list.add(new OptionButton("Fight (Easy)", () -> requestDuel(BaseBreathingTrainerEntity.DuelDifficulty.EASY)));
-                    list.add(new OptionButton("Farewell",     this::onClose));
+                    list.add(new OptionButton("Spar",     () -> requestDuel(BaseBreathingTrainerEntity.DuelDifficulty.EASY)));
+                    list.add(new OptionButton("Farewell", this::onClose));
                 }
             }
             case STRANGER, DUEL_COOLDOWN -> list.add(new OptionButton("Farewell", this::onClose));

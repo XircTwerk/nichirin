@@ -212,7 +212,7 @@ public class ThunderSwarmAttack extends ThunderBreathingAttackBase {
         LightningBolt lightning = EntityType.LIGHTNING_BOLT.create(world);
         if (lightning != null) {
             lightning.moveTo(groundPos.getX() + 0.5, groundPos.getY(), groundPos.getZ() + 0.5);
-            lightning.setCause((net.minecraft.server.level.ServerPlayer) user);
+            lightning.setCause(user instanceof net.minecraft.server.level.ServerPlayer sp ? sp : null);
             world.addFreshEntity(lightning);
 
         }

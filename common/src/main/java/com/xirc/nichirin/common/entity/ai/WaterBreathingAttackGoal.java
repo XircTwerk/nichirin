@@ -185,9 +185,11 @@ public class WaterBreathingAttackGoal extends MeleeAttackGoal {
     // Difficulty only affects timing (cooldowns) and think-pause frequency
     private void decideAction(LivingEntity target, double distSq) {
         if (distSq < 4.0 * 4.0) {
-            // Close — backstep into heavy, or fast jab
+            // Close — backstep into heavy, or fast jab, or M2 water strike
             if (canUseAnyHeavy() && backstepCooldown == 0 && trainer.getRandom().nextInt(3) != 0) {
                 queueHeavyAfterBackstep();
+            } else if (trainer.canUseRightClickMove(false) && trainer.getRandom().nextInt(4) == 0) {
+                useRightClick(false);
             } else if (canDo(0)) useMove(0);
             else if (canDo(4)) useMove(4);
             else applyDash(target);
@@ -195,20 +197,25 @@ public class WaterBreathingAttackGoal extends MeleeAttackGoal {
         } else if (distSq < 8.0 * 8.0) {
             // Close-mid
             if (canDo(1) && trainer.getRandom().nextBoolean()) queueAfterBackstep(1);
-            else if (canDo(4)) useMove(4);
+            else if (trainer.canUseRightClickMove(true) && trainer.getRandom().nextInt(3) == 0) {
+                useRightClick(true); // Crouch variant — e.g. water surface slash
+            } else if (canDo(4)) useMove(4);
             else if (canDo(0)) useMove(0);
             else applyDash(target);
 
         } else if (distSq < 16.0 * 16.0) {
             // Mid
             if (canDo(5) && trainer.getRandom().nextBoolean()) useMove(5);
-            else if (canDo(6)) useMove(6);
+            else if (trainer.canUseRightClickMove(false) && trainer.getRandom().nextInt(3) == 0) {
+                useRightClick(false);
+            } else if (canDo(6)) useMove(6);
             else if (canDo(2)) useMove(2);
             else applyDash(target);
 
         } else {
             // Long
             if (canDo(2) && trainer.getRandom().nextInt(3) == 0) useMove(2);
+            else if (trainer.canUseRightClickMove(false)) useRightClick(false);
             else applyDash(target);
         }
     }
@@ -227,6 +234,18 @@ public class WaterBreathingAttackGoal extends MeleeAttackGoal {
         snapToFaceTarget();
         trainer.performMovesetMove(idx);
         globalCooldown = cooldownAfterMove(idx);
+    }
+
+    private void useRightClick(boolean crouching) {
+        if (!trainer.canUseRightClickMove(crouching)) return;
+        snapToFaceTarget();
+        trainer.performRightClickMove(crouching);
+        // Short global cooldown — right-click moves are fast gap-closers
+        globalCooldown = switch (trainer.getDuelDifficulty()) {
+            case EASY   -> 40;
+            case MEDIUM -> 20;
+            case HARD   -> 8;
+        };
     }
 
     /** Instantly aligns trainer's yRot/yBodyRot to face the current target so hitboxes land. */
