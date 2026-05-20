@@ -316,7 +316,6 @@ public class RengokuAttack extends FlameBreathingAttackBase {
         // Ensure invulnerability is removed
         user.setInvulnerable(false);
 
-        // Clear hit entities
         hitEntities.clear();
 
         // Give user temporary benefits after using ultimate

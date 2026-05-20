@@ -20,9 +20,6 @@ import java.util.Set;
  * Barrage-like attack where a single thrust creates a wall of ripples that damage opponents
  * Works as a shield - blocks all attacks during execution
  * Creates multiple hitboxes in front of the user like a defensive wall
- *
- * All configuration comes from the moveset builder.
- * This class handles only the behavior and visual/audio effects.
  */
 public class DropRippleThrustAttack extends WaterBreathingAttackBase {
 
@@ -32,8 +29,6 @@ public class DropRippleThrustAttack extends WaterBreathingAttackBase {
     private int rippleTicks = 0;
 
     public DropRippleThrustAttack() {
-        // No configuration here - everything comes from moveset
-        // All values will be set via configure() method
     }
 
     @Override

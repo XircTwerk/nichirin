@@ -24,9 +24,6 @@ import java.util.Set;
  * - Deals rapid multi-hit damage (small hits stacking into big DPS)
  * - Reflects or destroys projectiles during active frames
  * - 1.5s duration, movement speed slowed by ~20% while active
- *
- * All configuration comes from the moveset builder.
- * This class handles only the behavior and visual/audio effects.
  */
 public class ConstantResoundingSlashesAttack extends SoundBreathingAttackBase {
 
@@ -36,8 +33,6 @@ public class ConstantResoundingSlashesAttack extends SoundBreathingAttackBase {
     private final float originalSpeed = 0.1f; // Store original movement speed
 
     public ConstantResoundingSlashesAttack() {
-        // No configuration here - everything comes from moveset
-        // All values will be set via configure() method
     }
 
     @Override

@@ -19,9 +19,6 @@ import java.util.List;
  * - Creates an AOE explosion with knockback
  * - Brief stun (0.5s) on hit
  * - Moderate damage, fast startup
- *
- * All configuration comes from the moveset builder.
- * This class handles only the behavior and visual/audio effects.
  */
 public class RoarAttack extends SoundBreathingAttackBase {
 
@@ -29,8 +26,6 @@ public class RoarAttack extends SoundBreathingAttackBase {
     private boolean swordsRaised = false;
 
     public RoarAttack() {
-        // No configuration here - everything comes from moveset
-        // All values will be set via configure() method
     }
 
     @Override

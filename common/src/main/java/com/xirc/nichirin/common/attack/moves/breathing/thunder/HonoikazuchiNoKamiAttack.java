@@ -16,9 +16,6 @@ import java.util.Set;
 /**
  * Seventh Form: Honoikazuchi no Kami (Flaming Thunder God)
  * Zenitsu's personal ultimate technique - massive damage teleport dash
- *
- * All configuration now comes from the moveset builder.
- * This class handles only the behavior and visual/audio effects.
  */
 public class HonoikazuchiNoKamiAttack extends ThunderBreathingAttackBase {
 
@@ -26,8 +23,6 @@ public class HonoikazuchiNoKamiAttack extends ThunderBreathingAttackBase {
     private Set<LivingEntity> hitEntities = new HashSet<>(); // Track hit entities to avoid double hits
 
     public HonoikazuchiNoKamiAttack() {
-        // No configuration here - everything comes from moveset
-        // All values will be set via configure() method
     }
 
     @Override
@@ -237,7 +232,6 @@ public class HonoikazuchiNoKamiAttack extends ThunderBreathingAttackBase {
         // Ensure invulnerability is removed
         user.setInvulnerable(false);
 
-        // Clear hit entities set
         hitEntities.clear();
     }
 }

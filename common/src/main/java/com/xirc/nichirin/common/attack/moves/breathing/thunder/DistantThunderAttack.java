@@ -17,7 +17,6 @@ import net.minecraft.world.phys.Vec3;
 public class DistantThunderAttack extends ThunderBreathingAttackBase {
 
     public DistantThunderAttack() {
-        // No configuration here - everything comes from moveset
     }
 
     @Override

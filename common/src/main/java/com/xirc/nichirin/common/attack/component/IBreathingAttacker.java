@@ -23,11 +23,6 @@ public interface IBreathingAttacker<A extends IBreathingAttacker<A, S>, S extend
     void setState(S state);
 
     /**
-     * Gets the breathing move map for this attacker
-     */
-    BreathingMoveMap<A, S> getMoveMap();
-
-    /**
      * Checks if the attacker can use breathing techniques
      */
     default boolean canUseBreathing() {

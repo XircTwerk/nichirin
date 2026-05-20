@@ -21,7 +21,6 @@ public class ClientInputTracker {
 
     /**
      * Check input states and sync to server if changed
-     * Call this from your client tick handler
      */
     public static void tick() {
         Minecraft client = Minecraft.getInstance();

@@ -17,9 +17,6 @@ import java.util.Map;
  * Jumps up and creates an ascending whirlpool around the user
  * Rises 4 blocks up, multi-hit attack where whirlpool stays in place
  * Hit entities start spinning uncontrollably and moving around in a circle
- *
- * All configuration comes from the moveset builder.
- * This class handles only the behavior and visual/audio effects.
  */
 public class WhirlpoolAttack extends WaterBreathingAttackBase {
 
@@ -44,8 +41,6 @@ public class WhirlpoolAttack extends WaterBreathingAttackBase {
     }
 
     public WhirlpoolAttack() {
-        // No configuration here - everything comes from moveset
-        // All values will be set via configure() method
     }
 
     @Override

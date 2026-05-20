@@ -23,8 +23,6 @@ import java.util.concurrent.ThreadLocalRandom; // ✅ Thread-safe alternative
  * Third Form: Thunder Swarm
  * Launches 4 sword slashes forward that travel in sequence
  * Each slash creates lightning on impact or when hitting ground/expiring
- *
- * All configuration comes from the moveset builder.
  */
 public class ThunderSwarmAttack extends ThunderBreathingAttackBase {
 
@@ -38,7 +36,6 @@ public class ThunderSwarmAttack extends ThunderBreathingAttackBase {
     // ✅ REMOVED: private final Random random = new Random();
 
     public ThunderSwarmAttack() {
-        // Configuration comes from moveset
     }
 
     @Override

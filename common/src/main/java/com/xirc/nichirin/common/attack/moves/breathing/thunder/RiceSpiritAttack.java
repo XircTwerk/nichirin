@@ -15,9 +15,6 @@ import java.util.Random;
 /**
  * Second Form: Rice Spirit
  * 5 slashes focused on a single target - locks onto closest enemy
- *
- * All configuration now comes from the moveset builder.
- * This class handles only the behavior and visual/audio effects.
  */
 public class RiceSpiritAttack extends ThunderBreathingAttackBase {
 
@@ -27,8 +24,6 @@ public class RiceSpiritAttack extends ThunderBreathingAttackBase {
     private final Random random = new Random();
 
     public RiceSpiritAttack() {
-        // No configuration here - everything comes from moveset
-        // All values will be set via configure() method
     }
 
     @Override
@@ -128,7 +123,6 @@ public class RiceSpiritAttack extends ThunderBreathingAttackBase {
                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS,
                 0.8f, 1.5f + random.nextFloat() * 0.2f);
 
-        // FIXED: Use hitTargetNoImmunity to remove immunity frames for rapid slashes
         hitTargetNoImmunity(lockedTarget);
 
         // Visual feedback on the target

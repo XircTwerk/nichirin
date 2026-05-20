@@ -2,7 +2,6 @@ package com.xirc.nichirin.common.attack.component;
 
 import com.xirc.nichirin.client.animation.NichirinAnimations;
 import com.xirc.nichirin.common.util.StaminaManager;
-import com.xirc.nichirin.common.util.enums.MoveClass;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.core.particles.ParticleOptions;
@@ -90,8 +89,6 @@ public abstract class AbstractSimpleAttack<T extends AbstractSimpleAttack<T, A>,
     private boolean hitConnected = false;
     @Setter
     private Set<UUID> hitEntities = new HashSet<>();
-    @Setter
-    private MoveClass moveClass;
     private Player Player;
 
     // Builder methods
@@ -228,16 +225,6 @@ public abstract class AbstractSimpleAttack<T extends AbstractSimpleAttack<T, A>,
     }
 
     // Core lifecycle methods
-
-    /**
-     * Called when the move is registered to a MoveClass
-     */
-    public void onRegister(MoveClass moveClass) {
-        this.moveClass = moveClass;
-        if (followup != null) {
-            followup.onRegister(moveClass);
-        }
-    }
 
     /**
      * Total duration of the attack

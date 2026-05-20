@@ -23,9 +23,6 @@ import java.util.Set;
  * Fifth Form: Heat Lightning
  * Performs an upward slash in the direction the user is looking
  * Then strikes airborne targets with lightning
- *
- * All configuration now comes from the moveset builder.
- * This class handles only the behavior and visual/audio effects.
  */
 public class HeatLightningAttack extends ThunderBreathingAttackBase {
 
@@ -34,8 +31,6 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
     private boolean lightningStruck = false; // Track if lightning has been summoned
 
     public HeatLightningAttack() {
-        // No configuration here - everything comes from moveset
-        // All values will be set via configure() method
     }
 
     @Override

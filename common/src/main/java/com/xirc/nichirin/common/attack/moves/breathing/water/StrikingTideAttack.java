@@ -15,9 +15,6 @@ import java.util.Set;
  * Fourth Form: Striking Tide
  * The user performs big omnidirectional slashes after a short windup
  * 360° omnidirectional multiple slashes with particles during windup
- *
- * All configuration comes from the moveset builder.
- * This class handles only the behavior and visual/audio effects.
  */
 public class StrikingTideAttack extends WaterBreathingAttackBase {
 
@@ -28,8 +25,6 @@ public class StrikingTideAttack extends WaterBreathingAttackBase {
     private static final int TOTAL_SLASHES = 4; // 4 big omnidirectional slashes
 
     public StrikingTideAttack() {
-        // No configuration here - everything comes from moveset
-        // All values will be set via configure() method
     }
 
     @Override

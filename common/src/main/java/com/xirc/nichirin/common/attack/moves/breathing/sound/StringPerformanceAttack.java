@@ -27,9 +27,6 @@ import java.util.Set;
  * - Each spin hits multiple times (high DPS)
  * - User stays grounded throughout
  * - Finisher does a big explosion with a huge shockwave of damage
- *
- * All configuration comes from the moveset builder.
- * This class handles only the behavior and visual/audio effects.
  */
 public class StringPerformanceAttack extends SoundBreathingAttackBase {
 
@@ -47,8 +44,6 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
     private boolean finaleExecuted = false;
 
     public StringPerformanceAttack() {
-        // No configuration here - everything comes from moveset
-        // All values will be set via configure() method
     }
 
     @Override

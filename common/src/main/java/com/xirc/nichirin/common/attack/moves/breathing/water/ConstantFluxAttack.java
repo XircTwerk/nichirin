@@ -17,9 +17,6 @@ import java.util.Map;
  * Fast combo ending in a powerful aoe finisher with the appearance of a water dragon
  * 5 piece combo + finisher that drags opponents forward into the final big hit
  * Weakest ultimate but still very strong
- *
- * All configuration comes from the moveset builder.
- * This class handles only the behavior and visual/audio effects.
  */
 public class ConstantFluxAttack extends WaterBreathingAttackBase {
 
@@ -45,8 +42,6 @@ public class ConstantFluxAttack extends WaterBreathingAttackBase {
     }
 
     public ConstantFluxAttack() {
-        // No configuration here - everything comes from moveset
-        // All values will be set via configure() method
     }
 
     @Override

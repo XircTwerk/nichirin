@@ -40,11 +40,5 @@ public interface IDemonAttacker<A extends IDemonAttacker<A, S>, S extends Enum<?
         // Default implementation does nothing
     }
 
-    /**
-     * Get the demon art move map for this attacker
-     * Override to provide access to the attacker's demon moves
-     */
-    default DemonMoveMap<A, S> getDemonMoveMap() {
-        return null; // Override in implementing classes
-    }
+
 }

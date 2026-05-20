@@ -16,9 +16,6 @@ import java.util.*;
  * Sixth Form: Rumble and Flash
  * Summons lightning at the original positions where enemies were when the attack started
  * Enemies must move away from their starting positions to avoid the strikes
- *
- * All configuration now comes from the moveset builder.
- * This class handles only the behavior and visual/audio effects.
  */
 public class RumbleFlashAttack extends ThunderBreathingAttackBase {
 
@@ -27,8 +24,6 @@ public class RumbleFlashAttack extends ThunderBreathingAttackBase {
     private static final int WARNING_DURATION = 35; // 1.75 seconds warning (35 ticks)
 
     public RumbleFlashAttack() {
-        // No configuration here - everything comes from moveset
-        // All values will be set via configure() method
     }
 
     @Override

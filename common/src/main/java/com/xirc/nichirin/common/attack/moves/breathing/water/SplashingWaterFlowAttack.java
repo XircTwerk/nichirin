@@ -17,9 +17,6 @@ import java.util.Set;
  * Segmented dash ending in a quick slash
  * About 10 block range with particles appearing at user's feet every time they "jump"
  * Short repeated jumps in a zigzag pattern (like Centipede Attack)
- *
- * All configuration comes from the moveset builder.
- * This class handles only the behavior and visual/audio effects.
  */
 public class SplashingWaterFlowAttack extends WaterBreathingAttackBase {
 
@@ -39,8 +36,6 @@ public class SplashingWaterFlowAttack extends WaterBreathingAttackBase {
     private boolean wasInvulnerable = false;
 
     public SplashingWaterFlowAttack() {
-        // No configuration here - everything comes from moveset
-        // All values will be set via configure() method
     }
 
     @Override

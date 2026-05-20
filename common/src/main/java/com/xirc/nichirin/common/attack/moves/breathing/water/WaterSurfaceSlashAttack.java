@@ -18,7 +18,6 @@ import java.util.concurrent.TimeUnit;
  * Stage 2: Right to left slash (no knockback)
  * Stage 3: Downward slam (high damage, knockback, stun)
  *
- * All configuration comes from the moveset builder.
  * This class handles behavior and visual/audio effects for all 3 stages.
  * Uses hitTargetNoImmunity to bypass immunity frames for rapid combo hits.
  */
@@ -30,8 +29,6 @@ public class WaterSurfaceSlashAttack extends WaterBreathingAttackBase {
     private boolean isComboActive = false;
 
     public WaterSurfaceSlashAttack() {
-        // No configuration here - everything comes from moveset
-        // All values will be set via configure() method
     }
 
     /**

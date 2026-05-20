@@ -23,9 +23,6 @@ import java.util.Set;
  * - User becomes invulnerable during active frames
  * - Deflects or destroys projectiles during active frames
  * - 3.5 block radius
- *
- * All configuration comes from the moveset builder.
- * This class handles only the behavior and visual/audio effects.
  */
 public class BloomingFlameUndulationAttack extends FlameBreathingAttackBase {
 
@@ -34,8 +31,6 @@ public class BloomingFlameUndulationAttack extends FlameBreathingAttackBase {
     private int spinTicks = 0; // Local counter to avoid threading issues
 
     public BloomingFlameUndulationAttack() {
-        // No configuration here - everything comes from moveset
-        // All values will be set via configure() method
     }
 
     @Override
@@ -259,7 +254,6 @@ public class BloomingFlameUndulationAttack extends FlameBreathingAttackBase {
             }
         }
 
-        // Clear hit entities
         hitEntities.clear();
 
         // Reset spin counter

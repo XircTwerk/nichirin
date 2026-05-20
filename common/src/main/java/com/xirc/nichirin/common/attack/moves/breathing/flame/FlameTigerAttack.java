@@ -21,10 +21,7 @@ import java.util.Set;
  * - Lots of strikes during 8 block dash
  * - User goes in a straight line
  * - Drags enemies with you
- * - High DPS multi-hit attack - NOW RESPECTS IMMUNITY FRAMES
- *
- * All configuration comes from the moveset builder.
- * This class handles only the behavior and visual/audio effects.
+ * - High DPS multi-hit attack
  */
 public class FlameTigerAttack extends FlameBreathingAttackBase {
 
@@ -37,8 +34,6 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
     private int hitCounter = 0;
 
     public FlameTigerAttack() {
-        // No configuration here - everything comes from moveset
-        // All values will be set via configure() method
     }
 
     @Override
@@ -121,8 +116,7 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
                 hitboxCenter, 4.0, 3.0, 4.0);
 
         for (LivingEntity target : nearbyTargets) {
-            // Hit each enemy - NOW RESPECTS IMMUNITY FRAMES
-            hitTarget(target); // Changed from hitTargetNoImmunity to hitTarget
+            hitTarget(target);
 
             // Create claw marks effect
             createClawMarksEffect(target.position());
@@ -135,7 +129,7 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
         // Also hit dragged enemies
         for (LivingEntity draggedEnemy : draggedEnemies) {
             if (draggedEnemy.isAlive()) {
-                hitTarget(draggedEnemy); // Changed from hitTargetNoImmunity to hitTarget
+                hitTarget(draggedEnemy);
                 createClawMarksEffect(draggedEnemy.position());
             }
         }

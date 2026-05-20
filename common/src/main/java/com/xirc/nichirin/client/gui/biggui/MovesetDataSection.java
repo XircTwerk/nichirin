@@ -115,7 +115,6 @@ public class MovesetDataSection extends AbstractGuiPage {
                 hoveredMoveIndex = i;
             }
 
-            // Get move icon using your MoveIcon system
             ResourceLocation moveIcon = MoveIcon.getIcon(currentStyle, move.getMoveId());
             renderMoveIcon(graphics, currentX, currentY, moveIcon, COLOR_PALETTE.BORDER_HI.argb());
 

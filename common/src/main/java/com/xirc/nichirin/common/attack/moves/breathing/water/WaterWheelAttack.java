@@ -15,9 +15,6 @@ import java.util.Set;
  * Second Form: Water Wheel (Wheel Version)
  * The user jumps forward and creates a vertical wheel around them
  * Multi-hit lingering attack that lunges forward slightly
- *
- * All configuration comes from the moveset builder.
- * This class handles only the behavior and visual/audio effects.
  */
 public class WaterWheelAttack extends WaterBreathingAttackBase {
 
@@ -26,8 +23,6 @@ public class WaterWheelAttack extends WaterBreathingAttackBase {
     private int wheelTicks = 0;
 
     public WaterWheelAttack() {
-        // No configuration here - everything comes from moveset
-        // All values will be set via configure() method
     }
 
     @Override

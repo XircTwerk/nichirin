@@ -67,7 +67,6 @@ public class AttackWheelHandler {
             if (wheelOpen && isEscDown && !wasEscDown) {
                 closeWheel();
 
-                // MULTIPLAYER FIX: More aggressive pause menu prevention
                 // Check immediately and for the next few ticks
                 for (int i = 0; i < 3; i++) {
                     if (client.screen != null && client.screen.getClass().getSimpleName().contains("Pause")) {
@@ -86,7 +85,6 @@ public class AttackWheelHandler {
                 }
             }
 
-            // NEW: Capture highlighted move every tick while wheel is open
             if (wheelOpen && currentWheel != null) {
                 int currentHovered = currentWheel.getCurrentlyHoveredMove();
                 if (currentHovered != lastHoveredMove) {
@@ -122,7 +120,6 @@ public class AttackWheelHandler {
 
         // Additional multiplayer-specific check in POST tick
         ClientTickEvent.CLIENT_POST.register(client -> {
-            // MULTIPLAYER FIX: Double-check for pause screens that might appear delayed
             if (wheelOpen && client.screen != null) {
                 String screenName = client.screen.getClass().getSimpleName();
                 if (screenName.contains("Pause")) {
@@ -156,7 +153,6 @@ public class AttackWheelHandler {
 
             boolean isAttackDown = client.options.keyAttack.isDown();
 
-            // NUCLEAR OPTION: Consume ALL clicks while wheel is open
             while (client.options.keyAttack.consumeClick()) {
             }
             while (client.options.keyUse.consumeClick()) {
@@ -191,7 +187,7 @@ public class AttackWheelHandler {
     }
 
     /**
-     * DEBUG: Open the attack wheel - properly uses demon movesets for demons
+     * Open the attack wheel - properly uses demon movesets for demons
      */
     private static void openWheel() {
         Minecraft mc = Minecraft.getInstance();
@@ -208,7 +204,6 @@ public class AttackWheelHandler {
             return;
         }
 
-        // CORRECTED LOGIC: Determine moveset based on what player has, not what they're holding
         AbstractMoveset moveset = null;
         boolean isBreathingWheel = false;
 
@@ -307,7 +302,7 @@ public class AttackWheelHandler {
     }
 
     /**
-     * DEBUG: Execute the selected wheel move - uses the correct moveset type
+     * Execute the selected wheel move - uses the correct moveset type
      */
     private static void executeWheelMove() {
         Minecraft mc = Minecraft.getInstance();
@@ -323,7 +318,6 @@ public class AttackWheelHandler {
             return;
         }
 
-        // CORRECTED: Use the moveset type that was determined when wheel opened
         AbstractMoveset moveset = null;
 
         if (currentWheelIsBreathing) {

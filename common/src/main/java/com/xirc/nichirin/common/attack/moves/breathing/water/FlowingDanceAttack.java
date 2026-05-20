@@ -19,9 +19,6 @@ import java.util.Set;
  * Empowers the user with strength and speed while they slash forth
  * Creates a trail behind the user and constantly damages in front during active duration
  * Allows for comboing with other moves
- *
- * All configuration comes from the moveset builder.
- * This class handles only the behavior and visual/audio effects.
  */
 public class FlowingDanceAttack extends WaterBreathingAttackBase {
 
@@ -31,8 +28,6 @@ public class FlowingDanceAttack extends WaterBreathingAttackBase {
     private int danceTicks = 0;
 
     public FlowingDanceAttack() {
-        // No configuration here - everything comes from moveset
-        // All values will be set via configure() method
     }
 
     @Override

@@ -4,7 +4,6 @@ import com.xirc.nichirin.common.attack.moveset.AbstractMoveset.MoveConfiguration
 import com.xirc.nichirin.common.util.ComboIntegration;
 import com.xirc.nichirin.common.util.HitboxData;
 import com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer;
-import com.xirc.nichirin.common.util.enums.MoveClass;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import com.xirc.nichirin.common.system.DemonManager;
@@ -20,7 +19,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import org.jetbrains.annotations.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,7 +67,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
     @Setter
     protected boolean isActive = false;
     protected int tickCount = 0;
-    protected LivingEntity user;  // FIXED: Changed from Player to LivingEntity
+    protected LivingEntity user;
     protected Level world;
 
     // Self-ticking system - CHANGED to use UUID instead of Player for NPC support
@@ -779,13 +777,6 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
     public boolean hasTeleport() { return teleportDistance != null && teleportDistance > 0; }
     public boolean hasDash() { return dashSpeed != null && dashSpeed > 0; }
     public boolean hasTeleportWindup() { return teleportWindup != null; }
-
-    /**
-     * Legacy method support for MoveClass registration
-     */
-    public void onRegister(MoveClass moveClass) {
-        // Override if needed - default implementation does nothing
-    }
 
     /**
      * Register this attack for automatic ticking - USES UUID for NPC support

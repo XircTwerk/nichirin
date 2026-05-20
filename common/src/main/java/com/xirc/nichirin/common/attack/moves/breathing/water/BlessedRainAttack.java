@@ -14,9 +14,6 @@ import java.util.List;
  * Ultimate level single hit dash that drops ½ a healthbar on hit
  * Very small 1.0 block hitbox - precision attack that can be angled downwards
  * Similar to Butterfly Attack but with teleport instead of dash after leap
- *
- * All configuration comes from the moveset builder.
- * This class handles only the behavior and visual/audio effects.
  */
 public class BlessedRainAttack extends WaterBreathingAttackBase {
 
@@ -30,8 +27,6 @@ public class BlessedRainAttack extends WaterBreathingAttackBase {
     private boolean wasInvulnerable = false;
 
     public BlessedRainAttack() {
-        // No configuration here - everything comes from moveset
-        // All values will be set via configure() method
     }
 
     @Override

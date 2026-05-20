@@ -19,9 +19,6 @@ import java.util.Set;
  * BIG ASS MULTIHIT
  * Erects a waterfall in front of the user, may be divided into several thinner waterfalls
  * Creates massive continuous damage in a large area
- *
- * All configuration comes from the moveset builder.
- * This class handles only the behavior and visual/audio effects.
  */
 public class WaterfallBasinAttack extends WaterBreathingAttackBase {
 
@@ -32,8 +29,6 @@ public class WaterfallBasinAttack extends WaterBreathingAttackBase {
     private static final float WATERFALL_HEIGHT = 6.0f; // BIG ASS WATERFALL
 
     public WaterfallBasinAttack() {
-        // No configuration here - everything comes from moveset
-        // All values will be set via configure() method
     }
 
     @Override

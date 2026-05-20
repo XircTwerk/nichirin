@@ -14,9 +14,6 @@ import java.util.Set;
 /**
  * Pommel Slash - Flame Breathing right-click attack
  * Performs 6 rapid alternating left-right slashes with flame effects
- *
- * All configuration comes from the moveset builder.
- * This class handles only the behavior and visual/audio effects.
  */
 public class PommelSlashAttack extends FlameBreathingAttackBase {
 
@@ -27,8 +24,6 @@ public class PommelSlashAttack extends FlameBreathingAttackBase {
     private Set<LivingEntity> hitEntities = new HashSet<>();
 
     public PommelSlashAttack() {
-        // No configuration here - everything comes from moveset
-        // All values will be set via configure() method
     }
 
     @Override

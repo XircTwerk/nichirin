@@ -20,9 +20,6 @@ import java.util.Set;
  * - Heavy attack with 2s windup
  * - Creates a fiery explosion when move ends
  * - Large AOE
- *
- * All configuration comes from the moveset builder.
- * This class handles only the behavior and visual/audio effects.
  */
 public class BlazingUniverseAttack extends FlameBreathingAttackBase {
 
@@ -31,8 +28,6 @@ public class BlazingUniverseAttack extends FlameBreathingAttackBase {
     private Set<LivingEntity> hitEntities = new HashSet<>();
 
     public BlazingUniverseAttack() {
-        // No configuration here - everything comes from moveset
-        // All values will be set via configure() method
     }
 
     @Override

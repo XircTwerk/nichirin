@@ -17,9 +17,6 @@ import java.util.Set;
  * First Form: Unknowing Fire
  * The user dashes towards the target at tremendous speeds,
  * before unleashing a singular horizontal slash directed at the target's neck for a decapitation.
- *
- * All configuration comes from the moveset builder.
- * This class handles only the behavior and visual/audio effects.
  */
 public class UnknowingFireAttack extends FlameBreathingAttackBase {
 
@@ -41,8 +38,6 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
     private boolean shouldPreventFallDamage = false;
 
     public UnknowingFireAttack() {
-        // No configuration here - everything comes from moveset
-        // All values will be set via configure() method
     }
 
     @Override

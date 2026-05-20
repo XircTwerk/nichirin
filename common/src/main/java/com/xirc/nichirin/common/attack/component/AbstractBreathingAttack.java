@@ -5,7 +5,6 @@ import com.xirc.nichirin.common.network.s2c.TriggerShaderPacket;
 import com.xirc.nichirin.common.util.BreathingManager;
 import com.xirc.nichirin.common.util.ComboIntegration;
 import com.xirc.nichirin.common.util.HitboxData;
-import com.xirc.nichirin.common.util.enums.MoveClass;
 import com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
@@ -21,7 +20,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
@@ -815,13 +813,6 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     }
 
     /**
-     * Legacy method support for MoveClass registration
-     */
-    public void onRegister(MoveClass moveClass) {
-        // Override if needed - default implementation does nothing
-    }
-
-    /**
      * Register this attack for automatic ticking
      */
     private void registerForTicking() {
@@ -847,7 +838,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     }
 
     /**
-     * Tick all self-registered attacks - CALL THIS FROM YOUR MAIN TICK HANDLER
+     * Tick all self-registered attacks
      */
     public static void tickAllActiveAttacks(MinecraftServer server) {
         if (selfTickingAttacks.isEmpty()) {

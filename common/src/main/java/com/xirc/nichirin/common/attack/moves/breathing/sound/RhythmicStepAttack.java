@@ -21,9 +21,6 @@ import java.util.HashSet;
  * - Does a slash at the end
  * - Continuous movement with constant velocity
  * - Explosion trail effects
- *
- * All configuration comes from the moveset builder.
- * This class handles only the behavior and visual/audio effects.
  */
 public class RhythmicStepAttack extends SoundBreathingAttackBase {
 
@@ -37,8 +34,6 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
     private final Set<LivingEntity> hitEntities = new HashSet<>();
 
     public RhythmicStepAttack() {
-        // No configuration here - everything comes from moveset
-        // All values will be set via configure() method
     }
 
     @Override

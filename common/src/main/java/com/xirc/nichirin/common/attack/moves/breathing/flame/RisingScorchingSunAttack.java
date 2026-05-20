@@ -17,9 +17,6 @@ import java.util.List;
  * - Creates a full 360-degree spinning wheel of flames around the player
  * - Deals continuous damage to enemies within the wheel
  * - Deals bonus damage to airborne enemies
- *
- * All configuration comes from the moveset builder.
- * This class handles only the behavior and visual/audio effects.
  */
 public class RisingScorchingSunAttack extends FlameBreathingAttackBase {
 
@@ -28,8 +25,6 @@ public class RisingScorchingSunAttack extends FlameBreathingAttackBase {
     private static final int WHEEL_DURATION = 60; // 3 seconds at 20 ticks per second
 
     public RisingScorchingSunAttack() {
-        // No configuration here - everything comes from moveset
-        // All values will be set via configure() method
     }
 
     @Override
