@@ -24,6 +24,7 @@ public class RengokuAttack extends FlameBreathingAttackBase {
     private Vec3 dashDirection;
     private Vec3 dashStartPos;
     private final Set<LivingEntity> hitEntities = new HashSet<>();
+    private boolean hitConnected = false;
 
     public RengokuAttack() {}
 
@@ -33,6 +34,7 @@ public class RengokuAttack extends FlameBreathingAttackBase {
         isDashing = false;
         dashTicks = 0;
         hitEntities.clear();
+        hitConnected = false;
 
         // Flatten to horizontal so pitch doesn't cause diagonal drift or world-clipping (#11)
         Vec3 look = user.getLookAngle();
@@ -118,7 +120,7 @@ public class RengokuAttack extends FlameBreathingAttackBase {
     }
 
     private void startFastDash() {
-        // Capture start position for teleport-based dashing
+        // Capture start position for velocity-based dashing
         dashStartPos = user.position();
 
         // Create dragon emergence effect
@@ -130,11 +132,17 @@ public class RengokuAttack extends FlameBreathingAttackBase {
     }
 
     private void continueFastDash() {
-        // Teleport-based dash: interpolate from start to end over DASH_DURATION ticks
-        if (dashStartPos != null) {
-            float progress = (float)(dashTicks + 1) / DASH_DURATION;
-            Vec3 targetPos = dashStartPos.add(dashDirection.scale(DASH_DISTANCE * progress));
-            teleportSafe(targetPos);
+        // Velocity-based dash — smooth movement, no teleport snapping
+        if (dashStartPos != null && !hitConnected) {
+            float perTickSpeed = DASH_DISTANCE / (float) DASH_DURATION;
+            Vec3 current = user.getDeltaMovement();
+            user.setDeltaMovement(
+                    dashDirection.x * perTickSpeed,
+                    current.y,
+                    dashDirection.z * perTickSpeed
+            );
+            user.hurtMarked = true;
+            user.hasImpulse = true;
         }
 
         // Create intense dragon trail effects
@@ -149,6 +157,11 @@ public class RengokuAttack extends FlameBreathingAttackBase {
             if (!hitEntities.contains(target)) {
                 hitTargetUltimate(target);
                 hitEntities.add(target);
+                // Cancel user movement on first hit (#37)
+                if (!hitConnected) {
+                    hitConnected = true;
+                    user.setDeltaMovement(Vec3.ZERO);
+                }
             }
         }
 
@@ -317,6 +330,7 @@ public class RengokuAttack extends FlameBreathingAttackBase {
         user.setInvulnerable(false);
 
         hitEntities.clear();
+        hitConnected = false;
 
         // Give user temporary benefits after using ultimate
         user.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 2, false, true));

@@ -6,16 +6,19 @@ import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import com.xirc.nichirin.registry.NichirinMovesetRegistry;
+import com.xirc.nichirin.common.attack.moveset.demon.DefaultDemonMoveset;
+import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.data.PlayerDataStorage;
+import com.xirc.nichirin.common.data.ProgressionHelper;
 import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
 import com.xirc.nichirin.common.system.DemonManager;
+import com.xirc.nichirin.registry.NichirinMovesetRegistry;
+import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
-import com.xirc.nichirin.common.data.ProgressionHelper;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.concurrent.CompletableFuture;
@@ -134,8 +137,8 @@ public class DemonCommand {
         PlayerDataProvider.forceSync(player.server);
 
         // Verify the demon status
-        boolean actuallyDemon = com.xirc.nichirin.common.data.MovesetHelper.hasDemonMoveset(player);
-        String actualDemonId = com.xirc.nichirin.common.data.MovesetHelper.getDemonMovesetId(player);
+        boolean actuallyDemon = MovesetHelper.hasDemonMoveset(player);
+        String actualDemonId = MovesetHelper.getDemonMovesetId(player);
 
         if (!actuallyDemon || !actualDemonId.equals("default_demon")) {
             source.sendFailure(Component.literal("Failed to make " + playerName + " a demon (sync issue)")
@@ -190,15 +193,18 @@ public class DemonCommand {
         PlayerDataStorage.savePlayerData(player);
         PlayerDataProvider.forceSync(player.server);
 
+        // Explicitly clear the client-side blood bar and demon GUI state
+        NichirinPacketRegistry.sendDemonSync(player, 0, 0, false);
+
         // Clean up any demon-specific server state
         try {
-            com.xirc.nichirin.common.attack.moveset.demon.DefaultDemonMoveset.cleanupPlayer(player);
+            DefaultDemonMoveset.cleanupPlayer(player);
         } catch (Exception e) {
             // Ignore cleanup errors
         }
 
         // Verify demon removal
-        boolean stillDemon = com.xirc.nichirin.common.data.MovesetHelper.hasDemonMoveset(player);
+        boolean stillDemon = MovesetHelper.hasDemonMoveset(player);
         if (stillDemon) {
             source.sendFailure(Component.literal("Failed to remove demon status from " + playerName + " (sync issue)")
                     .withStyle(s -> s.withColor(0xFF5555)));

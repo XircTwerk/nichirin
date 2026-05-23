@@ -1,9 +1,12 @@
 package com.xirc.nichirin.common.item.scroll;
 
+import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.system.perks.NichirinPerkRegistry;
+import com.xirc.nichirin.common.system.perks.PerkData;
 import com.xirc.nichirin.common.system.perks.PerkDefinition;
 import com.xirc.nichirin.common.system.perks.PerkManager;
 import net.minecraft.ChatFormatting;
+import net.minecraft.util.RandomSource;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -19,6 +22,7 @@ import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Consumable scroll that grants the player discovery of a specific perk.
@@ -62,8 +66,24 @@ public class PerkScrollItem extends Item {
 
         String perkId = getPerkId(stack);
         if (perkId == null) {
-            player.sendSystemMessage(Component.literal("This scroll is blank.").withStyle(ChatFormatting.GRAY));
-            return InteractionResultHolder.fail(stack);
+            // Blank scroll — discover a random undiscovered perk
+            PerkData data = PlayerDataProvider.getData(serverPlayer).getPerkData();
+            List<PerkDefinition> undiscovered = NichirinPerkRegistry.allPerks().stream()
+                    .filter(def -> !def.cursed && !data.hasDiscovered(def.id))
+                    .collect(Collectors.toList());
+            if (undiscovered.isEmpty()) {
+                player.sendSystemMessage(Component.literal("You already know all available perks.").withStyle(ChatFormatting.GRAY));
+                return InteractionResultHolder.fail(stack);
+            }
+            RandomSource rand = level.getRandom();
+            PerkDefinition chosen = undiscovered.get(rand.nextInt(undiscovered.size()));
+            PerkManager.discover(serverPlayer, chosen.id);
+            level.playSound(null, player.blockPosition(), SoundEvents.ENCHANTMENT_TABLE_USE, SoundSource.PLAYERS, 0.8f, 1.2f);
+            player.sendSystemMessage(Component.literal("The scroll reveals: ")
+                    .withStyle(ChatFormatting.GOLD)
+                    .append(Component.literal(chosen.name).withStyle(ChatFormatting.YELLOW)));
+            if (!player.getAbilities().instabuild) stack.shrink(1);
+            return InteractionResultHolder.consume(stack);
         }
 
         PerkDefinition def = NichirinPerkRegistry.getPerk(perkId);
@@ -98,7 +118,7 @@ public class PerkScrollItem extends Item {
         super.appendHoverText(stack, level, tooltip, flag);
         String perkId = getPerkId(stack);
         if (perkId == null) {
-            tooltip.add(Component.literal("Blank scroll").withStyle(ChatFormatting.GRAY));
+            tooltip.add(Component.literal("Blank scroll — reveals a random undiscovered perk.").withStyle(ChatFormatting.GOLD));
             return;
         }
         PerkDefinition def = NichirinPerkRegistry.getPerk(perkId);

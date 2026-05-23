@@ -21,12 +21,14 @@ public class BeastExplosiveRushAttack extends BeastBreathingAttackBase {
     private Vec3 dashDirection;
     private Vec3 dashStartPos;
     private int dashTick = 0;
+    private boolean hitConnected = false;
 
     @Override
     protected void onStart() {
         dashStarted = false;
         dashStartPos = null;
         dashTick = 0;
+        hitConnected = false;
         Vec3 look = user.getLookAngle();
         dashDirection = new Vec3(look.x, 0, look.z).normalize();
         wasInvulnerable = user.isInvulnerable();
@@ -42,17 +44,30 @@ public class BeastExplosiveRushAttack extends BeastBreathingAttackBase {
     protected void perform() {
         if (world.isClientSide) return;
 
-        // Teleport-based movement for precision — velocity is overridden by client prediction
+        // Velocity-based movement — smooth for client, no snapping
         if (!dashStarted) {
             dashStartPos = user.position();
             dashStarted = true;
+            float speed = dashSpeed != null ? dashSpeed : 14.0f;
+            // Launch with full velocity; divide by duration for per-tick equivalent
+            float perTickSpeed = speed / Math.max(duration, 1);
+            user.setDeltaMovement(dashDirection.scale(perTickSpeed));
+            user.hurtMarked = true;
+            user.hasImpulse = true;
+        } else if (!hitConnected) {
+            // Maintain dash velocity each tick until a hit connects
+            float speed = dashSpeed != null ? dashSpeed : 14.0f;
+            float perTickSpeed = speed / Math.max(duration, 1);
+            Vec3 current = user.getDeltaMovement();
+            // Blend towards dash direction to keep heading straight
+            user.setDeltaMovement(
+                    dashDirection.x * perTickSpeed,
+                    current.y,
+                    dashDirection.z * perTickSpeed
+            );
+            user.hurtMarked = true;
         }
         dashTick++;
-        float speed = dashSpeed != null ? dashSpeed : 14.0f;
-        double totalDistance = speed; // speed is interpreted as total dash distance in blocks
-        float progress = (float) dashTick / Math.max(duration, 1);
-        Vec3 targetPos = dashStartPos.add(dashDirection.scale(totalDistance * progress));
-        teleportSafe(targetPos);
 
         deflectProjectiles();
 
@@ -60,6 +75,11 @@ public class BeastExplosiveRushAttack extends BeastBreathingAttackBase {
         List<LivingEntity> targets = getTargetsInCustomHitbox(center, hitboxSize, HitboxData.HitboxShape.LONG);
         for (LivingEntity target : targets) {
             hitTarget(target);
+            // Cancel user movement on hit (#37)
+            if (!hitConnected) {
+                hitConnected = true;
+                user.setDeltaMovement(Vec3.ZERO);
+            }
         }
 
         createDashTrail();
@@ -112,6 +132,7 @@ public class BeastExplosiveRushAttack extends BeastBreathingAttackBase {
         dashStarted = false;
         dashStartPos = null;
         dashTick = 0;
+        hitConnected = false;
 
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.PLAYERS, 1.0f, 0.6f);

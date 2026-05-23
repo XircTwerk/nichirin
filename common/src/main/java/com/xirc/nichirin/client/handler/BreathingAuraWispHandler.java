@@ -18,10 +18,9 @@ public class BreathingAuraWispHandler {
             if (minecraft.level == null || minecraft.player == null) return;
             if (minecraft.player.isSpectator() || !minecraft.player.isAlive()) return;
 
-            // Spawn once every 20 game ticks. Use a tracked variable instead of % 20 so
-            // a frozen gameTime (singleplayer pause) doesn't fire particles on every frame.
+            // Spawn once every 40 game ticks (2 seconds). Particles follow the player face while alive.
             long gameTime = minecraft.level.getGameTime();
-            if (gameTime - lastSpawnGameTime < 20) return;
+            if (gameTime - lastSpawnGameTime < 40) return;
             lastSpawnGameTime = gameTime;
 
             if (!NichirinClientConfig.get().visual.enableBreathingAuraParticles) return;
@@ -54,6 +53,8 @@ public class BreathingAuraWispHandler {
             BreathingAuraWispParticleProvider.pendingLateralX = rightX * driftMag;
             BreathingAuraWispParticleProvider.pendingLateralZ = rightZ * driftMag;
             BreathingAuraWispParticleProvider.pendingMirrored = false;
+            BreathingAuraWispParticleProvider.pendingOffsetX = rightX * spread;
+            BreathingAuraWispParticleProvider.pendingOffsetZ = rightZ * spread;
             minecraft.level.addParticle(NichirinParticleRegistry.BREATHING_AURA_WISP.get(),
                     baseX + rightX * spread, py, baseZ + rightZ * spread,
                     color[0], color[1], color[2]);
@@ -62,6 +63,8 @@ public class BreathingAuraWispHandler {
             BreathingAuraWispParticleProvider.pendingLateralX = -rightX * driftMag;
             BreathingAuraWispParticleProvider.pendingLateralZ = -rightZ * driftMag;
             BreathingAuraWispParticleProvider.pendingMirrored = true;
+            BreathingAuraWispParticleProvider.pendingOffsetX = -rightX * spread;
+            BreathingAuraWispParticleProvider.pendingOffsetZ = -rightZ * spread;
             minecraft.level.addParticle(NichirinParticleRegistry.BREATHING_AURA_WISP.get(),
                     baseX - rightX * spread, py, baseZ - rightZ * spread,
                     color[0], color[1], color[2]);

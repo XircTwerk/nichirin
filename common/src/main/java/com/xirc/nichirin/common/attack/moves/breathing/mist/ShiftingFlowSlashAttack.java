@@ -7,6 +7,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -19,6 +20,7 @@ public class ShiftingFlowSlashAttack extends MistBreathingAttackBase {
     private Vec3 dashDirection;
     private Vec3 dashStartPos;
     private int dashTick = 0;
+    private Vec3 lastDashPos = null;
     private final Set<LivingEntity> hitDuringDash = new HashSet<>();
 
     @Override
@@ -78,6 +80,7 @@ public class ShiftingFlowSlashAttack extends MistBreathingAttackBase {
             dashTick++;
             float progress = (float) dashTick / Math.max(duration, 1);
             Vec3 targetPos = dashStartPos.add(dashDirection.scale(range * progress));
+            lastDashPos = user.position();
             teleportSafe(targetPos);
         }
         if (world instanceof ServerLevel serverLevel) {
@@ -90,19 +93,39 @@ public class ShiftingFlowSlashAttack extends MistBreathingAttackBase {
     private void slashEnemiesInPath() {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
-        // Hit enemies near the current position — fixed-size hitbox that moves with the player
-        List<LivingEntity> targets = getTargetsInCustomHitbox(userPos, hitboxSize, hitboxSize * 1.5, hitboxSize);
+        // Sweep hitbox from last position to current to fill gaps caused by teleport (#61)
+        List<LivingEntity> targets;
+        if (lastDashPos != null) {
+            targets = getTargetsAlongPath(lastDashPos.add(0, user.getBbHeight() / 2, 0), userPos, hitboxSize);
+        } else {
+            targets = getTargetsInCustomHitbox(userPos, hitboxSize, hitboxSize * 1.5, hitboxSize);
+        }
 
         for (LivingEntity target : targets) {
             if (!hitDuringDash.contains(target)) {
                 hitTarget(target);
                 hitDuringDash.add(target);
                 dashTick = duration; // stop dash on hit
+                user.setDeltaMovement(Vec3.ZERO); // cancel user movement on hit (#37)
 
                 world.playSound(null, target.getX(), target.getY(), target.getZ(),
                         SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.7f, 1.3f);
             }
         }
+    }
+
+    private List<LivingEntity> getTargetsAlongPath(Vec3 from, Vec3 to, float radius) {
+        Vec3 dir = to.subtract(from);
+        double dist = dir.length();
+        if (dist < 0.01) return getTargetsInCustomHitbox(to, radius, radius * 1.5, radius);
+
+        Set<LivingEntity> found = new HashSet<>();
+        int steps = Math.max(1, (int) Math.ceil(dist / (radius * 0.5)));
+        for (int i = 0; i <= steps; i++) {
+            Vec3 sample = from.add(dir.scale((double) i / steps));
+            found.addAll(getTargetsInCustomHitbox(sample, radius, radius * 1.5, radius));
+        }
+        return new ArrayList<>(found);
     }
 
     private void executeFinisher() {
@@ -129,6 +152,7 @@ public class ShiftingFlowSlashAttack extends MistBreathingAttackBase {
         dashStarted = false;
         finisherExecuted = false;
         dashStartPos = null;
+        lastDashPos = null;
         dashTick = 0;
     }
 }

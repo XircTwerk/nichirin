@@ -12,14 +12,15 @@ import java.util.List;
 // Form 2: 8 rapid slashes bypassing immunity frames. Right Click.
 public class EightLayeredMistAttack extends MistBreathingAttackBase {
 
-    private static final int TOTAL_SLASHES = 8;
     private static final int SLASH_INTERVAL = 3; // ticks between each slash
 
     private int slashesPerformed = 0;
+    private int totalSlashes;
 
     @Override
     protected void onStart() {
         slashesPerformed = 0;
+        totalSlashes = Math.max(1, duration / SLASH_INTERVAL);
         createMistParticles();
 
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
@@ -34,7 +35,7 @@ public class EightLayeredMistAttack extends MistBreathingAttackBase {
 
         if (ticksSinceWindup >= 0 && ticksSinceWindup % SLASH_INTERVAL == 0) {
             int slashIndex = ticksSinceWindup / SLASH_INTERVAL;
-            if (slashIndex < TOTAL_SLASHES) {
+            if (slashIndex < totalSlashes) {
                 performSlash(slashIndex);
                 slashesPerformed++;
             }

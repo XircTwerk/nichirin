@@ -226,14 +226,20 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
         }
 
         // Pull dragged enemies toward player via velocity
+        Vec3 dragAnchor = userPos.add(0, user.getBbHeight() / 4, 0);
         for (LivingEntity draggedEnemy : new ArrayList<>(draggedEnemies)) {
             if (draggedEnemy.isAlive()) {
-                Vec3 dragTarget = userPos.subtract(dashDirection.scale(1.5));
-                Vec3 toDrag = dragTarget.subtract(draggedEnemy.position());
+                Vec3 toDrag = dragAnchor.subtract(draggedEnemy.position());
                 double dist = toDrag.length();
-                if (dist > 0.3) {
-                    draggedEnemy.setDeltaMovement(toDrag.normalize().scale(Math.min(dist * 0.8, 2.5)));
+                if (dist > 0.5) {
+                    draggedEnemy.setDeltaMovement(toDrag.normalize().scale(Math.min(dist, 3.5)));
                     draggedEnemy.hurtMarked = true;
+                } else {
+                    draggedEnemy.setDeltaMovement(
+                            user.getDeltaMovement().x,
+                            draggedEnemy.getDeltaMovement().y,
+                            user.getDeltaMovement().z
+                    );
                 }
                 createChainDragEffect(draggedEnemy.position(), userPos);
             } else {

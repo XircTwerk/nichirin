@@ -56,6 +56,15 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
             nextZigzagTick += DASH_DURATION + DASH_INTERVAL;
         }
 
+        // Sample hitboxes on every tick during each dash's travel window
+        if (zigzagsExecuted > 0 && !finisherExecuted) {
+            int lastDashStartTick = windup + (zigzagsExecuted - 1) * (DASH_DURATION + DASH_INTERVAL);
+            int travelTick = tickCount - lastDashStartTick;
+            if (travelTick > 0 && travelTick <= DASH_DURATION) {
+                hitEnemiesAlongPath();
+            }
+        }
+
         if (!finisherExecuted && zigzagsExecuted >= ZIGZAG_COUNT &&
                 tickCount >= windup + (ZIGZAG_COUNT * (DASH_DURATION + DASH_INTERVAL)) + 5) {
             executeFinisher();
@@ -85,7 +94,6 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
         user.setInvulnerable(true);
 
         catchAndDragEnemies();
-        hitEnemiesAlongPath();
         createZigzagTrail(zigzagsExecuted);
 
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
@@ -119,15 +127,20 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
     }
 
     private void continueDragEffect() {
-        Vec3 userPos = user.position();
+        Vec3 userPos = user.position().add(0, user.getBbHeight() / 4, 0);
         for (LivingEntity draggedEnemy : new ArrayList<>(draggedEnemies)) {
             if (draggedEnemy.isAlive()) {
-                Vec3 dragTarget = userPos.subtract(baseDirection.scale(0.67));
-                Vec3 toDrag = dragTarget.subtract(draggedEnemy.position());
+                Vec3 toDrag = userPos.subtract(draggedEnemy.position());
                 double dist = toDrag.length();
-                if (dist > 0.3) {
-                    draggedEnemy.setDeltaMovement(toDrag.normalize().scale(Math.min(dist * 0.8, 2.5)));
+                if (dist > 0.5) {
+                    draggedEnemy.setDeltaMovement(toDrag.normalize().scale(Math.min(dist, 3.5)));
                     draggedEnemy.hurtMarked = true;
+                } else {
+                    draggedEnemy.setDeltaMovement(
+                            user.getDeltaMovement().x,
+                            draggedEnemy.getDeltaMovement().y,
+                            user.getDeltaMovement().z
+                    );
                 }
                 createDragTrailEffect(draggedEnemy.position());
             } else {

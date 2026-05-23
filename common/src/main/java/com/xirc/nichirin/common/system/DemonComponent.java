@@ -49,6 +49,10 @@ public class DemonComponent {
         if (isDemon) {
             setClientBloodPoints(bloodPoints);
             setClientHalfBloodPoints(halfBloodPoints);
+        } else {
+            // Clear client-side demon state so the GUI and blood bar stop showing
+            clientBloodPoints = 0;
+            clientHalfBloodPoints = 0;
         }
     }
 

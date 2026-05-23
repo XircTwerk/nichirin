@@ -19,6 +19,8 @@ import dev.architectury.event.events.common.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.storage.loot.LootPool;
@@ -109,7 +111,7 @@ public class BreathOfNichirinEventHandler {
             MoveExecutor.tickAllAttacks(server);
             AbstractDemonAttack.tickAllActiveAttacks(server);
 
-            // Check for demon players with 0 blood and kill them
+            // Check for demon players with 0 blood and kill them; keep night vision active
             for (ServerPlayer player : server.getPlayerList().getPlayers()) {
                 if (MovesetHelper.hasDemonMoveset(player)) {
                     int bloodPoints = DemonManager.getBloodPoints(player);
@@ -117,6 +119,13 @@ public class BreathOfNichirinEventHandler {
                     if (bloodPoints <= 0 && player.isAlive()) {
                         AbstractDemonAttack.clearSelfTickingAttacks(player);
                         player.hurt(player.damageSources().magic(), Float.MAX_VALUE);
+                    }
+
+                    // Maintain night vision while a demon
+                    MobEffectInstance existing = player.getEffect(MobEffects.NIGHT_VISION);
+                    if (existing == null || existing.getDuration() < 40) {
+                        player.addEffect(new MobEffectInstance(
+                                MobEffects.NIGHT_VISION, 260, 0, false, false, false));
                     }
                 }
             }
@@ -139,7 +148,7 @@ public class BreathOfNichirinEventHandler {
             AbstractDemonAttack.clearSelfTickingAttacks(player);
             DemonManager.cleanupPlayer(player);
             DemonFoodHandler.cleanupPlayer(player);
-            com.xirc.nichirin.registry.NichirinPacketRegistry.cleanupPlayer(player);
+            NichirinPacketRegistry.cleanupPlayer(player);
         } catch (Exception e) {
             e.printStackTrace();
         }

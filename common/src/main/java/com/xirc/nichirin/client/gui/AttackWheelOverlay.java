@@ -370,8 +370,11 @@ public class AttackWheelOverlay {
             int iconX = centerX - ICON_SIZE / 2;
             int iconY = centerY - ICON_SIZE / 2;
 
+            RenderSystem.enableBlend();
+            RenderSystem.defaultBlendFunc();
             RenderSystem.setShaderTexture(0, iconLocation);
             guiGraphics.blit(iconLocation, iconX, iconY, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
+            RenderSystem.disableBlend();
         } else {
             drawMoveNameFallback(guiGraphics, centerX, centerY, segment);
         }

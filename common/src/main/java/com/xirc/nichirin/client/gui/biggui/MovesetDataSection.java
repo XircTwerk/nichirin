@@ -1,5 +1,6 @@
 package com.xirc.nichirin.client.gui.biggui;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.xirc.nichirin.client.gui.MoveIcon;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.data.MovesetHelper;
@@ -153,8 +154,11 @@ public class MovesetDataSection extends AbstractGuiPage {
         graphics.fill(x, y, x + ICON_SIZE, y + ICON_SIZE, COLOR_PALETTE.PANEL_MID.argb());
         graphics.fill(x, y, x + ICON_SIZE, y + 2, withAlpha(borderColor, 0xCC));
 
-        // Draw the actual icon texture
+        // Draw the actual icon texture — enable blend before blit for transparency support
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
         graphics.blit(iconTexture, x, y, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
+        RenderSystem.disableBlend();
     }
 
     /**

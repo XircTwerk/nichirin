@@ -2,23 +2,28 @@ package com.xirc.nichirin.client.particle;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.*;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
+import java.lang.ref.WeakReference;
+
 public class BreathingAuraWispParticleProvider implements ParticleProvider<SimpleParticleType> {
     private final SpriteSet sprites;
 
-    // Set immediately before addParticle to pass outward lateral drift direction.
-    // Safe since particle creation is synchronous on the main thread.
+    // Set immediately before addParticle to pass context. Safe: particle creation is synchronous on main thread.
     public static double pendingLateralX = 0.0;
     public static double pendingLateralZ = 0.0;
-    // True for the particle that should be horizontally mirrored (left nostril).
     public static boolean pendingMirrored = false;
+    // Lateral offset from center (in world units) so we can re-compute face position each tick.
+    public static double pendingOffsetX = 0.0;
+    public static double pendingOffsetZ = 0.0;
 
     public BreathingAuraWispParticleProvider(SpriteSet sprites) {
         this.sprites = sprites;
@@ -32,29 +37,46 @@ public class BreathingAuraWispParticleProvider implements ParticleProvider<Simpl
         double lx = pendingLateralX;
         double lz = pendingLateralZ;
         boolean mirrored = pendingMirrored;
+        double ox = pendingOffsetX;
+        double oz = pendingOffsetZ;
         pendingLateralX = 0.0;
         pendingLateralZ = 0.0;
         pendingMirrored = false;
-        return new BreathingAuraWispParticle(level, x, y, z, (float) xSpeed, (float) ySpeed, (float) zSpeed, lx, lz, mirrored, sprites);
+        pendingOffsetX = 0.0;
+        pendingOffsetZ = 0.0;
+        return new BreathingAuraWispParticle(level, x, y, z, (float) xSpeed, (float) ySpeed, (float) zSpeed, lx, lz, ox, oz, mirrored, sprites);
     }
 
     public static class BreathingAuraWispParticle extends TextureSheetParticle {
         private final SpriteSet animatedSprites;
         private final boolean mirrored;
+        // Lateral offset from center at spawn time, to re-anchor to player face each tick
+        private final double offsetX;
+        private final double offsetZ;
+        // Accumulated drift relative to anchor
+        private double driftX;
+        private double driftY;
+        private double driftZ;
 
         protected BreathingAuraWispParticle(ClientLevel level, double x, double y, double z,
                                             float r, float g, float b, double lateralX, double lateralZ,
+                                            double offsetX, double offsetZ,
                                             boolean mirrored, SpriteSet sprites) {
             super(level, x, y, z, 0, 0, 0);
             this.animatedSprites = sprites;
             this.mirrored = mirrored;
-            this.lifetime = 10;
+            this.offsetX = offsetX;
+            this.offsetZ = offsetZ;
+            this.lifetime = 12;
             this.hasPhysics = false;
             this.friction = 1.0f;
             this.gravity = 0.0f;
             this.xd = (this.random.nextDouble() - 0.5) * 0.006 + lateralX;
             this.yd = 0.003 + this.random.nextDouble() * 0.003;
             this.zd = (this.random.nextDouble() - 0.5) * 0.006 + lateralZ;
+            this.driftX = 0;
+            this.driftY = 0;
+            this.driftZ = 0;
             this.quadSize = 0.045f + this.random.nextFloat() * 0.02f;
             this.setColor(r, g, b);
             this.setAlpha(0.7f);
@@ -63,8 +85,38 @@ public class BreathingAuraWispParticleProvider implements ParticleProvider<Simpl
 
         @Override
         public void tick() {
-            super.tick();
+            this.xo = this.x;
+            this.yo = this.y;
+            this.zo = this.z;
             this.setSpriteFromAge(this.animatedSprites);
+
+            if (this.age++ >= this.lifetime) {
+                this.remove();
+                return;
+            }
+
+            // Accumulate drift and re-anchor to player face position
+            this.driftX += this.xd;
+            this.driftY += this.yd;
+            this.driftZ += this.zd;
+
+            LocalPlayer player = Minecraft.getInstance().player;
+            if (player != null) {
+                float yaw = player.getYRot() * ((float) Math.PI / 180f);
+                double fwdX = -Math.sin(yaw);
+                double fwdZ =  Math.cos(yaw);
+                double forward = 0.28;
+                double anchorX = player.getX() + fwdX * forward + offsetX;
+                double anchorY = player.getEyeY() - 0.10;
+                double anchorZ = player.getZ() + fwdZ * forward + offsetZ;
+                this.x = anchorX + driftX;
+                this.y = anchorY + driftY;
+                this.z = anchorZ + driftZ;
+            } else {
+                this.x += this.xd;
+                this.y += this.yd;
+                this.z += this.zd;
+            }
             float progress = (float) this.age / (float) this.lifetime;
             float alpha;
             if (progress < 0.2f) {

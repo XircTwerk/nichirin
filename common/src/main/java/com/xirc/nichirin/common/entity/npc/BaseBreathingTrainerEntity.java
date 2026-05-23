@@ -32,6 +32,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.player.Player;
+import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
@@ -265,6 +266,11 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
     public @NotNull InteractionResult mobInteract(@NotNull Player player, @NotNull InteractionHand hand) {
         if (hand != InteractionHand.MAIN_HAND) return InteractionResult.PASS;
         if (!(player instanceof ServerPlayer sp)) return InteractionResult.sidedSuccess(true);
+
+        // Don't open dialogue if the player is holding a katana (they're likely mid-attack)
+        if (player.getMainHandItem().getItem() instanceof SimpleKatana) {
+            return InteractionResult.PASS;
+        }
 
         if (mode == TrainerMode.DUELING || mode == TrainerMode.SELF_DEFENSE) {
             sp.displayClientMessage(

@@ -1,5 +1,6 @@
 package com.xirc.nichirin.client.gui.biggui.skills;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.xirc.nichirin.client.data.ClientPerkCache;
 import com.xirc.nichirin.client.gui.PerkIcon;
 import com.xirc.nichirin.client.gui.biggui.AbstractGuiPage;
@@ -887,7 +888,10 @@ public class PerksTab extends AbstractGuiPage {
 
     private static void renderPerkIcon(GuiGraphics g, String perkId, PerkTier tier, int x, int y) {
         ResourceLocation tex = PerkIcon.get(perkId, tier);
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
         g.blit(tex, x, y, 0, 0, 32, 32, 32, 32);
+        RenderSystem.disableBlend();
     }
 
     private int drawBadge(GuiGraphics g, Font font, int x, int y, String label, int color, boolean outlineOnly) {

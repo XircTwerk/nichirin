@@ -155,7 +155,7 @@ public class DefaultDemonMoveset extends AbstractMoveset {
                         })
                 )
 
-                .withMove(new MoveBuilder("demon_grab", "Grab")
+                .withMove(new MoveBuilder("demon_grab", "Throw")
                         .withAnimation("nichirin:demon_grab", 5)
                         .withTiming(80, 3, 12)
                         .withDescription("Grab and instantly throw the target forward")

@@ -144,9 +144,15 @@ public class SkillsSection extends AbstractGuiPage {
         int statX = Math.max(4, w - 116);
         int statY = 10;
         int slots = data.getPerkSlots();
-        g.drawString(font, "Slots " + data.equippedCount() + "/" + slots, statX, statY, TEXT, false);
-        g.drawString(font, "Perks " + data.getDiscoveredIds().size() + "/" + NichirinPerkRegistry.allPerks().size(), statX, statY + 16, TEXT, false);
-        g.drawString(font, "Flaws " + data.equippedFlawCount(), statX, statY + 32, TEXT, false);
+        int maxSlots = 5;
+        String slotText = "Slots " + data.equippedCount() + "/" + slots;
+        g.drawString(font, slotText, statX, statY, TEXT, false);
+        if (slots < maxSlots) {
+            String unlockHint = "(" + (maxSlots - slots) + " more unlockable)";
+            g.drawString(font, unlockHint, statX, statY + 8, TEXT_DIM, false);
+        }
+        g.drawString(font, "Perks " + data.getDiscoveredIds().size() + "/" + NichirinPerkRegistry.allPerks().size(), statX, statY + 18, TEXT, false);
+        g.drawString(font, "Flaws " + data.equippedFlawCount(), statX, statY + 34, TEXT, false);
 
         g.fill(0, HEADER_H - 1, w, HEADER_H, DIVIDER);
     }

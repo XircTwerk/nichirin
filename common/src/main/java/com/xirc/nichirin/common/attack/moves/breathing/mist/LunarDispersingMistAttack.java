@@ -7,6 +7,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -18,7 +19,7 @@ public class LunarDispersingMistAttack extends MistBreathingAttackBase {
     private boolean finisherExecuted = false;
     private Vec3 dashDirection;
     private final Set<LivingEntity> hitDuringFlight = new HashSet<>();
-    private final java.util.List<LivingEntity> draggedEnemies = new java.util.ArrayList<>();
+    private final List<LivingEntity> draggedEnemies = new ArrayList<>();
     private int slashCount = 0;
 
     @Override
@@ -120,15 +121,20 @@ public class LunarDispersingMistAttack extends MistBreathingAttackBase {
         }
 
         // Drag caught enemies along the flight path
-        Vec3 dragUserPos = user.position();
-        for (LivingEntity dragged : new java.util.ArrayList<>(draggedEnemies)) {
+        Vec3 dragAnchor = user.position().add(0, user.getBbHeight() / 4, 0);
+        for (LivingEntity dragged : new ArrayList<>(draggedEnemies)) {
             if (!dragged.isAlive()) { draggedEnemies.remove(dragged); continue; }
-            Vec3 dragTarget = dragUserPos.subtract(dashDirection.scale(1.5));
-            Vec3 toDrag = dragTarget.subtract(dragged.position());
+            Vec3 toDrag = dragAnchor.subtract(dragged.position());
             double dist = toDrag.length();
-            if (dist > 0.3) {
-                dragged.setDeltaMovement(toDrag.normalize().scale(Math.min(dist * 0.8, 2.5)));
+            if (dist > 0.5) {
+                dragged.setDeltaMovement(toDrag.normalize().scale(Math.min(dist, 3.5)));
                 dragged.hurtMarked = true;
+            } else {
+                dragged.setDeltaMovement(
+                        user.getDeltaMovement().x,
+                        dragged.getDeltaMovement().y,
+                        user.getDeltaMovement().z
+                );
             }
         }
 

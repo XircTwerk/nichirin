@@ -160,15 +160,22 @@ public class SplashingWaterFlowAttack extends WaterBreathingAttackBase {
     }
 
     private void continueDragEffect() {
-        Vec3 userPos = user.position();
+        Vec3 userPos = user.position().add(0, user.getBbHeight() / 4, 0);
         for (LivingEntity draggedEnemy : new ArrayList<>(draggedEnemies)) {
             if (draggedEnemy.isAlive()) {
-                Vec3 dragTarget = userPos.subtract(baseDirection.scale(1.5));
-                Vec3 toDrag = dragTarget.subtract(draggedEnemy.position());
+                Vec3 toDrag = userPos.subtract(draggedEnemy.position());
                 double dist = toDrag.length();
-                if (dist > 0.3) {
-                    draggedEnemy.setDeltaMovement(toDrag.normalize().scale(Math.min(dist * 0.8, 2.5)));
+                if (dist > 0.5) {
+                    // Scale velocity so enemies keep up with even fast dashes
+                    draggedEnemy.setDeltaMovement(toDrag.normalize().scale(Math.min(dist, 3.5)));
                     draggedEnemy.hurtMarked = true;
+                } else {
+                    // Close enough — zero out so they don't oscillate
+                    draggedEnemy.setDeltaMovement(
+                            user.getDeltaMovement().x,
+                            draggedEnemy.getDeltaMovement().y,
+                            user.getDeltaMovement().z
+                    );
                 }
             } else {
                 draggedEnemies.remove(draggedEnemy);
