@@ -99,7 +99,7 @@ public class DefaultDemonMoveset extends AbstractMoveset {
 
                 .withCrouchRightClickMove(new MoveBuilder("high_jump", "High Jump")
                         .withAnimation("nichirin:demon_high_jump", 8)
-                        .withTiming(140, 0, 5)
+                        .withTiming(220, 0, 5)
                         .withDescription("Launch into the air, crouch mid-air to stomp down")
                 )
 
@@ -122,10 +122,10 @@ public class DefaultDemonMoveset extends AbstractMoveset {
 
                 .withMove(new MoveBuilder("dashing_strike", "Dashing Strike")
                         .withAnimation("nichirin:demon_dash_strike", 10)
-                        .withTiming(80, 8, 20)
+                        .withTiming(140, 8, 20)
                         .withDamage(12.0f)
-                        .withDashSpeed(4.0f)
-                        .withRange(4.0f)
+                        .withDashSpeed(6.0f)
+                        .withRange(5.5f)
                         .withKnockback(0.2f)
                         .withHitStun(20)
                         .withHitboxSize(2)

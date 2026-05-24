@@ -204,6 +204,12 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
 
         tickCount++;
 
+        // Cancel attack if the user was hit during windup (#84)
+        if (tickCount <= windup && user.hurtTime > 0 && windup > 0) {
+            stop();
+            return;
+        }
+
         // Check if we're past windup phase
         if (tickCount > windup) {
             try {
@@ -370,7 +376,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
             return; // Skip blood gain for NPCs (handled by NPC system)
         }
 
-        if (!DemonManager.isDemon(player) || bloodGainedThisAttack >= maxBloodPerAttack) {
+        if (!DemonManager.isDemon(player)) {
             return;
         }
 
@@ -378,22 +384,20 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
         boolean targetDied = !target.isAlive() || target.getHealth() <= 0;
 
         if (targetDied) {
-            // Give 3 blood for killing
-            int killBlood = Math.min(bloodOnKill, maxBloodPerAttack - bloodGainedThisAttack);
-            if (killBlood > 0) {
-                DemonManager.addBloodPoints(player, killBlood);
-                bloodGainedThisAttack += killBlood;
+            // Kill rewards always apply — multi-kill AoE should grant blood per kill (#90).
+            // The maxBloodPerAttack cap intentionally does NOT apply to kills.
+            if (bloodOnKill > 0) {
+                DemonManager.addBloodPoints(player, bloodOnKill);
 
-                // Send feedback message
                 if (player instanceof ServerPlayer serverPlayer) {
                     serverPlayer.displayClientMessage(
-                            Component.literal("§c+" + killBlood + " Blood (Kill)")
+                            Component.literal("§c+" + bloodOnKill + " Blood (Kill)")
                                     .withStyle(style -> style.withColor(0xDC143C)),
                             true
                     );
                 }
             }
-        } else {
+        } else if (bloodGainedThisAttack < maxBloodPerAttack) {
             // Count hits for blood gain (every 3 hits = 1 blood)
             hitCountForBlood++;
             if (hitCountForBlood >= hitsForBlood) {

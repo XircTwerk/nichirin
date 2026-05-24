@@ -210,6 +210,12 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
 
         tickCount++;
 
+        // Cancel attack if the user was hit during windup (#84)
+        if (tickCount <= windup && user.hurtTime > 0 && windup > 0) {
+            stop();
+            return;
+        }
+
         // Check if we're past windup phase
         if (tickCount > windup) {
             try {

@@ -67,8 +67,8 @@ public class DemonHighJumpAttack extends AbstractDemonAttack<DemonHighJumpAttack
                 entity -> entity != user && entity.isAlive() && !entity.isSpectator()
         );
 
-        // Apply strong upward momentum for jump
-        double jumpStrength = 1.2; // Strong upward velocity (5+ blocks)
+        // Apply strong upward momentum for jump (#86 — buffed)
+        double jumpStrength = 1.5;
 
         // Launch the user
         Vec3 currentVelocity = user.getDeltaMovement();

@@ -204,7 +204,7 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
         if (isAnyAttackActive(state)) return;
 
         long now = player.level().getGameTime();
-        float cost = NichirinModConfig.get().breathing.heavyAttackStaminaCost;
+        float cost = NichirinModConfig.get().stamina.heavyAttackStaminaCost;
 
         if (!StaminaManager.hasStamina(player, cost)) {
             player.displayClientMessage(

@@ -29,7 +29,7 @@ public class StaminaManager {
         if (player == null) return false;
         if (player.isCreative()) return true;
         if (MovesetHelper.hasDemonMoveset(player)) return true;
-        if (NichirinModConfig.get().breathing.unlimitedStamina) return true;
+        if (NichirinModConfig.get().stamina.unlimitedStamina) return true;
         return false;
     }
 
@@ -77,7 +77,7 @@ public class StaminaManager {
 
         // Enhanced regeneration logic
         if (data.timeSinceUse >= effectiveDelay && data.current < data.max) {
-            float regenAmount = NichirinModConfig.get().combat.staminaRegenRate / 20.0f;
+            float regenAmount = NichirinModConfig.get().stamina.staminaRegenRate / 20.0f;
 
             // Apply perk regen multiplier (iron_core, enduring_spirit LEGENDARY, second_wind)
             if (player instanceof ServerPlayer sp) {

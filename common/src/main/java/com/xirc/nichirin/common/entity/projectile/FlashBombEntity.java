@@ -47,6 +47,11 @@ public class FlashBombEntity extends ThrowableItemProjectile {
         this.setDeltaMovement(this.getDeltaMovement().scale(1.0).add(0, -0.1, 0));
     }
 
+    /** Constructor used by dispenser projectile behavior. */
+    public FlashBombEntity(Level level, double x, double y, double z) {
+        super(NichirinEntityRegistry.FLASH_BOMB.get(), x, y, z, level);
+    }
+
     @Override
     protected Item getDefaultItem() {
         return com.xirc.nichirin.registry.NichirinItemRegistry.FLASH_BOMB.get();

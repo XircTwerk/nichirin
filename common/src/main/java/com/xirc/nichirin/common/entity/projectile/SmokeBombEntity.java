@@ -28,6 +28,11 @@ public class SmokeBombEntity extends ThrowableItemProjectile {
         super(NichirinEntityRegistry.SMOKE_BOMB.get(), shooter, level);
     }
 
+    /** Constructor used by dispenser projectile behavior. */
+    public SmokeBombEntity(Level level, double x, double y, double z) {
+        super(NichirinEntityRegistry.SMOKE_BOMB.get(), x, y, z, level);
+    }
+
     @Override
     protected Item getDefaultItem() {
         return com.xirc.nichirin.registry.NichirinItemRegistry.SMOKE_BOMB.get();

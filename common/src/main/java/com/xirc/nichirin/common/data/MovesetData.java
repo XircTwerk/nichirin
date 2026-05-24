@@ -255,7 +255,9 @@ public class MovesetData {
     public void setMovesetId(@Nullable String movesetId) {
 
         if (movesetId == null) {
-            clearMovesets();
+            // Only clear breathing — the BreathingStylesSection clear button calls this and must
+            // not wipe the demon moveset (see #89).
+            setBreathingMovesetId(null);
             return;
         }
 

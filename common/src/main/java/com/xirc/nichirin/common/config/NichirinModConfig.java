@@ -37,17 +37,22 @@ public class NichirinModConfig implements ConfigData {
         @ConfigEntry.Gui.Tooltip
         public boolean enableParrySystem = true;
 
-        @ConfigEntry.Gui.Tooltip
-        @ConfigEntry.BoundedDiscrete(min = 1, max = 100)
+        /** @deprecated moved to {@link StaminaConfig#staminaRegenRate} (#82). */
+        @Deprecated
+        @ConfigEntry.Gui.Excluded
         public int staminaRegenRate = 40;
     }
 
-    // Breathing
+    // Stamina (#82)
 
     @ConfigEntry.Gui.CollapsibleObject
-    public BreathingConfig breathing = new BreathingConfig();
+    public StaminaConfig stamina = new StaminaConfig();
 
-    public static class BreathingConfig {
+    public static class StaminaConfig {
+
+        @ConfigEntry.Gui.Tooltip
+        @ConfigEntry.BoundedDiscrete(min = 1, max = 100)
+        public int staminaRegenRate = 40;
 
         @ConfigEntry.Gui.Tooltip
         @ConfigEntry.BoundedDiscrete(min = 0, max = 30)
@@ -58,6 +63,44 @@ public class NichirinModConfig implements ConfigData {
         public int heavyAttackStaminaCost = 20;
 
         @ConfigEntry.Gui.Tooltip
+        public boolean unlimitedStamina = false;
+    }
+
+    // Breathing (#83)
+
+    @ConfigEntry.Gui.CollapsibleObject
+    public BreathingConfig breathing = new BreathingConfig();
+
+    public static class BreathingConfig {
+
+        @ConfigEntry.Gui.Tooltip
+        public boolean infiniteBreath = false;
+
+        @ConfigEntry.Gui.Tooltip
+        public boolean freeBreathMoves = false;
+
+        @ConfigEntry.Gui.Tooltip
+        @ConfigEntry.BoundedDiscrete(min = 1, max = 100)
+        public int maxBreath = 100;
+
+        /** Per-tick regen (so 1 = 20/sec). */
+        @ConfigEntry.Gui.Tooltip
+        @ConfigEntry.BoundedDiscrete(min = 1, max = 50)
+        public int breathRegenRate = 1;
+
+        /** @deprecated moved to {@link StaminaConfig#lightAttackStaminaCost} (#82). */
+        @Deprecated
+        @ConfigEntry.Gui.Excluded
+        public int lightAttackStaminaCost = 10;
+
+        /** @deprecated moved to {@link StaminaConfig#heavyAttackStaminaCost} (#82). */
+        @Deprecated
+        @ConfigEntry.Gui.Excluded
+        public int heavyAttackStaminaCost = 20;
+
+        /** @deprecated moved to {@link StaminaConfig#unlimitedStamina} (#82). */
+        @Deprecated
+        @ConfigEntry.Gui.Excluded
         public boolean unlimitedStamina = false;
     }
 

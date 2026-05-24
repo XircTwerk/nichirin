@@ -45,7 +45,7 @@ public class NichirinConfig {
             Integer clothValue = switch (key) {
                 case COMBO_WINDOW_TICKS      -> cfg.combat.comboWindowTicks;
                 case PARRY_WINDOW_TICKS      -> cfg.combat.parryWindowTicks;
-                case STAMINA_REGEN_RATE      -> cfg.combat.staminaRegenRate;
+                case STAMINA_REGEN_RATE      -> cfg.stamina.staminaRegenRate;
                 default                      -> null;
             };
             if (clothValue != null) return clothValue;

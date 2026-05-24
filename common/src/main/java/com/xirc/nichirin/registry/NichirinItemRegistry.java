@@ -335,5 +335,54 @@ public interface NichirinItemRegistry {
         return new Item.Properties();
     }
 
-    static void init() {}
+    static void init() {
+        // Defer dispenser behavior registration until items are actually registered.
+        dev.architectury.event.events.common.LifecycleEvent.SERVER_BEFORE_START.register(
+                server -> registerDispenserBehaviors());
+    }
+
+    /**
+     * Register dispense behaviors so smoke/flash bombs are launched as projectiles instead
+     * of being dropped as items (#85).
+     */
+    static void registerDispenserBehaviors() {
+        if (DispenserState.registered) return;
+        DispenserState.registered = true;
+        net.minecraft.core.dispenser.AbstractProjectileDispenseBehavior flashBehavior =
+                new net.minecraft.core.dispenser.AbstractProjectileDispenseBehavior() {
+                    @Override
+                    protected net.minecraft.world.entity.projectile.Projectile getProjectile(
+                            net.minecraft.world.level.Level level, net.minecraft.core.Position pos,
+                            net.minecraft.world.item.ItemStack stack) {
+                        com.xirc.nichirin.common.entity.projectile.FlashBombEntity bomb =
+                                new com.xirc.nichirin.common.entity.projectile.FlashBombEntity(
+                                        level, pos.x(), pos.y(), pos.z());
+                        bomb.setItem(stack);
+                        return bomb;
+                    }
+                };
+
+        net.minecraft.core.dispenser.AbstractProjectileDispenseBehavior smokeBehavior =
+                new net.minecraft.core.dispenser.AbstractProjectileDispenseBehavior() {
+                    @Override
+                    protected net.minecraft.world.entity.projectile.Projectile getProjectile(
+                            net.minecraft.world.level.Level level, net.minecraft.core.Position pos,
+                            net.minecraft.world.item.ItemStack stack) {
+                        com.xirc.nichirin.common.entity.projectile.SmokeBombEntity bomb =
+                                new com.xirc.nichirin.common.entity.projectile.SmokeBombEntity(
+                                        level, pos.x(), pos.y(), pos.z());
+                        bomb.setItem(stack);
+                        return bomb;
+                    }
+                };
+
+        net.minecraft.world.level.block.DispenserBlock.registerBehavior(FLASH_BOMB.get(), flashBehavior);
+        net.minecraft.world.level.block.DispenserBlock.registerBehavior(SMOKE_BOMB.get(), smokeBehavior);
+    }
+
+    /** Holds mutable flag for one-shot dispenser registration (interfaces can't hold mutable state). */
+    final class DispenserState {
+        static boolean registered = false;
+        private DispenserState() {}
+    }
 }

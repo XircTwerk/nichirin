@@ -121,11 +121,17 @@ public class BreathOfNichirinEventHandler {
                         player.hurt(player.damageSources().magic(), Float.MAX_VALUE);
                     }
 
-                    // Maintain night vision while a demon
+                    // Maintain infinite night vision while a demon
                     MobEffectInstance existing = player.getEffect(MobEffects.NIGHT_VISION);
-                    if (existing == null || existing.getDuration() < 40) {
+                    if (existing == null || existing.getDuration() < 200) {
                         player.addEffect(new MobEffectInstance(
-                                MobEffects.NIGHT_VISION, 260, 0, false, false, false));
+                                MobEffects.NIGHT_VISION, Integer.MAX_VALUE, 0, false, false, false));
+                    }
+                } else {
+                    // Not a demon — strip demon-granted night vision (long duration) immediately
+                    MobEffectInstance existing = player.getEffect(MobEffects.NIGHT_VISION);
+                    if (existing != null && existing.getDuration() > 1000) {
+                        player.removeEffect(MobEffects.NIGHT_VISION);
                     }
                 }
             }

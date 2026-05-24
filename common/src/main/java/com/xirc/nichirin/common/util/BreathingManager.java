@@ -30,9 +30,11 @@ public class BreathingManager {
      */
     private static boolean hasUnlimitedBreath(Player player) {
         if (player == null) return false;
-
-        // Creative mode players have unlimited breath
-        return player.isCreative();
+        if (player.isCreative()) return true;
+        // Config toggles from breathing section (#83)
+        if (com.xirc.nichirin.common.config.NichirinModConfig.get().breathing.infiniteBreath) return true;
+        if (com.xirc.nichirin.common.config.NichirinModConfig.get().breathing.freeBreathMoves) return true;
+        return false;
     }
 
     /**
@@ -72,6 +74,15 @@ public class BreathingManager {
             data.timeSinceUse = 0;
             return;
         }
+
+        // Sync max breath and base regen rate from config (#83)
+        var breathCfg = com.xirc.nichirin.common.config.NichirinModConfig.get().breathing;
+        float configMax = breathCfg.maxBreath;
+        if (data.max != configMax) {
+            data.max = configMax;
+            if (data.current > data.max) data.current = data.max;
+        }
+        data.regenRate = breathCfg.breathRegenRate;
 
         // Regeneration logic (slower than stamina)
         if (data.timeSinceUse >= data.regenDelay && data.current < data.max) {

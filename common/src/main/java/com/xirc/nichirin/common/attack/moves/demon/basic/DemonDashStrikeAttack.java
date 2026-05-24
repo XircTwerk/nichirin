@@ -53,7 +53,7 @@ public class DemonDashStrikeAttack extends AbstractDemonAttack<DemonDashStrikeAt
 
         // Sustain dash velocity until the punch fires
         if (dashExecuted && !punchExecuted && dashDirection != null) {
-            double dashStrength = 1.8;
+            double dashStrength = 2.4;
             Vec3 current = user.getDeltaMovement();
             user.setDeltaMovement(dashDirection.x * dashStrength, current.y, dashDirection.z * dashStrength);
             user.hurtMarked = true;
@@ -70,7 +70,7 @@ public class DemonDashStrikeAttack extends AbstractDemonAttack<DemonDashStrikeAt
         if (user == null || dashDirection == null) return;
 
         // Apply strong forward momentum for dash
-        double dashStrength = 1.8; // Strong dash velocity
+        double dashStrength = 2.4; // Strong dash velocity
         Vec3 dashVelocity = dashDirection.scale(dashStrength);
 
         // Maintain some vertical component if jumping

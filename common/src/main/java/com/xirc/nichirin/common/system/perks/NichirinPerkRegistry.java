@@ -17,8 +17,7 @@ public final class NichirinPerkRegistry {
 
     static {
 
-        // ── BREATH ───────────────────────────────────────────────────────────
-
+        // BREATH
         register(PerkDefinition.builder("breath_efficiency", "Breath Efficiency")
                 .description("Reduced breathing cost for techniques.")
                 .icon(Items.SUGAR)
@@ -109,8 +108,7 @@ public final class NichirinPerkRegistry {
                 .upgradeCost(PerkTier.LEGENDARY, PerkUpgradeCost.builder(22).item(Items.BLAZE_ROD, 10).item(Items.GOLDEN_APPLE, 2).item(Items.NETHER_STAR, 1).build())
                 .build());
 
-        // ── COMBAT ───────────────────────────────────────────────────────────
-
+        // COMBAT
         register(PerkDefinition.builder("iron_will", "Iron Will")
                 .description("Take reduced damage when below 30% HP.")
                 .icon(Items.IRON_INGOT)
@@ -233,8 +231,7 @@ public final class NichirinPerkRegistry {
                 .upgradeCost(PerkTier.LEGENDARY, PerkUpgradeCost.builder(22).item(Items.BLAZE_ROD, 6).item(Items.GOLDEN_APPLE, 1).item(Items.GHAST_TEAR, 1).build())
                 .build());
 
-        // ── MOVEMENT & SURVIVAL ──────────────────────────────────────────────
-
+        // MOVEMENT & SURVIVAL
         register(PerkDefinition.builder("ghost_step", "Ghost Step")
                 .description("Increased i-frames on dodges.")
                 .icon(Items.PHANTOM_MEMBRANE)
@@ -369,8 +366,7 @@ public final class NichirinPerkRegistry {
                 .upgradeCost(PerkTier.EPIC,      PerkUpgradeCost.builder(14).item(Items.GOLDEN_APPLE, 2).item(Items.DIAMOND, 1).build())
                 .build());
 
-        // ── SPECIAL / SITUATIONAL ────────────────────────────────────────────
-
+        // SPECIAL / SITUATIONAL
         register(PerkDefinition.builder("hunters_instinct", "Hunter's Instinct")
                 .description("Passive enemy detection at short range.")
                 .icon(Items.ENDER_EYE)
@@ -451,8 +447,7 @@ public final class NichirinPerkRegistry {
                 .upgradeCost(PerkTier.LEGENDARY, PerkUpgradeCost.builder(22).item(Items.NETHERITE_INGOT, 2).item(Items.TOTEM_OF_UNDYING, 1).item(Items.NETHER_STAR, 1).build())
                 .build());
 
-        // ── PINNACLE ─────────────────────────────────────────────────────────
-
+        // PINNACLE
         register(PerkDefinition.builder("slayers_resolve", "Slayer's Resolve")
                 .description("Deal extra damage proportional to your missing HP.")
                 .icon(Items.NETHER_STAR)
@@ -463,8 +458,7 @@ public final class NichirinPerkRegistry {
                 .tierDesc(PerkTier.LEGENDARY, "For every 1% HP missing, deal 0.3% more damage. At 50% HP: +15% damage. At 10% HP: +27% damage.")
                 .build());
 
-        // ── FLAWS ─────────────────────────────────────────────────────────────
-
+        // FLAWS
         registerFlaw(new FlawDefinition("brittle_bones",  "Brittle Bones",  "Your bones fracture more easily. Fall damage is doubled and knockback sends you further."));
         registerFlaw(new FlawDefinition("demon_bait",     "Demon Bait",     "Demons are innately drawn to you. You have a permanent 30% aggro increase from all demons."));
         registerFlaw(new FlawDefinition("slow_recovery",  "Slow Recovery",  "Your body heals sluggishly. Natural health regeneration is 40% slower."));
