@@ -31,7 +31,7 @@ public class BreathingManager {
     private static boolean hasUnlimitedBreath(Player player) {
         if (player == null) return false;
         if (player.isCreative()) return true;
-        // Config toggles from breathing section (#83)
+        // Config toggles from breathing section
         if (com.xirc.nichirin.common.config.NichirinModConfig.get().breathing.infiniteBreath) return true;
         if (com.xirc.nichirin.common.config.NichirinModConfig.get().breathing.freeBreathMoves) return true;
         return false;
@@ -75,7 +75,7 @@ public class BreathingManager {
             return;
         }
 
-        // Sync max breath and base regen rate from config (#83)
+        // Sync max breath and base regen rate from config
         var breathCfg = com.xirc.nichirin.common.config.NichirinModConfig.get().breathing;
         float configMax = breathCfg.maxBreath;
         if (data.max != configMax) {

@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.attack.moveset;
 
+import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.*;
 import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
@@ -115,13 +116,7 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
     public static void tick(Player player) {
         KatanaState state = playerStates.get(player.getUUID());
         if (state == null) return;
-
-        if (state.currentSlash        != null && state.currentSlash.isActive())       state.currentSlash.tick(player);
-        if (state.currentDoubleSlash  != null && state.currentDoubleSlash.isActive()) state.currentDoubleSlash.tick(player);
-        if (state.currentRisingSlash  != null && state.currentRisingSlash.isActive()) state.currentRisingSlash.tick(player);
-        if (state.currentCheck        != null && state.currentCheck.isActive())        state.currentCheck.tick(player);
-        if (state.currentOverhead     != null && state.currentOverhead.isActive())     state.currentOverhead.tick(player);
-        if (state.currentThrust       != null && state.currentThrust.isActive())       state.currentThrust.tick(player);
+        // Attack ticking is handled by MoveExecutor.tickAllAttacks
 
         // Reset combo if the window expired
         long now = player.level().getGameTime();
@@ -174,17 +169,17 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
 
         if (isCombo && state.comboCount == 1) {
             state.currentSlash = createLightSlash2();
-            state.currentSlash.start(player);
             state.comboCount = 2;
             state.slash2CooldownUntil = now + state.currentSlash.getCooldown();
+            MoveExecutor.executeAttack(player, state.currentSlash, "default_katana", "slash");
             if (player instanceof ServerPlayer sp)
                 NichirinPacketRegistry.broadcastPlayerAnimation(sp, new PlayerAnimationPacket(sp.getId(), "sword.slash"));
             for (LivingEntity t : targets) ComboIntegration.handleKatanaHit(player, t, 5, 5.0f);
         } else {
             state.currentSlash = createLightSlash1();
-            state.currentSlash.start(player);
             state.comboCount = 1;
             state.slash1CooldownUntil = now + state.currentSlash.getCooldown();
+            MoveExecutor.executeAttack(player, state.currentSlash, "default_katana", "slash");
             if (player instanceof ServerPlayer sp)
                 NichirinPacketRegistry.broadcastPlayerAnimation(sp, new PlayerAnimationPacket(sp.getId(), "sword.slash"));
             for (LivingEntity t : targets) ComboIntegration.handleKatanaHit(player, t, 5, 4.0f);
@@ -220,8 +215,8 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
             if (!StaminaManager.consume(player, cost)) return;
 
             state.currentRisingSlash = createRisingSlashAttack();
-            state.currentRisingSlash.start(player);
             state.risingSlashCooldownUntil = now + state.currentRisingSlash.getCooldown();
+            MoveExecutor.executeAttack(player, state.currentRisingSlash, "default_katana", "rising_slash");
             if (player instanceof ServerPlayer sp)
                 NichirinPacketRegistry.broadcastPlayerAnimation(sp, new PlayerAnimationPacket(sp.getId(), "sword.vertical"));
             for (LivingEntity t : findTargetsInRange(player, 2.5f))
@@ -232,8 +227,8 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
             if (!StaminaManager.consume(player, cost)) return;
 
             state.currentDoubleSlash = createDoubleSlashAttack();
-            state.currentDoubleSlash.start(player);
             state.doubleSlashCooldownUntil = now + state.currentDoubleSlash.getCooldown();
+            MoveExecutor.executeAttack(player, state.currentDoubleSlash, "default_katana", "double_slash");
             if (player instanceof ServerPlayer sp)
                 NichirinPacketRegistry.broadcastPlayerAnimation(sp, new PlayerAnimationPacket(sp.getId(), "sword.doubleslash"));
             for (LivingEntity t : findTargetsInRange(player, 2.8f))
@@ -267,9 +262,8 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
                 if (now < state.checkCooldownUntil) return;
                 if (!StaminaManager.consume(player, SPECIAL_STAMINA_COST)) return;
                 state.currentCheck = KatanaCheckAttack.createDefault();
-                state.currentCheck.start(player);
-                int checkCd = state.currentCheck.getCooldown();
-                state.checkCooldownUntil = now + checkCd;
+                state.checkCooldownUntil = now + state.currentCheck.getCooldown();
+                MoveExecutor.executeAttack(player, state.currentCheck, "default_katana", "check");
                 if (player instanceof ServerPlayer sp)
                     NichirinPacketRegistry.broadcastPlayerAnimation(sp, new PlayerAnimationPacket(sp.getId(), "sword.check"));
             }
@@ -277,9 +271,8 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
                 if (now < state.overheadCooldownUntil) return;
                 if (!StaminaManager.consume(player, SPECIAL_STAMINA_COST)) return;
                 state.currentOverhead = KatanaOverheadAttack.createDefault();
-                state.currentOverhead.start(player);
-                int overheadCd = state.currentOverhead.getCooldown();
-                state.overheadCooldownUntil = now + overheadCd;
+                state.overheadCooldownUntil = now + state.currentOverhead.getCooldown();
+                MoveExecutor.executeAttack(player, state.currentOverhead, "default_katana", "overhead");
                 if (player instanceof ServerPlayer sp)
                     NichirinPacketRegistry.broadcastPlayerAnimation(sp, new PlayerAnimationPacket(sp.getId(), "sword.vertical"));
             }
@@ -287,9 +280,8 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
                 if (now < state.thrustCooldownUntil) return;
                 if (!StaminaManager.consume(player, SPECIAL_STAMINA_COST)) return;
                 state.currentThrust = KatanaThrustAttack.createDefault();
-                state.currentThrust.start(player);
-                int thrustCd = state.currentThrust.getCooldown();
-                state.thrustCooldownUntil = now + thrustCd;
+                state.thrustCooldownUntil = now + state.currentThrust.getCooldown();
+                MoveExecutor.executeAttack(player, state.currentThrust, "default_katana", "thrust");
                 if (player instanceof ServerPlayer sp)
                     NichirinPacketRegistry.broadcastPlayerAnimation(sp, new PlayerAnimationPacket(sp.getId(), "sword.thrust"));
             }

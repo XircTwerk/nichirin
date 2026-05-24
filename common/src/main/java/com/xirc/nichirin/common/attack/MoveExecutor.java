@@ -253,6 +253,13 @@ public class MoveExecutor {
         } catch (NoSuchMethodException ignored) {}
         catch (Exception e) { e.printStackTrace(); return; }
 
+        // AbstractKatanaAttack uses start(LivingEntity) without a Level parameter
+        try {
+            attack.getClass().getMethod("start", LivingEntity.class).invoke(attack, entity);
+            return;
+        } catch (NoSuchMethodException ignored) {}
+        catch (Exception e) { e.printStackTrace(); return; }
+
         if (entity instanceof Player player) {
             try {
                 attack.getClass().getMethod("start", Player.class, Level.class).invoke(attack, player, entity.level());

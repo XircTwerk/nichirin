@@ -36,7 +36,7 @@ public class RengokuAttack extends FlameBreathingAttackBase {
         hitEntities.clear();
         hitConnected = false;
 
-        // Flatten to horizontal so pitch doesn't cause diagonal drift or world-clipping (#11)
+        // Flatten to horizontal so pitch doesn't cause diagonal drift or world-clipping
         Vec3 look = user.getLookAngle();
         dashDirection = new Vec3(look.x, 0, look.z).normalize();
         dashStartPos = null;
@@ -157,7 +157,7 @@ public class RengokuAttack extends FlameBreathingAttackBase {
             if (!hitEntities.contains(target)) {
                 hitTargetUltimate(target);
                 hitEntities.add(target);
-                // Cancel user movement on first hit (#37)
+                // Cancel user movement on first hit
                 if (!hitConnected) {
                     hitConnected = true;
                     user.setDeltaMovement(Vec3.ZERO);

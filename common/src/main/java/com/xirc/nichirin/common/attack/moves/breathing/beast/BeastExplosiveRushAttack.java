@@ -75,7 +75,7 @@ public class BeastExplosiveRushAttack extends BeastBreathingAttackBase {
         List<LivingEntity> targets = getTargetsInCustomHitbox(center, hitboxSize, HitboxData.HitboxShape.LONG);
         for (LivingEntity target : targets) {
             hitTarget(target);
-            // Cancel user movement on hit (#37)
+            // Cancel user movement on hit
             if (!hitConnected) {
                 hitConnected = true;
                 user.setDeltaMovement(Vec3.ZERO);

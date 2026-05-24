@@ -93,7 +93,7 @@ public class ShiftingFlowSlashAttack extends MistBreathingAttackBase {
     private void slashEnemiesInPath() {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
-        // Sweep hitbox from last position to current to fill gaps caused by teleport (#61)
+        // Sweep hitbox from last position to current to fill gaps caused by teleport
         List<LivingEntity> targets;
         if (lastDashPos != null) {
             targets = getTargetsAlongPath(lastDashPos.add(0, user.getBbHeight() / 2, 0), userPos, hitboxSize);
@@ -106,7 +106,7 @@ public class ShiftingFlowSlashAttack extends MistBreathingAttackBase {
                 hitTarget(target);
                 hitDuringDash.add(target);
                 dashTick = duration; // stop dash on hit
-                user.setDeltaMovement(Vec3.ZERO); // cancel user movement on hit (#37)
+                user.setDeltaMovement(Vec3.ZERO); // cancel user movement on hit
 
                 world.playSound(null, target.getX(), target.getY(), target.getZ(),
                         SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.7f, 1.3f);

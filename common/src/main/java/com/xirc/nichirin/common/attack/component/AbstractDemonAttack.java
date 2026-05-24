@@ -204,7 +204,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
 
         tickCount++;
 
-        // Cancel attack if the user was hit during windup (#84)
+        // Cancel attack if the user was hit during windup
         if (tickCount <= windup && user.hurtTime > 0 && windup > 0) {
             stop();
             return;
@@ -384,7 +384,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
         boolean targetDied = !target.isAlive() || target.getHealth() <= 0;
 
         if (targetDied) {
-            // Kill rewards always apply — multi-kill AoE should grant blood per kill (#90).
+            // Kill rewards always apply — multi-kill AoE grants blood per kill.
             // The maxBloodPerAttack cap intentionally does NOT apply to kills.
             if (bloodOnKill > 0) {
                 DemonManager.addBloodPoints(player, bloodOnKill);

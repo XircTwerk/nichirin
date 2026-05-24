@@ -343,7 +343,7 @@ public interface NichirinItemRegistry {
 
     /**
      * Register dispense behaviors so smoke/flash bombs are launched as projectiles instead
-     * of being dropped as items (#85).
+     * of being dropped as items.
      */
     static void registerDispenserBehaviors() {
         if (DispenserState.registered) return;

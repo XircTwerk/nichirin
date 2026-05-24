@@ -77,6 +77,16 @@ public class CooldownHUD {
         float progress = 1.0f - (float)remaining / (float)cooldown.duration;
         progress = Mth.clamp(progress, 0.0f, 1.0f);
 
+        // Move icon to the left of the entry, same size as the timer bar
+        net.minecraft.resources.ResourceLocation icon = lookupIcon(name);
+        if (icon != null) {
+            int iconX = x - ENTRY_HEIGHT - 2;
+            RenderSystem.enableBlend();
+            RenderSystem.defaultBlendFunc();
+            graphics.blit(icon, iconX, y, 0, 0, ENTRY_HEIGHT, ENTRY_HEIGHT, ENTRY_HEIGHT, ENTRY_HEIGHT);
+            RenderSystem.disableBlend();
+        }
+
         // Background
         graphics.fill(x, y, x + width, y + ENTRY_HEIGHT, 0x80000000);
 
@@ -177,6 +187,32 @@ public class CooldownHUD {
      */
     public static void removeCooldown(String name) {
         cooldowns.remove(name);
+    }
+
+    /**
+     * Look up the icon for a cooldown entry by checking the player's active movesets.
+     * Returns null if neither moveset has a matching move name.
+     */
+    private static net.minecraft.resources.ResourceLocation lookupIcon(String moveDisplayName) {
+        try {
+            var player = Minecraft.getInstance().player;
+            if (player == null) return null;
+            var movesetData = com.xirc.nichirin.common.data.PlayerDataProvider.getMovesetData(player);
+
+            String breathingId = movesetData.getBreathingMovesetId();
+            if (breathingId != null) {
+                net.minecraft.resources.ResourceLocation icon = MoveIcon.getIconFormatted(breathingId, moveDisplayName);
+                if (icon != null) return icon;
+            }
+
+            String demonId = movesetData.getDemonMovesetId();
+            if (demonId != null) {
+                net.minecraft.resources.ResourceLocation icon = MoveIcon.getIconFormatted(demonId, moveDisplayName);
+                if (icon != null) return icon;
+            }
+        } catch (Exception ignored) {
+        }
+        return null;
     }
 
     private static class CooldownEntry {

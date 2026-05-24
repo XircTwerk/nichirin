@@ -22,6 +22,9 @@ import java.util.List;
  */
 public class TheBigGui extends Screen {
 
+    // Always render as though GUI scale = 2
+    private static final double FIXED_GUI_SCALE = 2.0;
+
     // UI Constants
     private static final int BUTTON_WIDTH = 100;
     private static final int BUTTON_HEIGHT = 20;
@@ -61,8 +64,24 @@ public class TheBigGui extends Screen {
         PlayerStats.initialize();
     }
 
+    /**
+     * Compute the scale ratio that makes everything render as if GUI scale = 2.
+     */
+    private double getScaleRatio() {
+        if (minecraft == null) return 1.0;
+        double currentScale = minecraft.getWindow().getGuiScale();
+        if (currentScale <= 0) return 1.0;
+        return FIXED_GUI_SCALE / currentScale;
+    }
+
     @Override
     protected void init() {
+        // Rescale width/height so widgets lay out at fixed scale 2
+        double ratio = getScaleRatio();
+        if (ratio != 1.0) {
+            this.width = (int) (this.width / ratio);
+            this.height = (int) (this.height / ratio);
+        }
         super.init();
 
         // Clear previous buttons
@@ -115,6 +134,21 @@ public class TheBigGui extends Screen {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        double ratio = getScaleRatio();
+        if (ratio != 1.0) {
+            graphics.pose().pushPose();
+            graphics.pose().scale((float) ratio, (float) ratio, 1.0f);
+            // Translate raw screen-pixel mouse coords into our fixed-scale GUI space
+            mouseX = (int) (mouseX / ratio);
+            mouseY = (int) (mouseY / ratio);
+            renderScaled(graphics, mouseX, mouseY, partialTick);
+            graphics.pose().popPose();
+            return;
+        }
+        renderScaled(graphics, mouseX, mouseY, partialTick);
+    }
+
+    private void renderScaled(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         graphics.fill(0, 0, this.width, this.height, BACKGROUND_COLOR);
 
         int contentRight = this.width - BUTTON_WIDTH - RIGHT_MARGIN - 10;
@@ -185,6 +219,9 @@ public class TheBigGui extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+        double ratio = getScaleRatio();
+        mouseX /= ratio;
+        mouseY /= ratio;
         if (currentSection == GuiSection.SKILLS) {
             if (skillsSection.handleScroll(mouseX - CONTENT_X, mouseY - CONTENT_Y, delta)) return true;
         }
@@ -193,6 +230,9 @@ public class TheBigGui extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        double ratio = getScaleRatio();
+        mouseX /= ratio;
+        mouseY /= ratio;
         int contentRight = this.width - BUTTON_WIDTH - RIGHT_MARGIN - 10;
         int clickContentWidth = contentRight - CONTENT_X;
         int clickContentHeight = this.height - BOTTOM_MARGIN - CONTENT_Y;
@@ -213,6 +253,18 @@ public class TheBigGui extends Screen {
         }
 
         return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        double ratio = getScaleRatio();
+        return super.mouseReleased(mouseX / ratio, mouseY / ratio, button);
+    }
+
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dx, double dy) {
+        double ratio = getScaleRatio();
+        return super.mouseDragged(mouseX / ratio, mouseY / ratio, button, dx / ratio, dy / ratio);
     }
 
     @Getter

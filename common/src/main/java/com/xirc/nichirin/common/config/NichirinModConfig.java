@@ -37,13 +37,13 @@ public class NichirinModConfig implements ConfigData {
         @ConfigEntry.Gui.Tooltip
         public boolean enableParrySystem = true;
 
-        /** @deprecated moved to {@link StaminaConfig#staminaRegenRate} (#82). */
+        /** @deprecated moved to {@link StaminaConfig#staminaRegenRate}. */
         @Deprecated
         @ConfigEntry.Gui.Excluded
         public int staminaRegenRate = 40;
     }
 
-    // Stamina (#82)
+    // Stamina
 
     @ConfigEntry.Gui.CollapsibleObject
     public StaminaConfig stamina = new StaminaConfig();
@@ -66,7 +66,7 @@ public class NichirinModConfig implements ConfigData {
         public boolean unlimitedStamina = false;
     }
 
-    // Breathing (#83)
+    // Breathing
 
     @ConfigEntry.Gui.CollapsibleObject
     public BreathingConfig breathing = new BreathingConfig();
@@ -88,17 +88,17 @@ public class NichirinModConfig implements ConfigData {
         @ConfigEntry.BoundedDiscrete(min = 1, max = 50)
         public int breathRegenRate = 1;
 
-        /** @deprecated moved to {@link StaminaConfig#lightAttackStaminaCost} (#82). */
+        /** @deprecated moved to {@link StaminaConfig#lightAttackStaminaCost}. */
         @Deprecated
         @ConfigEntry.Gui.Excluded
         public int lightAttackStaminaCost = 10;
 
-        /** @deprecated moved to {@link StaminaConfig#heavyAttackStaminaCost} (#82). */
+        /** @deprecated moved to {@link StaminaConfig#heavyAttackStaminaCost}. */
         @Deprecated
         @ConfigEntry.Gui.Excluded
         public int heavyAttackStaminaCost = 20;
 
-        /** @deprecated moved to {@link StaminaConfig#unlimitedStamina} (#82). */
+        /** @deprecated moved to {@link StaminaConfig#unlimitedStamina}. */
         @Deprecated
         @ConfigEntry.Gui.Excluded
         public boolean unlimitedStamina = false;
