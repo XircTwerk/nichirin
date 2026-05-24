@@ -70,7 +70,7 @@ public class MistBreathingMoveset extends AbstractMoveset {
                 .withDashSpeed(12.0f)
                 .withBreathCost(10.0f)
                 .withHitStun(14)
-                .withHitboxSize(1.5f)
+                .withHitboxSize(20.0f)
                 .withDescription("Lightning-fast thrusting lunge that pierces multiple enemies.")
                 .build();
     }
@@ -129,7 +129,7 @@ public class MistBreathingMoveset extends AbstractMoveset {
                         .withRange(12.0f)
                         .withKnockback(0.25f)
                         .withDashSpeed(10.0f)
-                        .withBreathCost(38.0f)
+                        .withBreathCost(25.0f)
                         .withHitStun(15)
                         .withHitboxSize(7.5f)
                         .withDescription("5-hop zigzag charge with large hitboxes. Drags and slashes enemies into a powerful finisher.")
@@ -150,7 +150,7 @@ public class MistBreathingMoveset extends AbstractMoveset {
                         .withRange(14.0f)
                         .withKnockback(0.35f)
                         .withDashSpeed(8.0f)
-                        .withBreathCost(42.0f)
+                        .withBreathCost(25.0f)
                         .withHitStun(20)
                         .withHitboxSize(3.0f)
                         .withDescription("Aerial charge with multiple slashes. Ends with a devastating vertical circular slash.")

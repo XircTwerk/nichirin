@@ -123,9 +123,9 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("striking_tide", "Striking Tide")
                         .withAnimation("nichirin:striking_tide", 14)
                         .withTiming(360, 12, 40) // 7 second cooldown, windup, 2s execution
-                        .withDamage(10.0f) // Good damage for 360° attack
+                        .withDamage(6.0f) // Good damage for 360° attack
                         .withRange(4.5f) // Large omnidirectional range
-                        .withKnockback(0.4f)
+                        .withKnockback(0.1f)
                         .withBreathCost(25.0f)
                         .withHitStun(8)
                         .withHitboxSize(4.5f) // Full radius
@@ -187,7 +187,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("drop_ripple_thrust", "Drop Ripple Thrust")
                         .withAnimation("nichirin:drop_ripple_thrust", 13)
                         .withTiming(300, 10, 35) // 5 second cooldown, 0.5s windup, 1.75s duration
-                        .withDamage(10.0f) // Good thrust damage
+                        .withDamage(8.5f) // Good thrust damage
                         .withRange(5.0f) // Thrust range
                         .withKnockback(0f)
                         .withBreathCost(15.0f)
@@ -208,7 +208,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("waterfall_basin", "Waterfall Basin")
                         .withAnimation("nichirin:waterfall_basin", 16)
                         .withTiming(400, 16, 120) // 9 second cooldown, windup, 3s duration
-                        .withDamage(2.5f) // High DPS multi-hit
+                        .withDamage(2.0f) // High DPS multi-hit
                         .withRange(6.0f) // Large waterfall area
                         .withKnockback(0.0f) // Light knockback to keep enemies in waterfall
                         .withBreathCost(35.0f)
