@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.data;
 
 import com.xirc.nichirin.common.network.s2c.ProgressionSyncPacket;
+import com.xirc.nichirin.common.system.DemonManager;
 import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.event.events.common.TickEvent;
 import net.minecraft.server.level.ServerPlayer;
@@ -226,22 +227,30 @@ public class PlayerDataProvider {
         try {
             PlayerData data = getData(player);
 
-            // Send breathing moveset if exists
             String breathingId = data.getMovesetData().getBreathingMovesetId();
-            if (breathingId != null) {
-                com.xirc.nichirin.registry.NichirinPacketRegistry.sendToPlayer(player, breathingId);
-            }
-
-            // Send demon moveset if exists
             String demonId = data.getMovesetData().getDemonMovesetId();
-            if (demonId != null) {
-                com.xirc.nichirin.registry.NichirinPacketRegistry.sendToPlayer(player, demonId);
+
+            if (breathingId == null && demonId == null) {
+                // No movesets — clear everything on the client
+                com.xirc.nichirin.registry.NichirinPacketRegistry.sendToPlayer(player, (String) null);
+            } else {
+                if (demonId != null) {
+                    com.xirc.nichirin.registry.NichirinPacketRegistry.sendToPlayer(player, demonId);
+                }
+                if (breathingId != null) {
+                    // Send breathing; if demon was just removed, clear client demon slot first
+                    if (demonId == null) {
+                        // Clear all client state, then re-set only the breathing
+                        com.xirc.nichirin.registry.NichirinPacketRegistry.sendToPlayer(player, (String) null);
+                    }
+                    com.xirc.nichirin.registry.NichirinPacketRegistry.sendToPlayer(player, breathingId);
+                }
             }
 
-            // If no movesets, send null to clear client
-            if (breathingId == null && demonId == null) {
-                com.xirc.nichirin.registry.NichirinPacketRegistry.sendToPlayer(player, (String) null);
-            }
+            // Always sync the demon GUI state so it clears when demon is removed
+            boolean isDemon = demonId != null;
+            int bloodPoints = isDemon ? com.xirc.nichirin.common.system.DemonManager.getBloodPoints(player) : 0;
+            com.xirc.nichirin.registry.NichirinPacketRegistry.sendDemonSync(player, bloodPoints, bloodPoints * 2, isDemon);
 
             ProgressionSyncPacket.sendToPlayer(player);
 

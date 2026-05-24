@@ -66,7 +66,7 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
 
                     target.setDeltaMovement(
                             target.getDeltaMovement().x * 0.1,
-                            0.1,
+                            0.6,
                             target.getDeltaMovement().z * 0.1
                     );
                     target.hurtMarked = true;

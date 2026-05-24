@@ -393,27 +393,25 @@ public class KatanaBlock {
     }
 
     /**
-     * Interrupt the attacker's moves when they get parried
+     * Interrupt the attacker's moves when they get parried, and stun them for 1 second.
      */
     private static void interruptAttackerMoves(ServerPlayer attacker) {
         try {
-            // Stop all active attacks via MoveExecutor
             MoveExecutor.clearAttacks(attacker);
-
-            // Clear any self-ticking attacks from AbstractBreathingAttack system
             AbstractBreathingAttack.clearSelfTickingAttacks(attacker);
-
-            // Apply default cooldown for parried attacks
             sendParriedCooldown(attacker, "Move (Parried)", PARRIED_ATTACK_COOLDOWN);
 
-            // Notify attacker (but don't stun them)
+            // Stun the attacker for 1 second (20 ticks); amplifier 1 triggers movement restriction
+            attacker.addEffect(new MobEffectInstance(
+                    NichirinEffectRegistry.STUNNED.get(),
+                    20, 1, false, false, true));
+
             attacker.displayClientMessage(
                     Component.literal("✗ Parried!")
                             .withStyle(style -> style.withColor(0xFF5555).withBold(true)),
                     true
             );
 
-            // Play stun-break sound for the parried attacker
             attacker.level().playSound(null, attacker.getX(), attacker.getY(), attacker.getZ(),
                     SoundEvents.SHIELD_BREAK, SoundSource.PLAYERS, 0.8f, 0.8f);
 

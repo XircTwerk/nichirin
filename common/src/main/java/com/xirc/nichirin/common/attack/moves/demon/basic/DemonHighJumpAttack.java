@@ -23,6 +23,7 @@ import java.util.List;
 public class DemonHighJumpAttack extends AbstractDemonAttack<DemonHighJumpAttack, IDemonAttacker> {
 
     private boolean jumpExecuted = false;
+    private boolean preventFallDamage = false;
     private Vec3 startPosition;
 
     public DemonHighJumpAttack() {
@@ -151,6 +152,16 @@ public class DemonHighJumpAttack extends AbstractDemonAttack<DemonHighJumpAttack
                     landing.x, landing.y, landing.z, 3, 0.3, 0.1, 0.3, 0.05);
         }
         jumpExecuted = false;
+        preventFallDamage = true;
         startPosition = null;
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        if (preventFallDamage && user != null && user.onGround()) {
+            user.resetFallDistance();
+            preventFallDamage = false;
+        }
     }
 }

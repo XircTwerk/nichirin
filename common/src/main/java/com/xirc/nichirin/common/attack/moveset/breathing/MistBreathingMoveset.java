@@ -55,7 +55,7 @@ public class MistBreathingMoveset extends AbstractMoveset {
                 .withKnockback(0.05f)
                 .withBreathCost(15.0f)
                 .withHitStun(12)
-                .withHitboxSize(3.0f)
+                .withHitboxSize(4.5f)
                 .withDescription("Eight rapid slashes that ignore immunity frames.")
                 .build();
     }

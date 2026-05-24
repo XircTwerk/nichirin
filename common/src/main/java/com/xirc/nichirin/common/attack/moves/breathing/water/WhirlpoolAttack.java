@@ -4,6 +4,8 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
@@ -77,9 +79,12 @@ public class WhirlpoolAttack extends WaterBreathingAttackBase {
         whirlpoolCenter = user.position();
 
         // Launch user upward 4 blocks
-        user.setDeltaMovement(0, 0.8, 0); // Strong upward velocity
+        user.setDeltaMovement(0, 0.8, 0);
         user.hurtMarked = true;
         user.hasImpulse = true;
+
+        // Apply slow falling so the user lands safely after the whirlpool
+        user.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, duration + 40, 0, false, false, false));
 
         // Sync to client
         if (user instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {

@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.util;
 
+import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.network.s2c.SyncBreathPacket;
 import com.xirc.nichirin.common.system.perks.PerkManager;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
@@ -64,6 +65,12 @@ public class BreathingManager {
                     data.current = Math.min(data.max, data.current + passiveRegen);
                 }
             }
+        }
+
+        // Pause regen while a move is actively executing
+        if (MoveExecutor.hasActiveAttacks(player)) {
+            data.timeSinceUse = 0;
+            return;
         }
 
         // Regeneration logic (slower than stamina)

@@ -38,8 +38,8 @@ public class PerkData {
     /** Whether this player has the perk system enabled. */
     private boolean perksEnabled = true;
 
-    /** How many perk slots this player has unlocked (starts at 1, upgradeable to 5). */
-    private int perkSlots = 1;
+    /** How many perk slots this player has unlocked (starts at 5). */
+    private int perkSlots = 5;
 
     /** Named preset loadouts. */
     private final List<PerkPreset> presets = new ArrayList<>();
@@ -247,7 +247,7 @@ public class PerkData {
 
     public void load(CompoundTag tag) {
         perksEnabled = !tag.contains("PerksEnabled") || tag.getBoolean("PerksEnabled");
-        perkSlots = tag.contains("PerkSlots") ? Math.max(1, tag.getInt("PerkSlots")) : 1;
+        perkSlots = tag.contains("PerkSlots") ? Math.max(5, tag.getInt("PerkSlots")) : 5;
 
         discovered.clear();
         ListTag discoveredTag = tag.getList("Discovered", Tag.TAG_STRING);

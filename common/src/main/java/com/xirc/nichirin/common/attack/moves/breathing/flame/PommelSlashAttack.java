@@ -17,9 +17,9 @@ import java.util.Set;
  */
 public class PommelSlashAttack extends FlameBreathingAttackBase {
 
-    private static final int TOTAL_SLASHES = 6;
-    private static final int SLASH_INTERVAL = 3; // Ticks between each slash
+    private static final int SLASH_INTERVAL = 3;
 
+    private int totalSlashes;
     private int slashesPerformed = 0;
     private Set<LivingEntity> hitEntities = new HashSet<>();
 
@@ -28,6 +28,7 @@ public class PommelSlashAttack extends FlameBreathingAttackBase {
 
     @Override
     protected void onStart() {
+        totalSlashes = Math.max(1, duration / SLASH_INTERVAL);
         slashesPerformed = 0;
         hitEntities.clear();
 
@@ -50,7 +51,7 @@ public class PommelSlashAttack extends FlameBreathingAttackBase {
         if (ticksSinceWindup >= 0 && ticksSinceWindup % SLASH_INTERVAL == 0) {
             int slashIndex = ticksSinceWindup / SLASH_INTERVAL;
 
-            if (slashIndex < TOTAL_SLASHES) {
+            if (slashIndex < totalSlashes) {
                 performSlash(slashIndex);
                 slashesPerformed++;
             }

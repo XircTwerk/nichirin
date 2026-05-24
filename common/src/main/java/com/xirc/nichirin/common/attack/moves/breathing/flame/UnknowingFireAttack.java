@@ -31,6 +31,7 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
     @Getter
     @Setter
     private Vec3 startPosition;
+    private Vec3 lastDashPos = null;
     private Set<LivingEntity> hitEntities = new HashSet<>();
 
     // Invulnerability and fall damage protection
@@ -44,6 +45,7 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
     protected void onStart() {
         dashStarted = false;
         slashExecuted = false;
+        lastDashPos = null;
         hitEntities.clear();
 
         dashDirection = user.getLookAngle().normalize();
@@ -138,18 +140,24 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
     }
 
     private void continueDash() {
-        // Maintain dash velocity - using Flame Tiger's method
+        // Maintain dash velocity
         Vec3 dashVelocity = dashDirection.scale(DASH_DISTANCE * 6);
+        Vec3 prevPos = lastDashPos;
+        lastDashPos = user.position().add(0, user.getBbHeight() / 2, 0);
         user.setDeltaMovement(dashVelocity);
         user.hurtMarked = true;
 
         // Create continuous intense trail
         createIntenseDashTrail();
 
-        // Hit enemies during dash with light damage - using constant hitboxes like Flame Tiger
-        List<LivingEntity> dashTargets = getTargetsInCustomHitbox(
-                user.position().add(0, user.getBbHeight() / 2, 0),
-                hitboxSize, hitboxSize * 1.25, hitboxSize);
+        // Sweep hitbox from last position to current to eliminate gaps from high-speed movement
+        List<LivingEntity> dashTargets;
+        Vec3 center = user.position().add(0, user.getBbHeight() / 2, 0);
+        if (prevPos != null) {
+            dashTargets = getTargetsInLine(prevPos, center, hitboxSize * 1.5);
+        } else {
+            dashTargets = getTargetsInCustomHitbox(center, hitboxSize * 1.5f, hitboxSize * 1.25f, hitboxSize * 1.5f);
+        }
 
         for (LivingEntity target : dashTargets) {
             if (!hitEntities.contains(target)) {
@@ -389,9 +397,9 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 1.0f, 0.7f);
 
-        // Clear state
         dashStarted = false;
         slashExecuted = false;
+        lastDashPos = null;
         hitEntities.clear();
     }
 

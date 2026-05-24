@@ -13,13 +13,14 @@ import java.util.List;
 // Fourth Fang: Slice 'n' Dice. 8 rapid diagonal slashes that bypass immunity frames.
 public class BeastSliceNDiceAttack extends BeastBreathingAttackBase {
 
-    private static final int TOTAL_SLASHES = 8;
     private static final int TICKS_PER_SLASH = 2;
 
+    private int totalSlashes;
     private int lastSlashTick = -1;
 
     @Override
     protected void onStart() {
+        totalSlashes = Math.max(1, duration / TICKS_PER_SLASH);
         lastSlashTick = -1;
         playSlashSound();
     }
@@ -32,7 +33,7 @@ public class BeastSliceNDiceAttack extends BeastBreathingAttackBase {
         if (activeTick < 0) return;
 
         int slashIndex = activeTick / TICKS_PER_SLASH;
-        if (slashIndex >= TOTAL_SLASHES) return;
+        if (slashIndex >= totalSlashes) return;
 
         if (lastSlashTick < 0 || activeTick / TICKS_PER_SLASH != (lastSlashTick - windup - 1) / TICKS_PER_SLASH) {
             lastSlashTick = tickCount;

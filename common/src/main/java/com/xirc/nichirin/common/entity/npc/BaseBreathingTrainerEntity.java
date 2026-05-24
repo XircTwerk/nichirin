@@ -558,14 +558,51 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
 
     private static class TrainerDuelGoal extends MeleeAttackGoal {
         private final BaseBreathingTrainerEntity trainer;
+        private int moveCooldown = 0;
+
         TrainerDuelGoal(BaseBreathingTrainerEntity trainer) {
             super(trainer, 1.1, true);
             this.trainer = trainer;
             setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
         }
+
         @Override public boolean canUse()           { return trainer.mode == TrainerMode.DUELING && super.canUse(); }
         @Override public boolean canContinueToUse() { return trainer.mode == TrainerMode.DUELING && super.canContinueToUse(); }
         @Override protected double getAttackReachSqr(net.minecraft.world.entity.@NotNull LivingEntity t) { return 9.0; }
         @Override protected int getAttackInterval() { return 25; }
+
+        @Override
+        public void tick() {
+            super.tick();
+
+            if (trainer.moveset == null) return;
+
+            if (moveCooldown > 0) {
+                moveCooldown--;
+                return;
+            }
+
+            // Try to use a moveset move when close enough to the target
+            LivingEntity target = trainer.getTarget();
+            if (target == null) return;
+
+            double distSq = trainer.distanceToSqr(target);
+            if (distSq > 100.0) return; // Only use moves within 10 blocks
+
+            int moveCount = trainer.moveset.getMoveCount();
+            if (moveCount == 0) return;
+
+            // Pick a random available move and execute it
+            int attempts = 0;
+            while (attempts < moveCount) {
+                int moveIndex = trainer.level().random.nextInt(moveCount);
+                if (trainer.canUseMove(moveIndex)) {
+                    trainer.performMovesetMove(moveIndex);
+                    moveCooldown = 40; // 2 second cooldown between moveset uses
+                    break;
+                }
+                attempts++;
+            }
+        }
     }
 }

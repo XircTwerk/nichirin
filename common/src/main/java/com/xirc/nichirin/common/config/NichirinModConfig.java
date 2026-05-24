@@ -38,8 +38,8 @@ public class NichirinModConfig implements ConfigData {
         public boolean enableParrySystem = true;
 
         @ConfigEntry.Gui.Tooltip
-        @ConfigEntry.BoundedDiscrete(min = 1, max = 20)
-        public int staminaRegenRate = 8;
+        @ConfigEntry.BoundedDiscrete(min = 1, max = 100)
+        public int staminaRegenRate = 40;
     }
 
     // Breathing
@@ -174,7 +174,7 @@ public class NichirinModConfig implements ConfigData {
 
         @ConfigEntry.Gui.Tooltip
         @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
-        public int maxEquippedPerks = 1;
+        public int maxEquippedPerks = 5;
 
         /** Number of perks a player can equip before they must also equip a flaw. */
         @ConfigEntry.Gui.Tooltip

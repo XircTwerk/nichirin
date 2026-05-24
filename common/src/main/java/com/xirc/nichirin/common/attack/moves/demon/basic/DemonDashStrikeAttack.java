@@ -51,8 +51,16 @@ public class DemonDashStrikeAttack extends AbstractDemonAttack<DemonDashStrikeAt
             dashExecuted = true;
         }
 
+        // Sustain dash velocity until the punch fires
+        if (dashExecuted && !punchExecuted && dashDirection != null) {
+            double dashStrength = 1.8;
+            Vec3 current = user.getDeltaMovement();
+            user.setDeltaMovement(dashDirection.x * dashStrength, current.y, dashDirection.z * dashStrength);
+            user.hurtMarked = true;
+        }
+
         // Execute punch at end of dash (during active frames)
-        if (dashExecuted && !punchExecuted && tickCount >= windup + 12) { // Punch 12 ticks after dash starts
+        if (dashExecuted && !punchExecuted && tickCount >= windup + 12) {
             executePunch();
             punchExecuted = true;
         }
