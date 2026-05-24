@@ -40,7 +40,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
         MoveConfiguration tempConfig = new MoveBuilder("pommel_slash", "Pommel Slash")
                 .withAnimation("nichirin:pommel_slash", 8)
                 .withTiming(0, 5, 18)
-                .withDamage(3.0f)
+                .withDamage(1.5f)
                 .withRange(4.0f)
                 .withKnockback(0f)
                 .withBreathCost(15.0f)
@@ -140,7 +140,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withTiming(120, 10, 40) // 6 second cooldown, dash duration
                         .withDamage(18.0f)
                         .withDashSpeed(8.0f) // 8 block dash
-                        .withRange(8.0f) // Dash distance
+                        .withRange(16.0f) // Dash distance
                         .withKnockback(0.2f) // Light knockback to keep enemies close
                         .withBreathCost(50.0f)
                         .withHitStun(10) // Short stun for combo potential
