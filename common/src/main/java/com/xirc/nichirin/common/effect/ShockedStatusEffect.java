@@ -7,10 +7,13 @@ import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.AttributeMap;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -21,6 +24,8 @@ public class ShockedStatusEffect extends MobEffect {
 
     // UUID for the movement speed modifier
     private static final UUID MOVEMENT_MODIFIER_UUID = UUID.fromString("7107DE5E-7CE8-4030-940E-514C1F160890");
+    private static final Map<UUID, Long> recentLaunches = new HashMap<>();
+    private static final int LAUNCH_GRACE_TICKS = 12;
 
     public ShockedStatusEffect() {
         super(MobEffectCategory.HARMFUL, 0xFFFF00); // Yellow color for thunder
@@ -34,6 +39,10 @@ public class ShockedStatusEffect extends MobEffect {
         );
     }
 
+    public static void markRecentLaunch(LivingEntity entity) {
+        recentLaunches.put(entity.getUUID(), entity.level().getGameTime() + LAUNCH_GRACE_TICKS);
+    }
+
     @Override
     public boolean isDurationEffectTick(int duration, int amplifier) {
         // Apply effect every tick for continuous particles and movement restriction
@@ -44,12 +53,19 @@ public class ShockedStatusEffect extends MobEffect {
     public void applyEffectTick(LivingEntity entity, int amplifier) {
         // Restrict movement but not rotation
         Vec3 motion = entity.getDeltaMovement();
+        Long graceEnd = recentLaunches.get(entity.getUUID());
+        boolean inLaunchGrace = graceEnd != null && entity.level().getGameTime() < graceEnd;
+
+        if (graceEnd != null && entity.level().getGameTime() >= graceEnd) {
+            recentLaunches.remove(entity.getUUID());
+            inLaunchGrace = false;
+        }
 
         // Heavily reduce horizontal movement (on top of the attribute modifier)
         double horizontalMultiplier = 0.1; // Additional 90% reduction for near-immobilization
         entity.setDeltaMovement(
                 motion.x * horizontalMultiplier,
-                Math.min(motion.y, 0.0), // Prevent jumping but allow falling
+                inLaunchGrace ? motion.y : Math.min(motion.y, 0.0), // Prevent jumping but allow falling
                 motion.z * horizontalMultiplier
         );
 
@@ -116,7 +132,7 @@ public class ShockedStatusEffect extends MobEffect {
     }
 
     @Override
-    public void removeAttributeModifiers(LivingEntity entity, net.minecraft.world.entity.ai.attributes.AttributeMap attributeMap, int amplifier) {
+    public void removeAttributeModifiers(LivingEntity entity, AttributeMap attributeMap, int amplifier) {
         super.removeAttributeModifiers(entity, attributeMap, amplifier);
 
         // Spawn a final burst of particles when effect ends

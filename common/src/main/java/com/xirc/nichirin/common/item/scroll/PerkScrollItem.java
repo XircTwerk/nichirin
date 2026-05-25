@@ -121,7 +121,7 @@ public class PerkScrollItem extends Item {
         super.appendHoverText(stack, level, tooltip, flag);
         String perkId = getPerkId(stack);
         if (perkId == null) {
-            tooltip.add(Component.literal("Blank scroll — reveals a random undiscovered perk.").withStyle(ChatFormatting.GOLD));
+            tooltip.add(Component.literal("Reveals a random undiscovered perk.").withStyle(ChatFormatting.GOLD));
             return;
         }
         PerkDefinition def = NichirinPerkRegistry.getPerk(perkId);

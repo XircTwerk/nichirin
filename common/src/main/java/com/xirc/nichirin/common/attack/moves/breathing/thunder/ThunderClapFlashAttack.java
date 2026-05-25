@@ -1,9 +1,11 @@
 package com.xirc.nichirin.common.attack.moves.breathing.thunder;
 
 import com.xirc.nichirin.common.util.TeleportUtil;
+import com.xirc.nichirin.common.effect.ShockedStatusEffect;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.sounds.SoundEvents;
@@ -67,11 +69,16 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
 
                     target.setDeltaMovement(
                             target.getDeltaMovement().x * 0.1,
-                            0.9,
+                            0.45,
                             target.getDeltaMovement().z * 0.1
                     );
                     target.hurtMarked = true;
                     target.hasImpulse = true;
+                    ShockedStatusEffect.markRecentLaunch(target);
+
+                    if (world instanceof ServerLevel serverLevel) {
+                        serverLevel.getChunkSource().broadcast(target, new ClientboundSetEntityMotionPacket(target));
+                    }
 
                     if (target instanceof ServerPlayer serverPlayer) {
                         serverPlayer.connection.send(new ClientboundSetEntityMotionPacket(target));
