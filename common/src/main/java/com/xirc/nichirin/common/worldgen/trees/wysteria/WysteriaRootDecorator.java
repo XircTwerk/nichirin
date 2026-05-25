@@ -2,6 +2,8 @@ package com.xirc.nichirin.common.worldgen.trees.wysteria;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.xirc.nichirin.registry.NichirinBlockRegistry;
+import com.xirc.nichirin.registry.NichirinTreeDecoratorTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.levelgen.feature.treedecorators.TreeDecorator;
@@ -20,7 +22,7 @@ public class WysteriaRootDecorator extends TreeDecorator {
 
     @Override
     protected TreeDecoratorType<?> type() {
-        return com.xirc.nichirin.registry.NichirinTreeDecoratorTypes.WYSTERIA_ROOT_DECORATOR.get();
+        return NichirinTreeDecoratorTypes.WYSTERIA_ROOT_DECORATOR.get();
     }
 
     @Override
@@ -33,7 +35,7 @@ public class WysteriaRootDecorator extends TreeDecorator {
         BlockPos trunkBase = context.roots().get(0);
 
         net.minecraft.world.level.block.state.BlockState logState =
-                com.xirc.nichirin.registry.NichirinBlockRegistry.WYSTERIA_LOG.get().defaultBlockState();
+                NichirinBlockRegistry.WYSTERIA_LOG.get().defaultBlockState();
 
         // Determine trunk type (check if there's a 2x2 base)
         boolean isThickTrunk = context.isAir(trunkBase.offset(1, 0, 0).above()) == false &&

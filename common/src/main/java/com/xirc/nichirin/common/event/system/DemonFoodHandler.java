@@ -2,6 +2,7 @@ package com.xirc.nichirin.common.event.system;
 
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.system.DemonManager;
+import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.event.CompoundEventResult;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.EntityEvent;
@@ -158,7 +159,7 @@ public class DemonFoodHandler {
     private static void syncHalfBloodToClient(Player player, int halfBloodPoints) {
         if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
             int fullBlood = DemonManager.getBloodPoints(player);
-            com.xirc.nichirin.registry.NichirinPacketRegistry.sendDemonSync(serverPlayer, fullBlood, halfBloodPoints, true);
+            NichirinPacketRegistry.sendDemonSync(serverPlayer, fullBlood, halfBloodPoints, true);
         }
     }
 

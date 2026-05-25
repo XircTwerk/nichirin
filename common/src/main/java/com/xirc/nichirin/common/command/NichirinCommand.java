@@ -6,6 +6,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.xirc.nichirin.common.config.NichirinConfig;
+import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.data.ProgressionHelper;
 import com.xirc.nichirin.common.event.BreathOfNichirinEventHandler;
@@ -144,7 +145,7 @@ public class NichirinCommand {
             if (PerkManager.discover(player, def.id)) perksDiscovered++;
         }
 
-        int maxSlots = com.xirc.nichirin.common.config.NichirinModConfig.get().perks.maxEquippedPerks;
+        int maxSlots = NichirinModConfig.get().perks.maxEquippedPerks;
         PlayerDataProvider.getData(player).getPerkData().setPerkSlots(maxSlots);
 
         BreathOfNichirinEventHandler.syncPerksToPlayer(player);

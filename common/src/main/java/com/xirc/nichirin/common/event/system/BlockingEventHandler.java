@@ -3,7 +3,9 @@ package com.xirc.nichirin.common.event.system;
 import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.system.StanceManager;
 import com.xirc.nichirin.common.system.blocking.KatanaBlock;
+import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
+import com.xirc.nichirin.registry.NicirinSoundRegistry;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.TickEvent;
 import dev.architectury.event.events.common.PlayerEvent;
@@ -66,15 +68,15 @@ public class BlockingEventHandler {
 
                         if (attackingEntity != null && attackingEntity != player) {
                             attackingEntity.addEffect(new MobEffectInstance(
-                                    com.xirc.nichirin.registry.NichirinEffectRegistry.STUNNED.get(),
+                                    NichirinEffectRegistry.STUNNED.get(),
                                     30, 0, false, false, true));
                         }
 
                         NichirinPacketRegistry.sendParrySpark(player);
 
                         net.minecraft.sounds.SoundEvent clashSound = player.level().random.nextBoolean()
-                                ? com.xirc.nichirin.registry.NicirinSoundRegistry.PARRY_CLASH.get()
-                                : com.xirc.nichirin.registry.NicirinSoundRegistry.PARRY_CLASH_2.get();
+                                ? NicirinSoundRegistry.PARRY_CLASH.get()
+                                : NicirinSoundRegistry.PARRY_CLASH_2.get();
                         player.level().playSound(null,
                                 player.getX(), player.getY(), player.getZ(),
                                 clashSound, SoundSource.PLAYERS, 1.0f, 1.0f);

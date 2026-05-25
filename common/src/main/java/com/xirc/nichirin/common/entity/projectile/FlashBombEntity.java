@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.entity.projectile;
 
 import com.xirc.nichirin.registry.NichirinEntityRegistry;
+import com.xirc.nichirin.registry.NichirinItemRegistry;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -54,7 +55,7 @@ public class FlashBombEntity extends ThrowableItemProjectile {
 
     @Override
     protected Item getDefaultItem() {
-        return com.xirc.nichirin.registry.NichirinItemRegistry.FLASH_BOMB.get();
+        return NichirinItemRegistry.FLASH_BOMB.get();
     }
 
     @Override

@@ -1,5 +1,7 @@
 package com.xirc.nichirin.common.system.movement;
 
+import com.xirc.nichirin.common.data.PlayerDataProvider;
+import com.xirc.nichirin.common.util.StaminaManager;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
@@ -337,15 +339,15 @@ public class Dodge {
 
     /** Anchored flaw: cannot dodge while stamina > 50%. */
     private static boolean isAnchored(Player player) {
-        if (!com.xirc.nichirin.common.data.PlayerDataProvider.getData(player).getPerkData().hasFlaw("anchored")) {
+        if (!PlayerDataProvider.getData(player).getPerkData().hasFlaw("anchored")) {
             return false;
         }
-        return com.xirc.nichirin.common.util.StaminaManager.getStaminaPercentage(player) > 0.5f;
+        return StaminaManager.getStaminaPercentage(player) > 0.5f;
     }
 
     private static void notifyAnchored(Player player) {
         player.displayClientMessage(
-                net.minecraft.network.chat.Component.literal("Anchored — too rested to dodge")
+                Component.literal("Anchored — too rested to dodge")
                         .withStyle(s -> s.withColor(0xFF5555)),
                 true);
     }

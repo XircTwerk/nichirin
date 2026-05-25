@@ -10,6 +10,8 @@ import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.item.katana.SoundKatana;
 import com.xirc.nichirin.common.item.food.MochiItem;
 import com.xirc.nichirin.common.item.food.RiceItem;
+import com.xirc.nichirin.common.entity.projectile.FlashBombEntity;
+import com.xirc.nichirin.common.entity.projectile.SmokeBombEntity;
 import com.xirc.nichirin.common.item.throwable.FlashBombItem;
 import com.xirc.nichirin.common.item.throwable.SmokeBombItem;
 import com.xirc.nichirin.common.item.tool.BentoBoxItem;
@@ -354,8 +356,8 @@ public interface NichirinItemRegistry {
                     protected net.minecraft.world.entity.projectile.Projectile getProjectile(
                             net.minecraft.world.level.Level level, net.minecraft.core.Position pos,
                             net.minecraft.world.item.ItemStack stack) {
-                        com.xirc.nichirin.common.entity.projectile.FlashBombEntity bomb =
-                                new com.xirc.nichirin.common.entity.projectile.FlashBombEntity(
+                        FlashBombEntity bomb =
+                                new FlashBombEntity(
                                         level, pos.x(), pos.y(), pos.z());
                         bomb.setItem(stack);
                         return bomb;
@@ -368,8 +370,8 @@ public interface NichirinItemRegistry {
                     protected net.minecraft.world.entity.projectile.Projectile getProjectile(
                             net.minecraft.world.level.Level level, net.minecraft.core.Position pos,
                             net.minecraft.world.item.ItemStack stack) {
-                        com.xirc.nichirin.common.entity.projectile.SmokeBombEntity bomb =
-                                new com.xirc.nichirin.common.entity.projectile.SmokeBombEntity(
+                        SmokeBombEntity bomb =
+                                new SmokeBombEntity(
                                         level, pos.x(), pos.y(), pos.z());
                         bomb.setItem(stack);
                         return bomb;

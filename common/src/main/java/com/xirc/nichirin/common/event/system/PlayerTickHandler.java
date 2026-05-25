@@ -1,20 +1,29 @@
 package com.xirc.nichirin.common.event.system;
 
+import com.xirc.nichirin.common.data.MovesetHelper;
+import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.system.movement.Dash;
 import com.xirc.nichirin.common.system.movement.Dodge;
 import com.xirc.nichirin.common.system.abilities.PlayerDoubleJump;
 import com.xirc.nichirin.common.system.DemonManager;
 import com.xirc.nichirin.common.system.perks.PerkManager;
+import com.xirc.nichirin.common.system.perks.PerkData;
+import dev.architectury.event.EventResult;
+import dev.architectury.event.events.common.InteractionEvent;
 import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.event.events.common.TickEvent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.phys.AABB;
 
 import java.util.List;
@@ -45,21 +54,21 @@ public class PlayerTickHandler {
         });
 
         // Sleep Deprived flaw — refuse bed interactions
-        dev.architectury.event.events.common.InteractionEvent.RIGHT_CLICK_BLOCK.register((player, hand, pos, face) -> {
-            if (player.level().isClientSide) return dev.architectury.event.EventResult.pass();
+        InteractionEvent.RIGHT_CLICK_BLOCK.register((player, hand, pos, face) -> {
+            if (player.level().isClientSide) return EventResult.pass();
             var state = player.level().getBlockState(pos);
-            if (!(state.getBlock() instanceof net.minecraft.world.level.block.BedBlock)) {
-                return dev.architectury.event.EventResult.pass();
+            if (!(state.getBlock() instanceof BedBlock)) {
+                return EventResult.pass();
             }
-            var perkData = com.xirc.nichirin.common.data.PlayerDataProvider.getData(player).getPerkData();
+            PerkData perkData = PlayerDataProvider.getData(player).getPerkData();
             if (perkData.hasFlaw("sleep_deprived")) {
                 player.displayClientMessage(
-                        net.minecraft.network.chat.Component.literal("You cannot sleep — your mind refuses rest.")
+                        Component.literal("You cannot sleep — your mind refuses rest.")
                                 .withStyle(s -> s.withColor(0xFF5555)),
                         true);
-                return dev.architectury.event.EventResult.interruptFalse();
+                return EventResult.interruptFalse();
             }
-            return dev.architectury.event.EventResult.pass();
+            return EventResult.pass();
         });
     }
 
@@ -81,7 +90,7 @@ public class PlayerTickHandler {
      * Per-tick effects driven by equipped flaws.
      */
     private static void tickFlawEffects(ServerPlayer player) {
-        var data = com.xirc.nichirin.common.data.PlayerDataProvider.getData(player).getPerkData();
+        PerkData data = PlayerDataProvider.getData(player).getPerkData();
 
         // Cursed Eyes — permanent Blindness, no Night Vision benefit
         if (data.hasFlaw("cursed_eyes")) {
@@ -131,7 +140,7 @@ public class PlayerTickHandler {
         }
     }
 
-    private static boolean hasEffect(ServerPlayer player, net.minecraft.world.effect.MobEffect effect, int minAmplifier) {
+    private static boolean hasEffect(ServerPlayer player, MobEffect effect, int minAmplifier) {
         var inst = player.getEffect(effect);
         return inst != null && inst.getAmplifier() >= minAmplifier && inst.getDuration() > 20;
     }
@@ -175,7 +184,7 @@ public class PlayerTickHandler {
             AABB box = player.getBoundingBox().inflate(range);
             List<LivingEntity> nearby = player.level().getEntitiesOfClass(
                     LivingEntity.class, box,
-                    e -> e != player && (e instanceof Player) && com.xirc.nichirin.common.data.MovesetHelper.hasDemonMoveset((Player) e));
+                    e -> e != player && (e instanceof Player) && MovesetHelper.hasDemonMoveset((Player) e));
             for (LivingEntity demon : nearby) {
                 if (!demon.hasEffect(MobEffects.GLOWING) || demon.getEffect(MobEffects.GLOWING).getDuration() < 30) {
                     demon.addEffect(new MobEffectInstance(MobEffects.GLOWING, 60, 0, false, false));
@@ -189,7 +198,7 @@ public class PlayerTickHandler {
      * Skips no-op (value == 0) cases by removing the modifier cleanly.
      */
     private static void applyOrRemoveModifier(ServerPlayer player,
-                                               net.minecraft.world.entity.ai.attributes.Attribute attribute,
+                                               Attribute attribute,
                                                UUID uuid, String name,
                                                float value,
                                                AttributeModifier.Operation op) {

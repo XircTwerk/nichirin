@@ -2,6 +2,7 @@ package com.xirc.nichirin.common.attack.moves.breathing.flame;
 
 import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
 import com.xirc.nichirin.common.attack.component.IBreathingAttacker;
+import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -61,7 +62,7 @@ public abstract class FlameBreathingAttackBase extends AbstractBreathingAttack<F
 
         int burningDurationTicks = fireSeconds * 20;
         target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-                com.xirc.nichirin.registry.NichirinEffectRegistry.BURNING.get(),
+                NichirinEffectRegistry.BURNING.get(),
                 burningDurationTicks,
                 0, false, true
         ));

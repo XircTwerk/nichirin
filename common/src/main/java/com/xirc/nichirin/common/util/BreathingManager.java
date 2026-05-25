@@ -1,6 +1,8 @@
 package com.xirc.nichirin.common.util;
 
 import com.xirc.nichirin.common.attack.MoveExecutor;
+import com.xirc.nichirin.common.config.NichirinModConfig;
+import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.network.s2c.SyncBreathPacket;
 import com.xirc.nichirin.common.system.perks.PerkManager;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
@@ -32,8 +34,8 @@ public class BreathingManager {
         if (player == null) return false;
         if (player.isCreative()) return true;
         // Config toggles from breathing section
-        if (com.xirc.nichirin.common.config.NichirinModConfig.get().breathing.infiniteBreath) return true;
-        if (com.xirc.nichirin.common.config.NichirinModConfig.get().breathing.freeBreathMoves) return true;
+        if (NichirinModConfig.get().breathing.infiniteBreath) return true;
+        if (NichirinModConfig.get().breathing.freeBreathMoves) return true;
         return false;
     }
 
@@ -76,10 +78,10 @@ public class BreathingManager {
         }
 
         // Sync max breath and base regen rate from config
-        var breathCfg = com.xirc.nichirin.common.config.NichirinModConfig.get().breathing;
+        var breathCfg = NichirinModConfig.get().breathing;
         float configMax = breathCfg.maxBreath;
         // Flaw: One Lung halves max breath
-        if (com.xirc.nichirin.common.data.PlayerDataProvider.getData(player).getPerkData().hasFlaw("one_lung")) {
+        if (PlayerDataProvider.getData(player).getPerkData().hasFlaw("one_lung")) {
             configMax *= 0.5f;
         }
         if (data.max != configMax) {

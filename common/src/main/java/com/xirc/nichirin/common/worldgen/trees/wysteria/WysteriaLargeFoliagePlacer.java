@@ -2,6 +2,7 @@ package com.xirc.nichirin.common.worldgen.trees.wysteria;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.xirc.nichirin.registry.NichirinFoliagePlacerTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.IntProvider;
@@ -20,7 +21,7 @@ public class WysteriaLargeFoliagePlacer extends FoliagePlacer {
 
     @Override
     protected FoliagePlacerType<?> type() {
-        return com.xirc.nichirin.registry.NichirinFoliagePlacerTypes.WYSTERIA_LARGE_FOLIAGE_PLACER.get();
+        return NichirinFoliagePlacerTypes.WYSTERIA_LARGE_FOLIAGE_PLACER.get();
     }
 
     @Override

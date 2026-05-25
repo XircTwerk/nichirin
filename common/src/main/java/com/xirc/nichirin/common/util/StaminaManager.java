@@ -2,6 +2,7 @@ package com.xirc.nichirin.common.util;
 
 import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.data.MovesetHelper;
+import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.network.s2c.StaminaSyncPacket;
 import com.xirc.nichirin.common.system.perks.PerkManager;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
@@ -53,7 +54,7 @@ public class StaminaManager {
 
         // Flaw: Atrophied reduces max stamina by 40%
         float targetMax = DEFAULT_MAX_STAMINA;
-        if (com.xirc.nichirin.common.data.PlayerDataProvider.getData(player).getPerkData().hasFlaw("atrophied")) {
+        if (PlayerDataProvider.getData(player).getPerkData().hasFlaw("atrophied")) {
             targetMax *= 0.6f;
         }
         if (data.max != targetMax) {

@@ -5,7 +5,10 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import com.xirc.nichirin.common.data.MovesetData;
+import com.xirc.nichirin.common.data.PlayerDataProvider;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 
 import java.util.ArrayList;
@@ -78,7 +81,7 @@ public class CooldownHUD {
         progress = Mth.clamp(progress, 0.0f, 1.0f);
 
         // Move icon to the left of the entry, same size as the timer bar
-        net.minecraft.resources.ResourceLocation icon = lookupIcon(name);
+        ResourceLocation icon = lookupIcon(name);
         if (icon != null) {
             int iconX = x - ENTRY_HEIGHT - 2;
             RenderSystem.enableBlend();
@@ -193,21 +196,21 @@ public class CooldownHUD {
      * Look up the icon for a cooldown entry by checking the player's active movesets.
      * Returns null if neither moveset has a matching move name.
      */
-    private static net.minecraft.resources.ResourceLocation lookupIcon(String moveDisplayName) {
+    private static ResourceLocation lookupIcon(String moveDisplayName) {
         try {
             var player = Minecraft.getInstance().player;
             if (player == null) return null;
-            var movesetData = com.xirc.nichirin.common.data.PlayerDataProvider.getMovesetData(player);
+            MovesetData movesetData = PlayerDataProvider.getMovesetData(player);
 
             String breathingId = movesetData.getBreathingMovesetId();
             if (breathingId != null) {
-                net.minecraft.resources.ResourceLocation icon = MoveIcon.getIconFormatted(breathingId, moveDisplayName);
+                ResourceLocation icon = MoveIcon.getIconFormatted(breathingId, moveDisplayName);
                 if (icon != null) return icon;
             }
 
             String demonId = movesetData.getDemonMovesetId();
             if (demonId != null) {
-                net.minecraft.resources.ResourceLocation icon = MoveIcon.getIconFormatted(demonId, moveDisplayName);
+                ResourceLocation icon = MoveIcon.getIconFormatted(demonId, moveDisplayName);
                 if (icon != null) return icon;
             }
         } catch (Exception ignored) {

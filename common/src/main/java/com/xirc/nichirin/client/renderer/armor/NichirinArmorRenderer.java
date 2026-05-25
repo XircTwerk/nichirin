@@ -1,6 +1,7 @@
 package com.xirc.nichirin.client.renderer.armor;
 
 import com.xirc.nichirin.BreathOfNichirin;
+import com.xirc.nichirin.client.renderer.armor.core.NichirinArmorAnimator;
 import com.xirc.nichirin.client.renderer.armor.core.NichirinArmorBoneProvider;
 import mod.azure.azurelib.animation.dispatch.AzDispatchSide;
 import mod.azure.azurelib.animation.dispatch.command.AzCommand;
@@ -75,7 +76,7 @@ public class NichirinArmorRenderer extends AzArmorRenderer {
 
         if (animName != null) {
             final String name = animName;
-            builder.setAnimatorProvider(() -> new com.xirc.nichirin.client.renderer.armor.core.NichirinArmorAnimator(name));
+            builder.setAnimatorProvider(() -> new NichirinArmorAnimator(name));
         }
 
         return builder.build();

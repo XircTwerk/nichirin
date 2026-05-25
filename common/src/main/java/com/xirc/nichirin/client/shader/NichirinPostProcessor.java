@@ -1,6 +1,7 @@
 package com.xirc.nichirin.client.shader;
 
 import com.mojang.blaze3d.shaders.Uniform;
+import com.xirc.nichirin.mixin_logic.NichirinDepthHolder;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
@@ -23,7 +24,7 @@ public abstract class NichirinPostProcessor {
     protected static final Minecraft MC = Minecraft.getInstance();
 
     public static int getMainDepthTexId() {
-        return ((com.xirc.nichirin.mixin_logic.NichirinDepthHolder) MC.getMainRenderTarget()).nichirin$getDepthTexId();
+        return ((NichirinDepthHolder) MC.getMainRenderTarget()).nichirin$getDepthTexId();
     }
 
     protected PostChain shaderEffect;

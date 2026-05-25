@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.network.s2c;
 
+import com.xirc.nichirin.client.gui.trainer.TrainerDialogueScreen;
 import com.xirc.nichirin.common.entity.npc.TrainerType;
 import net.minecraft.network.FriendlyByteBuf;
 
@@ -54,7 +55,7 @@ public class OpenTrainerDialoguePacket {
     public void handleClient() {
         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
         mc.execute(() -> mc.setScreen(
-                new com.xirc.nichirin.client.gui.trainer.TrainerDialogueScreen(
+                new TrainerDialogueScreen(
                         trainerUUID, trainerType, state, hasBeatenTrainer)));
     }
 }

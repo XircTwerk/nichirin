@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.network.s2c;
 
+import com.xirc.nichirin.common.system.DemonComponent;
 import lombok.Getter;
 import net.minecraft.network.FriendlyByteBuf;
 
@@ -30,6 +31,6 @@ public class DemonSyncPacket {
     }
 
     public void handleClient() {
-        com.xirc.nichirin.common.system.DemonComponent.updateBloodFromSync(bloodPoints, halfBloodPoints, isDemon);
+        DemonComponent.updateBloodFromSync(bloodPoints, halfBloodPoints, isDemon);
     }
 }

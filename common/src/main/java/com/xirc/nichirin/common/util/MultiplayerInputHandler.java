@@ -1,8 +1,10 @@
 package com.xirc.nichirin.common.util;
 
 import com.xirc.nichirin.common.data.MovesetHelper;
+import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.network.c2s.BreathingMovePacket;
 import com.xirc.nichirin.common.network.c2s.DemonMovePacket;
+import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
@@ -89,7 +91,7 @@ public class MultiplayerInputHandler {
                 return;
             }
 
-            boolean holdingKatana = player.getMainHandItem().getItem() instanceof com.xirc.nichirin.common.item.katana.SimpleKatana;
+            boolean holdingKatana = player.getMainHandItem().getItem() instanceof SimpleKatana;
 
             if (holdingKatana) {
                 try {
@@ -127,7 +129,7 @@ public class MultiplayerInputHandler {
         if (player.level().isClientSide) {
             try {
                 var packet = new BreathingMovePacket(moveIndex, true);
-                com.xirc.nichirin.registry.NichirinPacketRegistry.sendToServer(packet);
+                NichirinPacketRegistry.sendToServer(packet);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -141,7 +143,7 @@ public class MultiplayerInputHandler {
         if (player.level().isClientSide) {
             try {
                 var packet = new DemonMovePacket(moveIndex, true);
-                com.xirc.nichirin.registry.NichirinPacketRegistry.sendToServer(packet);
+                NichirinPacketRegistry.sendToServer(packet);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -152,7 +154,7 @@ public class MultiplayerInputHandler {
      * SERVER: Check if player inputs should be blocked
      */
     public static boolean shouldBlockInputsServer(Player player) {
-        return com.xirc.nichirin.registry.NichirinPacketRegistry.shouldBlockInputsServer(player);
+        return NichirinPacketRegistry.shouldBlockInputsServer(player);
     }
 
     /**
@@ -160,7 +162,7 @@ public class MultiplayerInputHandler {
      */
     public static void blockInputsAfterMoveExecution(Player player) {
         if (!player.level().isClientSide) {
-            PlayerInputState state = com.xirc.nichirin.registry.NichirinPacketRegistry.getOrCreatePlayerState(player);
+            PlayerInputState state = NichirinPacketRegistry.getOrCreatePlayerState(player);
             state.inputBlocked = true;
             state.blockUntilTime = player.level().getGameTime() + 40;
         }
@@ -178,7 +180,7 @@ public class MultiplayerInputHandler {
      * Clean up player data
      */
     public static void cleanupPlayer(Player player) {
-        com.xirc.nichirin.registry.NichirinPacketRegistry.cleanupPlayer(player);
+        NichirinPacketRegistry.cleanupPlayer(player);
     }
 
     public static void tick() {

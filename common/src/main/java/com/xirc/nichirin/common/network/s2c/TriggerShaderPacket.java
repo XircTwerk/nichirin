@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.network.s2c;
 
+import com.xirc.nichirin.client.shader.NichirinPostProcessor;
 import com.xirc.nichirin.client.shader.NichirinShaderManager;
 import net.minecraft.network.FriendlyByteBuf;
 import org.slf4j.Logger;
@@ -42,8 +43,8 @@ public class TriggerShaderPacket {
         try {
             // Get the shader effect class
             @SuppressWarnings("unchecked")
-            Class<? extends com.xirc.nichirin.client.shader.NichirinPostProcessor> clazz =
-                    (Class<? extends com.xirc.nichirin.client.shader.NichirinPostProcessor>) Class.forName(shaderEffectClass);
+            Class<? extends NichirinPostProcessor> clazz =
+                    (Class<? extends NichirinPostProcessor>) Class.forName(shaderEffectClass);
 
             // Get the shader from the manager
             var shader = NichirinShaderManager.getInstance().getProcessor(clazz);

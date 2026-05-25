@@ -2,6 +2,7 @@ package com.xirc.nichirin.common.worldgen.trees.wysteria;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.xirc.nichirin.registry.NichirinTrunkPlacerTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
@@ -33,7 +34,7 @@ public class WysteriaTrunkPlacer extends TrunkPlacer {
 
     @Override
     protected TrunkPlacerType<?> type() {
-        return com.xirc.nichirin.registry.NichirinTrunkPlacerTypes.WYSTERIA_TRUNK_PLACER.get();
+        return NichirinTrunkPlacerTypes.WYSTERIA_TRUNK_PLACER.get();
     }
 
     @Override

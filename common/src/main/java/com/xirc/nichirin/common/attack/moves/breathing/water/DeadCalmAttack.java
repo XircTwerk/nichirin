@@ -1,5 +1,7 @@
 package com.xirc.nichirin.common.attack.moves.breathing.water;
 
+import com.xirc.nichirin.common.network.s2c.TriggerShaderPacket;
+import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -48,8 +50,8 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
         Vec3 userPos = user.position();
         for (net.minecraft.server.level.ServerPlayer player : serverLevel.players()) {
             if (player.distanceToSqr(userPos) < 10000) {
-                com.xirc.nichirin.registry.NichirinPacketRegistry.sendToPlayer(
-                        new com.xirc.nichirin.common.network.s2c.TriggerShaderPacket(
+                NichirinPacketRegistry.sendToPlayer(
+                        new TriggerShaderPacket(
                                 "com.xirc.nichirin.client.shader.DeadCalmShaderEffect",
                                 true
                         ),

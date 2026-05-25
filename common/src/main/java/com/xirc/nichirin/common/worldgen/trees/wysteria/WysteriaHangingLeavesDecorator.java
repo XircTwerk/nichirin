@@ -2,6 +2,8 @@ package com.xirc.nichirin.common.worldgen.trees.wysteria;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.xirc.nichirin.registry.NichirinBlockRegistry;
+import com.xirc.nichirin.registry.NichirinTreeDecoratorTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
@@ -26,14 +28,14 @@ public class WysteriaHangingLeavesDecorator extends TreeDecorator {
 
     @Override
     protected TreeDecoratorType<?> type() {
-        return com.xirc.nichirin.registry.NichirinTreeDecoratorTypes.WYSTERIA_HANGING_LEAVES_DECORATOR.get();
+        return NichirinTreeDecoratorTypes.WYSTERIA_HANGING_LEAVES_DECORATOR.get();
     }
 
     @Override
     public void place(Context context) {
         // Use the wysteria leaves block with persistent property
         net.minecraft.world.level.block.state.BlockState leafState =
-                com.xirc.nichirin.registry.NichirinBlockRegistry.WYSTERIA_LEAVES.get()
+                NichirinBlockRegistry.WYSTERIA_LEAVES.get()
                         .defaultBlockState()
                         .setValue(LeavesBlock.PERSISTENT, true); // Make hanging leaves persistent
 

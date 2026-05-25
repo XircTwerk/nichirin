@@ -1,13 +1,19 @@
 package com.xirc.nichirin.registry;
 
 import com.xirc.nichirin.BreathOfNichirin;
+import com.xirc.nichirin.client.data.ClientProgressionCache;
+import com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer;
+import com.xirc.nichirin.client.renderer.effects.ParrySparkHandler;
+import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
+import com.xirc.nichirin.common.config.NichirinModConfig;
+import com.xirc.nichirin.common.data.*;
+import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.network.c2s.*;
 import com.xirc.nichirin.common.network.s2c.*;
 import com.xirc.nichirin.common.network.util.MovesetSyncPacket;
-import com.xirc.nichirin.common.system.blocking.KatanaBlock;
-import com.xirc.nichirin.common.data.*;
-import com.xirc.nichirin.common.util.MultiplayerInputHandler;
 import com.xirc.nichirin.common.system.DemonComponent;
+import com.xirc.nichirin.common.system.blocking.KatanaBlock;
+import com.xirc.nichirin.common.util.MultiplayerInputHandler;
 import dev.architectury.networking.NetworkManager;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -218,8 +224,8 @@ public interface NichirinPacketRegistry {
         });
 
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, TRAINER_ACTION_ID, (buf, context) -> {
-            com.xirc.nichirin.common.network.c2s.TrainerActionPacket packet =
-                    new com.xirc.nichirin.common.network.c2s.TrainerActionPacket(buf);
+            TrainerActionPacket packet =
+                    new TrainerActionPacket(buf);
             if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
                 context.queue(() -> packet.handle(serverPlayer));
             }
@@ -271,8 +277,8 @@ public interface NichirinPacketRegistry {
                         MovesetData data = PlayerDataProvider.getMovesetData(player);
 
                         if (movesetId != null) {
-                            com.xirc.nichirin.common.attack.moveset.AbstractMoveset moveset =
-                                    com.xirc.nichirin.registry.NichirinMovesetRegistry.getMoveset(movesetId);
+                            AbstractMoveset moveset =
+                                    NichirinMovesetRegistry.getMoveset(movesetId);
 
                             if (moveset != null) {
                                 if (moveset.isBreathingMoveset()) {
@@ -297,7 +303,7 @@ public interface NichirinPacketRegistry {
                 }
 
                 context.queue(() -> {
-                    com.xirc.nichirin.client.data.ClientProgressionCache.setUnlockedStyles(unlockedStyles);
+                    ClientProgressionCache.setUnlockedStyles(unlockedStyles);
                 });
             });
 
@@ -332,7 +338,7 @@ public interface NichirinPacketRegistry {
                 final long finalDuration = duration;
                 context.queue(() -> {
                     for (AABB hitbox : hitboxesToAdd) {
-                        com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer.addHitbox(hitbox, finalDuration, false);
+                        AttackHitboxRenderer.addHitbox(hitbox, finalDuration, false);
                     }
                 });
             });
@@ -346,12 +352,12 @@ public interface NichirinPacketRegistry {
                 double x = buf.readDouble();
                 double y = buf.readDouble();
                 double z = buf.readDouble();
-                context.queue(() -> com.xirc.nichirin.client.renderer.effects.ParrySparkHandler.spawnSparks(x, y, z));
+                context.queue(() -> ParrySparkHandler.spawnSparks(x, y, z));
             });
 
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, BLOOD_MOON_SYNC_ID, (buf, context) -> {
-                com.xirc.nichirin.common.network.s2c.BloodMoonSyncPacket packet =
-                        new com.xirc.nichirin.common.network.s2c.BloodMoonSyncPacket(buf);
+                BloodMoonSyncPacket packet =
+                        new BloodMoonSyncPacket(buf);
                 context.queue(() -> packet.handleClient());
             });
 
@@ -361,8 +367,8 @@ public interface NichirinPacketRegistry {
             });
 
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, OPEN_TRAINER_DIALOGUE_ID, (buf, context) -> {
-                com.xirc.nichirin.common.network.s2c.OpenTrainerDialoguePacket packet =
-                        new com.xirc.nichirin.common.network.s2c.OpenTrainerDialoguePacket(buf);
+                OpenTrainerDialoguePacket packet =
+                        new OpenTrainerDialoguePacket(buf);
                 context.queue(() -> packet.handleClient());
             });
 
@@ -371,7 +377,7 @@ public interface NichirinPacketRegistry {
                 context.queue(() -> {
                     net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
                     mc.setScreen(me.shedaniel.autoconfig.AutoConfig
-                            .getConfigScreen(com.xirc.nichirin.common.config.NichirinModConfig.class, mc.screen)
+                            .getConfigScreen(NichirinModConfig.class, mc.screen)
                             .get());
                 });
             });
@@ -391,11 +397,11 @@ public interface NichirinPacketRegistry {
     static boolean shouldBlockInputsServer(Player player) {
         if (player.level().isClientSide) return false;
 
-        if (player.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.STUNNED.get())) {
+        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
             return true;
         }
 
-        if (player.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.BLOCKING.get())) {
+        if (player.hasEffect(NichirinEffectRegistry.BLOCKING.get())) {
             return true;
         }
 
@@ -408,7 +414,7 @@ public interface NichirinPacketRegistry {
 
     static void executeKatanaInput(ServerPlayer player, MultiplayerInputHandler.InputType inputType) {
         var mainHand = player.getMainHandItem();
-        if (!(mainHand.getItem() instanceof com.xirc.nichirin.common.item.katana.SimpleKatana katana)) {
+        if (!(mainHand.getItem() instanceof SimpleKatana katana)) {
             return;
         }
 
@@ -429,19 +435,19 @@ public interface NichirinPacketRegistry {
     }
 
     static void handleDemonInput(ServerPlayer player, MultiplayerInputHandler.InputType inputType) {
-        if (player.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.STUNNED.get())) {
+        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
             return;
         }
 
-        if (player.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.BLOCKING.get())) {
+        if (player.hasEffect(NichirinEffectRegistry.BLOCKING.get())) {
             return;
         }
 
-        if (!com.xirc.nichirin.common.data.MovesetHelper.hasDemonMoveset(player)) {
+        if (!MovesetHelper.hasDemonMoveset(player)) {
             return;
         }
 
-        com.xirc.nichirin.common.attack.moveset.AbstractMoveset moveset = com.xirc.nichirin.common.data.MovesetHelper.getDemonMoveset(player);
+        AbstractMoveset moveset = MovesetHelper.getDemonMoveset(player);
         if (moveset == null || !moveset.isDemonMoveset()) {
             return;
         }
@@ -670,7 +676,7 @@ public interface NichirinPacketRegistry {
      * Broadcasts a PlayerAnimationPacket to the animated player and all players in the same level.
      * This ensures other players can see animations played on the given player.
      */
-    public static void broadcastPlayerAnimation(ServerPlayer animatedPlayer, com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket packet) {
+    public static void broadcastPlayerAnimation(ServerPlayer animatedPlayer, PlayerAnimationPacket packet) {
         ResourceLocation id = PACKET_IDS.get(packet.getClass());
         if (id == null) return;
         try {

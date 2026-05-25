@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.entity.projectile;
 
 import com.xirc.nichirin.registry.NichirinEntityRegistry;
+import com.xirc.nichirin.registry.NichirinItemRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -35,7 +36,7 @@ public class SmokeBombEntity extends ThrowableItemProjectile {
 
     @Override
     protected Item getDefaultItem() {
-        return com.xirc.nichirin.registry.NichirinItemRegistry.SMOKE_BOMB.get();
+        return NichirinItemRegistry.SMOKE_BOMB.get();
     }
 
     @Override

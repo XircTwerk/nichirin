@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.event.system;
 
+import com.xirc.nichirin.client.gui.CooldownHUD;
 import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.EntityEvent;
@@ -43,7 +44,7 @@ public class CooldownClearEventHandler {
                 // Simple detection: if player just spawned (low tick count and full health)
                 if (minecraft.player.tickCount <= 10 && minecraft.player.getHealth() > 0) {
                     // Clear all cooldowns from the HUD display
-                    com.xirc.nichirin.client.gui.CooldownHUD.clearAllCooldowns();
+                    CooldownHUD.clearAllCooldowns();
                 }
             }
         });

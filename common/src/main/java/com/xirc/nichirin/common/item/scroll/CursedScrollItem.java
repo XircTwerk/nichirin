@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.item.scroll;
 
+import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.system.perks.*;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -74,7 +75,7 @@ public class CursedScrollItem extends Item {
         }
 
         // Must equip the linked flaw first (makes a slot available), unless already wearing it
-        PerkData data = com.xirc.nichirin.common.data.PlayerDataProvider.getData(serverPlayer).getPerkData();
+        PerkData data = PlayerDataProvider.getData(serverPlayer).getPerkData();
 
         // Equip the flaw if needed
         if (def.linkedFlawId != null) {

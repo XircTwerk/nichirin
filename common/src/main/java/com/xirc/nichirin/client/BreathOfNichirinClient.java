@@ -1,6 +1,7 @@
 package com.xirc.nichirin.client;
 
 import com.xirc.nichirin.client.animation.NichirinAnimations;
+import com.xirc.nichirin.common.util.enums.BreathingStyle;
 import com.xirc.nichirin.client.config.NichirinClientConfig;
 import com.xirc.nichirin.client.handler.*;
 import com.xirc.nichirin.client.shader.*;
@@ -222,8 +223,7 @@ public class BreathOfNichirinClient {
 
     /** Maps a breathing style ID to an RGB color for the aura wisp particle. */
     public static float[] getBreathingStyleColor(String styleId) {
-        com.xirc.nichirin.common.util.enums.BreathingStyle style =
-                com.xirc.nichirin.common.util.enums.BreathingStyle.fromMovesetId(styleId);
+        BreathingStyle style = BreathingStyle.fromMovesetId(styleId);
         return style != null ? style.getColorAsFloat() : new float[]{1.0f, 0.8f, 0.4f};
     }
 

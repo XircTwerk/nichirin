@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.system.perks;
 
+import com.xirc.nichirin.common.config.NichirinModConfig;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
@@ -140,13 +141,13 @@ public class PerkData {
 
     /** Increases perk slots up to the global config maximum. */
     public void setPerkSlots(int slots) {
-        int cap = com.xirc.nichirin.common.config.NichirinModConfig.get().perks.maxEquippedPerks;
+        int cap = NichirinModConfig.get().perks.maxEquippedPerks;
         this.perkSlots = Math.max(1, Math.min(slots, cap));
     }
 
     /** Grants one additional perk slot if below the cap. Returns true if a slot was added. */
     public boolean unlockPerkSlot() {
-        int cap = com.xirc.nichirin.common.config.NichirinModConfig.get().perks.maxEquippedPerks;
+        int cap = NichirinModConfig.get().perks.maxEquippedPerks;
         if (perkSlots >= cap) return false;
         perkSlots++;
         return true;

@@ -1,6 +1,11 @@
 package com.xirc.nichirin.datagen.providers.data;
 
 import com.xirc.nichirin.BreathOfNichirin;
+import com.xirc.nichirin.common.advancement.FirstBreathTrigger;
+import com.xirc.nichirin.common.advancement.FlameBreathingTrigger;
+import com.xirc.nichirin.common.advancement.InsectBreathingTrigger;
+import com.xirc.nichirin.common.advancement.SoundBreathingTrigger;
+import com.xirc.nichirin.common.advancement.ThunderBreathingTrigger;
 import com.xirc.nichirin.registry.NichirinItemRegistry;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricAdvancementProvider;
@@ -62,7 +67,7 @@ public class NichirinAdvancementProvider extends FabricAdvancementProvider {
                         true,
                         false)
                 .addCriterion("has_first_breathing_style",
-                        com.xirc.nichirin.common.advancement.FirstBreathTrigger.TriggerInstance.firstBreathUnlock())
+                        FirstBreathTrigger.TriggerInstance.firstBreathUnlock())
                 .build(BreathOfNichirin.id("first_breath"));
 
         // Thunder Breathing advancement - triggered when obtaining the breathing style
@@ -77,7 +82,7 @@ public class NichirinAdvancementProvider extends FabricAdvancementProvider {
                         true,
                         false) // Not hidden
                 .addCriterion("has_thunder_breathing",
-                        com.xirc.nichirin.common.advancement.ThunderBreathingTrigger.TriggerInstance.thunderBreathingUnlock())
+                        ThunderBreathingTrigger.TriggerInstance.thunderBreathingUnlock())
                 .build(BreathOfNichirin.id("thunder_breathing"));
 
         // Flame Breathing advancement - triggered when obtaining the breathing style
@@ -92,7 +97,7 @@ public class NichirinAdvancementProvider extends FabricAdvancementProvider {
                         true,
                         false) // Not hidden
                 .addCriterion("has_flame_breathing",
-                        com.xirc.nichirin.common.advancement.FlameBreathingTrigger.TriggerInstance.flameBreathingUnlock())
+                        FlameBreathingTrigger.TriggerInstance.flameBreathingUnlock())
                 .build(BreathOfNichirin.id("flame_breathing"));
 
         final Advancement insectBreathing = Advancement.Builder.advancement()
@@ -106,7 +111,7 @@ public class NichirinAdvancementProvider extends FabricAdvancementProvider {
                         true,
                         false) // Not hidden
                 .addCriterion("has_insect_breathing",
-                        com.xirc.nichirin.common.advancement.InsectBreathingTrigger.TriggerInstance.insectBreathingUnlock())
+                        InsectBreathingTrigger.TriggerInstance.insectBreathingUnlock())
                 .build(BreathOfNichirin.id("insect_breathing"));
 
         final Advancement soundBreathing = Advancement.Builder.advancement()
@@ -120,7 +125,7 @@ public class NichirinAdvancementProvider extends FabricAdvancementProvider {
                         true,
                         false) // Not hidden
                 .addCriterion("has_sound_breathing",
-                        com.xirc.nichirin.common.advancement.SoundBreathingTrigger.TriggerInstance.soundBreathingUnlock())
+                        SoundBreathingTrigger.TriggerInstance.soundBreathingUnlock())
                 .build(BreathOfNichirin.id("sound_breathing"));
 
 

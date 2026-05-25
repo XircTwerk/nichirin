@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.network.s2c;
 
+import com.xirc.nichirin.client.gui.ComboHUD;
 import lombok.Getter;
 import net.minecraft.network.FriendlyByteBuf;
 
@@ -32,9 +33,9 @@ public class ComboCounterPacket {
     }
 
     public void handleClient() {
-        com.xirc.nichirin.client.gui.ComboHUD.updateCombo(comboCount, stunDurationTicks);
+        ComboHUD.updateCombo(comboCount, stunDurationTicks);
         if (damage > 0) {
-            com.xirc.nichirin.client.gui.ComboHUD.addDamage(damage);
+            ComboHUD.addDamage(damage);
         }
     }
 

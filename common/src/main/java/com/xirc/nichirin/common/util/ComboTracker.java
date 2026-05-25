@@ -2,6 +2,7 @@ package com.xirc.nichirin.common.util;
 
 import com.xirc.nichirin.common.network.s2c.ComboCounterPacket;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
+import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
@@ -101,7 +102,7 @@ public class ComboTracker {
             net.minecraft.network.FriendlyByteBuf buf = new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());
             packet.toBytes(buf);
             dev.architectury.networking.NetworkManager.sendToPlayer(serverPlayer,
-                    com.xirc.nichirin.registry.NichirinPacketRegistry.COMBO_COUNTER_ID, buf);
+                    NichirinPacketRegistry.COMBO_COUNTER_ID, buf);
         } catch (Exception e) {
         }
     }
@@ -181,7 +182,7 @@ public class ComboTracker {
                     net.minecraft.network.FriendlyByteBuf buf = new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());
                     packet.toBytes(buf);
                     dev.architectury.networking.NetworkManager.sendToPlayer(serverPlayer,
-                            com.xirc.nichirin.registry.NichirinPacketRegistry.COMBO_COUNTER_ID, buf);
+                            NichirinPacketRegistry.COMBO_COUNTER_ID, buf);
                 } catch (Exception e) {
                 }
             }
@@ -221,7 +222,7 @@ public class ComboTracker {
                                 net.minecraft.network.FriendlyByteBuf buf = new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());
                                 packet.toBytes(buf);
                                 dev.architectury.networking.NetworkManager.sendToPlayer(serverPlayer,
-                                        com.xirc.nichirin.registry.NichirinPacketRegistry.COMBO_COUNTER_ID, buf);
+                                        NichirinPacketRegistry.COMBO_COUNTER_ID, buf);
                             } catch (Exception e) {
                             }
                         }

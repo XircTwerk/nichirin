@@ -1,5 +1,7 @@
 package com.xirc.nichirin.common.util;
 
+import com.xirc.nichirin.client.handler.AttackWheelHandler;
+import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinKeybindRegistry;
 import dev.architectury.event.events.client.ClientTickEvent;
 import dev.architectury.networking.NetworkManager;
@@ -83,18 +85,18 @@ public class BlockingInputHandler {
         Minecraft mc = Minecraft.getInstance();
 
         // Check if player has blocking effect - BLOCK ALL INPUTS
-        if (mc.player != null && mc.player.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.BLOCKING.get())) {
+        if (mc.player != null && mc.player.hasEffect(NichirinEffectRegistry.BLOCKING.get())) {
             return true;
         }
 
         // Check if player is stunned - BLOCK ALL INPUTS
-        if (mc.player != null && mc.player.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.STUNNED.get())) {
+        if (mc.player != null && mc.player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
             return true;
         }
 
         // Check wheel state first
         try {
-            if (com.xirc.nichirin.client.handler.AttackWheelHandler.shouldBlockAttackInputs()) {
+            if (AttackWheelHandler.shouldBlockAttackInputs()) {
                 return true;
             }
         } catch (Exception e) {

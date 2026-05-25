@@ -468,7 +468,7 @@ public class MovesetData {
     private MovesetStatistics getStatistics() {
         if (player != null) {
             try {
-                return com.xirc.nichirin.common.data.PlayerDataProvider.getData(player).getStatistics();
+                return PlayerDataProvider.getData(player).getStatistics();
             } catch (Exception e) {
                 return null;
             }

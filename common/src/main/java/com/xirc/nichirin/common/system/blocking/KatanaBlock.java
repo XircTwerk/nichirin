@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.system.blocking;
 
 import com.xirc.nichirin.common.config.NichirinModConfig;
+import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.system.StanceManager;
 import com.xirc.nichirin.common.util.InputHandler;
 import com.xirc.nichirin.common.attack.MoveExecutor;
@@ -18,6 +19,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.nbt.CompoundTag;
@@ -436,7 +438,7 @@ public class KatanaBlock {
 
     private static boolean handleSuccessfulBlock(Player player, BlockingState state, float damage) {
         // Flaw: Glass Stance — stance shatters on the first hit while blocking
-        boolean glassStance = com.xirc.nichirin.common.data.PlayerDataProvider.getData(player).getPerkData().hasFlaw("glass_stance");
+        boolean glassStance = PlayerDataProvider.getData(player).getPerkData().hasFlaw("glass_stance");
         float stanceCost = glassStance ? Float.MAX_VALUE : 10.0f;
         if (!StanceManager.consume(player, stanceCost)) {
             // Out of stance - stance broken! Apply stun to the blocker
@@ -490,7 +492,7 @@ public class KatanaBlock {
 
         // Apply Resistance IV (80% damage reduction)
         MobEffectInstance resistanceEffect = new MobEffectInstance(
-                net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE,
+                MobEffects.DAMAGE_RESISTANCE,
                 Integer.MAX_VALUE, // Permanent while blocking
                 3, // Amplifier 3 = Resistance IV (80% damage reduction)
                 false, // Ambient
@@ -502,7 +504,7 @@ public class KatanaBlock {
 
     private static void removeBlockingEffect(Player player) {
         player.removeEffect(NichirinEffectRegistry.BLOCKING.get());
-        player.removeEffect(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE);
+        player.removeEffect(MobEffects.DAMAGE_RESISTANCE);
     }
 
     /**
