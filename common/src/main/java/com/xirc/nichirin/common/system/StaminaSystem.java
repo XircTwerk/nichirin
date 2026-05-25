@@ -1,6 +1,5 @@
 package com.xirc.nichirin.common.system;
 
-import com.xirc.nichirin.common.util.enums.Gauge;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.nbt.CompoundTag;

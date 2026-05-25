@@ -29,8 +29,7 @@ public class StaminaManager {
         if (player == null) return false;
         if (player.isCreative()) return true;
         if (MovesetHelper.hasDemonMoveset(player)) return true;
-        if (NichirinModConfig.get().stamina.unlimitedStamina) return true;
-        return false;
+        return NichirinModConfig.get().stamina.unlimitedStamina;
     }
 
     /**

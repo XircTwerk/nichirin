@@ -40,7 +40,7 @@ public class NichirinModConfig implements ConfigData {
         /** @deprecated moved to {@link StaminaConfig#staminaRegenRate}. */
         @Deprecated
         @ConfigEntry.Gui.Excluded
-        public int staminaRegenRate = 40;
+        public int staminaRegenRate = 8;
     }
 
     // Stamina
@@ -52,7 +52,7 @@ public class NichirinModConfig implements ConfigData {
 
         @ConfigEntry.Gui.Tooltip
         @ConfigEntry.BoundedDiscrete(min = 1, max = 100)
-        public int staminaRegenRate = 40;
+        public int staminaRegenRate = 12;
 
         @ConfigEntry.Gui.Tooltip
         @ConfigEntry.BoundedDiscrete(min = 0, max = 30)
