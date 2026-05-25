@@ -59,12 +59,41 @@ public class NichirinRecipeProvider extends FabricRecipeProvider {
                 .unlockedBy("has_magenta_dye", InventoryChangeTrigger.TriggerInstance.hasItems(Items.MAGENTA_DYE))
                 .save(exporter);
 
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.COMBAT, NichirinItemRegistry.MIST_KATANA.get())
+                .requires(NichirinItemRegistry.KATANA.get())
+                .requires(Items.CYAN_DYE)
+                .unlockedBy("has_katana", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinItemRegistry.KATANA.get()))
+                .unlockedBy("has_cyan_dye", InventoryChangeTrigger.TriggerInstance.hasItems(Items.CYAN_DYE))
+                .save(exporter);
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.COMBAT, NichirinItemRegistry.SABITO_KATANA.get())
+                .requires(NichirinItemRegistry.KATANA.get())
+                .requires(Items.GREEN_DYE)
+                .unlockedBy("has_katana", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinItemRegistry.KATANA.get()))
+                .unlockedBy("has_green_dye", InventoryChangeTrigger.TriggerInstance.hasItems(Items.GREEN_DYE))
+                .save(exporter);
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.COMBAT, NichirinItemRegistry.UROKODAKI_KATANA.get())
+                .requires(NichirinItemRegistry.KATANA.get())
+                .requires(Items.LIGHT_BLUE_DYE)
+                .unlockedBy("has_katana", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinItemRegistry.KATANA.get()))
+                .unlockedBy("has_light_blue_dye", InventoryChangeTrigger.TriggerInstance.hasItems(Items.LIGHT_BLUE_DYE))
+                .save(exporter);
+
         ShapelessRecipeBuilder.shapeless(RecipeCategory.COMBAT, NichirinItemRegistry.SOUND_KATANAS.get())
                 .requires(NichirinItemRegistry.KATANA.get())
                 .requires(NichirinItemRegistry.KATANA.get())
                 .requires(Items.WHITE_DYE)
                 .unlockedBy("has_katana", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinItemRegistry.KATANA.get()))
                 .unlockedBy("has_white_dye", InventoryChangeTrigger.TriggerInstance.hasItems(Items.WHITE_DYE))
+                .save(exporter);
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.COMBAT, NichirinItemRegistry.BEAST_KATANAS.get())
+                .requires(NichirinItemRegistry.KATANA.get())
+                .requires(NichirinItemRegistry.KATANA.get())
+                .requires(Items.GRAY_DYE)
+                .unlockedBy("has_katana", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinItemRegistry.KATANA.get()))
+                .unlockedBy("has_gray_dye", InventoryChangeTrigger.TriggerInstance.hasItems(Items.GRAY_DYE))
                 .save(exporter);
 
         // Smoke bomb recipe
@@ -107,7 +136,6 @@ public class NichirinRecipeProvider extends FabricRecipeProvider {
                 .unlockedBy("has_iron_ingot", InventoryChangeTrigger.TriggerInstance.hasItems(Items.IRON_INGOT))
                 .save(exporter);
 
-        // ===== ZENITSU ARMOR RECIPES =====
         // Zenitsu Helmet - Yellow secondary, Orange primary
         ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.ZENITSU_HEADPIECE.get())
                 .define('Y', Items.YELLOW_DYE) // Secondary
@@ -153,7 +181,6 @@ public class NichirinRecipeProvider extends FabricRecipeProvider {
                 .unlockedBy("has_netherite_boots", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_BOOTS))
                 .save(exporter);
 
-        // ===== RENGOKU ARMOR RECIPES =====
         // Rengoku Helmet - Orange secondary, Red primary
         ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.RENGOKU_HEADPIECE.get())
                 .define('O', Items.ORANGE_DYE) // Secondary
@@ -199,7 +226,6 @@ public class NichirinRecipeProvider extends FabricRecipeProvider {
                 .unlockedBy("has_netherite_boots", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_BOOTS))
                 .save(exporter);
 
-        // ===== TENGEN ARMOR RECIPES =====
         // Tengen Helmet - White secondary, Chain (Iron Nugget) primary
         ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.TENGEN_HEADPIECE.get())
                 .define('W', Items.WHITE_DYE) // Secondary
@@ -245,7 +271,6 @@ public class NichirinRecipeProvider extends FabricRecipeProvider {
                 .unlockedBy("has_netherite_boots", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_BOOTS))
                 .save(exporter);
 
-        // ===== SHINOBU ARMOR RECIPES =====
         // Shinobu Helmet - Purple secondary, Black primary
         ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.SHINOBU_HEADPIECE.get())
                 .define('P', Items.PURPLE_DYE) // Secondary
@@ -289,6 +314,191 @@ public class NichirinRecipeProvider extends FabricRecipeProvider {
                 .pattern("WBW")
                 .pattern("K K")
                 .unlockedBy("has_netherite_boots", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_BOOTS))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.SABITO_HEADPIECE.get())
+                .define('G', Items.GREEN_DYE)
+                .define('S', Items.STRING)
+                .define('W', Items.WHITE_DYE)
+                .define('H', Items.NETHERITE_HELMET)
+                .pattern("GSG")
+                .pattern("WHW")
+                .pattern("   ")
+                .unlockedBy("has_netherite_helmet", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_HELMET))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.SABITO_CAPE.get())
+                .define('G', Items.GREEN_DYE)
+                .define('C', Items.NETHERITE_CHESTPLATE)
+                .define('O', Items.ORANGE_DYE)
+                .pattern("GGG")
+                .pattern("GCG")
+                .pattern("O O")
+                .unlockedBy("has_netherite_chestplate", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_CHESTPLATE))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.SABITO_LEGGINGS.get())
+                .define('G', Items.GREEN_DYE)
+                .define('L', Items.NETHERITE_LEGGINGS)
+                .define('B', Items.BLACK_DYE)
+                .pattern("GGG")
+                .pattern("GLG")
+                .pattern("B B")
+                .unlockedBy("has_netherite_leggings", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_LEGGINGS))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.SABITO_BOOTS.get())
+                .define('B', Items.BLACK_DYE)
+                .define('O', Items.NETHERITE_BOOTS)
+                .define('G', Items.GREEN_DYE)
+                .pattern("   ")
+                .pattern("BOB")
+                .pattern("G G")
+                .unlockedBy("has_netherite_boots", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_BOOTS))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.GIYU_HEADPIECE.get())
+                .define('B', Items.BLACK_DYE)
+                .define('S', Items.STRING)
+                .define('C', Items.CYAN_DYE)
+                .define('H', Items.NETHERITE_HELMET)
+                .pattern("BSB")
+                .pattern("CHC")
+                .pattern("   ")
+                .unlockedBy("has_netherite_helmet", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_HELMET))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.GIYU_CAPE.get())
+                .define('G', Items.GREEN_DYE)
+                .define('C', Items.NETHERITE_CHESTPLATE)
+                .define('R', Items.RED_DYE)
+                .pattern("GGG")
+                .pattern("GCG")
+                .pattern("R R")
+                .unlockedBy("has_netherite_chestplate", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_CHESTPLATE))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.GIYU_LEGGINGS.get())
+                .define('B', Items.BLACK_DYE)
+                .define('L', Items.NETHERITE_LEGGINGS)
+                .define('C', Items.CYAN_DYE)
+                .pattern("BBB")
+                .pattern("BLB")
+                .pattern("C C")
+                .unlockedBy("has_netherite_leggings", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_LEGGINGS))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.GIYU_BOOTS.get())
+                .define('B', Items.BLACK_DYE)
+                .define('O', Items.NETHERITE_BOOTS)
+                .define('R', Items.RED_DYE)
+                .pattern("   ")
+                .pattern("BOB")
+                .pattern("R R")
+                .unlockedBy("has_netherite_boots", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_BOOTS))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.UROKODAKI_HEADPIECE.get())
+                .define('L', Items.LIGHT_BLUE_DYE)
+                .define('S', Items.STRING)
+                .define('W', Items.WHITE_DYE)
+                .define('H', Items.NETHERITE_HELMET)
+                .pattern("LSL")
+                .pattern("WHW")
+                .pattern("   ")
+                .unlockedBy("has_netherite_helmet", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_HELMET))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.UROKODAKI_CAPE.get())
+                .define('L', Items.LIGHT_BLUE_DYE)
+                .define('C', Items.NETHERITE_CHESTPLATE)
+                .define('W', Items.WHITE_DYE)
+                .pattern("LLL")
+                .pattern("LCL")
+                .pattern("W W")
+                .unlockedBy("has_netherite_chestplate", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_CHESTPLATE))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.UROKODAKI_LEGGINGS.get())
+                .define('L', Items.LIGHT_BLUE_DYE)
+                .define('P', Items.NETHERITE_LEGGINGS)
+                .define('G', Items.GRAY_DYE)
+                .pattern("LLL")
+                .pattern("LPL")
+                .pattern("G G")
+                .unlockedBy("has_netherite_leggings", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_LEGGINGS))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.UROKODAKI_BOOTS.get())
+                .define('G', Items.GRAY_DYE)
+                .define('B', Items.NETHERITE_BOOTS)
+                .define('L', Items.LIGHT_BLUE_DYE)
+                .pattern("   ")
+                .pattern("GBG")
+                .pattern("L L")
+                .unlockedBy("has_netherite_boots", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_BOOTS))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.MUICHIRO_HEADPIECE.get())
+                .define('C', Items.CYAN_DYE)
+                .define('S', Items.STRING)
+                .define('B', Items.BLACK_DYE)
+                .define('H', Items.NETHERITE_HELMET)
+                .pattern("CSC")
+                .pattern("BHB")
+                .pattern("   ")
+                .unlockedBy("has_netherite_helmet", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_HELMET))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.MUICHIRO_CHESTPLATE.get())
+                .define('C', Items.CYAN_DYE)
+                .define('P', Items.NETHERITE_CHESTPLATE)
+                .define('B', Items.BLACK_DYE)
+                .pattern("CCC")
+                .pattern("CPC")
+                .pattern("B B")
+                .unlockedBy("has_netherite_chestplate", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_CHESTPLATE))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.MUICHIRO_BOOTS.get())
+                .define('B', Items.BLACK_DYE)
+                .define('O', Items.NETHERITE_BOOTS)
+                .define('C', Items.CYAN_DYE)
+                .pattern("   ")
+                .pattern("BOB")
+                .pattern("C C")
+                .unlockedBy("has_netherite_boots", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_BOOTS))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.BOAR_HEAD.get())
+                .define('B', Items.BROWN_DYE)
+                .define('W', Items.WHITE_DYE)
+                .define('L', Items.LEATHER)
+                .define('H', Items.DIAMOND_HELMET)
+                .pattern("BWB")
+                .pattern("LHL")
+                .pattern("   ")
+                .unlockedBy("has_diamond_helmet", InventoryChangeTrigger.TriggerInstance.hasItems(Items.DIAMOND_HELMET))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.INOSUKE_LEGGINGS.get())
+                .define('B', Items.BROWN_DYE)
+                .define('L', Items.DIAMOND_LEGGINGS)
+                .define('G', Items.LIGHT_GRAY_DYE)
+                .pattern("BBB")
+                .pattern("BLB")
+                .pattern("G G")
+                .unlockedBy("has_diamond_leggings", InventoryChangeTrigger.TriggerInstance.hasItems(Items.DIAMOND_LEGGINGS))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.INOSUKE_BOOTS.get())
+                .define('G', Items.GRAY_DYE)
+                .define('B', Items.DIAMOND_BOOTS)
+                .define('R', Items.BROWN_DYE)
+                .pattern("   ")
+                .pattern("GBG")
+                .pattern("R R")
+                .unlockedBy("has_diamond_boots", InventoryChangeTrigger.TriggerInstance.hasItems(Items.DIAMOND_BOOTS))
                 .save(exporter);
 
         // Sakuramochi
