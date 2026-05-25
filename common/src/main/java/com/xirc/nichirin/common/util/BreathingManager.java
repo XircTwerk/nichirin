@@ -78,6 +78,10 @@ public class BreathingManager {
         // Sync max breath and base regen rate from config
         var breathCfg = com.xirc.nichirin.common.config.NichirinModConfig.get().breathing;
         float configMax = breathCfg.maxBreath;
+        // Flaw: One Lung halves max breath
+        if (com.xirc.nichirin.common.data.PlayerDataProvider.getData(player).getPerkData().hasFlaw("one_lung")) {
+            configMax *= 0.5f;
+        }
         if (data.max != configMax) {
             data.max = configMax;
             if (data.current > data.max) data.current = data.max;

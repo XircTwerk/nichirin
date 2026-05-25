@@ -144,11 +144,11 @@ public class SkillsSection extends AbstractGuiPage {
         int statX = Math.max(4, w - 116);
         int statY = 10;
         int slots = data.getPerkSlots();
-        int maxSlots = 5;
+        int maxSlots = com.xirc.nichirin.common.config.NichirinModConfig.get().perks.maxEquippedPerks;
         String slotText = "Slots " + data.equippedCount() + "/" + slots;
         g.drawString(font, slotText, statX, statY, TEXT, false);
         if (slots < maxSlots) {
-            String unlockHint = "(" + (maxSlots - slots) + " more unlockable)";
+            String unlockHint = "(" + (maxSlots - slots) + " more — train with a Master)";
             g.drawString(font, unlockHint, statX, statY + 8, TEXT_DIM, false);
         }
         g.drawString(font, "Perks " + data.getDiscoveredIds().size() + "/" + NichirinPerkRegistry.allPerks().size(), statX, statY + 18, TEXT, false);

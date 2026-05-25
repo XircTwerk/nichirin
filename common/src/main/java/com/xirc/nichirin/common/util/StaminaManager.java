@@ -51,6 +51,16 @@ public class StaminaManager {
 
         StaminaData data = getOrCreateData(player);
 
+        // Flaw: Atrophied reduces max stamina by 40%
+        float targetMax = DEFAULT_MAX_STAMINA;
+        if (com.xirc.nichirin.common.data.PlayerDataProvider.getData(player).getPerkData().hasFlaw("atrophied")) {
+            targetMax *= 0.6f;
+        }
+        if (data.max != targetMax) {
+            data.max = targetMax;
+            if (data.current > data.max) data.current = data.max;
+        }
+
         // second_wind tick
         if (player instanceof ServerPlayer sp) {
             PerkManager.tickSecondWind(sp);

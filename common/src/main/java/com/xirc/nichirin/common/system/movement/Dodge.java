@@ -32,6 +32,10 @@ public class Dodge {
         if (player == null || player.level().isClientSide) {
             return;
         }
+        if (isAnchored(player)) {
+            notifyAnchored(player);
+            return;
+        }
 
         // Start immunity frames
         grantImmunityFrames(player);
@@ -52,6 +56,10 @@ public class Dodge {
      */
     public static void executeAirDodge(Player player, MovementContext.DashInput input) {
         if (player == null || player.level().isClientSide) {
+            return;
+        }
+        if (isAnchored(player)) {
+            notifyAnchored(player);
             return;
         }
 
@@ -325,5 +333,20 @@ public class Dodge {
         boolean dodgedAttack;
         boolean shouldStunOnLanding;
         DodgeType type;
+    }
+
+    /** Anchored flaw: cannot dodge while stamina > 50%. */
+    private static boolean isAnchored(Player player) {
+        if (!com.xirc.nichirin.common.data.PlayerDataProvider.getData(player).getPerkData().hasFlaw("anchored")) {
+            return false;
+        }
+        return com.xirc.nichirin.common.util.StaminaManager.getStaminaPercentage(player) > 0.5f;
+    }
+
+    private static void notifyAnchored(Player player) {
+        player.displayClientMessage(
+                net.minecraft.network.chat.Component.literal("Anchored — too rested to dodge")
+                        .withStyle(s -> s.withColor(0xFF5555)),
+                true);
     }
 }

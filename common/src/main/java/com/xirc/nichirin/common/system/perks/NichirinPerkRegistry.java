@@ -459,16 +459,15 @@ public final class NichirinPerkRegistry {
                 .build());
 
         // FLAWS
-        registerFlaw(new FlawDefinition("brittle_bones",  "Brittle Bones",  "Your bones fracture more easily. Fall damage is doubled and knockback sends you further."));
-        registerFlaw(new FlawDefinition("demon_bait",     "Demon Bait",     "Demons are innately drawn to you. You have a permanent 30% aggro increase from all demons."));
-        registerFlaw(new FlawDefinition("slow_recovery",  "Slow Recovery",  "Your body heals sluggishly. Natural health regeneration is 40% slower."));
-        registerFlaw(new FlawDefinition("frail_mind",     "Frail Mind",     "Mental fortitude is lacking. Stun and stagger durations are doubled."));
-        registerFlaw(new FlawDefinition("heavy_feet",     "Heavy Feet",     "Your feet feel leaden. Movement speed is reduced by 15% and sprint stamina drains faster."));
-        registerFlaw(new FlawDefinition("brittle_blade",  "Brittle Blade",  "Your katana chips easily. Durability drains twice as fast and attack damage is reduced by 8%."));
-        registerFlaw(new FlawDefinition("bloodlust",      "Bloodlust",      "Once you land three consecutive hits you cannot stop attacking, continuing the combo involuntarily."));
-        registerFlaw(new FlawDefinition("cursed_eyes",    "Cursed Eyes",    "Your vision is blighted. You have permanent Blindness I and cannot benefit from Night Vision."));
-        registerFlaw(new FlawDefinition("reckless",       "Reckless",       "You lunge into every attack without caution. Dodge cooldown is increased by 30%."));
-        registerFlaw(new FlawDefinition("stamina_seeker", "Stamina Seeker", "Your breath is insatiable. Stamina costs for all actions are increased by 20%."));
+        registerFlaw(new FlawDefinition("one_lung",       "One Lung",       "Your lungs are damaged. Maximum breath is halved."));
+        registerFlaw(new FlawDefinition("atrophied",      "Atrophied",      "Your muscles have wasted away. Maximum stamina is reduced by 40%."));
+        registerFlaw(new FlawDefinition("glass_stance",   "Glass Stance",   "Your guard shatters on contact. Your stance breaks instantly on the first hit, even while blocking."));
+        registerFlaw(new FlawDefinition("cursed_eyes",    "Cursed Eyes",    "Your vision is blighted. You have permanent Blindness and cannot benefit from Night Vision."));
+        registerFlaw(new FlawDefinition("daywalker",      "Daywalker",      "You belong to the day. At night, your damage, movement and attack speed are halved."));
+        registerFlaw(new FlawDefinition("hollow",         "Hollow",         "Your body cannot store nourishment. Hunger drains rapidly and food gives no saturation."));
+        registerFlaw(new FlawDefinition("sleep_deprived", "Sleep Deprived", "You cannot sleep. Beds refuse to accept you."));
+        registerFlaw(new FlawDefinition("forsaken",       "Forsaken",       "Food can no longer mend you. Natural food-based regeneration is suppressed entirely."));
+        registerFlaw(new FlawDefinition("anchored",       "Anchored",       "You are tethered to the ground. You cannot dodge or air-dodge while above 50% stamina."));
     }
 
     private static void register(PerkDefinition def) { PERKS.put(def.id, def); }

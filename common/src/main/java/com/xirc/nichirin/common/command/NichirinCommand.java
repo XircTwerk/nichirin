@@ -144,19 +144,21 @@ public class NichirinCommand {
             if (PerkManager.discover(player, def.id)) perksDiscovered++;
         }
 
-        PlayerDataProvider.getData(player).getPerkData().setPerkSlots(5);
+        int maxSlots = com.xirc.nichirin.common.config.NichirinModConfig.get().perks.maxEquippedPerks;
+        PlayerDataProvider.getData(player).getPerkData().setPerkSlots(maxSlots);
 
         BreathOfNichirinEventHandler.syncPerksToPlayer(player);
         ProgressionSyncPacket.sendToPlayer(player);
 
         int finalStyles = stylesUnlocked;
         int finalPerks = perksDiscovered;
+        int finalSlots = maxSlots;
         src.sendSuccess(() -> Component.literal("Unlocked everything for " + name + ": " +
-                finalStyles + " style(s), " + finalPerks + " perk(s), 5 perk slots.")
+                finalStyles + " style(s), " + finalPerks + " perk(s), " + finalSlots + " perk slots.")
                 .withStyle(s -> s.withColor(COL_OK)), true);
 
         player.displayClientMessage(
-                Component.literal("All breathing styles and perks unlocked! Perk slots: 5.")
+                Component.literal("All breathing styles and perks unlocked! Perk slots: " + finalSlots + ".")
                         .withStyle(s -> s.withColor(0x55FFFF)), false);
 
         return 1;

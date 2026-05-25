@@ -435,8 +435,10 @@ public class KatanaBlock {
     }
 
     private static boolean handleSuccessfulBlock(Player player, BlockingState state, float damage) {
-        // Take 10 stance damage when hit while blocking
-        if (!StanceManager.consume(player, 10.0f)) {
+        // Flaw: Glass Stance — stance shatters on the first hit while blocking
+        boolean glassStance = com.xirc.nichirin.common.data.PlayerDataProvider.getData(player).getPerkData().hasFlaw("glass_stance");
+        float stanceCost = glassStance ? Float.MAX_VALUE : 10.0f;
+        if (!StanceManager.consume(player, stanceCost)) {
             // Out of stance - stance broken! Apply stun to the blocker
             MobEffectInstance stunEffect = new MobEffectInstance(
                     NichirinEffectRegistry.STUNNED.get(),

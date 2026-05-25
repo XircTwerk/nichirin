@@ -43,6 +43,24 @@ public class PlayerTickHandler {
                 removeAllPerkModifiers(sp);
             }
         });
+
+        // Sleep Deprived flaw — refuse bed interactions
+        dev.architectury.event.events.common.InteractionEvent.RIGHT_CLICK_BLOCK.register((player, hand, pos, face) -> {
+            if (player.level().isClientSide) return dev.architectury.event.EventResult.pass();
+            var state = player.level().getBlockState(pos);
+            if (!(state.getBlock() instanceof net.minecraft.world.level.block.BedBlock)) {
+                return dev.architectury.event.EventResult.pass();
+            }
+            var perkData = com.xirc.nichirin.common.data.PlayerDataProvider.getData(player).getPerkData();
+            if (perkData.hasFlaw("sleep_deprived")) {
+                player.displayClientMessage(
+                        net.minecraft.network.chat.Component.literal("You cannot sleep — your mind refuses rest.")
+                                .withStyle(s -> s.withColor(0xFF5555)),
+                        true);
+                return dev.architectury.event.EventResult.interruptFalse();
+            }
+            return dev.architectury.event.EventResult.pass();
+        });
     }
 
     private static void onPlayerTick(Player player) {
@@ -54,8 +72,68 @@ public class PlayerTickHandler {
 
             if (player instanceof ServerPlayer) {
                 tickPerkEffects((ServerPlayer) player);
+                tickFlawEffects((ServerPlayer) player);
             }
         }
+    }
+
+    /**
+     * Per-tick effects driven by equipped flaws.
+     */
+    private static void tickFlawEffects(ServerPlayer player) {
+        var data = com.xirc.nichirin.common.data.PlayerDataProvider.getData(player).getPerkData();
+
+        // Cursed Eyes — permanent Blindness, no Night Vision benefit
+        if (data.hasFlaw("cursed_eyes")) {
+            if (player.hasEffect(MobEffects.NIGHT_VISION)) {
+                player.removeEffect(MobEffects.NIGHT_VISION);
+            }
+            var blind = player.getEffect(MobEffects.BLINDNESS);
+            if (blind == null || blind.getDuration() < 40) {
+                player.addEffect(new MobEffectInstance(
+                        MobEffects.BLINDNESS, Integer.MAX_VALUE, 0, false, false, false));
+            }
+        }
+
+        // Daywalker — all stats halved at night
+        if (data.hasFlaw("daywalker")) {
+            long timeOfDay = player.level().getDayTime() % 24000L;
+            boolean isNight = timeOfDay >= 13000L && timeOfDay <= 23000L;
+            if (isNight) {
+                if (!hasEffect(player, MobEffects.WEAKNESS, 1)) {
+                    player.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 60, 1, false, false, false));
+                }
+                if (!hasEffect(player, MobEffects.MOVEMENT_SLOWDOWN, 1)) {
+                    player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 1, false, false, false));
+                }
+                if (!hasEffect(player, MobEffects.DIG_SLOWDOWN, 1)) {
+                    player.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 60, 1, false, false, false));
+                }
+            }
+        }
+
+        // Hollow — hunger drains 3x faster, no saturation
+        if (data.hasFlaw("hollow")) {
+            player.causeFoodExhaustion(0.04f);
+            if (player.getFoodData().getSaturationLevel() > 0f) {
+                player.getFoodData().setSaturation(0f);
+            }
+        }
+
+        // Forsaken — food provides no healing (clamp food just below regen threshold)
+        if (data.hasFlaw("forsaken")) {
+            if (player.getFoodData().getFoodLevel() > 17) {
+                player.getFoodData().setFoodLevel(17);
+            }
+            if (player.getFoodData().getSaturationLevel() > 0f) {
+                player.getFoodData().setSaturation(0f);
+            }
+        }
+    }
+
+    private static boolean hasEffect(ServerPlayer player, net.minecraft.world.effect.MobEffect effect, int minAmplifier) {
+        var inst = player.getEffect(effect);
+        return inst != null && inst.getAmplifier() >= minAmplifier && inst.getDuration() > 20;
     }
 
     private static void tickPerkEffects(ServerPlayer player) {

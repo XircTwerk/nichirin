@@ -140,12 +140,14 @@ public class PerkData {
 
     /** Increases perk slots up to the global config maximum. */
     public void setPerkSlots(int slots) {
-        this.perkSlots = Math.max(1, Math.min(slots, 5));
+        int cap = com.xirc.nichirin.common.config.NichirinModConfig.get().perks.maxEquippedPerks;
+        this.perkSlots = Math.max(1, Math.min(slots, cap));
     }
 
     /** Grants one additional perk slot if below the cap. Returns true if a slot was added. */
     public boolean unlockPerkSlot() {
-        if (perkSlots >= 5) return false;
+        int cap = com.xirc.nichirin.common.config.NichirinModConfig.get().perks.maxEquippedPerks;
+        if (perkSlots >= cap) return false;
         perkSlots++;
         return true;
     }
