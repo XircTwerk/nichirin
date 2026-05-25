@@ -59,7 +59,7 @@ public class MistBreathingMoveset extends AbstractMoveset {
                 .withDashSpeed(12.0f)
                 .withBreathCost(10.0f)
                 .withHitStun(14)
-                .withHitboxSize(20.0f)
+                .withHitboxSize(10.5f)
                 .withDescription("Lightning-fast thrusting lunge that pierces multiple enemies.")
                 .build();
     }
