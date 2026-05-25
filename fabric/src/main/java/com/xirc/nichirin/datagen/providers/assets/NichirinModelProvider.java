@@ -4,6 +4,7 @@ import com.xirc.nichirin.registry.NichirinBlockRegistry;
 import com.xirc.nichirin.registry.NichirinItemRegistry;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricModelProvider;
+import net.minecraft.client.model.Model;
 import net.minecraft.data.models.BlockModelGenerators;
 import net.minecraft.data.models.ItemModelGenerators;
 import net.minecraft.data.models.model.ModelTemplates;
@@ -92,6 +93,11 @@ public class NichirinModelProvider extends FabricModelProvider {
         generator.generateFlatItem(NichirinItemRegistry.PERK_SCROLL.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.CURSED_SCROLL.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinBlockRegistry.WYSTERIA_SAPLING_ITEM.get(), ModelTemplates.FLAT_ITEM);
+
+        generator.generateFlatItem(NichirinItemRegistry.BOAR_SPAWN_EGG.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.TEMPLE_DEMON_SPAWN_EGG.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.WATER_BREATHING_TRAINER_SPAWN_EGG.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.THUNDER_BREATHING_TRAINER_SPAWN_EGG.get(), ModelTemplates.FLAT_ITEM);
 
         // Armor items
         generateArmorItems(generator);

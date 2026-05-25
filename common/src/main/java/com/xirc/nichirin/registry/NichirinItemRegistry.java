@@ -311,13 +311,15 @@ public interface NichirinItemRegistry {
     RegistrySupplier<Item> INOSUKE_BOOTS = register("inosuke_boots",
             () -> new NichirinArmorItem(ArmorMaterials.DIAMOND, NichirinArmorItem.Type.BOOTS, settings().stacksTo(1)));
 
-    // Spawn egg for Temple Demon (dark body, blood-red spots)
+    // Spawn eggs
     RegistrySupplier<Item> TEMPLE_DEMON_SPAWN_EGG = register("temple_demon_spawn_egg",
-            () -> new LazySpawnEggItem(NichirinEntityRegistry.TEMPLE_DEMON, 0x1a1a2e, 0x8b0000, settings()));
-
-    // Spawn egg for Water Breathing Trainer (deep teal body, white mask spots)
+            () -> new LazySpawnEggItem(NichirinEntityRegistry.TEMPLE_DEMON, settings()));
+    RegistrySupplier<Item> BOAR_SPAWN_EGG = register("boar_spawn_egg",
+            () -> new LazySpawnEggItem(NichirinEntityRegistry.BOAR, settings()));
     RegistrySupplier<Item> WATER_BREATHING_TRAINER_SPAWN_EGG = register("water_breathing_trainer_spawn_egg",
-            () -> new LazySpawnEggItem(NichirinEntityRegistry.WATER_BREATHING_TRAINER, 0x1a3a4a, 0xffffff, settings()));
+            () -> new LazySpawnEggItem(NichirinEntityRegistry.WATER_BREATHING_TRAINER, settings()));
+    RegistrySupplier<Item>  THUNDER_BREATHING_TRAINER_SPAWN_EGG = register("thunder_breathing_trainer_spawn_egg",
+            () -> new LazySpawnEggItem(NichirinEntityRegistry.THUNDER_BREATHING_TRAINER, settings()));
 
     // Perk scrolls
     RegistrySupplier<Item> PERK_SCROLL = register("perk_scroll",

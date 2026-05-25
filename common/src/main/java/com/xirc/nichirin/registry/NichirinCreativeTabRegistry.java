@@ -50,7 +50,9 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinItemRegistry.PERK_SCROLL.get());
                         entries.accept(NichirinItemRegistry.CURSED_SCROLL.get());
                         entries.accept(NichirinItemRegistry.TEMPLE_DEMON_SPAWN_EGG.get());
+                        entries.accept(NichirinItemRegistry.BOAR_SPAWN_EGG.get());
                         entries.accept(NichirinItemRegistry.WATER_BREATHING_TRAINER_SPAWN_EGG.get());
+                        entries.accept(NichirinItemRegistry.THUNDER_BREATHING_TRAINER_SPAWN_EGG.get());
                     })
                     .build();
         });
