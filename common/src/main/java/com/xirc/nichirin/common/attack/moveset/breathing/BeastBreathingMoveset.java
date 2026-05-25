@@ -39,7 +39,7 @@ public class BeastBreathingMoveset extends AbstractMoveset {
                 .withDamage(5.0f)
                 .withRange(4.0f)
                 .withKnockback(2.0f)
-                .withBreathCost(0.0f)
+                .withBreathCost(8.0f)
                 .withStaminaCost(10.0f)
                 .withHitStun(10)
                 .withHitboxSize(1.5f)
