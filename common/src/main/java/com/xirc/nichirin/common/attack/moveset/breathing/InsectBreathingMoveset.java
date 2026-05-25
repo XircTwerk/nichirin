@@ -96,7 +96,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                         .withRange(10.0f) // Lock-on range
                         .withKnockback(0.3f) // Light knockback
                         .withBreathCost(20.0f)
-                        .withHitStun(25) // Good stun for precision strike
+                        .withHitStun(30) // Good stun for precision strike
                         .withHitboxSize(2f) // Small precise hitbox
                         .withDescription("Lock-on dash strike that deals high single-target damage.")
                         .withAction(entity -> {
