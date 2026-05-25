@@ -42,7 +42,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                 .withAnimation("nichirin:pommel_slash", 8)
                 .withTiming(0, 5, 18)
                 .withDamage(1.5f)
-                .withRange(1.5f)
+                .withRange(2.5f)
                 .withKnockback(0f)
                 .withBreathCost(15.0f)
                 .withHitStun(8)
