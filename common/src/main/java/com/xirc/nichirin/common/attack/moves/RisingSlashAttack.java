@@ -73,7 +73,7 @@ public class RisingSlashAttack {
         private int active = 10;
         private int recovery = 8;
         private int cooldown = 25;
-        private float damage = 6.0f;
+        private float damage = 0.0f;
         private float range = 2.5f;
         private float knockback = 0.2f;
         private float hitboxSize = 2.0f;

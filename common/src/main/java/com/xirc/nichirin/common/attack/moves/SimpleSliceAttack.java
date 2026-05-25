@@ -65,7 +65,7 @@ public class SimpleSliceAttack {
         private int active = 13;
         private int recovery = 4;
         private int cooldown = 10;
-        private float damage = 4.0f;
+        private float damage = 0.0f;
         private float range = 2.5f;
         private float knockback = 0.3f;
         private float hitboxSize = 2.0f;

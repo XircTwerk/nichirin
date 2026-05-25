@@ -69,7 +69,7 @@ public class KatanaCheckAttack extends AbstractKatanaAttack {
     public static class Builder extends AbstractKatanaAttack.Builder<Builder, KatanaCheckAttack> {
         public Builder() {
             startup = 0; active = 1; recovery = 4;
-            cooldown = 30; damage = 2.0f; range = 0.9f;
+            cooldown = 30; range = 0.9f;
             knockback = 2.2f; hitboxSize = 2.0f; hitStun = 20;
         }
 
@@ -83,7 +83,7 @@ public class KatanaCheckAttack extends AbstractKatanaAttack {
     public static KatanaCheckAttack createDefault() {
         return new Builder()
                 .withCooldown(30)
-                // Same sounds as the gut punch — PLAYER_ATTACK_STRONG on startup, PLAYER_ATTACK_CRIT on impact
+                .withDamage(2.0f)
                 .withSounds(SoundEvents.PLAYER_ATTACK_STRONG, SoundEvents.PLAYER_ATTACK_CRIT)
                 .build();
     }

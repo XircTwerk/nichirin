@@ -113,7 +113,7 @@ public class KatanaThrustAttack extends AbstractKatanaAttack {
     public static class Builder extends AbstractKatanaAttack.Builder<Builder, KatanaThrustAttack> {
         public Builder() {
             startup = 3; active = 10; recovery = 8;
-            cooldown = 50; damage = 8.0f; range = 7.0f;
+            cooldown = 50; range = 7.0f;
             knockback = 1.2f; hitboxSize = 2.0f; hitStun = 15;
         }
 
@@ -127,6 +127,7 @@ public class KatanaThrustAttack extends AbstractKatanaAttack {
     public static KatanaThrustAttack createDefault() {
         return new Builder()
                 .withCooldown(50)
+                .withDamage(8.0f)
                 .withSounds(SoundEvents.PLAYER_ATTACK_SWEEP, SoundEvents.PLAYER_ATTACK_STRONG)
                 .build();
     }

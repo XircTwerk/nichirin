@@ -69,7 +69,7 @@ public class DoubleSlashAttack {
         private int active = 16; // Active frames for the entire attack
         private int recovery = 6;
         private int cooldown = 20;
-        private float damage = 3.5f; // Damage per hit (targets can be hit twice)
+        private float damage = 0.0f; // Damage per hit (targets can be hit twice)
         private float range = 2.8f;
         private float knockback = 0.4f;
         private float hitboxSize = 2.0f;

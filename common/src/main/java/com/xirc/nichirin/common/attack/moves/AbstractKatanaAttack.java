@@ -224,7 +224,7 @@ public abstract class AbstractKatanaAttack {
         protected int active      = 6;
         protected int recovery    = 8;
         protected int cooldown    = 40;
-        protected float damage    = 5.0f;
+        protected float damage    = 0.0f;
         protected float range     = 2.5f;
         protected float knockback = 1.0f;
         protected float hitboxSize   = 2.0f;
