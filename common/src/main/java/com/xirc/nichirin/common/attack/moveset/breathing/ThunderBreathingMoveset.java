@@ -164,7 +164,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 // Seventh Form: Honoikazuchi no Kami - Ultimate finisher (INDEX 5 in wheel)
                 .withMove(new MoveBuilder("honoikazuchi_no_kami", "Honoikazuchi no Kami")
                         .withAnimation("nichirin:honoikazuchi_no_kami", 15)
-                        .withTiming(600, 120, 40) // 30 second cooldown, windup, execution
+                        .withTiming(600, 120, 10) // 30 second cooldown, windup, execution
                         .withDamage(80.0f) // Very high damage ultimate
                         .withTeleportDistance(20.0f) // Long dash
                         .withKnockback(2.0f) // High knockback
