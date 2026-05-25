@@ -680,16 +680,17 @@ public interface NichirinPacketRegistry {
     }
 
     /**
-     * Broadcasts a PlayerAnimationPacket to the animated player and all players in the same level.
-     * This ensures other players can see animations played on the given player.
+     * Broadcasts a PlayerAnimationPacket only to players within 256 blocks of the animated player.
+     * Avoids sending to the entire dimension like the old implementation did.
      */
-    public static void broadcastPlayerAnimation(ServerPlayer animatedPlayer, PlayerAnimationPacket packet) {
+    static void broadcastPlayerAnimation(ServerPlayer animatedPlayer, PlayerAnimationPacket packet) {
         ResourceLocation id = PACKET_IDS.get(packet.getClass());
         if (id == null) return;
         try {
             FriendlyByteBuf buf = encodePacket(packet);
             animatedPlayer.server.getPlayerList().getPlayers().stream()
-                    .filter(p -> p.level() == animatedPlayer.level())
+                    .filter(p -> p.level() == animatedPlayer.level()
+                            && p.distanceToSqr(animatedPlayer) <= 256.0 * 256.0)
                     .forEach(p -> {
                         try {
                             NetworkManager.sendToPlayer(p, id, new FriendlyByteBuf(buf.copy()));

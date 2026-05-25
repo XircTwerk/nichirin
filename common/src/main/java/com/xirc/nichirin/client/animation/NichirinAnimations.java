@@ -1,35 +1,27 @@
 package com.xirc.nichirin.client.animation;
 
+import com.xirc.nichirin.common.util.INichirinAnimatedPlayer;
 import dev.kosmx.playerAnim.api.layered.IAnimation;
 import dev.kosmx.playerAnim.api.layered.KeyframeAnimationPlayer;
 import dev.kosmx.playerAnim.api.layered.ModifierLayer;
-import dev.kosmx.playerAnim.api.layered.modifier.AbstractFadeModifier;
 import dev.kosmx.playerAnim.core.data.KeyframeAnimation;
-import dev.kosmx.playerAnim.core.util.Ease;
-import dev.kosmx.playerAnim.minecraftApi.PlayerAnimationAccess;
 import dev.kosmx.playerAnim.minecraftApi.PlayerAnimationRegistry;
-import net.fabricmc.api.Environment;
 import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
-import dev.kosmx.playerAnim.api.layered.AnimationStack;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Environment(EnvType.CLIENT)
 public class NichirinAnimations {
 
-    public static void init() {
-        PlayerAnimationAccess.REGISTER_ANIMATION_EVENT.register(NichirinAnimations::onPlayerAnimationRegister);
-    }
+    private static final Logger LOGGER = LoggerFactory.getLogger("NichirinAnimations");
 
-    private static void onPlayerAnimationRegister(AbstractClientPlayer player, AnimationStack animationStack) {
-        ModifierLayer<IAnimation> animationLayer = new ModifierLayer<>();
-        animationStack.addAnimLayer(0, animationLayer);
-
-        var playerData = PlayerAnimationAccess.getPlayerAssociatedData(player);
-        playerData.set(new ResourceLocation("nichirin", "animation_layer"), animationLayer);
-    }
+    // No init() needed — layer registration is handled by AbstractClientPlayerMixin.
+    public static void init() {}
 
     public static void playAnimation(Player player, String animationName) {
         if (!(player instanceof AbstractClientPlayer clientPlayer)) return;
@@ -37,7 +29,6 @@ public class NichirinAnimations {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft == null || minecraft.level == null) return;
 
-        // Empty name is the stop signal â€” clear the animation layer and return
         if (animationName == null || animationName.isEmpty()) {
             stopAnimation(clientPlayer);
             return;
@@ -45,94 +36,75 @@ public class NichirinAnimations {
 
         try {
             KeyframeAnimation animation = findAnimation(animationName);
-            if (animation == null) return;
+            if (animation == null) {
+                LOGGER.error("[Nichirin] Could not find animation '{}' for player '{}' — check that the animation JSON is registered under the correct resource path.", animationName, player.getScoreboardName());
+                return;
+            }
 
-            KeyframeAnimationPlayer animationPlayer = new KeyframeAnimationPlayer(animation);
-            playAnimationDirect(clientPlayer, animationPlayer);
+            ModifierLayer<IAnimation> layer = getLayer(clientPlayer);
+            if (layer == null) {
+                LOGGER.error("[Nichirin] Animation layer is null for player '{}' — mixin may not have fired.", player.getScoreboardName());
+                return;
+            }
+
+            layer.setAnimation(new KeyframeAnimationPlayer(animation));
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("[Nichirin] Exception while playing animation '{}': {}", animationName, e.getMessage(), e);
         }
     }
 
     private static KeyframeAnimation findAnimation(String animationName) {
+        // Try direct lookup first (e.g. "nichirin:water/first_form")
         ResourceLocation directLoc = new ResourceLocation("nichirin", animationName);
-        KeyframeAnimation directResult = PlayerAnimationRegistry.getAnimation(directLoc);
-        if (directResult != null) {
-            return directResult;
-        }
+        KeyframeAnimation result = PlayerAnimationRegistry.getAnimation(directLoc);
+        if (result != null) return result;
 
-        String[] paths = {
-                "attacks/basic/" + animationName,
-                "attacks/demon/basic/" + animationName,
-                "attacks/katana/basic/" + animationName,
-                "attacks/" + animationName,
-                "basic/" + animationName,
-                "combat/" + animationName,
-                "sword/" + animationName,
-                "katana/" + animationName,
-                "special/" + animationName,
-                "moves/" + animationName,
-                animationName.replace("_", "/"),
-                "attacks/basic/" + animationName.replace("_", "/"),
-                "basic/" + animationName.replace("_", "/")
+        String[] prefixes = {
+                "attacks/basic/",
+                "attacks/demon/basic/",
+                "attacks/katana/basic/",
+                "attacks/",
+                "basic/",
+                "combat/",
+                "sword/",
+                "katana/",
+                "special/",
+                "moves/"
         };
 
-        for (String path : paths) {
-            ResourceLocation loc = new ResourceLocation("nichirin", path);
-            KeyframeAnimation animation = PlayerAnimationRegistry.getAnimation(loc);
-            if (animation != null) {
-                return animation;
-            }
+        for (String prefix : prefixes) {
+            result = PlayerAnimationRegistry.getAnimation(new ResourceLocation("nichirin", prefix + animationName));
+            if (result != null) return result;
         }
 
+        // Last-ditch: replace underscores with slashes
+        result = PlayerAnimationRegistry.getAnimation(new ResourceLocation("nichirin", animationName.replace("_", "/")));
+        if (result != null) return result;
+
+        LOGGER.warn("[Nichirin] Animation '{}' not found in any known path. Tried: nichirin:{} and {} prefix variants.", animationName, animationName, prefixes.length);
         return null;
     }
 
-    private static void playAnimationDirect(AbstractClientPlayer player, IAnimation animation) {
-        try {
-            var playerData = PlayerAnimationAccess.getPlayerAssociatedData(player);
-            var animationLayer = (ModifierLayer<IAnimation>) playerData.get(new ResourceLocation("nichirin", "animation_layer"));
-
-            if (animationLayer != null) {
-                IAnimation currentAnim = animationLayer.getAnimation();
-                if (currentAnim != null) {
-                    animationLayer.replaceAnimationWithFade(
-                            AbstractFadeModifier.standardFadeIn(3, Ease.INOUTSINE),
-                            animation
-                    );
-                } else {
-                    animationLayer.setAnimation(animation);
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     public static void stopAnimation(AbstractClientPlayer player) {
-        try {
-            var playerData = PlayerAnimationAccess.getPlayerAssociatedData(player);
-            var animationLayer = (ModifierLayer<IAnimation>) playerData.get(new ResourceLocation("nichirin", "animation_layer"));
-
-            if (animationLayer != null) {
-                animationLayer.setAnimation(null);
-            }
-        } catch (Exception e) {
+        ModifierLayer<IAnimation> layer = getLayer(player);
+        if (layer != null) {
+            layer.setAnimation(null);
         }
     }
 
     public static boolean isAnimationPlaying(AbstractClientPlayer player) {
-        try {
-            var playerData = PlayerAnimationAccess.getPlayerAssociatedData(player);
-            var animationLayer = (ModifierLayer<IAnimation>) playerData.get(new ResourceLocation("nichirin", "animation_layer"));
+        ModifierLayer<IAnimation> layer = getLayer(player);
+        if (layer == null) return false;
+        IAnimation current = layer.getAnimation();
+        return current != null && current.isActive();
+    }
 
-            if (animationLayer != null) {
-                IAnimation currentAnim = animationLayer.getAnimation();
-                return currentAnim != null && currentAnim.isActive();
-            }
-        } catch (Exception e) {
+    private static ModifierLayer<IAnimation> getLayer(AbstractClientPlayer player) {
+        if (player instanceof INichirinAnimatedPlayer animated) {
+            return animated.nichirin_getAnimLayer();
         }
-        return false;
+        LOGGER.warn("[Nichirin] Player '{}' does not implement INichirinAnimatedPlayer — AbstractClientPlayerMixin missing?", player.getScoreboardName());
+        return null;
     }
 }
