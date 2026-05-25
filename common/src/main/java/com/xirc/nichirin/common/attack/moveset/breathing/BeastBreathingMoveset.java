@@ -66,7 +66,7 @@ public class BeastBreathingMoveset extends AbstractMoveset {
     private void captureExplosiveRushConfig() {
         MoveConfiguration cfg = new MoveBuilder("explosive_rush", "Explosive Rush")
                 .withAnimation("nichirin:beast_explosive_rush", 12)
-                .withTiming(80, 0, 15)
+                .withTiming(0, 0, 15)
                 .withDamage(20.0f)
                 .withDashSpeed(24.0f)
                 .withRange(16.0f)
