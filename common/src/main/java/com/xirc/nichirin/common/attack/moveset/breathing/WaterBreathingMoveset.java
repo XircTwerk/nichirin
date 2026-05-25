@@ -165,7 +165,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("whirlpool", "Whirlpool")
                         .withAnimation("nichirin:whirlpool", 15)
                         .withTiming(380, 14, 70) // 8 second cooldown, windup, 2.5s duration
-                        .withDamage(3.5f) // Multi-hit spinning damage
+                        .withDamage(2.0f) // Multi-hit spinning damage
                         .withRange(3.0f) // Whirlpool radius
                         .withKnockback(0.1f) // Light knockback, enemies spin around
                         .withBreathCost(20.0f)
