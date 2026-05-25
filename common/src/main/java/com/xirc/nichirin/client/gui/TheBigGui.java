@@ -22,8 +22,14 @@ import java.util.List;
  */
 public class TheBigGui extends Screen {
 
-    // Always render as though GUI scale = 2
-    private static final double FIXED_GUI_SCALE = 2.0;
+    /** Forced GUI scale while this screen is open. */
+    private static final int FIXED_GUI_SCALE = 2;
+
+    /** Player's original GUI scale option, restored when the screen closes. */
+    private Integer savedGuiScaleOption = null;
+
+    /** Reentrancy guard: true while we're restoring so a triggered re-init doesn't re-apply scale 2. */
+    private boolean isRestoring = false;
 
     // UI Constants
     private static final int BUTTON_WIDTH = 100;
@@ -65,23 +71,54 @@ public class TheBigGui extends Screen {
     }
 
     /**
-     * Compute the scale ratio that makes everything render as if GUI scale = 2.
+     * Force the player's GUI scale to {@link #FIXED_GUI_SCALE} while this screen is open.
+     * Crash-safe: persists the player's original scale to options.txt BEFORE swapping the
+     * in-memory value, so if the game is killed (Alt-F4 / crash) while this screen is open,
+     * the next launch reads the player's original scale from disk.
      */
-    private double getScaleRatio() {
-        if (minecraft == null) return 1.0;
-        double currentScale = minecraft.getWindow().getGuiScale();
-        if (currentScale <= 0) return 1.0;
-        return FIXED_GUI_SCALE / currentScale;
+    private void applyFixedScale() {
+        if (minecraft == null || savedGuiScaleOption != null || isRestoring) return;
+        savedGuiScaleOption = minecraft.options.guiScale().get();
+        if (savedGuiScaleOption == FIXED_GUI_SCALE) {
+            // Already at the right scale — no swap needed
+            return;
+        }
+        try {
+            // Force-persist the player's CURRENT scale to disk first, so any crash leaves
+            // options.txt with the correct value.
+            minecraft.options.save();
+        } catch (Throwable ignored) {}
+        minecraft.options.guiScale().set(FIXED_GUI_SCALE);
+        // Force a window resize so the new scale takes effect immediately. This triggers
+        // Screen.resize → init() re-entry, which is fine: savedGuiScaleOption is set so
+        // the guard at the top of applyFixedScale bails out.
+        minecraft.resizeDisplay();
+    }
+
+    private void restoreScale() {
+        if (minecraft == null || savedGuiScaleOption == null) return;
+        Integer toRestore = savedGuiScaleOption;
+        savedGuiScaleOption = null;
+        isRestoring = true;
+        try {
+            if (!minecraft.options.guiScale().get().equals(toRestore)) {
+                minecraft.options.guiScale().set(toRestore);
+                // Resize so the restored scale takes effect immediately. This may trigger
+                // Screen.resize → init() on the still-current screen, but isRestoring blocks
+                // applyFixedScale from re-clobbering.
+                minecraft.resizeDisplay();
+            }
+            try {
+                minecraft.options.save();
+            } catch (Throwable ignored) {}
+        } finally {
+            isRestoring = false;
+        }
     }
 
     @Override
     protected void init() {
-        // Rescale width/height so widgets lay out at fixed scale 2
-        double ratio = getScaleRatio();
-        if (ratio != 1.0) {
-            this.width = (int) (this.width / ratio);
-            this.height = (int) (this.height / ratio);
-        }
+        applyFixedScale();
         super.init();
 
         // Clear previous buttons
@@ -134,21 +171,6 @@ public class TheBigGui extends Screen {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        double ratio = getScaleRatio();
-        if (ratio != 1.0) {
-            graphics.pose().pushPose();
-            graphics.pose().scale((float) ratio, (float) ratio, 1.0f);
-            // Translate raw screen-pixel mouse coords into our fixed-scale GUI space
-            mouseX = (int) (mouseX / ratio);
-            mouseY = (int) (mouseY / ratio);
-            renderScaled(graphics, mouseX, mouseY, partialTick);
-            graphics.pose().popPose();
-            return;
-        }
-        renderScaled(graphics, mouseX, mouseY, partialTick);
-    }
-
-    private void renderScaled(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         graphics.fill(0, 0, this.width, this.height, BACKGROUND_COLOR);
 
         int contentRight = this.width - BUTTON_WIDTH - RIGHT_MARGIN - 10;
@@ -179,6 +201,20 @@ public class TheBigGui extends Screen {
     @Override
     public boolean isPauseScreen() {
         return false; // Don't pause the game
+    }
+
+    @Override
+    public void removed() {
+        super.removed();
+        // Restore the player's original GUI scale when the screen closes.
+        restoreScale();
+    }
+
+    @Override
+    public void onClose() {
+        // Restore BEFORE the screen is actually torn down so the new screen lays out at the right scale.
+        restoreScale();
+        super.onClose();
     }
 
     @Override
@@ -219,9 +255,6 @@ public class TheBigGui extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
-        double ratio = getScaleRatio();
-        mouseX /= ratio;
-        mouseY /= ratio;
         if (currentSection == GuiSection.SKILLS) {
             if (skillsSection.handleScroll(mouseX - CONTENT_X, mouseY - CONTENT_Y, delta)) return true;
         }
@@ -230,9 +263,6 @@ public class TheBigGui extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        double ratio = getScaleRatio();
-        mouseX /= ratio;
-        mouseY /= ratio;
         int contentRight = this.width - BUTTON_WIDTH - RIGHT_MARGIN - 10;
         int clickContentWidth = contentRight - CONTENT_X;
         int clickContentHeight = this.height - BOTTOM_MARGIN - CONTENT_Y;
@@ -253,18 +283,6 @@ public class TheBigGui extends Screen {
         }
 
         return super.mouseClicked(mouseX, mouseY, button);
-    }
-
-    @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        double ratio = getScaleRatio();
-        return super.mouseReleased(mouseX / ratio, mouseY / ratio, button);
-    }
-
-    @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double dx, double dy) {
-        double ratio = getScaleRatio();
-        return super.mouseDragged(mouseX / ratio, mouseY / ratio, button, dx / ratio, dy / ratio);
     }
 
     @Getter
