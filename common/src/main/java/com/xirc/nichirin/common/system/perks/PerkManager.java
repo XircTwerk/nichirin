@@ -5,6 +5,8 @@ import com.xirc.nichirin.common.data.PlayerDataProvider;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -49,7 +51,7 @@ public final class PerkManager {
      *   <li>Perk must be discovered.</li>
      *   <li>Perk must not already be equipped.</li>
      *   <li>Perk ID must not be in the config's disabled list.</li>
-     *   <li>Slot count must be below {@code maxEquippedPerks}.</li>
+     *   <li>Slot count must be below the fixed perk slot cap.</li>
      *   <li>If going beyond {@code perksBeforeFlaws} slots, enough flaws must already be equipped.</li>
      * </ul>
      */
@@ -65,8 +67,8 @@ public final class PerkManager {
         if (!data.isPerksEnabled()) return Result.fail("You have disabled your perks.");
         if (!data.hasDiscovered(perkId)) return Result.fail("You haven't discovered this perk yet.");
         if (data.isEquipped(perkId)) return Result.fail("This perk is already equipped.");
-        int effectiveMax = Math.min(data.getPerkSlots(), cfg.maxEquippedPerks);
-        if (data.equippedCount() >= effectiveMax) return Result.fail("No free perk slots (max " + effectiveMax + "). Earn more through training.");
+        int effectiveMax = data.getPerkSlots();
+        if (data.equippedCount() >= effectiveMax) return Result.fail("No free perk slots (max " + effectiveMax + ").");
 
         int newCount = data.equippedCount() + 1;
         if (newCount > cfg.perksBeforeFlaws) {
@@ -114,7 +116,7 @@ public final class PerkManager {
         }
 
         // Check items
-        for (net.minecraft.world.item.ItemStack required : cost.requiredItems) {
+        for (ItemStack required : cost.requiredItems) {
             int found = countItem(player, required.getItem());
             if (found < required.getCount()) {
                 return Result.fail("Missing " + required.getCount() + "x " + required.getHoverName().getString() + ".");
@@ -125,7 +127,7 @@ public final class PerkManager {
         player.giveExperienceLevels(-cost.xpLevels);
 
         // Deduct items
-        for (net.minecraft.world.item.ItemStack required : cost.requiredItems) {
+        for (ItemStack required : cost.requiredItems) {
             removeItem(player, required.getItem(), required.getCount());
         }
 
@@ -657,17 +659,17 @@ public final class PerkManager {
         return false;
     }
 
-    private static int countItem(ServerPlayer player, net.minecraft.world.item.Item item) {
+    private static int countItem(ServerPlayer player, Item item) {
         int total = 0;
-        for (net.minecraft.world.item.ItemStack stack : player.getInventory().items) {
+        for (ItemStack stack : player.getInventory().items) {
             if (stack.is(item)) total += stack.getCount();
         }
         return total;
     }
 
-    private static void removeItem(ServerPlayer player, net.minecraft.world.item.Item item, int amount) {
+    private static void removeItem(ServerPlayer player, Item item, int amount) {
         int remaining = amount;
-        for (net.minecraft.world.item.ItemStack stack : player.getInventory().items) {
+        for (ItemStack stack : player.getInventory().items) {
             if (stack.is(item) && remaining > 0) {
                 int take = Math.min(remaining, stack.getCount());
                 stack.shrink(take);

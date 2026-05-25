@@ -294,7 +294,7 @@ public class PerksTab extends AbstractGuiPage {
     }
 
     private int renderLoadoutCard(GuiGraphics g, Font font, PerkData data, int x, int y, int w, int mx, int my) {
-        int h = 104;
+        int h = 118;
         g.fill(x, y, x + w, y + h, PANEL);
         g.fill(x, y, x + w, y + 1, BORDER_HI);
         g.fill(x, y + h - 1, x + w, y + h, BORDER);
@@ -322,9 +322,11 @@ public class PerksTab extends AbstractGuiPage {
 
         String stats = data.equippedCount() + "/" + data.getPerkSlots() + " . " + data.equippedFlawCount() + " flaw";
         g.drawString(font, stats, x + 9, y + 59, TEXT_DIM, false);
+        String slotHint = "Skill slots are fixed at 5";
+        g.drawString(font, trim(font, slotHint, w - 18), x + 9, y + 70, TEXT_FAINT, false);
 
         int bw = (w - 18 - 2 * 5) / 3;
-        int by = y + 77;
+        int by = y + 91;
         for (int i = 0; i < 3; i++) {
             int bx = x + 9 + i * (bw + 5);
             boolean active = i == activePresetIndex;
@@ -332,7 +334,7 @@ public class PerksTab extends AbstractGuiPage {
             int border = active ? ACCENT : BORDER;
             int bg = active ? 0xFF2A2115 : PANEL_2;
             drawRect(g, bx, by, bw, 16, border, bg);
-            String label = hasPreset ? trim(font, data.getPresets().get(i).name, bw - 8) : roman(i + 1);
+            String label = hasPreset ? trim(font, data.getPresets().get(i).name, bw - 8) : "+ " + roman(i + 1);
             g.drawString(font, label, bx + (bw - font.width(label)) / 2, by + 4, active ? COLOR_PALETTE.ACCENT_LIGHT.rgb() : TEXT_DIM, false);
         }
 
@@ -533,18 +535,6 @@ public class PerksTab extends AbstractGuiPage {
         y = Math.max(blockY + 64, y + 20);
         y += GAP;
 
-        y = renderQuote(g, font, x, y, w, color, humanPerkNote(def, tier), "LOADOUT NOTE");
-        y += GAP;
-
-        g.drawString(font, "Lore", x, y, TEXT, false);
-        y += 13;
-        String lore = "In practice, this perk changes how a fight feels more than how a menu reads. The current tier is the version your character can actually rely on right now; higher tiers are shown so the next step is clear without pretending you already have it.";
-        for (String line : wordWrap(font, lore, w)) {
-            g.drawString(font, line, x, y, TEXT_DIM, false);
-            y += font.lineHeight + 2;
-        }
-        y += GAP;
-
         g.drawString(font, "Tier Progression", x, y, TEXT, false);
         y += 15;
         for (PerkTier t : PerkTier.values()) {
@@ -592,23 +582,7 @@ public class PerksTab extends AbstractGuiPage {
             y += font.lineHeight + 1;
         }
         y = Math.max(blockY + 64, y + 20);
-        y = renderQuote(g, font, x, y, w, RED, "You take this because the extra power has to cost something.", "LOADOUT NOTE");
-        y += GAP;
-        g.drawString(font, "Lore", x, y, TEXT, false);
-        y += 13;
-        for (String line : wordWrap(font, "A flaw is not a bonus wearing a scary mask. It is a real drawback you accept so a heavier perk setup can stay balanced.", w)) {
-            g.drawString(font, line, x, y, TEXT_DIM, false);
-            y += font.lineHeight + 2;
-        }
         return y + PAD;
-    }
-
-    private int renderQuote(GuiGraphics g, Font font, int x, int y, int w, int color, String quote, String attr) {
-        g.fill(x, y, x + 2, y + 42, color);
-        g.drawString(font, "\"", x + 10, y + 3, dimColor(color, 0x99), false);
-        g.drawString(font, trim(font, quote, w - 28), x + 24, y + 9, TEXT_DIM, false);
-        g.drawString(font, attr, x + 24, y + 25, TEXT_FAINT, false);
-        return y + 42;
     }
 
     private int renderUpgradeCost(GuiGraphics g, Font font, PerkData data, PerkDefinition def, PerkTier tier, int x, int y, int w) {
@@ -680,15 +654,25 @@ public class PerksTab extends AbstractGuiPage {
         int x = PAD;
         int y = PAD - categoryScroll;
         int w = leftW - PAD * 2;
-        int cardH = 104;
+        int cardH = 118;
         int bw = (w - 18 - 2 * 5) / 3;
-        int by = y + 77;
+        int by = y + 91;
         for (int i = 0; i < 3; i++) {
             int bx = x + 9 + i * (bw + 5);
             if (inRect(mx, my, bx, by, bw, 16)) {
+                if (i == activePresetIndex) {
+                    String name = i < data.getPresets().size() ? data.getPresets().get(i).name : presetNameForIndex(i);
+                    sendAction(new PerkActionPacket(PerkActionPacket.Action.SAVE_PRESET, name));
+                    return true;
+                }
+                if (i != activePresetIndex && activePresetIndex < data.getPresets().size()) {
+                    sendAction(new PerkActionPacket(PerkActionPacket.Action.SAVE_PRESET, data.getPresets().get(activePresetIndex).name));
+                }
                 activePresetIndex = i;
                 if (i < data.getPresets().size()) {
                     sendAction(new PerkActionPacket(PerkActionPacket.Action.LOAD_PRESET, data.getPresets().get(i).name));
+                } else {
+                    sendAction(new PerkActionPacket(PerkActionPacket.Action.SAVE_PRESET, presetNameForIndex(i)));
                 }
                 return true;
             }
@@ -865,7 +849,11 @@ public class PerksTab extends AbstractGuiPage {
 
     private String activePresetName(PerkData data) {
         if (activePresetIndex < data.getPresets().size()) return data.getPresets().get(activePresetIndex).name;
-        return "Preset " + roman(activePresetIndex + 1);
+        return presetNameForIndex(activePresetIndex);
+    }
+
+    private static String presetNameForIndex(int index) {
+        return "Preset " + roman(index + 1);
     }
 
     private boolean matchesPerk(PerkDefinition def, String search) {
@@ -877,14 +865,6 @@ public class PerksTab extends AbstractGuiPage {
     private boolean matchesFlaw(FlawDefinition flaw, String search) {
         return flaw.name.toLowerCase(Locale.ROOT).contains(search)
                 || flaw.description.toLowerCase(Locale.ROOT).contains(search);
-    }
-
-    private String humanPerkNote(PerkDefinition def, PerkTier tier) {
-        String desc = def.getDescriptionForTier(tier);
-        if (desc == null || desc.isBlank()) {
-            desc = def.description;
-        }
-        return trimPlain(desc, 86);
     }
 
     private static void renderPerkIcon(GuiGraphics g, String perkId, PerkTier tier, int x, int y) {
@@ -958,12 +938,6 @@ public class PerksTab extends AbstractGuiPage {
         if (text == null) return "";
         if (font.width(text) <= maxW) return text;
         return font.plainSubstrByWidth(text, Math.max(0, maxW - font.width("..."))) + "...";
-    }
-
-    private static String trimPlain(String text, int maxChars) {
-        if (text == null) return "";
-        if (text.length() <= maxChars) return text;
-        return text.substring(0, Math.max(0, maxChars - 3)).stripTrailing() + "...";
     }
 
     private static List<String> wordWrap(Font font, String text, int maxW) {

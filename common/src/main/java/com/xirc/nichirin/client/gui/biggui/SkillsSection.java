@@ -1,7 +1,6 @@
 package com.xirc.nichirin.client.gui.biggui;
 
 import com.xirc.nichirin.client.data.ClientPerkCache;
-import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.client.gui.biggui.skills.AbilitiesTab;
 import com.xirc.nichirin.client.gui.biggui.skills.BloodlinesTab;
 import com.xirc.nichirin.client.gui.biggui.skills.PerksTab;
@@ -145,13 +144,8 @@ public class SkillsSection extends AbstractGuiPage {
         int statX = Math.max(4, w - 116);
         int statY = 10;
         int slots = data.getPerkSlots();
-        int maxSlots = NichirinModConfig.get().perks.maxEquippedPerks;
         String slotText = "Slots " + data.equippedCount() + "/" + slots;
         g.drawString(font, slotText, statX, statY, TEXT, false);
-        if (slots < maxSlots) {
-            String unlockHint = "(" + (maxSlots - slots) + " more — train with a Master)";
-            g.drawString(font, unlockHint, statX, statY + 8, TEXT_DIM, false);
-        }
         g.drawString(font, "Perks " + data.getDiscoveredIds().size() + "/" + NichirinPerkRegistry.allPerks().size(), statX, statY + 18, TEXT, false);
         g.drawString(font, "Flaws " + data.equippedFlawCount(), statX, statY + 34, TEXT, false);
 

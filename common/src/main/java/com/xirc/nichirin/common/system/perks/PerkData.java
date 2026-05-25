@@ -1,6 +1,5 @@
 package com.xirc.nichirin.common.system.perks;
 
-import com.xirc.nichirin.common.config.NichirinModConfig;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
@@ -23,6 +22,7 @@ import java.util.*;
  */
 public class PerkData {
 
+    public static final int MAX_PERK_SLOTS = 5;
 
     /** All perk IDs the player has discovered (not necessarily equipped). */
     private final Set<String> discovered = new LinkedHashSet<>();
@@ -39,8 +39,7 @@ public class PerkData {
     /** Whether this player has the perk system enabled. */
     private boolean perksEnabled = true;
 
-    /** How many perk slots this player has unlocked (starts at 5). */
-    private int perkSlots = 5;
+    private int perkSlots = MAX_PERK_SLOTS;
 
     /** Named preset loadouts. */
     private final List<PerkPreset> presets = new ArrayList<>();
@@ -136,21 +135,16 @@ public class PerkData {
     }
 
     public int getPerkSlots() {
-        return perkSlots;
+        return MAX_PERK_SLOTS;
     }
 
-    /** Increases perk slots up to the global config maximum. */
     public void setPerkSlots(int slots) {
-        int cap = NichirinModConfig.get().perks.maxEquippedPerks;
-        this.perkSlots = Math.max(1, Math.min(slots, cap));
+        this.perkSlots = MAX_PERK_SLOTS;
     }
 
-    /** Grants one additional perk slot if below the cap. Returns true if a slot was added. */
     public boolean unlockPerkSlot() {
-        int cap = NichirinModConfig.get().perks.maxEquippedPerks;
-        if (perkSlots >= cap) return false;
-        perkSlots++;
-        return true;
+        perkSlots = MAX_PERK_SLOTS;
+        return false;
     }
 
 
@@ -210,7 +204,7 @@ public class PerkData {
         this.equippedFlaws.clear();
         this.equippedFlaws.addAll(other.equippedFlaws);
         this.perksEnabled = other.perksEnabled;
-        this.perkSlots = other.perkSlots;
+        this.perkSlots = MAX_PERK_SLOTS;
         this.presets.clear();
         for (PerkPreset p : other.presets) {
             this.presets.add(PerkPreset.load(p.save()));
@@ -222,7 +216,7 @@ public class PerkData {
         CompoundTag tag = new CompoundTag();
 
         tag.putBoolean("PerksEnabled", perksEnabled);
-        tag.putInt("PerkSlots", perkSlots);
+        tag.putInt("PerkSlots", MAX_PERK_SLOTS);
 
         ListTag discoveredTag = new ListTag();
         for (String id : discovered) discoveredTag.add(StringTag.valueOf(id));
@@ -250,7 +244,7 @@ public class PerkData {
 
     public void load(CompoundTag tag) {
         perksEnabled = !tag.contains("PerksEnabled") || tag.getBoolean("PerksEnabled");
-        perkSlots = tag.contains("PerkSlots") ? Math.max(5, tag.getInt("PerkSlots")) : 5;
+        perkSlots = MAX_PERK_SLOTS;
 
         discovered.clear();
         ListTag discoveredTag = tag.getList("Discovered", Tag.TAG_STRING);

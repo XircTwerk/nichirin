@@ -373,8 +373,6 @@
   "text.autoconfig.nichirin.option.perks.enablePerks.@Tooltip": "Enables the perk discovery, equip, and upgrade systems.",
   "text.autoconfig.nichirin.option.perks.enableFlawSystem": "Enable Flaw System",
   "text.autoconfig.nichirin.option.perks.enableFlawSystem.@Tooltip": "Allows flaws to appear and be equipped alongside perks.",
-  "text.autoconfig.nichirin.option.perks.maxEquippedPerks": "Max Equipped Perks",
-  "text.autoconfig.nichirin.option.perks.maxEquippedPerks.@Tooltip": "Maximum number of perks a player can equip at once.",
   "text.autoconfig.nichirin.option.perks.perksBeforeFlaws": "Perks Before Flaws",
   "text.autoconfig.nichirin.option.perks.perksBeforeFlaws.@Tooltip": "Number of perks a player can equip before they must also equip a flaw.",
   "text.autoconfig.nichirin.option.perks.maxFlaws": "Max Flaws",
