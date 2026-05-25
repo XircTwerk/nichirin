@@ -5,23 +5,23 @@
 			"loop": true,
 			"animation_length": 1,
 			"bones": {
-				"Cape": {
+				"CapeMiddle": {
 					"rotation": {
 						"0.0": {
-							"vector": [5, 0, 0],
+							"vector": [27.5, 0, 0],
 							"easing": "easeInOutSine"
 						},
 						"0.5": {
-							"vector": [2.5, 0, 0],
+							"vector": [25, 0, 0],
 							"easing": "linear"
 						},
 						"1.0": {
-							"vector": [5, 0, 0],
+							"vector": [27.5, 0, 0],
 							"easing": "linear"
 						}
 					}
 				},
-				"lower": {
+				"Capelower": {
 					"rotation": {
 						"0.0": {
 							"vector": [22.5, 0, 0],
@@ -57,7 +57,7 @@
 			"loop": true,
 			"animation_length": 2.88,
 			"bones": {
-				"Cape": {
+				"CapeMiddle": {
 					"rotation": {
 						"0.0": {
 							"vector": [2.5, 0, 0],
@@ -73,7 +73,7 @@
 						}
 					}
 				},
-				"lower": {
+				"Capelower": {
 					"rotation": {
 						"0.0": {
 							"vector": [5, 0, 0],
