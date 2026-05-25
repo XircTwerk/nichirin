@@ -56,7 +56,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
         MoveConfiguration tempConfig = new MoveBuilder("rhythmic_step", "Rhythmic Step")
                 .withAnimation("nichirin:rhythmic_step", 9)
                 .withTiming(0, 0, 20) // Fast dash with finishing duration
-                .withDamage(12.0f) // Moderate damage but hits multiple times
+                .withDamage(8.0f) // Moderate damage but hits multiple times
                 .withDashSpeed(4.0f) // 4 block dash (halved from 8)
                 .withRange(4.0f) // Dash distance (halved from 8)
                 .withKnockback(0.5f) // Light knockback during dash
@@ -77,7 +77,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("roar", "Roar")
                         .withAnimation("nichirin:roar", 10)
                         .withTiming(160, 50, 20) // 5 second cooldown, windup
-                        .withDamage(23.0f) // Good AOE damage
+                        .withDamage(14.0f) // Good AOE damage
                         .withRange(13.5f) // Tripled from 4.5f (4.5 * 3 = 13.5)
                         .withKnockback(0.3f) // Strong knockback
                         .withBreathCost(25.0f)
@@ -98,7 +98,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("constant_resounding_slashes", "Constant Resounding Slashes")
                         .withAnimation("nichirin:constant_resounding_slashes", 12)
                         .withTiming(180, 5, 50)
-                        .withDamage(10.0f)
+                        .withDamage(6.0f)
                         .withRange(20.0f) // Increased from 5.5f (1.5x = 8.25f)
                         .withKnockback(0f) // Light knockback to keep enemies close
                         .withBreathCost(25.0f)
@@ -119,7 +119,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("string_performance", "String Performance")
                         .withAnimation("nichirin:string_performance", 15)
                         .withTiming(160, 14, 80) // 8 second cooldown, windup, 4s duration
-                        .withDamage(22.0f) // High damage for finale
+                        .withDamage(14.0f) // High damage for finale
                         .withDashSpeed(16.0f) // 16 block total dash
                         .withRange(16.0f) // Dash distance
                         .withKnockback(0f) // Light knockback during dash

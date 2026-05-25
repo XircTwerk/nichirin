@@ -65,7 +65,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
         MoveConfiguration tempConfig = new MoveBuilder("water_surface_slash", "Water Surface Slash")
                 .withAnimation("nichirin:water_surface_slash", 6)
                 .withTiming(0, 0, 18)
-                .withDamage(3.5f)
+                .withDamage(3.0f)
                 .withRange(3.5f)
                 .withKnockback(0f)
                 .withBreathCost(8.0f)
@@ -80,7 +80,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
         MoveConfiguration tempConfig = new MoveBuilder("water_wheel", "Water Wheel")
                 .withAnimation("nichirin:water_wheel", 10)
                 .withTiming(0, 10, 30)
-                .withDamage(6.0f)
+                .withDamage(4.0f)
                 .withRange(4.0f)
                 .withKnockback(0.1f)
                 .withBreathCost(18.0f)
@@ -101,7 +101,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("flowing_dance", "Flowing Dance")
                         .withAnimation("nichirin:flowing_dance", 12)
                         .withTiming(240, 15, 60) // 6 second cooldown, 0.75s windup, 3s duration
-                        .withDamage(4.0f) // Continuous damage
+                        .withDamage(3.0f) // Continuous damage
                         .withRange(3.0f) // Close range continuous
                         .withKnockback(0.05f) // Very light knockback
                         .withBreathCost(25.0f)
@@ -122,7 +122,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("striking_tide", "Striking Tide")
                         .withAnimation("nichirin:striking_tide", 14)
                         .withTiming(360, 12, 40) // 7 second cooldown, windup, 2s execution
-                        .withDamage(6.0f) // Good damage for 360° attack
+                        .withDamage(4.0f) // Good damage for 360° attack
                         .withRange(4.5f) // Large omnidirectional range
                         .withKnockback(0.1f)
                         .withBreathCost(25.0f)
@@ -143,7 +143,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("blessed_rain", "Blessed Rain")
                         .withAnimation("nichirin:blessed_rain", 18)
                         .withTiming(500, 9, 25) // 10 second cooldown, windup, 1.25s duration
-                        .withDamage(20.0f) // Drops half a health bar
+                        .withDamage(12.0f) // Drops half a health bar
                         .withRange(8.0f) // Long dash range
                         .withKnockback(0.8f)
                         .withBreathCost(45.0f)
@@ -186,7 +186,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("drop_ripple_thrust", "Drop Ripple Thrust")
                         .withAnimation("nichirin:drop_ripple_thrust", 13)
                         .withTiming(300, 10, 35) // 5 second cooldown, 0.5s windup, 1.75s duration
-                        .withDamage(8.5f) // Good thrust damage
+                        .withDamage(6.0f) // Good thrust damage
                         .withRange(5.0f) // Thrust range
                         .withKnockback(0f)
                         .withBreathCost(15.0f)
@@ -207,7 +207,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("waterfall_basin", "Waterfall Basin")
                         .withAnimation("nichirin:waterfall_basin", 16)
                         .withTiming(400, 16, 120) // 9 second cooldown, windup, 3s duration
-                        .withDamage(1.2f) // High DPS multi-hit
+                        .withDamage(1.0f) // High DPS multi-hit
                         .withRange(6.0f) // Large waterfall area
                         .withKnockback(0.0f) // Light knockback to keep enemies in waterfall
                         .withBreathCost(35.0f)
@@ -250,7 +250,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("constant_flux", "Constant Flux")
                         .withAnimation("nichirin:constant_flux", 20)
                         .withTiming(420, 20, 80) // 15 second cooldown, 1s windup, 4s duration
-                        .withDamage(24.0f) // Strong combo damage
+                        .withDamage(15.0f) // Strong combo damage
                         .withRange(5.0f) // Drag range
                         .withKnockback(0.2f) // Light knockback for dragging
                         .withBreathCost(50.0f)

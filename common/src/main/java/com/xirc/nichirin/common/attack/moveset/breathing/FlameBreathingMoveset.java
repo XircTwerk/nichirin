@@ -41,7 +41,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
         MoveConfiguration tempConfig = new MoveBuilder("pommel_slash", "Pommel Slash")
                 .withAnimation("nichirin:pommel_slash", 8)
                 .withTiming(0, 5, 18)
-                .withDamage(1.5f)
+                .withDamage(1.0f)
                 .withRange(2.5f)
                 .withKnockback(0f)
                 .withBreathCost(15.0f)
@@ -56,7 +56,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
         MoveConfiguration tempConfig = new MoveBuilder("unknowing_fire_quick", "Unknowing Fire")
                 .withAnimation("nichirin:unknowing_fire", 9)
                 .withTiming(0, 6, 15)
-                .withDamage(16.0f)
+                .withDamage(10.0f)
                 .withRange(3.0f)
                 .withKnockback(0.4f)
                 .withBreathCost(40.0f)
@@ -76,7 +76,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("rising_scorching_sun", "Scorching Sun")
                         .withAnimation("nichirin:rising_scorching_sun", 8)
                         .withTiming(100, 12, 25) // 5 second cooldown
-                        .withDamage(15.0f) // Good damage + bonus vs airborne
+                        .withDamage(9.0f) // Good damage + bonus vs airborne
                         .withRange(6.0f) // Upward arc range
                         .withKnockback(0.6f) // Strong upward knockback
                         .withBreathCost(20.0f)
@@ -97,7 +97,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("blazing_universe", "Blazing Universe")
                         .withAnimation("nichirin:blazing_universe", 12)
                         .withTiming(160, 13, 50) // 8 second cooldown, windup, explosive finish
-                        .withDamage(12.0f) // Very high damage
+                        .withDamage(5.0f) // Very high damage
                         .withRange(4.0f) // Large AOE
                         .withKnockback(0.6f)
                         .withBreathCost(30.0f) // Expensive for heavy attack
@@ -118,7 +118,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("blooming_flame_undulation", "Blooming Flame")
                         .withAnimation("nichirin:blooming_flame_undulation", 10)
                         .withTiming(140, 11, 35) // 7 second cooldown
-                        .withDamage(8.0f) // Multiple hits around user
+                        .withDamage(5.0f) // Multiple hits around user
                         .withRange(3.5f) // 3.5 block radius
                         .withKnockback(0f)
                         .withBreathCost(25.0f)
@@ -139,7 +139,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("flame_tiger", "Flame Tiger")
                         .withAnimation("nichirin:flame_tiger", 11)
                         .withTiming(120, 10, 40) // 6 second cooldown, dash duration
-                        .withDamage(18.0f)
+                        .withDamage(11.0f)
                         .withDashSpeed(35.0f)
                         .withRange(16.0f) // Dash distance
                         .withKnockback(0.2f) // Light knockback to keep enemies close
@@ -161,7 +161,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("rengoku", "Rengoku")
                         .withAnimation("nichirin:rengoku", 20)
                         .withTiming(600, 120, 60) // 30 second cooldown, windup, dragon dash
-                        .withDamage(50.0f) // Massive damage
+                        .withDamage(30.0f) // Massive damage
                         .withDashSpeed(50.0f) // Very fast dash
                         .withRange(20.0f) // Long range dash
                         .withKnockback(0f) // Massive knockback

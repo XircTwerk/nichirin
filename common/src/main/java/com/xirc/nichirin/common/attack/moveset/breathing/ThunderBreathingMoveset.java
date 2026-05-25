@@ -41,7 +41,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
         MoveConfiguration tempConfig = new MoveBuilder("thunderclap_flash", "Thunderclap and Flash")
                 .withAnimation("nichirin:thunderclap_flash", 10)
                 .withTiming(0, 1, 15)
-                .withDamage(11.0f)
+                .withDamage(7.0f)
                 .withTeleportDistance(12.0f)
                 .withKnockback(0.2f)
                 .withBreathCost(12.0f)
@@ -63,7 +63,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("rice_spirit", "Rice Spirit")
                         .withAnimation("nichirin:rice_spirit", 8)
                         .withTiming(120, 8, 120) // 5 second cooldown, windup, duration
-                        .withDamage(2.5f)
+                        .withDamage(2.0f)
                         .withRange(10.0f) // Medium range
                         .withKnockback(0.2f)
                         .withBreathCost(30.0f)
@@ -84,7 +84,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("thunder_swarm", "Thunder Swarm")
                         .withAnimation("nichirin:thunder_swarm", 9)
                         .withTiming(140, 12, 35) // 7 second cooldown, windup, duration
-                        .withDamage(4.5f) // 4 slashes = 24 damage total (was 8.0f = 32 total)
+                        .withDamage(3.0f) // 4 slashes = 24 damage total (was 8.0f = 32 total)
                         .withRange(7.0f) // Large area around player
                         .withKnockback(0.4f)
                         .withBreathCost(45.0f) // Higher cost for AOE
@@ -146,7 +146,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("rumble_flash", "Rumble and Flash")
                         .withAnimation("nichirin:rumble_flash", 8)
                         .withTiming(180, 9, 25) // 9 second cooldown, windup, duration
-                        .withDamage(16.5f) // High damage for long range precision (was 22.0f)
+                        .withDamage(10.0f) // High damage for long range precision (was 22.0f)
                         .withRange(20.0f) // Very long range
                         .withKnockback(0.6f)
                         .withBreathCost(40.0f) // High cost for range and damage
@@ -166,7 +166,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("honoikazuchi_no_kami", "Honoikazuchi no Kami")
                         .withAnimation("nichirin:honoikazuchi_no_kami", 15)
                         .withTiming(600, 120, 10) // 30 second cooldown, windup, execution
-                        .withDamage(80.0f) // Very high damage ultimate
+                        .withDamage(48.0f) // Very high damage ultimate
                         .withTeleportDistance(20.0f) // Long dash
                         .withKnockback(2.0f) // High knockback
                         .withBreathCost(70.0f) // Very expensive ultimate

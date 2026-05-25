@@ -72,7 +72,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
         MoveConfiguration tempConfig = new MoveBuilder("bee_sting", "Bee Sting")
                 .withAnimation("nichirin:bee_sting", 9)
                 .withTiming(0, 6, 13)
-                .withDamage(8.0f)
+                .withDamage(5.0f)
                 .withDashSpeed(6.0f)
                 .withRange(6.0f)
                 .withKnockback(0.1f)
@@ -93,7 +93,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("butterfly", "Butterfly")
                         .withAnimation("nichirin:butterfly", 8)
                         .withTiming(120, 8, 40) // 6 second cooldown, quick windup, LONGER duration for 2-phase attack
-                        .withDamage(18.0f) // High single-target damage
+                        .withDamage(11.0f) // High single-target damage
                         .withDashSpeed(5.0f) // Dash speed (changed from withTeleportDistance)
                         .withRange(10.0f) // Lock-on range
                         .withKnockback(0.3f) // Light knockback
@@ -136,7 +136,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("centipede", "Centipede")
                         .withAnimation("nichirin:centipede", 15)
                         .withTiming(240, 20, 50) // 12 second cooldown, complex movement
-                        .withDamage(22.0f) // High damage finisher
+                        .withDamage(14.0f) // High damage finisher
                         .withDashSpeed(4.0f) // Multiple zigzag dashes (was 8.0f)
                         .withRange(2.0f)
                         .withKnockback(0.8f) // Strong finisher knockback
