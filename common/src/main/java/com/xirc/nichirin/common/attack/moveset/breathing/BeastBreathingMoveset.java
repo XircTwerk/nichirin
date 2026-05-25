@@ -4,6 +4,7 @@ import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.breathing.beast.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.network.s2c.MovesetConfigSyncPacket;
+import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
 import com.xirc.nichirin.common.util.EntityResources;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.network.chat.Component;
@@ -14,23 +15,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * Beast Breathing moveset.
- * <p>
- * Left click:         First Fang: Pierce (skewer thrust, delayed knockback)
- * Right click:        Second Fang: Slice (progressing X-slashes)
- * Crouch+Right click: Eighth Form: Explosive Rush (invulnerable dash, deflects projectiles)
- * <p>
- * Wheel (index 0-7):
- *   0 - Third Fang: Devour (horizontal slashes, stun)
- *   1 - Fourth Fang: Slice 'n' Dice (8 rapid slashes)
- *   2 - Fifth Fang: Crazy Cutting (omnidirectional + float)
- *   3 - Sixth Fang: Palisade Bite (4 wide progressing slashes)
- *   4 - Seventh Form: Spatial Awareness (enemy detection / glow)
- *   5 - Ninth Fang: Bendy Slash (long-range frontal, no windup)
- *   6 - Tenth Fang: Whirling Fangs (spin + deflect projectiles)
- *   7 - Eleventh Fang: Throwing Strike (throw 2 katana entities)
- */
 public class BeastBreathingMoveset extends AbstractMoveset {
 
     private static final Map<UUID, Map<Integer, Long>> entityCooldowns = new HashMap<>();
@@ -356,7 +340,13 @@ public class BeastBreathingMoveset extends AbstractMoveset {
         }
 
         executingMove.remove(entity.getUUID());
-        if (config != null) setMoveCooldown(entity, moveIndex);
+        if (config != null) {
+            setMoveCooldown(entity, moveIndex);
+            if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer
+                    && config.getCooldownOrDefault(0) > 0) {
+                CooldownDisplayPacket.sendToClient(serverPlayer, "beast_breathing", config);
+            }
+        }
     }
 
 

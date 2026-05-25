@@ -4,6 +4,7 @@ import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.breathing.flame.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.network.s2c.MovesetConfigSyncPacket;
+import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
 import com.xirc.nichirin.common.util.EntityResources;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.networking.NetworkManager;
@@ -19,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-// Flame Breathing moveset. RC=Pommel Slash, Crouch+RC=Unknowing Fire, Wheel 0-4=breathing forms.
 public class FlameBreathingMoveset extends AbstractMoveset {
 
     private static final Map<UUID, Map<Integer, Long>> entityCooldowns = new HashMap<>();
@@ -289,11 +289,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
             setMoveCooldown(entity, moveIndex);
             if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer
                     && config.getCooldownOrDefault(0) > 0) {
-                FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-                buf.writeUtf(config.getDisplayName());
-                buf.writeInt(config.getCooldownOrDefault(0));
-
-                NetworkManager.sendToPlayer(serverPlayer, new ResourceLocation("nichirin", "cooldown_display"), buf);
+                CooldownDisplayPacket.sendToClient(serverPlayer, "flame_breathing", config);
             }
         }
     }

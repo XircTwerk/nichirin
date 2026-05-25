@@ -4,6 +4,7 @@ import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.breathing.mist.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.network.s2c.MovesetConfigSyncPacket;
+import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
 import com.xirc.nichirin.common.util.EntityResources;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.networking.NetworkManager;
@@ -18,18 +19,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * Mist Breathing moveset — a quick, pressure-oriented style.
- * Low individual damage per hit, but fast multi-hit combos and disorienting mobility.
- *
- * Right-click:        Form 2 — Eight-Layered Mist (8 rapid no-immunity slashes)
- * Crouch+Right-click: Form 1 — Low Clouds, Distant Haze (thrusting skewer dash)
- * Wheel 1: Form 3 — Scattering Mist Splash (360° AoE, deflects projectiles)
- * Wheel 2: Form 4 — Shifting Flow Slash (18-block stance dash + finisher)
- * Wheel 3: Form 5 — Sea of Clouds and Haze (zigzag multi-hop)
- * Wheel 4: Form 6 — Lunar Dispersing Mist (aerial charge + vertical finisher)
- * Wheel 5: Form 7 — Obscuring Clouds (5s invisibility, teleport barrage)
- */
 public class MistBreathingMoveset extends AbstractMoveset {
 
     private static final Map<UUID, Map<Integer, Long>> entityCooldowns = new HashMap<>();
@@ -288,10 +277,7 @@ public class MistBreathingMoveset extends AbstractMoveset {
 
             if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer
                     && config.getCooldownOrDefault(0) > 0) {
-                FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-                buf.writeUtf(config.getDisplayName());
-                buf.writeInt(config.getCooldownOrDefault(0));
-                NetworkManager.sendToPlayer(serverPlayer, new ResourceLocation("nichirin", "cooldown_display"), buf);
+                CooldownDisplayPacket.sendToClient(serverPlayer, "mist_breathing", config);
             }
         }
     }

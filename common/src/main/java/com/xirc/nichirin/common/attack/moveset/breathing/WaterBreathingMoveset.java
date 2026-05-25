@@ -4,6 +4,7 @@ import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.breathing.water.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.network.s2c.MovesetConfigSyncPacket;
+import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
 import com.xirc.nichirin.common.util.EntityResources;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
@@ -19,8 +20,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-// Right-click: Water Surface Slash combo (3-stage combo system)
-// Crouch + Right-click: Water Wheel (lunging wheel attack)
 public class WaterBreathingMoveset extends AbstractMoveset {
 
     private static final Map<UUID, Map<Integer, Long>> entityCooldowns = new HashMap<>();
@@ -486,11 +485,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
 
             if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer
                     && config.getCooldownOrDefault(0) > 0) {
-                FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-                buf.writeUtf(config.getDisplayName());
-                buf.writeInt(config.getCooldownOrDefault(0));
-
-                NetworkManager.sendToPlayer(serverPlayer, new ResourceLocation("nichirin", "cooldown_display"), buf);
+                CooldownDisplayPacket.sendToClient(serverPlayer, "water_breathing", config);
             }
         }
     }

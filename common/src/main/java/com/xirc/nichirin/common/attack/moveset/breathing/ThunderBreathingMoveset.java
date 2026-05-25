@@ -4,6 +4,7 @@ import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.breathing.thunder.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.network.s2c.MovesetConfigSyncPacket;
+import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
 import com.xirc.nichirin.common.util.EntityResources;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.networking.NetworkManager;
@@ -20,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-// Thunder Clap Flash is right-click only; remaining 6 forms go in the attack wheel.
 public class ThunderBreathingMoveset extends AbstractMoveset {
 
     private static final Map<UUID, Map<Integer, Long>> entityCooldowns = new HashMap<>();
@@ -273,11 +273,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
 
             if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer
                     && config.getCooldownOrDefault(0) > 0) {
-                FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-                buf.writeUtf(config.getDisplayName());
-                buf.writeInt(config.getCooldownOrDefault(0));
-
-                NetworkManager.sendToPlayer(serverPlayer, new ResourceLocation("nichirin", "cooldown_display"), buf);
+                CooldownDisplayPacket.sendToClient(serverPlayer, "thunder_breathing", config);
             }
         }
     }
