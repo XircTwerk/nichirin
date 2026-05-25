@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.List;
 
 // Base for Sound Breathing attacks. All hits stun, build a combo counter, and trigger shockwave explosions every 4th hit.
 @SuppressWarnings("rawtypes")
@@ -273,7 +274,7 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
         serverLevel.sendParticles(ParticleTypes.EXPLOSION,
                 center.x, center.y + 1, center.z, 1, 0.5, 0.5, 0.5, 0);
 
-        java.util.List<LivingEntity> nearbyTargets = world.getEntitiesOfClass(LivingEntity.class,
+        List<LivingEntity> nearbyTargets = world.getEntitiesOfClass(LivingEntity.class,
                 new AABB(center.subtract(3, 3, 3), center.add(3, 3, 3)),
                 entity -> entity != user && entity.isAlive());
 

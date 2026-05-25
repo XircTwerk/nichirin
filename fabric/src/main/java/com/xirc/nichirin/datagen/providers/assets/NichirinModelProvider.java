@@ -110,6 +110,11 @@ public class NichirinModelProvider extends FabricModelProvider {
         generator.generateFlatItem(NichirinItemRegistry.ZENITSU_LEGGINGS.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.ZENITSU_BOOTS.get(), ModelTemplates.FLAT_ITEM);
 
+        generator.generateFlatItem(NichirinItemRegistry.JIGORO_HEADPIECE.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.JIGORO_CAPE.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.JIGORO_LEGGINGS.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.JIGORO_BOOTS.get(), ModelTemplates.FLAT_ITEM);
+
         // Rengoku armor
         generator.generateFlatItem(NichirinItemRegistry.RENGOKU_HEADPIECE.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.RENGOKU_CAPE.get(), ModelTemplates.FLAT_ITEM);

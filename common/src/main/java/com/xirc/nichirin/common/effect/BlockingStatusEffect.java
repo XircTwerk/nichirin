@@ -9,6 +9,8 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.UUID;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.ai.attributes.AttributeMap;
 
 /**
  * Blocking Status Effect - Applied when a player is blocking with a katana
@@ -46,7 +48,7 @@ public class BlockingStatusEffect extends MobEffect {
 
             if (entity instanceof Player player) {
                 player.displayClientMessage(
-                        net.minecraft.network.chat.Component.literal("Blocking protects you from stun!")
+                        Component.literal("Blocking protects you from stun!")
                                 .withStyle(style -> style.withColor(0x55FF55)),
                         true
                 );
@@ -55,7 +57,7 @@ public class BlockingStatusEffect extends MobEffect {
     }
 
     @Override
-    public void removeAttributeModifiers(LivingEntity entity, net.minecraft.world.entity.ai.attributes.AttributeMap attributeMap, int amplifier) {
+    public void removeAttributeModifiers(LivingEntity entity, AttributeMap attributeMap, int amplifier) {
         super.removeAttributeModifiers(entity, attributeMap, amplifier);
 
         // Restore normal movement when effect ends

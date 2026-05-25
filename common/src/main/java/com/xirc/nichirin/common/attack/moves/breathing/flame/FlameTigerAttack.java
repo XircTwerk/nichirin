@@ -27,8 +27,9 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
 
     private boolean dashStarted = false;
     private Vec3 dashDirection;
-    private Vec3 startPosition;
+    private Vec3 lastDashPos;
     private int dashTick = 0;
+    private float dashDistanceTravelled = 0.0f;
     private final Set<LivingEntity> caughtEnemies = new HashSet<>();
     private final List<LivingEntity> draggedEnemies = new ArrayList<>();
     private int hitCounter = 0;
@@ -43,9 +44,10 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
         draggedEnemies.clear();
         hitCounter = 0;
 
-        dashDirection = user.getLookAngle().normalize();
-        startPosition = user.position();
+        refreshDashDirection();
+        lastDashPos = null;
         dashTick = 0;
+        dashDistanceTravelled = 0.0f;
 
         // Tiger roar sound at start
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
@@ -79,11 +81,18 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
     }
 
     private void continueDash() {
-        // Glide toward target using teleportSafe for smooth movement
         dashTick++;
-        float progress = (float) dashTick / Math.max(duration, 1);
-        Vec3 targetPos = startPosition.add(dashDirection.scale(range * progress));
-        teleportSafe(targetPos);
+        refreshDashDirection();
+        float perTickSpeed = dashSpeed != null && dashSpeed > 0.0f
+                ? dashSpeed / 20.0f
+                : range / Math.max(duration, 1);
+        float remainingDistance = Math.max(0.0f, range - dashDistanceTravelled);
+        perTickSpeed = Math.min(perTickSpeed, remainingDistance);
+        Vec3 current = user.getDeltaMovement();
+        user.setDeltaMovement(dashDirection.x * perTickSpeed, current.y, dashDirection.z * perTickSpeed);
+        user.hurtMarked = true;
+        user.hasImpulse = true;
+        dashDistanceTravelled += perTickSpeed;
 
         // Create continuous tiger effect during dash
         createTigerTrailEffect();
@@ -137,13 +146,15 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
 
     private void catchAndDragEnemies() {
         Vec3 userPos = user.position();
+        Vec3 currentCenter = userPos.add(0, user.getBbHeight() / 2, 0);
 
         // Find enemies in dash path
         List<LivingEntity> pathEnemies = getTargetsInLine(
-                startPosition,
-                userPos.add(dashDirection.scale(2)), // Look ahead
+                lastDashPos != null ? lastDashPos : currentCenter,
+                currentCenter.add(dashDirection.scale(2)), // Look ahead
                 2.0 // Thickness of dash path
         );
+        lastDashPos = currentCenter;
 
         for (LivingEntity enemy : pathEnemies) {
             if (!caughtEnemies.contains(enemy)) {
@@ -301,6 +312,15 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
         return true; // This is a dash attack
     }
 
+    private void refreshDashDirection() {
+        Vec3 look = user.getLookAngle();
+        Vec3 horizontal = new Vec3(look.x, 0, look.z);
+        if (horizontal.lengthSqr() < 0.001) {
+            horizontal = Vec3.directionFromRotation(0, user.getYRot());
+        }
+        dashDirection = horizontal.normalize();
+    }
+
     @Override
     protected void onStop() {
         // Reset user velocity
@@ -332,6 +352,8 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
         // Clear all state
         dashStarted = false;
         dashTick = 0;
+        dashDistanceTravelled = 0.0f;
+        lastDashPos = null;
         caughtEnemies.clear();
         draggedEnemies.clear();
         hitCounter = 0;

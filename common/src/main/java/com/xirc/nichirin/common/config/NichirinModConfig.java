@@ -215,11 +215,6 @@ public class NichirinModConfig implements ConfigData {
         @ConfigEntry.Gui.Tooltip
         public boolean enableFlawSystem = true;
 
-        /** Number of perks a player can equip before they must also equip a flaw. */
-        @ConfigEntry.Gui.Tooltip
-        @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
-        public int perksBeforeFlaws = 3;
-
         @ConfigEntry.Gui.Tooltip
         @ConfigEntry.BoundedDiscrete(min = 1, max = 5)
         public int maxFlaws = 3;

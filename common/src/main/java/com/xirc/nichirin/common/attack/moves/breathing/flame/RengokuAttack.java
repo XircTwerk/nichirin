@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.attack.moves.breathing.flame;
 
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -15,8 +16,8 @@ import java.util.Set;
 // Ninth Form: Rengoku. High-stance windup into a flaming dragon dash with massive damage.
 public class RengokuAttack extends FlameBreathingAttackBase {
 
-    private static final int DASH_DURATION = 20; // Fast dragon dash - 5 ticks
-    private static final float DASH_DISTANCE = 24.0f; // 24 block dash distance
+    private static final int DASH_DURATION = 40;
+    private static final float DASH_SPEED = 9.6f;
 
     private boolean hasExecuted = false;
     private boolean isDashing = false;
@@ -24,7 +25,6 @@ public class RengokuAttack extends FlameBreathingAttackBase {
     private Vec3 dashDirection;
     private Vec3 dashStartPos;
     private final Set<LivingEntity> hitEntities = new HashSet<>();
-    private boolean hitConnected = false;
 
     public RengokuAttack() {}
 
@@ -34,11 +34,7 @@ public class RengokuAttack extends FlameBreathingAttackBase {
         isDashing = false;
         dashTicks = 0;
         hitEntities.clear();
-        hitConnected = false;
-
-        // Flatten to horizontal so pitch doesn't cause diagonal drift or world-clipping
-        Vec3 look = user.getLookAngle();
-        dashDirection = new Vec3(look.x, 0, look.z).normalize();
+        refreshDashDirection();
         dashStartPos = null;
 
         // Epic windup effects
@@ -94,7 +90,7 @@ public class RengokuAttack extends FlameBreathingAttackBase {
     }
 
     private void createChargeUpEffect() {
-        if (!(world instanceof net.minecraft.server.level.ServerLevel serverLevel)) return;
+        if (!(world instanceof ServerLevel serverLevel)) return;
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
@@ -133,13 +129,13 @@ public class RengokuAttack extends FlameBreathingAttackBase {
 
     private void continueFastDash() {
         // Velocity-based dash — smooth movement, no teleport snapping
-        if (dashStartPos != null && !hitConnected) {
-            float perTickSpeed = DASH_DISTANCE / (float) DASH_DURATION;
+        if (dashStartPos != null) {
+            refreshDashDirection();
             Vec3 current = user.getDeltaMovement();
             user.setDeltaMovement(
-                    dashDirection.x * perTickSpeed,
+                    dashDirection.x * DASH_SPEED,
                     current.y,
-                    dashDirection.z * perTickSpeed
+                    dashDirection.z * DASH_SPEED
             );
             user.hurtMarked = true;
             user.hasImpulse = true;
@@ -157,16 +153,20 @@ public class RengokuAttack extends FlameBreathingAttackBase {
             if (!hitEntities.contains(target)) {
                 hitTargetUltimate(target);
                 hitEntities.add(target);
-                // Cancel user movement on first hit
-                if (!hitConnected) {
-                    hitConnected = true;
-                    user.setDeltaMovement(Vec3.ZERO);
-                }
             }
         }
 
         // Create ground carving effect at current position
         createGroundCarvingEffect();
+    }
+
+    private void refreshDashDirection() {
+        Vec3 look = user.getLookAngle();
+        Vec3 horizontal = new Vec3(look.x, 0, look.z);
+        if (horizontal.lengthSqr() < 0.001) {
+            horizontal = Vec3.directionFromRotation(0, user.getYRot());
+        }
+        dashDirection = horizontal.normalize();
     }
 
     private void endFastDash() {
@@ -187,7 +187,7 @@ public class RengokuAttack extends FlameBreathingAttackBase {
     }
 
     private void createDragonEmergenceEffect() {
-        if (!(world instanceof net.minecraft.server.level.ServerLevel serverLevel)) return;
+        if (!(world instanceof ServerLevel serverLevel)) return;
 
         Vec3 userPos = user.position();
         Vec3 lookDir = user.getLookAngle();
@@ -218,7 +218,7 @@ public class RengokuAttack extends FlameBreathingAttackBase {
     }
 
     private void createIntenseDragonTrailEffect() {
-        if (!(world instanceof net.minecraft.server.level.ServerLevel serverLevel)) return;
+        if (!(world instanceof ServerLevel serverLevel)) return;
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
@@ -254,7 +254,7 @@ public class RengokuAttack extends FlameBreathingAttackBase {
     }
 
     private void createGroundCarvingEffect() {
-        if (!(world instanceof net.minecraft.server.level.ServerLevel serverLevel)) return;
+        if (!(world instanceof ServerLevel serverLevel)) return;
 
         Vec3 userPos = user.position();
 
@@ -275,7 +275,7 @@ public class RengokuAttack extends FlameBreathingAttackBase {
     }
 
     private void createMassiveExplosion() {
-        if (!(world instanceof net.minecraft.server.level.ServerLevel serverLevel)) return;
+        if (!(world instanceof ServerLevel serverLevel)) return;
 
         Vec3 pos = user.position();
 
@@ -330,8 +330,6 @@ public class RengokuAttack extends FlameBreathingAttackBase {
         user.setInvulnerable(false);
 
         hitEntities.clear();
-        hitConnected = false;
-
         // Give user temporary benefits after using ultimate
         user.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 2, false, true));
         user.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 600, 0, false, true));

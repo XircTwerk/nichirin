@@ -2,13 +2,13 @@ package com.xirc.nichirin.common.attack.moves.breathing.thunder;
 
 import com.xirc.nichirin.common.util.TeleportUtil;
 import com.xirc.nichirin.common.effect.ShockedStatusEffect;
+import com.xirc.nichirin.registry.NicirinSoundRegistry;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
@@ -34,7 +34,7 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
     protected void onStart() {
         startPosition = user.getEyePosition();
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
-                SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS,
+                NicirinSoundRegistry.THUNDERCLAP_FLASH.get(), SoundSource.PLAYERS,
                 1f, 2.0f);
     }
 
@@ -62,7 +62,7 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
         TeleportUtil.TeleportOptions options = new TeleportUtil.TeleportOptions()
                 .withParticles(NichirinParticleRegistry.THUNDER.get(), NichirinParticleRegistry.THUNDER.get())
                 .withTrail(NichirinParticleRegistry.THUNDER.get(), 1.0f)
-                .withSounds(SoundEvents.LIGHTNING_BOLT_THUNDER, null)
+                .withSounds(NicirinSoundRegistry.THUNDERCLAP_FLASH.get(), null)
                 .withDamage(damage)
                 .withDamageCallback(target -> {
                     hitTargetNoImmunity(target);

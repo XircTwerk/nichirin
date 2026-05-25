@@ -15,6 +15,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import net.minecraft.server.level.ServerPlayer;
 
 // Eleventh Form: Dead Calm. Establishes a persistent field that auto-slashes all enemies who enter or remain in range.
 public class DeadCalmAttack extends WaterBreathingAttackBase {
@@ -48,7 +49,7 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
         Vec3 userPos = user.position();
-        for (net.minecraft.server.level.ServerPlayer player : serverLevel.players()) {
+        for (ServerPlayer player : serverLevel.players()) {
             if (player.distanceToSqr(userPos) < 10000) {
                 NichirinPacketRegistry.sendToPlayer(
                         new TriggerShaderPacket(
@@ -122,8 +123,8 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
     private void maintainCalmField() {
         if (fieldCenter == null || frozenPos == null) return;
 
-        // Anchor the user in place — teleport overrides client-side prediction
-        if (user instanceof net.minecraft.server.level.ServerPlayer sp) {
+        // Anchor the user in place â€” teleport overrides client-side prediction
+        if (user instanceof ServerPlayer sp) {
             sp.teleportTo(frozenPos.x, frozenPos.y, frozenPos.z);
         } else {
             user.absMoveTo(frozenPos.x, frozenPos.y, frozenPos.z, user.getYRot(), user.getXRot());

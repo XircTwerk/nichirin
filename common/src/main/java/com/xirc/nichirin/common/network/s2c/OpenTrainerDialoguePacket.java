@@ -5,20 +5,21 @@ import com.xirc.nichirin.common.entity.npc.TrainerType;
 import net.minecraft.network.FriendlyByteBuf;
 
 import java.util.UUID;
+import net.minecraft.client.Minecraft;
 
 /**
- * S2C — tells the client to open the trainer dialogue screen.
+ * S2C â€” tells the client to open the trainer dialogue screen.
  */
 public class OpenTrainerDialoguePacket {
 
     public enum DialogueState {
         /** Player hasn't brought the prerequisite items yet. */
         STRANGER,
-        /** Player has the prerequisite items — offer to start the duel. */
+        /** Player has the prerequisite items â€” offer to start the duel. */
         PREREQ_MET,
-        /** Player already has the breathing style — offer a practice spar. */
+        /** Player already has the breathing style â€” offer a practice spar. */
         STUDENT,
-        /** Trainer recently dueled — resting. */
+        /** Trainer recently dueled â€” resting. */
         DUEL_COOLDOWN
     }
 
@@ -53,7 +54,7 @@ public class OpenTrainerDialoguePacket {
     }
 
     public void handleClient() {
-        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        Minecraft mc = Minecraft.getInstance();
         mc.execute(() -> mc.setScreen(
                 new TrainerDialogueScreen(
                         trainerUUID, trainerType, state, hasBeatenTrainer)));

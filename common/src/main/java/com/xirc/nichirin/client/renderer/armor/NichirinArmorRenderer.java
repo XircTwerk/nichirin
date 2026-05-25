@@ -29,6 +29,10 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
+import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.properties.Property;
+import com.mojang.authlib.properties.PropertyMap;
+import java.util.Base64;
 
 /**
  * Base armor renderer for Nichirin armors using AzureLib 3.x API
@@ -113,7 +117,7 @@ public class NichirinArmorRenderer extends AzArmorRenderer {
                 try {
                     super.scaleBoneWithModelPart(context, boneContext, isReRender);
                 } catch (NullPointerException ignored) {
-                    // Body bone is null by design — skip body scaling.
+                    // Body bone is null by design â€” skip body scaling.
                 }
             }
         };
@@ -185,7 +189,7 @@ public class NichirinArmorRenderer extends AzArmorRenderer {
         matchRotation(currentBaseModel.rightLeg, getBone("rightBoot"));
         matchRotation(currentBaseModel.leftLeg, getBone("leftBoot"));
 
-        // Wide (Steve) skins have 4px arms vs slim (Alex) 3px — scale arm bones to match.
+        // Wide (Steve) skins have 4px arms vs slim (Alex) 3px â€” scale arm bones to match.
         boolean slim = currentBaseModel instanceof PlayerModel<?>
                 && ((PlayerModelAccessor) currentBaseModel).isSlim();
         float armScaleX = slim ? 0.75f : (4.0f / 3.0f) + 0.05f;
@@ -211,7 +215,7 @@ public class NichirinArmorRenderer extends AzArmorRenderer {
     protected void scaleArmBones(AzBone leftArmBone, AzBone rightArmBone, float multiplier) {
         // Reliable slim detection isn't available here (AzureLib passes plain HumanoidModel,
         // not PlayerModel, and getModelName() is unreliable for offline/dev players).
-        // Default to Steve width (4/3) for everyone — slightly wide for Alex but acceptable.
+        // Default to Steve width (4/3) for everyone â€” slightly wide for Alex but acceptable.
         float scaleX = multiplier * (4.0f / 3.0f);
         if (leftArmBone  != null) leftArmBone.setScaleX(scaleX);
         if (rightArmBone != null) rightArmBone.setScaleX(scaleX);
@@ -285,7 +289,7 @@ public class NichirinArmorRenderer extends AzArmorRenderer {
      * Override in subclasses.
      */
     protected void applyBoneVisibilityBySlot(EquipmentSlot slot) {
-        // Base implementation — override in subclasses
+        // Base implementation â€” override in subclasses
         setAllVisible(false);
     }
 
@@ -313,12 +317,12 @@ public class NichirinArmorRenderer extends AzArmorRenderer {
     protected boolean isSlimPlayer(AbstractClientPlayer player) {
         try {
             // Method 1: Direct GameProfile access
-            com.mojang.authlib.GameProfile profile = player.getGameProfile();
+            GameProfile profile = player.getGameProfile();
             if (profile != null) {
-                com.mojang.authlib.properties.PropertyMap properties = profile.getProperties();
+                PropertyMap properties = profile.getProperties();
                 if (properties.containsKey("textures")) {
-                    com.mojang.authlib.properties.Property textureProperty = properties.get("textures").iterator().next();
-                    String texturesJson = new String(java.util.Base64.getDecoder().decode(textureProperty.getValue()));
+                    Property textureProperty = properties.get("textures").iterator().next();
+                    String texturesJson = new String(Base64.getDecoder().decode(textureProperty.getValue()));
                     if (texturesJson.contains("\"slim\"")) {
                         return true;
                     }

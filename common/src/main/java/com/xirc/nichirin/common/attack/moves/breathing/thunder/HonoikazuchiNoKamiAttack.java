@@ -12,6 +12,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import net.minecraft.server.level.ServerLevel;
 
 /**
  * Seventh Form: Honoikazuchi no Kami (Flaming Thunder God)
@@ -154,7 +155,7 @@ public class HonoikazuchiNoKamiAttack extends ThunderBreathingAttackBase {
         target.push(knockbackDir.x * knockback, 0.5, knockbackDir.z * knockback);
 
         // Extra particle explosion per target
-        if (world instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+        if (world instanceof ServerLevel serverLevel) {
             serverLevel.sendParticles(ParticleTypes.EXPLOSION_EMITTER,
                     target.getX(), target.getY() + 1, target.getZ(),
                     1, 0, 0, 0, 0);
@@ -166,7 +167,7 @@ public class HonoikazuchiNoKamiAttack extends ThunderBreathingAttackBase {
     }
 
     private void createLightningDragonEffect() {
-        if (!(world instanceof net.minecraft.server.level.ServerLevel serverLevel)) return;
+        if (!(world instanceof ServerLevel serverLevel)) return;
 
         Vec3 userPos = user.position();
         Vec3 lookDir = user.getLookAngle();
@@ -198,7 +199,7 @@ public class HonoikazuchiNoKamiAttack extends ThunderBreathingAttackBase {
     }
 
     private void createExplosionEffect() {
-        if (!(world instanceof net.minecraft.server.level.ServerLevel serverLevel)) return;
+        if (!(world instanceof ServerLevel serverLevel)) return;
 
         Vec3 pos = user.position();
 

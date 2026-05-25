@@ -11,6 +11,9 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * C2S — player requests a perk-related action from the GUI.
  *
@@ -81,7 +84,9 @@ public class PerkActionPacket {
             case LOAD_PRESET -> {
                 for (PerkPreset p : data.getPresets()) {
                     if (p.name.equals(id)) {
+                        Set<String> previousFlaws = new HashSet<>(data.getEquippedFlaws());
                         data.applyPreset(p);
+                        PerkManager.cleanupRemovedFlaws(player, previousFlaws, data.getEquippedFlaws());
                         result = PerkManager.Result.ok();
                         break;
                     }

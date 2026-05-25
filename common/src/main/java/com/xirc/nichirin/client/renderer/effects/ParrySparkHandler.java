@@ -4,6 +4,7 @@ import com.xirc.nichirin.client.config.NichirinClientConfig;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.util.RandomSource;
 
 public class ParrySparkHandler {
 
@@ -12,7 +13,7 @@ public class ParrySparkHandler {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;
 
-        net.minecraft.util.RandomSource rand = mc.level.random;
+        RandomSource rand = mc.level.random;
 
         // Central white flash
         mc.level.addParticle(ParticleTypes.FLASH, x, y, z, 0, 0, 0);

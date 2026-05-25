@@ -94,6 +94,11 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinItemRegistry.ZENITSU_LEGGINGS.get());
                         entries.accept(NichirinItemRegistry.ZENITSU_BOOTS.get());
 
+                        entries.accept(NichirinItemRegistry.JIGORO_HEADPIECE.get());
+                        entries.accept(NichirinItemRegistry.JIGORO_CAPE.get());
+                        entries.accept(NichirinItemRegistry.JIGORO_LEGGINGS.get());
+                        entries.accept(NichirinItemRegistry.JIGORO_BOOTS.get());
+
                         entries.accept(NichirinItemRegistry.RENGOKU_HEADPIECE.get());
                         entries.accept(NichirinItemRegistry.RENGOKU_CAPE.get());
                         entries.accept(NichirinItemRegistry.RENGOKU_LEGGINGS.get());

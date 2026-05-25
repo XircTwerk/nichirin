@@ -13,6 +13,8 @@ import dev.architectury.event.events.common.EntityEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.entity.LivingEntity;
 
 /** Event handler for the blocking/parry system and stance management. */
 public class BlockingEventHandler {
@@ -50,12 +52,12 @@ public class BlockingEventHandler {
             if (entity instanceof Player player && !player.level().isClientSide) {
                 if (KatanaBlock.isBlocking(player)) {
                     Player playerAttacker = null;
-                    net.minecraft.world.entity.LivingEntity attackingEntity = null;
+                    LivingEntity attackingEntity = null;
 
                     if (damageSource.getEntity() instanceof Player playerAtk) {
                         playerAttacker = playerAtk;
                         attackingEntity = playerAtk;
-                    } else if (damageSource.getEntity() instanceof net.minecraft.world.entity.LivingEntity livingAtk) {
+                    } else if (damageSource.getEntity() instanceof LivingEntity livingAtk) {
                         attackingEntity = livingAtk;
                     }
 
@@ -74,7 +76,7 @@ public class BlockingEventHandler {
 
                         NichirinPacketRegistry.sendParrySpark(player);
 
-                        net.minecraft.sounds.SoundEvent clashSound = player.level().random.nextBoolean()
+                        SoundEvent clashSound = player.level().random.nextBoolean()
                                 ? NicirinSoundRegistry.PARRY_CLASH.get()
                                 : NicirinSoundRegistry.PARRY_CLASH_2.get();
                         player.level().playSound(null,

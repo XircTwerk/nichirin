@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import net.minecraft.world.phys.AABB;
 
 public class FlameBreathingMoveset extends AbstractMoveset {
 
@@ -71,7 +72,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                 .withIdleAnimation("nichirin:flame_idle")
                 .withSpeedMultiplier(1.15f)
 
-                // INDEX 0: Rising Scorching Sun — upward arc, launches enemies
+                // INDEX 0: Rising Scorching Sun â€” upward arc, launches enemies
                 .withMove(new MoveBuilder("rising_scorching_sun", "Scorching Sun")
                         .withAnimation("nichirin:rising_scorching_sun", 8)
                         .withTiming(100, 12, 25) // 5 second cooldown
@@ -92,7 +93,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         })
                 )
 
-                // INDEX 1: Blazing Universe — charged downward strike, explodes on impact
+                // INDEX 1: Blazing Universe â€” charged downward strike, explodes on impact
                 .withMove(new MoveBuilder("blazing_universe", "Blazing Universe")
                         .withAnimation("nichirin:blazing_universe", 12)
                         .withTiming(160, 13, 50) // 8 second cooldown, windup, explosive finish
@@ -113,7 +114,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         })
                 )
 
-                // INDEX 2: Blooming Flame Undulation — 360° defense
+                // INDEX 2: Blooming Flame Undulation â€” 360Â° defense
                 .withMove(new MoveBuilder("blooming_flame_undulation", "Blooming Flame")
                         .withAnimation("nichirin:blooming_flame_undulation", 10)
                         .withTiming(140, 11, 35) // 7 second cooldown
@@ -123,7 +124,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(25.0f)
                         .withHitStun(15)
                         .withHitboxSize(3.5f) // Full radius
-                        .withDescription("Full 360° slash hitting all nearby enemies.")
+                        .withDescription("Full 360Â° slash hitting all nearby enemies.")
                         .withAction(entity -> {
                             BloomingFlameUndulationAttack attack = new BloomingFlameUndulationAttack();
                             FlameBreathingMoveset moveset = getCurrentMoveset();
@@ -134,12 +135,12 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         })
                 )
 
-                // INDEX 3: Flame Tiger — dashing multi-hit strike
+                // INDEX 3: Flame Tiger â€” dashing multi-hit strike
                 .withMove(new MoveBuilder("flame_tiger", "Flame Tiger")
                         .withAnimation("nichirin:flame_tiger", 11)
                         .withTiming(120, 10, 40) // 6 second cooldown, dash duration
                         .withDamage(18.0f)
-                        .withDashSpeed(8.0f) // 8 block dash
+                        .withDashSpeed(35.0f)
                         .withRange(16.0f) // Dash distance
                         .withKnockback(0.2f) // Light knockback to keep enemies close
                         .withBreathCost(50.0f)
@@ -156,12 +157,12 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         })
                 )
 
-                // INDEX 4: Rengoku — ultimate dragon dash, 30-second cooldown
+                // INDEX 4: Rengoku â€” ultimate dragon dash, 30-second cooldown
                 .withMove(new MoveBuilder("rengoku", "Rengoku")
                         .withAnimation("nichirin:rengoku", 20)
                         .withTiming(600, 120, 60) // 30 second cooldown, windup, dragon dash
                         .withDamage(50.0f) // Massive damage
-                        .withDashSpeed(25.0f) // Very fast dash
+                        .withDashSpeed(50.0f) // Very fast dash
                         .withRange(20.0f) // Long range dash
                         .withKnockback(0f) // Massive knockback
                         .withBreathCost(75.0f)
@@ -295,7 +296,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
     }
 
     private boolean hasTargetsInRange(LivingEntity entity, float range) {
-        net.minecraft.world.phys.AABB searchBox = new net.minecraft.world.phys.AABB(
+        AABB searchBox = new AABB(
                 entity.getX() - range, entity.getY() - range, entity.getZ() - range,
                 entity.getX() + range, entity.getY() + range, entity.getZ() + range
         );

@@ -13,6 +13,7 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import java.lang.ref.WeakReference;
+import net.minecraft.world.phys.Vec3;
 
 public class BreathingAuraWispParticleProvider implements ParticleProvider<SimpleParticleType> {
     private final SpriteSet sprites;
@@ -136,7 +137,7 @@ public class BreathingAuraWispParticleProvider implements ParticleProvider<Simpl
                 return;
             }
             // Horizontal mirror: swap u0/u1 so the sprite is flipped left-right
-            net.minecraft.world.phys.Vec3 cameraPos = camera.getPosition();
+            Vec3 cameraPos = camera.getPosition();
             float px = (float)(Mth.lerp(partialTick, xo, x) - cameraPos.x());
             float py = (float)(Mth.lerp(partialTick, yo, y) - cameraPos.y());
             float pz = (float)(Mth.lerp(partialTick, zo, z) - cameraPos.z());

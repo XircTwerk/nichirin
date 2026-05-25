@@ -566,7 +566,7 @@ public class BoarEntity extends TamableAnimal {
     }
 
     @Override
-    public AgeableMob getBreedOffspring(net.minecraft.server.level.ServerLevel level, AgeableMob otherParent) {
+    public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
         BoarEntity baby = new BoarEntity((EntityType<? extends BoarEntity>) this.getType(), level);
         UUID uuid = this.getOwnerUUID();
         if (uuid != null) {

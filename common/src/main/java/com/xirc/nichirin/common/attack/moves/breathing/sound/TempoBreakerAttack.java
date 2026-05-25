@@ -15,6 +15,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.Level.ExplosionInteraction;
+import net.minecraft.world.phys.AABB;
 
 // Tempo Breaker. Wide-arc slash that plants delayed TNT explosions on hit enemies.
 public class TempoBreakerAttack extends SoundBreathingAttackBase {
@@ -153,7 +157,7 @@ public class TempoBreakerAttack extends SoundBreathingAttackBase {
     private void createTNTExplosion(Vec3 position) {
         if (world.isClientSide) return;
 
-        world.explode(null, position.x, position.y, position.z, 1.5f, net.minecraft.world.level.Level.ExplosionInteraction.NONE);
+        world.explode(null, position.x, position.y, position.z, 1.5f, ExplosionInteraction.NONE);
 
         if (world instanceof ServerLevel serverLevel) {
             serverLevel.sendParticles(ParticleTypes.EXPLOSION_EMITTER,
@@ -225,7 +229,7 @@ public class TempoBreakerAttack extends SoundBreathingAttackBase {
         double angleRadians = Math.toRadians(angleDegrees / 2);
 
         return world.getEntitiesOfClass(LivingEntity.class,
-                new net.minecraft.world.phys.AABB(origin.subtract(range, 2, range), origin.add(range, 2, range)),
+                new AABB(origin.subtract(range, 2, range), origin.add(range, 2, range)),
                 entity -> {
                     if (entity == user || !entity.isAlive()) return false;
                     Vec3 toEntity = entity.position().subtract(origin).normalize();
@@ -247,7 +251,7 @@ public class TempoBreakerAttack extends SoundBreathingAttackBase {
     }
 
     // Call from a server tick handler to process pending explosions after the attack ends.
-    public static void processPendingExplosionsGlobal(net.minecraft.server.MinecraftServer server) {
+    public static void processPendingExplosionsGlobal(MinecraftServer server) {
         if (PENDING_EXPLOSIONS.isEmpty()) return;
 
         PENDING_EXPLOSIONS.entrySet().removeIf(entry -> {
@@ -288,11 +292,11 @@ public class TempoBreakerAttack extends SoundBreathingAttackBase {
         }
     }
 
-    private static void createGlobalTNTExplosion(net.minecraft.world.level.Level world, Vec3 position) {
+    private static void createGlobalTNTExplosion(Level world, Vec3 position) {
         if (world.isClientSide) return;
 
         world.explode(null, position.x, position.y, position.z, 3.0f,
-                net.minecraft.world.level.Level.ExplosionInteraction.NONE);
+                ExplosionInteraction.NONE);
 
         if (world instanceof ServerLevel serverLevel) {
             serverLevel.sendParticles(ParticleTypes.EXPLOSION_EMITTER,

@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
+import net.minecraft.server.level.ServerPlayer;
 
 /**
  * Sixth Form: Whirlpool
@@ -87,8 +89,8 @@ public class WhirlpoolAttack extends WaterBreathingAttackBase {
         user.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, duration + 40, 0, false, false, false));
 
         // Sync to client
-        if (user instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-            serverPlayer.connection.send(new net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket(user));
+        if (user instanceof ServerPlayer serverPlayer) {
+            serverPlayer.connection.send(new ClientboundSetEntityMotionPacket(user));
         }
 
         // Whirlpool start sound

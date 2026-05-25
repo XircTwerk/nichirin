@@ -17,7 +17,8 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom; // ✅ Thread-safe alternative
+import java.util.concurrent.ThreadLocalRandom; // âœ… Thread-safe alternative
+import net.minecraft.server.level.ServerPlayer;
 
 /**
  * Third Form: Thunder Swarm
@@ -33,7 +34,7 @@ public class ThunderSwarmAttack extends ThunderBreathingAttackBase {
     private final List<ProjectileSlash> activeSlashes = new ArrayList<>();
     private int slashesLaunched = 0;
     private int launchTimer = 0;
-    // ✅ REMOVED: private final Random random = new Random();
+    // âœ… REMOVED: private final Random random = new Random();
 
     public ThunderSwarmAttack() {
     }
@@ -95,7 +96,7 @@ public class ThunderSwarmAttack extends ThunderBreathingAttackBase {
 
         activeSlashes.add(slash);
 
-        // Launch sound - ✅ FIXED: Use ThreadLocalRandom instead of instance field
+        // Launch sound - âœ… FIXED: Use ThreadLocalRandom instead of instance field
         world.playSound(null, startPos.x, startPos.y, startPos.z,
                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS,
                 0.8f, 1.5f + ThreadLocalRandom.current().nextFloat() * 0.3f);
@@ -212,7 +213,7 @@ public class ThunderSwarmAttack extends ThunderBreathingAttackBase {
         LightningBolt lightning = EntityType.LIGHTNING_BOLT.create(world);
         if (lightning != null) {
             lightning.moveTo(groundPos.getX() + 0.5, groundPos.getY(), groundPos.getZ() + 0.5);
-            lightning.setCause(user instanceof net.minecraft.server.level.ServerPlayer sp ? sp : null);
+            lightning.setCause(user instanceof ServerPlayer sp ? sp : null);
             world.addFreshEntity(lightning);
 
         }

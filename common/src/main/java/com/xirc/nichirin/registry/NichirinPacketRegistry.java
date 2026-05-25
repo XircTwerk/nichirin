@@ -15,7 +15,10 @@ import com.xirc.nichirin.common.system.DemonComponent;
 import com.xirc.nichirin.common.system.blocking.KatanaBlock;
 import com.xirc.nichirin.common.util.MultiplayerInputHandler;
 import dev.architectury.networking.NetworkManager;
+import me.shedaniel.autoconfig.AutoConfig;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -29,8 +32,12 @@ import io.netty.buffer.Unpooled;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public interface NichirinPacketRegistry {
 
@@ -72,7 +79,7 @@ public interface NichirinPacketRegistry {
     Map<Class<?>, ResourceLocation> PACKET_IDS = new HashMap<>();
 
     // Server-side state tracking for MultiplayerInputHandler
-    Map<java.util.UUID, MultiplayerInputHandler.PlayerInputState> SERVER_PLAYER_STATES = new java.util.concurrent.ConcurrentHashMap<>();
+    Map<UUID, MultiplayerInputHandler.PlayerInputState> SERVER_PLAYER_STATES = new ConcurrentHashMap<>();
 
     static void init() {
         // Map packet classes to IDs
@@ -319,7 +326,7 @@ public interface NichirinPacketRegistry {
 
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, HITBOX_PACKET_ID, (buf, context) -> {
                 int hitboxCount = buf.readInt();
-                java.util.List<AABB> hitboxesToAdd = new java.util.ArrayList<>();
+                List<AABB> hitboxesToAdd = new ArrayList<>();
                 long duration = 0;
 
                 for (int i = 0; i < hitboxCount; i++) {
@@ -375,8 +382,8 @@ public interface NichirinPacketRegistry {
             // Open the Cloth Config GUI on the client when requested by a command
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, OPEN_CONFIG_SCREEN_ID, (buf, context) -> {
                 context.queue(() -> {
-                    net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
-                    mc.setScreen(me.shedaniel.autoconfig.AutoConfig
+                    Minecraft mc = Minecraft.getInstance();
+                    mc.setScreen(AutoConfig
                             .getConfigScreen(NichirinModConfig.class, mc.screen)
                             .get());
                 });
@@ -462,7 +469,7 @@ public interface NichirinPacketRegistry {
     static void handleStyleChangeRequestFromOriginalPacket(ServerPlayer player, String movesetId) {
         try {
             if (movesetId != null && !NichirinMovesetRegistry.isRegistered(movesetId)) {
-                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                player.sendSystemMessage(Component.literal(
                         "§cInvalid breathing style: " + movesetId
                 ));
                 return;
@@ -470,7 +477,7 @@ public interface NichirinPacketRegistry {
 
             if (movesetId != null && !ProgressionHelper.isStyleUnlocked(player, movesetId)) {
                 String requirement = ProgressionHelper.getUnlockRequirement(movesetId);
-                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                player.sendSystemMessage(Component.literal(
                         "§cYou haven't unlocked this breathing style! §fRequirement: §e" + requirement
                 ));
                 return;
@@ -480,11 +487,11 @@ public interface NichirinPacketRegistry {
 
             if (movesetId != null) {
                 String styleName = formatStyleName(movesetId);
-                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                player.sendSystemMessage(Component.literal(
                         "§aSwitched to " + styleName + "."
                 ));
             } else {
-                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                player.sendSystemMessage(Component.literal(
                         "§7Cleared breathing style."
                 ));
             }

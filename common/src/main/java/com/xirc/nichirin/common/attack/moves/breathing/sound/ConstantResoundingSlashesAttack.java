@@ -13,6 +13,10 @@ import net.minecraft.world.phys.Vec3;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.phys.AABB;
 
 /**
  * Fourth Form: Constant Resounding Slashes
@@ -20,7 +24,7 @@ import java.util.Set;
  * enabling the blades to destroy anything it makes contact with for powerful defensive capabilities.
  *
  * Mechanics:
- * - 360° hitbox, 3.5 block radius
+ * - 360Â° hitbox, 3.5 block radius
  * - Deals rapid multi-hit damage (small hits stacking into big DPS)
  * - Reflects or destroys projectiles during active frames
  * - 1.5s duration, movement speed slowed by ~20% while active
@@ -47,8 +51,8 @@ public class ConstantResoundingSlashesAttack extends SoundBreathingAttackBase {
 
         // Slow down user movement
         if (user != null) {
-            user.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-                    net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN,
+            user.addEffect(new MobEffectInstance(
+                    MobEffects.MOVEMENT_SLOWDOWN,
                     duration,
                     0, // 20% slower
                     false,
@@ -95,7 +99,7 @@ public class ConstantResoundingSlashesAttack extends SoundBreathingAttackBase {
         // Create spinning particle effect
         createSpinningBladeEffect(userPos);
 
-        // Hit all enemies in 360° radius
+        // Hit all enemies in 360Â° radius
         List<LivingEntity> targets = getTargetsInCustomHitbox(userPos, range, 2.0, range);
 
         for (LivingEntity target : targets) {
@@ -136,7 +140,7 @@ public class ConstantResoundingSlashesAttack extends SoundBreathingAttackBase {
 
         // Find all projectiles in range
         List<Projectile> projectiles = world.getEntitiesOfClass(Projectile.class,
-                new net.minecraft.world.phys.AABB(userPos.subtract(range, 2, range), userPos.add(range, 2, range)),
+                new AABB(userPos.subtract(range, 2, range), userPos.add(range, 2, range)),
                 projectile -> projectile.isAlive() && projectile.getOwner() != user);
 
         for (Projectile projectile : projectiles) {

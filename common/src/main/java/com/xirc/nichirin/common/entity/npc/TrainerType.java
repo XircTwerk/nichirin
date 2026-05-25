@@ -1,5 +1,7 @@
 package com.xirc.nichirin.common.entity.npc;
 
+import com.xirc.nichirin.common.data.ProgressionHelper;
+import com.xirc.nichirin.common.network.s2c.OpenTrainerDialoguePacket;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 
@@ -7,7 +9,7 @@ import net.minecraft.world.item.Items;
  * Immutable config for each breathing-style trainer NPC.
  *
  * <p>Held by {@link BaseBreathingTrainerEntity} instances and passed inside
- * {@link com.xirc.nichirin.common.network.s2c.OpenTrainerDialoguePacket} so
+ * {@link OpenTrainerDialoguePacket} so
  * the client dialogue screen can show the right name and dialogue.</p>
  */
 public enum TrainerType {
@@ -66,7 +68,7 @@ public enum TrainerType {
     /** NPC display name shown in the dialogue screen header. */
     public final String npcName;
 
-    /** Moveset ID passed to {@link com.xirc.nichirin.common.data.ProgressionHelper}. */
+    /** Moveset ID passed to {@link ProgressionHelper}. */
     public final String movesetId;
 
     /** Hex RGB color used for server-side chat messages. */

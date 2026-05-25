@@ -7,6 +7,7 @@ import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import dev.architectury.event.events.client.ClientTickEvent;
+import net.minecraft.util.RandomSource;
 
 public class BreathingAuraWispHandler {
 
@@ -29,17 +30,17 @@ public class BreathingAuraWispHandler {
             String styleId = PlayerDataProvider.getMovesetData(minecraft.player).getBreathingMovesetId();
             float[] color = BreathOfNichirinClient.getBreathingStyleColor(styleId);
 
-            net.minecraft.util.RandomSource rand = minecraft.level.random;
+            RandomSource rand = minecraft.level.random;
 
             // Horizontal forward and right vectors derived from player yaw
             float yaw = minecraft.player.getYRot() * ((float) Math.PI / 180f);
-            // forward: (-sin, 0, cos) — right: (-cos, 0, -sin) in Minecraft's coord system
+            // forward: (-sin, 0, cos) â€” right: (-cos, 0, -sin) in Minecraft's coord system
             double fwdX = -Math.sin(yaw);
             double fwdZ =  Math.cos(yaw);
             double rightX = -Math.cos(yaw);
             double rightZ = -Math.sin(yaw);
 
-            // Place particles at the nose/mouth — forward from center and slightly below eyes
+            // Place particles at the nose/mouth â€” forward from center and slightly below eyes
             double forward = 0.28;
             double spread  = 0.10 + rand.nextDouble() * 0.03;
             double py = minecraft.player.getEyeY() - 0.10 + (rand.nextDouble() - 0.5) * 0.06;
@@ -49,7 +50,7 @@ public class BreathingAuraWispHandler {
             // Outward lateral drift: bias each nostril particle away from center
             double driftMag = 0.004;
 
-            // Right nostril — drifts right, unmirrored
+            // Right nostril â€” drifts right, unmirrored
             BreathingAuraWispParticleProvider.pendingLateralX = rightX * driftMag;
             BreathingAuraWispParticleProvider.pendingLateralZ = rightZ * driftMag;
             BreathingAuraWispParticleProvider.pendingMirrored = false;
@@ -59,7 +60,7 @@ public class BreathingAuraWispHandler {
                     baseX + rightX * spread, py, baseZ + rightZ * spread,
                     color[0], color[1], color[2]);
 
-            // Left nostril — drifts left, horizontally mirrored
+            // Left nostril â€” drifts left, horizontally mirrored
             BreathingAuraWispParticleProvider.pendingLateralX = -rightX * driftMag;
             BreathingAuraWispParticleProvider.pendingLateralZ = -rightZ * driftMag;
             BreathingAuraWispParticleProvider.pendingMirrored = true;

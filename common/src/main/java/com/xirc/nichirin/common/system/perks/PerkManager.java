@@ -2,6 +2,7 @@ package com.xirc.nichirin.common.system.perks;
 
 import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
+import net.minecraft.world.effect.MobEffect;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -10,6 +11,7 @@ import net.minecraft.world.item.ItemStack;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -52,7 +54,7 @@ public final class PerkManager {
      *   <li>Perk must not already be equipped.</li>
      *   <li>Perk ID must not be in the config's disabled list.</li>
      *   <li>Slot count must be below the fixed perk slot cap.</li>
-     *   <li>If going beyond {@code perksBeforeFlaws} slots, enough flaws must already be equipped.</li>
+     *   <li>If going beyond the free slots, enough flaws must already be equipped.</li>
      * </ul>
      */
     public static Result tryEquip(ServerPlayer player, String perkId, PerkTier tier) {
@@ -71,8 +73,8 @@ public final class PerkManager {
         if (data.equippedCount() >= effectiveMax) return Result.fail("No free perk slots (max " + effectiveMax + ").");
 
         int newCount = data.equippedCount() + 1;
-        if (newCount > cfg.perksBeforeFlaws) {
-            int requiredFlaws = newCount - cfg.perksBeforeFlaws;
+        if (newCount > PerkData.FREE_PERK_SLOTS) {
+            int requiredFlaws = newCount - PerkData.FREE_PERK_SLOTS;
             if (data.equippedFlawCount() < requiredFlaws) {
                 return Result.fail("You must equip " + requiredFlaws + " flaw(s) before adding another perk.");
             }
@@ -155,15 +157,41 @@ public final class PerkManager {
         PerkData data = PlayerDataProvider.getData(player).getPerkData();
         NichirinModConfig.PerkConfig cfg = NichirinModConfig.get().perks;
 
-        // Cannot unequip if it would leave equipped perks without their required flaws
-        int requiredFlaws = Math.max(0, data.equippedCount() - cfg.perksBeforeFlaws);
+        int requiredFlaws = Math.max(0, data.equippedCount() - PerkData.FREE_PERK_SLOTS);
         if (data.equippedFlawCount() - 1 < requiredFlaws) {
             return Result.fail("Cannot remove this flaw — you need " + requiredFlaws + " flaw(s) for your current perks.");
         }
 
         if (!data.hasFlaw(flawId)) return Result.fail("Flaw is not equipped.");
         data.unequipFlaw(flawId);
+        cleanupFlawEffects(player, flawId);
         return Result.ok();
+    }
+
+    public static void cleanupRemovedFlaws(ServerPlayer player, Set<String> previousFlaws, Set<String> currentFlaws) {
+        for (String flawId : previousFlaws) {
+            if (!currentFlaws.contains(flawId)) {
+                cleanupFlawEffects(player, flawId);
+            }
+        }
+    }
+
+    public static void cleanupFlawEffects(ServerPlayer player, String flawId) {
+        switch (flawId) {
+            case "cursed_eyes" -> {
+                MobEffectInstance blindness = player.getEffect(MobEffects.BLINDNESS);
+                if (blindness != null && blindness.getDuration() > 100000) {
+                    player.removeEffect(MobEffects.BLINDNESS);
+                }
+            }
+            case "daywalker" -> {
+                removeShortAmplifiedEffect(player, MobEffects.WEAKNESS, 1);
+                removeShortAmplifiedEffect(player, MobEffects.MOVEMENT_SLOWDOWN, 1);
+                removeShortAmplifiedEffect(player, MobEffects.DIG_SLOWDOWN, 1);
+            }
+            default -> {
+            }
+        }
     }
 
 
@@ -675,6 +703,13 @@ public final class PerkManager {
                 stack.shrink(take);
                 remaining -= take;
             }
+        }
+    }
+
+    private static void removeShortAmplifiedEffect(ServerPlayer player, MobEffect effect, int minAmplifier) {
+        MobEffectInstance instance = player.getEffect(effect);
+        if (instance != null && instance.getAmplifier() >= minAmplifier && instance.getDuration() <= 80) {
+            player.removeEffect(effect);
         }
     }
 

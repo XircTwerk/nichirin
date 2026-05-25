@@ -2,11 +2,15 @@ package com.xirc.nichirin.common.event.unlock;
 
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.data.ProgressionHelper;
+import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.InteractionEvent;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.RecordItem;
@@ -26,7 +30,7 @@ public class SoundBreathingUnlockHandler {
                 checkJukeboxInteraction(serverPlayer, hand, pos);
             }
 
-            return dev.architectury.event.EventResult.pass();
+            return EventResult.pass();
         });
     }
 
@@ -58,12 +62,12 @@ public class SoundBreathingUnlockHandler {
         );
 
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
-                net.minecraft.sounds.SoundEvents.NOTE_BLOCK_CHIME.value(),
-                net.minecraft.sounds.SoundSource.PLAYERS, 1.0f, 1.0f);
+                SoundEvents.NOTE_BLOCK_CHIME.value(),
+                SoundSource.PLAYERS, 1.0f, 1.0f);
 
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
-                net.minecraft.sounds.SoundEvents.NOTE_BLOCK_HARP.value(),
-                net.minecraft.sounds.SoundSource.PLAYERS, 0.8f, 1.2f);
+                SoundEvents.NOTE_BLOCK_HARP.value(),
+                SoundSource.PLAYERS, 0.8f, 1.2f);
 
         if (player.level() instanceof ServerLevel serverLevel) {
             for (int i = 0; i < 30; i++) {
@@ -71,7 +75,7 @@ public class SoundBreathingUnlockHandler {
                 double offsetY = player.getRandom().nextDouble() * 2.5;
                 double offsetZ = (player.getRandom().nextDouble() - 0.5) * 3.0;
 
-                serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.NOTE,
+                serverLevel.sendParticles(ParticleTypes.NOTE,
                         player.getX() + offsetX,
                         player.getY() + offsetY,
                         player.getZ() + offsetZ,

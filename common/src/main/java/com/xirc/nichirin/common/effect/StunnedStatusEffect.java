@@ -12,6 +12,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import net.minecraft.world.entity.ai.attributes.AttributeMap;
 
 /**
  * Stunned Status Effect - Prevents movement and actions but allows knockback
@@ -59,7 +60,7 @@ public class StunnedStatusEffect extends MobEffect {
     }
 
     @Override
-    public void addAttributeModifiers(LivingEntity entity, net.minecraft.world.entity.ai.attributes.AttributeMap attributeMap, int amplifier) {
+    public void addAttributeModifiers(LivingEntity entity, AttributeMap attributeMap, int amplifier) {
         // Only apply movement reduction for amplifier 1+ (Level 2+)
         if (amplifier >= 1) {
             var attribute = entity.getAttribute(Attributes.MOVEMENT_SPEED);
@@ -76,7 +77,7 @@ public class StunnedStatusEffect extends MobEffect {
     }
 
     @Override
-    public void removeAttributeModifiers(LivingEntity entity, net.minecraft.world.entity.ai.attributes.AttributeMap attributeMap, int amplifier) {
+    public void removeAttributeModifiers(LivingEntity entity, AttributeMap attributeMap, int amplifier) {
         var attribute = entity.getAttribute(Attributes.MOVEMENT_SPEED);
         if (attribute != null) {
             attribute.removeModifier(MOVEMENT_MODIFIER_UUID);

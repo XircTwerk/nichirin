@@ -8,6 +8,7 @@ import net.minecraft.world.level.storage.LevelResource;
 
 import java.io.File;
 import java.io.IOException;
+import net.minecraft.server.MinecraftServer;
 
 /**
  * Handles persistent storage of player data including breathing styles and progression
@@ -82,7 +83,7 @@ public class PlayerDataStorage {
     /**
      * Gets the data directory for storing player files
      */
-    private static File getDataDirectory(net.minecraft.server.MinecraftServer server) {
+    private static File getDataDirectory(MinecraftServer server) {
         // Get world save directory
         File worldDir = server.getWorldPath(LevelResource.ROOT).toFile();
         return new File(worldDir, DATA_FOLDER);

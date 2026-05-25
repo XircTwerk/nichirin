@@ -7,8 +7,12 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.entity.player.Player;
 
 // Base for Flame Breathing attacks. All hits apply fire and burning effects.
 @SuppressWarnings("rawtypes")
@@ -48,7 +52,7 @@ public abstract class FlameBreathingAttackBase extends AbstractBreathingAttack<F
         }
 
         // Skip creative mode players - they shouldn't be affected by fire
-        if (target instanceof net.minecraft.world.entity.player.Player player && player.isCreative()) {
+        if (target instanceof Player player && player.isCreative()) {
             return;
         }
 
@@ -61,7 +65,7 @@ public abstract class FlameBreathingAttackBase extends AbstractBreathingAttack<F
         target.setRemainingFireTicks(Math.max(target.getRemainingFireTicks(), fireSeconds * 20));
 
         int burningDurationTicks = fireSeconds * 20;
-        target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+        target.addEffect(new MobEffectInstance(
                 NichirinEffectRegistry.BURNING.get(),
                 burningDurationTicks,
                 0, false, true
@@ -73,7 +77,7 @@ public abstract class FlameBreathingAttackBase extends AbstractBreathingAttack<F
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDir = user.getLookAngle();
-        net.minecraft.util.RandomSource random = serverLevel.getRandom();
+        RandomSource random = serverLevel.getRandom();
 
         for (int i = 0; i < FLAME_PARTICLE_COUNT; i++) {
             double offsetX = (random.nextDouble() - 0.5) * FLAME_PARTICLE_SPREAD;
@@ -150,7 +154,7 @@ public abstract class FlameBreathingAttackBase extends AbstractBreathingAttack<F
         if (!(world instanceof ServerLevel serverLevel)) return;
 
         // Use ServerLevel's random instead of world.random to avoid threading issues
-        net.minecraft.util.RandomSource random = serverLevel.getRandom();
+        RandomSource random = serverLevel.getRandom();
 
         for (int i = 0; i < particleCount; i++) {
             double angle = (2 * Math.PI * i) / particleCount;
@@ -176,7 +180,7 @@ public abstract class FlameBreathingAttackBase extends AbstractBreathingAttack<F
         if (!(world instanceof ServerLevel serverLevel)) return;
 
         // Use ServerLevel's random instead of world.random to avoid threading issues
-        net.minecraft.util.RandomSource random = serverLevel.getRandom();
+        RandomSource random = serverLevel.getRandom();
 
         int baseParticles = (int)(20 * intensity);
 

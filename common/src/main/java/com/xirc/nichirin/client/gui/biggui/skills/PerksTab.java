@@ -246,7 +246,6 @@ public class PerksTab extends AbstractGuiPage {
     public boolean handleScroll(double mx, double my, double delta) {
         int amount = (int) Math.signum(delta) * 22;
         if (mx < leftW) {
-            categoryScroll = Math.max(0, categoryScroll - amount);
             return true;
         }
         if (mx >= rightX) {
@@ -279,7 +278,7 @@ public class PerksTab extends AbstractGuiPage {
 
         int cy = y + PAD - categoryScroll;
         cy = renderLoadoutCard(g, font, data, x + PAD, cy, w - PAD * 2, mx, my);
-        cy += GAP;
+        cy += GAP + 10;
 
         for (Category category : Category.values()) {
             if (category == Category.FLAWS) {
@@ -322,19 +321,16 @@ public class PerksTab extends AbstractGuiPage {
 
         String stats = data.equippedCount() + "/" + data.getPerkSlots() + " . " + data.equippedFlawCount() + " flaw";
         g.drawString(font, stats, x + 9, y + 59, TEXT_DIM, false);
-        String slotHint = "Skill slots are fixed at 5";
-        g.drawString(font, trim(font, slotHint, w - 18), x + 9, y + 70, TEXT_FAINT, false);
 
         int bw = (w - 18 - 2 * 5) / 3;
         int by = y + 91;
         for (int i = 0; i < 3; i++) {
             int bx = x + 9 + i * (bw + 5);
             boolean active = i == activePresetIndex;
-            boolean hasPreset = i < data.getPresets().size();
             int border = active ? ACCENT : BORDER;
             int bg = active ? 0xFF2A2115 : PANEL_2;
             drawRect(g, bx, by, bw, 16, border, bg);
-            String label = hasPreset ? trim(font, data.getPresets().get(i).name, bw - 8) : "+ " + roman(i + 1);
+            String label = roman(i + 1);
             g.drawString(font, label, bx + (bw - font.width(label)) / 2, by + 4, active ? COLOR_PALETTE.ACCENT_LIGHT.rgb() : TEXT_DIM, false);
         }
 
@@ -360,7 +356,6 @@ public class PerksTab extends AbstractGuiPage {
 
     private void renderPerkList(GuiGraphics g, Font font, PerkData data, int x, int y, int w, int h, int mx, int my) {
         g.fill(x, y, x + w, y + h, BG);
-        renderListSubheader(g, font, data, x, y, w, mx, my);
 
         listViewportY = y + SUBHEADER_H;
         listViewportH = Math.max(0, h - SUBHEADER_H);
@@ -384,6 +379,7 @@ public class PerksTab extends AbstractGuiPage {
         g.disableScissor();
 
         if (maxScroll > 0) renderScrollBar(g, x + w - 4, listViewportY + 3, 2, listViewportH - 6, listScroll, maxScroll);
+        renderListSubheader(g, font, data, x, y, w, mx, my);
     }
 
     private void renderListSubheader(GuiGraphics g, Font font, PerkData data, int x, int y, int w, int mx, int my) {
@@ -558,14 +554,6 @@ public class PerksTab extends AbstractGuiPage {
         y += GAP;
 
         y = renderUpgradeCost(g, font, data, def, tier, x, y, w);
-        y += GAP;
-
-        g.drawString(font, "WHERE TO FIND", x, y, TEXT_DIM, false);
-        y += 13;
-        for (String line : wordWrap(font, def.locationHint, w)) {
-            g.drawString(font, line, x, y, TEXT_DIM, false);
-            y += font.lineHeight + 2;
-        }
         return y + PAD;
     }
 
@@ -661,24 +649,23 @@ public class PerksTab extends AbstractGuiPage {
             int bx = x + 9 + i * (bw + 5);
             if (inRect(mx, my, bx, by, bw, 16)) {
                 if (i == activePresetIndex) {
-                    String name = i < data.getPresets().size() ? data.getPresets().get(i).name : presetNameForIndex(i);
-                    sendAction(new PerkActionPacket(PerkActionPacket.Action.SAVE_PRESET, name));
+                    sendAction(new PerkActionPacket(PerkActionPacket.Action.SAVE_PRESET, presetNameForIndex(i)));
                     return true;
                 }
-                if (i != activePresetIndex && activePresetIndex < data.getPresets().size()) {
-                    sendAction(new PerkActionPacket(PerkActionPacket.Action.SAVE_PRESET, data.getPresets().get(activePresetIndex).name));
+                if (i != activePresetIndex) {
+                    sendAction(new PerkActionPacket(PerkActionPacket.Action.SAVE_PRESET, presetNameForIndex(activePresetIndex)));
                 }
                 activePresetIndex = i;
-                if (i < data.getPresets().size()) {
-                    sendAction(new PerkActionPacket(PerkActionPacket.Action.LOAD_PRESET, data.getPresets().get(i).name));
-                } else {
-                    sendAction(new PerkActionPacket(PerkActionPacket.Action.SAVE_PRESET, presetNameForIndex(i)));
-                }
+                String selectedName = presetNameForIndex(i);
+                PerkActionPacket.Action action = hasPreset(data, selectedName)
+                        ? PerkActionPacket.Action.LOAD_PRESET
+                        : PerkActionPacket.Action.SAVE_PRESET;
+                sendAction(new PerkActionPacket(action, selectedName));
                 return true;
             }
         }
 
-        int cy = y + cardH + GAP;
+        int cy = y + cardH + GAP + 10;
         for (Category category : Category.values()) {
             if (category == Category.FLAWS) cy += 13;
             if (inRect(mx, my, x, cy, w, 20)) {
@@ -848,12 +835,15 @@ public class PerksTab extends AbstractGuiPage {
     }
 
     private String activePresetName(PerkData data) {
-        if (activePresetIndex < data.getPresets().size()) return data.getPresets().get(activePresetIndex).name;
         return presetNameForIndex(activePresetIndex);
     }
 
     private static String presetNameForIndex(int index) {
         return "Preset " + roman(index + 1);
+    }
+
+    private static boolean hasPreset(PerkData data, String name) {
+        return data.getPresets().stream().anyMatch(preset -> preset.name.equals(name));
     }
 
     private boolean matchesPerk(PerkDefinition def, String search) {

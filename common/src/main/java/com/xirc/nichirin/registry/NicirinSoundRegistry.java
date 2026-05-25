@@ -29,6 +29,8 @@ public interface NicirinSoundRegistry {
     // Entity sounds
     RegistrySupplier<SoundEvent> THUNDER_BALL = registerSound("thunderball");
 
+    RegistrySupplier<SoundEvent> THUNDERCLAP_FLASH = registerSound("thunderclap_flash");
+
 
     static RegistrySupplier<SoundEvent> registerSound(String name) {
         return SOUND_EVENTS.register(name, () -> SoundEvent.createVariableRangeEvent(

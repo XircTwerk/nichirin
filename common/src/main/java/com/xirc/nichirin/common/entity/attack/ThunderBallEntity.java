@@ -25,6 +25,8 @@ import dev.architectury.networking.NetworkManager;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.levelgen.Heightmap;
 
 /**
  * Thunder Ball Entity - Travels forward for 6 seconds, continuously damaging nearby entities
@@ -72,7 +74,7 @@ public class ThunderBallEntity extends Entity {
     public void tick() {
         super.tick();
 
-        // Move on both sides — client applies deltaMovement each tick so rendering is smooth
+        // Move on both sides â€” client applies deltaMovement each tick so rendering is smooth
         // rather than snapping between server-synced positions.
         Vec3 motion = this.getDeltaMovement();
         this.setPos(this.getX() + motion.x, this.getY() + motion.y, this.getZ() + motion.z);
@@ -167,8 +169,8 @@ public class ThunderBallEntity extends Entity {
 
             // Find the ground level for lightning strike
             int groundY = this.level().getHeightmapPos(
-                    net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING,
-                    new net.minecraft.core.BlockPos((int)(this.getX() + offsetX), (int)this.getY(), (int)(this.getZ() + offsetZ))
+                    Heightmap.Types.MOTION_BLOCKING,
+                    new BlockPos((int)(this.getX() + offsetX), (int)this.getY(), (int)(this.getZ() + offsetZ))
             ).getY();
 
             Vec3 strikePos = new Vec3(this.getX() + offsetX, groundY, this.getZ() + offsetZ);

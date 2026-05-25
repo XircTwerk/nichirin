@@ -11,6 +11,11 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.projectile.ThrownPotion;
 import net.minecraft.world.item.alchemy.PotionUtils;
 import net.minecraft.world.item.alchemy.Potions;
+import dev.architectury.event.EventResult;
+import dev.architectury.event.events.common.EntityEvent;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 
 /**
  * Handles unlocking Insect Breathing when throwing poison potions
@@ -21,14 +26,14 @@ public class InsectBreathingUnlockHandler {
         PlayerEvent.PLAYER_CLONE.register((oldPlayer, newPlayer, wonGame) -> {;
         });
 
-        dev.architectury.event.events.common.EntityEvent.ADD.register((entity, world) -> {
+        EntityEvent.ADD.register((entity, world) -> {
             if (entity instanceof ThrownPotion thrownPotion && !world.isClientSide) {
                 if (thrownPotion.getOwner() instanceof ServerPlayer player) {
                     checkPoisonPotionThrow(player, thrownPotion);
                 }
             }
 
-            return dev.architectury.event.EventResult.pass();
+            return EventResult.pass();
         });
     }
 
@@ -47,14 +52,14 @@ public class InsectBreathingUnlockHandler {
         PlayerDataProvider.updateAndSync(player, "insect_breathing");
 
         player.displayClientMessage(
-                Component.literal("🦋 Toxic Elegance achieved! You have mastered poison and unlocked Insect Breathing! 🦋")
+                Component.literal("ðŸ¦‹ Toxic Elegance achieved! You have mastered poison and unlocked Insect Breathing! ðŸ¦‹")
                         .withStyle(style -> style.withColor(0x9932CC).withBold(true)),
                 false
         );
 
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
-                net.minecraft.sounds.SoundEvents.BREWING_STAND_BREW,
-                net.minecraft.sounds.SoundSource.PLAYERS, 1.0f, 1.2f);
+                SoundEvents.BREWING_STAND_BREW,
+                SoundSource.PLAYERS, 1.0f, 1.2f);
 
         if (player.level() instanceof ServerLevel serverLevel) {
             for (int i = 0; i < 25; i++) {

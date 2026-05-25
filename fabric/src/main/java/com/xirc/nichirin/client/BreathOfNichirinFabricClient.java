@@ -9,6 +9,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.HitResult;
 
 public class BreathOfNichirinFabricClient implements ClientModInitializer {
 
@@ -44,7 +45,7 @@ public class BreathOfNichirinFabricClient implements ClientModInitializer {
             // Detect fresh press (not held)
             if (isAttackPressed && !wasAttackPressed) {
                 // Check if not hitting a block or entity
-                if (client.hitResult == null || client.hitResult.getType() == net.minecraft.world.phys.HitResult.Type.MISS) {
+                if (client.hitResult == null || client.hitResult.getType() == HitResult.Type.MISS) {
                     // Send packet to server to perform attack
                     FabricPacketHandler.sendKatanaAttackPacket();
                 }

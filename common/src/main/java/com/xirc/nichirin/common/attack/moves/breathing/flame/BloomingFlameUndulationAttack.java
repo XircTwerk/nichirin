@@ -12,6 +12,9 @@ import net.minecraft.world.phys.Vec3;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.phys.AABB;
 
 /**
  * Fourth Form: Blooming Flame Undulation
@@ -128,7 +131,7 @@ public class BloomingFlameUndulationAttack extends FlameBreathingAttackBase {
 
         // Find all projectiles in range
         List<Projectile> projectiles = world.getEntitiesOfClass(Projectile.class,
-                new net.minecraft.world.phys.AABB(userPos.subtract(range, 2, range), userPos.add(range, 2, range)),
+                new AABB(userPos.subtract(range, 2, range), userPos.add(range, 2, range)),
                 projectile -> projectile.isAlive() && projectile.getOwner() != user);
 
         for (Projectile projectile : projectiles) {
@@ -162,25 +165,25 @@ public class BloomingFlameUndulationAttack extends FlameBreathingAttackBase {
      * Create flame deflection effect when destroying/reflecting projectiles
      */
     private void createFlameDeflectionEffect(Vec3 position) {
-        if (!(world instanceof net.minecraft.server.level.ServerLevel serverLevel)) return;
+        if (!(world instanceof ServerLevel serverLevel)) return;
 
         // Flame burst from deflection
-        serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.FLAME,
+        serverLevel.sendParticles(ParticleTypes.FLAME,
                 position.x, position.y, position.z,
                 8, 0.3, 0.3, 0.3, 0.2);
 
         // Lava particles for impact
-        serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.LAVA,
+        serverLevel.sendParticles(ParticleTypes.LAVA,
                 position.x, position.y, position.z,
                 3, 0.2, 0.2, 0.2, 0.1);
 
         // Spark effect
-        serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.CRIT,
+        serverLevel.sendParticles(ParticleTypes.CRIT,
                 position.x, position.y, position.z,
                 5, 0.4, 0.4, 0.4, 0.3);
 
         // Smoke from deflection
-        serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.LARGE_SMOKE,
+        serverLevel.sendParticles(ParticleTypes.LARGE_SMOKE,
                 position.x, position.y, position.z,
                 2, 0.2, 0.2, 0.2, 0.05);
     }
@@ -189,7 +192,7 @@ public class BloomingFlameUndulationAttack extends FlameBreathingAttackBase {
      * Create spinning flame effect around the user
      */
     private void createSpinningFlameEffect() {
-        if (!(world instanceof net.minecraft.server.level.ServerLevel serverLevel)) return;
+        if (!(world instanceof ServerLevel serverLevel)) return;
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
@@ -210,25 +213,25 @@ public class BloomingFlameUndulationAttack extends FlameBreathingAttackBase {
                 double y = userPos.y + ringHeight;
 
                 // Main flame particles
-                serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.FLAME,
+                serverLevel.sendParticles(ParticleTypes.FLAME,
                         x, y, z, 2, 0.1, 0.1, 0.1, 0.05);
 
                 // Soul fire for inner ring
                 if (ring == 0) {
-                    serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.FLAME,
+                    serverLevel.sendParticles(ParticleTypes.FLAME,
                             x, y, z, 1, 0.05, 0.05, 0.05, 0.02);
                 }
 
                 // Smoke trails
                 if (i % 3 == 0) {
-                    serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.LARGE_SMOKE,
+                    serverLevel.sendParticles(ParticleTypes.LARGE_SMOKE,
                             x, y + 0.5, z, 1, 0.1, 0.1, 0.1, 0.02);
                 }
             }
         }
 
         // Central flame pillar
-        serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.FLAME,
+        serverLevel.sendParticles(ParticleTypes.FLAME,
                 userPos.x, userPos.y, userPos.z, 8, 0.3, 1.0, 0.3, 0.1);
     }
 

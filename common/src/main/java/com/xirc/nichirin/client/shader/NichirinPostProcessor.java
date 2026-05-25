@@ -14,6 +14,7 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.util.List;
 
 
 /**
@@ -88,7 +89,7 @@ public abstract class NichirinPostProcessor {
                     var passesField = PostChain.class.getDeclaredField("passes");
                     passesField.setAccessible(true);
                     @SuppressWarnings("unchecked")
-                    var passesList = (java.util.List<PostPass>) passesField.get(shaderEffect);
+                    var passesList = (List<PostPass>) passesField.get(shaderEffect);
                     effects = new EffectInstance[passesList.size()];
                     for (int i = 0; i < passesList.size(); i++) {
                         effects[i] = passesList.get(i).getEffect();
@@ -201,7 +202,7 @@ public abstract class NichirinPostProcessor {
         // Match the GL state vanilla uses for its own post effects.
         // Depth testing and blending left over from world rendering will
         // either kill the fullscreen quad (depth fail) or blend it against
-        // black — both produce a black screen.
+        // black â€” both produce a black screen.
         RenderSystem.disableDepthTest();
         RenderSystem.disableBlend();
         RenderSystem.resetTextureMatrix();

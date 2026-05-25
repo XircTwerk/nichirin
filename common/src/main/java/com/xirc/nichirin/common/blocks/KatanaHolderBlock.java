@@ -124,7 +124,7 @@ public class KatanaHolderBlock extends BaseEntityBlock {
 
     @Override
     public void appendHoverText(@NotNull ItemStack stack, @javax.annotation.Nullable BlockGetter level, List<Component> tooltip, @NotNull TooltipFlag flag) {
-        tooltip.add(Component.literal("Crouch Right click the block to rotate by 90°").withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.literal("Crouch Right click the block to rotate by 90Â°").withStyle(ChatFormatting.GRAY));
     }
 
     @Override
@@ -300,8 +300,8 @@ public class KatanaHolderBlock extends BaseEntityBlock {
         }
 
         @Override
-        public net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket getUpdatePacket() {
-            return net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket.create(this);
+        public ClientboundBlockEntityDataPacket getUpdatePacket() {
+            return ClientboundBlockEntityDataPacket.create(this);
         }
     }
 }

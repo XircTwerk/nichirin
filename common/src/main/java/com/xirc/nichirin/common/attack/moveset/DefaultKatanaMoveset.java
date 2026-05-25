@@ -14,6 +14,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 import java.util.Map;
@@ -311,7 +312,7 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
     private static SimpleSlashAttack createLightSlash1() {
         return new SimpleSlashAttack.Builder()
                 .withTiming(0, 7, 2).withCooldown(0).withDamage(4.0f).withRange(2.5f)
-                .withKnockback(0.3f).withHitbox(2.0f, new net.minecraft.world.phys.Vec3(0, 0, 1.0))
+                .withKnockback(0.3f).withHitbox(2.0f, new Vec3(0, 0, 1.0))
                 .withHitStun(5).withSounds(SoundEvents.PLAYER_ATTACK_SWEEP, SoundEvents.PLAYER_ATTACK_STRONG)
                 .build();
     }
@@ -319,7 +320,7 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
     private static SimpleSlashAttack createLightSlash2() {
         return new SimpleSlashAttack.Builder()
                 .withTiming(0, 10, 3).withCooldown(0).withDamage(5.0f).withRange(2.5f)
-                .withKnockback(0.5f).withHitbox(2.0f, new net.minecraft.world.phys.Vec3(0, 0, 1.0))
+                .withKnockback(0.5f).withHitbox(2.0f, new Vec3(0, 0, 1.0))
                 .withHitStun(5).withSounds(SoundEvents.PLAYER_ATTACK_SWEEP, SoundEvents.PLAYER_ATTACK_STRONG)
                 .build();
     }
@@ -327,7 +328,7 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
     private static DoubleSlashAttack createDoubleSlashAttack() {
         return new DoubleSlashAttack.Builder()
                 .withTiming(0, 16, 6).withCooldown(20).withDamage(3.5f).withRange(2.8f)
-                .withKnockback(0.4f).withHitbox(2.0f, new net.minecraft.world.phys.Vec3(0, 0, 1.0))
+                .withKnockback(0.4f).withHitbox(2.0f, new Vec3(0, 0, 1.0))
                 .withHitStun(7).withSlashDelay(2)
                 .withSounds(SoundEvents.PLAYER_ATTACK_SWEEP, SoundEvents.PLAYER_ATTACK_STRONG)
                 .build();
@@ -337,7 +338,7 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
         return new RisingSlashAttack.Builder()
                 .withTiming(0, 10, 8).withCooldown(25).withDamage(4.0f).withRange(2.5f)
                 .withLaunchPower(0.8f).withKnockback(0.2f)
-                .withHitbox(2.0f, new net.minecraft.world.phys.Vec3(0, 0.5, 1.0))
+                .withHitbox(2.0f, new Vec3(0, 0.5, 1.0))
                 .withHitStun(10).withSounds(SoundEvents.PLAYER_ATTACK_SWEEP, SoundEvents.PLAYER_ATTACK_CRIT)
                 .build();
     }

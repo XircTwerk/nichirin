@@ -11,6 +11,8 @@ import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.configurations.TreeConfiguration;
 import net.minecraft.world.level.levelgen.feature.featuresize.TwoLayersFeatureSize;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
+import java.util.List;
+import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
 
 public class WysteriaConfiguredFeatures {
 
@@ -27,7 +29,7 @@ public class WysteriaConfiguredFeatures {
                 BlockStateProvider.simple(NichirinBlockRegistry.WYSTERIA_LEAVES.get()),
                 new WysteriaSmallFoliagePlacer(ConstantInt.of(2), ConstantInt.of(0)),
                 new TwoLayersFeatureSize(1, 0, 1)
-        ).decorators(java.util.List.of(
+        ).decorators(List.of(
                 new WysteriaRootDecorator(0.3f), // 30% chance for surface roots
                 new WysteriaHangingLeavesDecorator(2, 5) // Short hanging clusters
         ));
@@ -40,7 +42,7 @@ public class WysteriaConfiguredFeatures {
                 BlockStateProvider.simple(NichirinBlockRegistry.WYSTERIA_LEAVES.get()),
                 new WysteriaMediumFoliagePlacer(ConstantInt.of(3), ConstantInt.of(1)),
                 new TwoLayersFeatureSize(2, 0, 2)
-        ).decorators(java.util.List.of(
+        ).decorators(List.of(
                 new WysteriaRootDecorator(0.6f), // 60% chance for surface roots
                 new WysteriaHangingLeavesDecorator(4, 8) // Medium hanging clusters
         ));
@@ -53,13 +55,13 @@ public class WysteriaConfiguredFeatures {
                 BlockStateProvider.simple(NichirinBlockRegistry.WYSTERIA_LEAVES.get()),
                 new WysteriaLargeFoliagePlacer(ConstantInt.of(4), ConstantInt.of(2)),
                 new TwoLayersFeatureSize(3, 0, 3)
-        ).decorators(java.util.List.of(  // THIS adds the roots
+        ).decorators(List.of(  // THIS adds the roots
                 new WysteriaRootDecorator(0.8f),
                 new WysteriaHangingLeavesDecorator(6, 12)
         ));
     }
 
-    private static <FC extends net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration, F extends Feature<FC>>
+    private static <FC extends FeatureConfiguration, F extends Feature<FC>>
     void register(BootstapContext<ConfiguredFeature<?, ?>> context, ResourceKey<ConfiguredFeature<?, ?>> key, F feature, FC configuration) {
         context.register(key, new ConfiguredFeature<>(feature, configuration));
     }

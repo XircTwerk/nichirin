@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import net.minecraft.world.phys.AABB;
 
 public class SoundBreathingMoveset extends AbstractMoveset {
 
@@ -93,7 +94,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                         })
                 )
 
-                // Fourth Form: Constant Resounding Slashes - 360° defense (INDEX 1 in wheel)
+                // Fourth Form: Constant Resounding Slashes - 360Â° defense (INDEX 1 in wheel)
                 .withMove(new MoveBuilder("constant_resounding_slashes", "Constant Resounding Slashes")
                         .withAnimation("nichirin:constant_resounding_slashes", 12)
                         .withTiming(180, 5, 50)
@@ -102,8 +103,8 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                         .withKnockback(0f) // Light knockback to keep enemies close
                         .withBreathCost(25.0f)
                         .withHitStun(10) // Brief stun per hit
-                        .withHitboxSize(12.25f) // Full 360° radius
-                        .withDescription("Spinning 360° attack that hits all nearby enemies multiple times.")
+                        .withHitboxSize(12.25f) // Full 360Â° radius
+                        .withDescription("Spinning 360Â° attack that hits all nearby enemies multiple times.")
                         .withAction(entity -> {
                             ConstantResoundingSlashesAttack attack = new ConstantResoundingSlashesAttack();
                             SoundBreathingMoveset moveset = getCurrentMoveset();
@@ -252,7 +253,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
     }
 
     private boolean hasTargetsInRange(LivingEntity entity, float range) {
-        net.minecraft.world.phys.AABB searchBox = new net.minecraft.world.phys.AABB(
+        AABB searchBox = new AABB(
                 entity.getX() - range, entity.getY() - range, entity.getZ() - range,
                 entity.getX() + range, entity.getY() + range, entity.getZ() + range
         );

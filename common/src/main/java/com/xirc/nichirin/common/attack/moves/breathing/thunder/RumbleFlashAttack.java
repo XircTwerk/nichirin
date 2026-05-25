@@ -11,6 +11,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.*;
+import net.minecraft.util.RandomSource;
 
 /**
  * Sixth Form: Rumble and Flash
@@ -71,7 +72,7 @@ public class RumbleFlashAttack extends ThunderBreathingAttackBase {
                 LivingEntity target = targets.get(i);
                 Vec3 targetCurrentPos = target.position(); // Capture current position when attack starts
 
-                net.minecraft.util.RandomSource random = ((ServerLevel) world).getRandom();
+                RandomSource random = ((ServerLevel) world).getRandom();
 
                 // Mark multiple lightning strikes around target's CURRENT position (won't move)
                 for (int j = 0; j < 3; j++) {

@@ -15,11 +15,12 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.damagesource.DamageSource;
 
 /**
  * Unlocks Beast Breathing when a player kills a Boar and equips the dropped boar head.
- * Step 1: Kill a boar → receive boar head in inventory.
- * Step 2: Equip the boar head → Beast Breathing unlocked.
+ * Step 1: Kill a boar â†’ receive boar head in inventory.
+ * Step 2: Equip the boar head â†’ Beast Breathing unlocked.
  */
 public class BeastBreathingUnlockHandler {
 
@@ -35,7 +36,7 @@ public class BeastBreathingUnlockHandler {
         });
     }
 
-    private static void onEntityDeath(LivingEntity entity, net.minecraft.world.damagesource.DamageSource source) {
+    private static void onEntityDeath(LivingEntity entity, DamageSource source) {
         if (entity == null || source == null) return;
         if (entity.getType() != NichirinEntityRegistry.BOAR.get()) return;
 

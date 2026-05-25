@@ -13,7 +13,7 @@
 			"bones": [
 				{
 					"name": "Head",
-					"pivot": [0, 28.275, 0.175],
+					"pivot": [0, 24, 0],
 					"cubes": [
 						{"origin": [-4, 25, -4], "size": [8, 7, 8], "inflate": 0.1, "uv": [86, 27]},
 						{"origin": [-4, 25, -4], "size": [8, 7, 8], "inflate": 0.3, "uv": [86, 49], "mirror": true},
@@ -62,14 +62,16 @@
 					"name": "leftArm",
 					"pivot": [5, 22, 0],
 					"cubes": [
-						{"origin": [4, 11.9, -2], "size": [3, 12, 4], "inflate": 0.38, "uv": [25, 21], "mirror": true}
+						{"origin": [4, 11.9, -2], "size": [3, 12, 4], "inflate": 0.38, "uv": [25, 21], "mirror": true},
+						{"origin": [4, 11.9, -2], "size": [3, 12, 4], "inflate": 0.48, "uv": [84, 89], "mirror": true}
 					]
 				},
 				{
 					"name": "rightArm",
 					"pivot": [-6, 22, 0],
 					"cubes": [
-						{"origin": [-7, 11.9, -2], "size": [3, 12, 4], "inflate": 0.38, "uv": [25, 21]}
+						{"origin": [-7, 11.9, -2], "size": [3, 12, 4], "inflate": 0.38, "uv": [25, 21]},
+						{"origin": [-7, 11.9, -2], "size": [3, 12, 4], "inflate": 0.48, "uv": [83, 107]}
 					]
 				},
 				{
@@ -118,14 +120,6 @@
 					"pivot": [0, 9.45, -0.3],
 					"cubes": [
 						{"origin": [-4, 9.75, -1.8], "size": [8, 4, 4], "inflate": 0.68, "uv": [99, 83]}
-					]
-				},
-				{
-					"name": "bb_main",
-					"pivot": [0, 0, 0],
-					"cubes": [
-						{"origin": [-7, 11.9, -2], "size": [3, 12, 4], "inflate": 0.48, "uv": [83, 107]},
-						{"origin": [4, 11.9, -2], "size": [3, 12, 4], "inflate": 0.48, "uv": [84, 89], "mirror": true}
 					]
 				}
 			]

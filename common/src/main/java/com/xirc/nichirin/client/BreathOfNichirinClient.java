@@ -171,7 +171,7 @@ public class BreathOfNichirinClient {
 
             // Register blood moon screen overlay
             ClientGuiEvent.RENDER_HUD.register((graphics, partialTicks) -> {
-                net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+                Minecraft mc = Minecraft.getInstance();
                 if (mc.level == null || mc.options.hideGui) return;
                 if (!BloodMoonClientState.isActive()) return;
                 long dayTime = mc.level.getDayTime() % 24000L;

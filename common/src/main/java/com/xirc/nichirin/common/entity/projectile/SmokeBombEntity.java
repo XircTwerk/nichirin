@@ -18,6 +18,7 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
+import net.minecraft.server.TickTask;
 
 public class SmokeBombEntity extends ThrowableItemProjectile {
 
@@ -66,7 +67,7 @@ public class SmokeBombEntity extends ThrowableItemProjectile {
             // Schedule the smoke effect to run every tick for constant blindness
             for (int tick = 0; tick < SMOKE_DURATION; tick++) { // Every tick instead of every other tick
                 int finalTick = tick;
-                serverLevel.getServer().tell(new net.minecraft.server.TickTask(
+                serverLevel.getServer().tell(new TickTask(
                         serverLevel.getServer().getTickCount() + tick, () -> {
 
                     // Apply blindness to entities in range

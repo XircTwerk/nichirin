@@ -14,6 +14,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import net.minecraft.world.phys.AABB;
 
 /**
  * Seventh Form: Drop Ripple Thrust
@@ -151,7 +152,7 @@ public class DropRippleThrustAttack extends WaterBreathingAttackBase {
 
         // Find all projectiles in shield area
         List<Projectile> projectiles = world.getEntitiesOfClass(Projectile.class,
-                new net.minecraft.world.phys.AABB(
+                new AABB(
                         shieldCenter.subtract(2, 2, 2),
                         shieldCenter.add(2, 2, 2)
                 ),

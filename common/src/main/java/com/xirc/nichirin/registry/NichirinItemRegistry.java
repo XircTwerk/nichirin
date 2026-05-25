@@ -19,8 +19,12 @@ import com.xirc.nichirin.common.item.LazySpawnEggItem;
 import com.xirc.nichirin.common.item.tool.DrinkingGourdItem;
 import com.xirc.nichirin.common.item.scroll.PerkScrollItem;
 import com.xirc.nichirin.common.item.scroll.CursedScrollItem;
+import com.xirc.nichirin.common.util.enums.BreathingStyle;
+import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
+import net.minecraft.core.Position;
+import net.minecraft.core.dispenser.AbstractProjectileDispenseBehavior;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.*;
@@ -28,8 +32,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.DispenserBlock;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -235,6 +242,15 @@ public interface NichirinItemRegistry {
     RegistrySupplier<Item> ZENITSU_BOOTS = register("zenitsu_boots",
             () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.BOOTS, settings().stacksTo(1)));
 
+    RegistrySupplier<Item> JIGORO_HEADPIECE = register("jigoro_headpiece",
+            () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.HELMET, settings().stacksTo(1)));
+    RegistrySupplier<Item> JIGORO_CAPE = register("jigoro_cape",
+            () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.CHESTPLATE, settings().stacksTo(1)));
+    RegistrySupplier<Item> JIGORO_LEGGINGS = register("jigoro_leggings",
+            () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.LEGGINGS, settings().stacksTo(1)));
+    RegistrySupplier<Item> JIGORO_BOOTS = register("jigoro_boots",
+            () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.BOOTS, settings().stacksTo(1)));
+
     RegistrySupplier<Item> RENGOKU_HEADPIECE = register("rengoku_headpiece",
             () -> new NichirinArmorItem(ArmorMaterials.NETHERITE, NichirinArmorItem.Type.HELMET, settings().stacksTo(1)));
     RegistrySupplier<Item> RENGOKU_CAPE = register("rengoku_cape",
@@ -313,13 +329,13 @@ public interface NichirinItemRegistry {
 
     // Spawn eggs
     RegistrySupplier<Item> TEMPLE_DEMON_SPAWN_EGG = register("temple_demon_spawn_egg",
-            () -> new LazySpawnEggItem(NichirinEntityRegistry.TEMPLE_DEMON, settings()));
+            () -> new LazySpawnEggItem(NichirinEntityRegistry.TEMPLE_DEMON, 0x33213D, 0xB33549, settings()));
     RegistrySupplier<Item> BOAR_SPAWN_EGG = register("boar_spawn_egg",
-            () -> new LazySpawnEggItem(NichirinEntityRegistry.BOAR, settings()));
+            () -> new LazySpawnEggItem(NichirinEntityRegistry.BOAR, 0x6B4A35, 0xD2B18A, settings()));
     RegistrySupplier<Item> WATER_BREATHING_TRAINER_SPAWN_EGG = register("water_breathing_trainer_spawn_egg",
-            () -> new LazySpawnEggItem(NichirinEntityRegistry.WATER_BREATHING_TRAINER, settings()));
+            () -> new LazySpawnEggItem(NichirinEntityRegistry.WATER_BREATHING_TRAINER, BreathingStyle.WATER.getColor(), 0xF0D2B8, settings()));
     RegistrySupplier<Item>  THUNDER_BREATHING_TRAINER_SPAWN_EGG = register("thunder_breathing_trainer_spawn_egg",
-            () -> new LazySpawnEggItem(NichirinEntityRegistry.THUNDER_BREATHING_TRAINER, settings()));
+            () -> new LazySpawnEggItem(NichirinEntityRegistry.THUNDER_BREATHING_TRAINER, 0xCDA287, 0x987040, settings()));
 
     // Perk scrolls
     RegistrySupplier<Item> PERK_SCROLL = register("perk_scroll",
@@ -341,7 +357,7 @@ public interface NichirinItemRegistry {
 
     static void init() {
         // Defer dispenser behavior registration until items are actually registered.
-        dev.architectury.event.events.common.LifecycleEvent.SERVER_BEFORE_START.register(
+        LifecycleEvent.SERVER_BEFORE_START.register(
                 server -> registerDispenserBehaviors());
     }
 
@@ -352,12 +368,12 @@ public interface NichirinItemRegistry {
     static void registerDispenserBehaviors() {
         if (DispenserState.registered) return;
         DispenserState.registered = true;
-        net.minecraft.core.dispenser.AbstractProjectileDispenseBehavior flashBehavior =
-                new net.minecraft.core.dispenser.AbstractProjectileDispenseBehavior() {
+        AbstractProjectileDispenseBehavior flashBehavior =
+                new AbstractProjectileDispenseBehavior() {
                     @Override
-                    protected net.minecraft.world.entity.projectile.Projectile getProjectile(
-                            net.minecraft.world.level.Level level, net.minecraft.core.Position pos,
-                            net.minecraft.world.item.ItemStack stack) {
+                    protected Projectile getProjectile(
+                            Level level, Position pos,
+                            ItemStack stack) {
                         FlashBombEntity bomb =
                                 new FlashBombEntity(
                                         level, pos.x(), pos.y(), pos.z());
@@ -366,12 +382,12 @@ public interface NichirinItemRegistry {
                     }
                 };
 
-        net.minecraft.core.dispenser.AbstractProjectileDispenseBehavior smokeBehavior =
-                new net.minecraft.core.dispenser.AbstractProjectileDispenseBehavior() {
+        AbstractProjectileDispenseBehavior smokeBehavior =
+                new AbstractProjectileDispenseBehavior() {
                     @Override
-                    protected net.minecraft.world.entity.projectile.Projectile getProjectile(
-                            net.minecraft.world.level.Level level, net.minecraft.core.Position pos,
-                            net.minecraft.world.item.ItemStack stack) {
+                    protected Projectile getProjectile(
+                            Level level, Position pos,
+                            ItemStack stack) {
                         SmokeBombEntity bomb =
                                 new SmokeBombEntity(
                                         level, pos.x(), pos.y(), pos.z());
@@ -380,8 +396,8 @@ public interface NichirinItemRegistry {
                     }
                 };
 
-        net.minecraft.world.level.block.DispenserBlock.registerBehavior(FLASH_BOMB.get(), flashBehavior);
-        net.minecraft.world.level.block.DispenserBlock.registerBehavior(SMOKE_BOMB.get(), smokeBehavior);
+        DispenserBlock.registerBehavior(FLASH_BOMB.get(), flashBehavior);
+        DispenserBlock.registerBehavior(SMOKE_BOMB.get(), smokeBehavior);
     }
 
     /** Holds mutable flag for one-shot dispenser registration (interfaces can't hold mutable state). */

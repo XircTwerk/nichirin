@@ -11,6 +11,10 @@ import net.minecraft.world.phys.Vec3;
 import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.phys.AABB;
 
 /**
  * Rhythmic Step (Crouch + Right Click Attack)
@@ -173,8 +177,8 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
                 target.push(slashKnockback.x, 0.4, slashKnockback.z);
 
                 // Extended stun
-                target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-                        net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN,
+                target.addEffect(new MobEffectInstance(
+                        MobEffects.MOVEMENT_SLOWDOWN,
                         30, // 1.5 seconds
                         5,
                         false,
@@ -356,7 +360,7 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
         double angleRadians = Math.toRadians(angleDegrees / 2);
 
         return world.getEntitiesOfClass(LivingEntity.class,
-                new net.minecraft.world.phys.AABB(origin.subtract(range, 2, range), origin.add(range, 2, range)),
+                new AABB(origin.subtract(range, 2, range), origin.add(range, 2, range)),
                 entity -> {
                     if (entity == user || !entity.isAlive()) return false;
 

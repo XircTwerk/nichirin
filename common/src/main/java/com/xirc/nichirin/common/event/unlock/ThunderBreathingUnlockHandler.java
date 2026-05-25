@@ -3,10 +3,13 @@ package com.xirc.nichirin.common.event.unlock;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.data.ProgressionHelper;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
+import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.EntityEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.player.Player;
@@ -33,7 +36,7 @@ public class ThunderBreathingUnlockHandler {
                 }
             }
 
-            return dev.architectury.event.EventResult.pass();
+            return EventResult.pass();
         });
     }
 
@@ -61,8 +64,8 @@ public class ThunderBreathingUnlockHandler {
         );
 
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
-                net.minecraft.sounds.SoundEvents.LIGHTNING_BOLT_THUNDER,
-                net.minecraft.sounds.SoundSource.PLAYERS, 1.0f, 1.0f);
+                SoundEvents.LIGHTNING_BOLT_THUNDER,
+                SoundSource.PLAYERS, 1.0f, 1.0f);
 
         if (player.level() instanceof ServerLevel serverLevel) {
             for (int i = 0; i < 20; i++) {

@@ -18,6 +18,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class WysteriaTrunkPlacer extends TrunkPlacer {
     public static final Codec<WysteriaTrunkPlacer> CODEC = RecordCodecBuilder.create((instance) ->
@@ -38,7 +39,7 @@ public class WysteriaTrunkPlacer extends TrunkPlacer {
     }
 
     @Override
-    public List<FoliagePlacer.FoliageAttachment> placeTrunk(LevelSimulatedReader level, BiConsumer<BlockPos, net.minecraft.world.level.block.state.BlockState> blockSetter, RandomSource random, int height, BlockPos startPos, TreeConfiguration config) {
+    public List<FoliagePlacer.FoliageAttachment> placeTrunk(LevelSimulatedReader level, BiConsumer<BlockPos, BlockState> blockSetter, RandomSource random, int height, BlockPos startPos, TreeConfiguration config) {
         List<FoliagePlacer.FoliageAttachment> foliageAttachments = new ArrayList<>();
         Set<BlockPos> trunkPositions = new HashSet<>(); // Track all trunk positions
 

@@ -1,8 +1,7 @@
 package com.xirc.nichirin.common.system.perks;
 
 /**
- * A negative perk (flaw) the player must equip when equipping more than
- * {@code PerkConfig.perksBeforeFlaws} perks.
+ * A negative perk (flaw) the player must equip to unlock perk slots past the free slots.
  */
 public class FlawDefinition {
 

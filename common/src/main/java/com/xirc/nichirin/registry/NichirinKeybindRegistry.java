@@ -3,7 +3,6 @@ package com.xirc.nichirin.registry;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.xirc.nichirin.client.gui.CooldownHUD;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
-import com.xirc.nichirin.common.attack.moveset.DefaultKatanaMoveset;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.network.c2s.MovementInputPacket;
@@ -173,10 +172,6 @@ public interface NichirinKeybindRegistry {
         if (moveset == null) {
             if (holdingKatana && moveIndex <= 2) {
                 NichirinPacketRegistry.sendToServer(new MoveHotkeyPacket(moveIndex));
-                var config = DefaultKatanaMoveset.INSTANCE.getMove(moveIndex);
-                if (config != null && config.hasCooldown()) {
-                    CooldownHUD.setCooldown(config.getDisplayName(), config.getCooldown());
-                }
             }
             return;
         }

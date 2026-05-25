@@ -68,7 +68,7 @@ public class BeastBreathingMoveset extends AbstractMoveset {
                 .withAnimation("nichirin:beast_explosive_rush", 12)
                 .withTiming(0, 0, 15)
                 .withDamage(20.0f)
-                .withDashSpeed(24.0f)
+                .withDashSpeed(40.0f)
                 .withRange(16.0f)
                 .withKnockback(0.5f)
                 .withBreathCost(25.0f)
@@ -351,7 +351,6 @@ public class BeastBreathingMoveset extends AbstractMoveset {
 
 
     private static final Map<UUID, Long> rightClickCooldownEnd = new HashMap<>();
-    private static final long RIGHT_CLICK_COOLDOWN = 80L;
 
     private boolean canUseRightClickMove(LivingEntity entity) {
         Long end = rightClickCooldownEnd.get(entity.getUUID());
@@ -360,7 +359,11 @@ public class BeastBreathingMoveset extends AbstractMoveset {
     }
 
     private void setRightClickCooldown(LivingEntity entity) {
-        rightClickCooldownEnd.put(entity.getUUID(), entity.level().getGameTime() + RIGHT_CLICK_COOLDOWN);
+        MoveConfiguration config = getCrouchRightClickConfiguration();
+        long cooldown = config != null ? config.getCooldownOrDefault(0) : 0;
+        if (cooldown > 0) {
+            rightClickCooldownEnd.put(entity.getUUID(), entity.level().getGameTime() + cooldown);
+        }
     }
 
     private boolean canUseMove(LivingEntity entity, int moveIndex) {

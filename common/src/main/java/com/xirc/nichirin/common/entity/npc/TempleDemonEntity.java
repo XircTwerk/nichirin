@@ -18,6 +18,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 import java.util.EnumSet;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 
 /**
  * Temple Demon with full moveset support and smart AI
@@ -82,12 +83,12 @@ public class TempleDemonEntity extends DemonNPCEntity {
 
     public static AttributeSupplier.Builder createAttributes() {
         return createDemonAttributes()
-                .add(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH, 50.0)
-                .add(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE, 12.0)
-                .add(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED, 0.3)
-                .add(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR, 8.0)
-                .add(net.minecraft.world.entity.ai.attributes.Attributes.FOLLOW_RANGE, 32.0)
-                .add(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_KNOCKBACK, 1.0);
+                .add(Attributes.MAX_HEALTH, 50.0)
+                .add(Attributes.ATTACK_DAMAGE, 12.0)
+                .add(Attributes.MOVEMENT_SPEED, 0.3)
+                .add(Attributes.ARMOR, 8.0)
+                .add(Attributes.FOLLOW_RANGE, 32.0)
+                .add(Attributes.ATTACK_KNOCKBACK, 1.0);
     }
 
     @Override
@@ -108,7 +109,7 @@ public class TempleDemonEntity extends DemonNPCEntity {
         Level level = this.level();
         if (!level.isDay()) return;
         if (!level.canSeeSky(this.blockPosition())) return;
-        // Exposed to direct sunlight — take heavy damage every 4 ticks (5 HP/s)
+        // Exposed to direct sunlight â€” take heavy damage every 4 ticks (5 HP/s)
         if ((level.getGameTime() % 4) == 0) {
             this.hurt(this.damageSources().onFire(), 1.0f);
         }
@@ -132,12 +133,12 @@ public class TempleDemonEntity extends DemonNPCEntity {
             return;
         }
 
-        // Server cleared the anim — allow same anim name to re-trigger next time
+        // Server cleared the anim â€” allow same anim name to re-trigger next time
         if (serverAnim.isEmpty()) {
             consumedAttackAnim = "";
         }
 
-        // Idle/walk — only re-dispatch when state changes (lastWasWalking == null on first tick)
+        // Idle/walk â€” only re-dispatch when state changes (lastWasWalking == null on first tick)
         boolean walking = moveAnalysis.isMovingHorizontally();
         if (!Boolean.valueOf(walking).equals(lastWasWalking)) {
             if (walking) {
@@ -164,7 +165,7 @@ public class TempleDemonEntity extends DemonNPCEntity {
                 stopAnimation();
             }
         } else {
-            // Safety: no countdown set (e.g. from old save data) — clear immediately
+            // Safety: no countdown set (e.g. from old save data) â€” clear immediately
             stopAnimation();
         }
     }
@@ -184,7 +185,7 @@ public class TempleDemonEntity extends DemonNPCEntity {
     }
 
     /**
-     * AI goal — during daytime, if the demon is exposed to direct sky, seek nearby covered shelter.
+     * AI goal â€” during daytime, if the demon is exposed to direct sky, seek nearby covered shelter.
      * Does not apply while the demon has an active target (attacking takes priority).
      */
     private static class DayShelterGoal extends Goal {
@@ -253,14 +254,14 @@ public class TempleDemonEntity extends DemonNPCEntity {
                     return Vec3.atCenterOf(surface);
                 }
             }
-            // No surface shelter found — try going one layer underground
+            // No surface shelter found â€” try going one layer underground
             BlockPos under = demon.blockPosition().below(4);
             return Vec3.atCenterOf(under);
         }
     }
 
     /**
-     * Smart AI goal — uses ALL demon moves: left click, right click combos, and wheel moves.
+     * Smart AI goal â€” uses ALL demon moves: left click, right click combos, and wheel moves.
      *
      * Move indices used here:
      *   ATTACK_LEFT  (-3) = Gut Punch     (handleLeftClick)
@@ -327,7 +328,7 @@ public class TempleDemonEntity extends DemonNPCEntity {
             if (stompDelay > 0) {
                 stompDelay--;
             } else if (pendingStomp && !demon.onGround() && demon.getTarget() != null) {
-                demon.getMoveset().handleRightClick(demon, true); // canStompAfterHighJump is set → stomp
+                demon.getMoveset().handleRightClick(demon, true); // canStompAfterHighJump is set â†’ stomp
                 pendingStomp  = false;
                 globalCooldown = 20;
             }
@@ -474,10 +475,10 @@ public class TempleDemonEntity extends DemonNPCEntity {
         /**
          * Returns the attack constant/index to use, or ATTACK_NONE.
          * Priority logic mirrors a real combo fighter:
-         *   Very close  → gut punch or bite → slash
-         *   Close       → slash → kick → gut punch
-         *   Medium      → slash → kick → dash strike
-         *   Far         → dash strike → slash
+         *   Very close  â†’ gut punch or bite â†’ slash
+         *   Close       â†’ slash â†’ kick â†’ gut punch
+         *   Medium      â†’ slash â†’ kick â†’ dash strike
+         *   Far         â†’ dash strike â†’ slash
          */
         private int selectAttack(double distance, boolean movingAway, boolean inAir, boolean lowHp) {
             if (inAir && distance <= 4.0 && cooldownHighJump == 0 && demon.onGround()) {

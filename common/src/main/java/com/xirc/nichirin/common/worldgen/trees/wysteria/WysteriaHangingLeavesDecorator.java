@@ -10,6 +10,8 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.levelgen.feature.treedecorators.TreeDecorator;
 import net.minecraft.world.level.levelgen.feature.treedecorators.TreeDecoratorType;
+import net.minecraft.core.Direction.Plane;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class WysteriaHangingLeavesDecorator extends TreeDecorator {
     public static final Codec<WysteriaHangingLeavesDecorator> CODEC = RecordCodecBuilder.create((instance) ->
@@ -34,7 +36,7 @@ public class WysteriaHangingLeavesDecorator extends TreeDecorator {
     @Override
     public void place(Context context) {
         // Use the wysteria leaves block with persistent property
-        net.minecraft.world.level.block.state.BlockState leafState =
+        BlockState leafState =
                 NichirinBlockRegistry.WYSTERIA_LEAVES.get()
                         .defaultBlockState()
                         .setValue(LeavesBlock.PERSISTENT, true); // Make hanging leaves persistent
@@ -72,7 +74,7 @@ public class WysteriaHangingLeavesDecorator extends TreeDecorator {
 
                         // REDUCED: Create fewer secondary hanging strands
                         if (i > 4 && context.random().nextInt(6) == 0) { // REDUCED: 17% chance instead of 25%
-                            Direction randomDir = net.minecraft.core.Direction.Plane.HORIZONTAL.getRandomDirection(context.random());
+                            Direction randomDir = Plane.HORIZONTAL.getRandomDirection(context.random());
                             int secondaryLength = 1 + context.random().nextInt(2); // Shorter secondary strands
                             for (int j = 1; j <= secondaryLength; j++) {
                                 BlockPos secondaryPos = hangPos.relative(randomDir, j);

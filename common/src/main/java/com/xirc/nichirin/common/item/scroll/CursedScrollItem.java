@@ -105,6 +105,7 @@ public class CursedScrollItem extends Item {
                     .withStyle(ChatFormatting.RED));
             if (equippedNewFlaw && flawId != null) {
                 data.unequipFlaw(flawId);
+                PerkManager.cleanupFlawEffects(player, flawId);
             }
             BreathOfNichirinEventHandler.syncPerksToPlayer(player);
             return InteractionResultHolder.fail(stack);

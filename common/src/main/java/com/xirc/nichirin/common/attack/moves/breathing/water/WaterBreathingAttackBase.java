@@ -9,6 +9,11 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.player.Player;
 
 // Base for Water Breathing attacks. All hits apply a slowness effect representing water pressure.
 @SuppressWarnings("rawtypes")
@@ -42,10 +47,10 @@ public abstract class WaterBreathingAttackBase extends AbstractBreathingAttack<W
     }
 
     protected void applyWaterEffect(LivingEntity target) {
-        if (target instanceof net.minecraft.world.entity.player.Player player && player.isCreative()) return;
+        if (target instanceof Player player && player.isCreative()) return;
         int slownessDurationTicks = Math.max(40, (int)(damage * 2));
-        target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-                net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN,
+        target.addEffect(new MobEffectInstance(
+                MobEffects.MOVEMENT_SLOWDOWN,
                 slownessDurationTicks, 0, false, true));
     }
 
@@ -88,7 +93,7 @@ public abstract class WaterBreathingAttackBase extends AbstractBreathingAttack<W
     protected void createWaterCircle(Vec3 center, float radius, int particleCount) {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
-        net.minecraft.util.RandomSource random = serverLevel.getRandom();
+        RandomSource random = serverLevel.getRandom();
 
         for (int i = 0; i < particleCount; i++) {
             double angle = (2 * Math.PI * i) / particleCount;
@@ -140,7 +145,7 @@ public abstract class WaterBreathingAttackBase extends AbstractBreathingAttack<W
     protected void createWaterExplosion(Vec3 center, float intensity) {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
-        net.minecraft.util.RandomSource random = serverLevel.getRandom();
+        RandomSource random = serverLevel.getRandom();
         int baseParticles = (int)(30 * intensity);
 
         serverLevel.sendParticles(ParticleTypes.EXPLOSION,

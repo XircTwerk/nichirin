@@ -24,6 +24,7 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
+import net.minecraft.world.damagesource.DamageSource;
 
 public class FlashBombEntity extends ThrowableItemProjectile {
 
@@ -198,7 +199,7 @@ public class FlashBombEntity extends ThrowableItemProjectile {
     }
 
     @Override
-    public boolean hurt(net.minecraft.world.damagesource.DamageSource damageSource, float amount) {
+    public boolean hurt(DamageSource damageSource, float amount) {
         if (!this.level().isClientSide && getExplosionCount() == 0 && damageSource.getEntity() instanceof Player) {
             // Player hit the bomb - explode immediately
             System.out.println("Player hit flash bomb, exploding immediately");

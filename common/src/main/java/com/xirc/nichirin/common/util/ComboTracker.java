@@ -9,6 +9,9 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.*;
+import dev.architectury.networking.NetworkManager;
+import io.netty.buffer.Unpooled;
+import net.minecraft.network.FriendlyByteBuf;
 
 /**
  * Central combo tracking logic with automatic reset when stun expires
@@ -99,9 +102,9 @@ public class ComboTracker {
 
         // Use the registry's sendToPlayer method which handles encoding
         try {
-            net.minecraft.network.FriendlyByteBuf buf = new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             packet.toBytes(buf);
-            dev.architectury.networking.NetworkManager.sendToPlayer(serverPlayer,
+            NetworkManager.sendToPlayer(serverPlayer,
                     NichirinPacketRegistry.COMBO_COUNTER_ID, buf);
         } catch (Exception e) {
         }
@@ -179,9 +182,9 @@ public class ComboTracker {
             if (player instanceof ServerPlayer serverPlayer) {
                 ComboCounterPacket packet = new ComboCounterPacket(0, 0, 0.0f);
                 try {
-                    net.minecraft.network.FriendlyByteBuf buf = new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());
+                    FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
                     packet.toBytes(buf);
-                    dev.architectury.networking.NetworkManager.sendToPlayer(serverPlayer,
+                    NetworkManager.sendToPlayer(serverPlayer,
                             NichirinPacketRegistry.COMBO_COUNTER_ID, buf);
                 } catch (Exception e) {
                 }
@@ -219,9 +222,9 @@ public class ComboTracker {
                         if (attacker instanceof ServerPlayer serverPlayer) {
                             ComboCounterPacket packet = new ComboCounterPacket(0, 0, 0.0f);
                             try {
-                                net.minecraft.network.FriendlyByteBuf buf = new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());
+                                FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
                                 packet.toBytes(buf);
-                                dev.architectury.networking.NetworkManager.sendToPlayer(serverPlayer,
+                                NetworkManager.sendToPlayer(serverPlayer,
                                         NichirinPacketRegistry.COMBO_COUNTER_ID, buf);
                             } catch (Exception e) {
                             }

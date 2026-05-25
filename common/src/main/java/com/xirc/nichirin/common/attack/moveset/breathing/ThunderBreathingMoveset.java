@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import net.minecraft.world.phys.AABB;
 
 public class ThunderBreathingMoveset extends AbstractMoveset {
 
@@ -279,7 +280,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
     }
 
     private boolean hasTargetsInRange(LivingEntity entity, float range) {
-        net.minecraft.world.phys.AABB searchBox = new net.minecraft.world.phys.AABB(
+        AABB searchBox = new AABB(
                 entity.getX() - range, entity.getY() - range, entity.getZ() - range,
                 entity.getX() + range, entity.getY() + range, entity.getZ() + range
         );

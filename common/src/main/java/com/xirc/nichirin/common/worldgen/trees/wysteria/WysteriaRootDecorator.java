@@ -8,6 +8,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.levelgen.feature.treedecorators.TreeDecorator;
 import net.minecraft.world.level.levelgen.feature.treedecorators.TreeDecoratorType;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class WysteriaRootDecorator extends TreeDecorator {
     public static final Codec<WysteriaRootDecorator> CODEC = RecordCodecBuilder.create((instance) ->
@@ -34,7 +35,7 @@ public class WysteriaRootDecorator extends TreeDecorator {
         if (context.roots().isEmpty()) return;
         BlockPos trunkBase = context.roots().get(0);
 
-        net.minecraft.world.level.block.state.BlockState logState =
+        BlockState logState =
                 NichirinBlockRegistry.WYSTERIA_LOG.get().defaultBlockState();
 
         // Determine trunk type (check if there's a 2x2 base)

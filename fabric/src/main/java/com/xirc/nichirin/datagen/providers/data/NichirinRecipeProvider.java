@@ -181,6 +181,47 @@ public class NichirinRecipeProvider extends FabricRecipeProvider {
                 .unlockedBy("has_netherite_boots", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_BOOTS))
                 .save(exporter);
 
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.JIGORO_HEADPIECE.get())
+                .define('Y', Items.YELLOW_DYE)
+                .define('S', Items.STRING)
+                .define('W', Items.WHITE_DYE)
+                .define('H', Items.NETHERITE_HELMET)
+                .pattern("YSY")
+                .pattern("WHW")
+                .pattern("   ")
+                .unlockedBy("has_netherite_helmet", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_HELMET))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.JIGORO_CAPE.get())
+                .define('Y', Items.YELLOW_DYE)
+                .define('C', Items.NETHERITE_CHESTPLATE)
+                .define('W', Items.WHITE_DYE)
+                .pattern("YYY")
+                .pattern("YCY")
+                .pattern("W W")
+                .unlockedBy("has_netherite_chestplate", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_CHESTPLATE))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.JIGORO_LEGGINGS.get())
+                .define('B', Items.BROWN_DYE)
+                .define('L', Items.NETHERITE_LEGGINGS)
+                .define('W', Items.WHITE_DYE)
+                .pattern("BBB")
+                .pattern("BLB")
+                .pattern("W W")
+                .unlockedBy("has_netherite_leggings", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_LEGGINGS))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.JIGORO_BOOTS.get())
+                .define('Y', Items.YELLOW_DYE)
+                .define('B', Items.NETHERITE_BOOTS)
+                .define('W', Items.WHITE_DYE)
+                .pattern("   ")
+                .pattern("YBY")
+                .pattern("W W")
+                .unlockedBy("has_netherite_boots", InventoryChangeTrigger.TriggerInstance.hasItems(Items.NETHERITE_BOOTS))
+                .save(exporter);
+
         // Rengoku Helmet - Orange secondary, Red primary
         ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.RENGOKU_HEADPIECE.get())
                 .define('O', Items.ORANGE_DYE) // Secondary

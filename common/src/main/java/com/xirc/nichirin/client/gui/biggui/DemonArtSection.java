@@ -12,6 +12,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 
 import static com.xirc.nichirin.common.data.ProgressionHelper.getUnlockRequirement;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
 
 /**
  * Demon Arts section that mirrors the breathing styles system but for demon arts
@@ -296,8 +299,8 @@ public class DemonArtSection extends AbstractGuiPage {
 
             // Play click sound
             Minecraft.getInstance().getSoundManager().play(
-                    net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
-                            net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 1.0F
+                    SimpleSoundInstance.forUI(
+                            SoundEvents.UI_BUTTON_CLICK.value(), 1.0F
                     )
             );
 
@@ -316,8 +319,8 @@ public class DemonArtSection extends AbstractGuiPage {
         if (!isArtUnlocked(player, artName)) {
             // Art is locked - play error sound
             Minecraft.getInstance().getSoundManager().play(
-                    net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
-                            net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 0.5F, 0.8F
+                    SimpleSoundInstance.forUI(
+                            SoundEvents.UI_BUTTON_CLICK.value(), 0.5F, 0.8F
                     )
             );
             lastClickTime = currentTime;
@@ -331,8 +334,8 @@ public class DemonArtSection extends AbstractGuiPage {
 
             // Play success sound
             Minecraft.getInstance().getSoundManager().play(
-                    net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
-                            net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 1.0F
+                    SimpleSoundInstance.forUI(
+                            SoundEvents.UI_BUTTON_CLICK.value(), 1.0F
                     )
             );
         }

@@ -8,10 +8,12 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
+import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
+import net.minecraft.server.level.ServerPlayer;
 
 /**
  * Fifth Form: Blessed Rain After the Drought
- * Ultimate level single hit dash that drops ½ a healthbar on hit
+ * Ultimate level single hit dash that drops Â½ a healthbar on hit
  * Very small 1.0 block hitbox - precision attack that can be angled downwards
  * Similar to Butterfly Attack but with teleport instead of dash after leap
  */
@@ -120,8 +122,8 @@ public class BlessedRainAttack extends WaterBreathingAttackBase {
         user.hasImpulse = true;
 
         // Sync to client
-        if (user instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-            serverPlayer.connection.send(new net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket(user));
+        if (user instanceof ServerPlayer serverPlayer) {
+            serverPlayer.connection.send(new ClientboundSetEntityMotionPacket(user));
         }
 
         // Leap sound
@@ -140,7 +142,7 @@ public class BlessedRainAttack extends WaterBreathingAttackBase {
         user.teleportTo(teleportDestination.x, teleportDestination.y, teleportDestination.z);
 
         // Sync teleport to client
-        if (user instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+        if (user instanceof ServerPlayer serverPlayer) {
             serverPlayer.teleportTo(teleportDestination.x, teleportDestination.y, teleportDestination.z);
         }
 

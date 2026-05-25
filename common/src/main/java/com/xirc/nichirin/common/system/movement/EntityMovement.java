@@ -8,16 +8,18 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.phys.Vec3;
+import java.util.UUID;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 
 /**
  * Velocity-only movement primitives for any LivingEntity.
- * No stamina consumed here — callers are responsible for resource checks.
+ * No stamina consumed here â€” callers are responsible for resource checks.
  * Player-specific wrappers in Dash/Backstep/Dodge/PlayerDoubleJump delegate here.
  */
 public final class EntityMovement {
 
     private static final double DASH_FORCE        = 2.0;
-    private static final double DOUBLE_JUMP_VEL   = 0.63;  // same as PlayerDoubleJump × 1.5
+    private static final double DOUBLE_JUMP_VEL   = 0.63;  // same as PlayerDoubleJump Ã— 1.5
     private static final double BACKSTEP_DIST     = 3.0;
     private static final double AIR_DODGE_DIST    = 0.5;
     private static final double SPRINT_MULTIPLIER = 1.3;
@@ -140,8 +142,8 @@ public final class EntityMovement {
 
         var existing = speedAttr.getModifier(SPRINT_UUID);
         if (existing == null) {
-            speedAttr.addTransientModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(
-                    SPRINT_UUID, "npc_sprint", SPRINT_MULTIPLIER - 1.0, net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.MULTIPLY_BASE
+            speedAttr.addTransientModifier(new AttributeModifier(
+                    SPRINT_UUID, "npc_sprint", SPRINT_MULTIPLIER - 1.0, AttributeModifier.Operation.MULTIPLY_BASE
             ));
         }
     }
@@ -152,8 +154,8 @@ public final class EntityMovement {
         if (speedAttr != null) speedAttr.removeModifier(SPRINT_UUID);
     }
 
-    private static final java.util.UUID SPRINT_UUID =
-            java.util.UUID.fromString("B3C4D5E6-F7A8-9012-BCDE-F12345678901");
+    private static final UUID SPRINT_UUID =
+            UUID.fromString("B3C4D5E6-F7A8-9012-BCDE-F12345678901");
 
 
     private static Vec3 findSafePosition(LivingEntity entity, Vec3 direction, double maxDist) {

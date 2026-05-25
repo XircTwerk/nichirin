@@ -8,6 +8,7 @@ import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.event.events.client.ClientTickEvent;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.server.level.ServerPlayer;
+import com.xirc.nichirin.BreathOfNichirin;
 
 /**
  * Event handler for clearing cooldowns on death and respawn
@@ -23,7 +24,7 @@ public class CooldownClearEventHandler {
         EntityEvent.LIVING_DEATH.register((entity, damageSource) -> {
             if (entity instanceof Player player && !player.level().isClientSide) {
                 clearPlayerCooldowns(player);
-                com.xirc.nichirin.BreathOfNichirin.LOGGER.debug("Cleared cooldowns for {} on death",
+                BreathOfNichirin.LOGGER.debug("Cleared cooldowns for {} on death",
                         player.getName().getString());
             }
             return EventResult.pass();
@@ -33,7 +34,7 @@ public class CooldownClearEventHandler {
         PlayerEvent.PLAYER_RESPAWN.register((newPlayer, conqueredEnd) -> {
             if (!conqueredEnd && !newPlayer.level().isClientSide) {
                 clearPlayerCooldowns(newPlayer);
-                com.xirc.nichirin.BreathOfNichirin.LOGGER.debug("Cleared cooldowns for {} on respawn",
+                BreathOfNichirin.LOGGER.debug("Cleared cooldowns for {} on respawn",
                         newPlayer.getName().getString());
             }
         });

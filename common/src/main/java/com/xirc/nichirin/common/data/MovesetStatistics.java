@@ -6,6 +6,7 @@ import net.minecraft.nbt.StringTag;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Tracks detailed statistics for moveset usage (breathing techniques and demon arts)
@@ -170,7 +171,7 @@ public class MovesetStatistics {
     /**
      * Gets all moveset IDs that have statistics
      */
-    public java.util.Set<String> getTrackedMovesets() {
+    public Set<String> getTrackedMovesets() {
         return movesetStats.keySet();
     }
 

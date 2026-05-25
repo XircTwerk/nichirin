@@ -48,5 +48,10 @@
     "sounds": [
       "nichirin:entity/thunder_ball"
     ]
+  },
+  "thunderclap_flash": {
+    "sounds": [
+      "nichirin:breathing/thunderclapflash"
+    ]
   }
 }

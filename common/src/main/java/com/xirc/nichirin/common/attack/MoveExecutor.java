@@ -123,6 +123,11 @@ public class MoveExecutor {
 
     private static void handleGenericAttack(LivingEntity entity, Object attack, String movesetId, String moveId) {
         String displayName = attack.getClass().getSimpleName();
+        AbstractMoveset moveset = NichirinMovesetRegistry.getMoveset(movesetId);
+        AbstractMoveset.MoveConfiguration config = moveset != null ? findMoveConfig(moveset, moveId) : null;
+        if (config != null) {
+            displayName = config.getDisplayName();
+        }
         int cooldown = getCooldownForAttack(attack);
         executeAttackInternal(entity, attack, displayName, cooldown);
     }

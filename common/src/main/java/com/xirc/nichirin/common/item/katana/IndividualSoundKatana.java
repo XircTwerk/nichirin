@@ -10,6 +10,7 @@ import net.minecraft.world.level.Level;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import net.minecraft.world.entity.item.ItemEntity;
 
 /**
  * Individual Sound Katana that converts back to sound katanas when moved or dropped
@@ -43,7 +44,7 @@ public class IndividualSoundKatana extends SimpleKatana {
         if (level.isClientSide) return;
 
         if (slotId < 0 || slotId > 40) {
-            // Item is in a non-standard inventory (chest, hopper, etc.) — convert and drop
+            // Item is in a non-standard inventory (chest, hopper, etc.) â€” convert and drop
             ItemStack soundKatanas = new ItemStack(NichirinItemRegistry.SOUND_KATANAS.get());
             if (entity.level().getBlockEntity(entity.blockPosition()) != null) {
                 entity.spawnAtLocation(soundKatanas);
@@ -97,7 +98,7 @@ public class IndividualSoundKatana extends SimpleKatana {
             player.spawnAtLocation(soundKatanas);
 
             // Remove any dropped individual katana entities nearby
-            player.level().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,
+            player.level().getEntitiesOfClass(ItemEntity.class,
                     player.getBoundingBox().inflate(3.0)).forEach(itemEntity -> {
                 ItemStack droppedStack = itemEntity.getItem();
                 if (isRightSoundKatana(droppedStack) || isLeftSoundKatana(droppedStack)) {

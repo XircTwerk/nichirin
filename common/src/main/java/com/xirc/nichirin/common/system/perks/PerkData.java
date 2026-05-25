@@ -5,7 +5,14 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Per-player perk state.
@@ -13,7 +20,7 @@ import java.util.*;
  * <ul>
  *   <li>{@link #discovered} — set of perk IDs the player has unlocked (via scrolls/advancements).</li>
  *   <li>{@link #equippedPerks} — ordered map of equipped perk ID → current tier (max 5 slots).</li>
- *   <li>{@link #equippedFlaws} — set of equipped flaw IDs (required when equipping beyond {@code perksBeforeFlaws}).</li>
+ *   <li>{@link #equippedFlaws} — set of equipped flaw IDs used to unlock perk slots past the free slots.</li>
  *   <li>{@link #perksEnabled} — master toggle for the entire perk system per player.</li>
  *   <li>{@link #presets} — saved loadout presets.</li>
  * </ul>
@@ -23,6 +30,7 @@ import java.util.*;
 public class PerkData {
 
     public static final int MAX_PERK_SLOTS = 5;
+    public static final int FREE_PERK_SLOTS = 2;
 
     /** All perk IDs the player has discovered (not necessarily equipped). */
     private final Set<String> discovered = new LinkedHashSet<>();
@@ -153,9 +161,15 @@ public class PerkData {
     }
 
     public void savePreset(PerkPreset preset) {
-        // Replace existing preset with same name
-        presets.removeIf(p -> p.name.equals(preset.name));
+        for (int i = 0; i < presets.size(); i++) {
+            if (presets.get(i).name.equals(preset.name)) {
+                presets.set(i, preset);
+                sortPresets();
+                return;
+            }
+        }
         presets.add(preset);
+        sortPresets();
     }
 
     public void deletePreset(String name) {
@@ -264,5 +278,15 @@ public class PerkData {
         presets.clear();
         ListTag presetsTag = tag.getList("Presets", Tag.TAG_COMPOUND);
         for (int i = 0; i < presetsTag.size(); i++) presets.add(PerkPreset.load(presetsTag.getCompound(i)));
+        sortPresets();
+    }
+
+    private void sortPresets() {
+        presets.sort(Comparator.comparingInt(p -> switch (p.name) {
+            case "Preset I" -> 0;
+            case "Preset II" -> 1;
+            case "Preset III" -> 2;
+            default -> 100;
+        }));
     }
 }

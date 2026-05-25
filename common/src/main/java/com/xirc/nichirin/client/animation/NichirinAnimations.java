@@ -14,6 +14,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
+import dev.kosmx.playerAnim.api.layered.AnimationStack;
 
 @Environment(EnvType.CLIENT)
 public class NichirinAnimations {
@@ -22,7 +23,7 @@ public class NichirinAnimations {
         PlayerAnimationAccess.REGISTER_ANIMATION_EVENT.register(NichirinAnimations::onPlayerAnimationRegister);
     }
 
-    private static void onPlayerAnimationRegister(AbstractClientPlayer player, dev.kosmx.playerAnim.api.layered.AnimationStack animationStack) {
+    private static void onPlayerAnimationRegister(AbstractClientPlayer player, AnimationStack animationStack) {
         ModifierLayer<IAnimation> animationLayer = new ModifierLayer<>();
         animationStack.addAnimLayer(0, animationLayer);
 
@@ -36,7 +37,7 @@ public class NichirinAnimations {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft == null || minecraft.level == null) return;
 
-        // Empty name is the stop signal — clear the animation layer and return
+        // Empty name is the stop signal â€” clear the animation layer and return
         if (animationName == null || animationName.isEmpty()) {
             stopAnimation(clientPlayer);
             return;

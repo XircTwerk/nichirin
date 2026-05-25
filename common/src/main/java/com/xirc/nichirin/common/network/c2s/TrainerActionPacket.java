@@ -6,9 +6,10 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 
 import java.util.UUID;
+import net.minecraft.server.level.ServerLevel;
 
 /**
- * C2S — player picks a dialogue option on the trainer dialogue screen.
+ * C2S â€” player picks a dialogue option on the trainer dialogue screen.
  */
 public class TrainerActionPacket {
 
@@ -49,7 +50,7 @@ public class TrainerActionPacket {
     }
 
     public void handle(ServerPlayer player) {
-        if (!(player.level() instanceof net.minecraft.server.level.ServerLevel serverLevel)) return;
+        if (!(player.level() instanceof ServerLevel serverLevel)) return;
 
         Entity entity = serverLevel.getEntity(trainerUUID);
         if (entity instanceof BaseBreathingTrainerEntity trainer && action == Action.REQUEST_DUEL) {

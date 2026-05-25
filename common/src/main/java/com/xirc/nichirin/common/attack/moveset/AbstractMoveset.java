@@ -23,6 +23,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * AbstractMoveset that works with ANY LivingEntity - players AND NPCs
@@ -65,7 +68,7 @@ public abstract class AbstractMoveset {
     protected final float healthRegenMultiplier;
 
     // Static tracking for followup queues per entity
-    private static final java.util.concurrent.ConcurrentHashMap<UUID, FollowupQueue> entityFollowupQueues = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<UUID, FollowupQueue> entityFollowupQueues = new ConcurrentHashMap<>();
 
     /**
      * Followup queue state for an entity
@@ -305,7 +308,7 @@ public abstract class AbstractMoveset {
      */
     public void triggerAnimation(LivingEntity entity, String animationName) {
         if (entity instanceof ServerPlayer serverPlayer) {
-            // Player animation — broadcast to all players in the same level so others can see it
+            // Player animation â€” broadcast to all players in the same level so others can see it
             PlayerAnimationPacket packet = new PlayerAnimationPacket(serverPlayer.getId(), animationName);
             NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer, packet);
         } else if (entity instanceof MovesetCapableNPC npc) {
@@ -406,7 +409,7 @@ public abstract class AbstractMoveset {
     private void scheduleFollowupCheck(LivingEntity entity, int durationTicks) {
         long delayMs = durationTicks * 50L;
 
-        java.util.concurrent.CompletableFuture.delayedExecutor(delayMs, java.util.concurrent.TimeUnit.MILLISECONDS)
+        CompletableFuture.delayedExecutor(delayMs, TimeUnit.MILLISECONDS)
                 .execute(() -> checkAndExecuteFollowup(entity));
     }
 
@@ -451,7 +454,7 @@ public abstract class AbstractMoveset {
         if (followupDuration > 0 && queue.canQueue) {
             scheduleFollowupCheck(entity, followupDuration);
         } else {
-            java.util.concurrent.CompletableFuture.delayedExecutor(followupDuration * 50L, java.util.concurrent.TimeUnit.MILLISECONDS)
+            CompletableFuture.delayedExecutor(followupDuration * 50L, TimeUnit.MILLISECONDS)
                     .execute(() -> {
                         queue.clear();
                         entityFollowupQueues.remove(entity.getUUID());

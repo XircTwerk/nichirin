@@ -10,6 +10,9 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.entity.player.Player;
 
 // Base for Insect Breathing attacks. All hits apply stackable venom; invulnerability is granted for the full attack duration.
 @SuppressWarnings("rawtypes")
@@ -58,11 +61,11 @@ public abstract class InsectBreathingAttackBase extends AbstractBreathingAttack<
     }
 
     protected void applyPoisonEffect(LivingEntity target) {
-        if (target instanceof net.minecraft.world.entity.player.Player player && player.isCreative()) {
+        if (target instanceof Player player && player.isCreative()) {
             return;
         }
 
-        net.minecraft.world.effect.MobEffect venomEffect =
+        MobEffect venomEffect =
                 NichirinEffectRegistry.VENOM.get();
 
         MobEffectInstance existingVenom = target.getEffect(venomEffect);
@@ -84,7 +87,7 @@ public abstract class InsectBreathingAttackBase extends AbstractBreathingAttack<
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDir = user.getLookAngle();
-        net.minecraft.util.RandomSource random = serverLevel.getRandom();
+        RandomSource random = serverLevel.getRandom();
 
         for (int i = 0; i < INSECT_PARTICLE_COUNT; i++) {
             double offsetX = (random.nextDouble() - 0.5) * INSECT_PARTICLE_SPREAD;
@@ -151,7 +154,7 @@ public abstract class InsectBreathingAttackBase extends AbstractBreathingAttack<
     protected void createInsectSwarm(Vec3 center, float radius, int particleCount) {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
-        net.minecraft.util.RandomSource random = serverLevel.getRandom();
+        RandomSource random = serverLevel.getRandom();
 
         for (int i = 0; i < particleCount; i++) {
             double angle = (2 * Math.PI * i) / particleCount;
@@ -172,7 +175,7 @@ public abstract class InsectBreathingAttackBase extends AbstractBreathingAttack<
     protected void createPoisonBurst(Vec3 center, float intensity) {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
-        net.minecraft.util.RandomSource random = serverLevel.getRandom();
+        RandomSource random = serverLevel.getRandom();
         int baseParticles = (int)(15 * intensity);
 
         serverLevel.sendParticles(ParticleTypes.WITCH,

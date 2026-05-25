@@ -9,6 +9,8 @@ import net.minecraft.world.level.Level;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.InteractionHand;
 
 /**
  * Individual beast katana (left or right) that converts back to beast katanas when the pair is broken.
@@ -81,7 +83,7 @@ public class IndividualBeastKatana extends SimpleKatana {
             player.getInventory().setItem(slotId, new ItemStack(NichirinItemRegistry.BEAST_KATANAS.get()));
         } else {
             player.spawnAtLocation(new ItemStack(NichirinItemRegistry.BEAST_KATANAS.get()));
-            player.level().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,
+            player.level().getEntitiesOfClass(ItemEntity.class,
                     player.getBoundingBox().inflate(3.0)).forEach(ie -> {
                 ItemStack dropped = ie.getItem();
                 if (isRightBeast(dropped) || isLeftBeast(dropped)) ie.discard();
@@ -89,10 +91,10 @@ public class IndividualBeastKatana extends SimpleKatana {
         }
 
         if (isRightBeast(mainHand) || isLeftBeast(mainHand)) {
-            player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+            player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
         }
         if (isRightBeast(offHand) || isLeftBeast(offHand)) {
-            player.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND, ItemStack.EMPTY);
+            player.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
         }
 
         BeastKatana.restorePlayerOffhand(player);

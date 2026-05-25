@@ -27,6 +27,11 @@ public class ArmorRendererManager {
         registerArmor(NichirinItemRegistry.ZENITSU_LEGGINGS.get(), ZenitsuUniformRenderer::new);
         registerArmor(NichirinItemRegistry.ZENITSU_BOOTS.get(), ZenitsuUniformRenderer::new);
 
+        registerArmor(NichirinItemRegistry.JIGORO_HEADPIECE.get(), JigoroUniformRenderer::new);
+        registerArmor(NichirinItemRegistry.JIGORO_CAPE.get(), JigoroUniformRenderer::new);
+        registerArmor(NichirinItemRegistry.JIGORO_LEGGINGS.get(), JigoroUniformRenderer::new);
+        registerArmor(NichirinItemRegistry.JIGORO_BOOTS.get(), JigoroUniformRenderer::new);
+
         // Rengoku armor
         registerArmor(NichirinItemRegistry.RENGOKU_HEADPIECE.get(), RengokuUniformRenderer::new);
         registerArmor(NichirinItemRegistry.RENGOKU_CAPE.get(), RengokuCapeRenderer::new);
