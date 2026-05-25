@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.util;
 
 import com.xirc.nichirin.client.handler.AttackWheelHandler;
+import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinKeybindRegistry;
 import dev.architectury.event.events.client.ClientTickEvent;
@@ -13,7 +14,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import com.xirc.nichirin.common.item.katana.SimpleKatana;
 
 /**
  * Handles blocking input with V key
@@ -26,6 +26,8 @@ public class BlockingInputHandler {
     private static final ResourceLocation PARRY_ID = new ResourceLocation("nichirin", "parry");
 
     private static boolean isCurrentlyBlocking = false;
+    private static int blockRetryTicks = 0;
+    private static final int BLOCK_START_RETRY_TICKS = 5;
 
     public static void register() {
         // Only register on client side
@@ -50,21 +52,32 @@ public class BlockingInputHandler {
             if (isCurrentlyBlocking) {
                 sendBlockStop();
                 isCurrentlyBlocking = false;
+                blockRetryTicks = 0;
             }
             return;
         }
 
         boolean blockKeyPressed = NichirinKeybindRegistry.BLOCK_KEY.isDown();
+        boolean serverAcceptedBlock = player.hasEffect(NichirinEffectRegistry.BLOCKING.get());
 
         // Handle key press
         if (blockKeyPressed && !isCurrentlyBlocking) {
             // Key just pressed - start blocking
             sendBlockStart();
             isCurrentlyBlocking = true;
+            blockRetryTicks = BLOCK_START_RETRY_TICKS;
+        } else if (blockKeyPressed && isCurrentlyBlocking && !serverAcceptedBlock) {
+            if (blockRetryTicks-- <= 0 && !player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+                sendBlockStart();
+                blockRetryTicks = BLOCK_START_RETRY_TICKS;
+            }
         } else if (!blockKeyPressed && isCurrentlyBlocking) {
             // Key just released - stop blocking
             sendBlockStop();
             isCurrentlyBlocking = false;
+            blockRetryTicks = 0;
+        } else if (serverAcceptedBlock) {
+            blockRetryTicks = 0;
         }
     }
 

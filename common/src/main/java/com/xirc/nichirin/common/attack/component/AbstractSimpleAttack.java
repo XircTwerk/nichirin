@@ -272,6 +272,12 @@ public abstract class AbstractSimpleAttack<T extends AbstractSimpleAttack<T, A>,
 
         currentTick++;
 
+        if (currentTick <= startup && attacker.hurtTime > 0 && startup > 0) {
+            onEnd(attacker, world);
+            active = false;
+            return;
+        }
+
         // Check if we're in active frames
         if (currentTick > startup && currentTick <= startup + activeFrames) {
             // Generate hitbox and check for hits

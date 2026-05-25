@@ -15,7 +15,7 @@ public class BeastPierceAttack extends BeastBreathingAttackBase {
     private boolean slashExecuted = false;
     private boolean knockbackApplied = false;
     private LivingEntity storedTarget = null;
-    private static final int KNOCKBACK_DELAY = 5;
+    private static final int KNOCKBACK_DELAY = 2;
 
     @Override
     protected void onStart() {

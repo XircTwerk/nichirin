@@ -5,6 +5,7 @@ import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
@@ -31,7 +32,7 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
     protected void onStart() {
         startPosition = user.getEyePosition();
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
-                SoundEvents.LIGHTNING_BOLT_THUNDER, net.minecraft.sounds.SoundSource.PLAYERS,
+                SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS,
                 1f, 2.0f);
     }
 
@@ -66,7 +67,7 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
 
                     target.setDeltaMovement(
                             target.getDeltaMovement().x * 0.1,
-                            0.6,
+                            0.9,
                             target.getDeltaMovement().z * 0.1
                     );
                     target.hurtMarked = true;

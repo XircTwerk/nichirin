@@ -5,25 +5,19 @@ import com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer;
 import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
 import com.xirc.nichirin.common.attack.component.AbstractDemonAttack;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
-import com.xirc.nichirin.common.entity.MovesetCapableNPC;
-import com.xirc.nichirin.common.system.NPCResourceManager;
 import com.xirc.nichirin.common.util.ComboTracker;
-import com.xirc.nichirin.common.util.BreathingManager;
-import com.xirc.nichirin.registry.NichirinMovesetRegistry;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
+import com.xirc.nichirin.registry.NichirinMovesetRegistry;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
-import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.phys.Vec3;
-import com.mojang.blaze3d.vertex.PoseStack;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -355,6 +349,21 @@ public class MoveExecutor {
 
     public static boolean hasActiveAttacks(Player player) { return hasActiveAttacks((LivingEntity) player); }
 
+    public static boolean hasActiveBreathingAttacks(LivingEntity entity) {
+        var attacks = activeAttacks.get(entity.getUUID());
+        if (attacks == null) return false;
+        for (Object attack : attacks) {
+            if (attack instanceof AbstractBreathingAttack<?, ?>) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean hasActiveBreathingAttacks(Player player) {
+        return hasActiveBreathingAttacks((LivingEntity) player);
+    }
+
     public static int getActiveAttackCount(LivingEntity entity) {
         var attacks = activeAttacks.get(entity.getUUID());
         return attacks != null ? attacks.size() : 0;
@@ -410,7 +419,7 @@ public class MoveExecutor {
         });
     }
 
-    public static void tickAllAttacks(net.minecraft.server.MinecraftServer server) {
+    public static void tickAllAttacks(MinecraftServer server) {
         if (server == null) return;
         for (var player : server.getPlayerList().getPlayers()) tickAttacks(player);
         AbstractBreathingAttack.tickAllActiveAttacks(server);

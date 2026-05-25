@@ -1,10 +1,11 @@
 package com.xirc.nichirin.common.entity.npc;
 
 import com.xirc.nichirin.client.renderer.entity.dispatcher.ThunderBreathingTrainerDispatcher;
-import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moveset.breathing.ThunderBreathingMoveset;
 import com.xirc.nichirin.common.entity.ai.ThunderBreathingAttackGoal;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.BossEvent;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
@@ -117,14 +118,14 @@ public class ThunderBreathingTrainerEntity extends BaseBreathingTrainerEntity {
     public boolean isWaitingForFirstBlow() { return waitingForFirstBlow; }
 
     @Override
-    public void startDuel(net.minecraft.server.level.ServerPlayer challenger, DuelDifficulty difficulty) {
+    public void startDuel(ServerPlayer challenger, DuelDifficulty difficulty) {
         waitingForFirstBlow = true;
         super.startDuel(challenger, difficulty);
     }
 
     @Override
-    protected net.minecraft.world.BossEvent.BossBarColor getBossBarColor() {
-        return net.minecraft.world.BossEvent.BossBarColor.YELLOW;
+    protected BossEvent.BossBarColor getBossBarColor() {
+        return BossEvent.BossBarColor.YELLOW;
     }
 
     @Override
@@ -144,7 +145,6 @@ public class ThunderBreathingTrainerEntity extends BaseBreathingTrainerEntity {
         }
 
         if (moveset == null) moveset = new ThunderBreathingMoveset();
-        MoveExecutor.tickAttacks(this);
     }
 
     private void updateAnimations() {

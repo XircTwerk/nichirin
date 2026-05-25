@@ -1,11 +1,12 @@
 package com.xirc.nichirin.common.entity.npc;
 
 import com.xirc.nichirin.client.renderer.entity.dispatcher.WaterBreathingTrainerDispatcher;
-import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moveset.breathing.WaterBreathingMoveset;
 import com.xirc.nichirin.common.entity.ai.WaterBreathingAttackGoal;
 import com.xirc.nichirin.registry.NichirinItemRegistry;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.BossEvent;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
@@ -120,14 +121,14 @@ public class WaterBreathingTrainerEntity extends BaseBreathingTrainerEntity {
     public boolean isWaitingForFirstBlow() { return waitingForFirstBlow; }
 
     @Override
-    public void startDuel(net.minecraft.server.level.ServerPlayer challenger, DuelDifficulty difficulty) {
+    public void startDuel(ServerPlayer challenger, DuelDifficulty difficulty) {
         waitingForFirstBlow = true;
         super.startDuel(challenger, difficulty);
     }
 
     @Override
-    protected net.minecraft.world.BossEvent.BossBarColor getBossBarColor() {
-        return net.minecraft.world.BossEvent.BossBarColor.BLUE;
+    protected BossEvent.BossBarColor getBossBarColor() {
+        return BossEvent.BossBarColor.BLUE;
     }
 
     @Override
@@ -147,7 +148,6 @@ public class WaterBreathingTrainerEntity extends BaseBreathingTrainerEntity {
         }
 
         if (moveset == null) moveset = new WaterBreathingMoveset();
-        MoveExecutor.tickAttacks(this);
     }
 
     private void updateAnimations() {

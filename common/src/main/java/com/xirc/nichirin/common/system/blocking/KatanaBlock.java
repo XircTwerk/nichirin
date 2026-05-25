@@ -349,14 +349,17 @@ public class KatanaBlock {
     }
 
     private static boolean isBackstab(Player defender, Player attacker) {
-        // Calculate angle between defender's facing direction and attacker's position
         Vec3 defenderLook = defender.getLookAngle();
-        Vec3 toAttacker = attacker.position().subtract(defender.position()).normalize();
+        Vec3 flatLook = new Vec3(defenderLook.x, 0, defenderLook.z).normalize();
+        Vec3 toAttacker = attacker.position().subtract(defender.position());
+        Vec3 flatToAttacker = new Vec3(toAttacker.x, 0, toAttacker.z).normalize();
 
-        double dot = defenderLook.dot(toAttacker);
-        double angle = Math.toDegrees(Math.acos(Math.abs(dot)));
+        if (flatLook.lengthSqr() < 0.001 || flatToAttacker.lengthSqr() < 0.001) {
+            return false;
+        }
 
-        // Backstab if attacker is more than 90 degrees behind defender
+        double dot = flatLook.dot(flatToAttacker);
+        double angle = Math.toDegrees(Math.acos(Math.max(-1.0, Math.min(1.0, dot))));
         return angle > BACKSTAB_ANGLE;
     }
 

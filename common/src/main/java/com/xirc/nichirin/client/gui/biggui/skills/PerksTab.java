@@ -21,6 +21,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
@@ -79,6 +80,7 @@ public class PerksTab extends AbstractGuiPage {
     private int rightX;
     private int listViewportY;
     private int listViewportH;
+    private int detailMaxScroll;
 
     private enum SortMode {
         TIER("Tier"),
@@ -99,8 +101,7 @@ public class PerksTab extends AbstractGuiPage {
 
     private enum FilterMode {
         ALL("All"),
-        EQUIPPED("Equipped"),
-        CURSED("Cursed");
+        EQUIPPED("Equipped");
 
         final String label;
 
@@ -249,7 +250,7 @@ public class PerksTab extends AbstractGuiPage {
             return true;
         }
         if (mx >= rightX) {
-            detailScroll = Math.max(0, detailScroll - amount);
+            detailScroll = clamp(detailScroll - amount, 0, detailMaxScroll);
             return true;
         }
         listScroll = Math.max(0, listScroll - amount);
@@ -440,7 +441,6 @@ public class PerksTab extends AbstractGuiPage {
         if (!row.locked && row.perk != null) {
             badgeX = drawBadge(g, font, badgeX, y + 25, rowTier(data, row.perk).displayName.toUpperCase(Locale.ROOT), tier, false);
             if (data.isEquipped(row.perk.id)) badgeX = drawBadge(g, font, badgeX + 4, y + 25, "EQUIPPED", GREEN, false);
-            if (row.perk.cursed) drawBadge(g, font, badgeX + 4, y + 25, "CURSED", RED, true);
         } else if (row.flaw != null) {
             badgeX = drawBadge(g, font, badgeX, y + 25, data.hasFlaw(row.flaw.id) ? "EQUIPPED" : "FLAW", RED, true);
         }
@@ -492,8 +492,10 @@ public class PerksTab extends AbstractGuiPage {
         g.fill(x, y, x + w, y + 3, strip);
         g.fill(x, y + 3, x + w, y + 8, dimColor(strip, 0x28));
 
-        int contentBottom = h - DETAIL_FOOTER_H;
-        g.enableScissor(x, y + 3, x + w, y + contentBottom);
+        detailScroll = clamp(detailScroll, 0, detailMaxScroll);
+
+        int contentBottom = y + h - DETAIL_FOOTER_H;
+        g.enableScissor(x, y + 3, x + w, contentBottom);
         int cy = y + PAD - detailScroll;
         if (perk != null) {
             cy = renderPerkDetailContent(g, font, data, perk, x + PAD, cy, w - PAD * 2);
@@ -502,11 +504,11 @@ public class PerksTab extends AbstractGuiPage {
         }
         g.disableScissor();
 
-        int maxScroll = Math.max(0, cy + detailScroll - (h - DETAIL_FOOTER_H - PAD));
-        detailScroll = clamp(detailScroll, 0, maxScroll);
-        if (maxScroll > 0) renderScrollBar(g, x + w - 4, y + 8, 2, h - DETAIL_FOOTER_H - 12, detailScroll, maxScroll);
+        detailMaxScroll = Math.max(0, cy + detailScroll - (contentBottom - PAD * 3));
+        detailScroll = clamp(detailScroll, 0, detailMaxScroll);
+        if (detailMaxScroll > 0) renderScrollBar(g, x + w - 4, y + 8, 2, h - DETAIL_FOOTER_H - 12, detailScroll, detailMaxScroll);
 
-        renderActionFooter(g, font, data, perk, flaw, x, h - DETAIL_FOOTER_H, w, DETAIL_FOOTER_H, mx, my);
+        renderActionFooter(g, font, data, perk, flaw, x, y + h - DETAIL_FOOTER_H, w, DETAIL_FOOTER_H, mx, my);
     }
 
     private int renderPerkDetailContent(GuiGraphics g, Font font, PerkData data, PerkDefinition def, int x, int y, int w) {
@@ -809,7 +811,6 @@ public class PerksTab extends AbstractGuiPage {
             if (activeCategory.tag != null && Arrays.stream(def.tags).noneMatch(t -> t == activeCategory.tag)) continue;
             if (!lockedMode) {
                 if (filter == FilterMode.EQUIPPED && !data.isEquipped(def.id)) continue;
-                if (filter == FilterMode.CURSED && !def.cursed) continue;
             }
             if (!search.isEmpty() && !matchesPerk(def, search)) continue;
             rows.add(new RowEntry(def, lockedMode));
@@ -934,7 +935,7 @@ public class PerksTab extends AbstractGuiPage {
         return (alpha << 24) | (color & 0x00FFFFFF);
     }
 
-    private static int countClientItem(net.minecraft.world.item.Item item) {
+    private static int countClientItem(Item item) {
         Player p = Minecraft.getInstance().player;
         if (p == null || item == Items.AIR) return 0;
         int count = 0;

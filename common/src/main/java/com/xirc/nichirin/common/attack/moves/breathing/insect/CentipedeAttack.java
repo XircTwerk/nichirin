@@ -24,6 +24,7 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
     private int nextZigzagTick = 0;
     private boolean finisherExecuted = false;
     private Vec3 baseDirection;
+    private Vec3 lastDashPos;
     private final Set<LivingEntity> caughtEnemies = new HashSet<>();
     private final List<LivingEntity> draggedEnemies = new ArrayList<>();
 
@@ -34,6 +35,7 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
         zigzagsExecuted = 0;
         nextZigzagTick = 0;
         finisherExecuted = false;
+        lastDashPos = null;
         caughtEnemies.clear();
         draggedEnemies.clear();
 
@@ -92,6 +94,7 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
         user.hurtMarked = true;
         user.hasImpulse = true;
         user.setInvulnerable(true);
+        lastDashPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
         catchAndDragEnemies();
         createZigzagTrail(zigzagsExecuted);
@@ -151,7 +154,11 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
 
     private void hitEnemiesAlongPath() {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
-        List<LivingEntity> targets = getTargetsInCustomHitbox(userPos, hitboxSize * 0.84, hitboxSize * 0.5, hitboxSize * 0.84);
+        Vec3 previousPos = lastDashPos;
+        lastDashPos = userPos;
+        List<LivingEntity> targets = previousPos != null
+                ? getTargetsAlongPath(previousPos, userPos, hitboxSize * 0.84f)
+                : getTargetsInCustomHitbox(userPos, hitboxSize * 0.84, hitboxSize * 0.5, hitboxSize * 0.84);
 
         for (LivingEntity target : targets) {
             float originalDamage = damage;
@@ -173,6 +180,20 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
                 createZigzagImpactEffect(draggedEnemy.position());
             }
         }
+    }
+
+    private List<LivingEntity> getTargetsAlongPath(Vec3 from, Vec3 to, float radius) {
+        Vec3 path = to.subtract(from);
+        double distance = path.length();
+        if (distance < 0.01) return getTargetsInCustomHitbox(to, radius, hitboxSize * 0.5, radius);
+
+        Set<LivingEntity> found = new HashSet<>();
+        int steps = Math.max(1, (int) Math.ceil(distance / Math.max(radius * 0.25, 0.1)));
+        for (int i = 0; i <= steps; i++) {
+            Vec3 sample = from.add(path.scale((double) i / steps));
+            found.addAll(getTargetsInCustomHitbox(sample, radius, hitboxSize * 0.5, radius));
+        }
+        return new ArrayList<>(found);
     }
 
     private void executeFinisher() {
@@ -333,6 +354,7 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
         zigzagsExecuted = 0;
         nextZigzagTick = 0;
         finisherExecuted = false;
+        lastDashPos = null;
         caughtEnemies.clear();
         draggedEnemies.clear();
     }

@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.system.movement;
 
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
@@ -14,8 +15,8 @@ import java.util.Map;
  */
 public class Dash {
 
-    private static final float DASH_FORCE = 2f;
-    private static final int DASH_DURATION = 12; // ticks
+    private static final float DASH_FORCE = 2.35f;
+    private static final int DASH_DURATION = 14; // ticks
     private static final float PARTICLE_HEIGHT_OFFSET = 1.0f; // Move particles up
 
     // Track active dashes with player references instead of UUIDs
@@ -133,7 +134,7 @@ public class Dash {
         if (player.level().isClientSide) return;
 
         // Use regular minecraft wind particles
-        if (player.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+        if (player.level() instanceof ServerLevel serverLevel) {
             for (int i = 0; i < 5; i++) {
                 double offsetX = (player.getRandom().nextDouble() - 0.5) * 0.8;
                 double offsetY = (player.getRandom().nextDouble() - 0.5) * 0.8;

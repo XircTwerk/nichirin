@@ -94,6 +94,11 @@ public abstract class AbstractKatanaAttack {
 
         tickCount++;
 
+        if (tickCount <= startup && player.hurtTime > 0 && startup > 0) {
+            end(player);
+            return;
+        }
+
         if (tickCount == startup) {
             onActiveStart(player);
         }

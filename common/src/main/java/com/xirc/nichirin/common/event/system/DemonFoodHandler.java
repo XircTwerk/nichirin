@@ -8,10 +8,10 @@ import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.EntityEvent;
 import dev.architectury.event.events.common.InteractionEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.server.level.ServerPlayer;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,9 +25,11 @@ public class DemonFoodHandler {
     private static final Map<UUID, Float> accumulatedDamage = new HashMap<>();
     private static final Map<UUID, Integer> halfBloodPoints = new HashMap<>();
     private static final Map<UUID, Long> lastDamageTimes = new HashMap<>();
+    private static final Map<UUID, Long> lastBloodLossTimes = new HashMap<>();
 
     private static final float DAMAGE_PER_HALF_BLOOD = 10.0f;
     private static final long MULTIHIT_WINDOW_MS = 1000; // Milliseconds
+    private static final long BLOOD_LOSS_INTERVAL_MS = 2000;
 
     public static void register() {
         InteractionEvent.RIGHT_CLICK_ITEM.register((player, hand) -> {
@@ -103,33 +105,34 @@ public class DemonFoodHandler {
             accumulated = 100.0f;
         }
 
-        int safetyCounter = 0;
-        while (accumulated >= DAMAGE_PER_HALF_BLOOD && safetyCounter < 10) {
-            safetyCounter++;
+        if (accumulated >= DAMAGE_PER_HALF_BLOOD) {
+            long currentTime = System.currentTimeMillis();
+            long lastLossTime = lastBloodLossTimes.getOrDefault(playerUUID, 0L);
 
-            int currentBlood = DemonManager.getBloodPoints(player);
-            int currentHalfBlood = halfBloodPoints.getOrDefault(playerUUID, 0);
+            if (currentTime - lastLossTime >= BLOOD_LOSS_INTERVAL_MS) {
+                int currentBlood = DemonManager.getBloodPoints(player);
+                int currentHalfBlood = halfBloodPoints.getOrDefault(playerUUID, 0);
 
-            if (currentBlood > 0 || currentHalfBlood > 0) {
-                currentHalfBlood++;
-                halfBloodPoints.put(playerUUID, currentHalfBlood);
+                if (currentBlood > 0 || currentHalfBlood > 0) {
+                    currentHalfBlood++;
+                    halfBloodPoints.put(playerUUID, currentHalfBlood);
 
-                if (currentHalfBlood >= 2) {
-                    DemonManager.removeBloodPoints(player, 1);
-                    halfBloodPoints.put(playerUUID, 0);
-                    syncHalfBloodToClient(player, 0);
+                    if (currentHalfBlood >= 2) {
+                        DemonManager.removeBloodPoints(player, 1);
+                        halfBloodPoints.put(playerUUID, 0);
+                        syncHalfBloodToClient(player, 0);
+                    } else {
+                        syncHalfBloodToClient(player, currentHalfBlood);
+                    }
+
+                    lastBloodLossTimes.put(playerUUID, currentTime);
+                    accumulated -= DAMAGE_PER_HALF_BLOOD;
                 } else {
-                    syncHalfBloodToClient(player, currentHalfBlood);
+                    accumulated = 0.0f;
                 }
             } else {
-                break;
+                accumulated = Math.min(accumulated, DAMAGE_PER_HALF_BLOOD);
             }
-
-            accumulated -= DAMAGE_PER_HALF_BLOOD;
-        }
-
-        if (safetyCounter >= 10) {
-            accumulated = 0.0f;
         }
 
         accumulatedDamage.put(playerUUID, accumulated);
@@ -185,5 +188,6 @@ public class DemonFoodHandler {
         accumulatedDamage.remove(playerUUID);
         halfBloodPoints.remove(playerUUID);
         lastDamageTimes.remove(playerUUID);
+        lastBloodLossTimes.remove(playerUUID);
     }
 }

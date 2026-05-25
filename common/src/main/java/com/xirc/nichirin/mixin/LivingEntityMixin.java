@@ -1,10 +1,12 @@
 package com.xirc.nichirin.mixin;
 
+import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.util.ComboTracker;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.damagesource.DamageSource;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -22,6 +24,13 @@ public abstract class LivingEntityMixin {
 
     @Shadow
     public abstract Map<MobEffect, MobEffectInstance> getActiveEffectsMap();
+
+    @Inject(method = "hurtArmor", at = @At("HEAD"), cancellable = true)
+    private void nichirin$preventAttackArmorWear(DamageSource damageSource, float damageAmount, CallbackInfo ci) {
+        if (damageSource.getEntity() instanceof LivingEntity attacker && MoveExecutor.hasActiveAttacks(attacker)) {
+            ci.cancel();
+        }
+    }
 
     /**
      * Hook into the effect removal process to detect when STUNNED effect expires

@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.item.scroll;
 
 import com.xirc.nichirin.common.data.PlayerDataProvider;
+import com.xirc.nichirin.common.event.BreathOfNichirinEventHandler;
 import com.xirc.nichirin.common.system.perks.NichirinPerkRegistry;
 import com.xirc.nichirin.common.system.perks.PerkData;
 import com.xirc.nichirin.common.system.perks.PerkDefinition;
@@ -78,6 +79,7 @@ public class PerkScrollItem extends Item {
             RandomSource rand = level.getRandom();
             PerkDefinition chosen = undiscovered.get(rand.nextInt(undiscovered.size()));
             PerkManager.discover(serverPlayer, chosen.id);
+            BreathOfNichirinEventHandler.syncPerksToPlayer(serverPlayer);
             level.playSound(null, player.blockPosition(), SoundEvents.ENCHANTMENT_TABLE_USE, SoundSource.PLAYERS, 0.8f, 1.2f);
             player.sendSystemMessage(Component.literal("The scroll reveals: ")
                     .withStyle(ChatFormatting.GOLD)
@@ -93,6 +95,7 @@ public class PerkScrollItem extends Item {
         }
 
         boolean newlyDiscovered = PerkManager.discover(serverPlayer, perkId);
+        BreathOfNichirinEventHandler.syncPerksToPlayer(serverPlayer);
 
         level.playSound(null, player.blockPosition(), SoundEvents.ENCHANTMENT_TABLE_USE, SoundSource.PLAYERS, 0.8f, 1.2f);
 

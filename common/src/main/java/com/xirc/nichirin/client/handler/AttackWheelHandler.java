@@ -4,22 +4,24 @@ import com.xirc.nichirin.client.gui.AttackWheelOverlay;
 import com.xirc.nichirin.client.gui.CooldownHUD;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.attack.moveset.DefaultKatanaMoveset;
-import com.xirc.nichirin.common.network.c2s.MoveHotkeyPacket;
-import com.xirc.nichirin.registry.NichirinKeybindRegistry;
-import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.common.network.c2s.MoveHotkeyPacket;
 import com.xirc.nichirin.common.util.BreathingManager;
-import com.xirc.nichirin.common.util.StaminaManager;
 import com.xirc.nichirin.common.util.MultiplayerInputHandler;
+import com.xirc.nichirin.common.util.StaminaManager;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
-import dev.architectury.event.events.client.ClientTickEvent;
+import com.xirc.nichirin.registry.NichirinKeybindRegistry;
+import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.event.events.client.ClientGuiEvent;
+import dev.architectury.event.events.client.ClientTickEvent;
 import lombok.Getter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
+
+import java.util.Arrays;
 
 /**
  * DEBUG VERSION: Attack wheel handler with extensive logging
@@ -275,7 +277,7 @@ public class AttackWheelHandler {
         // Reset captured move state
         capturedSelectedMove = -1;
         lastHoveredMove = -1;
-        java.util.Arrays.fill(wasNumberKeyDown, false);
+        Arrays.fill(wasNumberKeyDown, false);
 
         // START BLOCKING TIMER - Record when wheel was closed
         if (mc.player != null) {
@@ -383,10 +385,6 @@ public class AttackWheelHandler {
         } else if (isDefaultKatanaWheel) {
             // Default katana wheel — server handles via SimpleKatana.performWheelMove
             NichirinPacketRegistry.sendToServer(new MoveHotkeyPacket(selectedMove));
-            // Mirror cooldown on the client for HUD display
-            if (moveConfig.hasCooldown()) {
-                CooldownHUD.setCooldown(moveName, moveConfig.getCooldown());
-            }
         } else {
             MultiplayerInputHandler.sendDemonMove(selectedMove, mc.player);
         }

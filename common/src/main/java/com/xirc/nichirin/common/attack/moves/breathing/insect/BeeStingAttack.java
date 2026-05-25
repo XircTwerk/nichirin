@@ -8,6 +8,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -19,6 +20,7 @@ public class BeeStingAttack extends InsectBreathingAttackBase {
 
     private boolean dashStarted = false;
     private Vec3 dashDirection;
+    private Vec3 lastDashPos;
     private final Set<LivingEntity> hitEntities = new HashSet<>();
     private int trailEffectCounter = 0;
 
@@ -27,6 +29,7 @@ public class BeeStingAttack extends InsectBreathingAttackBase {
         dashStarted = false;
         hitEntities.clear();
         trailEffectCounter = 0;
+        lastDashPos = null;
         dashDirection = user.getLookAngle().normalize();
 
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
@@ -85,14 +88,18 @@ public class BeeStingAttack extends InsectBreathingAttackBase {
     }
 
     private void continueDash() {
+        Vec3 previousCenter = lastDashPos;
+        Vec3 currentCenter = user.position().add(0, user.getBbHeight() / 2, 0);
+        lastDashPos = currentCenter;
+
         user.setDeltaMovement(dashDirection.scale(dashSpeed));
         user.hurtMarked = true;
         createBeeTrail();
         trailEffectCounter++;
 
-        List<LivingEntity> dashTargets = getTargetsInCustomHitbox(
-                user.position().add(0, user.getBbHeight() / 2, 0),
-                hitboxSize, 2.0, hitboxSize);
+        List<LivingEntity> dashTargets = previousCenter != null
+                ? getTargetsAlongPath(previousCenter, currentCenter, hitboxSize)
+                : getTargetsInCustomHitbox(currentCenter, hitboxSize, 2.0, hitboxSize);
 
         for (LivingEntity target : dashTargets) {
             if (!hitEntities.contains(target)) {
@@ -104,6 +111,20 @@ public class BeeStingAttack extends InsectBreathingAttackBase {
                         SoundEvents.PLAYER_ATTACK_WEAK, SoundSource.PLAYERS, 0.6f, 1.8f);
             }
         }
+    }
+
+    private List<LivingEntity> getTargetsAlongPath(Vec3 from, Vec3 to, float radius) {
+        Vec3 path = to.subtract(from);
+        double distance = path.length();
+        if (distance < 0.01) return getTargetsInCustomHitbox(to, radius, 2.0, radius);
+
+        Set<LivingEntity> found = new HashSet<>();
+        int steps = Math.max(1, (int) Math.ceil(distance / Math.max(radius * 0.25, 0.1)));
+        for (int i = 0; i <= steps; i++) {
+            Vec3 sample = from.add(path.scale((double) i / steps));
+            found.addAll(getTargetsInCustomHitbox(sample, radius, 2.0, radius));
+        }
+        return new ArrayList<>(found);
     }
 
     private void createDashBurst() {
@@ -169,6 +190,7 @@ public class BeeStingAttack extends InsectBreathingAttackBase {
                 SoundEvents.BEE_LOOP, SoundSource.PLAYERS, 0.6f, 1.0f);
 
         dashStarted = false;
+        lastDashPos = null;
         hitEntities.clear();
         trailEffectCounter = 0;
     }

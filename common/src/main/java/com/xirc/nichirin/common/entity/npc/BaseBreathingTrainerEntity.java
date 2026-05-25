@@ -1,10 +1,13 @@
 package com.xirc.nichirin.common.entity.npc;
 
+import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.data.ProgressionHelper;
 import com.xirc.nichirin.common.entity.MovesetCapableNPC;
+import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.network.s2c.OpenTrainerDialoguePacket;
 import com.xirc.nichirin.common.system.NPCResourceManager;
+import com.xirc.nichirin.registry.NichirinMovesetRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
@@ -22,23 +25,34 @@ import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.goal.*;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.player.Player;
-import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 
 public abstract class BaseBreathingTrainerEntity extends PathfinderMob implements MovesetCapableNPC {
 
@@ -400,7 +414,7 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
     }
 
     @Override
-    public boolean doHurtTarget(net.minecraft.world.entity.@NotNull Entity target) {
+    public boolean doHurtTarget(@NotNull Entity target) {
         if (mode == TrainerMode.DUELING && target instanceof Player p
                 && p.getUUID().equals(duelPlayerId)) {
             // If trainer is already near-dead the player is about to win — don't claim trainer wins
@@ -473,7 +487,9 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
         super.tick();
         if (!level().isClientSide) {
             entityData.set(ANIMATION_RESET, false);
+            ensureMoveset();
             tickMovesetSystems();
+            MoveExecutor.tickAttacks(this);
         }
 
         if (level().isClientSide) return;
@@ -505,8 +521,14 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
     }
 
     private void ensureEquipment() {
-        if (getItemBySlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND).isEmpty()) {
+        if (getItemBySlot(EquipmentSlot.MAINHAND).isEmpty()) {
             equipArmor();
+        }
+    }
+
+    protected void ensureMoveset() {
+        if (moveset == null) {
+            moveset = NichirinMovesetRegistry.getMoveset(trainerType.movesetId);
         }
     }
 
@@ -566,9 +588,16 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
             setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
         }
 
-        @Override public boolean canUse()           { return trainer.mode == TrainerMode.DUELING && super.canUse(); }
-        @Override public boolean canContinueToUse() { return trainer.mode == TrainerMode.DUELING && super.canContinueToUse(); }
-        @Override protected double getAttackReachSqr(net.minecraft.world.entity.@NotNull LivingEntity t) { return 9.0; }
+        @Override public boolean canUse() {
+            return (trainer.mode == TrainerMode.DUELING || trainer.mode == TrainerMode.SELF_DEFENSE) && super.canUse();
+        }
+
+        @Override public boolean canContinueToUse() {
+            return (trainer.mode == TrainerMode.DUELING || trainer.mode == TrainerMode.SELF_DEFENSE)
+                    && super.canContinueToUse();
+        }
+
+        @Override protected double getAttackReachSqr(@NotNull LivingEntity t) { return 9.0; }
         @Override protected int getAttackInterval() { return 25; }
 
         @Override

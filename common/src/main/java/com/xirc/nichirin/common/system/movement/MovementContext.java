@@ -4,6 +4,7 @@ import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
 import com.xirc.nichirin.common.util.StaminaManager;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
@@ -18,10 +19,13 @@ import java.util.UUID;
 public class MovementContext {
 
     private static final float MOVEMENT_STAMINA_COST = 15.0f;
-    private static final int MOVEMENT_COOLDOWN_TICKS = 40; // 2 seconds
+    private static final int DODGE_COOLDOWN_TICKS = 40;
+    private static final int AIR_DODGE_COOLDOWN_TICKS = 60;
+    private static final int BACKSTEP_COOLDOWN_TICKS = 70;
+    private static final int DASH_COOLDOWN_TICKS = 60;
 
     // Track cooldowns per player
-    private static final Map<UUID, Long> playerCooldowns = new HashMap<>();
+    private static final Map<UUID, Long> playerCooldownEnds = new HashMap<>();
     // Track current input states per player
     private static final Map<UUID, InputState> playerInputs = new HashMap<>();
 
@@ -67,15 +71,6 @@ public class MovementContext {
             return;
         }
 
-        // Check cooldown
-        if (isOnCooldown(player)) {
-            player.displayClientMessage(
-                    Component.literal("Movement on cooldown!").withStyle(style -> style.withColor(0xFFAA00)),
-                    true
-            );
-            return;
-        }
-
         // Check stamina
         if (!StaminaManager.hasStamina(player, MOVEMENT_STAMINA_COST)) {
             player.displayClientMessage(
@@ -98,13 +93,22 @@ public class MovementContext {
             return;
         }
 
+        // Check cooldown
+        if (isOnCooldown(player)) {
+            player.displayClientMessage(
+                    Component.literal("Movement on cooldown!").withStyle(style -> style.withColor(0xFFAA00)),
+                    true
+            );
+            return;
+        }
+
         // Consume stamina
         if (!StaminaManager.consume(player, MOVEMENT_STAMINA_COST)) {
             return;
         }
 
         // Set cooldown and display on HUD
-        setCooldown(player);
+        setCooldown(player, movementType);
         displayMovementCooldown(player, movementType);
 
         // Execute the appropriate movement
@@ -185,7 +189,7 @@ public class MovementContext {
      * Display cooldown on client HUD
      */
     private static void displayMovementCooldown(Player player, MovementType movementType) {
-        if (!player.level().isClientSide && player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+        if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
             String cooldownName = switch (movementType) {
                 case DODGE -> "Dodge";
                 case AIR_DODGE -> "Air Dodge";
@@ -194,7 +198,7 @@ public class MovementContext {
                 case NONE -> "Movement";
             };
 
-            CooldownDisplayPacket.sendToClient(serverPlayer, cooldownName, MOVEMENT_COOLDOWN_TICKS);
+            CooldownDisplayPacket.sendToClient(serverPlayer, cooldownName, getCooldownTicks(movementType));
         }
     }
 
@@ -202,28 +206,33 @@ public class MovementContext {
      * Cooldown management
      */
     private static boolean isOnCooldown(Player player) {
-        Long lastUse = playerCooldowns.get(player.getUUID());
-        if (lastUse == null) return false;
-
-        long currentTime = player.level().getGameTime();
-        return (currentTime - lastUse) < MOVEMENT_COOLDOWN_TICKS;
+        Long cooldownEnd = playerCooldownEnds.get(player.getUUID());
+        return cooldownEnd != null && player.level().getGameTime() < cooldownEnd;
     }
 
-    private static void setCooldown(Player player) {
-        playerCooldowns.put(player.getUUID(), player.level().getGameTime());
+    private static void setCooldown(Player player, MovementType movementType) {
+        playerCooldownEnds.put(player.getUUID(), player.level().getGameTime() + getCooldownTicks(movementType));
+    }
+
+    private static int getCooldownTicks(MovementType movementType) {
+        return switch (movementType) {
+            case DODGE -> DODGE_COOLDOWN_TICKS;
+            case AIR_DODGE -> AIR_DODGE_COOLDOWN_TICKS;
+            case BACKSTEP -> BACKSTEP_COOLDOWN_TICKS;
+            case DASH -> DASH_COOLDOWN_TICKS;
+            case NONE -> DASH_COOLDOWN_TICKS;
+        };
     }
 
     /**
      * Get remaining cooldown time in ticks
      */
     public static int getRemainingCooldown(Player player) {
-        Long lastUse = playerCooldowns.get(player.getUUID());
-        if (lastUse == null) return 0;
+        Long cooldownEnd = playerCooldownEnds.get(player.getUUID());
+        if (cooldownEnd == null) return 0;
 
         long currentTime = player.level().getGameTime();
-        long timeSinceUse = currentTime - lastUse;
-
-        return Math.max(0, (int)(MOVEMENT_COOLDOWN_TICKS - timeSinceUse));
+        return Math.max(0, (int)(cooldownEnd - currentTime));
     }
 
     /**

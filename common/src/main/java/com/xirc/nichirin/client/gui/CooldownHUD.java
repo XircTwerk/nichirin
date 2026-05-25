@@ -1,21 +1,23 @@
 package com.xirc.nichirin.client.gui;
 
+import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.GameRenderer;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.data.MovesetData;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.util.enums.BreathingStyle;
 import com.xirc.nichirin.registry.NichirinMovesetRegistry;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.ChatScreen;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import org.joml.Matrix4f;
@@ -38,6 +40,8 @@ public class CooldownHUD {
     private static final int DISPLAY_X = 10;
     private static final int DISPLAY_Y = 10;
     private static final int TILE_SIZE = 48;
+    private static final float TILE_SCALE = 0.6f;
+    private static final int LAYOUT_TILE_SIZE = Math.round(TILE_SIZE * TILE_SCALE);
     private static final int TILE_GAP = 6;
     private static final int ICON_SIZE = TILE_SIZE;
     private static final int ICON_TEXTURE_SIZE = 32;
@@ -49,7 +53,7 @@ public class CooldownHUD {
 
     public static void render(GuiGraphics graphics, float partialTicks) {
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.player == null || minecraft.font == null || minecraft.screen != null
+        if (minecraft.player == null || minecraft.font == null || (minecraft.screen != null && !(minecraft.screen instanceof ChatScreen))
                 || minecraft.options.hideGui || minecraft.options.renderDebug || !minecraft.player.isAlive()) {
             return;
         }
@@ -63,12 +67,12 @@ public class CooldownHUD {
         ACTIVE_COOLDOWNS.sort(REMAINING_ASCENDING);
 
         int screenWidth = minecraft.getWindow().getGuiScaledWidth();
-        int x = screenWidth - TILE_SIZE - DISPLAY_X;
+        int x = screenWidth - LAYOUT_TILE_SIZE - DISPLAY_X;
         int y = DISPLAY_Y;
 
         for (Map.Entry<String, CooldownEntry> entry : ACTIVE_COOLDOWNS) {
             renderCooldownTile(graphics, minecraft.font, x, y, entry.getValue(), now, partialTicks);
-            y += TILE_SIZE + TILE_GAP;
+            y += LAYOUT_TILE_SIZE + TILE_GAP;
         }
     }
 
@@ -100,6 +104,7 @@ public class CooldownHUD {
 
         graphics.pose().pushPose();
         graphics.pose().translate(x, y, 0.0f);
+        graphics.pose().scale(TILE_SCALE, TILE_SCALE, 1.0f);
 
         renderAura(graphics, cooldown.elementColorARGB, progress, pulseProgress);
         renderTileChrome(graphics);
@@ -169,10 +174,10 @@ public class CooldownHUD {
 
         RenderSystem.enableBlend();
         RenderSystem.blendFuncSeparate(
-                com.mojang.blaze3d.platform.GlStateManager.SourceFactor.SRC_ALPHA,
-                com.mojang.blaze3d.platform.GlStateManager.DestFactor.ONE,
-                com.mojang.blaze3d.platform.GlStateManager.SourceFactor.ONE,
-                com.mojang.blaze3d.platform.GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+                GlStateManager.SourceFactor.SRC_ALPHA,
+                GlStateManager.DestFactor.ONE,
+                GlStateManager.SourceFactor.ONE,
+                GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
         drawGradientDisc(graphics.pose().last().pose(), center, center, innerRadius, radius, argb, alpha);
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableBlend();

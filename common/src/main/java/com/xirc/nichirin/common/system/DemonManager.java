@@ -5,17 +5,18 @@ import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.event.system.DemonFoodHandler;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
-import net.minecraft.tags.EntityTypeTags;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.EntityTypeTags;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MobType;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodData;
+import net.minecraft.world.level.Level;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.HashSet;
 import java.util.UUID;
 
 /** Manages demon passives: sunlight, blood points, blood drain, and regen. */
@@ -56,6 +57,9 @@ public class DemonManager {
 
         bloodPoints = Math.max(0, Math.min(bloodPoints, max));
         playerBloodPoints.put(player.getUUID(), bloodPoints);
+        if (bloodPoints >= max && DemonFoodHandler.getHalfBloodPoints(player) > 0) {
+            DemonFoodHandler.setHalfBloodPointsDirectly(player, 0);
+        }
 
         // Sync to client if on server
         if (!player.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
@@ -116,6 +120,7 @@ public class DemonManager {
     }
 
     private static void handleSunDamage(Player player) {
+        if (player.isCreative()) return;
         if (!NichirinModConfig.get().demon.burnInSunlight) return;
         Level level = player.level();
         if (level.isDay() && !level.isRaining() && !level.isThundering()
@@ -125,6 +130,7 @@ public class DemonManager {
     }
 
     private static void handleFireDamage(Player player) {
+        if (player.isCreative()) return;
         if (player.getRemainingFireTicks() > 0 && player.getRemainingFireTicks() % 20 == 0) {
             player.hurt(player.damageSources().magic(), NichirinModConfig.get().demon.sunDamagePerSecond);
         }
@@ -212,6 +218,7 @@ public class DemonManager {
     private static void handleBloodDrain(Player player) {
         NichirinModConfig cfg = NichirinModConfig.get();
         if (!cfg.demon.bloodDrainEnabled) return;
+        if (player.isCreative()) return;
 
         UUID uuid = player.getUUID();
         long now = player.level().getGameTime();
@@ -253,7 +260,7 @@ public class DemonManager {
     private static boolean hasBlood(LivingEntity entity) {
         // Most living entities have blood except undead
         return !entity.getType().is(EntityTypeTags.SKELETONS) &&
-                entity.getMobType() != net.minecraft.world.entity.MobType.UNDEAD;
+                entity.getMobType() != MobType.UNDEAD;
     }
 
     /**

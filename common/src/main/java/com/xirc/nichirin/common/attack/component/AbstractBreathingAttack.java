@@ -1,11 +1,11 @@
 package com.xirc.nichirin.common.attack.component;
 
+import com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset.MoveConfiguration;
 import com.xirc.nichirin.common.network.s2c.TriggerShaderPacket;
 import com.xirc.nichirin.common.util.BreathingManager;
 import com.xirc.nichirin.common.util.ComboIntegration;
 import com.xirc.nichirin.common.util.HitboxData;
-import com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import lombok.Getter;
@@ -17,15 +17,19 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.HashSet;
-import java.util.ArrayList;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Base class for all breathing technique attacks.
@@ -59,7 +63,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     protected Level world;
 
     // Self-ticking system - attacks register themselves for automatic ticking (Players only)
-    private static final java.util.concurrent.ConcurrentHashMap<java.util.UUID, java.util.List<AbstractBreathingAttack<?, ?>>> selfTickingAttacks = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<UUID, List<AbstractBreathingAttack<?, ?>>> selfTickingAttacks = new ConcurrentHashMap<>();
 
     // Hit tracking
     @Setter
@@ -454,7 +458,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     protected List<LivingEntity> getTargetsInLine(Vec3 start, Vec3 end, double thickness) {
         // Calculate the distance and create multiple hitboxes along the line
         double distance = start.distanceTo(end);
-        int hitboxCount = Math.max(1, (int) Math.ceil(distance / thickness));
+        int hitboxCount = Math.max(1, (int) Math.ceil(distance / Math.max(thickness * 0.5, 0.1)));
 
         Set<LivingEntity> allTargets = new HashSet<>();
         Set<AABB> lineHitboxes = new HashSet<>();
@@ -824,7 +828,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     private void registerForTicking() {
         // Only Player attacks self-tick; NPC attacks are ticked via MoveExecutor.tickAttacks.
         if (user instanceof Player) {
-            selfTickingAttacks.computeIfAbsent(user.getUUID(), k -> new java.util.ArrayList<>()).add(this);
+            selfTickingAttacks.computeIfAbsent(user.getUUID(), k -> new ArrayList<>()).add(this);
         }
     }
 
@@ -851,10 +855,10 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
             return;
         }
 
-        java.util.List<java.util.UUID> toClean = new java.util.ArrayList<>();
+        List<UUID> toClean = new ArrayList<>();
 
         for (var entry : selfTickingAttacks.entrySet()) {
-            java.util.UUID uuid = entry.getKey();
+            UUID uuid = entry.getKey();
             var attacks = entry.getValue();
 
             // Remove stale entries for UUIDs with no active attacks
@@ -863,10 +867,10 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
                 continue;
             }
 
-            java.util.List<AbstractBreathingAttack<?, ?>> toRemove = new java.util.ArrayList<>();
+            List<AbstractBreathingAttack<?, ?>> toRemove = new ArrayList<>();
 
             synchronized (attacks) {
-                for (var attack : new java.util.ArrayList<>(attacks)) {
+                for (var attack : new ArrayList<>(attacks)) {
                     try {
                         if (attack.isActive()) {
                             attack.tick();
@@ -882,7 +886,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
             }
         }
 
-        for (java.util.UUID uuid : toClean) {
+        for (UUID uuid : toClean) {
             selfTickingAttacks.remove(uuid);
         }
     }
@@ -911,15 +915,15 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         Vec3 from = entity.position().add(eyeHeight);
         Vec3 to   = targetPos.add(eyeHeight);
 
-        net.minecraft.world.phys.BlockHitResult hit = world.clip(
-                new net.minecraft.world.level.ClipContext(
+        BlockHitResult hit = world.clip(
+                new ClipContext(
                         from, to,
-                        net.minecraft.world.level.ClipContext.Block.COLLIDER,
-                        net.minecraft.world.level.ClipContext.Fluid.NONE,
+                        ClipContext.Block.COLLIDER,
+                        ClipContext.Fluid.NONE,
                         entity));
 
         Vec3 safePos;
-        if (hit.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK) {
+        if (hit.getType() == HitResult.Type.BLOCK) {
             Vec3 dir = to.subtract(from);
             double len = dir.length();
             Vec3 normalized = len > 0.001 ? dir.scale(1.0 / len) : Vec3.ZERO;
@@ -943,15 +947,15 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         Vec3 from = user.position().add(eyeHeight);
         Vec3 to   = targetPos.add(eyeHeight);
 
-        net.minecraft.world.phys.BlockHitResult hit = world.clip(
-                new net.minecraft.world.level.ClipContext(
+        BlockHitResult hit = world.clip(
+                new ClipContext(
                         from, to,
-                        net.minecraft.world.level.ClipContext.Block.COLLIDER,
-                        net.minecraft.world.level.ClipContext.Fluid.NONE,
+                        ClipContext.Block.COLLIDER,
+                        ClipContext.Fluid.NONE,
                         user));
 
         Vec3 safePos;
-        if (hit.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK) {
+        if (hit.getType() == HitResult.Type.BLOCK) {
             // Back off 0.1 blocks from the surface so the player doesn't clip in
             Vec3 dir = to.subtract(from);
             double len = dir.length();

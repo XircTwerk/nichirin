@@ -2,20 +2,23 @@ package com.xirc.nichirin.common.event;
 
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.component.AbstractDemonAttack;
-import com.xirc.nichirin.common.system.BloodMoonManager;
-import com.xirc.nichirin.common.system.KillRewardManager;
+import com.xirc.nichirin.common.data.MovesetHelper;
+import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.event.item.RiceInteractionHandler;
 import com.xirc.nichirin.common.event.system.DemonFoodHandler;
-import com.xirc.nichirin.common.system.DemonManager;
-import com.xirc.nichirin.common.data.PlayerDataProvider;
-import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.network.s2c.PerkSyncPacket;
+import com.xirc.nichirin.common.system.BloodMoonManager;
+import com.xirc.nichirin.common.system.DemonManager;
+import com.xirc.nichirin.common.system.KillRewardManager;
 import com.xirc.nichirin.registry.NichirinItemRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
+import dev.architectury.event.events.common.LifecycleEvent;
+import dev.architectury.event.events.common.LootEvent;
+import dev.architectury.event.events.common.PlayerEvent;
+import dev.architectury.event.events.common.TickEvent;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
-import dev.architectury.event.events.common.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -27,6 +30,7 @@ import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
 import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
 import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
+import net.minecraft.world.level.storage.loot.predicates.LootItemRandomChanceCondition;
 
 import java.util.Set;
 
@@ -43,7 +47,7 @@ public class BreathOfNichirinEventHandler {
         registerDemonEvents();
         registerPerkSyncEvents();
         RiceInteractionHandler.register();
-        registerRiceLootInjection();
+        registerLootInjection();
     }
 
     private static final Set<ResourceLocation> RICE_LOOT_TABLES = Set.of(
@@ -57,12 +61,44 @@ public class BreathOfNichirinEventHandler {
             new ResourceLocation("minecraft", "chests/abandoned_mineshaft")
     );
 
-    private static void registerRiceLootInjection() {
+    private static final Set<ResourceLocation> PERK_SCROLL_LOOT_TABLES = Set.of(
+            new ResourceLocation("minecraft", "chests/abandoned_mineshaft"),
+            new ResourceLocation("minecraft", "chests/desert_pyramid"),
+            new ResourceLocation("minecraft", "chests/jungle_temple"),
+            new ResourceLocation("minecraft", "chests/stronghold_corridor"),
+            new ResourceLocation("minecraft", "chests/stronghold_crossing"),
+            new ResourceLocation("minecraft", "chests/stronghold_library"),
+            new ResourceLocation("minecraft", "chests/woodland_mansion"),
+            new ResourceLocation("minecraft", "chests/pillager_outpost"),
+            new ResourceLocation("minecraft", "chests/simple_dungeon")
+    );
+
+    private static final Set<ResourceLocation> CURSED_SCROLL_LOOT_TABLES = Set.of(
+            new ResourceLocation("minecraft", "chests/ancient_city"),
+            new ResourceLocation("minecraft", "chests/bastion_treasure"),
+            new ResourceLocation("minecraft", "chests/end_city_treasure"),
+            new ResourceLocation("minecraft", "chests/woodland_mansion"),
+            new ResourceLocation("minecraft", "chests/stronghold_library")
+    );
+
+    private static void registerLootInjection() {
         LootEvent.MODIFY_LOOT_TABLE.register((manager, id, context, builtin) -> {
             if (RICE_LOOT_TABLES.contains(id)) {
                 context.addPool(LootPool.lootPool()
                         .add(LootItem.lootTableItem(NichirinItemRegistry.RICE.get())
                                 .apply(SetItemCountFunction.setCount(UniformGenerator.between(1, 6))))
+                        .build());
+            }
+            if (PERK_SCROLL_LOOT_TABLES.contains(id)) {
+                context.addPool(LootPool.lootPool()
+                        .add(LootItem.lootTableItem(NichirinItemRegistry.PERK_SCROLL.get())
+                                .when(LootItemRandomChanceCondition.randomChance(0.56f)))
+                        .build());
+            }
+            if (CURSED_SCROLL_LOOT_TABLES.contains(id)) {
+                context.addPool(LootPool.lootPool()
+                        .add(LootItem.lootTableItem(NichirinItemRegistry.CURSED_SCROLL.get())
+                                .when(LootItemRandomChanceCondition.randomChance(0.16f)))
                         .build());
             }
         });

@@ -1,8 +1,14 @@
 package com.xirc.nichirin.common.attack.moveset.demon;
 
 import com.xirc.nichirin.common.attack.MoveExecutor;
+import com.xirc.nichirin.common.attack.moves.demon.basic.DemonBiteAttack;
+import com.xirc.nichirin.common.attack.moves.demon.basic.DemonDashStrikeAttack;
+import com.xirc.nichirin.common.attack.moves.demon.basic.DemonGrabAttack;
+import com.xirc.nichirin.common.attack.moves.demon.basic.DemonGutPunchAttack;
+import com.xirc.nichirin.common.attack.moves.demon.basic.DemonKickAttack;
+import com.xirc.nichirin.common.attack.moves.demon.basic.DemonSlashAttack;
+import com.xirc.nichirin.common.attack.moves.demon.basic.DemonStompAttack;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
-import com.xirc.nichirin.common.attack.moves.demon.basic.*;
 import com.xirc.nichirin.common.system.GrabManager;
 import com.xirc.nichirin.common.entity.MovesetCapableNPC;
 import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
@@ -349,7 +355,7 @@ public class DefaultDemonMoveset extends AbstractMoveset {
         MoveExecutor.executeAttack(entity, stompAttack, "default_demon", "demon_stomp");
 
         canStompAfterHighJump.remove(entityUUID);
-        setMoveCooldown(entity, -4, 60); // ~3 second stomp cooldown
+        setMoveCooldown(entity, -4, 60);
         if (entity instanceof ServerPlayer serverPlayer) {
             sendCooldownPacket(serverPlayer, "Stomp", 60);
         }

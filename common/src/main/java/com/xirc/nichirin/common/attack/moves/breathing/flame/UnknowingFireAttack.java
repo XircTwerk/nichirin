@@ -188,8 +188,8 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
         Vec3 rightDir = lookDir.cross(new Vec3(0, 1, 0)).normalize();
 
         // Create multiple hitboxes for the wide slash
-        for (int i = -4; i <= 4; i++) {
-            double offset = i * (SLASH_WIDTH / 8.0);
+        for (int i = -8; i <= 8; i++) {
+            double offset = i * (SLASH_WIDTH / 16.0);
             Vec3 slashCenter = userPos.add(lookDir.scale(SLASH_DEPTH / 2)).add(rightDir.scale(offset));
 
             List<LivingEntity> targets = getTargetsInCustomHitbox(slashCenter, hitboxSize, hitboxSize * 1.5, hitboxSize);

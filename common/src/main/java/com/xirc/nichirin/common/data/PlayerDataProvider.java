@@ -1,10 +1,12 @@
 package com.xirc.nichirin.common.data;
 
+import com.xirc.nichirin.common.event.system.DemonFoodHandler;
 import com.xirc.nichirin.common.network.s2c.ProgressionSyncPacket;
 import com.xirc.nichirin.common.system.DemonManager;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.event.events.common.TickEvent;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 
@@ -231,27 +233,19 @@ public class PlayerDataProvider {
             String breathingId = data.getMovesetData().getBreathingMovesetId();
             String demonId = data.getMovesetData().getDemonMovesetId();
 
-            if (breathingId == null && demonId == null) {
-                // No movesets — clear everything on the client
-                NichirinPacketRegistry.sendToPlayer(player, (String) null);
-            } else {
-                if (demonId != null) {
-                    NichirinPacketRegistry.sendToPlayer(player, demonId);
-                }
-                if (breathingId != null) {
-                    // Send breathing; if demon was just removed, clear client demon slot first
-                    if (demonId == null) {
-                        // Clear all client state, then re-set only the breathing
-                        NichirinPacketRegistry.sendToPlayer(player, (String) null);
-                    }
-                    NichirinPacketRegistry.sendToPlayer(player, breathingId);
-                }
+            NichirinPacketRegistry.sendToPlayer(player, (String) null);
+            if (demonId != null) {
+                NichirinPacketRegistry.sendToPlayer(player, demonId);
+            }
+            if (breathingId != null) {
+                NichirinPacketRegistry.sendToPlayer(player, breathingId);
             }
 
             // Always sync the demon GUI state so it clears when demon is removed
             boolean isDemon = demonId != null;
             int bloodPoints = isDemon ? DemonManager.getBloodPoints(player) : 0;
-            NichirinPacketRegistry.sendDemonSync(player, bloodPoints, bloodPoints * 2, isDemon);
+            int halfBloodPoints = isDemon ? DemonFoodHandler.getHalfBloodPoints(player) : 0;
+            NichirinPacketRegistry.sendDemonSync(player, bloodPoints, halfBloodPoints, isDemon);
 
             ProgressionSyncPacket.sendToPlayer(player);
 
@@ -352,7 +346,7 @@ public class PlayerDataProvider {
     /**
      * Forces a sync for all online players (useful for debugging)
      */
-    public static void forceSync(net.minecraft.server.MinecraftServer server) {
+    public static void forceSync(MinecraftServer server) {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             syncToClient(player);
         }

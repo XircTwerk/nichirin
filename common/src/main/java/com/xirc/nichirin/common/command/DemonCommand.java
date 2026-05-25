@@ -1,12 +1,13 @@
 package com.xirc.nichirin.common.command;
 
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.arguments.BoolArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.xirc.nichirin.common.attack.moveset.demon.DefaultDemonMoveset;
+import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.data.PlayerDataStorage;
@@ -130,7 +131,7 @@ public class DemonCommand {
         PlayerDataProvider.getData(player).getMovesetData().setDemonMovesetId("default_demon");
 
         // Initialize blood points to max
-        DemonManager.setBloodPoints(player, 10);
+        DemonManager.setBloodPoints(player, NichirinModConfig.get().demon.maxBloodPoints);
 
         // Force save and sync to all players
         PlayerDataStorage.savePlayerData(player);

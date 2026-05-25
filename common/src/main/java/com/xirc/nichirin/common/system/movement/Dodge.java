@@ -22,7 +22,7 @@ public class Dodge {
     private static final int IMMUNITY_FRAMES = 20; // 1 second of immunity (20 ticks)
     private static final int STUN_DURATION = 20; // 1 second stun on whiff
     private static final float GROUND_DODGE_DISTANCE = 1.5f; //lmao this is so pointless
-    private static final float AIR_DODGE_DISTANCE = 0.5f;
+    private static final float AIR_DODGE_DISTANCE = 0.7f;
 
     // Track active dodges for whiff detection
     private static final Map<UUID, DodgeState> activeDodges = new HashMap<>();

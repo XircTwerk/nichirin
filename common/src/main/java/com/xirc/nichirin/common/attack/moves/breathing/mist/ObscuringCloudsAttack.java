@@ -12,7 +12,10 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * Form 7: Obscuring Clouds.
@@ -30,9 +33,11 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
     private double orbitAngle = 0.0;
     private boolean orbitInitialized = false;
     private LivingEntity orbitTarget = null;
+    private final Map<UUID, Integer> lastHitTicks = new HashMap<>();
     // How many radians to advance per tick
     private static final double ORBIT_SPEED = Math.PI / 8.0; // ~22.5°/tick (one full orbit per ~3 seconds)
     private static final double ORBIT_RADIUS = 3.0;
+    private static final int TARGET_HIT_INTERVAL_TICKS = 12;
 
     @Override
     protected void onStart() {
@@ -42,6 +47,7 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
         orbitAngle = 0.0;
         orbitInitialized = false;
         orbitTarget = null;
+        lastHitTicks.clear();
 
         user.addEffect(new MobEffectInstance(
                 MobEffects.INVISIBILITY, windup + duration + 10, 0, false, false, false));
@@ -119,7 +125,11 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
             float bigHitbox = hitboxSize * 2.5f;
             List<LivingEntity> targets = getTargetsInCustomHitbox(center, bigHitbox, bigHitbox + 1.0f, bigHitbox);
             for (LivingEntity target : targets) {
-                hitTargetNoImmunity(target);
+                int lastHitTick = lastHitTicks.getOrDefault(target.getUUID(), -TARGET_HIT_INTERVAL_TICKS);
+                if (tickCount - lastHitTick >= TARGET_HIT_INTERVAL_TICKS) {
+                    hitTargetNoImmunity(target);
+                    lastHitTicks.put(target.getUUID(), tickCount);
+                }
             }
         }
     }
@@ -144,5 +154,7 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
 
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 1.0f, 0.7f);
+
+        lastHitTicks.clear();
     }
 }

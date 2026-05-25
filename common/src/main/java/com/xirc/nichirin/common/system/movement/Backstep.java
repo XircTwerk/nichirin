@@ -2,6 +2,7 @@ package com.xirc.nichirin.common.system.movement;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
@@ -13,11 +14,11 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Backstep system - teleports player 3 blocks backward with thunder particles
+ * Backstep system - teleports player backward with thunder particles
  */
 public class Backstep {
 
-    private static final double BACKSTEP_DISTANCE = 3.0; // Reduced from 5.0 to 3.0
+    private static final double BACKSTEP_DISTANCE = 4.0;
     private static final double SAFETY_CHECK_RADIUS = 0.5; // Player collision box consideration
 
     /**
@@ -161,7 +162,7 @@ public class Backstep {
     private static void addBackstepEffects(Player player, Vec3 startPos, Vec3 endPos) {
         Level level = player.level();
 
-        if (level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+        if (level instanceof ServerLevel serverLevel) {
             // Wind particles at start position
             for (int i = 0; i < 20; i++) {
                 double offsetX = (player.getRandom().nextDouble() - 0.5) * 1.5;
