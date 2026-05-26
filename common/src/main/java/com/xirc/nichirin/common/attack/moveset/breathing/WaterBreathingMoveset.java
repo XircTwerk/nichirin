@@ -84,7 +84,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 .withRange(4.0f)
                 .withKnockback(0.1f)
                 .withBreathCost(18.0f)
-                .withHitStun(5)
+                .withHitStun(12)
                 .withHitboxSize(3.5f)
                 .withDashSpeed(4.0f)
                 .withDescription("Lunging spinning slash through enemies.")

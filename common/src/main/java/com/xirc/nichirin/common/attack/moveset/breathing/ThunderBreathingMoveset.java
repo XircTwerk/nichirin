@@ -45,7 +45,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 .withTeleportDistance(12.0f)
                 .withKnockback(0.2f)
                 .withBreathCost(12.0f)
-                .withHitStun(10)
+                .withHitStun(14)
                 .withHitboxSize(2.0f)
                 .withDescription("Teleport dash forward, hitting anything in the way.")
                 .build();
@@ -146,7 +146,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("rumble_flash", "Rumble and Flash")
                         .withAnimation("nichirin:rumble_flash", 8)
                         .withTiming(180, 9, 25) // 9 second cooldown, windup, duration
-                        .withDamage(10.0f) // High damage for long range precision (was 22.0f)
+                        .withDamage(7.5f) // High damage for long range precision (was 22.0f)
                         .withRange(20.0f) // Very long range
                         .withKnockback(0.6f)
                         .withBreathCost(40.0f) // High cost for range and damage

@@ -41,7 +41,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
         MoveConfiguration tempConfig = new MoveBuilder("pommel_slash", "Pommel Slash")
                 .withAnimation("nichirin:pommel_slash", 8)
                 .withTiming(0, 5, 18)
-                .withDamage(1.0f)
+                .withDamage(0.5f)
                 .withRange(2.5f)
                 .withKnockback(0f)
                 .withBreathCost(15.0f)
