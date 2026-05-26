@@ -11,3 +11,14 @@ accessible method net/minecraft/world/level/levelgen/feature/treedecorators/Tree
 # Shader stuff
 accessible field net/minecraft/client/renderer/PostChain passes Ljava/util/List;
 accessible method net/minecraft/client/renderer/GameRenderer getFov (Lnet/minecraft/client/Camera;FZ)D
+
+# Fields read/written by PlayerCloneClientPlayerEntity.updateData()
+accessible field net/minecraft/world/entity/LivingEntity yBodyRotO F
+accessible field net/minecraft/world/entity/LivingEntity yHeadRotO F
+accessible field net/minecraft/world/entity/LivingEntity hurtTime I
+accessible field net/minecraft/world/entity/LivingEntity hurtDuration I
+accessible field net/minecraft/world/entity/LivingEntity swinging Z
+accessible field net/minecraft/world/entity/LivingEntity oAttackAnim F
+accessible field net/minecraft/world/entity/LivingEntity attackAnim F
+accessible field net/minecraft/world/entity/LivingEntity swingTime I
+accessible field net/minecraft/world/entity/LivingEntity deathTime I

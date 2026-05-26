@@ -6,6 +6,7 @@ import com.xirc.nichirin.common.entity.projectile.FlashBombEntity;
 import com.xirc.nichirin.common.entity.projectile.SmokeBombEntity;
 import com.xirc.nichirin.common.entity.projectile.ThrownKatanaEntity;
 import com.xirc.nichirin.common.entity.attack.ThunderBallEntity;
+import com.xirc.nichirin.common.entity.effect.PlayerCloneEntity;
 import com.xirc.nichirin.common.entity.npc.TempleDemonEntity;
 import com.xirc.nichirin.common.entity.npc.ThunderBreathingTrainerEntity;
 import com.xirc.nichirin.common.entity.npc.WaterBreathingTrainerEntity;
@@ -76,6 +77,14 @@ public interface NichirinEntityRegistry {
                     .updateInterval(3)
                     .build("water_breathing_trainer"));
 
+    RegistrySupplier<EntityType<PlayerCloneEntity>> PLAYER_CLONE =
+            ENTITY_TYPES.register("player_clone", () -> EntityType.Builder.<PlayerCloneEntity>of(
+                            PlayerCloneEntity::new, MobCategory.MONSTER)
+                    .sized(0.6f, 1.8f)
+                    .clientTrackingRange(64)
+                    .updateInterval(1)
+                    .build("player_clone"));
+
     RegistrySupplier<EntityType<ThunderBreathingTrainerEntity>> THUNDER_BREATHING_TRAINER =
             ENTITY_TYPES.register("thunder_breathing_trainer", () -> EntityType.Builder.<ThunderBreathingTrainerEntity>of(
                             ThunderBreathingTrainerEntity::new, MobCategory.CREATURE)
@@ -89,6 +98,7 @@ public interface NichirinEntityRegistry {
         EntityAttributeRegistry.register(TEMPLE_DEMON, TempleDemonEntity::createAttributes);
         EntityAttributeRegistry.register(WATER_BREATHING_TRAINER, WaterBreathingTrainerEntity::createAttributes);
         EntityAttributeRegistry.register(THUNDER_BREATHING_TRAINER, ThunderBreathingTrainerEntity::createAttributes);
+        EntityAttributeRegistry.register(PLAYER_CLONE, PlayerCloneEntity::createAttributes);
     }
 
     static void init() {

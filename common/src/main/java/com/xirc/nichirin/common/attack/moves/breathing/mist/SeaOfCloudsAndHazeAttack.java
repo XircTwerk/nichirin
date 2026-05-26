@@ -1,7 +1,10 @@
 package com.xirc.nichirin.common.attack.moves.breathing.mist;
 
+import com.xirc.nichirin.common.entity.effect.PlayerCloneEntity;
+import com.xirc.nichirin.registry.NichirinEntityRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -11,34 +14,46 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 // Form 5: 5-hop zigzag charge with large hitboxes. Drags enemies into a straight finisher.
 public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
 
-    private static final int ZIGZAG_COUNT = 7;
-    private static final int DASH_DURATION = 6;
-    private static final int DASH_INTERVAL = 2;
+    private static final int   ZIGZAG_COUNT    = 7;
+    private static final int   DASH_DURATION   = 6;
+    private static final int   DASH_INTERVAL   = 5;  // ticks between hops (was 2, now more watchable)
+    private static final float DASH_DIST_FACTOR = 0.55f; // dashSpeed * this = blocks per hop
 
-    private int zigzagsExecuted = 0;
-    private int nextZigzagTick = 0;
+    private int     zigzagsExecuted = 0;
+    private int     nextZigzagTick  = 0;
     private boolean finisherExecuted = false;
-    private Vec3 baseDirection;
-    private final Set<LivingEntity> caughtEnemies = new HashSet<>();
+    private Vec3    baseDirection;
+
+    // Smooth lerp state for current hop
+    private Vec3 dashStartPos = null;
+    private Vec3 dashEndPos   = null;
+    private int  dashStartTick = 0;
+
+    private final Set<LivingEntity>  caughtEnemies  = new HashSet<>();
     private final List<LivingEntity> draggedEnemies = new ArrayList<>();
     private boolean wasInvulnerable = false;
+    private final List<UUID> spawnedClones = new ArrayList<>();
 
     @Override
     protected void onStart() {
-        zigzagsExecuted = 0;
-        nextZigzagTick = 0;
+        zigzagsExecuted  = 0;
+        nextZigzagTick   = 0;
         finisherExecuted = false;
+        dashStartPos     = null;
+        dashEndPos       = null;
         caughtEnemies.clear();
         draggedEnemies.clear();
+        spawnedClones.clear();
+
         Vec3 look = user.getLookAngle();
         baseDirection = new Vec3(look.x, 0, look.z).normalize();
         wasInvulnerable = user.isInvulnerable();
 
-        // Mist coil startup
         createMistParticles();
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0f, 0.9f);
@@ -48,38 +63,55 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
     protected void perform() {
         if (world.isClientSide) return;
 
-        // Execute zigzag dashes
+        // ── 1. Trigger next zigzag hop ──────────────────────────────────────
         if (zigzagsExecuted < ZIGZAG_COUNT && tickCount >= windup + nextZigzagTick) {
-            executeZigzagDash();
+            setupZigzagDash();
             zigzagsExecuted++;
             nextZigzagTick += DASH_DURATION + DASH_INTERVAL;
         }
 
-        // Execute finisher after all zigzags
+        // ── 2. Lerp position across DASH_DURATION ticks (smooth, grounded) ──
+        if (dashStartPos != null && dashEndPos != null) {
+            int tickInDash = tickCount - dashStartTick;
+            if (tickInDash >= 0 && tickInDash <= DASH_DURATION) {
+                double t = (double) tickInDash / DASH_DURATION;
+                double s = t * t * (3.0 - 2.0 * t); // smoothstep
+                double lerpX = dashStartPos.x + (dashEndPos.x - dashStartPos.x) * s;
+                double lerpZ = dashStartPos.z + (dashEndPos.z - dashStartPos.z) * s;
+                // Always use current Y — never lift the player off the ground
+                double y = user.getY();
+                if (user instanceof ServerPlayer sp) {
+                    sp.teleportTo(lerpX, y, lerpZ);
+                } else {
+                    user.absMoveTo(lerpX, y, lerpZ, user.getYRot(), user.getXRot());
+                }
+                user.setDeltaMovement(Vec3.ZERO);
+            }
+        }
+
+        // ── 3. Finisher ─────────────────────────────────────────────────────
         int finisherStartTick = windup + (ZIGZAG_COUNT * (DASH_DURATION + DASH_INTERVAL)) + 5;
         if (!finisherExecuted && zigzagsExecuted >= ZIGZAG_COUNT && tickCount >= finisherStartTick) {
             executeFinisher();
             finisherExecuted = true;
         }
 
-        // Maintain drag effect between dashes
+        // ── 4. Drag between hops ─────────────────────────────────────────────
         if (zigzagsExecuted > 0 && !finisherExecuted) {
             continueDragEffect();
         }
     }
 
-    private void executeZigzagDash() {
-        // 7-hop pattern: alternating ±45° closing in to 0° for the final approach
+    /** Sets up a single zigzag hop: stores lerp start/end, snap camera, queue hits. */
+    private void setupZigzagDash() {
         double[] angles = {45, -45, 35, -35, 20, -20, 0};
         double angle = zigzagsExecuted < angles.length ? angles[zigzagsExecuted] : 0;
-        Vec3 zigzagDirection = rotateDirection(baseDirection, angle);
+        Vec3 dir = rotateDirection(baseDirection, angle);
 
-        // Larger dash speed than Centipede
-        if (dashSpeed != null) {
-            user.setDeltaMovement(zigzagDirection.scale(dashSpeed * 0.25));
-            user.hurtMarked = true;
-            user.hasImpulse = true;
-        }
+        float dist = dashSpeed != null ? dashSpeed * DASH_DIST_FACTOR : 5.0f;
+        dashStartPos  = user.position();
+        dashEndPos    = new Vec3(dashStartPos.x + dir.x * dist, dashStartPos.y, dashStartPos.z + dir.z * dist);
+        dashStartTick = tickCount;
 
         user.setInvulnerable(true);
 
@@ -95,7 +127,6 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
 
     private void catchAndDragEnemies() {
         Vec3 userPos = user.position();
-        // Bigger hitbox than Centipede
         List<LivingEntity> pathEnemies = getTargetsInCustomHitbox(userPos, hitboxSize * 1.75, hitboxSize, hitboxSize * 1.75);
 
         for (LivingEntity enemy : pathEnemies) {
@@ -136,12 +167,11 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
 
     private void hitEnemiesAlongPath() {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
-        // Bigger hitbox than Centipede
         List<LivingEntity> targets = getTargetsInCustomHitbox(userPos, hitboxSize * 1.5, hitboxSize, hitboxSize * 1.5);
 
         for (LivingEntity target : targets) {
             float originalDamage = damage;
-            damage = damage * 0.45f; // 45% per zigzag
+            damage = damage * 0.45f;
             hitTarget(target);
             damage = originalDamage;
 
@@ -160,15 +190,14 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
     }
 
     private void executeFinisher() {
-        // Straight final dash
+        // Short forward burst to sell the final slash
         if (dashSpeed != null) {
-            user.setDeltaMovement(baseDirection.scale(dashSpeed));
+            user.setDeltaMovement(baseDirection.scale(dashSpeed * 0.4));
             user.hurtMarked = true;
             user.hasImpulse = true;
         }
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
-        // Large finisher hitbox
         List<LivingEntity> finisherTargets = getTargetsInCustomHitbox(userPos, hitboxSize * 1.5f, 2.5, hitboxSize * 1.5f);
 
         for (LivingEntity target : finisherTargets) {
@@ -191,7 +220,20 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
             }
         }
 
-        createMistCircle(userPos, range * 0.4f, 28);
+        float circleRadius = range * 0.4f;
+        Vec3 circleCenter  = userPos;
+        createMistCircle(circleCenter, circleRadius, 28);
+
+        // Spawn 6 player clone entities orbiting the mist circle
+        for (int i = 0; i < 6; i++) {
+            float angle = (float) (2.0 * Math.PI * i / 6);
+            PlayerCloneEntity clone = PlayerCloneEntity.create(
+                    NichirinEntityRegistry.PLAYER_CLONE.get(), world,
+                    user, circleCenter, circleRadius, angle, 50);
+            world.addFreshEntity(clone);
+            clone.copyEquipmentFrom(user);
+            spawnedClones.add(clone.getUUID());
+        }
 
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.PLAYERS, 1.4f, 0.9f);
@@ -218,15 +260,24 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
         user.setInvulnerable(wasInvulnerable);
         user.setDeltaMovement(Vec3.ZERO);
 
-        // Final mist burst
         createMistCircle(user.position().add(0, 1, 0), range * 0.5f, 32);
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.PLAYERS, 1.0f, 1.1f);
 
-        zigzagsExecuted = 0;
-        nextZigzagTick = 0;
+        if (world instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+            for (UUID id : spawnedClones) {
+                net.minecraft.world.entity.Entity e = serverLevel.getEntity(id);
+                if (e != null) e.discard();
+            }
+        }
+
+        zigzagsExecuted  = 0;
+        nextZigzagTick   = 0;
         finisherExecuted = false;
+        dashStartPos     = null;
+        dashEndPos       = null;
         caughtEnemies.clear();
         draggedEnemies.clear();
+        spawnedClones.clear();
     }
 }

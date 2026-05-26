@@ -10,6 +10,7 @@ import com.xirc.nichirin.common.data.*;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.network.c2s.*;
 import com.xirc.nichirin.common.network.s2c.*;
+import net.minecraft.world.phys.Vec3;
 import com.xirc.nichirin.common.network.util.MovesetSyncPacket;
 import com.xirc.nichirin.common.system.DemonComponent;
 import com.xirc.nichirin.common.system.blocking.KatanaBlock;
@@ -74,6 +75,7 @@ public interface NichirinPacketRegistry {
     ResourceLocation PERK_ACTION_ID                = new ResourceLocation(BreathOfNichirin.MOD_ID, "perk_action");
     ResourceLocation OPEN_TRAINER_DIALOGUE_ID      = new ResourceLocation(BreathOfNichirin.MOD_ID, "open_trainer_dialogue");
     ResourceLocation TRAINER_ACTION_ID             = new ResourceLocation(BreathOfNichirin.MOD_ID, "trainer_action");
+    ResourceLocation MIST_CLONES_ID                = new ResourceLocation(BreathOfNichirin.MOD_ID, "mist_clones");
 
     // Packet class mappings
     Map<Class<?>, ResourceLocation> PACKET_IDS = new HashMap<>();
@@ -97,6 +99,7 @@ public interface NichirinPacketRegistry {
         PACKET_IDS.put(MoveHotkeyPacket.class, MOVE_HOTKEY_ID);
         PACKET_IDS.put(DemonSyncPacket.class, DEMON_SYNC_ID);
         PACKET_IDS.put(TriggerShaderPacket.class, TRIGGER_SHADER_ID);
+        PACKET_IDS.put(MistClonesPacket.class, MIST_CLONES_ID);
 
         registerPackets();
     }
@@ -376,6 +379,11 @@ public interface NichirinPacketRegistry {
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, OPEN_TRAINER_DIALOGUE_ID, (buf, context) -> {
                 OpenTrainerDialoguePacket packet =
                         new OpenTrainerDialoguePacket(buf);
+                context.queue(() -> packet.handleClient());
+            });
+
+            NetworkManager.registerReceiver(NetworkManager.Side.S2C, MIST_CLONES_ID, (buf, context) -> {
+                MistClonesPacket packet = new MistClonesPacket(buf);
                 context.queue(() -> packet.handleClient());
             });
 
@@ -752,9 +760,32 @@ public interface NichirinPacketRegistry {
             p.toBytes(buf);
         } else if (packet instanceof TriggerShaderPacket p) {
             p.toBytes(buf);
+        } else if (packet instanceof MistClonesPacket p) {
+            p.toBytes(buf);
         }
 
         return buf;
+    }
+
+    static void sendMistClones(LivingEntity caster, Vec3 center, float radius, int lifetimeTicks) {
+        if (caster.level().isClientSide) return;
+        if (!(caster.level() instanceof ServerLevel serverLevel)) return;
+        try {
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+            buf.writeInt(caster.getId());
+            buf.writeDouble(center.x);
+            buf.writeDouble(center.y);
+            buf.writeDouble(center.z);
+            buf.writeFloat(radius);
+            buf.writeInt(lifetimeTicks);
+            serverLevel.getServer().getPlayerList().getPlayers().stream()
+                    .filter(p -> p.level() == caster.level()
+                            && p.distanceToSqr(caster) <= 256.0 * 256.0)
+                    .forEach(p -> NetworkManager.sendToPlayer(p, MIST_CLONES_ID, new FriendlyByteBuf(buf.copy())));
+            buf.release();
+        } catch (Exception e) {
+            // ignore
+        }
     }
 
     static void cleanupPlayer(Player player) {
