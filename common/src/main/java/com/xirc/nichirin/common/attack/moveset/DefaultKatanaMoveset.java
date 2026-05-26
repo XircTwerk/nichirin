@@ -113,6 +113,35 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
         return playerStates.computeIfAbsent(player.getUUID(), u -> new KatanaState());
     }
 
+    public static void cleanupPlayer(Player player) {
+        playerStates.remove(player.getUUID());
+    }
+
+    public static void clearAll() {
+        playerStates.clear();
+    }
+
+    public static void interruptPlayerAttack(Player player) {
+        KatanaState state = playerStates.get(player.getUUID());
+        if (state == null) return;
+
+        stopAttack(state.currentSlash);
+        stopAttack(state.currentDoubleSlash);
+        stopAttack(state.currentRisingSlash);
+        stopAttack(state.currentCheck);
+        stopAttack(state.currentOverhead);
+        stopAttack(state.currentThrust);
+
+        state.currentSlash = null;
+        state.currentDoubleSlash = null;
+        state.currentRisingSlash = null;
+        state.currentCheck = null;
+        state.currentOverhead = null;
+        state.currentThrust = null;
+        state.comboCount = 0;
+        state.lastAttackTime = 0;
+    }
+
     /** Called every tick from {@code SimpleKatana.inventoryTick} while the katana is selected. */
     public static void tick(Player player) {
         KatanaState state = playerStates.get(player.getUUID());
@@ -298,6 +327,14 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
             || (s.currentCheck       != null && s.currentCheck.isActive())
             || (s.currentOverhead    != null && s.currentOverhead.isActive())
             || (s.currentThrust      != null && s.currentThrust.isActive());
+    }
+
+    private static void stopAttack(Object attack) {
+        if (attack == null) return;
+        try {
+            attack.getClass().getMethod("stop").invoke(attack);
+        } catch (Exception ignored) {
+        }
     }
 
     private static List<LivingEntity> findTargetsInRange(Player player, float range) {

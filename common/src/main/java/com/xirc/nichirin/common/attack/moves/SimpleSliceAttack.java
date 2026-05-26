@@ -257,6 +257,11 @@ public class SimpleSliceAttack {
         hitEntities.clear();
     }
 
+    public void stop() {
+        isActive = false;
+        hitEntities.clear();
+    }
+
     public boolean isActive() {
         return isActive;
     }

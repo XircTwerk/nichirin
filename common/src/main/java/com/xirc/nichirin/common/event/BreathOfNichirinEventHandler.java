@@ -2,6 +2,7 @@ package com.xirc.nichirin.common.event;
 
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.component.AbstractDemonAttack;
+import com.xirc.nichirin.common.attack.moveset.DefaultKatanaMoveset;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.event.item.RiceInteractionHandler;
@@ -10,6 +11,8 @@ import com.xirc.nichirin.common.network.s2c.PerkSyncPacket;
 import com.xirc.nichirin.common.system.BloodMoonManager;
 import com.xirc.nichirin.common.system.DemonManager;
 import com.xirc.nichirin.common.system.KillRewardManager;
+import com.xirc.nichirin.common.system.movement.MovementContext;
+import com.xirc.nichirin.common.util.InputHandler;
 import com.xirc.nichirin.registry.NichirinItemRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.event.events.common.LifecycleEvent;
@@ -134,11 +137,20 @@ public class BreathOfNichirinEventHandler {
 
     private static void onServerStarting(MinecraftServer server) {
         currentServer = server;
+        clearTransientCombatState();
     }
 
     private static void onServerStopping(MinecraftServer server) {
         currentServer = null;
+        clearTransientCombatState();
         DemonManager.clearAll();
+    }
+
+    private static void clearTransientCombatState() {
+        NichirinPacketRegistry.clearServerPlayerStates();
+        MovementContext.clearAll();
+        DefaultKatanaMoveset.clearAll();
+        InputHandler.clearAll();
     }
 
     private static void onServerTick(MinecraftServer server) {
@@ -191,6 +203,8 @@ public class BreathOfNichirinEventHandler {
             DemonManager.cleanupPlayer(player);
             DemonFoodHandler.cleanupPlayer(player);
             NichirinPacketRegistry.cleanupPlayer(player);
+            MovementContext.cleanupPlayer(player);
+            DefaultKatanaMoveset.cleanupPlayer(player);
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -6,6 +6,7 @@ import com.xirc.nichirin.common.system.StanceManager;
 import com.xirc.nichirin.common.util.InputHandler;
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
+import com.xirc.nichirin.common.attack.moveset.DefaultKatanaMoveset;
 import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NicirinSoundRegistry;
@@ -404,6 +405,8 @@ public class KatanaBlock {
         try {
             MoveExecutor.clearAttacks(attacker);
             AbstractBreathingAttack.clearSelfTickingAttacks(attacker);
+            DefaultKatanaMoveset.interruptPlayerAttack(attacker);
+            NichirinPacketRegistry.clearInputBlock(attacker);
             sendParriedCooldown(attacker, "Move (Parried)", PARRIED_ATTACK_COOLDOWN);
 
             // Stun the attacker for 1 second (20 ticks); amplifier 1 triggers movement restriction

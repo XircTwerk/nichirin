@@ -185,6 +185,11 @@ public abstract class AbstractKatanaAttack {
         onEnd(player);
     }
 
+    public void stop() {
+        isActive = false;
+        hitEntities.clear();
+    }
+
 
     /** Called at the start of the attack (after state reset). Play sounds / start particles here. */
     protected void onStart(LivingEntity player) {}

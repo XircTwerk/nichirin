@@ -207,7 +207,11 @@ public class MovementContext {
      */
     private static boolean isOnCooldown(Player player) {
         Long cooldownEnd = playerCooldownEnds.get(player.getUUID());
-        return cooldownEnd != null && player.level().getGameTime() < cooldownEnd;
+        if (cooldownEnd == null) return false;
+        if (player.level().getGameTime() < cooldownEnd) return true;
+
+        playerCooldownEnds.remove(player.getUUID());
+        return false;
     }
 
     private static void setCooldown(Player player, MovementType movementType) {
@@ -232,7 +236,22 @@ public class MovementContext {
         if (cooldownEnd == null) return 0;
 
         long currentTime = player.level().getGameTime();
-        return Math.max(0, (int)(cooldownEnd - currentTime));
+        int remaining = Math.max(0, (int)(cooldownEnd - currentTime));
+        if (remaining == 0) {
+            playerCooldownEnds.remove(player.getUUID());
+        }
+        return remaining;
+    }
+
+    public static void cleanupPlayer(Player player) {
+        UUID playerId = player.getUUID();
+        playerCooldownEnds.remove(playerId);
+        playerInputs.remove(playerId);
+    }
+
+    public static void clearAll() {
+        playerCooldownEnds.clear();
+        playerInputs.clear();
     }
 
     /**

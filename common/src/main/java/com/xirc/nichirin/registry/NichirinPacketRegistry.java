@@ -409,6 +409,13 @@ public interface NichirinPacketRegistry {
         return SERVER_PLAYER_STATES.computeIfAbsent(player.getUUID(), uuid -> new MultiplayerInputHandler.PlayerInputState());
     }
 
+    static void clearInputBlock(Player player) {
+        MultiplayerInputHandler.PlayerInputState state = SERVER_PLAYER_STATES.get(player.getUUID());
+        if (state != null) {
+            state.clearBlock();
+        }
+    }
+
     static boolean shouldBlockInputsServer(Player player) {
         if (player.level().isClientSide) return false;
 
@@ -790,5 +797,9 @@ public interface NichirinPacketRegistry {
 
     static void cleanupPlayer(Player player) {
         SERVER_PLAYER_STATES.remove(player.getUUID());
+    }
+
+    static void clearServerPlayerStates() {
+        SERVER_PLAYER_STATES.clear();
     }
 }

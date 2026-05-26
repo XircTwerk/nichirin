@@ -260,6 +260,11 @@ public class SimpleSlashAttack {
         hitEntities.clear();
     }
 
+    public void stop() {
+        isActive = false;
+        hitEntities.clear();
+    }
+
     public int getTotalDuration() {
         return startup + active + recovery;
     }

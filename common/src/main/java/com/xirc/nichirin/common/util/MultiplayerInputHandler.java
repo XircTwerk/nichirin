@@ -34,9 +34,23 @@ public class MultiplayerInputHandler {
 
         public boolean shouldBlockInput(long currentTime) {
             if (attackWheelOpen) return true;
-            if (inputBlocked && currentTime < blockUntilTime) return true;
-            if (wheelCloseTime > 0 && currentTime - wheelCloseTime < 20) return true;
+            if (inputBlocked) {
+                if (currentTime < blockUntilTime) return true;
+                inputBlocked = false;
+                blockUntilTime = 0;
+            }
+            if (wheelCloseTime > 0) {
+                if (currentTime - wheelCloseTime < 20) return true;
+                wheelCloseTime = 0;
+            }
             return false;
+        }
+
+        public void clearBlock() {
+            attackWheelOpen = false;
+            wheelCloseTime = 0;
+            inputBlocked = false;
+            blockUntilTime = 0;
         }
     }
 
@@ -165,6 +179,12 @@ public class MultiplayerInputHandler {
             PlayerInputState state = NichirinPacketRegistry.getOrCreatePlayerState(player);
             state.inputBlocked = true;
             state.blockUntilTime = player.level().getGameTime() + 40;
+        }
+    }
+
+    public static void clearInputBlock(Player player) {
+        if (!player.level().isClientSide) {
+            NichirinPacketRegistry.clearInputBlock(player);
         }
     }
 

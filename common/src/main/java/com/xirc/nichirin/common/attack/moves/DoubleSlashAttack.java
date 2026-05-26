@@ -291,6 +291,12 @@ public class DoubleSlashAttack {
         hitCount.clear();
     }
 
+    public void stop() {
+        isActive = false;
+        hitCooldowns.clear();
+        hitCount.clear();
+    }
+
     public boolean isActive() {
         return isActive;
     }

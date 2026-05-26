@@ -234,6 +234,12 @@ public class InputHandler {
         INTERACTION_BLOCKED_UNTIL.remove(id);
     }
 
+    public static void clearAll() {
+        PLAYER_KATANAS.clear();
+        BLOCKED_UNTIL.clear();
+        INTERACTION_BLOCKED_UNTIL.clear();
+    }
+
     public static void blockAfterBreathingMove(Player player) {
         if (!player.level().isClientSide) {
             long blockUntil = player.level().getGameTime() + BLOCK_TICKS;
