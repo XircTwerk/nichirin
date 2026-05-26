@@ -446,157 +446,113 @@
                                                        }
                                          },
                        "roar":  {
-                                    "animation_length":  0.55,
+                                    "animation_length":  2.5000,
                                     "bones":  {
                                                   "torso":  {
                                                                 "rotation":  {
-                                                                                 "0.0":  {
+                                                                                 "0":  {
+                                                                                           "post":  [
+                                                                                                        0,
+                                                                                                        8,
+                                                                                                        0
+                                                                                                    ],
+                                                                                           "lerp_mode":  "catmullrom"
+                                                                                       },
+                                                                                 "0.4545":  {
+                                                                                                "post":  [
+                                                                                                             -5,
+                                                                                                             12,
+                                                                                                             0
+                                                                                                         ],
+                                                                                                "lerp_mode":  "catmullrom"
+                                                                                            },
+                                                                                 "1.2727":  {
+                                                                                                "post":  [
+                                                                                                             -22,
+                                                                                                             0,
+                                                                                                             0
+                                                                                                         ],
+                                                                                                "lerp_mode":  "catmullrom"
+                                                                                            },
+                                                                                 "1.9091":  {
+                                                                                                "post":  [
+                                                                                                             -10,
+                                                                                                             0,
+                                                                                                             0
+                                                                                                         ],
+                                                                                                "lerp_mode":  "catmullrom"
+                                                                                            },
+                                                                                 "2.5":  {
                                                                                              "post":  [
                                                                                                           0,
-                                                                                                          8,
+                                                                                                          0,
                                                                                                           0
                                                                                                       ],
                                                                                              "lerp_mode":  "catmullrom"
-                                                                                         },
-                                                                                 "0.1":  {
-                                                                                             "post":  [
-                                                                                                          -5,
-                                                                                                          12,
-                                                                                                          0
-                                                                                                      ],
-                                                                                             "lerp_mode":  "catmullrom"
-                                                                                         },
-                                                                                 "0.28":  {
-                                                                                              "post":  [
-                                                                                                           -22,
-                                                                                                           0,
-                                                                                                           0
-                                                                                                       ],
-                                                                                              "lerp_mode":  "catmullrom"
-                                                                                          },
-                                                                                 "0.42":  {
-                                                                                              "post":  [
-                                                                                                           -10,
-                                                                                                           0,
-                                                                                                           0
-                                                                                                       ],
-                                                                                              "lerp_mode":  "catmullrom"
-                                                                                          },
-                                                                                 "0.55":  {
-                                                                                              "post":  [
-                                                                                                           0,
-                                                                                                           0,
-                                                                                                           0
-                                                                                                       ],
-                                                                                              "lerp_mode":  "catmullrom"
-                                                                                          }
+                                                                                         }
                                                                              },
                                                                 "position":  {
-                                                                                 "0.0":  {
+                                                                                 "0":  {
+                                                                                           "post":  [
+                                                                                                        0,
+                                                                                                        0,
+                                                                                                        0
+                                                                                                    ],
+                                                                                           "lerp_mode":  "catmullrom"
+                                                                                       },
+                                                                                 "1.2727":  {
+                                                                                                "post":  [
+                                                                                                             0,
+                                                                                                             0,
+                                                                                                             3
+                                                                                                         ],
+                                                                                                "lerp_mode":  "catmullrom"
+                                                                                            },
+                                                                                 "2.5":  {
                                                                                              "post":  [
                                                                                                           0,
                                                                                                           0,
                                                                                                           0
                                                                                                       ],
                                                                                              "lerp_mode":  "catmullrom"
-                                                                                         },
-                                                                                 "0.28":  {
-                                                                                              "post":  [
-                                                                                                           0,
-                                                                                                           0,
-                                                                                                           3
-                                                                                                       ],
-                                                                                              "lerp_mode":  "catmullrom"
-                                                                                          },
-                                                                                 "0.55":  {
-                                                                                              "post":  [
-                                                                                                           0,
-                                                                                                           0,
-                                                                                                           0
-                                                                                                       ],
-                                                                                              "lerp_mode":  "catmullrom"
-                                                                                          }
+                                                                                         }
                                                                              }
                                                             },
                                                   "rightArm":  {
                                                                    "rotation":  {
-                                                                                    "0.0":  {
-                                                                                                "post":  [
-                                                                                                             0,
-                                                                                                             0,
-                                                                                                             -8
-                                                                                                         ],
-                                                                                                "lerp_mode":  "catmullrom"
-                                                                                            },
-                                                                                    "0.1":  {
-                                                                                                "post":  [
-                                                                                                             -15,
-                                                                                                             0,
-                                                                                                             10
-                                                                                                         ],
-                                                                                                "lerp_mode":  "catmullrom"
-                                                                                            },
-                                                                                    "0.28":  {
-                                                                                                 "post":  [
-                                                                                                              -108,
-                                                                                                              0,
-                                                                                                              18
-                                                                                                          ],
-                                                                                                 "lerp_mode":  "catmullrom"
-                                                                                             },
-                                                                                    "0.42":  {
-                                                                                                 "post":  [
-                                                                                                              -75,
-                                                                                                              0,
-                                                                                                              10
-                                                                                                          ],
-                                                                                                 "lerp_mode":  "catmullrom"
-                                                                                             },
-                                                                                    "0.55":  {
-                                                                                                 "post":  [
-                                                                                                              0,
-                                                                                                              0,
-                                                                                                              0
-                                                                                                          ],
-                                                                                                 "lerp_mode":  "catmullrom"
-                                                                                             }
-                                                                                }
-                                                               },
-                                                  "leftArm":  {
-                                                                  "rotation":  {
-                                                                                   "0.0":  {
-                                                                                               "post":  [
-                                                                                                            0,
-                                                                                                            0,
-                                                                                                            8
-                                                                                                        ],
-                                                                                               "lerp_mode":  "catmullrom"
-                                                                                           },
-                                                                                   "0.1":  {
-                                                                                               "post":  [
-                                                                                                            -15,
-                                                                                                            0,
-                                                                                                            -10
-                                                                                                        ],
-                                                                                               "lerp_mode":  "catmullrom"
-                                                                                           },
-                                                                                   "0.28":  {
-                                                                                                "post":  [
-                                                                                                             -108,
-                                                                                                             0,
-                                                                                                             -18
-                                                                                                         ],
-                                                                                                "lerp_mode":  "catmullrom"
-                                                                                            },
-                                                                                   "0.42":  {
-                                                                                                "post":  [
-                                                                                                             -75,
-                                                                                                             0,
-                                                                                                             -10
-                                                                                                         ],
-                                                                                                "lerp_mode":  "catmullrom"
-                                                                                            },
-                                                                                   "0.55":  {
+                                                                                    "0":  {
+                                                                                              "post":  [
+                                                                                                           0,
+                                                                                                           0,
+                                                                                                           -8
+                                                                                                       ],
+                                                                                              "lerp_mode":  "catmullrom"
+                                                                                          },
+                                                                                    "0.4545":  {
+                                                                                                   "post":  [
+                                                                                                                -15,
+                                                                                                                0,
+                                                                                                                10
+                                                                                                            ],
+                                                                                                   "lerp_mode":  "catmullrom"
+                                                                                               },
+                                                                                    "1.2727":  {
+                                                                                                   "post":  [
+                                                                                                                -108,
+                                                                                                                0,
+                                                                                                                18
+                                                                                                            ],
+                                                                                                   "lerp_mode":  "catmullrom"
+                                                                                               },
+                                                                                    "1.9091":  {
+                                                                                                   "post":  [
+                                                                                                                -75,
+                                                                                                                0,
+                                                                                                                10
+                                                                                                            ],
+                                                                                                   "lerp_mode":  "catmullrom"
+                                                                                               },
+                                                                                    "2.5":  {
                                                                                                 "post":  [
                                                                                                              0,
                                                                                                              0,
@@ -604,55 +560,71 @@
                                                                                                          ],
                                                                                                 "lerp_mode":  "catmullrom"
                                                                                             }
-                                                                               }
-                                                              },
-                                                  "rightLeg":  {
-                                                                   "rotation":  {
-                                                                                    "0.0":  {
-                                                                                                "post":  [
-                                                                                                             0,
-                                                                                                             0,
-                                                                                                             0
-                                                                                                         ],
-                                                                                                "lerp_mode":  "catmullrom"
-                                                                                            },
-                                                                                    "0.28":  {
-                                                                                                 "post":  [
-                                                                                                              -18,
-                                                                                                              0,
-                                                                                                              0
-                                                                                                          ],
-                                                                                                 "lerp_mode":  "catmullrom"
-                                                                                             },
-                                                                                    "0.55":  {
-                                                                                                 "post":  [
-                                                                                                              0,
-                                                                                                              0,
-                                                                                                              0
-                                                                                                          ],
-                                                                                                 "lerp_mode":  "catmullrom"
-                                                                                             }
                                                                                 }
                                                                },
-                                                  "leftLeg":  {
+                                                  "leftArm":  {
                                                                   "rotation":  {
-                                                                                   "0.0":  {
+                                                                                   "0":  {
+                                                                                             "post":  [
+                                                                                                          0,
+                                                                                                          0,
+                                                                                                          8
+                                                                                                      ],
+                                                                                             "lerp_mode":  "catmullrom"
+                                                                                         },
+                                                                                   "0.4545":  {
+                                                                                                  "post":  [
+                                                                                                               -15,
+                                                                                                               0,
+                                                                                                               -10
+                                                                                                           ],
+                                                                                                  "lerp_mode":  "catmullrom"
+                                                                                              },
+                                                                                   "1.2727":  {
+                                                                                                  "post":  [
+                                                                                                               -108,
+                                                                                                               0,
+                                                                                                               -18
+                                                                                                           ],
+                                                                                                  "lerp_mode":  "catmullrom"
+                                                                                              },
+                                                                                   "1.9091":  {
+                                                                                                  "post":  [
+                                                                                                               -75,
+                                                                                                               0,
+                                                                                                               -10
+                                                                                                           ],
+                                                                                                  "lerp_mode":  "catmullrom"
+                                                                                              },
+                                                                                   "2.5":  {
                                                                                                "post":  [
                                                                                                             0,
                                                                                                             0,
                                                                                                             0
                                                                                                         ],
                                                                                                "lerp_mode":  "catmullrom"
-                                                                                           },
-                                                                                   "0.28":  {
-                                                                                                "post":  [
-                                                                                                             15,
-                                                                                                             0,
-                                                                                                             0
-                                                                                                         ],
-                                                                                                "lerp_mode":  "catmullrom"
-                                                                                            },
-                                                                                   "0.55":  {
+                                                                                           }
+                                                                               }
+                                                              },
+                                                  "rightLeg":  {
+                                                                   "rotation":  {
+                                                                                    "0":  {
+                                                                                              "post":  [
+                                                                                                           0,
+                                                                                                           0,
+                                                                                                           0
+                                                                                                       ],
+                                                                                              "lerp_mode":  "catmullrom"
+                                                                                          },
+                                                                                    "1.2727":  {
+                                                                                                   "post":  [
+                                                                                                                -18,
+                                                                                                                0,
+                                                                                                                0
+                                                                                                            ],
+                                                                                                   "lerp_mode":  "catmullrom"
+                                                                                               },
+                                                                                    "2.5":  {
                                                                                                 "post":  [
                                                                                                              0,
                                                                                                              0,
@@ -660,6 +632,34 @@
                                                                                                          ],
                                                                                                 "lerp_mode":  "catmullrom"
                                                                                             }
+                                                                                }
+                                                               },
+                                                  "leftLeg":  {
+                                                                  "rotation":  {
+                                                                                   "0":  {
+                                                                                             "post":  [
+                                                                                                          0,
+                                                                                                          0,
+                                                                                                          0
+                                                                                                      ],
+                                                                                             "lerp_mode":  "catmullrom"
+                                                                                         },
+                                                                                   "1.2727":  {
+                                                                                                  "post":  [
+                                                                                                               15,
+                                                                                                               0,
+                                                                                                               0
+                                                                                                           ],
+                                                                                                  "lerp_mode":  "catmullrom"
+                                                                                              },
+                                                                                   "2.5":  {
+                                                                                               "post":  [
+                                                                                                            0,
+                                                                                                            0,
+                                                                                                            0
+                                                                                                        ],
+                                                                                               "lerp_mode":  "catmullrom"
+                                                                                           }
                                                                                }
                                                               }
                                               }
