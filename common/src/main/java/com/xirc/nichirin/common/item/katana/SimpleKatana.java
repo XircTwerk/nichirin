@@ -74,7 +74,7 @@ public class SimpleKatana extends Item {
         if (player.hasEffect(NichirinEffectRegistry.BLOCKING.get()))
             return InteractionResultHolder.pass(player.getItemInHand(hand));
 
-        boolean isCrouching = player.isCrouching();
+        boolean isCrouching = player.isShiftKeyDown() || player.isCrouching();
 
         // If the breathing moveset claims the right-click (returns true) we're done.
         // Otherwise fall through to the default double-slash / rising-slash.

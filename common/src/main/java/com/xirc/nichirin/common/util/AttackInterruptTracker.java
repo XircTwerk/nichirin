@@ -29,6 +29,11 @@ public final class AttackInterruptTracker {
         NichirinModConfig cfg = NichirinModConfig.get();
         if (!cfg.moveInterrupts.fireDamageInterruptsMoves && isFire(source)) return false;
         if (!cfg.moveInterrupts.fallDamageInterruptsMoves && source.is(DamageTypes.FALL)) return false;
+        if (!cfg.moveInterrupts.projectileDamageInterruptsMoves && isProjectile(source)) return false;
+        if (!cfg.moveInterrupts.explosionDamageInterruptsMoves && isExplosion(source)) return false;
+        if (!cfg.moveInterrupts.magicDamageInterruptsMoves && isMagic(source)) return false;
+        if (!cfg.moveInterrupts.drowningDamageInterruptsMoves && source.is(DamageTypes.DROWN)) return false;
+        if (!cfg.moveInterrupts.starvationDamageInterruptsMoves && source.is(DamageTypes.STARVE)) return false;
         return true;
     }
 
@@ -37,5 +42,22 @@ public final class AttackInterruptTracker {
                 || source.is(DamageTypes.IN_FIRE)
                 || source.is(DamageTypes.ON_FIRE)
                 || source.is(DamageTypes.LAVA);
+    }
+
+    private static boolean isProjectile(DamageSource source) {
+        return source.is(DamageTypeTags.IS_PROJECTILE)
+                || source.is(DamageTypes.ARROW)
+                || source.is(DamageTypes.TRIDENT);
+    }
+
+    private static boolean isExplosion(DamageSource source) {
+        return source.is(DamageTypeTags.IS_EXPLOSION)
+                || source.is(DamageTypes.EXPLOSION)
+                || source.is(DamageTypes.PLAYER_EXPLOSION);
+    }
+
+    private static boolean isMagic(DamageSource source) {
+        return source.is(DamageTypes.MAGIC)
+                || source.is(DamageTypes.INDIRECT_MAGIC);
     }
 }

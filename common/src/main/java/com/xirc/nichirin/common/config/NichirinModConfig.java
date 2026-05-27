@@ -11,12 +11,12 @@ import java.util.List;
 /**
  * Cloth Config / AutoConfig-backed configuration for Breath of Nichirin.
  *
- * <p>Saved to {@code .minecraft/config/nichirin.json} and editable through
+ * <p>Saved to {@code .minecraft/config/nichirin-server.toml} and editable through
  * the Cloth Config GUI (accessible via the Mods screen on Fabric/Forge).</p>
  *
  * <p>Use {@link #get()} anywhere in the codebase to read current values.</p>
  */
-@Config(name = "nichirin")
+@Config(name = "nichirin-server")
 public class NichirinModConfig implements ConfigData {
 
     // Combat
@@ -80,7 +80,7 @@ public class NichirinModConfig implements ConfigData {
         public boolean freeBreathMoves = false;
 
         @ConfigEntry.Gui.Tooltip
-        @ConfigEntry.BoundedDiscrete(min = 1, max = 100)
+        @ConfigEntry.BoundedDiscrete(min = 1, max = 1000)
         public int maxBreath = 100;
 
         /** Per-tick regen (so 1 = 20/sec). */
@@ -151,6 +151,21 @@ public class NichirinModConfig implements ConfigData {
 
         @ConfigEntry.Gui.Tooltip
         public boolean fallDamageInterruptsMoves = false;
+
+        @ConfigEntry.Gui.Tooltip
+        public boolean projectileDamageInterruptsMoves = true;
+
+        @ConfigEntry.Gui.Tooltip
+        public boolean explosionDamageInterruptsMoves = true;
+
+        @ConfigEntry.Gui.Tooltip
+        public boolean magicDamageInterruptsMoves = true;
+
+        @ConfigEntry.Gui.Tooltip
+        public boolean drowningDamageInterruptsMoves = true;
+
+        @ConfigEntry.Gui.Tooltip
+        public boolean starvationDamageInterruptsMoves = true;
     }
 
     // Kill Rewards

@@ -10,7 +10,7 @@ import net.fabricmc.api.Environment;
 /**
  * Client-only visual config for Breath of Nichirin.
  *
- * <p>Saved to {@code .minecraft/config/nichirin_client.json} on each player's
+ * <p>Saved to {@code .minecraft/config/nichirin_client.toml} on each player's
  * own machine. Changes here only affect YOUR game — not other players.</p>
  */
 @Environment(EnvType.CLIENT)
@@ -49,7 +49,7 @@ public class NichirinClientConfig implements ConfigData {
     public static void register() {
         try {
             AutoConfig.register(NichirinClientConfig.class,
-                    me.shedaniel.autoconfig.serializer.GsonConfigSerializer::new);
+                    NichirinClientConfigSerializer::new);
         } catch (Exception e) {
             // cloth-config not installed; defaults will be used
         }

@@ -224,7 +224,7 @@ public class ClientInputHandler {
     }
 
     private static void sendRightClick(Player player) {
-        boolean crouch = player.isCrouching();
+        boolean crouch = isCrouchInputDown(player);
 
         try {
             // Show cooldown for katana users
@@ -250,5 +250,16 @@ public class ClientInputHandler {
             } catch (Exception fallbackException) {
             }
         }
+    }
+
+    private static boolean isCrouchInputDown(Player player) {
+        try {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.options != null && mc.options.keyShift.isDown()) {
+                return true;
+            }
+        } catch (Exception ignored) {
+        }
+        return player.isShiftKeyDown() || player.isCrouching();
     }
 }

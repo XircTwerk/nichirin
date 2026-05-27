@@ -2,6 +2,7 @@ package com.xirc.nichirin;
 
 import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.config.NichirinServerConfig;
+import com.xirc.nichirin.common.config.NichirinServerConfigSerializer;
 import com.xirc.nichirin.common.advancement.NichirinCriteriaTriggers;
 import com.xirc.nichirin.common.event.item.DrinkingGourdInteractionHandler;
 import com.xirc.nichirin.common.event.system.*;
@@ -24,15 +25,17 @@ public final class BreathOfNichirin {
     public static final DeferredRegister<CreativeModeTab> CREATIVE_TAB_REGISTRY = DeferredRegister.create(MOD_ID, Registries.CREATIVE_MODE_TAB);
 
     public static void init() {
-        // Register config first so all systems can read from it immediately
+        // Migrate/load the server config before AutoConfig can create a default file.
+        NichirinServerConfig.load();
+
+        // Register config so all systems can read from it immediately
         try {
             me.shedaniel.autoconfig.AutoConfig.register(
                     NichirinModConfig.class,
-                    me.shedaniel.autoconfig.serializer.GsonConfigSerializer::new);
+                    NichirinServerConfigSerializer::new);
         } catch (Exception e) {
             LOGGER.warn("Could not register Cloth Config (cloth-config not installed?). Using hardcoded defaults.", e);
         }
-        NichirinServerConfig.load();
 
         // Initialize common registries first
         NichirinItemRegistry.init();
