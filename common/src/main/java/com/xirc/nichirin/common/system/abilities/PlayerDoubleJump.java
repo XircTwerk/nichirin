@@ -33,7 +33,6 @@ public class PlayerDoubleJump {
      * Call this when a player attempts to jump (without directional input)
      */
     public static void tryDoubleJump(Player player) {
-        // STRICT: Only allow double jump when NOT on ground
         if (player.onGround()) {
             return;
         }
@@ -48,7 +47,6 @@ public class PlayerDoubleJump {
      * Call this when a player attempts to jump with directional input
      */
     public static void tryDoubleJump(Player player, MovementContext.DashInput input) {
-        // STRICT: Only allow double jump when NOT on ground
         if (player.onGround()) {
             return;
         }

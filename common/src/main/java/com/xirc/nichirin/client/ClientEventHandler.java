@@ -13,7 +13,6 @@ import net.minecraft.client.Minecraft;
 public class ClientEventHandler {
 
     public static void register() {
-        // CRITICAL FIX: Register katana/demon input handler directly
         ClientInputHandler.registerClientEvents();
 
         // Register HUD render event

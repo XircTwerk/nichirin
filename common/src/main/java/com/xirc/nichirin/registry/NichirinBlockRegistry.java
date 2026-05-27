@@ -36,7 +36,6 @@ public interface NichirinBlockRegistry {
                     .sound(SoundType.WOOD)
                     .noOcclusion()));
 
-    // NEW: Wysteria Wood Set
     RegistrySupplier<Block> WYSTERIA_LOG = BLOCKS.register("wysteria_log",
             () -> new RotatedPillarBlock(BlockBehaviour.Properties.copy(Blocks.OAK_LOG).mapColor(MapColor.COLOR_PURPLE)));
 
@@ -118,7 +117,6 @@ public interface NichirinBlockRegistry {
     RegistrySupplier<Item> KATANA_HOLDER_ITEM = ITEMS.register("katana_holder",
             () -> new BlockItem(KATANA_HOLDER_BLOCK.get(), new Item.Properties()));
 
-    // NEW: Wysteria Wood Block Items
     RegistrySupplier<Item> WYSTERIA_LOG_ITEM = ITEMS.register("wysteria_log",
             () -> new BlockItem(WYSTERIA_LOG.get(), new Item.Properties()));
 

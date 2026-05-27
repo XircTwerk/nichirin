@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * FIXED: Attack wheel overlay that properly displays demon movesets for demons
+ * Attack wheel overlay that properly displays demon movesets for demons
  */
 public class AttackWheelOverlay {
 
@@ -85,7 +85,7 @@ public class AttackWheelOverlay {
     }
 
     /**
-     * FIXED: Rebuild wheel using the same logic as AttackWheelHandler
+     * Rebuild wheel using the same logic as AttackWheelHandler
      */
     private void rebuildWheel() {
         segments.clear();
@@ -96,7 +96,6 @@ public class AttackWheelOverlay {
 
         Player player = minecraft.player;
 
-        // FIXED: Use the same logic as AttackWheelHandler to determine which moveset to show
         AbstractMoveset moveset = null;
         String movesetId = null;
 
@@ -344,7 +343,6 @@ public class AttackWheelOverlay {
     private void drawCenterIcon(GuiGraphics guiGraphics, int centerX, int centerY, MoveSegment segment) {
         ResourceLocation iconLocation = null;
 
-        // FIXED: Get the correct moveset ID based on held item
         if (minecraft.player != null && segment.config != null) {
             Player player = minecraft.player;
             ItemStack mainHand = player.getMainHandItem();

@@ -42,16 +42,12 @@ public class NichirinRecipeProvider extends FabricRecipeProvider {
                 .unlockedBy("has_katana", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinItemRegistry.KATANA.get()))
                 .unlockedBy("has_yellow_dye", InventoryChangeTrigger.TriggerInstance.hasItems(Items.YELLOW_DYE))
                 .save(exporter);
-
-        // Flame katana recipe - updated to use red dye
         ShapelessRecipeBuilder.shapeless(RecipeCategory.COMBAT, NichirinItemRegistry.FLAME_KATANA.get())
                 .requires(NichirinItemRegistry.KATANA.get())
                 .requires(Items.RED_DYE)
                 .unlockedBy("has_katana", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinItemRegistry.KATANA.get()))
                 .unlockedBy("has_red_dye", InventoryChangeTrigger.TriggerInstance.hasItems(Items.RED_DYE))
                 .save(exporter);
-
-        // Insect katana recipe - updated to use magenta dye
         ShapelessRecipeBuilder.shapeless(RecipeCategory.COMBAT, NichirinItemRegistry.INSECT_KATANA.get())
                 .requires(NichirinItemRegistry.KATANA.get())
                 .requires(Items.MAGENTA_DYE)

@@ -160,7 +160,7 @@ public class DemonCommand {
     }
 
     /**
-     * FIXED: Removes demon status from a player and clears ALL demon-related data
+     * Removes demon status from a player and clears ALL demon-related data
      */
     private static int removeDemon(CommandContext<CommandSourceStack> context, ServerPlayer player) {
         CommandSourceStack source = context.getSource();
@@ -174,18 +174,14 @@ public class DemonCommand {
             return 0;
         }
 
-        // FIXED: Clear demon moveset specifically
         PlayerDataProvider.getData(player).getMovesetData().setDemonMovesetId(null);
 
-        // FIXED: Clean up ALL demon-specific data (blood points, regen tracking, etc.)
         DemonManager.cleanupPlayer(player);
 
-        // FIXED: Reset food data to normal (remove infinite hunger/stamina)
         player.getFoodData().setFoodLevel(20);
         player.getFoodData().setSaturation(5.0f);
         player.getFoodData().setExhaustion(0.0f);
 
-        // FIXED: Extinguish any sun fire
         if (player.isOnFire()) {
             player.clearFire();
         }

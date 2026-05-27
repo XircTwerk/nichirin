@@ -37,7 +37,6 @@ public class RiceSpiritAttack extends ThunderBreathingAttackBase {
         lockedTarget = findClosestEnemy();
 
         if (lockedTarget == null) {
-            // FIXED: No target in range - stop the attack BEFORE it becomes active
             // This prevents breath consumption and cooldown application
 
             // Stop the attack immediately - this will prevent breath consumption

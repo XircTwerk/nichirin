@@ -31,11 +31,8 @@ public class ClientDoubleJumpHandler {
 
         // Detect jump key press (rising edge detection)
         boolean jumpPressed = isJumping && !wasJumping;
-
-        // CRITICAL: Only process if NOT on ground, cooldown ready, and jump was pressed
         if (jumpPressed && jumpCooldown == 0) {
 
-            // STRICT CHECK: Must not be on ground
             if (player.onGround()) {
                 // Do nothing
             } else if (!StaminaManager.hasStamina(player, PlayerDoubleJump.getStaminaCost())) {
@@ -45,11 +42,10 @@ public class ClientDoubleJumpHandler {
                 // Set cooldown to prevent spam
                 jumpCooldown = 10;
 
-                // CAPTURE CURRENT WASD INPUT STATES
-                boolean forward = player.input.up;      // W key
-                boolean backward = player.input.down;   // S key
-                boolean left = player.input.left;       // A key
-                boolean right = player.input.right;     // D key
+                boolean forward = player.input.up;
+                boolean backward = player.input.down;
+                boolean left = player.input.left;
+                boolean right = player.input.right;
 
                 // Send packet to server WITH movement input
                 DoubleJumpPacket packet = new DoubleJumpPacket(forward, backward, left, right);

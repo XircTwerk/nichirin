@@ -34,9 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Base class for all demon art attacks.
  * Similar to AbstractBreathingAttack but for demon abilities - no breath/stamina costs.
  * Fixed hitbox system with proper positioning and no rotation issues.
- * Now includes blood restoration on successful hits (1 blood every 3 hits).
- *
- * REFACTORED: Now supports both Players and NPCs (uses LivingEntity)
+ * Restores blood on successful hits.
  */
 @Getter
 @SuppressWarnings("rawtypes")
@@ -63,14 +61,14 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
     protected Float dashSpeed;
     protected Integer teleportWindup;
 
-    // Runtime state - CHANGED FROM Player TO LivingEntity for NPC support
+    // Runtime state shared by player and NPC attacks.
     @Setter
     protected boolean isActive = false;
     protected int tickCount = 0;
     protected LivingEntity user;
     protected Level world;
 
-    // Self-ticking system - CHANGED to use UUID instead of Player for NPC support
+    // Tracks active attacks by UUID so players and NPCs share the same ticking path.
     private static final ConcurrentHashMap<UUID, List<AbstractDemonAttack<?, ?>>> selfTickingAttacks = new ConcurrentHashMap<>();
 
     // Hit tracking
@@ -92,8 +90,6 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
         if (configured) {
             return; // Prevent double-configuration
         }
-
-        // Combat Stats - REMOVED defaults - these MUST be provided by moveset
         this.damage = config.getDamageOrDefault(0f);
         this.range = config.getRangeOrDefault(0f);
         this.knockback = config.getKnockbackOrDefault(0f);
@@ -117,10 +113,9 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
     }
 
     /**
-     * Start the attack - REFACTORED: Now works with LivingEntity (Players AND NPCs)
+     * Start the attack for a player or NPC.
      */
     public void start(LivingEntity user, Level world) {
-        // CRITICAL: Check configuration first
         if (!configured) {
             LOGGER.warn("Demon attack {} not configured before start()", this.getClass().getSimpleName());
             return;
@@ -252,7 +247,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
 
     /**
      * Apply damage and effects to a target with immunity frames
-     * Now includes blood restoration for demons (1 blood every 3 hits)
+     * Restores blood for demons after repeated hits.
      */
     protected void hitTarget(LivingEntity target) {
         if (world.isClientSide) return;
@@ -310,7 +305,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
 
     /**
      * Special hit method that removes immunity frames
-     * Now includes blood restoration for demons (1 blood every 3 hits)
+     * Restores blood for demons after repeated hits.
      */
     protected void hitTargetNoImmunity(LivingEntity target) {
         if (world.isClientSide) return;
@@ -367,7 +362,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
     /**
      * Handle blood gain from hitting targets
      * 1 blood every 3 hits, 3 blood on kill
-     * FIXED: Only works for Players (NPCs use their own blood system)
+     * Only works for Players (NPCs use their own blood system)
      */
     private void handleBloodGain(LivingEntity target) {
         // Only players have blood points managed by DemonManager
@@ -422,7 +417,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
 
     /**
      * Get entities in a hitbox centered at the given position
-     * FIXED: Uses position-based detection instead of rotated AABBs
+     * Uses position-based detection instead of rotated AABBs
      */
     protected List<LivingEntity> getTargetsInHitbox(Vec3 center) {
         // Use a simple search area around the center
@@ -463,7 +458,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
 
     /**
      * Get entities in a custom hitbox with specified shape and size
-     * FIXED: Uses simple distance checking instead of rotation
+     * Uses simple distance checking instead of rotation
      */
     protected List<LivingEntity> getTargetsInCustomHitbox(Vec3 center, float size, HitboxData.HitboxShape shape) {
         // Use distance-based detection regardless of shape
@@ -511,7 +506,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
 
     /**
      * Get entities in a line between two points
-     * FIXED: Uses mathematical line-to-point distance calculation
+     * Uses mathematical line-to-point distance calculation
      */
     protected List<LivingEntity> getTargetsInLine(Vec3 start, Vec3 end, double thickness) {
         double lineLength = start.distanceTo(end);
@@ -566,7 +561,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
 
     /**
      * Create a hitbox at the configured range from the user
-     * FIXED: Uses simple positioning without rotation
+     * Uses simple positioning without rotation
      */
     protected List<LivingEntity> getTargetsAtRange() {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
@@ -589,7 +584,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
 
     /**
      * Create multiple hitboxes from user to max range
-     * FIXED: Uses proper line detection
+     * Uses proper line detection
      */
     protected List<LivingEntity> getTargetsInRangeLine(float spacing) {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
@@ -602,7 +597,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
 
     /**
      * Create a cone of hitboxes at the configured range
-     * FIXED: Uses angle-based detection instead of rotated hitboxes
+     * Uses angle-based detection instead of rotated hitboxes
      */
     protected List<LivingEntity> getTargetsInCone(float coneAngle, int hitboxCount) {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
@@ -671,7 +666,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
     }
 
     /**
-     * FIXED: Thrust attack using line detection
+     * Thrust attack using line detection
      */
     protected List<LivingEntity> getTargetsInThrust() {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
@@ -683,7 +678,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
 
     /**
      * Create a 360-degree circular attack around the user
-     * FIXED: Uses simple distance checking
+     * Uses simple distance checking
      */
     protected List<LivingEntity> getTargetsInCircle(float radius, int hitboxCount) {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
@@ -807,7 +802,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
     }
 
     /**
-     * Tick all self-registered attacks - REFACTORED for NPC support
+     * Tick all self-registered attacks.
      */
     public static void tickAllActiveAttacks(MinecraftServer server) {
         if (selfTickingAttacks.isEmpty()) {
@@ -870,7 +865,6 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
 
     /**
      * Clear all self-ticking attacks for a LivingEntity (on disconnect, death, etc.)
-     * REFACTORED: Now accepts LivingEntity for NPC support
      */
     public static void clearSelfTickingAttacks(LivingEntity entity) {
         var attacks = selfTickingAttacks.remove(entity.getUUID());

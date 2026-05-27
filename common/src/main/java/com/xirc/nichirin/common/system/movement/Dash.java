@@ -62,8 +62,8 @@ public class Dash {
 
         if (input.forward) forward += 1;
         if (input.backward) forward -= 1;
-        if (input.right) side += 1;    // Fixed: was side -= 1
-        if (input.left) side -= 1;     // Fixed: was side += 1
+        if (input.right) side += 1;
+        if (input.left) side -= 1;
 
         // Combine directions
         Vec3 dashDirection = forwardDirection.scale(forward).add(rightDirection.scale(side));

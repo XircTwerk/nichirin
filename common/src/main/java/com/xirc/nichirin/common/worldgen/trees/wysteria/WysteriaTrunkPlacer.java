@@ -116,8 +116,6 @@ public class WysteriaTrunkPlacer extends TrunkPlacer {
 
             // Create branch extending from connection point
             Direction branchDir = Direction.from2DDataValue(i % 4);
-
-            // FIXED: Scale branch length based on tree height
             int branchLength;
             if (height <= 5) {
                 branchLength = 1 + random.nextInt(2); // Small trees: 1-2 blocks

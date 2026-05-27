@@ -394,7 +394,7 @@ public class AttackWheelHandler {
     }
 
     /**
-     * NEW METHOD: Check if inputs should be blocked due to wheel state
+     * Check if inputs should be blocked due to wheel state.
      * This includes:
      * 1. When wheel is currently open
      * 2. For 2 seconds after wheel closes
@@ -447,10 +447,9 @@ public class AttackWheelHandler {
     }
 
     /**
-     * ENHANCED: Use the new blocking system instead of the old method
+     * Check all client-side attack blocking gates.
      */
     public static boolean shouldBlockKatanaAttacks() {
-        // Use the new comprehensive blocking system
         boolean shouldBlock = shouldBlockAttackInputs() || MultiplayerInputHandler.shouldBlockInputsClient();
         return shouldBlock;
     }

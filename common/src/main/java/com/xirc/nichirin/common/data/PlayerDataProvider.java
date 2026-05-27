@@ -78,9 +78,7 @@ public class PlayerDataProvider {
                 }
                 // Record moveset as equipped for time tracking
                 data.getStatistics().onMovesetEquipped(moveset.getMovesetId());
-            }
-
-            // CRITICAL: Sync to client AFTER data is loaded and applied
+            } // Sync to client AFTER data is loaded and applied
             syncToClient(serverPlayer);
         });
 
@@ -224,7 +222,7 @@ public class PlayerDataProvider {
     }
 
     /**
-     * FIXED: Syncs moveset data to client using proper dual moveset system
+     * Syncs moveset data to client using proper dual moveset system
      */
     private static void syncToClient(ServerPlayer player) {
         try {
@@ -240,8 +238,6 @@ public class PlayerDataProvider {
             if (breathingId != null) {
                 NichirinPacketRegistry.sendToPlayer(player, breathingId);
             }
-
-            // Always sync the demon GUI state so it clears when demon is removed
             boolean isDemon = demonId != null;
             int bloodPoints = isDemon ? DemonManager.getBloodPoints(player) : 0;
             int halfBloodPoints = isDemon ? DemonFoodHandler.getHalfBloodPoints(player) : 0;

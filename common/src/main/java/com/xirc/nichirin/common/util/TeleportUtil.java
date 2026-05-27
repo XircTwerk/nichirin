@@ -22,25 +22,16 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
-/**
- * FIXED: Reliable multiplayer teleportation - less strict safety checks
- */
 public class TeleportUtil {
 
-    /**
-     * MAIN FIX: Server-authoritative teleportation with RELAXED safety checks
-     */
     public static boolean teleport(LivingEntity entity, Vec3 targetPos, TeleportOptions options) {
         Level world = entity.level();
 
-        // CRITICAL: Only execute teleportation on server side
         if (world.isClientSide) {
             return false;
         }
 
         Vec3 startPos = entity.position();
-
-        // FIXED: Much more lenient safety checking
         if (options.requireSafe && !isPositionReasonable(world, targetPos, entity)) {
             // Try to find nearby safe position with more relaxed criteria
             targetPos = findReasonablePosition(world, targetPos, entity, options.maxSafeSearchRadius);
@@ -66,13 +57,10 @@ public class TeleportUtil {
             world.playSound(null, startPos.x, startPos.y, startPos.z,
                     options.departureSound, SoundSource.PLAYERS, options.soundVolume, options.soundPitch);
         }
-
-        // FIXED: Always successful teleportation
         if (entity instanceof ServerPlayer serverPlayer) {
             // For players: Use proper teleport method with forced sync
             serverPlayer.teleportTo(targetPos.x, targetPos.y, targetPos.z);
-
-            // CRITICAL: Force position sync to client immediately
+            // Force position sync to client immediately
             serverPlayer.connection.teleport(targetPos.x, targetPos.y, targetPos.z,
                     entity.getYRot(), entity.getXRot());
 
@@ -120,7 +108,7 @@ public class TeleportUtil {
     }
 
     /**
-     * FIXED: Much more lenient position checking - only check for deadly situations
+     * Much more lenient position checking - only check for deadly situations
      */
     private static boolean isPositionReasonable(Level world, Vec3 pos, Entity entity) {
         // Only check for truly dangerous situations
@@ -143,7 +131,7 @@ public class TeleportUtil {
     }
 
     /**
-     * FIXED: Quick reasonable position finder - no complex searching
+     * Quick reasonable position finder - no complex searching
      */
     private static Vec3 findReasonablePosition(Level world, Vec3 pos, Entity entity, float maxRadius) {
         // Simple 8-direction check around the position
@@ -171,12 +159,10 @@ public class TeleportUtil {
     }
 
     /**
-     * FIXED: Direction teleport with LESS STRICT block collision check
+     * Direction teleport with relaxed block collision checks.
      */
     public static boolean teleportInDirection(LivingEntity entity, float distance, TeleportOptions options) {
-        Level level = entity.level();
-
-        // CRITICAL: Server-side only
+        Level level = entity.level(); // Server-side only
         if (level.isClientSide) {
             return false;
         }
@@ -192,7 +178,7 @@ public class TeleportUtil {
     }
 
     /**
-     * FIXED: Check path for obstacles, but place on top of blocks at destination
+     * Check path for obstacles, but place on top of blocks at destination
      */
     private static Vec3 checkForMajorObstacles(Level level, Vec3 start, Vec3 direction, double maxDistance, Entity entity) {
         double stepSize = 0.5;
@@ -261,7 +247,6 @@ public class TeleportUtil {
     }
 
     /**
-     * UNCHANGED: Other teleport methods
      */
     public static boolean teleport(LivingEntity entity, Vec3 targetPos) {
         return teleport(entity, targetPos, new TeleportOptions());
@@ -284,7 +269,6 @@ public class TeleportUtil {
     }
 
     /**
-     * UNCHANGED: Effect methods
      */
     private static void createTeleportTrail(ServerLevel world, Vec3 start, Vec3 end, ParticleOptions particle, float density) {
         Vec3 direction = end.subtract(start);
@@ -303,7 +287,6 @@ public class TeleportUtil {
     }
 
     /**
-     * UNCHANGED: Damage method
      */
     private static void damageEntitiesInPath(LivingEntity attacker, Vec3 start, Vec3 end, TeleportOptions options, ServerLevel world) {
         if (!options.damageAlongPath || options.pathDamage <= 0) return;
@@ -332,7 +315,6 @@ public class TeleportUtil {
     }
 
     /**
-     * UNCHANGED: Configuration class
      */
     public static class TeleportOptions {
         // Effects

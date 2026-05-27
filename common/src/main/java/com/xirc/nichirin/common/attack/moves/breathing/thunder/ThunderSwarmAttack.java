@@ -17,7 +17,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom; // âœ… Thread-safe alternative
+import java.util.concurrent.ThreadLocalRandom;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
@@ -34,7 +34,6 @@ public class ThunderSwarmAttack extends ThunderBreathingAttackBase {
     private final List<ProjectileSlash> activeSlashes = new ArrayList<>();
     private int slashesLaunched = 0;
     private int launchTimer = 0;
-    // âœ… REMOVED: private final Random random = new Random();
 
     public ThunderSwarmAttack() {
     }
@@ -95,8 +94,6 @@ public class ThunderSwarmAttack extends ThunderBreathingAttackBase {
         );
 
         activeSlashes.add(slash);
-
-        // Launch sound - âœ… FIXED: Use ThreadLocalRandom instead of instance field
         world.playSound(null, startPos.x, startPos.y, startPos.z,
                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS,
                 0.8f, 1.5f + ThreadLocalRandom.current().nextFloat() * 0.3f);

@@ -20,7 +20,6 @@ import java.util.List;
  * High damage, close range, high stun, steals blood on hit
  * No knockback to keep enemies in bite range
  *
- * REFACTORED: Now works with both Player and NPC users
  * - Players: Steal blood via DemonManager
  * - NPCs: Just deal damage (they rely on natural regen, no blood stealing)
  */

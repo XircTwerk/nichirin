@@ -65,7 +65,7 @@ public class KatanaBlock {
         BlockingStance stance = BlockingStance.NONE;
         int blockTicks = 0;
         int parryWindowTicks = 0;
-        long blockCooldownUntil = 0; // New: cooldown for all blocking attempts
+        long blockCooldownUntil = 0;
         boolean wasBlockingLastTick = false;
 
         void reset() {

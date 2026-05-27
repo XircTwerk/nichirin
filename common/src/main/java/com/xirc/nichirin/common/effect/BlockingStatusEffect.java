@@ -15,7 +15,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeMap;
 /**
  * Blocking Status Effect - Applied when a player is blocking with a katana
  * Only handles movement speed reduction - damage reduction is handled by vanilla Resistance IV
- * ENHANCED: Removes stun effects when applied while blocking
+ * Removes stun effects when applied while blocking
  */
 public class BlockingStatusEffect extends MobEffect {
 

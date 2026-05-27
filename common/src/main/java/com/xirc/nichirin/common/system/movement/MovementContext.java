@@ -149,7 +149,7 @@ public class MovementContext {
      */
     private static void executeMovement(Player player, MovementType movementType, InputState input) {
         switch (movementType) {
-            case DODGE -> Dodge.executeGroundDodge(player); // FIXED: use executeGroundDodge
+            case DODGE -> Dodge.executeGroundDodge(player);
             case AIR_DODGE -> {
                 // Convert InputState to DashInput for air dodge
                 DashInput airDodgeInput = new DashInput();

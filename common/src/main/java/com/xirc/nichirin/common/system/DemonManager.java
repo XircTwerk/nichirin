@@ -137,19 +137,15 @@ public class DemonManager {
     }
 
     /**
-     * FIXED: Handles blood-based regeneration with stun check and fire check
+     * Handles blood-based regeneration with stun check and fire check
      */
     private static void handleBloodRegeneration(Player player) {
         long currentTime = player.level().getGameTime();
         UUID playerUUID = player.getUUID();
-
-        // FIXED: Check if player is stunned (ANY amplifier level)
         boolean hasStunEffect = player.hasEffect(NichirinEffectRegistry.STUNNED.get());
         if (hasStunEffect) {
             return; // Block regen during any stun
         }
-
-        // FIXED: Check if player is on fire using getRemainingFireTicks
         int fireTicks = player.getRemainingFireTicks();
         if (fireTicks > 0) {
             return; // Block regen while burning
@@ -174,7 +170,7 @@ public class DemonManager {
     }
 
     /**
-     * FIXED: Gets regeneration rate based on blood points with gradual scaling
+     * Gets regeneration rate based on blood points with gradual scaling
      * 10 blood: 3.0 hp/s
      * 5 blood: 1.5 hp/s
      * 1 blood: 0.5 hp/s
@@ -189,7 +185,7 @@ public class DemonManager {
     }
 
     /**
-     * FIXED: Applies infinite stamina and maintains full hunger ONLY for demons
+     * Applies infinite stamina and maintains full hunger ONLY for demons
      * BUT prevents natural regeneration - demons only heal via blood regen
      */
     private static void applyInfiniteStamina(Player player) {
@@ -207,8 +203,6 @@ public class DemonManager {
         if (foodData.getFoodLevel() < 20) {
             foodData.setFoodLevel(20); // Full hunger (20/20)
         }
-
-        // FIXED: Set saturation to 0 to disable vanilla natural regeneration
         // Demons should only heal via blood regeneration, not vanilla mechanics
         if (foodData.getSaturationLevel() > 0.0f) {
             foodData.setSaturation(0.0f); // No saturation = no vanilla regen

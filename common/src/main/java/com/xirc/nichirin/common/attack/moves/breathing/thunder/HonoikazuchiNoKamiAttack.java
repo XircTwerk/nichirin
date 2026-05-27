@@ -94,7 +94,6 @@ public class HonoikazuchiNoKamiAttack extends ThunderBreathingAttackBase {
                         hitEntities.add(target);
                     }
                 });
-        // REMOVED .unsafe() - now respects blocks like Thunder Clap and Flash
 
         // Custom sound properties
         options.soundVolume = 2.0f;
@@ -230,7 +229,6 @@ public class HonoikazuchiNoKamiAttack extends ThunderBreathingAttackBase {
 
     @Override
     protected void onStop() {
-        // Ensure invulnerability is removed
         user.setInvulnerable(false);
 
         hitEntities.clear();

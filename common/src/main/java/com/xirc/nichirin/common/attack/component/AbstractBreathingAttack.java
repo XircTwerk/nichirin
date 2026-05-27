@@ -33,7 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Base class for all breathing technique attacks.
- * Now follows the same pattern as ThunderBreathingAttackBase with moveset configuration.
+ * Uses moveset configuration at attack startup.
  * Enhanced with rotation-aware hitbox system for directional attacks.
  */
 @Getter
@@ -609,8 +609,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     }
 
     /**
-     * Create a fan/sweep attack that covers an arc in front of the player
-     * NEW METHOD: Creates multiple hitboxes in an arc pattern with proper rotation
+     * Create a fan/sweep attack that covers an arc in front of the player.
      */
     protected List<LivingEntity> getTargetsInSweep(float sweepAngle, float sweepRange, int hitboxCount) {
         Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);
@@ -658,8 +657,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     }
 
     /**
-     * Create a thrust attack with a long hitbox extending from the player
-     * NEW METHOD: Creates a single long hitbox that follows player direction
+     * Create a thrust attack with a long hitbox extending from the player.
      */
     protected List<LivingEntity> getTargetsInThrust() {
         Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);
@@ -694,8 +692,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     }
 
     /**
-     * Create a 360-degree circular attack around the player
-     * NEW METHOD: Creates multiple hitboxes in a circle around the player
+     * Create a 360-degree circular attack around the player.
      */
     protected List<LivingEntity> getTargetsInCircle(float radius, int hitboxCount) {
         Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);

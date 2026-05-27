@@ -82,7 +82,6 @@ public class ThunderBallEntity extends Entity {
         if (!this.level().isClientSide) {
             int currentLifeTicks = this.entityData.get(LIFE_TICKS);
 
-            // STRICT 120 tick lifespan - disappear immediately at 120 ticks
             if (currentLifeTicks >= MAX_LIFE_TICKS) {
                 this.discard(); // Disappear, not die
                 return;

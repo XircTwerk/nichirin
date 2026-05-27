@@ -36,7 +36,7 @@ public class NichirinConfiguredFeatures {
                 new OreConfiguration(
                         List.of(OreConfiguration.target(sandReplaceable, NichirinBlockRegistry.SCARLET_CRIMSON_IRON_SAND.get().defaultBlockState())),
                         4, // vein size
-                        0.0f // CRITICAL: 0.0 air exposure discard chance for surface generation
+                        0.0f // 0.0 air exposure discard chance for surface generation
                 )
         ));
 
@@ -46,7 +46,7 @@ public class NichirinConfiguredFeatures {
                 new OreConfiguration(
                         List.of(OreConfiguration.target(stoneReplaceable, NichirinBlockRegistry.SCARLET_ORE.get().defaultBlockState())),
                         6, // vein size
-                        0.0f // CRITICAL: 0.0 air exposure discard chance for surface generation
+                        0.0f // 0.0 air exposure discard chance for surface generation
                 )
         ));
     }

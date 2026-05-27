@@ -32,8 +32,7 @@ import java.util.concurrent.TimeUnit;
  * Flexible system supporting any number of moves with full configuration and followup system
  * Icons are handled by the MoveIcon system, not stored in move configs
  * Includes stun prevention system to prevent move stacking
- * Now supports custom left click attacks
- * REFACTORED: Works with LivingEntity instead of just Player
+ * Supports custom left-click attacks.
  */
 @Getter
 public abstract class AbstractMoveset {

@@ -51,8 +51,6 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
         if (tickCount == windup + 1) {
             performRisingSlash();
         }
-
-        // ✅ FIXED: Use range instead of exact tick to account for thread timing differences
         if (tickCount >= windup + 20 && tickCount <= windup + 30 && !lightningStruck && !hitEntities.isEmpty()) {
             strikeAllTargetsWithLightning();
             lightningStruck = true;
@@ -156,10 +154,6 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
         }
 
     }
-
-    /**
-     * ✅ NEW METHOD: Strike all hit targets with lightning at once
-     */
     private void strikeAllTargetsWithLightning() {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
@@ -172,9 +166,6 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
             if (lightning != null) {
                 lightning.moveTo(targetPos);
                 lightning.setCause(user instanceof ServerPlayer sp ? sp : null);
-
-                // ✅ FIXED: Don't set visual only - let it be a real lightning bolt
-                // lightning.setVisualOnly(true);  // ← REMOVED THIS LINE
 
                 serverLevel.addFreshEntity(lightning);
             }
@@ -195,10 +186,6 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
             }
         }
     }
-
-    /**
-     * ✅ NEW METHOD: Applies controlled lightning damage to only the intended target
-     */
     private void applyLightningDamage(LivingEntity target) {
         // Lightning damage (magic damage to bypass armor - using configured damage)
         DamageSource lightningSource = user.damageSources().magic();

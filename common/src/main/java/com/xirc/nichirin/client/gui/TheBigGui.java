@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * THE BIG GUI - Main menu system for all mod features
  * Full-screen interface with vanilla+ styling, unlock system, and translatable text
- * FIXED SCALE: Always renders at GUI scale 2 regardless of user's GUI scale setting
+ * Always renders at GUI scale 2 regardless of the user's GUI scale setting.
  */
 public class TheBigGui extends Screen {
 

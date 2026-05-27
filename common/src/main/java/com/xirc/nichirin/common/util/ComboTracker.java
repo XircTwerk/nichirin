@@ -15,7 +15,7 @@ import net.minecraft.network.FriendlyByteBuf;
 
 /**
  * Central combo tracking logic with automatic reset when stun expires
- * Now includes anti-spam detection for repeated moves
+ * Tracks combo scaling and anti-spam penalties for repeated moves.
  */
 public class ComboTracker {
 
@@ -193,7 +193,7 @@ public class ComboTracker {
     }
 
     /**
-     * NEW METHOD: Called when a victim's stun effect ends
+     * Called when a victim's stun effect ends.
      * This automatically resets combos of all players who were attacking this victim
      *
      * @param victim The entity whose stun ended

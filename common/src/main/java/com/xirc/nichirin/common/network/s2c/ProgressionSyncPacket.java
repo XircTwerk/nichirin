@@ -31,7 +31,6 @@ public class ProgressionSyncPacket {
             }
 
             context.queue(() -> {
-                // Store this on the client - updated method name
                 ClientProgressionCache.setUnlockedMovesets(unlockedMovesets);
             });
         });

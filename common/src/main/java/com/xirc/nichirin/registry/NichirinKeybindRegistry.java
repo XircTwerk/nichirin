@@ -25,7 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * FIXED: Extended keybind registry with movement system and move index hotkeys
+ * Extended keybind registry with movement system and move index hotkeys
  * Attack wheel key is now handled by AttackWheelHandler, not here
  */
 @Environment(EnvType.CLIENT)
