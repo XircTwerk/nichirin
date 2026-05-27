@@ -1,6 +1,7 @@
 package com.xirc.nichirin;
 
 import com.xirc.nichirin.common.config.NichirinModConfig;
+import com.xirc.nichirin.common.config.NichirinServerConfig;
 import com.xirc.nichirin.common.advancement.NichirinCriteriaTriggers;
 import com.xirc.nichirin.common.event.item.DrinkingGourdInteractionHandler;
 import com.xirc.nichirin.common.event.system.*;
@@ -31,6 +32,7 @@ public final class BreathOfNichirin {
         } catch (Exception e) {
             LOGGER.warn("Could not register Cloth Config (cloth-config not installed?). Using hardcoded defaults.", e);
         }
+        NichirinServerConfig.load();
 
         // Initialize common registries first
         NichirinItemRegistry.init();
@@ -70,7 +72,6 @@ public final class BreathOfNichirin {
         StaminaEventHandler.register();
         BlockingEventHandler.register();
         DodgeEventHandler.register();
-        PerkDamageHandler.register();
         DemonFoodHandler.register();
         DrinkingGourdInteractionHandler.register();
 

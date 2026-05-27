@@ -231,6 +231,7 @@ public abstract class AbstractMoveset {
         }
 
         if (leftClickMove != null && leftClickMove.startAction != null) {
+            if (!hasResourcesForMove(entity, leftClickMove)) return true;
             applyMoveStun(entity, leftClickMove);
 
             // AUTOMATIC ANIMATION HANDLING - Player or NPC
@@ -277,6 +278,7 @@ public abstract class AbstractMoveset {
         MoveConfiguration config = isCrouching ? crouchRightClickMove : rightClickMove;
 
         if (config != null && config.startAction != null) {
+            if (!hasResourcesForMove(entity, config)) return true;
             applyMoveStun(entity, config);
 
             // AUTOMATIC ANIMATION HANDLING
@@ -381,6 +383,7 @@ public abstract class AbstractMoveset {
 
         MoveConfiguration config = getMove(moveIndex);
         if (config != null) {
+            if (!hasResourcesForMove(entity, config)) return;
             // AUTOMATIC ANIMATION HANDLING
             if (config.animationId != null) {
                 triggerAnimation(entity, config.animationId.getPath());
@@ -618,6 +621,9 @@ public abstract class AbstractMoveset {
 
         if (config.hasBreathCost()) {
             if (!EntityResources.hasBreath(entity, config.getBreathCostOrDefault(0f))) return false;
+        }
+        if (config.hasStaminaCost()) {
+            if (!EntityResources.hasStamina(entity, config.getStaminaCostOrDefault(0f))) return false;
         }
 
         return true;

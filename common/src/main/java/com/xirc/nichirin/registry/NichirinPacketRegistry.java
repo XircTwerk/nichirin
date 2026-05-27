@@ -227,10 +227,6 @@ public interface NichirinPacketRegistry {
         });
 
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, PERK_ACTION_ID, (buf, context) -> {
-            PerkActionPacket packet = new PerkActionPacket(buf);
-            if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
-                context.queue(() -> packet.handle(serverPlayer));
-            }
         });
 
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, TRAINER_ACTION_ID, (buf, context) -> {
@@ -372,8 +368,6 @@ public interface NichirinPacketRegistry {
             });
 
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, PERK_SYNC_ID, (buf, context) -> {
-                PerkSyncPacket packet = new PerkSyncPacket(buf);
-                context.queue(() -> packet.handleClient());
             });
 
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, OPEN_TRAINER_DIALOGUE_ID, (buf, context) -> {

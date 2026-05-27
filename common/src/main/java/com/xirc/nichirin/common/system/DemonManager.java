@@ -10,6 +10,7 @@ import net.minecraft.tags.EntityTypeTags;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.Difficulty;
 import net.minecraft.world.food.FoodData;
 import net.minecraft.world.level.Level;
 
@@ -102,6 +103,12 @@ public class DemonManager {
      */
     public static void tickDemon(Player player) {
         if (!isDemon(player)) return;
+
+        if (player.level().getDifficulty() == Difficulty.PEACEFUL
+                && NichirinModConfig.get().demon.peacefulModeMaxBlood) {
+            DemonFoodHandler.setHalfBloodPointsDirectly(player, 0);
+            setBloodPoints(player, NichirinModConfig.get().demon.maxBloodPoints);
+        }
 
         // Handle sun damage (now sets on fire)
         handleSunDamage(player);
@@ -212,6 +219,7 @@ public class DemonManager {
     private static void handleBloodDrain(Player player) {
         NichirinModConfig cfg = NichirinModConfig.get();
         if (!cfg.demon.bloodDrainEnabled) return;
+        if (player.level().getDifficulty() == Difficulty.PEACEFUL && cfg.demon.peacefulModeMaxBlood) return;
         if (player.isCreative()) return;
 
         UUID uuid = player.getUUID();

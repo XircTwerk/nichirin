@@ -29,13 +29,12 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
 
     private static final double ORBIT_SPEED  = 0.07;  // radians/tick  (~4° — one orbit ≈ 90 ticks)
     private static final double ORBIT_RADIUS = 3.0;
-    private static final int    CLONE_COUNT  = 6;
     private static final int    HIT_INTERVAL = 12;    // ticks between hits on same target
+    private static final int    CLONE_INTERVAL = 6;
 
     private LivingEntity orbitTarget      = null;
     private double       orbitAngle       = 0.0;
     private boolean      orbitInitialized = false;
-    private int          clonesSpawnedCount = 0;
     private int          nextCloneSpawnTick = 0;
     private Vec3         initPos          = null;
 
@@ -56,7 +55,6 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
         initPos          = user.position();
         orbitAngle         = 0.0;
         orbitInitialized   = false;
-        clonesSpawnedCount = 0;
         nextCloneSpawnTick = windup; // first clone spawns on the first active tick
         lastHitTicks.clear();
         spawnedClones.clear();
@@ -92,10 +90,9 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
         Vec3 center = orbitTarget.position();
 
         // Stagger clone spawning: one clone per 1–10 random ticks
-        if (clonesSpawnedCount < CLONE_COUNT && tickCount >= nextCloneSpawnTick) {
+        if (tickCount >= nextCloneSpawnTick) {
             spawnNextClone(center);
-            clonesSpawnedCount++;
-            nextCloneSpawnTick = tickCount + 1 + world.random.nextInt(10);
+            nextCloneSpawnTick = tickCount + CLONE_INTERVAL;
         }
 
         // Set initial orbit angle from where we currently stand so there's no jump
@@ -110,7 +107,7 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
 
         double newX = center.x + Math.cos(orbitAngle) * ORBIT_RADIUS;
         double newZ = center.z + Math.sin(orbitAngle) * ORBIT_RADIUS;
-        double y    = user.getY(); // ground-locked — never elevate
+        double y    = initPos.y;
 
         // Face inward toward orbit center
         double dx    = center.x - newX;
@@ -118,12 +115,12 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
         float newYaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
         user.setYRot(newYaw);
 
-        if (user instanceof ServerPlayer sp) {
-            sp.teleportTo(newX, y, newZ);
-        } else {
-            user.absMoveTo(newX, y, newZ, newYaw, user.getXRot());
-        }
         user.setDeltaMovement(Vec3.ZERO);
+        if (user instanceof ServerPlayer sp) {
+            sp.teleportTo(initPos.x, initPos.y, initPos.z);
+        } else {
+            user.absMoveTo(initPos.x, initPos.y, initPos.z, newYaw, user.getXRot());
+        }
 
         // Hit nearby targets every HIT_INTERVAL ticks
         if (ticksSinceWindup % 3 == 0) {
@@ -140,7 +137,7 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
         }
 
         // Mist trail
-        Vec3 trail = user.position().add(0, user.getBbHeight() / 2, 0);
+        Vec3 trail = new Vec3(newX, y + user.getBbHeight() / 2, newZ);
         serverLevel.sendParticles(ParticleTypes.CLOUD,
                 trail.x, trail.y, trail.z, 2, 0.12, 0.12, 0.12, 0.03);
         if (ticksSinceWindup % 3 == 0) {

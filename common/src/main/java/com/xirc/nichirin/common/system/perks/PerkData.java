@@ -54,6 +54,7 @@ public class PerkData {
 
 
     public boolean hasDiscovered(String perkId) {
+        if (PerkArchive.ARCHIVED) return false;
         return discovered.contains(perkId);
     }
 
@@ -62,23 +63,28 @@ public class PerkData {
      * @return true if it was newly added (false if already known).
      */
     public boolean discover(String perkId) {
+        if (PerkArchive.ARCHIVED) return false;
         return discovered.add(perkId);
     }
 
     public Set<String> getDiscoveredIds() {
+        if (PerkArchive.ARCHIVED) return Collections.emptySet();
         return Collections.unmodifiableSet(discovered);
     }
 
 
     public boolean isEquipped(String perkId) {
+        if (PerkArchive.ARCHIVED) return false;
         return equippedPerks.containsKey(perkId);
     }
 
     public int equippedCount() {
+        if (PerkArchive.ARCHIVED) return 0;
         return equippedPerks.size();
     }
 
     public PerkTier getTier(String perkId) {
+        if (PerkArchive.ARCHIVED) return null;
         return equippedPerks.getOrDefault(perkId, null);
     }
 
@@ -87,6 +93,7 @@ public class PerkData {
      * Caller is responsible for enforcing slot limits and flaw requirements.
      */
     public void equip(String perkId, PerkTier tier) {
+        if (PerkArchive.ARCHIVED) return;
         equippedPerks.put(perkId, tier);
     }
 
@@ -99,6 +106,7 @@ public class PerkData {
      * @return the new tier, or null if already at max or not equipped.
      */
     public PerkTier upgradeTier(String perkId) {
+        if (PerkArchive.ARCHIVED) return null;
         PerkTier current = equippedPerks.get(perkId);
         if (current == null) return null;
         PerkTier next = current.next();
@@ -109,15 +117,18 @@ public class PerkData {
 
     /** Snapshot of equipped perks (ID → tier), unmodifiable. */
     public Map<String, PerkTier> getEquippedPerks() {
+        if (PerkArchive.ARCHIVED) return Collections.emptyMap();
         return Collections.unmodifiableMap(equippedPerks);
     }
 
 
     public boolean hasFlaw(String flawId) {
+        if (PerkArchive.ARCHIVED) return false;
         return equippedFlaws.contains(flawId);
     }
 
     public void equipFlaw(String flawId) {
+        if (PerkArchive.ARCHIVED) return;
         equippedFlaws.add(flawId);
     }
 
@@ -126,23 +137,28 @@ public class PerkData {
     }
 
     public int equippedFlawCount() {
+        if (PerkArchive.ARCHIVED) return 0;
         return equippedFlaws.size();
     }
 
     public Set<String> getEquippedFlaws() {
+        if (PerkArchive.ARCHIVED) return Collections.emptySet();
         return Collections.unmodifiableSet(equippedFlaws);
     }
 
 
     public boolean isPerksEnabled() {
+        if (PerkArchive.ARCHIVED) return false;
         return perksEnabled;
     }
 
     public void setPerksEnabled(boolean enabled) {
+        if (PerkArchive.ARCHIVED) return;
         this.perksEnabled = enabled;
     }
 
     public int getPerkSlots() {
+        if (PerkArchive.ARCHIVED) return 0;
         return MAX_PERK_SLOTS;
     }
 
@@ -157,10 +173,12 @@ public class PerkData {
 
 
     public List<PerkPreset> getPresets() {
+        if (PerkArchive.ARCHIVED) return Collections.emptyList();
         return Collections.unmodifiableList(presets);
     }
 
     public void savePreset(PerkPreset preset) {
+        if (PerkArchive.ARCHIVED) return;
         for (int i = 0; i < presets.size(); i++) {
             if (presets.get(i).name.equals(preset.name)) {
                 presets.set(i, preset);
@@ -196,6 +214,7 @@ public class PerkData {
      * Caller must validate flaw requirements externally.
      */
     public void applyPreset(PerkPreset preset) {
+        if (PerkArchive.ARCHIVED) return;
         equippedPerks.clear();
         equippedFlaws.clear();
         for (int i = 0; i < preset.perkIds.size(); i++) {

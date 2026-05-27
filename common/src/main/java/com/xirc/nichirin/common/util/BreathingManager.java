@@ -4,6 +4,7 @@ import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.network.s2c.SyncBreathPacket;
+import com.xirc.nichirin.common.system.DemonManager;
 import com.xirc.nichirin.common.system.perks.PerkManager;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.nbt.CompoundTag;
@@ -81,6 +82,9 @@ public class BreathingManager {
         // Sync max breath and base regen rate from config
         var breathCfg = NichirinModConfig.get().breathing;
         float configMax = breathCfg.maxBreath;
+        if (DemonManager.isDemon(player)) {
+            configMax *= NichirinModConfig.get().demon.demonMaxBreathPercent / 100.0f;
+        }
         // Flaw: One Lung halves max breath
         if (PlayerDataProvider.getData(player).getPerkData().hasFlaw("one_lung")) {
             configMax *= 0.5f;

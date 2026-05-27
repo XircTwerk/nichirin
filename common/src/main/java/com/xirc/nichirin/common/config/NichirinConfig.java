@@ -16,6 +16,8 @@ public class NichirinConfig {
     public static final String COMBO_WINDOW_TICKS      = "combo_window_ticks";
     public static final String PARRY_WINDOW_TICKS      = "parry_window_ticks";
     public static final String STAMINA_REGEN_RATE      = "stamina_regen_rate";
+    public static final String FIRE_DAMAGE_INTERRUPTS_MOVES = "fire_damage_interrupts_moves";
+    public static final String FALL_DAMAGE_INTERRUPTS_MOVES = "fall_damage_interrupts_moves";
 
     // Defaults
 
@@ -25,6 +27,8 @@ public class NichirinConfig {
         register(COMBO_WINDOW_TICKS,      20,   5, 100, "How long the STUNNED effect lasts (combo window in ticks)");
         register(PARRY_WINDOW_TICKS,      10,   1,  30, "How many ticks after raising block count as a parry window");
         register(STAMINA_REGEN_RATE,       8,   1,  20, "Stamina points regenerated per second");
+        registerBool(FIRE_DAMAGE_INTERRUPTS_MOVES, false, "Whether fire damage should end moves early");
+        registerBool(FALL_DAMAGE_INTERRUPTS_MOVES, false, "Whether fall damage should end moves early");
 
     }
 
@@ -47,6 +51,8 @@ public class NichirinConfig {
                 case COMBO_WINDOW_TICKS      -> cfg.combat.comboWindowTicks;
                 case PARRY_WINDOW_TICKS      -> cfg.combat.parryWindowTicks;
                 case STAMINA_REGEN_RATE      -> cfg.stamina.staminaRegenRate;
+                case FIRE_DAMAGE_INTERRUPTS_MOVES -> cfg.moveInterrupts.fireDamageInterruptsMoves ? 1 : 0;
+                case FALL_DAMAGE_INTERRUPTS_MOVES -> cfg.moveInterrupts.fallDamageInterruptsMoves ? 1 : 0;
                 default                      -> null;
             };
             if (clothValue != null) return clothValue;
@@ -65,6 +71,7 @@ public class NichirinConfig {
         if (e == null) return false;
         if (value < e.min || value > e.max) return false;
         entries.put(key, new Entry(value, e.defaultValue, e.min, e.max, e.description, e.isBoolean));
+        setServerValue(key, value);
         return true;
     }
 
@@ -93,12 +100,16 @@ public class NichirinConfig {
         Entry e = entries.get(key);
         if (e == null) return false;
         entries.put(key, new Entry(e.defaultValue, e.defaultValue, e.min, e.max, e.description, e.isBoolean));
+        setServerValue(key, e.defaultValue);
         return true;
     }
 
     /** Resets every key to its default. */
     public static void resetAll() {
         entries.replaceAll((k, e) -> new Entry(e.defaultValue, e.defaultValue, e.min, e.max, e.description, e.isBoolean));
+        for (Map.Entry<String, Entry> entry : entries.entrySet()) {
+            setServerValue(entry.getKey(), entry.getValue().defaultValue);
+        }
     }
 
     /** Returns an ordered snapshot of all entries for display. */
@@ -121,6 +132,24 @@ public class NichirinConfig {
         /** Returns the display string for the default value. */
         public String displayDefault() {
             return isBoolean ? (defaultValue != 0 ? "true" : "false") : String.valueOf(defaultValue);
+        }
+    }
+
+    private static void setServerValue(String key, int value) {
+        try {
+            NichirinModConfig cfg = NichirinServerConfig.get();
+            switch (key) {
+                case COMBO_WINDOW_TICKS -> cfg.combat.comboWindowTicks = value;
+                case PARRY_WINDOW_TICKS -> cfg.combat.parryWindowTicks = value;
+                case STAMINA_REGEN_RATE -> cfg.stamina.staminaRegenRate = value;
+                case FIRE_DAMAGE_INTERRUPTS_MOVES -> cfg.moveInterrupts.fireDamageInterruptsMoves = value != 0;
+                case FALL_DAMAGE_INTERRUPTS_MOVES -> cfg.moveInterrupts.fallDamageInterruptsMoves = value != 0;
+                default -> {
+                    return;
+                }
+            }
+            NichirinServerConfig.save();
+        } catch (Exception ignored) {
         }
     }
 }

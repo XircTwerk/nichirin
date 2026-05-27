@@ -88,7 +88,7 @@ public class MultiplayerInputHandler {
 
         if (clientWheelCloseTime > 0) {
             long elapsed = System.currentTimeMillis() - clientWheelCloseTime;
-            if (elapsed < 500) {
+            if (elapsed < 100) {
                 return true;
             }
         }

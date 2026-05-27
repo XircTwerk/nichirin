@@ -58,6 +58,7 @@ public final class PerkManager {
      * </ul>
      */
     public static Result tryEquip(ServerPlayer player, String perkId, PerkTier tier) {
+        if (PerkArchive.ARCHIVED) return Result.fail("Perk system is archived.");
         NichirinModConfig.PerkConfig cfg = NichirinModConfig.get().perks;
         if (!cfg.enablePerks) return Result.fail("Perk system is disabled.");
 
@@ -85,6 +86,7 @@ public final class PerkManager {
     }
 
     public static Result tryUnequip(ServerPlayer player, String perkId) {
+        if (PerkArchive.ARCHIVED) return Result.fail("Perk system is archived.");
         PerkData data = PlayerDataProvider.getData(player).getPerkData();
         if (!data.isEquipped(perkId)) return Result.fail("Perk is not equipped.");
         data.unequip(perkId);
@@ -97,6 +99,7 @@ public final class PerkManager {
      * Checks that the player has the required items/XP and deducts them on success.
      */
     public static Result tryUpgrade(ServerPlayer player, String perkId) {
+        if (PerkArchive.ARCHIVED) return Result.fail("Perk system is archived.");
         NichirinModConfig.PerkConfig cfg = NichirinModConfig.get().perks;
         if (!cfg.enablePerks) return Result.fail("Perk system is disabled.");
 
@@ -139,6 +142,7 @@ public final class PerkManager {
 
 
     public static Result tryEquipFlaw(ServerPlayer player, String flawId) {
+        if (PerkArchive.ARCHIVED) return Result.fail("Perk system is archived.");
         NichirinModConfig.PerkConfig cfg = NichirinModConfig.get().perks;
         if (!cfg.enableFlawSystem) return Result.fail("Flaw system is disabled.");
 
@@ -154,6 +158,7 @@ public final class PerkManager {
     }
 
     public static Result tryUnequipFlaw(ServerPlayer player, String flawId) {
+        if (PerkArchive.ARCHIVED) return Result.fail("Perk system is archived.");
         PerkData data = PlayerDataProvider.getData(player).getPerkData();
         NichirinModConfig.PerkConfig cfg = NichirinModConfig.get().perks;
 
@@ -201,6 +206,7 @@ public final class PerkManager {
      * @return true if newly discovered.
      */
     public static boolean discover(ServerPlayer player, String perkId) {
+        if (PerkArchive.ARCHIVED) return false;
         PerkDefinition def = NichirinPerkRegistry.getPerk(perkId);
         if (def == null) return false;
         return PlayerDataProvider.getData(player).getPerkData().discover(perkId);
@@ -670,6 +676,7 @@ public final class PerkManager {
 
 
     private static boolean isPerkSystemActive(ServerPlayer player, PerkData data) {
+        if (PerkArchive.ARCHIVED) return false;
         return NichirinModConfig.get().perks.enablePerks && data.isPerksEnabled();
     }
 

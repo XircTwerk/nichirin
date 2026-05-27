@@ -14,7 +14,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 
 import java.util.HashMap;
 import java.util.List;
@@ -40,7 +39,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
     private void createAndCaptureThunderclapFlashConfig() {
         MoveConfiguration tempConfig = new MoveBuilder("thunderclap_flash", "Thunderclap and Flash")
                 .withAnimation("nichirin:thunderclap_flash", 10)
-                .withTiming(0, 1, 15)
+                .withTiming(0, 1, 11)
                 .withDamage(7.0f)
                 .withTeleportDistance(12.0f)
                 .withKnockback(0.2f)
@@ -62,7 +61,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 // Second Form: Rice Spirit - 5 quick slashes (INDEX 0 in wheel)
                 .withMove(new MoveBuilder("rice_spirit", "Rice Spirit")
                         .withAnimation("nichirin:rice_spirit", 8)
-                        .withTiming(120, 8, 120) // 5 second cooldown, windup, duration
+                        .withTiming(120, 8, 84) // 5 second cooldown, windup, duration
                         .withDamage(2.0f)
                         .withRange(10.0f) // Medium range
                         .withKnockback(0.2f)
@@ -83,7 +82,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 // Third Form: Thunder Swarm - AOE slashes (INDEX 1 in wheel)
                 .withMove(new MoveBuilder("thunder_swarm", "Thunder Swarm")
                         .withAnimation("nichirin:thunder_swarm", 9)
-                        .withTiming(140, 12, 35) // 7 second cooldown, windup, duration
+                        .withTiming(140, 12, 25) // 7 second cooldown, windup, duration
                         .withDamage(3.0f) // 4 slashes = 24 damage total (was 8.0f = 32 total)
                         .withRange(7.0f) // Large area around player
                         .withKnockback(0.4f)
@@ -104,7 +103,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 // Fourth Form: Distant Thunder - Lightning over time (INDEX 2 in wheel)
                 .withMove(new MoveBuilder("distant_thunder", "Distant Thunder")
                         .withAnimation("nichirin:distant_thunder", 7)
-                        .withTiming(320, 7, 120) // 10 second cooldown, windup, 6 second duration
+                        .withTiming(320, 7, 84) // 10 second cooldown, windup, 6 second duration
                         .withDamage(8.0f) // 3 strikes = 27 damage over time (was 12.0f = 36 total)
                         .withRange(15.0f) // Large AOE radius
                         .withKnockback(0.3f)
@@ -124,7 +123,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 // Fifth Form: Heat Lightning - Anti-air combo (INDEX 3 in wheel)
                 .withMove(new MoveBuilder("heat_lightning", "Heat Lightning")
                         .withAnimation("nichirin:heat_lightning", 9)
-                        .withTiming(180, 10, 20)
+                        .withTiming(180, 10, 14)
                         .withDamage(4.0f) // Single hit + lightning follow-up (was 18.0f)
                         .withRange(2.0f)
                         .withKnockback(0.1f) // Minimal horizontal, focuses on launch
@@ -145,7 +144,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 // Sixth Form: Rumble and Flash - Long range precision (INDEX 4 in wheel)
                 .withMove(new MoveBuilder("rumble_flash", "Rumble and Flash")
                         .withAnimation("nichirin:rumble_flash", 8)
-                        .withTiming(180, 9, 25) // 9 second cooldown, windup, duration
+                        .withTiming(180, 9, 18) // 9 second cooldown, windup, duration
                         .withDamage(7.5f) // High damage for long range precision (was 22.0f)
                         .withRange(20.0f) // Very long range
                         .withKnockback(0.6f)
@@ -165,7 +164,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 // Seventh Form: Honoikazuchi no Kami - Ultimate finisher (INDEX 5 in wheel)
                 .withMove(new MoveBuilder("honoikazuchi_no_kami", "Honoikazuchi no Kami")
                         .withAnimation("nichirin:honoikazuchi_no_kami", 15)
-                        .withTiming(600, 120, 10) // 30 second cooldown, windup, execution
+                        .withTiming(600, 120, 7) // 30 second cooldown, windup, execution
                         .withDamage(48.0f) // Very high damage ultimate
                         .withTeleportDistance(20.0f) // Long dash
                         .withKnockback(2.0f) // High knockback
@@ -191,15 +190,10 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
 
     @Override
     public boolean handleRightClick(LivingEntity entity, boolean isCrouching) {
-        if (entity instanceof Player player) {
-            ThunderClapFlashAttack.setCrouchDash(player, isCrouching);
-        }
-
-        triggerAnimation(entity, "thunderclap_flash");
-        ThunderClapFlashAttack attack = new ThunderClapFlashAttack();
-
         createAndCaptureThunderclapFlashConfig();
         MoveConfiguration tempConfig = getRightClickConfiguration();
+        if (tempConfig == null) return false;
+        if (!canPerformMoves(entity) || !hasResourcesForMove(entity, tempConfig)) return true;
 
         if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer) {
             MovesetConfigSyncPacket packet = new MovesetConfigSyncPacket(
@@ -210,6 +204,9 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
             NichirinPacketRegistry.sendToPlayer(packet, serverPlayer);
         }
 
+        triggerAnimation(entity, "thunderclap_flash");
+        ThunderClapFlashAttack attack = new ThunderClapFlashAttack();
+        attack.setTurnBackwards(isCrouching);
         attack.configure(tempConfig);
         MoveExecutor.executeAttack(entity, attack, "thunder_breathing", "thunderclap_flash");
         onMovePerformed(entity, -1, isCrouching);

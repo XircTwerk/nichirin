@@ -47,8 +47,6 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinItemRegistry.SCARLET_GEM.get());
                         entries.accept(NichirinItemRegistry.SMOKE_BOMB.get());
                         entries.accept(NichirinItemRegistry.FLASH_BOMB.get());
-                        entries.accept(NichirinItemRegistry.PERK_SCROLL.get());
-                        entries.accept(NichirinItemRegistry.CURSED_SCROLL.get());
                         entries.accept(NichirinItemRegistry.TEMPLE_DEMON_SPAWN_EGG.get());
                         entries.accept(NichirinItemRegistry.BOAR_SPAWN_EGG.get());
                         entries.accept(NichirinItemRegistry.WATER_BREATHING_TRAINER_SPAWN_EGG.get());

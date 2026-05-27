@@ -38,7 +38,7 @@ public class MistBreathingMoveset extends AbstractMoveset {
     private MoveConfiguration buildEightLayeredMistConfig() {
         return new MoveBuilder("eight_layered_mist", "Eight-Layered Mist")
                 .withAnimation("nichirin:mist_rapid_slash", 6)
-                .withTiming(0, 9, 24)
+                .withTiming(0, 9, 17)
                 .withDamage(1.0f)
                 .withRange(2.5f)
                 .withKnockback(0.05f)
@@ -52,7 +52,7 @@ public class MistBreathingMoveset extends AbstractMoveset {
     private MoveConfiguration buildLowCloudsConfig() {
         return new MoveBuilder("low_clouds_distant_haze", "Low Clouds, Distant Haze")
                 .withAnimation("nichirin:mist_thrust", 7)
-                .withTiming(0, 5, 8)
+                .withTiming(0, 5, 6)
                 .withDamage(6.0f)
                 .withRange(1.5f)
                 .withKnockback(0.3f)
@@ -72,7 +72,7 @@ public class MistBreathingMoveset extends AbstractMoveset {
                 // Form 3: Scattering Mist Splash (INDEX 0 in wheel)
                 .withMove(new MoveBuilder("scattering_mist_splash", "Scattering Mist Splash")
                         .withAnimation("nichirin:mist_spin", 10)
-                        .withTiming(180, 8, 20)
+                        .withTiming(180, 8, 14)
                         .withDamage(9.0f)
                         .withRange(3.5f)
                         .withKnockback(0.4f)
@@ -92,7 +92,7 @@ public class MistBreathingMoveset extends AbstractMoveset {
                 // Form 4: Shifting Flow Slash (INDEX 1 in wheel)
                 .withMove(new MoveBuilder("shifting_flow_slash", "Shifting Flow Slash")
                         .withAnimation("nichirin:mist_dash_slash", 12)
-                        .withTiming(120, 10, 12)
+                        .withTiming(120, 10, 8)
                         .withDamage(6.0f)
                         .withRange(18.0f)
                         .withKnockback(0.35f)
@@ -113,7 +113,7 @@ public class MistBreathingMoveset extends AbstractMoveset {
                 // Form 5: Sea of Clouds and Haze (INDEX 2 in wheel)
                 .withMove(new MoveBuilder("sea_of_clouds_and_haze", "Sea of Clouds")
                         .withAnimation("nichirin:mist_zigzag", 13)
-                        .withTiming(160, 8, 80)
+                        .withTiming(160, 8, 56)
                         .withDamage(5.0f)
                         .withRange(12.0f)
                         .withKnockback(0.25f)
@@ -134,7 +134,7 @@ public class MistBreathingMoveset extends AbstractMoveset {
                 // Form 6: Lunar Dispersing Mist (INDEX 3 in wheel)
                 .withMove(new MoveBuilder("lunar_dispersing_mist", "Lunar Dispersing Mist")
                         .withAnimation("nichirin:mist_aerial", 14)
-                        .withTiming(200, 10, 35)
+                        .withTiming(200, 10, 25)
                         .withDamage(5.0f)
                         .withRange(14.0f)
                         .withKnockback(0.35f)
@@ -155,7 +155,7 @@ public class MistBreathingMoveset extends AbstractMoveset {
                 // Form 7: Obscuring Clouds (INDEX 4 in wheel)
                 .withMove(new MoveBuilder("obscuring_clouds", "Obscuring Clouds")
                         .withAnimation("nichirin:mist_vanish", 16)
-                        .withTiming(800, 5, 300)
+                        .withTiming(800, 5, 210)
                         .withDamage(1.3f)
                         .withRange(8.0f)
                         .withKnockback(0.0f)
@@ -180,6 +180,8 @@ public class MistBreathingMoveset extends AbstractMoveset {
 
     @Override
     public boolean handleRightClick(LivingEntity entity, boolean isCrouching) {
+        if (!canPerformMoves(entity)) return true;
+
         if (isCrouching) {
             return executeLowClouds(entity);
         } else {
@@ -188,14 +190,15 @@ public class MistBreathingMoveset extends AbstractMoveset {
     }
 
     private boolean executeEightLayeredMist(LivingEntity entity) {
-        triggerAnimation(entity, "eight_layered_mist");
-        EightLayeredMistAttack attack = new EightLayeredMistAttack();
-
         captureRightClickConfig(buildEightLayeredMistConfig(), false);
         MoveConfiguration tempConfig = getRightClickConfiguration();
+        if (tempConfig == null) return false;
+        if (!hasResourcesForMove(entity, tempConfig)) return true;
 
         syncConfigToClient(entity, tempConfig);
 
+        triggerAnimation(entity, "eight_layered_mist");
+        EightLayeredMistAttack attack = new EightLayeredMistAttack();
         attack.configure(tempConfig);
         MoveExecutor.executeAttack(entity, attack, "mist_breathing", "eight_layered_mist");
         onMovePerformed(entity, -1, false);
@@ -203,14 +206,15 @@ public class MistBreathingMoveset extends AbstractMoveset {
     }
 
     private boolean executeLowClouds(LivingEntity entity) {
-        triggerAnimation(entity, "low_clouds_distant_haze");
-        LowCloudsDistantHazeAttack attack = new LowCloudsDistantHazeAttack();
-
         captureRightClickConfig(buildLowCloudsConfig(), true);
         MoveConfiguration tempConfig = getCrouchRightClickConfiguration();
+        if (tempConfig == null) return false;
+        if (!hasResourcesForMove(entity, tempConfig)) return true;
 
         syncConfigToClient(entity, tempConfig);
 
+        triggerAnimation(entity, "low_clouds_distant_haze");
+        LowCloudsDistantHazeAttack attack = new LowCloudsDistantHazeAttack();
         attack.configure(tempConfig);
         MoveExecutor.executeAttack(entity, attack, "mist_breathing", "low_clouds_distant_haze");
         onMovePerformed(entity, -2, true);
@@ -230,6 +234,10 @@ public class MistBreathingMoveset extends AbstractMoveset {
 
     @Override
     public void performMove(LivingEntity entity, int moveIndex) {
+        if (!canPerformMoves(entity)) {
+            return;
+        }
+
         if (!canUseMove(entity, moveIndex)) {
             MoveConfiguration config = getMove(moveIndex);
             if (config != null) {

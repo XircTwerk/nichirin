@@ -1,6 +1,7 @@
 package com.xirc.nichirin.mixin;
 
-import com.xirc.nichirin.common.attack.MoveExecutor;
+import com.xirc.nichirin.common.util.AttackInterruptTracker;
+import com.xirc.nichirin.common.util.NichirinArmorDamage;
 import com.xirc.nichirin.common.util.ComboTracker;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import net.minecraft.world.effect.MobEffect;
@@ -11,6 +12,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -25,11 +27,14 @@ public abstract class LivingEntityMixin {
     @Shadow
     public abstract Map<MobEffect, MobEffectInstance> getActiveEffectsMap();
 
-    @Inject(method = "hurtArmor", at = @At("HEAD"), cancellable = true)
-    private void nichirin$preventAttackArmorWear(DamageSource damageSource, float damageAmount, CallbackInfo ci) {
-        if (damageSource.getEntity() instanceof LivingEntity attacker && MoveExecutor.hasActiveAttacks(attacker)) {
-            ci.cancel();
-        }
+    @ModifyVariable(method = "hurtArmor", at = @At("HEAD"), argsOnly = true, ordinal = 0)
+    private float nichirin$reduceAttackArmorWear(float damageAmount, DamageSource damageSource) {
+        return NichirinArmorDamage.scaleArmorDamage(damageSource, damageAmount);
+    }
+
+    @Inject(method = "hurt", at = @At("HEAD"))
+    private void nichirin$recordMoveInterruptDamage(DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
+        AttackInterruptTracker.record((LivingEntity) (Object) this, source);
     }
 
     /**

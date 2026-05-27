@@ -132,6 +132,25 @@ public class NichirinModConfig implements ConfigData {
         @ConfigEntry.Gui.Tooltip
         @ConfigEntry.BoundedDiscrete(min = 1, max = 100)
         public int bloodDrainIntervalSeconds = 30;
+
+        @ConfigEntry.Gui.Tooltip
+        public boolean peacefulModeMaxBlood = true;
+
+        @ConfigEntry.Gui.Tooltip
+        @ConfigEntry.BoundedDiscrete(min = 100, max = 300)
+        public int demonMaxBreathPercent = 150;
+    }
+
+    @ConfigEntry.Gui.CollapsibleObject
+    public MoveInterruptConfig moveInterrupts = new MoveInterruptConfig();
+
+    public static class MoveInterruptConfig {
+
+        @ConfigEntry.Gui.Tooltip
+        public boolean fireDamageInterruptsMoves = false;
+
+        @ConfigEntry.Gui.Tooltip
+        public boolean fallDamageInterruptsMoves = false;
     }
 
     // Kill Rewards
@@ -204,7 +223,7 @@ public class NichirinModConfig implements ConfigData {
 
     // Perks
 
-    @ConfigEntry.Gui.CollapsibleObject
+    @ConfigEntry.Gui.Excluded
     public PerkConfig perks = new PerkConfig();
 
     public static class PerkConfig {
@@ -237,6 +256,10 @@ public class NichirinModConfig implements ConfigData {
      * very early start-up or if cloth-config isn't installed).
      */
     public static NichirinModConfig get() {
+        try {
+            return NichirinServerConfig.get();
+        } catch (Exception ignored) {
+        }
         try {
             return AutoConfig.getConfigHolder(NichirinModConfig.class).getConfig();
         } catch (Exception e) {

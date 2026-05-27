@@ -91,7 +91,6 @@ public class DemonMovePacket {
 
         try {
             moveset.performMove(player, moveIndex);
-            MultiplayerInputHandler.blockInputsAfterMoveExecution(player);
 
             LOGGER.debug("DemonMovePacket - Successfully executed {}", moveConfig.getDisplayName());
 

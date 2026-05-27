@@ -3,6 +3,7 @@ package com.xirc.nichirin.common.item.scroll;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.event.BreathOfNichirinEventHandler;
 import com.xirc.nichirin.common.system.perks.NichirinPerkRegistry;
+import com.xirc.nichirin.common.system.perks.PerkArchive;
 import com.xirc.nichirin.common.system.perks.PerkData;
 import com.xirc.nichirin.common.system.perks.PerkDefinition;
 import com.xirc.nichirin.common.system.perks.PerkManager;
@@ -64,6 +65,7 @@ public class PerkScrollItem extends Item {
 
         if (level.isClientSide()) return InteractionResultHolder.success(stack);
         if (!(player instanceof ServerPlayer serverPlayer)) return InteractionResultHolder.pass(stack);
+        if (PerkArchive.ARCHIVED) return InteractionResultHolder.pass(stack);
 
         String perkId = getPerkId(stack);
         if (perkId == null) {
@@ -119,6 +121,7 @@ public class PerkScrollItem extends Item {
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(stack, level, tooltip, flag);
+        if (PerkArchive.ARCHIVED) return;
         String perkId = getPerkId(stack);
         if (perkId == null) {
             tooltip.add(Component.literal("Reveals a random undiscovered perk.").withStyle(ChatFormatting.GOLD));
@@ -138,6 +141,7 @@ public class PerkScrollItem extends Item {
     @Override
     public Component getName(ItemStack stack) {
         String perkId = getPerkId(stack);
+        if (PerkArchive.ARCHIVED) return super.getName(stack);
         if (perkId != null) {
             PerkDefinition def = NichirinPerkRegistry.getPerk(perkId);
             if (def != null) {

@@ -78,11 +78,13 @@ public class DragonflyAttack extends InsectBreathingAttackBase {
 
     private void createTargetingBeam() {
         if (!(world instanceof ServerLevel serverLevel)) return;
+        slashDirection = user.getLookAngle().normalize();
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         createInsectTrail(userPos, userPos.add(slashDirection.scale(range)));
     }
 
     private void executeStab() {
+        slashDirection = user.getLookAngle().normalize();
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         List<LivingEntity> frontTargets = getTargetsInCustomHitbox(
                 userPos.add(slashDirection.scale(1.5)), 2.0, 2.0, 3.0);

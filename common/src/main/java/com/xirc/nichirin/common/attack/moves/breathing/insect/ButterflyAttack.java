@@ -9,6 +9,9 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
@@ -20,6 +23,7 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
     private boolean secondDashExecuted = false;
     private Vec3 leapDirection;
     private Vec3 dashDirection;
+    private Vec3 lastDashPos;
     private Vec3 startPosition;
     private boolean wasInvulnerable = false;
 
@@ -30,6 +34,7 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
         startPosition = user.position();
         leapDirection = user.getLookAngle().normalize();
         dashDirection = null;
+        lastDashPos = null;
         wasInvulnerable = user.isInvulnerable();
         user.setInvulnerable(true);
 
@@ -54,18 +59,35 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
             dashDirection = user.getLookAngle().normalize();
             executeForwardDash();
             secondDashExecuted = true;
+            lastDashPos = user.position().add(0, user.getBbHeight() / 2, 0);
         }
 
         if (secondDashExecuted && tickCount > windup + 21 && tickCount <= windup + 35) {
-            List<LivingEntity> dashTargets = getTargetsInCustomHitbox(
-                    user.position().add(0, user.getBbHeight() / 2, 0),
-                    2.0, 2.5, 2.0);
+            Vec3 currentDashPos = user.position().add(0, user.getBbHeight() / 2, 0);
+            List<LivingEntity> dashTargets = lastDashPos != null
+                    ? getTargetsAlongPath(lastDashPos, currentDashPos, 1.0f)
+                    : getTargetsInCustomHitbox(currentDashPos, 2.0, 2.5, 2.0);
+            lastDashPos = currentDashPos;
 
             for (LivingEntity dashTarget : dashTargets) {
                 executeThrust(dashTarget);
                 break;
             }
         }
+    }
+
+    private List<LivingEntity> getTargetsAlongPath(Vec3 from, Vec3 to, float radius) {
+        Vec3 path = to.subtract(from);
+        double distance = path.length();
+        if (distance < 0.01) return getTargetsInCustomHitbox(to, radius * 2.0, 2.5, radius * 2.0);
+
+        Set<LivingEntity> found = new HashSet<>();
+        int steps = Math.max(1, (int) Math.ceil(distance / Math.max(radius * 0.25, 0.1)));
+        for (int i = 0; i <= steps; i++) {
+            Vec3 sample = from.add(path.scale((double) i / steps));
+            found.addAll(getTargetsInCustomHitbox(sample, radius * 2.0, 2.5, radius * 2.0));
+        }
+        return new ArrayList<>(found);
     }
 
     private void createLeapChargeEffect() {
@@ -205,5 +227,6 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
 
         dashStarted = false;
         secondDashExecuted = false;
+        lastDashPos = null;
     }
 }

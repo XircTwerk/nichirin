@@ -72,7 +72,7 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
 
                 .withMove(new MoveBuilder("check", "Check")
                         .withDescription("Shoulder bash with the katana handle. Close-range stun.")
-                        .withTiming(0, 1, 4)
+                        .withTiming(0, 1, 3)
                         .withCooldown(30)
                         .withStaminaCost(SPECIAL_STAMINA_COST)
                         .withDamage(2.0f)
@@ -84,7 +84,7 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
 
                 .withMove(new MoveBuilder("overhead", "Overhead")
                         .withDescription("Heavy downward slash. Slams airborne targets.")
-                        .withTiming(4, 8, 10)
+                        .withTiming(4, 8, 7)
                         .withCooldown(40)
                         .withStaminaCost(SPECIAL_STAMINA_COST)
                         .withDamage(10.0f)
@@ -96,7 +96,7 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
 
                 .withMove(new MoveBuilder("thrust", "Thrust")
                         .withDescription("Forward dash attack. Great knockback.")
-                        .withTiming(3, 10, 8)
+                        .withTiming(3, 10, 6)
                         .withCooldown(50)
                         .withStaminaCost(SPECIAL_STAMINA_COST)
                         .withDamage(8.0f)
@@ -348,7 +348,7 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
 
     private static SimpleSlashAttack createLightSlash1() {
         return new SimpleSlashAttack.Builder()
-                .withTiming(0, 7, 2).withCooldown(0).withDamage(4.0f).withRange(2.5f)
+                .withTiming(0, 7, 1).withCooldown(0).withDamage(4.0f).withRange(2.5f)
                 .withKnockback(0.3f).withHitbox(2.0f, new Vec3(0, 0, 1.0))
                 .withHitStun(5).withSounds(SoundEvents.PLAYER_ATTACK_SWEEP, SoundEvents.PLAYER_ATTACK_STRONG)
                 .build();
@@ -356,7 +356,7 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
 
     private static SimpleSlashAttack createLightSlash2() {
         return new SimpleSlashAttack.Builder()
-                .withTiming(0, 10, 3).withCooldown(0).withDamage(5.0f).withRange(2.5f)
+                .withTiming(0, 10, 2).withCooldown(0).withDamage(5.0f).withRange(2.5f)
                 .withKnockback(0.5f).withHitbox(2.0f, new Vec3(0, 0, 1.0))
                 .withHitStun(5).withSounds(SoundEvents.PLAYER_ATTACK_SWEEP, SoundEvents.PLAYER_ATTACK_STRONG)
                 .build();
@@ -364,7 +364,7 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
 
     private static DoubleSlashAttack createDoubleSlashAttack() {
         return new DoubleSlashAttack.Builder()
-                .withTiming(0, 16, 6).withCooldown(20).withDamage(3.5f).withRange(2.8f)
+                .withTiming(0, 16, 4).withCooldown(20).withDamage(3.5f).withRange(2.8f)
                 .withKnockback(0.4f).withHitbox(2.0f, new Vec3(0, 0, 1.0))
                 .withHitStun(7).withSlashDelay(2)
                 .withSounds(SoundEvents.PLAYER_ATTACK_SWEEP, SoundEvents.PLAYER_ATTACK_STRONG)
@@ -373,7 +373,7 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
 
     private static RisingSlashAttack createRisingSlashAttack() {
         return new RisingSlashAttack.Builder()
-                .withTiming(0, 10, 8).withCooldown(25).withDamage(4.0f).withRange(2.5f)
+                .withTiming(0, 10, 6).withCooldown(25).withDamage(4.0f).withRange(2.5f)
                 .withLaunchPower(0.8f).withKnockback(0.2f)
                 .withHitbox(2.0f, new Vec3(0, 0.5, 1.0))
                 .withHitStun(10).withSounds(SoundEvents.PLAYER_ATTACK_SWEEP, SoundEvents.PLAYER_ATTACK_CRIT)

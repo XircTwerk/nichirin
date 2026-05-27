@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.attack.moves.breathing.thunder;
 
+import com.xirc.nichirin.common.util.NichirinArmorDamage;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
@@ -122,7 +123,7 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
             if (dot > 0.3) {
                 // Create armor-bypassing damage source (using configured damage)
                 DamageSource armorPiercingSource = user.damageSources().magic();
-                target.hurt(armorPiercingSource, damage);
+                NichirinArmorDamage.hurt(target, armorPiercingSource, damage);
 
                 // Launch the target
                 launchTarget(target);
@@ -189,7 +190,7 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
     private void applyLightningDamage(LivingEntity target) {
         // Lightning damage (magic damage to bypass armor - using configured damage)
         DamageSource lightningSource = user.damageSources().magic();
-        target.hurt(lightningSource, damage * 0.5f);
+        NichirinArmorDamage.hurt(target, lightningSource, damage * 0.5f);
 
         // Additional lightning particles at impact
         if (world instanceof ServerLevel serverLevel) {

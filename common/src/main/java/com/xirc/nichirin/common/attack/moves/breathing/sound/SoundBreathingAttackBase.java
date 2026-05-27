@@ -3,6 +3,7 @@ package com.xirc.nichirin.common.attack.moves.breathing.sound;
 import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
 import com.xirc.nichirin.common.attack.component.IBreathingAttacker;
 import com.xirc.nichirin.common.effect.StunnedStatusEffect;
+import com.xirc.nichirin.common.util.NichirinArmorDamage;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import net.minecraft.core.particles.ParticleTypes;
@@ -47,7 +48,7 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
         DamageSource source = user instanceof Player p
                 ? user.damageSources().playerAttack(p)
                 : user.damageSources().mobAttack(user);
-        boolean damaged = target.hurt(source, damage);
+        boolean damaged = NichirinArmorDamage.hurt(target, source, damage);
 
         if (knockback > 0) {
             StunnedStatusEffect.markRecentKnockback(target);
@@ -86,7 +87,7 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
         DamageSource source = user instanceof Player p
                 ? user.damageSources().playerAttack(p)
                 : user.damageSources().mobAttack(user);
-        boolean damaged = target.hurt(source, damage);
+        boolean damaged = NichirinArmorDamage.hurt(target, source, damage);
 
         if (knockback > 0) {
             StunnedStatusEffect.markRecentKnockback(target);
@@ -127,7 +128,7 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
         DamageSource source = user instanceof Player p
                 ? user.damageSources().playerAttack(p)
                 : user.damageSources().mobAttack(user);
-        boolean damaged = target.hurt(source, damage);
+        boolean damaged = NichirinArmorDamage.hurt(target, source, damage);
 
         if (knockback > 0) {
             StunnedStatusEffect.markRecentKnockback(target);
@@ -279,7 +280,7 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
                 entity -> entity != user && entity.isAlive());
 
         for (LivingEntity target : nearbyTargets) {
-            target.hurt(world.damageSources().explosion(null, user), damage * 0.3f);
+            NichirinArmorDamage.hurt(target, world.damageSources().explosion(null, user), damage * 0.3f);
             target.addEffect(new MobEffectInstance(
                     MobEffects.MOVEMENT_SLOWDOWN,
                     DEFAULT_STUN_DURATION, 5, false, false));

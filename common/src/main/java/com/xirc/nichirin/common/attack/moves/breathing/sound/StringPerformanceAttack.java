@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.attack.moves.breathing.sound;
 
+import com.xirc.nichirin.common.util.NichirinArmorDamage;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -196,7 +197,7 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
         }
 
         // Apply damage directly using DamageSource
-        target.hurt(user instanceof Player p
+        NichirinArmorDamage.hurt(target, user instanceof Player p
                 ? user.damageSources().playerAttack(p)
                 : user.damageSources().mobAttack(user), damage);
 
@@ -304,7 +305,7 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
         }
 
         // Apply full damage for finale
-        target.hurt(user instanceof Player p
+        NichirinArmorDamage.hurt(target, user instanceof Player p
                 ? user.damageSources().playerAttack(p)
                 : user.damageSources().mobAttack(user), damage);
 

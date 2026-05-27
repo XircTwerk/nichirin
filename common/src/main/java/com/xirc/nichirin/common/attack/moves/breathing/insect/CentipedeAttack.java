@@ -79,6 +79,12 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
     }
 
     private void executeZigzagDash() {
+        Vec3 look = user.getLookAngle();
+        Vec3 aimedDirection = new Vec3(look.x, 0, look.z);
+        if (aimedDirection.lengthSqr() > 0.001) {
+            baseDirection = aimedDirection.normalize();
+        }
+
         Vec3 zigzagDirection;
         // 22.5° / -22.5° / 22.5° alternating pattern
         if (zigzagsExecuted == 0) {
@@ -197,6 +203,11 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
     }
 
     private void executeFinisher() {
+        Vec3 look = user.getLookAngle();
+        Vec3 aimedDirection = new Vec3(look.x, 0, look.z);
+        if (aimedDirection.lengthSqr() > 0.001) {
+            baseDirection = aimedDirection.normalize();
+        }
         Vec3 finisherVelocity = baseDirection.scale(dashSpeed * 0.83);
         user.setDeltaMovement(finisherVelocity);
         user.hurtMarked = true;

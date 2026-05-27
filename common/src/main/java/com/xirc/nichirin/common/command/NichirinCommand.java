@@ -8,12 +8,7 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.xirc.nichirin.common.config.NichirinConfig;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.data.ProgressionHelper;
-import com.xirc.nichirin.common.event.BreathOfNichirinEventHandler;
 import com.xirc.nichirin.common.system.BloodMoonManager;
-import com.xirc.nichirin.common.system.perks.NichirinPerkRegistry;
-import com.xirc.nichirin.common.system.perks.PerkDefinition;
-import com.xirc.nichirin.common.system.perks.PerkData;
-import com.xirc.nichirin.common.system.perks.PerkManager;
 import com.xirc.nichirin.common.network.s2c.ProgressionSyncPacket;
 import com.xirc.nichirin.registry.NichirinMovesetRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
@@ -140,26 +135,15 @@ public class NichirinCommand {
             PlayerDataProvider.updateAndSync(player, firstStyle);
         }
 
-        int perksDiscovered = 0;
-        for (PerkDefinition def : NichirinPerkRegistry.allPerks()) {
-            if (PerkManager.discover(player, def.id)) perksDiscovered++;
-        }
-
-        int maxSlots = PerkData.MAX_PERK_SLOTS;
-        PlayerDataProvider.getData(player).getPerkData().setPerkSlots(maxSlots);
-
-        BreathOfNichirinEventHandler.syncPerksToPlayer(player);
         ProgressionSyncPacket.sendToPlayer(player);
 
         int finalStyles = stylesUnlocked;
-        int finalPerks = perksDiscovered;
-        int finalSlots = maxSlots;
         src.sendSuccess(() -> Component.literal("Unlocked everything for " + name + ": " +
-                finalStyles + " style(s), " + finalPerks + " perk(s), " + finalSlots + " perk slots.")
+                finalStyles + " style(s).")
                 .withStyle(s -> s.withColor(COL_OK)), true);
 
         player.displayClientMessage(
-                Component.literal("All breathing styles and perks unlocked! Perk slots: " + finalSlots + ".")
+                Component.literal("All breathing styles unlocked!")
                         .withStyle(s -> s.withColor(0x55FFFF)), false);
 
         return 1;
@@ -198,7 +182,7 @@ public class NichirinCommand {
 
         src.sendSuccess(() -> header("— Breath of Nichirin Help —"), false);
         src.sendSuccess(() -> line(COL_DIM,  "Operator commands (permission level 2):"), false);
-        src.sendSuccess(() -> cmd("/nichirin unlockall <player>",                  "Unlock all styles, perks, and perk slots"), false);
+        src.sendSuccess(() -> cmd("/nichirin unlockall <player>",                  "Unlock all styles"), false);
         src.sendSuccess(() -> cmd("/nichirin config",                              "Open config GUI"), false);
         src.sendSuccess(() -> cmd("/nichirin config list",                         "List all config values"), false);
         src.sendSuccess(() -> cmd("/nichirin config get <key>",                    "Show a single config value"), false);

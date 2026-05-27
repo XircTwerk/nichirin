@@ -1,9 +1,0 @@
-{
-  "type": "minecraft:crafting_shapeless",
-  "ingredients": [
-    {"item": "minecraft:book"},
-    {"item": "nichirin:scarlet_crimson_iron_gem"},
-    {"item": "minecraft:paper"}
-  ],
-  "result": {"item": "nichirin:perk_scroll", "count": 1}
-}

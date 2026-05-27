@@ -1,8 +1,11 @@
 package com.xirc.nichirin.common.attack.component;
 
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset.MoveConfiguration;
+import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
 import com.xirc.nichirin.common.util.ComboIntegration;
 import com.xirc.nichirin.common.util.HitboxData;
+import com.xirc.nichirin.common.util.AttackInterruptTracker;
+import com.xirc.nichirin.common.util.NichirinArmorDamage;
 import com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
@@ -199,9 +202,14 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
 
         tickCount++;
 
-        // Cancel attack if the user was hit during windup
-        if (tickCount <= windup && user.hurtTime > 0 && windup > 0) {
-            stop();
+        if (isExternallyStunned()) {
+            stop(true);
+            return;
+        }
+
+        // Cancel attack if the user was hit during windup by an interrupting damage type.
+        if (tickCount <= windup && windup > 0 && AttackInterruptTracker.wasInterruptedThisTick(user)) {
+            stop(true);
             return;
         }
 
@@ -216,7 +224,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
 
         // Check if attack duration is complete
         if (tickCount >= windup + duration) {
-            stop();
+            stop(false);
         }
     }
 
@@ -231,6 +239,10 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
      * Stop the attack
      */
     public void stop() {
+        stop(true);
+    }
+
+    private void stop(boolean stopAnimation) {
         if (isActive) {
             isActive = false;
 
@@ -242,6 +254,15 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
             } catch (Exception e) {
                 e.printStackTrace();
             }
+            if (stopAnimation) {
+                stopPlayerAnimation();
+            }
+        }
+    }
+
+    private void stopPlayerAnimation() {
+        if (!world.isClientSide && user instanceof ServerPlayer serverPlayer) {
+            NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer, new PlayerAnimationPacket(serverPlayer.getId(), ""));
         }
     }
 
@@ -264,7 +285,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
         } else {
             source = user.damageSources().mobAttack(user);
         }
-        boolean damaged = target.hurt(source, damage);
+        boolean damaged = NichirinArmorDamage.hurt(target, source, damage);
 
         if (damaged) {
             // Add combo tracking for demon attacks (only for players)
@@ -321,7 +342,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
         } else {
             source = user.damageSources().mobAttack(user);
         }
-        boolean damaged = target.hurt(source, damage);
+        boolean damaged = NichirinArmorDamage.hurt(target, source, damage);
 
         if (damaged) {
             // Add combo tracking for demon attacks (no immunity version) - only for players
@@ -770,6 +791,11 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
      */
     public boolean isInActivePhase() {
         return isActive && tickCount > windup && tickCount < windup + duration;
+    }
+
+    private boolean isExternallyStunned() {
+        MobEffectInstance stun = user.getEffect(NichirinEffectRegistry.STUNNED.get());
+        return stun != null && stun.getAmplifier() > 0;
     }
 
     // Helper methods to check if movement properties are configured

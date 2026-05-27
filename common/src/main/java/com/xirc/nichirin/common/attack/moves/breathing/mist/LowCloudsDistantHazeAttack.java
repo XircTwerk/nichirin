@@ -50,8 +50,7 @@ public class LowCloudsDistantHazeAttack extends MistBreathingAttackBase {
         if (world.isClientSide) return;
 
         if (!dashStarted && tickCount == windup + 1) {
-            Vec3 look = user.getLookAngle();
-            dashDirection = new Vec3(look.x, 0, look.z).normalize();
+            dashDirection = angledDashDirection();
             dashStartPos = user.position();
             dashDuration = Math.max(1, duration);
             dashStarted = true;
@@ -100,5 +99,10 @@ public class LowCloudsDistantHazeAttack extends MistBreathingAttackBase {
         dashDuration = 0;
         dashStartPos = null;
         hitEntities.clear();
+    }
+
+    private Vec3 angledDashDirection() {
+        Vec3 look = user.getLookAngle();
+        return new Vec3(look.x, Math.max(-0.25, Math.min(0.25, look.y)), look.z).normalize();
     }
 }

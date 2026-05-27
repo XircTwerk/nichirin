@@ -165,24 +165,30 @@ public class MoveExecutor {
     }
 
     private static void applyPreConfiguredMoveStun(LivingEntity entity, AbstractBreathingAttack<?, ?> attack) {
-        int windupTicks = getWindupFromAttack(attack);
-        if (windupTicks > 0) {
+        int totalStunTicks = getWindupFromAttack(attack) + getDurationFromAttack(attack);
+        if (totalStunTicks > 0) {
             entity.addEffect(new MobEffectInstance(NichirinEffectRegistry.STUNNED.get(),
-                    windupTicks, 0, false, false, false));
+                    totalStunTicks, 0, false, false, false));
         }
     }
 
     private static void applyPreConfiguredDemonMoveStun(LivingEntity entity, AbstractDemonAttack<?, ?> attack) {
-        int windupTicks = getWindupFromAttack(attack);
-        if (windupTicks > 0) {
+        int totalStunTicks = getWindupFromAttack(attack) + getDurationFromAttack(attack);
+        if (totalStunTicks > 0) {
             entity.addEffect(new MobEffectInstance(NichirinEffectRegistry.STUNNED.get(),
-                    windupTicks, 0, false, false, false));
+                    totalStunTicks, 0, false, false, false));
         }
     }
 
     private static int getWindupFromAttack(Object attack) {
         try {
             return (int) attack.getClass().getMethod("getWindup").invoke(attack);
+        } catch (Exception e) { return 0; }
+    }
+
+    private static int getDurationFromAttack(Object attack) {
+        try {
+            return (int) attack.getClass().getMethod("getDuration").invoke(attack);
         } catch (Exception e) { return 0; }
     }
 

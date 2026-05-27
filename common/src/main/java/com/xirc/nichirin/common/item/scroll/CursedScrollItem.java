@@ -4,6 +4,7 @@ import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.event.BreathOfNichirinEventHandler;
 import com.xirc.nichirin.common.system.perks.FlawDefinition;
 import com.xirc.nichirin.common.system.perks.NichirinPerkRegistry;
+import com.xirc.nichirin.common.system.perks.PerkArchive;
 import com.xirc.nichirin.common.system.perks.PerkData;
 import com.xirc.nichirin.common.system.perks.PerkDefinition;
 import com.xirc.nichirin.common.system.perks.PerkManager;
@@ -56,6 +57,7 @@ public class CursedScrollItem extends Item {
 
         if (level.isClientSide()) return InteractionResultHolder.success(stack);
         if (!(player instanceof ServerPlayer serverPlayer)) return InteractionResultHolder.pass(stack);
+        if (PerkArchive.ARCHIVED) return InteractionResultHolder.pass(stack);
 
         PerkData data = PlayerDataProvider.getData(serverPlayer).getPerkData();
         String perkId = getPerkId(stack);
@@ -150,6 +152,7 @@ public class CursedScrollItem extends Item {
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(stack, level, tooltip, flag);
+        if (PerkArchive.ARCHIVED) return;
         String perkId = getPerkId(stack);
         if (perkId == null) {
             tooltip.add(Component.literal("Blank cursed scroll").withStyle(ChatFormatting.GRAY));
@@ -177,6 +180,7 @@ public class CursedScrollItem extends Item {
     @Override
     public Component getName(ItemStack stack) {
         String perkId = getPerkId(stack);
+        if (PerkArchive.ARCHIVED) return super.getName(stack);
         if (perkId != null) {
             PerkDefinition def = NichirinPerkRegistry.getPerk(perkId);
             if (def != null) {

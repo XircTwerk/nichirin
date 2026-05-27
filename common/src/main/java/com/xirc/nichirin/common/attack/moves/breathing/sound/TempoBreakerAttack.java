@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.attack.moves.breathing.sound;
 
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
+import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -227,9 +228,11 @@ public class TempoBreakerAttack extends SoundBreathingAttackBase {
 
     private List<LivingEntity> getTargetsInCone(Vec3 origin, Vec3 direction, double range, double angleDegrees) {
         double angleRadians = Math.toRadians(angleDegrees / 2);
+        AABB debugBox = new AABB(origin.subtract(range, 2, range), origin.add(range, 2, range));
+        NichirinPacketRegistry.sendHitboxToTracking(user, debugBox, 2500L);
 
         return world.getEntitiesOfClass(LivingEntity.class,
-                new AABB(origin.subtract(range, 2, range), origin.add(range, 2, range)),
+                debugBox,
                 entity -> {
                     if (entity == user || !entity.isAlive()) return false;
                     Vec3 toEntity = entity.position().subtract(origin).normalize();

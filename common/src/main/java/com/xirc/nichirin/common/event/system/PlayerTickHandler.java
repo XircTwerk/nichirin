@@ -6,6 +6,7 @@ import com.xirc.nichirin.common.system.movement.Dash;
 import com.xirc.nichirin.common.system.movement.Dodge;
 import com.xirc.nichirin.common.system.abilities.PlayerDoubleJump;
 import com.xirc.nichirin.common.system.DemonManager;
+import com.xirc.nichirin.common.system.perks.PerkArchive;
 import com.xirc.nichirin.common.system.perks.PerkManager;
 import com.xirc.nichirin.common.system.perks.PerkData;
 import dev.architectury.event.EventResult;
@@ -48,13 +49,13 @@ public class PlayerTickHandler {
         PlayerEvent.PLAYER_QUIT.register(player -> {
             if (player instanceof ServerPlayer) {
                 ServerPlayer sp = (ServerPlayer) player;
-                PerkManager.cleanupPlayer(sp);
                 removeAllPerkModifiers(sp);
             }
         });
 
         // Sleep Deprived flaw — refuse bed interactions
         InteractionEvent.RIGHT_CLICK_BLOCK.register((player, hand, pos, face) -> {
+            if (PerkArchive.ARCHIVED) return EventResult.pass();
             if (player.level().isClientSide) return EventResult.pass();
             var state = player.level().getBlockState(pos);
             if (!(state.getBlock() instanceof BedBlock)) {
@@ -80,8 +81,12 @@ public class PlayerTickHandler {
             DemonManager.tickDemon(player);
 
             if (player instanceof ServerPlayer) {
-                tickPerkEffects((ServerPlayer) player);
-                tickFlawEffects((ServerPlayer) player);
+                ServerPlayer serverPlayer = (ServerPlayer) player;
+                removeAllPerkModifiers(serverPlayer);
+                if (!PerkArchive.ARCHIVED) {
+                    tickPerkEffects(serverPlayer);
+                    tickFlawEffects(serverPlayer);
+                }
             }
         }
     }

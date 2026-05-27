@@ -40,7 +40,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
     private void createAndCapturePommelSlashConfig() {
         MoveConfiguration tempConfig = new MoveBuilder("pommel_slash", "Pommel Slash")
                 .withAnimation("nichirin:pommel_slash", 8)
-                .withTiming(0, 5, 18)
+                .withTiming(0, 5, 6)
                 .withDamage(0.5f)
                 .withRange(2.5f)
                 .withKnockback(0f)
@@ -55,7 +55,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
     private void createAndCaptureUnknowingFireConfig() {
         MoveConfiguration tempConfig = new MoveBuilder("unknowing_fire_quick", "Unknowing Fire")
                 .withAnimation("nichirin:unknowing_fire", 9)
-                .withTiming(0, 6, 15)
+                .withTiming(0, 6, 11)
                 .withDamage(10.0f)
                 .withRange(3.0f)
                 .withKnockback(0.4f)
@@ -75,7 +75,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                 // INDEX 0: Rising Scorching Sun â€” upward arc, launches enemies
                 .withMove(new MoveBuilder("rising_scorching_sun", "Scorching Sun")
                         .withAnimation("nichirin:rising_scorching_sun", 8)
-                        .withTiming(100, 12, 25) // 5 second cooldown
+                        .withTiming(100, 12, 18) // 5 second cooldown
                         .withDamage(9.0f) // Good damage + bonus vs airborne
                         .withRange(6.0f) // Upward arc range
                         .withKnockback(0.6f) // Strong upward knockback
@@ -96,7 +96,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                 // INDEX 1: Blazing Universe â€” charged downward strike, explodes on impact
                 .withMove(new MoveBuilder("blazing_universe", "Blazing Universe")
                         .withAnimation("nichirin:blazing_universe", 12)
-                        .withTiming(160, 13, 50) // 8 second cooldown, windup, explosive finish
+                        .withTiming(160, 13, 35) // 8 second cooldown, windup, explosive finish
                         .withDamage(5.0f) // Very high damage
                         .withRange(4.0f) // Large AOE
                         .withKnockback(0.6f)
@@ -117,7 +117,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                 // INDEX 2: Blooming Flame Undulation â€” 360Â° defense
                 .withMove(new MoveBuilder("blooming_flame_undulation", "Blooming Flame")
                         .withAnimation("nichirin:blooming_flame_undulation", 10)
-                        .withTiming(140, 11, 35) // 7 second cooldown
+                        .withTiming(140, 11, 25) // 7 second cooldown
                         .withDamage(5.0f) // Multiple hits around user
                         .withRange(3.5f) // 3.5 block radius
                         .withKnockback(0f)
@@ -138,7 +138,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                 // INDEX 3: Flame Tiger â€” dashing multi-hit strike
                 .withMove(new MoveBuilder("flame_tiger", "Flame Tiger")
                         .withAnimation("nichirin:flame_tiger", 11)
-                        .withTiming(120, 10, 40) // 6 second cooldown, dash duration
+                        .withTiming(120, 10, 28) // 6 second cooldown, dash duration
                         .withDamage(11.0f)
                         .withDashSpeed(35.0f)
                         .withRange(16.0f) // Dash distance
@@ -160,7 +160,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                 // INDEX 4: Rengoku â€” ultimate dragon dash, 30-second cooldown
                 .withMove(new MoveBuilder("rengoku", "Rengoku")
                         .withAnimation("nichirin:rengoku", 20)
-                        .withTiming(600, 120, 60) // 30 second cooldown, windup, dragon dash
+                        .withTiming(600, 120, 42) // 30 second cooldown, windup, dragon dash
                         .withDamage(30.0f) // Massive damage
                         .withDashSpeed(50.0f) // Very fast dash
                         .withRange(20.0f) // Long range dash
@@ -187,6 +187,8 @@ public class FlameBreathingMoveset extends AbstractMoveset {
 
     @Override
     public boolean handleRightClick(LivingEntity entity, boolean isCrouching) {
+        if (!canPerformMoves(entity)) return true;
+
         if (isCrouching) {
             return executeUnknowingFire(entity);
         } else {
@@ -195,11 +197,10 @@ public class FlameBreathingMoveset extends AbstractMoveset {
     }
 
     private boolean executePommelSlash(LivingEntity entity) {
-        triggerAnimation(entity, "pommel_slash");
-        PommelSlashAttack attack = new PommelSlashAttack();
-
         createAndCapturePommelSlashConfig();
         MoveConfiguration tempConfig = getRightClickConfiguration();
+        if (tempConfig == null) return false;
+        if (!hasResourcesForMove(entity, tempConfig)) return true;
 
         if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer) {
             MovesetConfigSyncPacket packet = new MovesetConfigSyncPacket(
@@ -210,6 +211,8 @@ public class FlameBreathingMoveset extends AbstractMoveset {
             NichirinPacketRegistry.sendToPlayer(packet, serverPlayer);
         }
 
+        triggerAnimation(entity, "pommel_slash");
+        PommelSlashAttack attack = new PommelSlashAttack();
         attack.configure(tempConfig);
         MoveExecutor.executeAttack(entity, attack, "flame_breathing", "pommel_slash");
         onMovePerformed(entity, -1, false);
@@ -217,11 +220,10 @@ public class FlameBreathingMoveset extends AbstractMoveset {
     }
 
     private boolean executeUnknowingFire(LivingEntity entity) {
-        triggerAnimation(entity, "unknowing_fire");
-        UnknowingFireAttack attack = new UnknowingFireAttack();
-
         createAndCaptureUnknowingFireConfig();
         MoveConfiguration tempConfig = getCrouchRightClickConfiguration();
+        if (tempConfig == null) return false;
+        if (!hasResourcesForMove(entity, tempConfig)) return true;
 
         if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer) {
             MovesetConfigSyncPacket packet = new MovesetConfigSyncPacket(
@@ -232,6 +234,8 @@ public class FlameBreathingMoveset extends AbstractMoveset {
             NichirinPacketRegistry.sendToPlayer(packet, serverPlayer);
         }
 
+        triggerAnimation(entity, "unknowing_fire");
+        UnknowingFireAttack attack = new UnknowingFireAttack();
         attack.configure(tempConfig);
         MoveExecutor.executeAttack(entity, attack, "flame_breathing", "unknowing_fire_quick");
         onMovePerformed(entity, -2, true);
@@ -240,6 +244,10 @@ public class FlameBreathingMoveset extends AbstractMoveset {
 
     @Override
     public void performMove(LivingEntity entity, int moveIndex) {
+        if (!canPerformMoves(entity)) {
+            return;
+        }
+
         // Check cooldown before allowing move
         if (!canUseMove(entity, moveIndex)) {
             // Show cooldown message

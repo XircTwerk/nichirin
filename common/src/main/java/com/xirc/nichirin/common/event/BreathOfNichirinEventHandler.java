@@ -7,7 +7,6 @@ import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.event.item.RiceInteractionHandler;
 import com.xirc.nichirin.common.event.system.DemonFoodHandler;
-import com.xirc.nichirin.common.network.s2c.PerkSyncPacket;
 import com.xirc.nichirin.common.system.BloodMoonManager;
 import com.xirc.nichirin.common.system.DemonManager;
 import com.xirc.nichirin.common.system.KillRewardManager;
@@ -19,9 +18,6 @@ import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.event.events.common.LootEvent;
 import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.event.events.common.TickEvent;
-import dev.architectury.networking.NetworkManager;
-import io.netty.buffer.Unpooled;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -33,7 +29,6 @@ import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
 import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
 import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
-import net.minecraft.world.level.storage.loot.predicates.LootItemRandomChanceCondition;
 
 import java.util.Set;
 
@@ -48,7 +43,6 @@ public class BreathOfNichirinEventHandler {
 
         PlayerDataProvider.register();
         registerDemonEvents();
-        registerPerkSyncEvents();
         RiceInteractionHandler.register();
         registerLootInjection();
     }
@@ -64,26 +58,6 @@ public class BreathOfNichirinEventHandler {
             new ResourceLocation("minecraft", "chests/abandoned_mineshaft")
     );
 
-    private static final Set<ResourceLocation> PERK_SCROLL_LOOT_TABLES = Set.of(
-            new ResourceLocation("minecraft", "chests/abandoned_mineshaft"),
-            new ResourceLocation("minecraft", "chests/desert_pyramid"),
-            new ResourceLocation("minecraft", "chests/jungle_temple"),
-            new ResourceLocation("minecraft", "chests/stronghold_corridor"),
-            new ResourceLocation("minecraft", "chests/stronghold_crossing"),
-            new ResourceLocation("minecraft", "chests/stronghold_library"),
-            new ResourceLocation("minecraft", "chests/woodland_mansion"),
-            new ResourceLocation("minecraft", "chests/pillager_outpost"),
-            new ResourceLocation("minecraft", "chests/simple_dungeon")
-    );
-
-    private static final Set<ResourceLocation> CURSED_SCROLL_LOOT_TABLES = Set.of(
-            new ResourceLocation("minecraft", "chests/ancient_city"),
-            new ResourceLocation("minecraft", "chests/bastion_treasure"),
-            new ResourceLocation("minecraft", "chests/end_city_treasure"),
-            new ResourceLocation("minecraft", "chests/woodland_mansion"),
-            new ResourceLocation("minecraft", "chests/stronghold_library")
-    );
-
     private static void registerLootInjection() {
         LootEvent.MODIFY_LOOT_TABLE.register((manager, id, context, builtin) -> {
             if (RICE_LOOT_TABLES.contains(id)) {
@@ -92,35 +66,10 @@ public class BreathOfNichirinEventHandler {
                                 .apply(SetItemCountFunction.setCount(UniformGenerator.between(1, 6))))
                         .build());
             }
-            if (PERK_SCROLL_LOOT_TABLES.contains(id)) {
-                context.addPool(LootPool.lootPool()
-                        .add(LootItem.lootTableItem(NichirinItemRegistry.PERK_SCROLL.get())
-                                .when(LootItemRandomChanceCondition.randomChance(0.56f)))
-                        .build());
-            }
-            if (CURSED_SCROLL_LOOT_TABLES.contains(id)) {
-                context.addPool(LootPool.lootPool()
-                        .add(LootItem.lootTableItem(NichirinItemRegistry.CURSED_SCROLL.get())
-                                .when(LootItemRandomChanceCondition.randomChance(0.16f)))
-                        .build());
-            }
         });
     }
 
-    private static void registerPerkSyncEvents() {
-        // Sync perk data to client on join and respawn
-        PlayerEvent.PLAYER_JOIN.register(player -> syncPerksToPlayer((ServerPlayer) player));
-        PlayerEvent.PLAYER_RESPAWN.register((player, keepEverything) -> syncPerksToPlayer((ServerPlayer) player));
-    }
-
     public static void syncPerksToPlayer(ServerPlayer player) {
-        try {
-            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-            new PerkSyncPacket(PlayerDataProvider.getData(player).getPerkData()).toBytes(buf);
-            NetworkManager.sendToPlayer(player, NichirinPacketRegistry.PERK_SYNC_ID, buf);
-        } catch (Exception e) {
-            // ignore
-        }
     }
 
     private static void registerDemonEvents() {

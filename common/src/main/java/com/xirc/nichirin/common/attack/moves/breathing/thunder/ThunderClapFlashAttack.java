@@ -4,30 +4,22 @@ import com.xirc.nichirin.common.util.TeleportUtil;
 import com.xirc.nichirin.common.effect.ShockedStatusEffect;
 import com.xirc.nichirin.registry.NicirinSoundRegistry;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
-import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.phys.Vec3;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
 
 // First Form: Thunderclap and Flash. Instant teleport dash hitting all enemies in path.
 public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
 
     private Vec3 startPosition = null;
-    private static final Map<UUID, Boolean> CROUCH_DASH_MAP = new HashMap<>();
+    private boolean turnBackwards = false;
 
-    public static void setCrouchDash(Player player, boolean crouchDash) {
-        if (crouchDash) {
-            CROUCH_DASH_MAP.put(player.getUUID(), true);
-        } else {
-            CROUCH_DASH_MAP.remove(player.getUUID());
-        }
+    public void setTurnBackwards(boolean turnBackwards) {
+        this.turnBackwards = turnBackwards;
     }
 
     @Override
@@ -45,14 +37,23 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
         if (tickCount == windup + 1) {
             executeTeleportDash();
 
-            Boolean shouldTurnBackwards = CROUCH_DASH_MAP.get(user.getUUID());
-            if (shouldTurnBackwards != null && shouldTurnBackwards && startPosition != null) {
-                user.lookAt(EntityAnchorArgument.Anchor.EYES, startPosition);
-                if (user instanceof ServerPlayer serverPlayer) {
-                    serverPlayer.connection.teleport(user.getX(), user.getY(), user.getZ(),
-                            user.getYRot(), user.getXRot());
-                }
+            if (turnBackwards && startPosition != null) {
+                flipUserBackwards();
             }
+        }
+    }
+
+    private void flipUserBackwards() {
+        float flippedYaw = user.getYRot() + 180.0f;
+        user.setYRot(flippedYaw);
+        user.setYHeadRot(flippedYaw);
+        user.setYBodyRot(flippedYaw);
+
+        if (user instanceof ServerPlayer serverPlayer) {
+            serverPlayer.connection.teleport(user.getX(), user.getY(), user.getZ(),
+                    flippedYaw, user.getXRot());
+        } else {
+            user.absMoveTo(user.getX(), user.getY(), user.getZ(), flippedYaw, user.getXRot());
         }
     }
 
@@ -66,6 +67,7 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
                 .withDamage(damage)
                 .withDamageCallback(target -> {
                     hitTargetNoImmunity(target);
+                    target.addEffect(new MobEffectInstance(MobEffects.LEVITATION, 12, 1, false, false, true));
 
                     target.setDeltaMovement(
                             target.getDeltaMovement().x * 0.1,
@@ -93,6 +95,6 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
 
     @Override
     protected void onStop() {
-        CROUCH_DASH_MAP.remove(user.getUUID());
+        turnBackwards = false;
     }
 }

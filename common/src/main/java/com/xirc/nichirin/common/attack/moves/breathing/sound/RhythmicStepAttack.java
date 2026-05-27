@@ -47,9 +47,7 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
         dashTick = 0;
         hitEntities.clear();
 
-        // Force horizontal direction only (ignore Y component)
-        Vec3 rawDirection = user.getLookAngle();
-        dashDirection = new Vec3(rawDirection.x, 0, rawDirection.z).normalize();
+        dashDirection = angledDashDirection();
         // Rhythmic step preparation sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.WARDEN_SONIC_CHARGE, SoundSource.PLAYERS, 0.8f, 2.0f);
@@ -396,5 +394,10 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
             world.playSound(null, user.getX(), user.getY(), user.getZ(),
                     SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 0.8f, 1.0f);
         }
+    }
+
+    private Vec3 angledDashDirection() {
+        Vec3 look = user.getLookAngle();
+        return new Vec3(look.x, Math.max(-0.25, Math.min(0.25, look.y)), look.z).normalize();
     }
 }

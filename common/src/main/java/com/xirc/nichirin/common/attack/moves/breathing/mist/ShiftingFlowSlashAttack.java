@@ -28,7 +28,7 @@ public class ShiftingFlowSlashAttack extends MistBreathingAttackBase {
         dashStarted = false;
         finisherExecuted = false;
         hitDuringDash.clear();
-        dashDirection = new Vec3(user.getLookAngle().x, 0, user.getLookAngle().z).normalize();
+        dashDirection = angledDashDirection();
         dashStartPos = null;
         dashTick = 0;
 
@@ -154,5 +154,10 @@ public class ShiftingFlowSlashAttack extends MistBreathingAttackBase {
         dashStartPos = null;
         lastDashPos = null;
         dashTick = 0;
+    }
+
+    private Vec3 angledDashDirection() {
+        Vec3 look = user.getLookAngle();
+        return new Vec3(look.x, Math.max(-0.25, Math.min(0.25, look.y)), look.z).normalize();
     }
 }
