@@ -163,8 +163,10 @@ public class KatanaBlock {
         // Remove blocking effect
         removeBlockingEffect(player);
 
-        // Stop the block animation on all nearby clients
-        if (player instanceof ServerPlayer serverPlayer) {
+        // Stop the block animation on all nearby clients.
+        // Exception: if a parry just landed, sword.parry is still playing — don't cancel it.
+        // It is non-looping so it will self-terminate naturally.
+        if (player instanceof ServerPlayer serverPlayer && state.stance != BlockingStance.PARRY_SUCCESS) {
             NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer,
                     new PlayerAnimationPacket(serverPlayer.getId(), ""));
         }
@@ -471,7 +473,12 @@ public class KatanaBlock {
             return false; // Stance broken, take full damage
         }
 
-        // Play block clang sound
+        // Play block clang sound and re-trigger the block animation so it snaps
+        // back to frame 0 — gives a visible "clang" jolt on the client.
+        if (player instanceof ServerPlayer serverPlayer) {
+            NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer,
+                    new PlayerAnimationPacket(serverPlayer.getId(), "sword.block"));
+        }
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 NicirinSoundRegistry.BLOCK_CLANG.get(), SoundSource.PLAYERS, 0.9f, 1.0f);
 

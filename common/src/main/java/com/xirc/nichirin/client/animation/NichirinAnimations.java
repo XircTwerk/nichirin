@@ -5,6 +5,7 @@ import dev.kosmx.playerAnim.api.layered.IAnimation;
 import dev.kosmx.playerAnim.api.layered.KeyframeAnimationPlayer;
 import dev.kosmx.playerAnim.api.layered.ModifierLayer;
 import dev.kosmx.playerAnim.core.data.KeyframeAnimation;
+import dev.kosmx.playerAnim.core.util.Ease;
 import dev.kosmx.playerAnim.minecraftApi.PlayerAnimationRegistry;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -47,7 +48,7 @@ public class NichirinAnimations {
                 return;
             }
 
-            layer.setAnimation(new KeyframeAnimationPlayer(animation));
+            layer.setAnimation(new KeyframeAnimationPlayer(postProcess(animationName, animation)));
 
         } catch (Exception e) {
             LOGGER.error("[Nichirin] Exception while playing animation '{}': {}", animationName, e.getMessage(), e);
@@ -98,6 +99,52 @@ public class NichirinAnimations {
         if (layer == null) return false;
         IAnimation current = layer.getAnimation();
         return current != null && current.isActive();
+    }
+
+    /**
+     * Post-processes a loaded animation:
+     * 1. Plain [x,y,z] arrays in JSON are parsed by PlayerAnim as Ease.CONSTANT (instant snap).
+     *    We replace CONSTANT with INOUTSINE so all animations interpolate smoothly, matching
+     *    the original catmullrom intent. (The linter strips lerp_mode from JSON, so this is
+     *    the only reliable way to get smooth interpolation.)
+     * 2. sword.block forces returnTick == endTick so it holds its last frame instead of
+     *    restarting.
+     */
+    private static KeyframeAnimation postProcess(String animationName, KeyframeAnimation animation) {
+        KeyframeAnimation.AnimationBuilder builder = animation.mutableCopy();
+
+        for (String partName : animation.getBodyParts().keySet()) {
+            KeyframeAnimation.StateCollection part = builder.getPart(partName);
+            if (part == null) continue;
+            fixEasing(part.pitch);
+            fixEasing(part.yaw);
+            fixEasing(part.roll);
+            fixEasing(part.x);
+            fixEasing(part.y);
+            fixEasing(part.z);
+            if (part.bend != null) fixEasing(part.bend);
+            if (part.bendDirection != null) fixEasing(part.bendDirection);
+        }
+
+        // sword.block: force loop and hold on its last frame so it never snaps back to
+        // the start. returnTick = endTick means "when done, jump to the last frame" — a freeze.
+        // We guard endTick > 0 in case the linter strips animation_length again.
+        if ("sword.block".equals(animationName) && builder.endTick > 0) {
+            builder.isLooped   = true;
+            builder.returnTick = builder.endTick;
+        }
+
+        return builder.build();
+    }
+
+    /** Replace Ease.CONSTANT (plain array default) with Ease.INOUTSINE on every keyframe. */
+    private static void fixEasing(KeyframeAnimation.StateCollection.State state) {
+        if (state == null) return;
+        for (int i = 0; i < state.getKeyFrames().size(); i++) {
+            if (state.getKeyFrames().get(i).ease == Ease.CONSTANT) {
+                state.replaceEase(i, Ease.INOUTSINE);
+            }
+        }
     }
 
     private static ModifierLayer<IAnimation> getLayer(AbstractClientPlayer player) {

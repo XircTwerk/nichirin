@@ -156,7 +156,7 @@ public class MistBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("obscuring_clouds", "Obscuring Clouds")
                         .withAnimation("nichirin:mist_vanish", 16)
                         .withTiming(800, 5, 300)
-                        .withDamage(1.0f)
+                        .withDamage(1.3f)
                         .withRange(8.0f)
                         .withKnockback(0.0f)
                         .withBreathCost(55.0f)

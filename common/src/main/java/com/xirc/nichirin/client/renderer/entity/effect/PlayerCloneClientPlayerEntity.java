@@ -89,7 +89,7 @@ public class PlayerCloneClientPlayerEntity extends AbstractClientPlayer {
 
     @Override
     public String getModelName() {
-        return CloneSkinTracker.getModelFor(clone);
+        return CloneSkinTracker.isSlimFor(clone) ? "slim" : "default";
     }
 
     @Override

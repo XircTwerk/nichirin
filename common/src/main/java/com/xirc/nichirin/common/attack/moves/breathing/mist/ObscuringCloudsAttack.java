@@ -32,11 +32,12 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
     private static final int    CLONE_COUNT  = 6;
     private static final int    HIT_INTERVAL = 12;    // ticks between hits on same target
 
-    private LivingEntity orbitTarget     = null;
-    private double       orbitAngle      = 0.0;
+    private LivingEntity orbitTarget      = null;
+    private double       orbitAngle       = 0.0;
     private boolean      orbitInitialized = false;
-    private boolean      clonesSpawned   = false;
-    private Vec3         initPos         = null;
+    private int          clonesSpawnedCount = 0;
+    private int          nextCloneSpawnTick = 0;
+    private Vec3         initPos          = null;
 
     private final Map<UUID, Integer> lastHitTicks  = new HashMap<>();
     private final List<UUID>         spawnedClones = new ArrayList<>();
@@ -53,9 +54,10 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
         }
 
         initPos          = user.position();
-        orbitAngle       = 0.0;
-        orbitInitialized = false;
-        clonesSpawned    = false;
+        orbitAngle         = 0.0;
+        orbitInitialized   = false;
+        clonesSpawnedCount = 0;
+        nextCloneSpawnTick = windup; // first clone spawns on the first active tick
         lastHitTicks.clear();
         spawnedClones.clear();
 
@@ -89,10 +91,11 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
         // Center tracks the target's feet so we stay grounded
         Vec3 center = orbitTarget.position();
 
-        // Spawn clones on the very first active tick
-        if (!clonesSpawned) {
-            spawnClones(center);
-            clonesSpawned = true;
+        // Stagger clone spawning: one clone per 1–10 random ticks
+        if (clonesSpawnedCount < CLONE_COUNT && tickCount >= nextCloneSpawnTick) {
+            spawnNextClone(center);
+            clonesSpawnedCount++;
+            nextCloneSpawnTick = tickCount + 1 + world.random.nextInt(10);
         }
 
         // Set initial orbit angle from where we currently stand so there's no jump
@@ -175,22 +178,27 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
 
     // -------------------------------------------------------------------------
 
-    private void spawnClones(Vec3 center) {
-        if (!(world instanceof ServerLevel)) return;
-        int lifetime      = windup + duration + 15;
-        float cloneRadius = (float) ORBIT_RADIUS;
-        Vec3 spawnCenter  = new Vec3(center.x, user.getY(), center.z);
-        for (int i = 0; i < CLONE_COUNT; i++) {
-            float angle = (float) (2.0 * Math.PI * i / CLONE_COUNT);
-            PlayerCloneEntity clone = PlayerCloneEntity.create(
-                    NichirinEntityRegistry.PLAYER_CLONE.get(), world,
-                    user, spawnCenter, cloneRadius, angle, lifetime);
-            world.addFreshEntity(clone);
-            // Set equipment after adding so the tracking system sends it to clients
-            clone.copyEquipmentFrom(user);
-            spawnedClones.add(clone.getUUID());
-        }
-        createMistCircle(spawnCenter.add(0, user.getBbHeight() / 2, 0), cloneRadius, 24);
+    private void spawnNextClone(Vec3 center) {
+        if (!(world instanceof ServerLevel serverLevel)) return;
+        int remainingLife = (windup + duration + 15) - tickCount;
+        if (remainingLife <= 0) return;
+
+        // Random angle so each clone swoops in from a different direction
+        float angle = (float) (world.random.nextFloat() * 2.0 * Math.PI);
+        Vec3 spawnCenter = new Vec3(center.x, user.getY(), center.z);
+
+        PlayerCloneEntity clone = PlayerCloneEntity.create(
+                NichirinEntityRegistry.PLAYER_CLONE.get(), world,
+                user, spawnCenter, angle, 0, remainingLife);
+        world.addFreshEntity(clone);
+        clone.copyEquipmentFrom(user);
+        spawnedClones.add(clone.getUUID());
+
+        // Small mist burst at spawn point of this individual clone
+        Vec3 spawnPos = spawnCenter.add(
+                Math.cos(angle) * 8, user.getBbHeight() / 2, Math.sin(angle) * 8);
+        serverLevel.sendParticles(ParticleTypes.CLOUD,
+                spawnPos.x, spawnPos.y, spawnPos.z, 10, 0.3, 0.3, 0.3, 0.03);
     }
 
     private LivingEntity findClosestEnemy() {

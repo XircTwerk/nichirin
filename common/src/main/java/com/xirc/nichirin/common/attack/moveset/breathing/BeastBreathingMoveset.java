@@ -38,12 +38,12 @@ public class BeastBreathingMoveset extends AbstractMoveset {
                 .withTiming(0, 0, 8)
                 .withDamage(3.0f)
                 .withRange(4.0f)
-                .withKnockback(2.0f)
+                .withKnockback(0.4f)
                 .withBreathCost(8.0f)
                 .withStaminaCost(10.0f)
                 .withHitStun(10)
                 .withHitboxSize(1.5f)
-                .withDescription("Stabs forward; knockback is delayed.")
+                .withDescription("Stabs forward")
                 .build();
         this.captureLeftClickConfig(cfg);
     }

@@ -37,7 +37,7 @@ public class BeastPierceAttack extends BeastBreathingAttackBase {
 
         if (!knockbackApplied && storedTarget != null && tickCount >= KNOCKBACK_DELAY) {
             Vec3 dir = storedTarget.position().subtract(user.position()).normalize();
-            storedTarget.push(dir.x * 2.0, 0.3, dir.z * 2.0);
+            storedTarget.push(dir.x * knockback, 0.1 * knockback, dir.z * knockback);
             knockbackApplied = true;
             if (world instanceof ServerLevel sl) {
                 sl.sendParticles(ParticleTypes.CRIT, storedTarget.getX(), storedTarget.getY() + 1, storedTarget.getZ(),

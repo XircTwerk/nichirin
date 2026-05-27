@@ -1,1610 +1,334 @@
-﻿{
-    "format_version":  "1.8.0",
-    "animations":  {
-                       "flame_idle":  {
-                                          "animation_length":  2.0,
-                                          "bones":  {
-                                                        "head":  {
-                                                                     "rotation":  {
-                                                                                      "0.0":  {
-                                                                                                  "post":  {
-                                                                                                               "vector":  [
-                                                                                                                              -5,
-                                                                                                                              0,
-                                                                                                                              0
-                                                                                                                          ]
-                                                                                                           },
-                                                                                                  "lerp_mode":  "catmullrom"
-                                                                                              },
-                                                                                      "1.0":  {
-                                                                                                  "post":  {
-                                                                                                               "vector":  [
-                                                                                                                              -8,
-                                                                                                                              0,
-                                                                                                                              0
-                                                                                                                          ]
-                                                                                                           },
-                                                                                                  "lerp_mode":  "catmullrom"
-                                                                                              },
-                                                                                      "2.0":  {
-                                                                                                  "post":  {
-                                                                                                               "vector":  [
-                                                                                                                              -5,
-                                                                                                                              0,
-                                                                                                                              0
-                                                                                                                          ]
-                                                                                                           },
-                                                                                                  "lerp_mode":  "catmullrom"
-                                                                                              }
-                                                                                  }
-                                                                 },
-                                                        "torso":  {
-                                                                      "rotation":  {
-                                                                                       "0.0":  {
-                                                                                                   "post":  {
-                                                                                                                "vector":  [
-                                                                                                                               -8,
-                                                                                                                               0,
-                                                                                                                               0
-                                                                                                                           ]
-                                                                                                            },
-                                                                                                   "lerp_mode":  "catmullrom"
-                                                                                               },
-                                                                                       "1.0":  {
-                                                                                                   "post":  {
-                                                                                                                "vector":  [
-                                                                                                                               -10,
-                                                                                                                               0,
-                                                                                                                               0
-                                                                                                                           ]
-                                                                                                            },
-                                                                                                   "lerp_mode":  "catmullrom"
-                                                                                               },
-                                                                                       "2.0":  {
-                                                                                                   "post":  {
-                                                                                                                "vector":  [
-                                                                                                                               -8,
-                                                                                                                               0,
-                                                                                                                               0
-                                                                                                                           ]
-                                                                                                            },
-                                                                                                   "lerp_mode":  "catmullrom"
-                                                                                               }
-                                                                                   },
-                                                                      "position":  {
-                                                                                       "0.0":  {
-                                                                                                   "post":  {
-                                                                                                                "vector":  [
-                                                                                                                               0,
-                                                                                                                               0,
-                                                                                                                               1
-                                                                                                                           ]
-                                                                                                            },
-                                                                                                   "lerp_mode":  "catmullrom"
-                                                                                               },
-                                                                                       "1.0":  {
-                                                                                                   "post":  {
-                                                                                                                "vector":  [
-                                                                                                                               0,
-                                                                                                                               -0.5,
-                                                                                                                               1.5
-                                                                                                                           ]
-                                                                                                            },
-                                                                                                   "lerp_mode":  "catmullrom"
-                                                                                               },
-                                                                                       "2.0":  {
-                                                                                                   "post":  {
-                                                                                                                "vector":  [
-                                                                                                                               0,
-                                                                                                                               0,
-                                                                                                                               1
-                                                                                                                           ]
-                                                                                                            },
-                                                                                                   "lerp_mode":  "catmullrom"
-                                                                                               }
-                                                                                   }
-                                                                  },
-                                                        "rightArm":  {
-                                                                         "rotation":  {
-                                                                                          "0.0":  {
-                                                                                                      "post":  {
-                                                                                                                   "vector":  [
-                                                                                                                                  -20,
-                                                                                                                                  0,
-                                                                                                                                  -15
-                                                                                                                              ]
-                                                                                                               },
-                                                                                                      "lerp_mode":  "catmullrom"
-                                                                                                  },
-                                                                                          "1.0":  {
-                                                                                                      "post":  {
-                                                                                                                   "vector":  [
-                                                                                                                                  -25,
-                                                                                                                                  0,
-                                                                                                                                  -18
-                                                                                                                              ]
-                                                                                                               },
-                                                                                                      "lerp_mode":  "catmullrom"
-                                                                                                  },
-                                                                                          "2.0":  {
-                                                                                                      "post":  {
-                                                                                                                   "vector":  [
-                                                                                                                                  -20,
-                                                                                                                                  0,
-                                                                                                                                  -15
-                                                                                                                              ]
-                                                                                                               },
-                                                                                                      "lerp_mode":  "catmullrom"
-                                                                                                  }
-                                                                                      }
-                                                                     },
-                                                        "leftArm":  {
-                                                                        "rotation":  {
-                                                                                         "0.0":  {
-                                                                                                     "post":  {
-                                                                                                                  "vector":  [
-                                                                                                                                 -15,
-                                                                                                                                 0,
-                                                                                                                                 20
-                                                                                                                             ]
-                                                                                                              },
-                                                                                                     "lerp_mode":  "catmullrom"
-                                                                                                 },
-                                                                                         "1.0":  {
-                                                                                                     "post":  {
-                                                                                                                  "vector":  [
-                                                                                                                                 -18,
-                                                                                                                                 0,
-                                                                                                                                 22
-                                                                                                                             ]
-                                                                                                              },
-                                                                                                     "lerp_mode":  "catmullrom"
-                                                                                                 },
-                                                                                         "2.0":  {
-                                                                                                     "post":  {
-                                                                                                                  "vector":  [
-                                                                                                                                 -15,
-                                                                                                                                 0,
-                                                                                                                                 20
-                                                                                                                             ]
-                                                                                                              },
-                                                                                                     "lerp_mode":  "catmullrom"
-                                                                                                 }
-                                                                                     }
-                                                                    },
-                                                        "rightLeg":  {
-                                                                         "rotation":  {
-                                                                                          "0.0":  {
-                                                                                                      "post":  {
-                                                                                                                   "vector":  [
-                                                                                                                                  5,
-                                                                                                                                  0,
-                                                                                                                                  0
-                                                                                                                              ]
-                                                                                                               },
-                                                                                                      "lerp_mode":  "catmullrom"
-                                                                                                  },
-                                                                                          "1.0":  {
-                                                                                                      "post":  {
-                                                                                                                   "vector":  [
-                                                                                                                                  8,
-                                                                                                                                  0,
-                                                                                                                                  0
-                                                                                                                              ]
-                                                                                                               },
-                                                                                                      "lerp_mode":  "catmullrom"
-                                                                                                  },
-                                                                                          "2.0":  {
-                                                                                                      "post":  {
-                                                                                                                   "vector":  [
-                                                                                                                                  5,
-                                                                                                                                  0,
-                                                                                                                                  0
-                                                                                                                              ]
-                                                                                                               },
-                                                                                                      "lerp_mode":  "catmullrom"
-                                                                                                  }
-                                                                                      }
-                                                                     },
-                                                        "leftLeg":  {
-                                                                        "rotation":  {
-                                                                                         "0.0":  {
-                                                                                                     "post":  {
-                                                                                                                  "vector":  [
-                                                                                                                                 5,
-                                                                                                                                 0,
-                                                                                                                                 0
-                                                                                                                             ]
-                                                                                                              },
-                                                                                                     "lerp_mode":  "catmullrom"
-                                                                                                 },
-                                                                                         "1.0":  {
-                                                                                                     "post":  {
-                                                                                                                  "vector":  [
-                                                                                                                                 3,
-                                                                                                                                 0,
-                                                                                                                                 0
-                                                                                                                             ]
-                                                                                                              },
-                                                                                                     "lerp_mode":  "catmullrom"
-                                                                                                 },
-                                                                                         "2.0":  {
-                                                                                                     "post":  {
-                                                                                                                  "vector":  [
-                                                                                                                                 5,
-                                                                                                                                 0,
-                                                                                                                                 0
-                                                                                                                             ]
-                                                                                                              },
-                                                                                                     "lerp_mode":  "catmullrom"
-                                                                                                 }
-                                                                                     }
-                                                                    }
-                                                    }
-                                      },
-                       "insect_idle":  {
-                                           "animation_length":  2.0,
-                                           "bones":  {
-                                                         "head":  {
-                                                                      "rotation":  {
-                                                                                       "0.0":  {
-                                                                                                   "post":  {
-                                                                                                                "vector":  [
-                                                                                                                               0,
-                                                                                                                               0,
-                                                                                                                               0
-                                                                                                                           ]
-                                                                                                            },
-                                                                                                   "lerp_mode":  "catmullrom"
-                                                                                               },
-                                                                                       "0.3":  {
-                                                                                                   "post":  {
-                                                                                                                "vector":  [
-                                                                                                                               -5,
-                                                                                                                               8,
-                                                                                                                               3
-                                                                                                                           ]
-                                                                                                            },
-                                                                                                   "lerp_mode":  "catmullrom"
-                                                                                               },
-                                                                                       "0.7":  {
-                                                                                                   "post":  {
-                                                                                                                "vector":  [
-                                                                                                                               3,
-                                                                                                                               -5,
-                                                                                                                               -3
-                                                                                                                           ]
-                                                                                                            },
-                                                                                                   "lerp_mode":  "catmullrom"
-                                                                                               },
-                                                                                       "1.0":  {
-                                                                                                   "post":  {
-                                                                                                                "vector":  [
-                                                                                                                               -3,
-                                                                                                                               6,
-                                                                                                                               2
-                                                                                                                           ]
-                                                                                                            },
-                                                                                                   "lerp_mode":  "catmullrom"
-                                                                                               },
-                                                                                       "1.4":  {
-                                                                                                   "post":  {
-                                                                                                                "vector":  [
-                                                                                                                               2,
-                                                                                                                               -4,
-                                                                                                                               -2
-                                                                                                                           ]
-                                                                                                            },
-                                                                                                   "lerp_mode":  "catmullrom"
-                                                                                               },
-                                                                                       "1.7":  {
-                                                                                                   "post":  {
-                                                                                                                "vector":  [
-                                                                                                                               -4,
-                                                                                                                               5,
-                                                                                                                               3
-                                                                                                                           ]
-                                                                                                            },
-                                                                                                   "lerp_mode":  "catmullrom"
-                                                                                               },
-                                                                                       "2.0":  {
-                                                                                                   "post":  {
-                                                                                                                "vector":  [
-                                                                                                                               0,
-                                                                                                                               0,
-                                                                                                                               0
-                                                                                                                           ]
-                                                                                                            },
-                                                                                                   "lerp_mode":  "catmullrom"
-                                                                                               }
-                                                                                   }
-                                                                  },
-                                                         "torso":  {
-                                                                       "rotation":  {
-                                                                                        "0.0":  {
-                                                                                                    "post":  {
-                                                                                                                 "vector":  [
-                                                                                                                                10,
-                                                                                                                                0,
-                                                                                                                                0
-                                                                                                                            ]
-                                                                                                             },
-                                                                                                    "lerp_mode":  "catmullrom"
-                                                                                                },
-                                                                                        "0.5":  {
-                                                                                                    "post":  {
-                                                                                                                 "vector":  [
-                                                                                                                                10,
-                                                                                                                                2,
-                                                                                                                                1
-                                                                                                                            ]
-                                                                                                             },
-                                                                                                    "lerp_mode":  "catmullrom"
-                                                                                                },
-                                                                                        "1.0":  {
-                                                                                                    "post":  {
-                                                                                                                 "vector":  [
-                                                                                                                                10,
-                                                                                                                                0,
-                                                                                                                                0
-                                                                                                                            ]
-                                                                                                             },
-                                                                                                    "lerp_mode":  "catmullrom"
-                                                                                                },
-                                                                                        "1.5":  {
-                                                                                                    "post":  {
-                                                                                                                 "vector":  [
-                                                                                                                                10,
-                                                                                                                                -2,
-                                                                                                                                -1
-                                                                                                                            ]
-                                                                                                             },
-                                                                                                    "lerp_mode":  "catmullrom"
-                                                                                                },
-                                                                                        "2.0":  {
-                                                                                                    "post":  {
-                                                                                                                 "vector":  [
-                                                                                                                                10,
-                                                                                                                                0,
-                                                                                                                                0
-                                                                                                                            ]
-                                                                                                             },
-                                                                                                    "lerp_mode":  "catmullrom"
-                                                                                                }
-                                                                                    }
-                                                                   },
-                                                         "rightArm":  {
-                                                                          "rotation":  {
-                                                                                           "0.0":  {
-                                                                                                       "post":  {
-                                                                                                                    "vector":  [
-                                                                                                                                   -30,
-                                                                                                                                   -10,
-                                                                                                                                   -20
-                                                                                                                               ]
-                                                                                                                },
-                                                                                                       "lerp_mode":  "catmullrom"
-                                                                                                   },
-                                                                                           "0.5":  {
-                                                                                                       "post":  {
-                                                                                                                    "vector":  [
-                                                                                                                                   -32,
-                                                                                                                                   -10,
-                                                                                                                                   -22
-                                                                                                                               ]
-                                                                                                                },
-                                                                                                       "lerp_mode":  "catmullrom"
-                                                                                                   },
-                                                                                           "1.0":  {
-                                                                                                       "post":  {
-                                                                                                                    "vector":  [
-                                                                                                                                   -30,
-                                                                                                                                   -10,
-                                                                                                                                   -20
-                                                                                                                               ]
-                                                                                                                },
-                                                                                                       "lerp_mode":  "catmullrom"
-                                                                                                   },
-                                                                                           "1.5":  {
-                                                                                                       "post":  {
-                                                                                                                    "vector":  [
-                                                                                                                                   -28,
-                                                                                                                                   -10,
-                                                                                                                                   -18
-                                                                                                                               ]
-                                                                                                                },
-                                                                                                       "lerp_mode":  "catmullrom"
-                                                                                                   },
-                                                                                           "2.0":  {
-                                                                                                       "post":  {
-                                                                                                                    "vector":  [
-                                                                                                                                   -30,
-                                                                                                                                   -10,
-                                                                                                                                   -20
-                                                                                                                               ]
-                                                                                                                },
-                                                                                                       "lerp_mode":  "catmullrom"
-                                                                                                   }
-                                                                                       }
-                                                                      },
-                                                         "leftArm":  {
-                                                                         "rotation":  {
-                                                                                          "0.0":  {
-                                                                                                      "post":  {
-                                                                                                                   "vector":  [
-                                                                                                                                  -25,
-                                                                                                                                  10,
-                                                                                                                                  25
-                                                                                                                              ]
-                                                                                                               },
-                                                                                                      "lerp_mode":  "catmullrom"
-                                                                                                  },
-                                                                                          "0.5":  {
-                                                                                                      "post":  {
-                                                                                                                   "vector":  [
-                                                                                                                                  -27,
-                                                                                                                                  10,
-                                                                                                                                  27
-                                                                                                                              ]
-                                                                                                               },
-                                                                                                      "lerp_mode":  "catmullrom"
-                                                                                                  },
-                                                                                          "1.0":  {
-                                                                                                      "post":  {
-                                                                                                                   "vector":  [
-                                                                                                                                  -25,
-                                                                                                                                  10,
-                                                                                                                                  25
-                                                                                                                              ]
-                                                                                                               },
-                                                                                                      "lerp_mode":  "catmullrom"
-                                                                                                  },
-                                                                                          "1.5":  {
-                                                                                                      "post":  {
-                                                                                                                   "vector":  [
-                                                                                                                                  -23,
-                                                                                                                                  10,
-                                                                                                                                  23
-                                                                                                                              ]
-                                                                                                               },
-                                                                                                      "lerp_mode":  "catmullrom"
-                                                                                                  },
-                                                                                          "2.0":  {
-                                                                                                      "post":  {
-                                                                                                                   "vector":  [
-                                                                                                                                  -25,
-                                                                                                                                  10,
-                                                                                                                                  25
-                                                                                                                              ]
-                                                                                                               },
-                                                                                                      "lerp_mode":  "catmullrom"
-                                                                                                  }
-                                                                                      }
-                                                                     },
-                                                         "rightLeg":  {
-                                                                          "rotation":  {
-                                                                                           "0.0":  {
-                                                                                                       "post":  {
-                                                                                                                    "vector":  [
-                                                                                                                                   0,
-                                                                                                                                   0,
-                                                                                                                                   0
-                                                                                                                               ]
-                                                                                                                },
-                                                                                                       "lerp_mode":  "catmullrom"
-                                                                                                   },
-                                                                                           "1.0":  {
-                                                                                                       "post":  {
-                                                                                                                    "vector":  [
-                                                                                                                                   3,
-                                                                                                                                   0,
-                                                                                                                                   0
-                                                                                                                               ]
-                                                                                                                },
-                                                                                                       "lerp_mode":  "catmullrom"
-                                                                                                   },
-                                                                                           "2.0":  {
-                                                                                                       "post":  {
-                                                                                                                    "vector":  [
-                                                                                                                                   0,
-                                                                                                                                   0,
-                                                                                                                                   0
-                                                                                                                               ]
-                                                                                                                },
-                                                                                                       "lerp_mode":  "catmullrom"
-                                                                                                   }
-                                                                                       }
-                                                                      },
-                                                         "leftLeg":  {
-                                                                         "rotation":  {
-                                                                                          "0.0":  {
-                                                                                                      "post":  {
-                                                                                                                   "vector":  [
-                                                                                                                                  0,
-                                                                                                                                  0,
-                                                                                                                                  0
-                                                                                                                              ]
-                                                                                                               },
-                                                                                                      "lerp_mode":  "catmullrom"
-                                                                                                  },
-                                                                                          "1.0":  {
-                                                                                                      "post":  {
-                                                                                                                   "vector":  [
-                                                                                                                                  -3,
-                                                                                                                                  0,
-                                                                                                                                  0
-                                                                                                                              ]
-                                                                                                               },
-                                                                                                      "lerp_mode":  "catmullrom"
-                                                                                                  },
-                                                                                          "2.0":  {
-                                                                                                      "post":  {
-                                                                                                                   "vector":  [
-                                                                                                                                  0,
-                                                                                                                                  0,
-                                                                                                                                  0
-                                                                                                                              ]
-                                                                                                               },
-                                                                                                      "lerp_mode":  "catmullrom"
-                                                                                                  }
-                                                                                      }
-                                                                     }
-                                                     }
-                                       },
-                       "sound_idle":  {
-                                          "animation_length":  2.0,
-                                          "bones":  {
-                                                        "head":  {
-                                                                     "rotation":  {
-                                                                                      "0.0":  {
-                                                                                                  "post":  {
-                                                                                                               "vector":  [
-                                                                                                                              0,
-                                                                                                                              -3,
-                                                                                                                              0
-                                                                                                                          ]
-                                                                                                           },
-                                                                                                  "lerp_mode":  "catmullrom"
-                                                                                              },
-                                                                                      "0.5":  {
-                                                                                                  "post":  {
-                                                                                                               "vector":  [
-                                                                                                                              0,
-                                                                                                                              3,
-                                                                                                                              0
-                                                                                                                          ]
-                                                                                                           },
-                                                                                                  "lerp_mode":  "catmullrom"
-                                                                                              },
-                                                                                      "1.0":  {
-                                                                                                  "post":  {
-                                                                                                               "vector":  [
-                                                                                                                              0,
-                                                                                                                              -3,
-                                                                                                                              0
-                                                                                                                          ]
-                                                                                                           },
-                                                                                                  "lerp_mode":  "catmullrom"
-                                                                                              },
-                                                                                      "1.5":  {
-                                                                                                  "post":  {
-                                                                                                               "vector":  [
-                                                                                                                              0,
-                                                                                                                              3,
-                                                                                                                              0
-                                                                                                                          ]
-                                                                                                           },
-                                                                                                  "lerp_mode":  "catmullrom"
-                                                                                              },
-                                                                                      "2.0":  {
-                                                                                                  "post":  {
-                                                                                                               "vector":  [
-                                                                                                                              0,
-                                                                                                                              -3,
-                                                                                                                              0
-                                                                                                                          ]
-                                                                                                           },
-                                                                                                  "lerp_mode":  "catmullrom"
-                                                                                              }
-                                                                                  }
-                                                                 },
-                                                        "torso":  {
-                                                                      "rotation":  {
-                                                                                       "0.0":  {
-                                                                                                   "post":  {
-                                                                                                                "vector":  [
-                                                                                                                               0,
-                                                                                                                               -5,
-                                                                                                                               2
-                                                                                                                           ]
-                                                                                                            },
-                                                                                                   "lerp_mode":  "catmullrom"
-                                                                                               },
-                                                                                       "0.5":  {
-                                                                                                   "post":  {
-                                                                                                                "vector":  [
-                                                                                                                               0,
-                                                                                                                               5,
-                                                                                                                               -2
-                                                                                                                           ]
-                                                                                                            },
-                                                                                                   "lerp_mode":  "catmullrom"
-                                                                                               },
-                                                                                       "1.0":  {
-                                                                                                   "post":  {
-                                                                                                                "vector":  [
-                                                                                                                               0,
-                                                                                                                               -5,
-                                                                                                                               2
-                                                                                                                           ]
-                                                                                                            },
-                                                                                                   "lerp_mode":  "catmullrom"
-                                                                                               },
-                                                                                       "1.5":  {
-                                                                                                   "post":  {
-                                                                                                                "vector":  [
-                                                                                                                               0,
-                                                                                                                               5,
-                                                                                                                               -2
-                                                                                                                           ]
-                                                                                                            },
-                                                                                                   "lerp_mode":  "catmullrom"
-                                                                                               },
-                                                                                       "2.0":  {
-                                                                                                   "post":  {
-                                                                                                                "vector":  [
-                                                                                                                               0,
-                                                                                                                               -5,
-                                                                                                                               2
-                                                                                                                           ]
-                                                                                                            },
-                                                                                                   "lerp_mode":  "catmullrom"
-                                                                                               }
-                                                                                   },
-                                                                      "position":  {
-                                                                                       "0.0":  {
-                                                                                                   "post":  {
-                                                                                                                "vector":  [
-                                                                                                                               0,
-                                                                                                                               0,
-                                                                                                                               0
-                                                                                                                           ]
-                                                                                                            },
-                                                                                                   "lerp_mode":  "catmullrom"
-                                                                                               },
-                                                                                       "0.5":  {
-                                                                                                   "post":  {
-                                                                                                                "vector":  [
-                                                                                                                               -0.5,
-                                                                                                                               0,
-                                                                                                                               0
-                                                                                                                           ]
-                                                                                                            },
-                                                                                                   "lerp_mode":  "catmullrom"
-                                                                                               },
-                                                                                       "1.0":  {
-                                                                                                   "post":  {
-                                                                                                                "vector":  [
-                                                                                                                               0,
-                                                                                                                               0,
-                                                                                                                               0
-                                                                                                                           ]
-                                                                                                            },
-                                                                                                   "lerp_mode":  "catmullrom"
-                                                                                               },
-                                                                                       "1.5":  {
-                                                                                                   "post":  {
-                                                                                                                "vector":  [
-                                                                                                                               0.5,
-                                                                                                                               0,
-                                                                                                                               0
-                                                                                                                           ]
-                                                                                                            },
-                                                                                                   "lerp_mode":  "catmullrom"
-                                                                                               },
-                                                                                       "2.0":  {
-                                                                                                   "post":  {
-                                                                                                                "vector":  [
-                                                                                                                               0,
-                                                                                                                               0,
-                                                                                                                               0
-                                                                                                                           ]
-                                                                                                            },
-                                                                                                   "lerp_mode":  "catmullrom"
-                                                                                               }
-                                                                                   }
-                                                                  },
-                                                        "rightArm":  {
-                                                                         "rotation":  {
-                                                                                          "0.0":  {
-                                                                                                      "post":  {
-                                                                                                                   "vector":  [
-                                                                                                                                  -10,
-                                                                                                                                  0,
-                                                                                                                                  -15
-                                                                                                                              ]
-                                                                                                               },
-                                                                                                      "lerp_mode":  "catmullrom"
-                                                                                                  },
-                                                                                          "0.5":  {
-                                                                                                      "post":  {
-                                                                                                                   "vector":  [
-                                                                                                                                  -8,
-                                                                                                                                  0,
-                                                                                                                                  -12
-                                                                                                                              ]
-                                                                                                               },
-                                                                                                      "lerp_mode":  "catmullrom"
-                                                                                                  },
-                                                                                          "1.0":  {
-                                                                                                      "post":  {
-                                                                                                                   "vector":  [
-                                                                                                                                  -12,
-                                                                                                                                  0,
-                                                                                                                                  -15
-                                                                                                                              ]
-                                                                                                               },
-                                                                                                      "lerp_mode":  "catmullrom"
-                                                                                                  },
-                                                                                          "1.5":  {
-                                                                                                      "post":  {
-                                                                                                                   "vector":  [
-                                                                                                                                  -8,
-                                                                                                                                  0,
-                                                                                                                                  -12
-                                                                                                                              ]
-                                                                                                               },
-                                                                                                      "lerp_mode":  "catmullrom"
-                                                                                                  },
-                                                                                          "2.0":  {
-                                                                                                      "post":  {
-                                                                                                                   "vector":  [
-                                                                                                                                  -10,
-                                                                                                                                  0,
-                                                                                                                                  -15
-                                                                                                                              ]
-                                                                                                               },
-                                                                                                      "lerp_mode":  "catmullrom"
-                                                                                                  }
-                                                                                      }
-                                                                     },
-                                                        "leftArm":  {
-                                                                        "rotation":  {
-                                                                                         "0.0":  {
-                                                                                                     "post":  {
-                                                                                                                  "vector":  [
-                                                                                                                                 -8,
-                                                                                                                                 0,
-                                                                                                                                 12
-                                                                                                                             ]
-                                                                                                              },
-                                                                                                     "lerp_mode":  "catmullrom"
-                                                                                                 },
-                                                                                         "0.5":  {
-                                                                                                     "post":  {
-                                                                                                                  "vector":  [
-                                                                                                                                 -10,
-                                                                                                                                 0,
-                                                                                                                                 15
-                                                                                                                             ]
-                                                                                                              },
-                                                                                                     "lerp_mode":  "catmullrom"
-                                                                                                 },
-                                                                                         "1.0":  {
-                                                                                                     "post":  {
-                                                                                                                  "vector":  [
-                                                                                                                                 -8,
-                                                                                                                                 0,
-                                                                                                                                 12
-                                                                                                                             ]
-                                                                                                              },
-                                                                                                     "lerp_mode":  "catmullrom"
-                                                                                                 },
-                                                                                         "1.5":  {
-                                                                                                     "post":  {
-                                                                                                                  "vector":  [
-                                                                                                                                 -10,
-                                                                                                                                 0,
-                                                                                                                                 15
-                                                                                                                             ]
-                                                                                                              },
-                                                                                                     "lerp_mode":  "catmullrom"
-                                                                                                 },
-                                                                                         "2.0":  {
-                                                                                                     "post":  {
-                                                                                                                  "vector":  [
-                                                                                                                                 -8,
-                                                                                                                                 0,
-                                                                                                                                 12
-                                                                                                                             ]
-                                                                                                              },
-                                                                                                     "lerp_mode":  "catmullrom"
-                                                                                                 }
-                                                                                     }
-                                                                    },
-                                                        "rightLeg":  {
-                                                                         "rotation":  {
-                                                                                          "0.0":  {
-                                                                                                      "post":  {
-                                                                                                                   "vector":  [
-                                                                                                                                  5,
-                                                                                                                                  0,
-                                                                                                                                  0
-                                                                                                                              ]
-                                                                                                               },
-                                                                                                      "lerp_mode":  "catmullrom"
-                                                                                                  },
-                                                                                          "0.5":  {
-                                                                                                      "post":  {
-                                                                                                                   "vector":  [
-                                                                                                                                  3,
-                                                                                                                                  0,
-                                                                                                                                  0
-                                                                                                                              ]
-                                                                                                               },
-                                                                                                      "lerp_mode":  "catmullrom"
-                                                                                                  },
-                                                                                          "1.0":  {
-                                                                                                      "post":  {
-                                                                                                                   "vector":  [
-                                                                                                                                  5,
-                                                                                                                                  0,
-                                                                                                                                  0
-                                                                                                                              ]
-                                                                                                               },
-                                                                                                      "lerp_mode":  "catmullrom"
-                                                                                                  },
-                                                                                          "1.5":  {
-                                                                                                      "post":  {
-                                                                                                                   "vector":  [
-                                                                                                                                  3,
-                                                                                                                                  0,
-                                                                                                                                  0
-                                                                                                                              ]
-                                                                                                               },
-                                                                                                      "lerp_mode":  "catmullrom"
-                                                                                                  },
-                                                                                          "2.0":  {
-                                                                                                      "post":  {
-                                                                                                                   "vector":  [
-                                                                                                                                  5,
-                                                                                                                                  0,
-                                                                                                                                  0
-                                                                                                                              ]
-                                                                                                               },
-                                                                                                      "lerp_mode":  "catmullrom"
-                                                                                                  }
-                                                                                      }
-                                                                     },
-                                                        "leftLeg":  {
-                                                                        "rotation":  {
-                                                                                         "0.0":  {
-                                                                                                     "post":  {
-                                                                                                                  "vector":  [
-                                                                                                                                 3,
-                                                                                                                                 0,
-                                                                                                                                 0
-                                                                                                                             ]
-                                                                                                              },
-                                                                                                     "lerp_mode":  "catmullrom"
-                                                                                                 },
-                                                                                         "0.5":  {
-                                                                                                     "post":  {
-                                                                                                                  "vector":  [
-                                                                                                                                 5,
-                                                                                                                                 0,
-                                                                                                                                 0
-                                                                                                                             ]
-                                                                                                              },
-                                                                                                     "lerp_mode":  "catmullrom"
-                                                                                                 },
-                                                                                         "1.0":  {
-                                                                                                     "post":  {
-                                                                                                                  "vector":  [
-                                                                                                                                 3,
-                                                                                                                                 0,
-                                                                                                                                 0
-                                                                                                                             ]
-                                                                                                              },
-                                                                                                     "lerp_mode":  "catmullrom"
-                                                                                                 },
-                                                                                         "1.5":  {
-                                                                                                     "post":  {
-                                                                                                                  "vector":  [
-                                                                                                                                 5,
-                                                                                                                                 0,
-                                                                                                                                 0
-                                                                                                                             ]
-                                                                                                              },
-                                                                                                     "lerp_mode":  "catmullrom"
-                                                                                                 },
-                                                                                         "2.0":  {
-                                                                                                     "post":  {
-                                                                                                                  "vector":  [
-                                                                                                                                 3,
-                                                                                                                                 0,
-                                                                                                                                 0
-                                                                                                                             ]
-                                                                                                              },
-                                                                                                     "lerp_mode":  "catmullrom"
-                                                                                                 }
-                                                                                     }
-                                                                    }
-                                                    }
-                                      },
-                       "sword.block":  {
-                                           "animation_length":  null,
-                                           "bones":  {
-                                                         "rightArm":  {
-                                                                          "rotation":  {
-                                                                                           "SyncRoot":  {
-                                                                                                            "post":  {
-                                                                                                                         "vector":  [
-                                                                                                                                        -50.79219,
-                                                                                                                                        -40.81384,
-                                                                                                                                        -14.54438
-                                                                                                                                    ]
-                                                                                                                     },
-                                                                                                            "lerp_mode":  "catmullrom"
-                                                                                                        }
-                                                                                       },
-                                                                          "position":  {
-                                                                                           "SyncRoot":  {
-                                                                                                            "post":  {
-                                                                                                                         "vector":  [
-                                                                                                                                        0,
-                                                                                                                                        0,
-                                                                                                                                        -1
-                                                                                                                                    ]
-                                                                                                                     },
-                                                                                                            "lerp_mode":  "catmullrom"
-                                                                                                        }
-                                                                                       }
-                                                                      },
-                                                         "leftArm":  {
-                                                                         "rotation":  {
-                                                                                          "SyncRoot":  {
-                                                                                                           "post":  {
-                                                                                                                        "vector":  [
-                                                                                                                                       -22.02637,
-                                                                                                                                       23.60662,
-                                                                                                                                       40.77127
-                                                                                                                                   ]
-                                                                                                                    },
-                                                                                                           "lerp_mode":  "catmullrom"
-                                                                                                       }
-                                                                                      },
-                                                                         "position":  {
-                                                                                          "SyncRoot":  {
-                                                                                                           "post":  {
-                                                                                                                        "vector":  [
-                                                                                                                                       0,
-                                                                                                                                       0,
-                                                                                                                                       -1
-                                                                                                                                   ]
-                                                                                                                    },
-                                                                                                           "lerp_mode":  "catmullrom"
-                                                                                                       }
-                                                                                      }
-                                                                     }
-                                                     }
-                                       },
-                       "sword.parry":  {
-                                           "animation_length":  0.5,
-                                           "bones":  {
-                                                         "rightArm":  {
-                                                                          "rotation":  {
-                                                                                           "0.0":  {
-                                                                                                       "post":  {
-                                                                                                                    "vector":  [
-                                                                                                                                   -50.79219,
-                                                                                                                                   -40.81384,
-                                                                                                                                   -14.54438
-                                                                                                                               ]
-                                                                                                                },
-                                                                                                       "lerp_mode":  "catmullrom"
-                                                                                                   },
-                                                                                           "0.1667":  {
-                                                                                                          "post":  {
-                                                                                                                       "vector":  [
-                                                                                                                                      -56.23771,
-                                                                                                                                      -2.93841,
-                                                                                                                                      129.02808
-                                                                                                                                  ]
-                                                                                                                   },
-                                                                                                          "lerp_mode":  "catmullrom"
-                                                                                                      }
-                                                                                       },
-                                                                          "position":  {
-                                                                                           "0.0":  {
-                                                                                                       "post":  {
-                                                                                                                    "vector":  [
-                                                                                                                                   0,
-                                                                                                                                   0,
-                                                                                                                                   -1
-                                                                                                                               ]
-                                                                                                                },
-                                                                                                       "lerp_mode":  "catmullrom"
-                                                                                                   },
-                                                                                           "0.0833":  {
-                                                                                                          "post":  {
-                                                                                                                       "vector":  [
-                                                                                                                                      0,
-                                                                                                                                      0,
-                                                                                                                                      0
-                                                                                                                                  ]
-                                                                                                                   },
-                                                                                                          "lerp_mode":  "catmullrom"
-                                                                                                      }
-                                                                                       }
-                                                                      },
-                                                         "leftArm":  {
-                                                                         "rotation":  {
-                                                                                          "0.0":  {
-                                                                                                      "post":  {
-                                                                                                                   "vector":  [
-                                                                                                                                  -22.02637,
-                                                                                                                                  23.60662,
-                                                                                                                                  40.77127
-                                                                                                                              ]
-                                                                                                               },
-                                                                                                      "lerp_mode":  "catmullrom"
-                                                                                                  },
-                                                                                          "0.1667":  {
-                                                                                                         "post":  {
-                                                                                                                      "vector":  [
-                                                                                                                                     -63.18676,
-                                                                                                                                     35.57472,
-                                                                                                                                     -43.28832
-                                                                                                                                 ]
-                                                                                                                  },
-                                                                                                         "lerp_mode":  "catmullrom"
-                                                                                                     }
-                                                                                      },
-                                                                         "position":  {
-                                                                                          "0.0":  {
-                                                                                                      "post":  {
-                                                                                                                   "vector":  [
-                                                                                                                                  0,
-                                                                                                                                  0,
-                                                                                                                                  -1
-                                                                                                                              ]
-                                                                                                               },
-                                                                                                      "lerp_mode":  "catmullrom"
-                                                                                                  }
-                                                                                      }
-                                                                     }
-                                                     }
-                                       },
-                       "thunder_idle":  {
-                                            "animation_length":  2.0,
-                                            "bones":  {
-                                                          "head":  {
-                                                                       "rotation":  {
-                                                                                        "0.0":  {
-                                                                                                    "post":  {
-                                                                                                                 "vector":  [
-                                                                                                                                -5,
-                                                                                                                                0,
-                                                                                                                                0
-                                                                                                                            ]
-                                                                                                             },
-                                                                                                    "lerp_mode":  "catmullrom"
-                                                                                                },
-                                                                                        "1.0":  {
-                                                                                                    "post":  {
-                                                                                                                 "vector":  [
-                                                                                                                                -7,
-                                                                                                                                0,
-                                                                                                                                0
-                                                                                                                            ]
-                                                                                                             },
-                                                                                                    "lerp_mode":  "catmullrom"
-                                                                                                },
-                                                                                        "2.0":  {
-                                                                                                    "post":  {
-                                                                                                                 "vector":  [
-                                                                                                                                -5,
-                                                                                                                                0,
-                                                                                                                                0
-                                                                                                                            ]
-                                                                                                             },
-                                                                                                    "lerp_mode":  "catmullrom"
-                                                                                                }
-                                                                                    }
-                                                                   },
-                                                          "torso":  {
-                                                                        "rotation":  {
-                                                                                         "0.0":  {
-                                                                                                     "post":  {
-                                                                                                                  "vector":  [
-                                                                                                                                 -5,
-                                                                                                                                 0,
-                                                                                                                                 0
-                                                                                                                             ]
-                                                                                                              },
-                                                                                                     "lerp_mode":  "catmullrom"
-                                                                                                 },
-                                                                                         "1.0":  {
-                                                                                                     "post":  {
-                                                                                                                  "vector":  [
-                                                                                                                                 -7,
-                                                                                                                                 0,
-                                                                                                                                 0
-                                                                                                                             ]
-                                                                                                              },
-                                                                                                     "lerp_mode":  "catmullrom"
-                                                                                                 },
-                                                                                         "2.0":  {
-                                                                                                     "post":  {
-                                                                                                                  "vector":  [
-                                                                                                                                 -5,
-                                                                                                                                 0,
-                                                                                                                                 0
-                                                                                                                             ]
-                                                                                                              },
-                                                                                                     "lerp_mode":  "catmullrom"
-                                                                                                 }
-                                                                                     },
-                                                                        "position":  {
-                                                                                         "0.0":  {
-                                                                                                     "post":  {
-                                                                                                                  "vector":  [
-                                                                                                                                 0,
-                                                                                                                                 -1,
-                                                                                                                                 0
-                                                                                                                             ]
-                                                                                                              },
-                                                                                                     "lerp_mode":  "catmullrom"
-                                                                                                 },
-                                                                                         "1.0":  {
-                                                                                                     "post":  {
-                                                                                                                  "vector":  [
-                                                                                                                                 0,
-                                                                                                                                 -1.5,
-                                                                                                                                 0
-                                                                                                                             ]
-                                                                                                              },
-                                                                                                     "lerp_mode":  "catmullrom"
-                                                                                                 },
-                                                                                         "2.0":  {
-                                                                                                     "post":  {
-                                                                                                                  "vector":  [
-                                                                                                                                 0,
-                                                                                                                                 -1,
-                                                                                                                                 0
-                                                                                                                             ]
-                                                                                                              },
-                                                                                                     "lerp_mode":  "catmullrom"
-                                                                                                 }
-                                                                                     }
-                                                                    },
-                                                          "rightArm":  {
-                                                                           "rotation":  {
-                                                                                            "0.0":  {
-                                                                                                        "post":  {
-                                                                                                                     "vector":  [
-                                                                                                                                    -15,
-                                                                                                                                    0,
-                                                                                                                                    -20
-                                                                                                                                ]
-                                                                                                                 },
-                                                                                                        "lerp_mode":  "catmullrom"
-                                                                                                    },
-                                                                                            "1.0":  {
-                                                                                                        "post":  {
-                                                                                                                     "vector":  [
-                                                                                                                                    -18,
-                                                                                                                                    0,
-                                                                                                                                    -22
-                                                                                                                                ]
-                                                                                                                 },
-                                                                                                        "lerp_mode":  "catmullrom"
-                                                                                                    },
-                                                                                            "2.0":  {
-                                                                                                        "post":  {
-                                                                                                                     "vector":  [
-                                                                                                                                    -15,
-                                                                                                                                    0,
-                                                                                                                                    -20
-                                                                                                                                ]
-                                                                                                                 },
-                                                                                                        "lerp_mode":  "catmullrom"
-                                                                                                    }
-                                                                                        }
-                                                                       },
-                                                          "leftArm":  {
-                                                                          "rotation":  {
-                                                                                           "0.0":  {
-                                                                                                       "post":  {
-                                                                                                                    "vector":  [
-                                                                                                                                   -10,
-                                                                                                                                   0,
-                                                                                                                                   15
-                                                                                                                               ]
-                                                                                                                },
-                                                                                                       "lerp_mode":  "catmullrom"
-                                                                                                   },
-                                                                                           "1.0":  {
-                                                                                                       "post":  {
-                                                                                                                    "vector":  [
-                                                                                                                                   -12,
-                                                                                                                                   0,
-                                                                                                                                   17
-                                                                                                                               ]
-                                                                                                                },
-                                                                                                       "lerp_mode":  "catmullrom"
-                                                                                                   },
-                                                                                           "2.0":  {
-                                                                                                       "post":  {
-                                                                                                                    "vector":  [
-                                                                                                                                   -10,
-                                                                                                                                   0,
-                                                                                                                                   15
-                                                                                                                               ]
-                                                                                                                },
-                                                                                                       "lerp_mode":  "catmullrom"
-                                                                                                   }
-                                                                                       }
-                                                                      },
-                                                          "rightLeg":  {
-                                                                           "rotation":  {
-                                                                                            "0.0":  {
-                                                                                                        "post":  {
-                                                                                                                     "vector":  [
-                                                                                                                                    20,
-                                                                                                                                    0,
-                                                                                                                                    0
-                                                                                                                                ]
-                                                                                                                 },
-                                                                                                        "lerp_mode":  "catmullrom"
-                                                                                                    },
-                                                                                            "1.0":  {
-                                                                                                        "post":  {
-                                                                                                                     "vector":  [
-                                                                                                                                    22,
-                                                                                                                                    0,
-                                                                                                                                    0
-                                                                                                                                ]
-                                                                                                                 },
-                                                                                                        "lerp_mode":  "catmullrom"
-                                                                                                    },
-                                                                                            "2.0":  {
-                                                                                                        "post":  {
-                                                                                                                     "vector":  [
-                                                                                                                                    20,
-                                                                                                                                    0,
-                                                                                                                                    0
-                                                                                                                                ]
-                                                                                                                 },
-                                                                                                        "lerp_mode":  "catmullrom"
-                                                                                                    }
-                                                                                        }
-                                                                       },
-                                                          "leftLeg":  {
-                                                                          "rotation":  {
-                                                                                           "0.0":  {
-                                                                                                       "post":  {
-                                                                                                                    "vector":  [
-                                                                                                                                   20,
-                                                                                                                                   0,
-                                                                                                                                   0
-                                                                                                                               ]
-                                                                                                                },
-                                                                                                       "lerp_mode":  "catmullrom"
-                                                                                                   },
-                                                                                           "1.0":  {
-                                                                                                       "post":  {
-                                                                                                                    "vector":  [
-                                                                                                                                   22,
-                                                                                                                                   0,
-                                                                                                                                   0
-                                                                                                                               ]
-                                                                                                                },
-                                                                                                       "lerp_mode":  "catmullrom"
-                                                                                                   },
-                                                                                           "2.0":  {
-                                                                                                       "post":  {
-                                                                                                                    "vector":  [
-                                                                                                                                   20,
-                                                                                                                                   0,
-                                                                                                                                   0
-                                                                                                                               ]
-                                                                                                                },
-                                                                                                       "lerp_mode":  "catmullrom"
-                                                                                                   }
-                                                                                       }
-                                                                      }
-                                                      }
-                                        },
-                       "water_idle":  {
-                                          "animation_length":  2.0,
-                                          "bones":  {
-                                                        "head":  {
-                                                                     "rotation":  {
-                                                                                      "0.0":  {
-                                                                                                  "post":  {
-                                                                                                               "vector":  [
-                                                                                                                              0,
-                                                                                                                              0,
-                                                                                                                              0
-                                                                                                                          ]
-                                                                                                           },
-                                                                                                  "lerp_mode":  "catmullrom"
-                                                                                              },
-                                                                                      "0.5":  {
-                                                                                                  "post":  {
-                                                                                                               "vector":  [
-                                                                                                                              -3,
-                                                                                                                              5,
-                                                                                                                              0
-                                                                                                                          ]
-                                                                                                           },
-                                                                                                  "lerp_mode":  "catmullrom"
-                                                                                              },
-                                                                                      "1.0":  {
-                                                                                                  "post":  {
-                                                                                                               "vector":  [
-                                                                                                                              0,
-                                                                                                                              0,
-                                                                                                                              0
-                                                                                                                          ]
-                                                                                                           },
-                                                                                                  "lerp_mode":  "catmullrom"
-                                                                                              },
-                                                                                      "1.5":  {
-                                                                                                  "post":  {
-                                                                                                               "vector":  [
-                                                                                                                              -2,
-                                                                                                                              -4,
-                                                                                                                              0
-                                                                                                                          ]
-                                                                                                           },
-                                                                                                  "lerp_mode":  "catmullrom"
-                                                                                              },
-                                                                                      "2.0":  {
-                                                                                                  "post":  {
-                                                                                                               "vector":  [
-                                                                                                                              0,
-                                                                                                                              0,
-                                                                                                                              0
-                                                                                                                          ]
-                                                                                                           },
-                                                                                                  "lerp_mode":  "catmullrom"
-                                                                                              }
-                                                                                  }
-                                                                 },
-                                                        "torso":  {
-                                                                      "rotation":  {
-                                                                                       "0.0":  {
-                                                                                                   "post":  {
-                                                                                                                "vector":  [
-                                                                                                                               5,
-                                                                                                                               0,
-                                                                                                                               0
-                                                                                                                           ]
-                                                                                                            },
-                                                                                                   "lerp_mode":  "catmullrom"
-                                                                                               },
-                                                                                       "0.5":  {
-                                                                                                   "post":  {
-                                                                                                                "vector":  [
-                                                                                                                               5,
-                                                                                                                               3,
-                                                                                                                               2
-                                                                                                                           ]
-                                                                                                            },
-                                                                                                   "lerp_mode":  "catmullrom"
-                                                                                               },
-                                                                                       "1.0":  {
-                                                                                                   "post":  {
-                                                                                                                "vector":  [
-                                                                                                                               5,
-                                                                                                                               0,
-                                                                                                                               0
-                                                                                                                           ]
-                                                                                                            },
-                                                                                                   "lerp_mode":  "catmullrom"
-                                                                                               },
-                                                                                       "1.5":  {
-                                                                                                   "post":  {
-                                                                                                                "vector":  [
-                                                                                                                               5,
-                                                                                                                               -3,
-                                                                                                                               -2
-                                                                                                                           ]
-                                                                                                            },
-                                                                                                   "lerp_mode":  "catmullrom"
-                                                                                               },
-                                                                                       "2.0":  {
-                                                                                                   "post":  {
-                                                                                                                "vector":  [
-                                                                                                                               5,
-                                                                                                                               0,
-                                                                                                                               0
-                                                                                                                           ]
-                                                                                                            },
-                                                                                                   "lerp_mode":  "catmullrom"
-                                                                                               }
-                                                                                   }
-                                                                  },
-                                                        "rightArm":  {
-                                                                         "rotation":  {
-                                                                                          "0.0":  {
-                                                                                                      "post":  {
-                                                                                                                   "vector":  [
-                                                                                                                                  -20,
-                                                                                                                                  -5,
-                                                                                                                                  -15
-                                                                                                                              ]
-                                                                                                               },
-                                                                                                      "lerp_mode":  "catmullrom"
-                                                                                                  },
-                                                                                          "0.5":  {
-                                                                                                      "post":  {
-                                                                                                                   "vector":  [
-                                                                                                                                  -22,
-                                                                                                                                  -5,
-                                                                                                                                  -18
-                                                                                                                              ]
-                                                                                                               },
-                                                                                                      "lerp_mode":  "catmullrom"
-                                                                                                  },
-                                                                                          "1.0":  {
-                                                                                                      "post":  {
-                                                                                                                   "vector":  [
-                                                                                                                                  -20,
-                                                                                                                                  -5,
-                                                                                                                                  -15
-                                                                                                                              ]
-                                                                                                               },
-                                                                                                      "lerp_mode":  "catmullrom"
-                                                                                                  },
-                                                                                          "1.5":  {
-                                                                                                      "post":  {
-                                                                                                                   "vector":  [
-                                                                                                                                  -18,
-                                                                                                                                  -5,
-                                                                                                                                  -12
-                                                                                                                              ]
-                                                                                                               },
-                                                                                                      "lerp_mode":  "catmullrom"
-                                                                                                  },
-                                                                                          "2.0":  {
-                                                                                                      "post":  {
-                                                                                                                   "vector":  [
-                                                                                                                                  -20,
-                                                                                                                                  -5,
-                                                                                                                                  -15
-                                                                                                                              ]
-                                                                                                               },
-                                                                                                      "lerp_mode":  "catmullrom"
-                                                                                                  }
-                                                                                      }
-                                                                     },
-                                                        "leftArm":  {
-                                                                        "rotation":  {
-                                                                                         "0.0":  {
-                                                                                                     "post":  {
-                                                                                                                  "vector":  [
-                                                                                                                                 -15,
-                                                                                                                                 5,
-                                                                                                                                 20
-                                                                                                                             ]
-                                                                                                              },
-                                                                                                     "lerp_mode":  "catmullrom"
-                                                                                                 },
-                                                                                         "0.5":  {
-                                                                                                     "post":  {
-                                                                                                                  "vector":  [
-                                                                                                                                 -18,
-                                                                                                                                 5,
-                                                                                                                                 22
-                                                                                                                             ]
-                                                                                                              },
-                                                                                                     "lerp_mode":  "catmullrom"
-                                                                                                 },
-                                                                                         "1.0":  {
-                                                                                                     "post":  {
-                                                                                                                  "vector":  [
-                                                                                                                                 -15,
-                                                                                                                                 5,
-                                                                                                                                 20
-                                                                                                                             ]
-                                                                                                              },
-                                                                                                     "lerp_mode":  "catmullrom"
-                                                                                                 },
-                                                                                         "1.5":  {
-                                                                                                     "post":  {
-                                                                                                                  "vector":  [
-                                                                                                                                 -12,
-                                                                                                                                 5,
-                                                                                                                                 17
-                                                                                                                             ]
-                                                                                                              },
-                                                                                                     "lerp_mode":  "catmullrom"
-                                                                                                 },
-                                                                                         "2.0":  {
-                                                                                                     "post":  {
-                                                                                                                  "vector":  [
-                                                                                                                                 -15,
-                                                                                                                                 5,
-                                                                                                                                 20
-                                                                                                                             ]
-                                                                                                              },
-                                                                                                     "lerp_mode":  "catmullrom"
-                                                                                                 }
-                                                                                     }
-                                                                    },
-                                                        "rightLeg":  {
-                                                                         "rotation":  {
-                                                                                          "0.0":  {
-                                                                                                      "post":  {
-                                                                                                                   "vector":  [
-                                                                                                                                  0,
-                                                                                                                                  0,
-                                                                                                                                  0
-                                                                                                                              ]
-                                                                                                               },
-                                                                                                      "lerp_mode":  "catmullrom"
-                                                                                                  },
-                                                                                          "1.0":  {
-                                                                                                      "post":  {
-                                                                                                                   "vector":  [
-                                                                                                                                  2,
-                                                                                                                                  0,
-                                                                                                                                  0
-                                                                                                                              ]
-                                                                                                               },
-                                                                                                      "lerp_mode":  "catmullrom"
-                                                                                                  },
-                                                                                          "2.0":  {
-                                                                                                      "post":  {
-                                                                                                                   "vector":  [
-                                                                                                                                  0,
-                                                                                                                                  0,
-                                                                                                                                  0
-                                                                                                                              ]
-                                                                                                               },
-                                                                                                      "lerp_mode":  "catmullrom"
-                                                                                                  }
-                                                                                      }
-                                                                     },
-                                                        "leftLeg":  {
-                                                                        "rotation":  {
-                                                                                         "0.0":  {
-                                                                                                     "post":  {
-                                                                                                                  "vector":  [
-                                                                                                                                 0,
-                                                                                                                                 0,
-                                                                                                                                 0
-                                                                                                                             ]
-                                                                                                              },
-                                                                                                     "lerp_mode":  "catmullrom"
-                                                                                                 },
-                                                                                         "1.0":  {
-                                                                                                     "post":  {
-                                                                                                                  "vector":  [
-                                                                                                                                 -2,
-                                                                                                                                 0,
-                                                                                                                                 0
-                                                                                                                             ]
-                                                                                                              },
-                                                                                                     "lerp_mode":  "catmullrom"
-                                                                                                 },
-                                                                                         "2.0":  {
-                                                                                                     "post":  {
-                                                                                                                  "vector":  [
-                                                                                                                                 0,
-                                                                                                                                 0,
-                                                                                                                                 0
-                                                                                                                             ]
-                                                                                                              },
-                                                                                                     "lerp_mode":  "catmullrom"
-                                                                                                 }
-                                                                                     }
-                                                                    }
-                                                    }
-                                      }
-                   }
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "flame_idle": {
+      "animation_length": 2,
+      "bones": {
+        "head": {
+          "rotation": {
+            "0.0": [-5, 0, 0],
+            "1.0": [-8, 0, 0],
+            "2.0": [-5, 0, 0]
+          }
+        },
+        "torso": {
+          "rotation": {
+            "0.0": [-8, 0, 0],
+            "1.0": [-10, 0, 0],
+            "2.0": [-8, 0, 0]
+          },
+          "position": {
+            "0.0": [0, 0, 1],
+            "1.0": [0, -0.5, 1.5],
+            "2.0": [0, 0, 1]
+          }
+        },
+        "rightArm": {
+          "rotation": {
+            "0.0": [-20, 0, -15],
+            "1.0": [-25, 0, -18],
+            "2.0": [-20, 0, -15]
+          }
+        },
+        "leftArm": {
+          "rotation": {
+            "0.0": [-15, 0, 20],
+            "1.0": [-18, 0, 22],
+            "2.0": [-15, 0, 20]
+          }
+        },
+        "rightLeg": {
+          "rotation": {
+            "0.0": [5, 0, 0],
+            "1.0": [8, 0, 0],
+            "2.0": [5, 0, 0]
+          }
+        },
+        "leftLeg": {
+          "rotation": {
+            "0.0": [5, 0, 0],
+            "1.0": [3, 0, 0],
+            "2.0": [5, 0, 0]
+          }
+        }
+      }
+    },
+    "insect_idle": {
+      "animation_length": 2,
+      "bones": {
+        "head": {
+          "rotation": {
+            "0.0": [0, 0, 0],
+            "0.3": [-5, 8, 3],
+            "0.7": [3, -5, -3],
+            "1.0": [-3, 6, 2],
+            "1.4": [2, -4, -2],
+            "1.7": [-4, 5, 3],
+            "2.0": [0, 0, 0]
+          }
+        },
+        "torso": {
+          "rotation": {
+            "0.0": [10, 0, 0],
+            "0.5": [10, 2, 1],
+            "1.0": [10, 0, 0],
+            "1.5": [10, -2, -1],
+            "2.0": [10, 0, 0]
+          }
+        },
+        "rightArm": {
+          "rotation": {
+            "0.0": [-30, -10, -20],
+            "0.5": [-32, -10, -22],
+            "1.0": [-30, -10, -20],
+            "1.5": [-28, -10, -18],
+            "2.0": [-30, -10, -20]
+          }
+        },
+        "leftArm": {
+          "rotation": {
+            "0.0": [-25, 10, 25],
+            "0.5": [-27, 10, 27],
+            "1.0": [-25, 10, 25],
+            "1.5": [-23, 10, 23],
+            "2.0": [-25, 10, 25]
+          }
+        },
+        "rightLeg": {
+          "rotation": {
+            "0.0": [0, 0, 0],
+            "1.0": [3, 0, 0],
+            "2.0": [0, 0, 0]
+          }
+        },
+        "leftLeg": {
+          "rotation": {
+            "0.0": [0, 0, 0],
+            "1.0": [-3, 0, 0],
+            "2.0": [0, 0, 0]
+          }
+        }
+      }
+    },
+    "sound_idle": {
+      "animation_length": 2,
+      "bones": {
+        "head": {
+          "rotation": {
+            "0.0": [0, -3, 0],
+            "0.5": [0, 3, 0],
+            "1.0": [0, -3, 0],
+            "1.5": [0, 3, 0],
+            "2.0": [0, -3, 0]
+          }
+        },
+        "torso": {
+          "rotation": {
+            "0.0": [0, -5, 2],
+            "0.5": [0, 5, -2],
+            "1.0": [0, -5, 2],
+            "1.5": [0, 5, -2],
+            "2.0": [0, -5, 2]
+          },
+          "position": {
+            "0.0": [0, 0, 0],
+            "0.5": [-0.5, 0, 0],
+            "1.0": [0, 0, 0],
+            "1.5": [0.5, 0, 0],
+            "2.0": [0, 0, 0]
+          }
+        },
+        "rightArm": {
+          "rotation": {
+            "0.0": [-10, 0, -15],
+            "0.5": [-8, 0, -12],
+            "1.0": [-12, 0, -15],
+            "1.5": [-8, 0, -12],
+            "2.0": [-10, 0, -15]
+          }
+        },
+        "leftArm": {
+          "rotation": {
+            "0.0": [-8, 0, 12],
+            "0.5": [-10, 0, 15],
+            "1.0": [-8, 0, 12],
+            "1.5": [-10, 0, 15],
+            "2.0": [-8, 0, 12]
+          }
+        },
+        "rightLeg": {
+          "rotation": {
+            "0.0": [5, 0, 0],
+            "0.5": [3, 0, 0],
+            "1.0": [5, 0, 0],
+            "1.5": [3, 0, 0],
+            "2.0": [5, 0, 0]
+          }
+        },
+        "leftLeg": {
+          "rotation": {
+            "0.0": [3, 0, 0],
+            "0.5": [5, 0, 0],
+            "1.0": [3, 0, 0],
+            "1.5": [5, 0, 0],
+            "2.0": [3, 0, 0]
+          }
+        }
+      }
+    },
+    "sword.block": {
+      "animation_length": 0.5,
+      "bones": {
+        "rightArm": {
+          "rotation": {
+            "0.0": [-50.79219, -40.81384, -14.54438],
+            "0.5": [-50.79219, -40.81384, -14.54438]
+          },
+          "position": {
+            "0.0": [0, 0, -1],
+            "0.5": [0, 0, -1]
+          }
+        },
+        "leftArm": {
+          "rotation": {
+            "0.0": [-22.02637, 23.60662, 40.77127],
+            "0.5": [-22.02637, 23.60662, 40.77127]
+          },
+          "position": {
+            "0.0": [0, 0, -1],
+            "0.5": [0, 0, -1]
+          }
+        }
+      }
+    },
+    "sword.parry": {
+      "animation_length": 0.5,
+      "bones": {
+        "rightArm": {
+          "rotation": {
+            "0.0": [-50.79219, -40.81384, -14.54438],
+            "0.1667": [-56.23771, -2.93841, 129.02808]
+          },
+          "position": {
+            "0.0": [0, 0, -1],
+            "0.0833": [0, 0, 0]
+          }
+        },
+        "leftArm": {
+          "rotation": {
+            "0.0": [-22.02637, 23.60662, 40.77127],
+            "0.1667": [-63.18676, 35.57472, -43.28832]
+          },
+          "position": [0, 0, -1]
+        }
+      }
+    },
+    "thunder_idle": {
+      "animation_length": 2,
+      "bones": {
+        "head": {
+          "rotation": {
+            "0.0": [-5, 0, 0],
+            "1.0": [-7, 0, 0],
+            "2.0": [-5, 0, 0]
+          }
+        },
+        "torso": {
+          "rotation": {
+            "0.0": [-5, 0, 0],
+            "1.0": [-7, 0, 0],
+            "2.0": [-5, 0, 0]
+          },
+          "position": {
+            "0.0": [0, -1, 0],
+            "1.0": [0, -1.5, 0],
+            "2.0": [0, -1, 0]
+          }
+        },
+        "rightArm": {
+          "rotation": {
+            "0.0": [-15, 0, -20],
+            "1.0": [-18, 0, -22],
+            "2.0": [-15, 0, -20]
+          }
+        },
+        "leftArm": {
+          "rotation": {
+            "0.0": [-10, 0, 15],
+            "1.0": [-12, 0, 17],
+            "2.0": [-10, 0, 15]
+          }
+        },
+        "rightLeg": {
+          "rotation": {
+            "0.0": [20, 0, 0],
+            "1.0": [22, 0, 0],
+            "2.0": [20, 0, 0]
+          }
+        },
+        "leftLeg": {
+          "rotation": {
+            "0.0": [20, 0, 0],
+            "1.0": [22, 0, 0],
+            "2.0": [20, 0, 0]
+          }
+        }
+      }
+    },
+    "water_idle": {
+      "animation_length": 2,
+      "bones": {
+        "head": {
+          "rotation": {
+            "0.0": [0, 0, 0],
+            "0.5": [-3, 5, 0],
+            "1.0": [0, 0, 0],
+            "1.5": [-2, -4, 0],
+            "2.0": [0, 0, 0]
+          }
+        },
+        "torso": {
+          "rotation": {
+            "0.0": [5, 0, 0],
+            "0.5": [5, 3, 2],
+            "1.0": [5, 0, 0],
+            "1.5": [5, -3, -2],
+            "2.0": [5, 0, 0]
+          }
+        },
+        "rightArm": {
+          "rotation": {
+            "0.0": [-20, -5, -15],
+            "0.5": [-22, -5, -18],
+            "1.0": [-20, -5, -15],
+            "1.5": [-18, -5, -12],
+            "2.0": [-20, -5, -15]
+          }
+        },
+        "leftArm": {
+          "rotation": {
+            "0.0": [-15, 5, 20],
+            "0.5": [-18, 5, 22],
+            "1.0": [-15, 5, 20],
+            "1.5": [-12, 5, 17],
+            "2.0": [-15, 5, 20]
+          }
+        },
+        "rightLeg": {
+          "rotation": {
+            "0.0": [0, 0, 0],
+            "1.0": [2, 0, 0],
+            "2.0": [0, 0, 0]
+          }
+        },
+        "leftLeg": {
+          "rotation": {
+            "0.0": [0, 0, 0],
+            "1.0": [-2, 0, 0],
+            "2.0": [0, 0, 0]
+          }
+        }
+      }
+    }
+  }
 }

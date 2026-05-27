@@ -1,7 +1,5 @@
 package com.xirc.nichirin.common.attack.moves.breathing.mist;
 
-import com.xirc.nichirin.common.entity.effect.PlayerCloneEntity;
-import com.xirc.nichirin.registry.NichirinEntityRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -223,17 +221,6 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
         float circleRadius = range * 0.4f;
         Vec3 circleCenter  = userPos;
         createMistCircle(circleCenter, circleRadius, 28);
-
-        // Spawn 6 player clone entities orbiting the mist circle
-        for (int i = 0; i < 6; i++) {
-            float angle = (float) (2.0 * Math.PI * i / 6);
-            PlayerCloneEntity clone = PlayerCloneEntity.create(
-                    NichirinEntityRegistry.PLAYER_CLONE.get(), world,
-                    user, circleCenter, circleRadius, angle, 50);
-            world.addFreshEntity(clone);
-            clone.copyEquipmentFrom(user);
-            spawnedClones.add(clone.getUUID());
-        }
 
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.PLAYERS, 1.4f, 0.9f);

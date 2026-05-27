@@ -5,6 +5,7 @@ import com.xirc.nichirin.client.gui.biggui.*;
 import com.xirc.nichirin.registry.NichirinKeybindRegistry;
 import com.xirc.nichirin.common.util.PlayerStats;
 import lombok.Getter;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -18,18 +19,8 @@ import java.util.List;
 /**
  * THE BIG GUI - Main menu system for all mod features
  * Full-screen interface with vanilla+ styling, unlock system, and translatable text
- * Always renders at GUI scale 2 regardless of the user's GUI scale setting.
  */
 public class TheBigGui extends Screen {
-
-    /** Forced GUI scale while this screen is open. */
-    private static final int FIXED_GUI_SCALE = 2;
-
-    /** Player's original GUI scale option, restored when the screen closes. */
-    private Integer savedGuiScaleOption = null;
-
-    /** Reentrancy guard: true while we're restoring so a triggered re-init doesn't re-apply scale 2. */
-    private boolean isRestoring = false;
 
     // UI Constants
     private static final int BUTTON_WIDTH = 100;
@@ -44,6 +35,11 @@ public class TheBigGui extends Screen {
     // Colors
     private static final int BACKGROUND_COLOR    = NichirinPalette.BG_DARK;
     private static final int ACTIVE_BUTTON_COLOR = NichirinPalette.BG_BOX_ACTIVE;
+
+    // Scale applied to the entire GUI so it fills the window proportionally.
+    // Stored as a field so mouse-event handlers can transform coords without recomputing.
+    private float contentScale = 1.0f;
+
 
     // Current section
     private GuiSection currentSection = GuiSection.HOME;
@@ -70,61 +66,23 @@ public class TheBigGui extends Screen {
         PlayerStats.initialize();
     }
 
-    /**
-     * Force the player's GUI scale to {@link #FIXED_GUI_SCALE} while this screen is open.
-     * Crash-safe: persists the player's original scale to options.txt BEFORE swapping the
-     * in-memory value, so if the game is killed (Alt-F4 / crash) while this screen is open,
-     * the next launch reads the player's original scale from disk.
-     */
-    private void applyFixedScale() {
-        if (minecraft == null || savedGuiScaleOption != null || isRestoring) return;
-        savedGuiScaleOption = minecraft.options.guiScale().get();
-        if (savedGuiScaleOption == FIXED_GUI_SCALE) {
-            // Already at the right scale — no swap needed
-            return;
-        }
-        try {
-            // Force-persist the player's CURRENT scale to disk first, so any crash leaves
-            // options.txt with the correct value.
-            minecraft.options.save();
-        } catch (Throwable ignored) {}
-        minecraft.options.guiScale().set(FIXED_GUI_SCALE);
-        // Force a window resize so the new scale takes effect immediately. This triggers
-        // Screen.resize → init() re-entry, which is fine: savedGuiScaleOption is set so
-        // the guard at the top of applyFixedScale bails out.
-        minecraft.resizeDisplay();
-    }
-
-    private void restoreScale() {
-        if (minecraft == null || savedGuiScaleOption == null) return;
-        Integer toRestore = savedGuiScaleOption;
-        savedGuiScaleOption = null;
-        isRestoring = true;
-        try {
-            if (!minecraft.options.guiScale().get().equals(toRestore)) {
-                minecraft.options.guiScale().set(toRestore);
-                // Resize so the restored scale takes effect immediately. This may trigger
-                // Screen.resize → init() on the still-current screen, but isRestoring blocks
-                // applyFixedScale from re-clobbering.
-                minecraft.resizeDisplay();
-            }
-            try {
-                minecraft.options.save();
-            } catch (Throwable ignored) {}
-        } finally {
-            isRestoring = false;
-        }
-    }
-
     @Override
     protected void init() {
-        applyFixedScale();
         super.init();
+
+        // Compute contentScale FIRST so button positions use logical coordinates.
+        var window = Minecraft.getInstance().getWindow();
+        int physW = window.getWidth();
+        int refScale = Math.max(1, physW / 960);
+        double actualScale = window.getGuiScale();
+        contentScale = (float) (refScale / actualScale);
+
+        int logW = Math.round(this.width / contentScale);
 
         // Clear previous buttons
         sectionButtons.clear();
 
-        int buttonX = this.width - BUTTON_WIDTH - RIGHT_MARGIN;
+        int buttonX = logW - BUTTON_WIDTH - RIGHT_MARGIN;
         int buttonY = TOP_MARGIN;
 
         // Create section buttons
@@ -171,31 +129,41 @@ public class TheBigGui extends Screen {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        graphics.fill(0, 0, this.width, this.height, BACKGROUND_COLOR);
+        graphics.pose().pushPose();
+        graphics.pose().scale(contentScale, contentScale, 1.0f);
 
-        int contentRight = this.width - BUTTON_WIDTH - RIGHT_MARGIN - 10;
-        graphics.fill(CONTENT_X, CONTENT_Y, contentRight, this.height - BOTTOM_MARGIN, 0xFF1A1817);
+        int logW = Math.round(this.width  / contentScale);
+        int logH = Math.round(this.height / contentScale);
+        int logMouseX = Math.round(mouseX / contentScale);
+        int logMouseY = Math.round(mouseY / contentScale);
 
-        int contentWidth = contentRight - CONTENT_X;
-        int contentHeight = this.height - BOTTOM_MARGIN - CONTENT_Y;
+        graphics.fill(0, 0, logW, logH, BACKGROUND_COLOR);
+
+        int contentRight  = logW - BUTTON_WIDTH - RIGHT_MARGIN - 10;
+        graphics.fill(CONTENT_X, CONTENT_Y, contentRight, logH - BOTTOM_MARGIN, 0xFF1A1817);
+
+        int contentWidth  = contentRight - CONTENT_X;
+        int contentHeight = logH - BOTTOM_MARGIN - CONTENT_Y;
+        int contentMouseX = logMouseX - CONTENT_X;
+        int contentMouseY = logMouseY - CONTENT_Y;
 
         graphics.pose().pushPose();
         graphics.pose().translate(CONTENT_X, CONTENT_Y, 0);
-        int contentMouseX = mouseX - CONTENT_X;
-        int contentMouseY = mouseY - CONTENT_Y;
         switch (currentSection) {
-            case HOME -> homeSection.render(graphics, contentMouseX, contentMouseY, player, contentWidth, contentHeight, this.font);
-            case SKILLS -> skillsSection.render(graphics, player, this.font, contentWidth, contentHeight, contentMouseX, contentMouseY);
-            case BESTIARY -> bestiarySection.render(graphics, player, this.font, contentWidth, contentHeight, contentMouseX, contentMouseY);
-            case QUESTS -> questsSection.render(graphics, player, this.font, contentWidth, contentHeight, contentMouseX, contentMouseY);
+            case HOME       -> homeSection      .render(graphics, contentMouseX, contentMouseY, player, contentWidth, contentHeight, this.font);
+            case SKILLS     -> skillsSection    .render(graphics, player, this.font, contentWidth, contentHeight, contentMouseX, contentMouseY);
+            case BESTIARY   -> bestiarySection  .render(graphics, player, this.font, contentWidth, contentHeight, contentMouseX, contentMouseY);
+            case QUESTS     -> questsSection    .render(graphics, player, this.font, contentWidth, contentHeight, contentMouseX, contentMouseY);
             case REPUTATION -> reputationSection.render(graphics, player, this.font, contentWidth, contentHeight, contentMouseX, contentMouseY);
-            case MOVESET -> movesetSection.render(graphics, player, this.font, contentWidth, contentHeight, contentMouseX, contentMouseY);
+            case MOVESET    -> movesetSection   .render(graphics, player, this.font, contentWidth, contentHeight, contentMouseX, contentMouseY);
         }
         graphics.pose().popPose();
 
         for (SectionButton button : sectionButtons) {
-            button.render(graphics, mouseX, mouseY, partialTick);
+            button.render(graphics, logMouseX, logMouseY, partialTick);
         }
+
+        graphics.pose().popPose();
     }
 
     @Override
@@ -206,14 +174,10 @@ public class TheBigGui extends Screen {
     @Override
     public void removed() {
         super.removed();
-        // Restore the player's original GUI scale when the screen closes.
-        restoreScale();
     }
 
     @Override
     public void onClose() {
-        // Restore BEFORE the screen is actually torn down so the new screen lays out at the right scale.
-        restoreScale();
         super.onClose();
     }
 
@@ -255,34 +219,38 @@ public class TheBigGui extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+        double lx = mouseX / contentScale - CONTENT_X;
+        double ly = mouseY / contentScale - CONTENT_Y;
         if (currentSection == GuiSection.SKILLS) {
-            if (skillsSection.handleScroll(mouseX - CONTENT_X, mouseY - CONTENT_Y, delta)) return true;
+            if (skillsSection.handleScroll(lx, ly, delta)) return true;
         }
-        return super.mouseScrolled(mouseX, mouseY, delta);
+        return super.mouseScrolled(mouseX / contentScale, mouseY / contentScale, delta);
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        int contentRight = this.width - BUTTON_WIDTH - RIGHT_MARGIN - 10;
-        int clickContentWidth = contentRight - CONTENT_X;
-        int clickContentHeight = this.height - BOTTOM_MARGIN - CONTENT_Y;
-        double contentMouseX = mouseX - CONTENT_X;
-        double contentMouseY = mouseY - CONTENT_Y;
+        double logMouseX = mouseX / contentScale;
+        double logMouseY = mouseY / contentScale;
+        double contentMouseX = logMouseX - CONTENT_X;
+        double contentMouseY = logMouseY - CONTENT_Y;
+
+        int logW = Math.round(this.width  / contentScale);
+        int logH = Math.round(this.height / contentScale);
+        int contentRight  = logW - BUTTON_WIDTH - RIGHT_MARGIN - 10;
+        int clickContentW = contentRight - CONTENT_X;
+        int clickContentH = logH - BOTTOM_MARGIN - CONTENT_Y;
 
         boolean handled = switch (currentSection) {
-            case HOME -> homeSection.handleClick(contentMouseX, contentMouseY, player);
-            case SKILLS -> skillsSection.handleClick(contentMouseX, contentMouseY, player, clickContentWidth, clickContentHeight);
-            case BESTIARY -> bestiarySection.handleClick(contentMouseX, contentMouseY, player);
-            case QUESTS -> questsSection.handleClick(contentMouseX, contentMouseY, player);
+            case HOME       -> homeSection      .handleClick(contentMouseX, contentMouseY, player);
+            case SKILLS     -> skillsSection    .handleClick(contentMouseX, contentMouseY, player, clickContentW, clickContentH);
+            case BESTIARY   -> bestiarySection  .handleClick(contentMouseX, contentMouseY, player);
+            case QUESTS     -> questsSection    .handleClick(contentMouseX, contentMouseY, player);
             case REPUTATION -> reputationSection.handleClick(contentMouseX, contentMouseY, player);
-            case MOVESET -> movesetSection.handleClick(contentMouseX, contentMouseY, player, clickContentWidth, clickContentHeight);
+            case MOVESET    -> movesetSection   .handleClick(contentMouseX, contentMouseY, player, clickContentW, clickContentH);
         };
 
-        if (handled) {
-            return true;
-        }
-
-        return super.mouseClicked(mouseX, mouseY, button);
+        if (handled) return true;
+        return super.mouseClicked(logMouseX, logMouseY, button);
     }
 
     @Getter
