@@ -10,6 +10,7 @@ import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
 import com.xirc.nichirin.common.util.StaminaManager;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -33,7 +34,6 @@ public class SheathingManager {
     }
 
     public static void cleanupPlayer(Player player) {
-        restoreStoredSwords(player);
         PLAYER_DATA.remove(player.getUUID());
         LAST_SYNC.remove(player.getUUID());
     }
@@ -41,6 +41,87 @@ public class SheathingManager {
     public static void clearAll() {
         PLAYER_DATA.clear();
         LAST_SYNC.clear();
+    }
+
+    public static CompoundTag savePlayerData(Player player) {
+        CompoundTag tag = new CompoundTag();
+        PlayerSheathData data = get(player);
+        tag.putInt("GlobalCooldown", data.getGlobalCooldownTicks());
+        if (data.getChargingSlot() != null) {
+            tag.putString("ArmedSlot", data.getChargingSlot().name());
+        }
+
+        CompoundTag slotsTag = new CompoundTag();
+        for (SheathSlotData slot : data.getSlots()) {
+            CompoundTag slotTag = new CompoundTag();
+            slotTag.putBoolean("Enabled", slot.isEnabled());
+            slotTag.putInt("HotbarSlot", slot.getLinkedHotbarSlot());
+            slotTag.putInt("Priority", slot.getPriority());
+            slotTag.putString("State", slot.getState().name());
+            slotTag.putString("TapAttack", slot.getTapAttack().name());
+            slotTag.putInt("CooldownTicks", slot.getCooldownTicks());
+            slotTag.putBoolean("Visible", slot.isVisible());
+            if (slot.hasStoredSword()) {
+                slotTag.put("StoredSword", slot.getStoredSword().save(new CompoundTag()));
+            }
+            slotsTag.put(slot.getPosition().name(), slotTag);
+        }
+        tag.put("Slots", slotsTag);
+        return tag;
+    }
+
+    public static void loadPlayerData(ServerPlayer player, CompoundTag tag) {
+        PlayerSheathData data = get(player);
+        data.setGlobalCooldownTicks(tag.getInt("GlobalCooldown"));
+        data.setChargingSlot(null);
+        if (tag.contains("ArmedSlot")) {
+            try {
+                data.setChargingSlot(SheathPosition.valueOf(tag.getString("ArmedSlot")));
+            } catch (IllegalArgumentException ignored) {
+                data.setChargingSlot(null);
+            }
+        }
+
+        CompoundTag slotsTag = tag.getCompound("Slots");
+        for (SheathPosition position : SheathPosition.values()) {
+            if (!slotsTag.contains(position.name())) continue;
+            SheathSlotData slot = data.getSlot(position);
+            CompoundTag slotTag = slotsTag.getCompound(position.name());
+            slot.setEnabled(slotTag.getBoolean("Enabled"));
+            slot.setLinkedHotbarSlot(slotTag.getInt("HotbarSlot"));
+            slot.setPriority(slotTag.getInt("Priority"));
+            slot.setCooldownTicks(slotTag.getInt("CooldownTicks"));
+            slot.setVisible(!slotTag.contains("Visible") || slotTag.getBoolean("Visible"));
+            if (slotTag.contains("TapAttack")) {
+                try {
+                    slot.setTapAttack(UnsheatheAttackType.valueOf(slotTag.getString("TapAttack")));
+                } catch (IllegalArgumentException ignored) {
+                    slot.setTapAttack(UnsheatheAttackType.QUICKDRAW_SLASH);
+                }
+            }
+            if (slotTag.contains("StoredSword")) {
+                slot.setStoredSword(ItemStack.of(slotTag.getCompound("StoredSword")));
+            } else {
+                slot.setStoredSword(ItemStack.EMPTY);
+            }
+
+            if (slot.hasStoredSword()) {
+                slot.setState(SheathState.SHEATHED);
+                slot.setTransitionTicks(0);
+            } else if (slotTag.contains("State")) {
+                try {
+                    slot.setState(SheathState.valueOf(slotTag.getString("State")));
+                } catch (IllegalArgumentException ignored) {
+                    slot.setState(SheathState.EMPTY);
+                }
+            }
+        }
+    }
+
+    public static void syncPlayer(ServerPlayer player) {
+        PlayerSheathData data = get(player);
+        LAST_SYNC.remove(player.getUUID());
+        NichirinPacketRegistry.sendSheathSync(player, data);
     }
 
     public static void tick(Player player) {
@@ -307,21 +388,6 @@ public class SheathingManager {
     private static boolean hasHotbarSword(Player player, SheathSlotData slot) {
         ItemStack stack = player.getInventory().getItem(slot.getLinkedHotbarSlot());
         return stack.getItem() instanceof SimpleKatana;
-    }
-
-    private static void restoreStoredSwords(Player player) {
-        PlayerSheathData data = PLAYER_DATA.get(player.getUUID());
-        if (data == null) return;
-        for (SheathSlotData slot : data.getSlots()) {
-            if (!slot.hasStoredSword()) continue;
-            if (player.getInventory().getItem(slot.getLinkedHotbarSlot()).isEmpty()) {
-                player.getInventory().setItem(slot.getLinkedHotbarSlot(), slot.getStoredSword());
-            } else {
-                player.getInventory().placeItemBackInInventory(slot.getStoredSword());
-            }
-            slot.setStoredSword(ItemStack.EMPTY);
-            slot.setState(SheathState.DRAWN);
-        }
     }
 
     private static void feedback(Player player, String text, int color, boolean bold) {

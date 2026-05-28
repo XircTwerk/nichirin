@@ -3,6 +3,7 @@ package com.xirc.nichirin.common.data;
 import com.xirc.nichirin.common.event.system.DemonFoodHandler;
 import com.xirc.nichirin.common.network.s2c.ProgressionSyncPacket;
 import com.xirc.nichirin.common.system.DemonManager;
+import com.xirc.nichirin.common.system.sheathing.SheathingManager;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.event.events.common.TickEvent;
@@ -80,6 +81,7 @@ public class PlayerDataProvider {
                 data.getStatistics().onMovesetEquipped(moveset.getMovesetId());
             } // Sync to client AFTER data is loaded and applied
             syncToClient(serverPlayer);
+            SheathingManager.syncPlayer(serverPlayer);
         });
 
         // Handle player quit - save data and cleanup
@@ -126,6 +128,7 @@ public class PlayerDataProvider {
 
             // Sync to client
             syncToClient(serverPlayer);
+            SheathingManager.syncPlayer(serverPlayer);
         });
 
         // Handle player clone (dimension change)
@@ -167,6 +170,7 @@ public class PlayerDataProvider {
 
                 // Sync to client
                 syncToClient(serverPlayer);
+                SheathingManager.syncPlayer(serverPlayer);
             }
 
             // Clean up old player data if it was a death

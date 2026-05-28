@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.data;
 
 import com.xirc.nichirin.BreathOfNichirin;
+import com.xirc.nichirin.common.system.sheathing.SheathingManager;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.server.level.ServerPlayer;
@@ -39,6 +40,7 @@ public class PlayerDataStorage {
             // Save all data using the PlayerData save method
             CompoundTag playerDataTag = data.save();
             tag.put("PlayerData", playerDataTag);
+            tag.put("SheathingData", SheathingManager.savePlayerData(player));
 
             // Also save legacy breathing style data for backwards compatibility
             tag.put("BreathingStyle", data.getBreathingStyleData().save());
@@ -72,6 +74,10 @@ public class PlayerDataStorage {
                     data.getBreathingStyleData().load(tag.getCompound("BreathingStyle"));
                     // Initialize progression with default values
                     // (progression data will be empty for existing players)
+                }
+
+                if (tag.contains("SheathingData")) {
+                    SheathingManager.loadPlayerData(player, tag.getCompound("SheathingData"));
                 }
             }
 
