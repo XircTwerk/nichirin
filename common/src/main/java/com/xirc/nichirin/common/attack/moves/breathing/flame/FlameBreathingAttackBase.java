@@ -19,7 +19,7 @@ import net.minecraft.world.entity.player.Player;
 public abstract class FlameBreathingAttackBase extends AbstractBreathingAttack<FlameBreathingAttackBase, IBreathingAttacker> {
 
     // Flame-specific properties
-    private static final int DEFAULT_FIRE_DURATION = 3; // 3 seconds of fire (was 8)
+    private static final int DEFAULT_FIRE_DURATION = 3; // 3 seconds of fire
     private static final int FLAME_PARTICLE_COUNT = 15;
     private static final float FLAME_PARTICLE_SPREAD = 1.5f;
 

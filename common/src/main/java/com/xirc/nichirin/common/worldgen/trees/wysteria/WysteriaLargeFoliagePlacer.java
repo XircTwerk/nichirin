@@ -50,7 +50,7 @@ public class WysteriaLargeFoliagePlacer extends FoliagePlacer {
                     if (distance <= radius - 1) {
                         shouldPlace = true; // Always place in core
                     } else if (distance <= radius) {
-                        shouldPlace = random.nextInt(4) != 0; // 75% chance at edge (was 67%)
+                        shouldPlace = random.nextInt(4) != 0; // 75% chance at edge
                     }
 
                     // Add more randomness to create natural gaps

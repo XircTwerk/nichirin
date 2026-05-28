@@ -69,7 +69,7 @@ public class BlessedRainAttack extends WaterBreathingAttackBase {
         }
 
         // Execute teleport strike 15 ticks after leap (0.75 seconds)
-        if (leapStarted && !teleportExecuted && tickCount == windup + 16) {
+        if (leapStarted && !teleportExecuted && tickCount >= windup + 16) {
             executeTeleportStrike();
             teleportExecuted = true;
         }
@@ -138,20 +138,16 @@ public class BlessedRainAttack extends WaterBreathingAttackBase {
         // Calculate teleport destination
         Vec3 teleportDestination = user.position().add(teleportDirection.scale(range * 0.8));
 
-        // Instant teleport (no gradual movement)
-        user.teleportTo(teleportDestination.x, teleportDestination.y, teleportDestination.z);
-
-        // Sync teleport to client
-        if (user instanceof ServerPlayer serverPlayer) {
-            serverPlayer.teleportTo(teleportDestination.x, teleportDestination.y, teleportDestination.z);
-        }
+        // Instant teleport, stopping at block collision instead of failing or clipping.
+        teleportSafe(teleportDestination);
+        Vec3 strikePosition = user.position();
 
         // Create massive rain strike effect
-        createRainStrikeEffect(teleportDestination);
+        createRainStrikeEffect(strikePosition);
 
         // Hit enemies in very small precise hitbox
         List<LivingEntity> targets = getTargetsInCustomHitbox(
-                teleportDestination.add(0, user.getBbHeight() / 2, 0),
+                strikePosition.add(0, user.getBbHeight() / 2, 0),
                 hitboxSize, // Very small 1.0 block hitbox
                 hitboxSize + 0.5,
                 hitboxSize
