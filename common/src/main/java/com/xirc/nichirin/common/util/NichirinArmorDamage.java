@@ -4,7 +4,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 
 public final class NichirinArmorDamage {
-    public static final float ARMOR_DAMAGE_MULTIPLIER = 0.125f;
+    public static final float ARMOR_DAMAGE_MULTIPLIER = 0.0f;
 
     private static final ThreadLocal<Boolean> REDUCE_ARMOR_DAMAGE =
             ThreadLocal.withInitial(() -> false);

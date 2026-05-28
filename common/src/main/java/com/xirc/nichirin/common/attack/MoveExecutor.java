@@ -50,29 +50,31 @@ public class MoveExecutor {
     }
 
     private static void handleAttack(LivingEntity entity, AbstractBreathingAttack<?, ?> attack, String movesetId, String moveId) {
+        int stunTicks = 0;
         if (!isAttackConfigured(attack)) {
-            configureAttackFromMoveset(entity, attack, movesetId, moveId);
+            stunTicks = configureAttackFromMoveset(entity, attack, movesetId, moveId);
         } else {
-            applyPreConfiguredEffects(entity, attack, moveId);
+            stunTicks = getPreConfiguredStunTicks(entity, attack, moveId);
         }
-        executeConfiguredAttack(entity, attack, movesetId, moveId);
+        executeConfiguredAttack(entity, attack, movesetId, moveId, stunTicks);
     }
 
     private static void handleAttack(LivingEntity entity, AbstractDemonAttack<?, ?> attack, String movesetId, String moveId) {
+        int stunTicks = 0;
         if (!isDemonAttackConfigured(attack)) {
-            configureAttackFromMoveset(entity, attack, movesetId, moveId);
+            stunTicks = configureAttackFromMoveset(entity, attack, movesetId, moveId);
         } else {
-            applyPreConfiguredDemonEffects(entity, attack, moveId);
+            stunTicks = getPreConfiguredDemonStunTicks(entity, attack, moveId);
         }
-        executeConfiguredAttack(entity, attack, movesetId, moveId);
+        executeConfiguredAttack(entity, attack, movesetId, moveId, stunTicks);
     }
 
-    private static void configureAttackFromMoveset(LivingEntity entity, Object attack, String movesetId, String moveId) {
+    private static int configureAttackFromMoveset(LivingEntity entity, Object attack, String movesetId, String moveId) {
         AbstractMoveset moveset = NichirinMovesetRegistry.getMoveset(movesetId);
-        if (moveset == null) return;
+        if (moveset == null) return 0;
 
         AbstractMoveset.MoveConfiguration config = findMoveConfig(moveset, moveId);
-        if (config == null) return;
+        if (config == null) return 0;
 
         int originalHitStun = config.getHitStunOrDefault(0);
         int modifiedHitStun = originalHitStun;
@@ -83,30 +85,32 @@ public class MoveExecutor {
             config = createModifiedConfig(config, modifiedHitStun);
         }
 
-        applyMoveStun(entity, config);
+        int stunTicks = config.getWindupOrDefault(0) + config.getDurationOrDefault(0);
 
         if (attack instanceof AbstractBreathingAttack<?, ?> breathingAttack) {
             breathingAttack.configure(config);
         } else if (attack instanceof AbstractDemonAttack<?, ?> demonAttack) {
             demonAttack.configure(config);
         }
+
+        return stunTicks;
     }
 
-    private static void applyPreConfiguredEffects(LivingEntity entity, AbstractBreathingAttack<?, ?> attack, String moveId) {
+    private static int getPreConfiguredStunTicks(LivingEntity entity, AbstractBreathingAttack<?, ?> attack, String moveId) {
         if (entity instanceof Player player) {
             ComboTracker.getModifiedHitStun(player, moveId, attack.getHitStun());
         }
-        applyPreConfiguredMoveStun(entity, attack);
+        return getWindupFromAttack(attack) + getDurationFromAttack(attack);
     }
 
-    private static void applyPreConfiguredDemonEffects(LivingEntity entity, AbstractDemonAttack<?, ?> attack, String moveId) {
+    private static int getPreConfiguredDemonStunTicks(LivingEntity entity, AbstractDemonAttack<?, ?> attack, String moveId) {
         if (entity instanceof Player player) {
             ComboTracker.getModifiedHitStun(player, moveId, getHitStunFromAttack(attack));
         }
-        applyPreConfiguredDemonMoveStun(entity, attack);
+        return getWindupFromAttack(attack) + getDurationFromAttack(attack);
     }
 
-    private static void executeConfiguredAttack(LivingEntity entity, Object attack, String movesetId, String moveId) {
+    private static void executeConfiguredAttack(LivingEntity entity, Object attack, String movesetId, String moveId, int stunTicks) {
         NichirinMovesetRegistry.MoveInfo moveInfo = NichirinMovesetRegistry.getMove(movesetId, moveId);
         String displayName;
         if (moveInfo != null) {
@@ -118,7 +122,7 @@ public class MoveExecutor {
             displayName = config != null ? config.getDisplayName() : attack.getClass().getSimpleName();
         }
         int cooldown = getCooldownForAttack(attack);
-        executeAttackInternal(entity, attack, displayName, cooldown);
+        executeAttackInternal(entity, attack, displayName, cooldown, stunTicks);
     }
 
     private static void handleGenericAttack(LivingEntity entity, Object attack, String movesetId, String moveId) {
@@ -129,7 +133,7 @@ public class MoveExecutor {
             displayName = config.getDisplayName();
         }
         int cooldown = getCooldownForAttack(attack);
-        executeAttackInternal(entity, attack, displayName, cooldown);
+        executeAttackInternal(entity, attack, displayName, cooldown, 0);
     }
 
     public static void executeAttackWithVisuals(LivingEntity entity, Object attack, String movesetId, String moveId) {
@@ -154,30 +158,6 @@ public class MoveExecutor {
         try {
             return (int) attack.getClass().getMethod("getHitStun").invoke(attack);
         } catch (Exception e) { return 0; }
-    }
-
-    private static void applyMoveStun(LivingEntity entity, AbstractMoveset.MoveConfiguration config) {
-        int totalStunTicks = config.getWindupOrDefault(0) + config.getDurationOrDefault(0);
-        if (totalStunTicks > 0) {
-            entity.addEffect(new MobEffectInstance(NichirinEffectRegistry.STUNNED.get(),
-                    totalStunTicks, 0, false, false, false));
-        }
-    }
-
-    private static void applyPreConfiguredMoveStun(LivingEntity entity, AbstractBreathingAttack<?, ?> attack) {
-        int totalStunTicks = getWindupFromAttack(attack) + getDurationFromAttack(attack);
-        if (totalStunTicks > 0) {
-            entity.addEffect(new MobEffectInstance(NichirinEffectRegistry.STUNNED.get(),
-                    totalStunTicks, 0, false, false, false));
-        }
-    }
-
-    private static void applyPreConfiguredDemonMoveStun(LivingEntity entity, AbstractDemonAttack<?, ?> attack) {
-        int totalStunTicks = getWindupFromAttack(attack) + getDurationFromAttack(attack);
-        if (totalStunTicks > 0) {
-            entity.addEffect(new MobEffectInstance(NichirinEffectRegistry.STUNNED.get(),
-                    totalStunTicks, 0, false, false, false));
-        }
     }
 
     private static int getWindupFromAttack(Object attack) {
@@ -212,18 +192,22 @@ public class MoveExecutor {
 
     public static void executeAttackWithInfo(LivingEntity entity, Object attack, String displayName, int cooldown) {
         if (entity.hasEffect(NichirinEffectRegistry.STUNNED.get())) return;
-        executeAttackInternal(entity, attack, displayName, cooldown);
+        executeAttackInternal(entity, attack, displayName, cooldown, 0);
     }
 
     public static void executeAttackWithInfo(Player player, Object attack, String displayName, int cooldown) {
         executeAttackWithInfo((LivingEntity) player, attack, displayName, cooldown);
     }
 
-    private static void executeAttackInternal(LivingEntity entity, Object attack, String displayName, int cooldown) {
+    private static void executeAttackInternal(LivingEntity entity, Object attack, String displayName, int cooldown, int stunTicks) {
         if (!isAttackActive(attack)) {
             startAttack(entity, attack);
 
             if (isAttackActive(attack)) {
+                if (stunTicks > 0) {
+                    entity.addEffect(new MobEffectInstance(NichirinEffectRegistry.STUNNED.get(),
+                            stunTicks, 0, false, false, false));
+                }
                 trackAttack(entity, attack);
                 if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer && cooldown > 0) {
                     sendCooldownToClient(serverPlayer, displayName, cooldown);

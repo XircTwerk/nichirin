@@ -40,7 +40,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
     private void createAndCaptureTempoBreakerConfig() {
         MoveConfiguration tempConfig = new MoveBuilder("tempo_breaker", "Tempo Breaker")
                 .withAnimation("nichirin:tempo_breaker", 8)
-                .withTiming(0, 8, 25) // Extended duration to allow delayed explosions
+                .withTiming(0, 8, 25)
                 .withDamage(0f) //explosion is what deals the damage
                 .withRange(5.0f) // Wide sweep range
                 .withKnockback(0.8f) // Reduced from 1.2f - still too strong
@@ -55,10 +55,10 @@ public class SoundBreathingMoveset extends AbstractMoveset {
     private void createAndCaptureRhythmicStepConfig() {
         MoveConfiguration tempConfig = new MoveBuilder("rhythmic_step", "Rhythmic Step")
                 .withAnimation("nichirin:rhythmic_step", 9)
-                .withTiming(0, 0, 8) // Fast dash with finishing duration
+                .withTiming(0, 0, 8)
                 .withDamage(8.0f) // Moderate damage but hits multiple times
-                .withDashSpeed(4.0f) // 4 block dash (halved from 8)
-                .withRange(4.0f) // Dash distance (halved from 8)
+                .withDashSpeed(4.0f)
+                .withRange(4.0f)
                 .withKnockback(0.5f) // Light knockback during dash
                 .withBreathCost(25.0f) // Mobility move cost
                 .withHitStun(15) // Good stun for finishing slash
@@ -76,12 +76,12 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                 // First Form: Roar - AOE slam (INDEX 0 in wheel)
                 .withMove(new MoveBuilder("roar", "Roar")
                         .withAnimation("nichirin:roar", 10)
-                        .withTiming(160, 50, 8) // 5 second cooldown, windup
+                        .withTiming(160, 50, 8)
                         .withDamage(14.0f) // Good AOE damage
-                        .withRange(13.5f) // Tripled from 4.5f (4.5 * 3 = 13.5)
+                        .withRange(13.5f)
                         .withKnockback(0.3f) // Strong knockback
                         .withBreathCost(25.0f)
-                        .withHitStun(10) // 0.5 second stun
+                        .withHitStun(10)
                         .withHitboxSize(13.5f) // Full radius
                         .withDescription("AOE slam that hits all enemies in a large radius.")
                         .withAction(entity -> {
@@ -118,9 +118,9 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                 // Fifth Form: String Performance - Multi-segment dash (INDEX 2 in wheel)
                 .withMove(new MoveBuilder("string_performance", "String Performance")
                         .withAnimation("nichirin:string_performance", 15)
-                        .withTiming(160, 14, 34) // 8 second cooldown, windup, 4s duration
+                        .withTiming(160, 14, 34)
                         .withDamage(14.0f) // High damage for finale
-                        .withDashSpeed(16.0f) // 16 block total dash
+                        .withDashSpeed(16.0f)
                         .withRange(16.0f) // Dash distance
                         .withKnockback(0f) // Light knockback during dash
                         .withBreathCost(40.0f) // Expensive ultimate-style move

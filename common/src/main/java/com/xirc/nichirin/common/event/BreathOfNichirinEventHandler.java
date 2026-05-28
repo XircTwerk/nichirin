@@ -12,6 +12,7 @@ import com.xirc.nichirin.common.system.DemonManager;
 import com.xirc.nichirin.common.system.KillRewardManager;
 import com.xirc.nichirin.common.system.movement.MovementContext;
 import com.xirc.nichirin.common.system.sheathing.SheathingManager;
+import com.xirc.nichirin.common.util.ComboTracker;
 import com.xirc.nichirin.common.util.InputHandler;
 import com.xirc.nichirin.registry.NichirinItemRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
@@ -109,6 +110,7 @@ public class BreathOfNichirinEventHandler {
             BloodMoonManager.onServerTick(server);
             MoveExecutor.tickAllAttacks(server);
             AbstractDemonAttack.tickAllActiveAttacks(server);
+            ComboTracker.tickComboTracking(server);
 
             // Check for demon players with 0 blood and kill them; keep night vision active
             for (ServerPlayer player : server.getPlayerList().getPlayers()) {

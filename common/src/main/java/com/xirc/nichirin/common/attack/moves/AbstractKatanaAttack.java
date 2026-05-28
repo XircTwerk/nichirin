@@ -1,5 +1,7 @@
 package com.xirc.nichirin.common.attack.moves;
 
+import com.xirc.nichirin.common.util.ComboIntegration;
+import com.xirc.nichirin.common.util.NichirinArmorDamage;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
@@ -116,7 +118,7 @@ public abstract class AbstractKatanaAttack {
     }
 
 
-    protected final void performHitDetection(LivingEntity user, Level world) {
+    protected void performHitDetection(LivingEntity user, Level world) {
         AABB hitbox = buildHitbox(user);
 
         NichirinPacketRegistry.sendHitboxToTracking(user, hitbox, Math.max(active * 50L, 1500L));
@@ -136,13 +138,17 @@ public abstract class AbstractKatanaAttack {
 
             // Damage first — vanilla hurt() resets invulnerableTime internally,
             // so we must override it AFTER the call, not before.
-            boolean damaged = target.hurt(damageSource, damage);
+            boolean damaged = NichirinArmorDamage.hurt(target, damageSource, damage);
             hitEntities.add(target);
 
             // Only apply post-hit effects if damage actually landed
             if (damaged) {
                 applyKnockback(user, target);
                 if (hitStun > 0) target.invulnerableTime = hitStun;
+
+                if (user instanceof Player p) {
+                    ComboIntegration.handleSuccessfulHit(p, target, hitStun, damage);
+                }
             }
 
             onHitTarget(user, target, world);

@@ -61,6 +61,8 @@ public class PlayerCloneEntity extends Monster {
     private int     passCount;      // how many times we've reached the far edge
     private boolean swungThisPass;  // gate so we only swing once per pass
 
+    private static final int MAX_LIFETIME = 600; // 30 seconds absolute safety cap
+
     public PlayerCloneEntity(EntityType<? extends PlayerCloneEntity> type, Level level) {
         super(type, level);
         this.noCulling  = true;
@@ -68,6 +70,9 @@ public class PlayerCloneEntity extends Monster {
         this.setInvulnerable(true);
         this.setSilent(true);
     }
+
+    @Override
+    public boolean shouldBeSaved() { return false; }
 
     /**
      * Factory. The clone spawns {@code SPAWN_DIST} blocks from {@code center} at {@code spawnAngle},
@@ -130,6 +135,12 @@ public class PlayerCloneEntity extends Monster {
     public void tick() {
         super.tick();
         if (level().isClientSide) return;
+
+        // Safety cap: discard if alive way too long (e.g. attack reference lost)
+        if (tickCount > MAX_LIFETIME) {
+            discard();
+            return;
+        }
 
         lifetimeTicks--;
         if (lifetimeTicks <= 0) {

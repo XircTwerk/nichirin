@@ -4,19 +4,14 @@ import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.*;
 import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
-import com.xirc.nichirin.common.util.ComboIntegration;
 import com.xirc.nichirin.common.util.StaminaManager;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -142,6 +137,12 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
         state.lastAttackTime = 0;
     }
 
+    private static boolean isAttackActive(Object attack) {
+        if (attack == null) return false;
+        if (attack instanceof AbstractKatanaAttack katana) return katana.isActive();
+        return false;
+    }
+
     /** Called every tick from {@code SimpleKatana.inventoryTick} while the katana is selected. */
     public static void tick(Player player) {
         KatanaState state = playerStates.get(player.getUUID());
@@ -195,24 +196,20 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
         if (!isCombo && now < state.slash1CooldownUntil) return;
         if (isCombo  && now < state.slash2CooldownUntil) return;
 
-        List<LivingEntity> targets = findTargetsInRange(player, 2.5f);
-
         if (isCombo && state.comboCount == 1) {
-            state.currentSlash = createLightSlash2();
+            state.currentSlash = KatanaSlashAttack.createSlash2();
             state.comboCount = 2;
             state.slash2CooldownUntil = now + state.currentSlash.getCooldown();
             MoveExecutor.executeAttack(player, state.currentSlash, "default_katana", "slash");
             if (player instanceof ServerPlayer sp)
                 NichirinPacketRegistry.broadcastPlayerAnimation(sp, new PlayerAnimationPacket(sp.getId(), "sword.slash"));
-            for (LivingEntity t : targets) ComboIntegration.handleKatanaHit(player, t, 5, 5.0f);
         } else {
-            state.currentSlash = createLightSlash1();
+            state.currentSlash = KatanaSlashAttack.createSlash1();
             state.comboCount = 1;
             state.slash1CooldownUntil = now + state.currentSlash.getCooldown();
             MoveExecutor.executeAttack(player, state.currentSlash, "default_katana", "slash");
             if (player instanceof ServerPlayer sp)
                 NichirinPacketRegistry.broadcastPlayerAnimation(sp, new PlayerAnimationPacket(sp.getId(), "sword.slash"));
-            for (LivingEntity t : targets) ComboIntegration.handleKatanaHit(player, t, 5, 4.0f);
         }
 
         state.lastAttackTime = now;
@@ -244,25 +241,21 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
             if (now < state.risingSlashCooldownUntil) return;
             if (!StaminaManager.consume(player, cost)) return;
 
-            state.currentRisingSlash = createRisingSlashAttack();
+            state.currentRisingSlash = KatanaRisingSlashAttack.createDefault();
             state.risingSlashCooldownUntil = now + state.currentRisingSlash.getCooldown();
             MoveExecutor.executeAttack(player, state.currentRisingSlash, "default_katana", "rising_slash");
             if (player instanceof ServerPlayer sp)
                 NichirinPacketRegistry.broadcastPlayerAnimation(sp, new PlayerAnimationPacket(sp.getId(), "sword.vertical"));
-            for (LivingEntity t : findTargetsInRange(player, 2.5f))
-                ComboIntegration.handleKatanaHit(player, t, 10, 4.0f);
 
         } else {
             if (now < state.doubleSlashCooldownUntil) return;
             if (!StaminaManager.consume(player, cost)) return;
 
-            state.currentDoubleSlash = createDoubleSlashAttack();
+            state.currentDoubleSlash = KatanaDoubleSlashAttack.createDefault();
             state.doubleSlashCooldownUntil = now + state.currentDoubleSlash.getCooldown();
             MoveExecutor.executeAttack(player, state.currentDoubleSlash, "default_katana", "double_slash");
             if (player instanceof ServerPlayer sp)
                 NichirinPacketRegistry.broadcastPlayerAnimation(sp, new PlayerAnimationPacket(sp.getId(), "sword.doubleslash"));
-            for (LivingEntity t : findTargetsInRange(player, 2.8f))
-                ComboIntegration.handleKatanaHit(player, t, 7, 3.5f);
         }
 
         state.comboCount = 0;
@@ -321,12 +314,12 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
     //  Private helpers
 
     private static boolean isAnyAttackActive(KatanaState s) {
-        return (s.currentSlash       != null && s.currentSlash.isActive())
-            || (s.currentDoubleSlash != null && s.currentDoubleSlash.isActive())
-            || (s.currentRisingSlash != null && s.currentRisingSlash.isActive())
-            || (s.currentCheck       != null && s.currentCheck.isActive())
-            || (s.currentOverhead    != null && s.currentOverhead.isActive())
-            || (s.currentThrust      != null && s.currentThrust.isActive());
+        return isAttackActive(s.currentSlash)
+            || isAttackActive(s.currentDoubleSlash)
+            || isAttackActive(s.currentRisingSlash)
+            || isAttackActive(s.currentCheck)
+            || isAttackActive(s.currentOverhead)
+            || isAttackActive(s.currentThrust);
     }
 
     private static void stopAttack(Object attack) {
@@ -337,61 +330,18 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
         }
     }
 
-    private static List<LivingEntity> findTargetsInRange(Player player, float range) {
-        AABB box = new AABB(
-                player.getX() - range, player.getY() - range, player.getZ() - range,
-                player.getX() + range, player.getY() + range, player.getZ() + range);
-        return player.level().getEntitiesOfClass(LivingEntity.class, box,
-                e -> e != player && e.isAlive() && !e.isSpectator());
-    }
-
-
-    private static SimpleSlashAttack createLightSlash1() {
-        return new SimpleSlashAttack.Builder()
-                .withTiming(0, 7, 1).withCooldown(0).withDamage(4.0f).withRange(2.5f)
-                .withKnockback(0.3f).withHitbox(2.0f, new Vec3(0, 0, 1.0))
-                .withHitStun(5).withSounds(SoundEvents.PLAYER_ATTACK_SWEEP, SoundEvents.PLAYER_ATTACK_STRONG)
-                .build();
-    }
-
-    private static SimpleSlashAttack createLightSlash2() {
-        return new SimpleSlashAttack.Builder()
-                .withTiming(0, 10, 1).withCooldown(0).withDamage(5.0f).withRange(2.5f)
-                .withKnockback(0.5f).withHitbox(2.0f, new Vec3(0, 0, 1.0))
-                .withHitStun(5).withSounds(SoundEvents.PLAYER_ATTACK_SWEEP, SoundEvents.PLAYER_ATTACK_STRONG)
-                .build();
-    }
-
-    private static DoubleSlashAttack createDoubleSlashAttack() {
-        return new DoubleSlashAttack.Builder()
-                .withTiming(0, 16, 2).withCooldown(20).withDamage(3.5f).withRange(2.8f)
-                .withKnockback(0.4f).withHitbox(2.0f, new Vec3(0, 0, 1.0))
-                .withHitStun(7).withSlashDelay(2)
-                .withSounds(SoundEvents.PLAYER_ATTACK_SWEEP, SoundEvents.PLAYER_ATTACK_STRONG)
-                .build();
-    }
-
-    private static RisingSlashAttack createRisingSlashAttack() {
-        return new RisingSlashAttack.Builder()
-                .withTiming(0, 10, 4).withCooldown(25).withDamage(4.0f).withRange(2.5f)
-                .withLaunchPower(0.8f).withKnockback(0.2f)
-                .withHitbox(2.0f, new Vec3(0, 0.5, 1.0))
-                .withHitStun(10).withSounds(SoundEvents.PLAYER_ATTACK_SWEEP, SoundEvents.PLAYER_ATTACK_CRIT)
-                .build();
-    }
-
     //  Per-player state
 
     public static class KatanaState {
         public long lastAttackTime = 0;
         public int  comboCount     = 0;
 
-        public SimpleSlashAttack    currentSlash       = null;
-        public DoubleSlashAttack    currentDoubleSlash = null;
-        public RisingSlashAttack    currentRisingSlash = null;
-        public KatanaCheckAttack    currentCheck       = null;
-        public KatanaOverheadAttack currentOverhead    = null;
-        public KatanaThrustAttack   currentThrust      = null;
+        public KatanaSlashAttack        currentSlash       = null;
+        public KatanaDoubleSlashAttack  currentDoubleSlash = null;
+        public KatanaRisingSlashAttack  currentRisingSlash = null;
+        public KatanaCheckAttack        currentCheck       = null;
+        public KatanaOverheadAttack     currentOverhead    = null;
+        public KatanaThrustAttack       currentThrust      = null;
 
         public long slash1CooldownUntil      = 0;
         public long slash2CooldownUntil      = 0;

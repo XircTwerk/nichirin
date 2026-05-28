@@ -92,7 +92,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                 // First Form: Butterfly - Precision dash strike (INDEX 0 in wheel)
                 .withMove(new MoveBuilder("butterfly", "Butterfly")
                         .withAnimation("nichirin:butterfly", 8)
-                        .withTiming(120, 8, 17) // 6 second cooldown, quick windup, LONGER duration for 2-phase attack
+                        .withTiming(120, 8, 17)
                         .withDamage(11.0f) // High single-target damage
                         .withDashSpeed(5.0f) // Dash speed (changed from withTeleportDistance)
                         .withRange(10.0f) // Lock-on range
@@ -114,8 +114,8 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                 // Third Form: Dragonfly - Multi-hit lock-on (INDEX 1 in wheel)
                 .withMove(new MoveBuilder("dragonfly", "Dragonfly")
                         .withAnimation("nichirin:dragonfly", 12)
-                        .withTiming(180, 15, 13) // 9 second cooldown, root during windup
-                        .withDamage(2.0f) // 6 hits = 36 total damage
+                        .withTiming(180, 15, 13)
+                        .withDamage(2.0f)
                         .withRange(6.0f) // Lock-on range
                         .withKnockback(0.0f) // Minimal knockback to keep target close
                         .withBreathCost(25.0f) // Higher cost for multi-hit
@@ -135,7 +135,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                 // Fourth Form: Centipede - Zigzag dash finisher (INDEX 2 in wheel)
                 .withMove(new MoveBuilder("centipede", "Centipede")
                         .withAnimation("nichirin:centipede", 15)
-                        .withTiming(240, 20, 21) // 12 second cooldown, complex movement
+                        .withTiming(240, 20, 21)
                         .withDamage(14.0f) // High damage finisher
                         .withDashSpeed(4.0f) // Multiple zigzag dashes (was 8.0f)
                         .withRange(2.0f)

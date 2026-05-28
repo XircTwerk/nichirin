@@ -31,19 +31,18 @@ public class BurningStatusEffect extends MobEffect {
         // Get the effect instance to check remaining duration
         MobEffectInstance effectInstance = entity.getEffect(this);
         if (effectInstance != null && effectInstance.getDuration() <= 1) {
-            // This is the last tick - extinguish fire instead of setting it
             entity.setSecondsOnFire(0);
         } else {
-            // Normal behavior - keep entity on fire
-            entity.setSecondsOnFire(2);
+            // Keep the fire visual but deal damage directly at 1/3 rate
+            // (ticks every 60 ticks = once per 3 seconds, dealing 1 damage each time)
+            entity.setRemainingFireTicks(2);
+            entity.hurt(entity.damageSources().onFire(), 1.0f);
         }
     }
 
     @Override
     public boolean isDurationEffectTick(int duration, int amplifier) {
-        // Apply the effect every 20 ticks (1 second) to maintain fire
-        // Also apply on the last tick to handle extinguishing
-        return duration % 20 == 0 || duration == 1;
+        return duration % 60 == 0 || duration == 1;
     }
 
     @Override
