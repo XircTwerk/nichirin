@@ -59,7 +59,10 @@ public class KatanaRisingSlashAttack extends AbstractKatanaAttack {
     @Override
     protected void performHitDetection(LivingEntity user, Level world) {
         AABB hitbox = buildHitbox(user);
-        NichirinPacketRegistry.sendHitboxToTracking(user, hitbox, Math.max(active * 50L, 1500L));
+        if (!hitboxSent) {
+            NichirinPacketRegistry.sendHitboxToTracking(user, hitbox, Math.max(active * 50L, 1500L));
+            hitboxSent = true;
+        }
 
         List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
                 entity -> entity != user && entity.isAlive() && !hitEntities.contains(entity));

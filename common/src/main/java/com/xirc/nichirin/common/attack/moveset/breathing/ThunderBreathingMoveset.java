@@ -39,7 +39,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
     private void createAndCaptureThunderclapFlashConfig() {
         MoveConfiguration tempConfig = new MoveBuilder("thunderclap_flash", "Thunderclap and Flash")
                 .withAnimation("nichirin:thunderclap_flash", 10)
-                .withTiming(0, 1, 7)
+                .withTiming(0, 1, 11)
                 .withDamage(7.0f)
                 .withTeleportDistance(12.0f)
                 .withKnockback(0.2f)
@@ -61,7 +61,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 // Second Form: Rice Spirit - 5 quick slashes (INDEX 0 in wheel)
                 .withMove(new MoveBuilder("rice_spirit", "Rice Spirit")
                         .withAnimation("nichirin:rice_spirit", 8)
-                        .withTiming(120, 8, 50)
+                        .withTiming(120, 8, 84) // 5 second cooldown, windup, duration
                         .withDamage(2.0f)
                         .withRange(10.0f) // Medium range
                         .withKnockback(0.2f)
@@ -82,11 +82,11 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 // Third Form: Thunder Swarm - AOE slashes (INDEX 1 in wheel)
                 .withMove(new MoveBuilder("thunder_swarm", "Thunder Swarm")
                         .withAnimation("nichirin:thunder_swarm", 9)
-                        .withTiming(140, 12, 15)
-                        .withDamage(3.0f)
-                        .withRange(7.0f)
+                        .withTiming(140, 12, 25) // 7 second cooldown, windup, duration
+                        .withDamage(3.0f) // 4 slashes = 24 damage total (was 8.0f = 32 total)
+                        .withRange(7.0f) // Large area around player
                         .withKnockback(0.4f)
-                        .withBreathCost(45.0f)
+                        .withBreathCost(45.0f) // Higher cost for AOE
                         .withHitStun(14)
                         .withHitboxSize(2.5f) // Large hitbox for AOE
                         .withDescription("4 AOE slashes around the player in quick succession.")
@@ -103,11 +103,11 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 // Fourth Form: Distant Thunder - Lightning over time (INDEX 2 in wheel)
                 .withMove(new MoveBuilder("distant_thunder", "Distant Thunder")
                         .withAnimation("nichirin:distant_thunder", 7)
-                        .withTiming(320, 7, 50)
-                        .withDamage(8.0f)
-                        .withRange(15.0f)
+                        .withTiming(320, 7, 84) // 10 second cooldown, windup, 6 second duration
+                        .withDamage(8.0f) // 3 strikes = 27 damage over time (was 12.0f = 36 total)
+                        .withRange(15.0f) // Large AOE radius
                         .withKnockback(0.3f)
-                        .withBreathCost(45.0f)
+                        .withBreathCost(45.0f) // High cost for area denial
                         .withHitStun(25)
                         .withDescription("Calls down 3 delayed lightning strikes over a large area.")
                         .withAction(entity -> {
@@ -123,7 +123,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 // Fifth Form: Heat Lightning - Anti-air combo (INDEX 3 in wheel)
                 .withMove(new MoveBuilder("heat_lightning", "Heat Lightning")
                         .withAnimation("nichirin:heat_lightning", 9)
-                        .withTiming(180, 10, 8)
+                        .withTiming(180, 10, 14)
                         .withDamage(4.0f) // Single hit + lightning follow-up (was 18.0f)
                         .withRange(2.0f)
                         .withKnockback(0.1f) // Minimal horizontal, focuses on launch
@@ -144,7 +144,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 // Sixth Form: Rumble and Flash - Long range precision (INDEX 4 in wheel)
                 .withMove(new MoveBuilder("rumble_flash", "Rumble and Flash")
                         .withAnimation("nichirin:rumble_flash", 8)
-                        .withTiming(180, 9, 11)
+                        .withTiming(180, 9, 18) // 9 second cooldown, windup, duration
                         .withDamage(7.5f) // High damage for long range precision (was 22.0f)
                         .withRange(20.0f) // Very long range
                         .withKnockback(0.6f)
@@ -164,12 +164,12 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 // Seventh Form: Honoikazuchi no Kami - Ultimate finisher (INDEX 5 in wheel)
                 .withMove(new MoveBuilder("honoikazuchi_no_kami", "Honoikazuchi no Kami")
                         .withAnimation("nichirin:honoikazuchi_no_kami", 15)
-                        .withTiming(600, 120, 4)
+                        .withTiming(600, 120, 7) // 30 second cooldown, windup, execution
                         .withDamage(48.0f) // Very high damage ultimate
                         .withTeleportDistance(20.0f) // Long dash
                         .withKnockback(2.0f) // High knockback
                         .withBreathCost(70.0f) // Very expensive ultimate
-                        .withHitStun(60)
+                        .withHitStun(60) // 3 second stun
                         .withHitboxSize(3.5f) // Large hitbox for ultimate
                         .withDescription("Massive-damage teleport slash. 30-second cooldown.")
                         .withAction(entity -> {

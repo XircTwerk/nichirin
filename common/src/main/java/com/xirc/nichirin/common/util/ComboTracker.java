@@ -139,7 +139,7 @@ public class ComboTracker {
         MobEffectInstance stunEffect = new MobEffectInstance(
                 NichirinEffectRegistry.STUNNED.get(),
                 durationTicks,
-                0, // Amplifier 0
+                1, // Amplifier 1 — full lockdown (movement + AI disabled)
                 false, // Not ambient
                 false, // Not visible (optional)
                 true   // Show icon
@@ -267,52 +267,6 @@ public class ComboTracker {
         victimToAttackers.values().forEach(attackerSet -> attackerSet.remove(playerUUID));
         // Clean up empty sets
         victimToAttackers.entrySet().removeIf(entry -> entry.getValue().isEmpty());
-    }
-
-    /**
-     * Tick combo tracking — checks if tracked victims' stun has expired and resets combos.
-     * Call once per server tick.
-     */
-    public static void tickComboTracking(net.minecraft.server.MinecraftServer server) {
-        if (server == null || victimToAttackers.isEmpty()) return;
-
-        for (var it = victimToAttackers.entrySet().iterator(); it.hasNext(); ) {
-            var entry = it.next();
-            UUID victimUUID = entry.getKey();
-            Set<UUID> attackerUUIDs = entry.getValue();
-
-            // Find the victim entity in any loaded level
-            LivingEntity victim = null;
-            for (net.minecraft.server.level.ServerLevel level : server.getAllLevels()) {
-                net.minecraft.world.entity.Entity entity = level.getEntity(victimUUID);
-                if (entity instanceof LivingEntity le) { victim = le; break; }
-            }
-
-            // If victim is gone or no longer stunned, reset all attackers' combos
-            boolean shouldReset = victim == null || !victim.isAlive() || !canContinueCombo(victim);
-            if (shouldReset) {
-                for (UUID attackerUUID : attackerUUIDs) {
-                    for (var level : server.getAllLevels()) {
-                        Player attacker = level.getPlayerByUUID(attackerUUID);
-                        if (attacker instanceof IComboCounter comboCounter && attacker instanceof ServerPlayer sp) {
-                            if (comboCounter.nichirin$getLastAttacked() == victim ||
-                                    (victim == null && comboCounter.nichirin$getComboCount() > 0)) {
-                                comboCounter.nichirin$setComboCount(0);
-                                comboCounter.nichirin$setLastAttacked(null);
-                                ComboCounterPacket packet = new ComboCounterPacket(0, 0, 0.0f);
-                                try {
-                                    FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-                                    packet.toBytes(buf);
-                                    NetworkManager.sendToPlayer(sp, NichirinPacketRegistry.COMBO_COUNTER_ID, buf);
-                                } catch (Exception ignored) {}
-                            }
-                            break;
-                        }
-                    }
-                }
-                it.remove();
-            }
-        }
     }
 
     /**

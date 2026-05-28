@@ -61,7 +61,6 @@ public class StunnedStatusEffect extends MobEffect {
 
     @Override
     public void addAttributeModifiers(LivingEntity entity, AttributeMap attributeMap, int amplifier) {
-        // Only apply movement reduction for amplifier 1+ (Level 2+)
         if (amplifier >= 1) {
             var attribute = entity.getAttribute(Attributes.MOVEMENT_SPEED);
             if (attribute != null) {
@@ -109,7 +108,6 @@ public class StunnedStatusEffect extends MobEffect {
             inGracePeriod = false;
         }
 
-        // Only restrict movement for amplifier 1+ (Level 2+) and when not in grace period
         if (amplifier >= 1 && !inGracePeriod) {
             Vec3 currentMovement = entity.getDeltaMovement();
 

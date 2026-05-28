@@ -50,31 +50,29 @@ public class MoveExecutor {
     }
 
     private static void handleAttack(LivingEntity entity, AbstractBreathingAttack<?, ?> attack, String movesetId, String moveId) {
-        int stunTicks = 0;
         if (!isAttackConfigured(attack)) {
-            stunTicks = configureAttackFromMoveset(entity, attack, movesetId, moveId);
+            configureAttackFromMoveset(entity, attack, movesetId, moveId);
         } else {
-            stunTicks = getPreConfiguredStunTicks(entity, attack, moveId);
+            applyPreConfiguredEffects(entity, attack, moveId);
         }
-        executeConfiguredAttack(entity, attack, movesetId, moveId, stunTicks);
+        executeConfiguredAttack(entity, attack, movesetId, moveId);
     }
 
     private static void handleAttack(LivingEntity entity, AbstractDemonAttack<?, ?> attack, String movesetId, String moveId) {
-        int stunTicks = 0;
         if (!isDemonAttackConfigured(attack)) {
-            stunTicks = configureAttackFromMoveset(entity, attack, movesetId, moveId);
+            configureAttackFromMoveset(entity, attack, movesetId, moveId);
         } else {
-            stunTicks = getPreConfiguredDemonStunTicks(entity, attack, moveId);
+            applyPreConfiguredDemonEffects(entity, attack, moveId);
         }
-        executeConfiguredAttack(entity, attack, movesetId, moveId, stunTicks);
+        executeConfiguredAttack(entity, attack, movesetId, moveId);
     }
 
-    private static int configureAttackFromMoveset(LivingEntity entity, Object attack, String movesetId, String moveId) {
+    private static void configureAttackFromMoveset(LivingEntity entity, Object attack, String movesetId, String moveId) {
         AbstractMoveset moveset = NichirinMovesetRegistry.getMoveset(movesetId);
-        if (moveset == null) return 0;
+        if (moveset == null) return;
 
         AbstractMoveset.MoveConfiguration config = findMoveConfig(moveset, moveId);
-        if (config == null) return 0;
+        if (config == null) return;
 
         int originalHitStun = config.getHitStunOrDefault(0);
         int modifiedHitStun = originalHitStun;
@@ -85,32 +83,30 @@ public class MoveExecutor {
             config = createModifiedConfig(config, modifiedHitStun);
         }
 
-        int stunTicks = config.getWindupOrDefault(0) + config.getDurationOrDefault(0);
+        applyMoveStun(entity, config);
 
         if (attack instanceof AbstractBreathingAttack<?, ?> breathingAttack) {
             breathingAttack.configure(config);
         } else if (attack instanceof AbstractDemonAttack<?, ?> demonAttack) {
             demonAttack.configure(config);
         }
-
-        return stunTicks;
     }
 
-    private static int getPreConfiguredStunTicks(LivingEntity entity, AbstractBreathingAttack<?, ?> attack, String moveId) {
+    private static void applyPreConfiguredEffects(LivingEntity entity, AbstractBreathingAttack<?, ?> attack, String moveId) {
         if (entity instanceof Player player) {
             ComboTracker.getModifiedHitStun(player, moveId, attack.getHitStun());
         }
-        return getWindupFromAttack(attack) + getDurationFromAttack(attack);
+        applyPreConfiguredMoveStun(entity, attack);
     }
 
-    private static int getPreConfiguredDemonStunTicks(LivingEntity entity, AbstractDemonAttack<?, ?> attack, String moveId) {
+    private static void applyPreConfiguredDemonEffects(LivingEntity entity, AbstractDemonAttack<?, ?> attack, String moveId) {
         if (entity instanceof Player player) {
             ComboTracker.getModifiedHitStun(player, moveId, getHitStunFromAttack(attack));
         }
-        return getWindupFromAttack(attack) + getDurationFromAttack(attack);
+        applyPreConfiguredDemonMoveStun(entity, attack);
     }
 
-    private static void executeConfiguredAttack(LivingEntity entity, Object attack, String movesetId, String moveId, int stunTicks) {
+    private static void executeConfiguredAttack(LivingEntity entity, Object attack, String movesetId, String moveId) {
         NichirinMovesetRegistry.MoveInfo moveInfo = NichirinMovesetRegistry.getMove(movesetId, moveId);
         String displayName;
         if (moveInfo != null) {
@@ -122,7 +118,7 @@ public class MoveExecutor {
             displayName = config != null ? config.getDisplayName() : attack.getClass().getSimpleName();
         }
         int cooldown = getCooldownForAttack(attack);
-        executeAttackInternal(entity, attack, displayName, cooldown, stunTicks);
+        executeAttackInternal(entity, attack, displayName, cooldown);
     }
 
     private static void handleGenericAttack(LivingEntity entity, Object attack, String movesetId, String moveId) {
@@ -133,7 +129,7 @@ public class MoveExecutor {
             displayName = config.getDisplayName();
         }
         int cooldown = getCooldownForAttack(attack);
-        executeAttackInternal(entity, attack, displayName, cooldown, 0);
+        executeAttackInternal(entity, attack, displayName, cooldown);
     }
 
     public static void executeAttackWithVisuals(LivingEntity entity, Object attack, String movesetId, String moveId) {
@@ -160,15 +156,33 @@ public class MoveExecutor {
         } catch (Exception e) { return 0; }
     }
 
+    private static void applyMoveStun(LivingEntity entity, AbstractMoveset.MoveConfiguration config) {
+        int totalStunTicks = config.getWindupOrDefault(0) + config.getDurationOrDefault(0);
+        if (totalStunTicks > 0) {
+            entity.addEffect(new MobEffectInstance(NichirinEffectRegistry.STUNNED.get(),
+                    totalStunTicks, 0, false, false, false));
+        }
+    }
+
+    private static void applyPreConfiguredMoveStun(LivingEntity entity, AbstractBreathingAttack<?, ?> attack) {
+        int windupTicks = getWindupFromAttack(attack);
+        if (windupTicks > 0) {
+            entity.addEffect(new MobEffectInstance(NichirinEffectRegistry.STUNNED.get(),
+                    windupTicks, 0, false, false, false));
+        }
+    }
+
+    private static void applyPreConfiguredDemonMoveStun(LivingEntity entity, AbstractDemonAttack<?, ?> attack) {
+        int windupTicks = getWindupFromAttack(attack);
+        if (windupTicks > 0) {
+            entity.addEffect(new MobEffectInstance(NichirinEffectRegistry.STUNNED.get(),
+                    windupTicks, 0, false, false, false));
+        }
+    }
+
     private static int getWindupFromAttack(Object attack) {
         try {
             return (int) attack.getClass().getMethod("getWindup").invoke(attack);
-        } catch (Exception e) { return 0; }
-    }
-
-    private static int getDurationFromAttack(Object attack) {
-        try {
-            return (int) attack.getClass().getMethod("getDuration").invoke(attack);
         } catch (Exception e) { return 0; }
     }
 
@@ -192,22 +206,18 @@ public class MoveExecutor {
 
     public static void executeAttackWithInfo(LivingEntity entity, Object attack, String displayName, int cooldown) {
         if (entity.hasEffect(NichirinEffectRegistry.STUNNED.get())) return;
-        executeAttackInternal(entity, attack, displayName, cooldown, 0);
+        executeAttackInternal(entity, attack, displayName, cooldown);
     }
 
     public static void executeAttackWithInfo(Player player, Object attack, String displayName, int cooldown) {
         executeAttackWithInfo((LivingEntity) player, attack, displayName, cooldown);
     }
 
-    private static void executeAttackInternal(LivingEntity entity, Object attack, String displayName, int cooldown, int stunTicks) {
+    private static void executeAttackInternal(LivingEntity entity, Object attack, String displayName, int cooldown) {
         if (!isAttackActive(attack)) {
             startAttack(entity, attack);
 
             if (isAttackActive(attack)) {
-                if (stunTicks > 0) {
-                    entity.addEffect(new MobEffectInstance(NichirinEffectRegistry.STUNNED.get(),
-                            stunTicks, 0, false, false, false));
-                }
                 trackAttack(entity, attack);
                 if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer && cooldown > 0) {
                     sendCooldownToClient(serverPlayer, displayName, cooldown);

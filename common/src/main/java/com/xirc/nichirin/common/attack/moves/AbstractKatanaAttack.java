@@ -58,6 +58,7 @@ public abstract class AbstractKatanaAttack {
     protected int tickCount  = 0;
     protected boolean isActive = false;
     protected boolean hasHit   = false;
+    protected boolean hitboxSent = false;
     protected final Set<LivingEntity> hitEntities = new HashSet<>();
 
     protected AbstractKatanaAttack(int startup, int active, int recovery, int cooldown,
@@ -82,10 +83,11 @@ public abstract class AbstractKatanaAttack {
     public final void start(LivingEntity player) {
         if (player.level().isClientSide()) return;
 
-        tickCount = 0;
-        hasHit    = false;
+        tickCount  = 0;
+        hasHit     = false;
+        hitboxSent = false;
         hitEntities.clear();
-        isActive  = true;
+        isActive   = true;
 
         onStart(player);
     }
@@ -121,7 +123,10 @@ public abstract class AbstractKatanaAttack {
     protected void performHitDetection(LivingEntity user, Level world) {
         AABB hitbox = buildHitbox(user);
 
-        NichirinPacketRegistry.sendHitboxToTracking(user, hitbox, Math.max(active * 50L, 1500L));
+        if (!hitboxSent) {
+            NichirinPacketRegistry.sendHitboxToTracking(user, hitbox, Math.max(active * 50L, 1500L));
+            hitboxSent = true;
+        }
 
         List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
                 entity -> entity != user && entity.isAlive() && !hitEntities.contains(entity));
@@ -141,7 +146,6 @@ public abstract class AbstractKatanaAttack {
             boolean damaged = NichirinArmorDamage.hurt(target, damageSource, damage);
             hitEntities.add(target);
 
-            // Only apply post-hit effects if damage actually landed
             if (damaged) {
                 applyKnockback(user, target);
                 if (hitStun > 0) target.invulnerableTime = hitStun;

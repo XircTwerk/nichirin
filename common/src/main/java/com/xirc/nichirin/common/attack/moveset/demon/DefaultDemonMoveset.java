@@ -83,7 +83,7 @@ public class DefaultDemonMoveset extends AbstractMoveset {
 
                 .withLeftClickMove(new MoveBuilder("demon_gut_punch", "Gut Punch")
                         .withAnimation("nichirin:demon_gut_punch", 6)
-                        .withTiming(15, 1, 4)
+                        .withTiming(15, 1, 7)
                         .withDamage(8.0f)
                         .withRange(2.0f)
                         .withKnockback(0.1f)
@@ -111,7 +111,7 @@ public class DefaultDemonMoveset extends AbstractMoveset {
 
                 .withMove(new MoveBuilder("demon_kick", "Kick")
                         .withAnimation("nichirin:demon_kick", 8)
-                        .withTiming(60, 5, 4)
+                        .withTiming(60, 5, 11)
                         .withDamage(6.0f)
                         .withRange(2.5f)
                         .withKnockback(1f)
@@ -128,7 +128,7 @@ public class DefaultDemonMoveset extends AbstractMoveset {
 
                 .withMove(new MoveBuilder("dashing_strike", "Dashing Strike")
                         .withAnimation("nichirin:demon_dash_strike", 10)
-                        .withTiming(140, 8, 6)
+                        .withTiming(140, 8, 14)
                         .withDamage(12.0f)
                         .withDashSpeed(6.0f)
                         .withRange(5.5f)
@@ -146,7 +146,7 @@ public class DefaultDemonMoveset extends AbstractMoveset {
 
                 .withMove(new MoveBuilder("demon_bite", "Bite")
                         .withAnimation("nichirin:demon_bite", 9)
-                        .withTiming(100, 5, 5)
+                        .withTiming(100, 5, 11)
                         .withDamage(8.0f)
                         .withRange(2.0f)
                         .withKnockback(0.1f)
@@ -241,11 +241,11 @@ public class DefaultDemonMoveset extends AbstractMoveset {
             animationName = "demon_slash";
         } else {
             slashConfig = new MoveBuilder("demon_slash_2", "Slash Finisher")
-                    .withTiming(16, 0, 18)
+                    .withTiming(5, 0, 18)
                     .withDamage(6.0f)
                     .withRange(3.0f)
                     .withKnockback(0.5f)
-                    .withHitStun(12)
+                    .withHitStun(20)
                     .withHitboxSize(2.2f)
                     .build();
             animationName = "demon_slash_2";
