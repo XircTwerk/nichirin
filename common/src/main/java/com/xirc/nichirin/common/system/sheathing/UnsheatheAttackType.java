@@ -8,7 +8,6 @@ public enum UnsheatheAttackType {
     SPRINTING_DRAW_DASH("Sprinting Draw Dash"),
     CROUCHING_LOW_DRAW("Crouching Low Draw"),
     AERIAL_DRAW_SLASH("Aerial Draw Slash"),
-    CHARGED_DRAW_SLASH("Charged Draw Slash"),
     DUAL_CROSS_SLASH("Dual Cross Slash");
 
     private final String displayName;

@@ -12,7 +12,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.entity.player.Player;
 
 public class SheathingSection extends AbstractGuiPage {
-    private static final int CARD_H = 112;
+    private static final int CARD_H = 124;
     private static final int BUTTON_H = 18;
     private static final int GAP = 12;
 
@@ -20,7 +20,7 @@ public class SheathingSection extends AbstractGuiPage {
         PlayerSheathData data = SheathingManager.get(player);
         int headerY = 12;
         graphics.drawString(font, "Katana Sheathing", 16, headerY, COLOR_PALETTE.TEXT.rgb(), false);
-        graphics.drawString(font, "Y sheaths or quickdraws. Shift + Y quick-sheathes. Stored katanas leave the hotbar.", 16, headerY + 14, COLOR_PALETTE.TEXT_DIM.rgb(), false);
+        graphics.drawString(font, "Y stores the selected katana. Select the empty linked slot and release Y to quickdraw.", 16, headerY + 14, COLOR_PALETTE.TEXT_DIM.rgb(), false);
 
         int cols = width >= 620 ? 2 : 1;
         int cardW = cols == 2 ? (width - 32 - GAP) / 2 : width - 32;
@@ -43,23 +43,23 @@ public class SheathingSection extends AbstractGuiPage {
             case BACK_2 -> 0xFFD05C5C;
         };
         drawPopPanel(graphics, x, y, w, CARD_H, accent);
-        graphics.drawString(font, slot.getPosition().getDisplayName(), x + 12, y + 10, COLOR_PALETTE.TEXT.rgb(), false);
+        String title = slot.getPosition().getDisplayName();
+        graphics.drawString(font, title, x + 12, y + 10, COLOR_PALETTE.TEXT.rgb(), false);
         graphics.drawString(font, stateLabel(slot), x + w - 12 - font.width(stateLabel(slot)), y + 10, stateColor(slot), false);
 
         String storage = slot.hasStoredSword()
                 ? uiTrimToWidth(font, slot.getStoredSword().getHoverName().getString(), w - 24)
                 : "No katana stored";
         graphics.drawString(font, storage, x + 12, y + 28, slot.hasStoredSword() ? COLOR_PALETTE.ACCENT_LIGHT.rgb() : COLOR_PALETTE.TEXT_DIM.rgb(), false);
-        graphics.drawString(font, "Hotbar " + (slot.getLinkedHotbarSlot() + 1) + "  Priority " + slot.getPriority(), x + 12, y + 42, COLOR_PALETTE.TEXT_DIM.rgb(), false);
+        graphics.drawString(font, slotMeta(slot), x + 12, y + 42, COLOR_PALETTE.TEXT_DIM.rgb(), false);
+        graphics.drawString(font, "Quickdraw: " + slot.getTapAttack().getDisplayName(), x + 12, y + 56, COLOR_PALETTE.TEXT_DIM.rgb(), false);
 
         int bw = Math.max(74, (w - 36) / 3);
-        drawButton(graphics, font, x + 12, y + 62, bw, "Enabled " + yesNo(slot.isEnabled()), mouseX, mouseY);
-        drawButton(graphics, font, x + 18 + bw, y + 62, bw, "Hotbar " + (slot.getLinkedHotbarSlot() + 1), mouseX, mouseY);
-        drawButton(graphics, font, x + 24 + bw * 2, y + 62, bw, "Priority " + slot.getPriority(), mouseX, mouseY);
+        drawButton(graphics, font, x + 12, y + 72, bw, yesNo(slot.isEnabled()), mouseX, mouseY);
+        drawButton(graphics, font, x + 18 + bw, y + 72, bw, "Slot " + (slot.getLinkedHotbarSlot() + 1), mouseX, mouseY);
+        drawButton(graphics, font, x + 24 + bw * 2, y + 72, bw, "Prio " + slot.getPriority(), mouseX, mouseY);
 
-        int lowerW = (w - 30) / 2;
-        drawButton(graphics, font, x + 12, y + 86, lowerW, "Tap: " + shortAttack(slot.getTapAttack()), mouseX, mouseY);
-        drawButton(graphics, font, x + 18 + lowerW, y + 86, lowerW, "Hold: " + shortAttack(slot.getHoldAttack()), mouseX, mouseY);
+        drawButton(graphics, font, x + 12, y + 96, w - 24, "Quickdraw " + shortAttack(slot.getTapAttack()), mouseX, mouseY);
     }
 
     public boolean handleClick(double mouseX, double mouseY, Player player, int width) {
@@ -80,29 +80,23 @@ public class SheathingSection extends AbstractGuiPage {
 
     private boolean handleSlotClick(double mouseX, double mouseY, SheathSlotData slot, int x, int y, int w, Player player) {
         int bw = Math.max(74, (w - 36) / 3);
-        if (uiHit(mouseX, mouseY, x + 12, y + 62, bw, BUTTON_H)) {
+        if (uiHit(mouseX, mouseY, x + 12, y + 72, bw, BUTTON_H)) {
             slot.setEnabled(!slot.isEnabled());
             sync(slot);
             return true;
         }
-        if (uiHit(mouseX, mouseY, x + 18 + bw, y + 62, bw, BUTTON_H)) {
-            slot.setLinkedHotbarSlot((slot.getLinkedHotbarSlot() + 1) % 9);
+        if (uiHit(mouseX, mouseY, x + 18 + bw, y + 72, bw, BUTTON_H)) {
+            slot.setLinkedHotbarSlot(nextFreeHotbarSlot(player, slot));
             sync(slot);
             return true;
         }
-        if (uiHit(mouseX, mouseY, x + 24 + bw * 2, y + 62, bw, BUTTON_H)) {
+        if (uiHit(mouseX, mouseY, x + 24 + bw * 2, y + 72, bw, BUTTON_H)) {
             slot.setPriority(slot.getPriority() >= 4 ? 1 : slot.getPriority() + 1);
             sync(slot);
             return true;
         }
-        int lowerW = (w - 30) / 2;
-        if (uiHit(mouseX, mouseY, x + 12, y + 86, lowerW, BUTTON_H)) {
+        if (uiHit(mouseX, mouseY, x + 12, y + 96, w - 24, BUTTON_H)) {
             slot.setTapAttack(next(slot.getTapAttack()));
-            sync(slot);
-            return true;
-        }
-        if (uiHit(mouseX, mouseY, x + 18 + lowerW, y + 86, lowerW, BUTTON_H)) {
-            slot.setHoldAttack(next(slot.getHoldAttack()));
             sync(slot);
             return true;
         }
@@ -119,7 +113,7 @@ public class SheathingSection extends AbstractGuiPage {
 
     private void sync(SheathSlotData slot) {
         NichirinPacketRegistry.sendToServer(new SheathConfigPacket(slot.getPosition(), slot.isEnabled(),
-                slot.getLinkedHotbarSlot(), slot.getPriority(), slot.getTapAttack(), slot.getHoldAttack(), slot.isVisible()));
+                slot.getLinkedHotbarSlot(), slot.getPriority(), slot.getTapAttack(), slot.getTapAttack(), slot.isVisible()));
     }
 
     private UnsheatheAttackType next(UnsheatheAttackType type) {
@@ -128,7 +122,30 @@ public class SheathingSection extends AbstractGuiPage {
     }
 
     private String yesNo(boolean value) {
-        return value ? "ON" : "OFF";
+        return value ? "Enabled" : "Disabled";
+    }
+
+    private int nextFreeHotbarSlot(Player player, SheathSlotData slot) {
+        PlayerSheathData data = SheathingManager.get(player);
+        int current = slot.getLinkedHotbarSlot();
+        for (int step = 1; step <= 9; step++) {
+            int candidate = (current + step) % 9;
+            boolean used = false;
+            for (SheathSlotData other : data.getSlots()) {
+                if (other != slot && other.isEnabled() && other.getLinkedHotbarSlot() == candidate) {
+                    used = true;
+                    break;
+                }
+            }
+            if (!used) return candidate;
+        }
+        return current;
+    }
+
+    private String slotMeta(SheathSlotData slot) {
+        return "Hotbar " + (slot.getLinkedHotbarSlot() + 1)
+                + "  Priority " + slot.getPriority()
+                + "  " + (slot.isVisible() ? "Visible" : "Hidden");
     }
 
     private String stateLabel(SheathSlotData slot) {
@@ -155,7 +172,6 @@ public class SheathingSection extends AbstractGuiPage {
             case SPRINTING_DRAW_DASH -> "Sprint";
             case CROUCHING_LOW_DRAW -> "Low";
             case AERIAL_DRAW_SLASH -> "Aerial";
-            case CHARGED_DRAW_SLASH -> "Charged";
             case DUAL_CROSS_SLASH -> "Dual";
         };
     }

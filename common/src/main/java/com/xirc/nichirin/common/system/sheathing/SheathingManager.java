@@ -21,10 +21,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class SheathingManager {
     public static final int NORMAL_TRANSITION_TICKS = 10;
-    public static final int QUICK_SHEATHE_TICKS = 1;
     public static final int GLOBAL_COOLDOWN_TICKS = 80;
     public static final int SLOT_COOLDOWN_TICKS = 35;
-    public static final float QUICK_SHEATHE_STAMINA_COST = 12.0f;
     public static final float DRAW_ATTACK_STAMINA_COST = 10.0f;
 
     private static final Map<UUID, PlayerSheathData> PLAYER_DATA = new ConcurrentHashMap<>();
@@ -59,7 +57,6 @@ public class SheathingManager {
                 if (!slot.hasStoredSword()) {
                     slot.setState(SheathState.EMPTY);
                 }
-                slot.setChargeTicks(0);
                 continue;
             }
 
@@ -67,13 +64,6 @@ public class SheathingManager {
                 slot.setCooldownTicks(slot.getCooldownTicks() - 1);
                 if (slot.getCooldownTicks() == 0 && slot.getState() == SheathState.COOLDOWN) {
                     slot.setState(SheathState.DRAWN);
-                }
-            }
-
-            if (data.getChargingSlot() == slot.getPosition()) {
-                slot.setChargeTicks(slot.getChargeTicks() + 1);
-                if (slot.getChargeTicks() % 10 == 0) {
-                    feedback(player, chargeMessage(slot), 0xFFE0A6, true);
                 }
             }
 
@@ -106,7 +96,7 @@ public class SheathingManager {
         syncIfChanged(player, data);
     }
 
-    public static void handleInput(ServerPlayer player, SheathInputAction action, boolean shiftDown) {
+    public static void handleInput(ServerPlayer player, SheathInputAction action, boolean shiftDown, int heldTicks) {
         if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
             feedback(player, "Cannot sheathe while stunned!", 0xFF5555, false);
             return;
@@ -120,28 +110,32 @@ public class SheathingManager {
         if (action == SheathInputAction.PRESS) {
             SheathSlotData drawn = getSelectedLinkedSlot(player, data);
             if (drawn != null && drawn.getState() == SheathState.DRAWN) {
-                startSheathe(player, data, drawn, shiftDown);
+                startSheathe(player, data, drawn);
                 return;
             }
 
-            SheathSlotData sheathed = firstReadySheathedSlot(player, data);
+            SheathSlotData sheathed = getSelectedLinkedSlot(player, data);
+            if (sheathed != null && sheathed.getState() != SheathState.SHEATHED) {
+                sheathed = null;
+            }
             if (sheathed != null) {
                 data.setChargingSlot(sheathed.getPosition());
-                sheathed.setChargeTicks(0);
-                feedback(player, "Quickdraw ready: " + sheathed.getPosition().getDisplayName(), 0xFFE0A6, true);
             } else if (data.getGlobalCooldownTicks() > 0) {
                 feedback(player, "Quickdraw cooldown (" + formatSeconds(data.getGlobalCooldownTicks()) + "s)", 0xFF5555, false);
             } else {
-                feedback(player, "No sheathed katana ready", 0xFF5555, false);
+                feedback(player, "Select the original empty hotbar slot to quickdraw", 0xFF5555, false);
             }
             return;
         }
 
         SheathPosition charging = data.getChargingSlot();
-        if (charging == null) return;
-        SheathSlotData slot = data.getSlot(charging);
-        data.setChargingSlot(null);
-        startUnsheathe(player, data, slot);
+        if (charging != null) {
+            SheathSlotData slot = data.getSlot(charging);
+            data.setChargingSlot(null);
+            startUnsheathe(player, data, slot);
+            return;
+        }
+
     }
 
     public static boolean isSelectedKatanaSheathed(Player player) {
@@ -166,11 +160,10 @@ public class SheathingManager {
         slot.setLinkedHotbarSlot(hotbarSlot);
         slot.setPriority(priority);
         slot.setTapAttack(tapAttack);
-        slot.setHoldAttack(holdAttack);
         slot.setVisible(visible);
     }
 
-    private static void startSheathe(ServerPlayer player, PlayerSheathData data, SheathSlotData slot, boolean quick) {
+    private static void startSheathe(ServerPlayer player, PlayerSheathData data, SheathSlotData slot) {
         ItemStack sword = player.getInventory().getItem(slot.getLinkedHotbarSlot());
         if (!(sword.getItem() instanceof SimpleKatana)) {
             feedback(player, "No katana in Hotbar " + (slot.getLinkedHotbarSlot() + 1), 0xFF5555, false);
@@ -180,22 +173,13 @@ public class SheathingManager {
             feedback(player, slot.getPosition().getDisplayName() + " already stores a katana", 0xFF5555, false);
             return;
         }
-        if (quick && !StaminaManager.consume(player, QUICK_SHEATHE_STAMINA_COST)) {
-            feedback(player, "Not enough stamina to quick sheathe!", 0xFF5555, false);
-            return;
-        }
 
         slot.setStoredSword(sword.copy());
         player.getInventory().setItem(slot.getLinkedHotbarSlot(), ItemStack.EMPTY);
         slot.setState(SheathState.SHEATHING);
-        slot.setTransitionTicks(quick ? QUICK_SHEATHE_TICKS : NORMAL_TRANSITION_TICKS);
-        NichirinPacketRegistry.broadcastPlayerAnimation(player, new PlayerAnimationPacket(player.getId(), quick ? "sheathing.quick_sheathe" : "sheathing.sheathe"));
-        feedback(player, quick ? "Quick Sheathe: " + slot.getPosition().getDisplayName() : "Sheathing: " + slot.getPosition().getDisplayName(),
-                quick ? 0x55FFFF : 0xFFE0A6, quick);
-        if (quick) {
-            data.setGlobalCooldownTicks(GLOBAL_COOLDOWN_TICKS);
-            MoveExecutor.sendCooldownDisplay(player, "Unsheathe", GLOBAL_COOLDOWN_TICKS);
-        }
+        slot.setTransitionTicks(NORMAL_TRANSITION_TICKS);
+        NichirinPacketRegistry.broadcastPlayerAnimation(player, new PlayerAnimationPacket(player.getId(), "sheathing.sheathe"));
+        feedback(player, "Sheathing: " + slot.getPosition().getDisplayName(), 0xFFE0A6, false);
     }
 
     private static void startUnsheathe(ServerPlayer player, PlayerSheathData data, SheathSlotData slot) {
@@ -221,12 +205,8 @@ public class SheathingManager {
             return;
         }
 
-        slot.setState(SheathState.UNSHEATHING);
-        slot.setTransitionTicks(NORMAL_TRANSITION_TICKS);
         player.getInventory().selected = slot.getLinkedHotbarSlot();
-        feedback(player, chargeMessage(slot), 0xFFE0A6, true);
-        NichirinPacketRegistry.broadcastPlayerAnimation(player, new PlayerAnimationPacket(player.getId(),
-                slot.getChargeTicks() >= 12 ? "sheathing.quick_draw_charged" : "sheathing.quick_draw"));
+        finishUnsheathe(player, data, slot);
     }
 
     private static void finishUnsheathe(Player player, PlayerSheathData data, SheathSlotData slot) {
@@ -242,31 +222,40 @@ public class SheathingManager {
 
         UnsheatheAttackType attackType = chooseAttack(player, slot);
         feedback(player, "Quickdraw: " + attackType.getDisplayName(), 0x55FF55, true);
-        executeDrawAttack(player, attackType, slot.getChargeTicks());
-        slot.setChargeTicks(0);
+        executeDrawAttack(player, attackType);
     }
 
     private static UnsheatheAttackType chooseAttack(Player player, SheathSlotData slot) {
-        if (slot.getChargeTicks() >= 12) return slot.getHoldAttack();
         if (player.isSprinting()) return UnsheatheAttackType.SPRINTING_DRAW_DASH;
         if (player.isShiftKeyDown()) return UnsheatheAttackType.CROUCHING_LOW_DRAW;
         if (!player.onGround()) return UnsheatheAttackType.AERIAL_DRAW_SLASH;
         return slot.getTapAttack();
     }
 
-    private static void executeDrawAttack(Player player, UnsheatheAttackType type, int chargeTicks) {
+    private static void executeDrawAttack(Player player, UnsheatheAttackType type) {
         Object attack = switch (type) {
             case SPRINTING_DRAW_DASH -> KatanaThrustAttack.createDefault();
-            case CROUCHING_LOW_DRAW -> KatanaCheckAttack.createDefault();
-            case OVERHEAD_BACKDRAW, AERIAL_DRAW_SLASH -> KatanaOverheadAttack.createDefault();
-            case CHARGED_DRAW_SLASH -> DrawSlashAttack.create(8.0f + Math.min(chargeTicks, 40) * 0.08f, 3.2f, 0.9f, 14, SLOT_COOLDOWN_TICKS, false);
-            case DUAL_CROSS_SLASH -> DrawSlashAttack.create(9.0f, 3.0f, 1.0f, 16, SLOT_COOLDOWN_TICKS, false);
-            default -> DrawSlashAttack.create(6.0f, 2.8f, 0.55f, 10, SLOT_COOLDOWN_TICKS, false);
+            case CROUCHING_LOW_DRAW -> DrawSlashAttack.lowDraw();
+            case OVERHEAD_BACKDRAW -> KatanaOverheadAttack.createDefault();
+            case AERIAL_DRAW_SLASH -> DrawSlashAttack.aerialDraw();
+            case REVERSE_DRAW_SLASH -> DrawSlashAttack.reverseDraw();
+            case DIAGONAL_BACKDRAW -> DrawSlashAttack.diagonalDraw();
+            case DUAL_CROSS_SLASH -> DrawSlashAttack.dualCross();
+            case QUICKDRAW_SLASH -> DrawSlashAttack.quickdraw();
         };
         MoveExecutor.executeAttackWithInfo(player, attack, type.getDisplayName(), SLOT_COOLDOWN_TICKS);
         if (player instanceof ServerPlayer serverPlayer) {
-            NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer, new PlayerAnimationPacket(player.getId(), "sheathing.draw_slash"));
+            NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer, new PlayerAnimationPacket(player.getId(), drawAnimation(type)));
         }
+    }
+
+    private static String drawAnimation(UnsheatheAttackType type) {
+        return switch (type) {
+            case OVERHEAD_BACKDRAW, AERIAL_DRAW_SLASH -> "sword.vertical";
+            case SPRINTING_DRAW_DASH -> "sword.thrust";
+            case CROUCHING_LOW_DRAW -> "sword.check";
+            default -> "sheathing.quick_draw";
+        };
     }
 
     public static void applyClientSync(Player player, SheathPosition position, boolean enabled, int hotbarSlot,
@@ -302,15 +291,6 @@ public class SheathingManager {
                     .append(slot.getStoredSword().getCount()).append(';');
         }
         return builder.toString();
-    }
-
-    private static SheathSlotData firstReadySheathedSlot(Player player, PlayerSheathData data) {
-        for (SheathSlotData slot : data.getSlotsByPriority()) {
-            if (slot.hasStoredSword() && slot.getState() == SheathState.SHEATHED && slot.getCooldownTicks() == 0) {
-                return slot;
-            }
-        }
-        return null;
     }
 
     private static SheathSlotData getSelectedLinkedSlot(Player player, PlayerSheathData data) {
@@ -350,13 +330,6 @@ public class SheathingManager {
                     var styled = style.withColor(color);
                     return bold ? styled.withBold(true) : styled;
                 }), true);
-    }
-
-    private static String chargeMessage(SheathSlotData slot) {
-        int percent = Math.min(100, Math.round(slot.getChargeTicks() / 40.0f * 100.0f));
-        return percent >= 30
-                ? "Quickdraw charge: " + percent + "% (" + slot.getHoldAttack().getDisplayName() + ")"
-                : "Quickdraw: " + slot.getTapAttack().getDisplayName();
     }
 
     private static String formatSeconds(int ticks) {

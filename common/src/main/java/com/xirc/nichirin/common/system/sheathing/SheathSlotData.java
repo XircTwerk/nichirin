@@ -9,10 +9,8 @@ public class SheathSlotData {
     private int priority;
     private SheathState state = SheathState.EMPTY;
     private UnsheatheAttackType tapAttack;
-    private UnsheatheAttackType holdAttack = UnsheatheAttackType.CHARGED_DRAW_SLASH;
     private int transitionTicks;
     private int cooldownTicks;
-    private int chargeTicks;
     private boolean visible = true;
     private ItemStack storedSword = ItemStack.EMPTY;
 
@@ -34,14 +32,10 @@ public class SheathSlotData {
     public void setState(SheathState state) { this.state = state; }
     public UnsheatheAttackType getTapAttack() { return tapAttack; }
     public void setTapAttack(UnsheatheAttackType tapAttack) { this.tapAttack = tapAttack; }
-    public UnsheatheAttackType getHoldAttack() { return holdAttack; }
-    public void setHoldAttack(UnsheatheAttackType holdAttack) { this.holdAttack = holdAttack; }
     public int getTransitionTicks() { return transitionTicks; }
     public void setTransitionTicks(int transitionTicks) { this.transitionTicks = Math.max(0, transitionTicks); }
     public int getCooldownTicks() { return cooldownTicks; }
     public void setCooldownTicks(int cooldownTicks) { this.cooldownTicks = Math.max(0, cooldownTicks); }
-    public int getChargeTicks() { return chargeTicks; }
-    public void setChargeTicks(int chargeTicks) { this.chargeTicks = Math.max(0, chargeTicks); }
     public boolean isVisible() { return visible; }
     public void setVisible(boolean visible) { this.visible = visible; }
     public ItemStack getStoredSword() { return storedSword; }

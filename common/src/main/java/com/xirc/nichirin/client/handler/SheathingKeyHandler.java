@@ -9,20 +9,26 @@ import net.minecraft.client.Minecraft;
 
 public class SheathingKeyHandler {
     private static boolean wasDown = false;
+    private static int heldTicks = 0;
 
     public static void register() {
         ClientTickEvent.CLIENT_POST.register(client -> {
             if (client.player == null || client.screen != null) {
                 wasDown = false;
+                heldTicks = 0;
                 return;
             }
 
             boolean down = NichirinKeybindRegistry.SHEATHE_KEY.isDown();
             boolean shiftDown = client.player.isShiftKeyDown();
             if (down && !wasDown) {
-                NichirinPacketRegistry.sendToServer(new SheathInputPacket(SheathInputAction.PRESS, shiftDown));
+                heldTicks = 0;
+                NichirinPacketRegistry.sendToServer(new SheathInputPacket(SheathInputAction.PRESS, shiftDown, heldTicks));
             } else if (!down && wasDown) {
-                NichirinPacketRegistry.sendToServer(new SheathInputPacket(SheathInputAction.RELEASE, shiftDown));
+                NichirinPacketRegistry.sendToServer(new SheathInputPacket(SheathInputAction.RELEASE, shiftDown, heldTicks));
+                heldTicks = 0;
+            } else if (down) {
+                heldTicks++;
             }
             wasDown = down;
         });

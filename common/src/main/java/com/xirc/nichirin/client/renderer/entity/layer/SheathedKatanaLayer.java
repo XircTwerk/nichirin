@@ -11,8 +11,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -53,7 +51,7 @@ public class SheathedKatanaLayer extends RenderLayer<AbstractClientPlayer, Playe
         getParentModel().body.translateAndRotate(poseStack);
         applySlotTransform(poseStack, slot.getPosition());
         poseStack.scale(0.72f, 0.72f, 0.72f);
-        Minecraft.getInstance().getItemRenderer().renderStatic(player, stack, ItemDisplayContext.THIRD_PERSON_RIGHT_HAND,
+        Minecraft.getInstance().getItemRenderer().renderStatic(player, stack, displayContext(slot.getPosition()),
                 false, poseStack, buffer, player.level(), packedLight, OverlayTexture.NO_OVERLAY,
                 player.getId() + slot.getPosition().ordinal());
         poseStack.popPose();
@@ -62,22 +60,29 @@ public class SheathedKatanaLayer extends RenderLayer<AbstractClientPlayer, Playe
     private void applySlotTransform(PoseStack poseStack, SheathPosition position) {
         switch (position) {
             case LEFT_HIP -> {
-                poseStack.translate(0.28, 0.72, 0.13);
-                poseStack.mulPose(rotation(0, 0, -38));
+                poseStack.translate(0.25, 0.7, 0);
+                poseStack.mulPose(rotation(70, 0, 0));
             }
             case RIGHT_HIP -> {
-                poseStack.translate(-0.28, 0.72, 0.13);
-                poseStack.mulPose(rotation(0, 0, 38));
+                poseStack.translate(-0.25, 0.70, 0);
+                poseStack.mulPose(rotation(70, 0, 0));
             }
             case BACK -> {
-                poseStack.translate(0.2, 0.18, 0.26);
-                poseStack.mulPose(rotation(28, 0, -136));
+                poseStack.translate(0.0, 0.25, 0.15);
+                poseStack.mulPose(rotation(0, 0, -90));
             }
             case BACK_2 -> {
-                poseStack.translate(-0.2, 0.18, 0.27);
-                poseStack.mulPose(rotation(28, 0, 136));
+                poseStack.translate(0.0, 0.25, 0.15);
+                poseStack.mulPose(rotation(0, 180, -90));
             }
         }
+    }
+
+    private ItemDisplayContext displayContext(SheathPosition position) {
+        return switch (position) {
+            case BACK, BACK_2 -> ItemDisplayContext.FIXED;
+            default -> ItemDisplayContext.THIRD_PERSON_RIGHT_HAND;
+        };
     }
 
     private Quaternionf rotation(float x, float y, float z) {
