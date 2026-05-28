@@ -241,11 +241,11 @@ public class DefaultDemonMoveset extends AbstractMoveset {
             animationName = "demon_slash";
         } else {
             slashConfig = new MoveBuilder("demon_slash_2", "Slash Finisher")
-                    .withTiming(5, 0, 18)
+                    .withTiming(16, 0, 18)
                     .withDamage(6.0f)
                     .withRange(3.0f)
                     .withKnockback(0.5f)
-                    .withHitStun(20)
+                    .withHitStun(12)
                     .withHitboxSize(2.2f)
                     .build();
             animationName = "demon_slash_2";

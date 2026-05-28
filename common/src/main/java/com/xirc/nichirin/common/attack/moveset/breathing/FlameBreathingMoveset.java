@@ -40,7 +40,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
     private void createAndCapturePommelSlashConfig() {
         MoveConfiguration tempConfig = new MoveBuilder("pommel_slash", "Pommel Slash")
                 .withAnimation("nichirin:pommel_slash", 8)
-                .withTiming(0, 5, 6)
+                .withTiming(0, 5, 3)
                 .withDamage(0.5f)
                 .withRange(2.5f)
                 .withKnockback(0f)
@@ -55,7 +55,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
     private void createAndCaptureUnknowingFireConfig() {
         MoveConfiguration tempConfig = new MoveBuilder("unknowing_fire_quick", "Unknowing Fire")
                 .withAnimation("nichirin:unknowing_fire", 9)
-                .withTiming(0, 6, 11)
+                .withTiming(0, 6, 8)
                 .withDamage(10.0f)
                 .withRange(3.0f)
                 .withKnockback(0.4f)
@@ -75,7 +75,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                 // INDEX 0: Rising Scorching Sun â€” upward arc, launches enemies
                 .withMove(new MoveBuilder("rising_scorching_sun", "Scorching Sun")
                         .withAnimation("nichirin:rising_scorching_sun", 8)
-                        .withTiming(100, 12, 18) // 5 second cooldown
+                        .withTiming(100, 12, 8) // 5 second cooldown
                         .withDamage(9.0f) // Good damage + bonus vs airborne
                         .withRange(6.0f) // Upward arc range
                         .withKnockback(0.6f) // Strong upward knockback
@@ -96,7 +96,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                 // INDEX 1: Blazing Universe â€” charged downward strike, explodes on impact
                 .withMove(new MoveBuilder("blazing_universe", "Blazing Universe")
                         .withAnimation("nichirin:blazing_universe", 12)
-                        .withTiming(160, 13, 35) // 8 second cooldown, windup, explosive finish
+                        .withTiming(160, 13, 15) // 8 second cooldown, windup, explosive finish
                         .withDamage(5.0f) // Very high damage
                         .withRange(4.0f) // Large AOE
                         .withKnockback(0.6f)
@@ -160,7 +160,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                 // INDEX 4: Rengoku â€” ultimate dragon dash, 30-second cooldown
                 .withMove(new MoveBuilder("rengoku", "Rengoku")
                         .withAnimation("nichirin:rengoku", 20)
-                        .withTiming(600, 120, 42) // 30 second cooldown, windup, dragon dash
+                        .withTiming(600, 120, 12) // 30 second cooldown, windup, dragon dash
                         .withDamage(30.0f) // Massive damage
                         .withDashSpeed(50.0f) // Very fast dash
                         .withRange(20.0f) // Long range dash
