@@ -11,6 +11,7 @@ import com.xirc.nichirin.common.system.BloodMoonManager;
 import com.xirc.nichirin.common.system.DemonManager;
 import com.xirc.nichirin.common.system.KillRewardManager;
 import com.xirc.nichirin.common.system.movement.MovementContext;
+import com.xirc.nichirin.common.system.sheathing.SheathingManager;
 import com.xirc.nichirin.common.util.InputHandler;
 import com.xirc.nichirin.registry.NichirinItemRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
@@ -98,6 +99,7 @@ public class BreathOfNichirinEventHandler {
     private static void clearTransientCombatState() {
         NichirinPacketRegistry.clearServerPlayerStates();
         MovementContext.clearAll();
+        SheathingManager.clearAll();
         DefaultKatanaMoveset.clearAll();
         InputHandler.clearAll();
     }
@@ -153,6 +155,7 @@ public class BreathOfNichirinEventHandler {
             DemonFoodHandler.cleanupPlayer(player);
             NichirinPacketRegistry.cleanupPlayer(player);
             MovementContext.cleanupPlayer(player);
+            SheathingManager.cleanupPlayer(player);
             DefaultKatanaMoveset.cleanupPlayer(player);
         } catch (Exception e) {
             e.printStackTrace();

@@ -76,6 +76,9 @@ public interface NichirinPacketRegistry {
     ResourceLocation OPEN_TRAINER_DIALOGUE_ID      = new ResourceLocation(BreathOfNichirin.MOD_ID, "open_trainer_dialogue");
     ResourceLocation TRAINER_ACTION_ID             = new ResourceLocation(BreathOfNichirin.MOD_ID, "trainer_action");
     ResourceLocation MIST_CLONES_ID                = new ResourceLocation(BreathOfNichirin.MOD_ID, "mist_clones");
+    ResourceLocation SHEATH_INPUT_ID               = new ResourceLocation(BreathOfNichirin.MOD_ID, "sheath_input");
+    ResourceLocation SHEATH_CONFIG_ID              = new ResourceLocation(BreathOfNichirin.MOD_ID, "sheath_config");
+    ResourceLocation SHEATH_SYNC_ID                = new ResourceLocation(BreathOfNichirin.MOD_ID, "sheath_sync");
 
     // Packet class mappings
     Map<Class<?>, ResourceLocation> PACKET_IDS = new HashMap<>();
@@ -100,6 +103,9 @@ public interface NichirinPacketRegistry {
         PACKET_IDS.put(DemonSyncPacket.class, DEMON_SYNC_ID);
         PACKET_IDS.put(TriggerShaderPacket.class, TRIGGER_SHADER_ID);
         PACKET_IDS.put(MistClonesPacket.class, MIST_CLONES_ID);
+        PACKET_IDS.put(SheathInputPacket.class, SHEATH_INPUT_ID);
+        PACKET_IDS.put(SheathConfigPacket.class, SHEATH_CONFIG_ID);
+        PACKET_IDS.put(SheathSyncPacket.class, SHEATH_SYNC_ID);
 
         registerPackets();
     }
@@ -232,6 +238,20 @@ public interface NichirinPacketRegistry {
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, TRAINER_ACTION_ID, (buf, context) -> {
             TrainerActionPacket packet =
                     new TrainerActionPacket(buf);
+            if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
+                context.queue(() -> packet.handle(serverPlayer));
+            }
+        });
+
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, SHEATH_INPUT_ID, (buf, context) -> {
+            SheathInputPacket packet = new SheathInputPacket(buf);
+            if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
+                context.queue(() -> packet.handle(serverPlayer));
+            }
+        });
+
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, SHEATH_CONFIG_ID, (buf, context) -> {
+            SheathConfigPacket packet = new SheathConfigPacket(buf);
             if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
                 context.queue(() -> packet.handle(serverPlayer));
             }
@@ -379,6 +399,11 @@ public interface NichirinPacketRegistry {
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, MIST_CLONES_ID, (buf, context) -> {
                 MistClonesPacket packet = new MistClonesPacket(buf);
                 context.queue(() -> packet.handleClient());
+            });
+
+            NetworkManager.registerReceiver(NetworkManager.Side.S2C, SHEATH_SYNC_ID, (buf, context) -> {
+                SheathSyncPacket packet = new SheathSyncPacket(buf);
+                context.queue(packet::handleClient);
             });
 
             // Open the Cloth Config GUI on the client when requested by a command
@@ -763,6 +788,12 @@ public interface NichirinPacketRegistry {
             p.toBytes(buf);
         } else if (packet instanceof MistClonesPacket p) {
             p.toBytes(buf);
+        } else if (packet instanceof SheathInputPacket p) {
+            p.toBytes(buf);
+        } else if (packet instanceof SheathConfigPacket p) {
+            p.toBytes(buf);
+        } else if (packet instanceof SheathSyncPacket p) {
+            p.toBytes(buf);
         }
 
         return buf;
@@ -786,6 +817,20 @@ public interface NichirinPacketRegistry {
             buf.release();
         } catch (Exception e) {
             // ignore
+        }
+    }
+
+    static void sendSheathSync(ServerPlayer player, com.xirc.nichirin.common.system.sheathing.PlayerSheathData data) {
+        SheathSyncPacket packet = new SheathSyncPacket(player, data);
+        ResourceLocation id = PACKET_IDS.get(SheathSyncPacket.class);
+        if (id == null) return;
+        try {
+            FriendlyByteBuf buf = encodePacket(packet);
+            player.server.getPlayerList().getPlayers().stream()
+                    .filter(p -> p.level() == player.level() && p.distanceToSqr(player) <= 256.0 * 256.0)
+                    .forEach(p -> NetworkManager.sendToPlayer(p, id, new FriendlyByteBuf(buf.copy())));
+            buf.release();
+        } catch (Exception ignored) {
         }
     }
 

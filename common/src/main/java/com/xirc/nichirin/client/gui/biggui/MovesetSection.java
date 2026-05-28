@@ -18,7 +18,8 @@ public class MovesetSection extends AbstractGuiPage {
     public enum MovesetTab {
         BREATHING_STYLES("gui.nichirin.moveset.tab.breathing_styles"),
         DEMON_ARTS("gui.nichirin.moveset.tab.demon_arts"),
-        DATA("gui.nichirin.moveset.tab.data");
+        DATA("gui.nichirin.moveset.tab.data"),
+        SHEATHING("gui.nichirin.moveset.tab.sheathing");
 
         private final String translationKey;
 
@@ -36,6 +37,7 @@ public class MovesetSection extends AbstractGuiPage {
     private final BreathingStylesSection breathingStylesSection = new BreathingStylesSection();
     private final DemonArtSection demonArtSection = new DemonArtSection();
     private final MovesetDataSection dataSection = new MovesetDataSection();
+    private final SheathingSection sheathingSection = new SheathingSection();
 
     // Render
     public void render(GuiGraphics graphics, Player player, Font font,
@@ -56,6 +58,8 @@ public class MovesetSection extends AbstractGuiPage {
             case DEMON_ARTS -> demonArtSection.render(
                     graphics, player, contentWidth, bodyH, font, mouseX, bodyMouseY);
             case DATA -> dataSection.render(
+                    graphics, player, contentWidth, bodyH, font, mouseX, bodyMouseY);
+            case SHEATHING -> sheathingSection.render(
                     graphics, player, contentWidth, bodyH, font, mouseX, bodyMouseY);
         }
         graphics.pose().popPose();
@@ -116,6 +120,7 @@ public class MovesetSection extends AbstractGuiPage {
             case BREATHING_STYLES -> breathingStylesSection.handleClick(mouseX, bodyMouseY, player, contentWidth);
             case DEMON_ARTS -> demonArtSection.handleClick(mouseX, bodyMouseY, player, contentWidth);
             case DATA -> dataSection.handleClick(mouseX, bodyMouseY, player, contentWidth);
+            case SHEATHING -> sheathingSection.handleClick(mouseX, bodyMouseY, player, contentWidth);
         };
     }
 
@@ -142,6 +147,7 @@ public class MovesetSection extends AbstractGuiPage {
             case BREATHING_STYLES -> "Breathing Styles";
             case DEMON_ARTS -> "Demon Arts";
             case DATA -> "Move Data";
+            case SHEATHING -> "Sheathing";
         };
     }
 

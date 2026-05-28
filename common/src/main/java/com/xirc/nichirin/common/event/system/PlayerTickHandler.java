@@ -6,6 +6,7 @@ import com.xirc.nichirin.common.system.movement.Dash;
 import com.xirc.nichirin.common.system.movement.Dodge;
 import com.xirc.nichirin.common.system.abilities.PlayerDoubleJump;
 import com.xirc.nichirin.common.system.DemonManager;
+import com.xirc.nichirin.common.system.sheathing.SheathingManager;
 import com.xirc.nichirin.common.system.perks.PerkArchive;
 import com.xirc.nichirin.common.system.perks.PerkManager;
 import com.xirc.nichirin.common.system.perks.PerkData;
@@ -50,6 +51,7 @@ public class PlayerTickHandler {
             if (player instanceof ServerPlayer) {
                 ServerPlayer sp = (ServerPlayer) player;
                 removeAllPerkModifiers(sp);
+                SheathingManager.cleanupPlayer(sp);
             }
         });
 
@@ -77,6 +79,7 @@ public class PlayerTickHandler {
         PlayerDoubleJump.tickPlayer(player);
 
         if (!player.level().isClientSide) {
+            SheathingManager.tick(player);
             Dodge.tickForPlayer(player);
             DemonManager.tickDemon(player);
 

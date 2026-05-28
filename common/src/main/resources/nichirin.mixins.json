@@ -11,6 +11,7 @@
     "client.LevelRendererMixin",
     "client.MouseHandlerMixin",
     "client.PlayerModelAccessor",
+    "client.PlayerRendererMixin",
     "client.LivingEntityRendererMixin",
     "client.ItemInHandLayerMixin",
     "client.RenderTargetDepthMixin"

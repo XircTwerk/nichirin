@@ -112,6 +112,7 @@
   "gui.nichirin.moveset.tab.breathing_styles": "Breathing Styles",
   "gui.nichirin.moveset.tab.demon_arts": "Demon Arts",
   "gui.nichirin.moveset.tab.data": "Data",
+  "gui.nichirin.moveset.tab.sheathing": "Sheathing",
   "gui.nichirin.demon_arts.title": "DEMON ARTS",
   "gui.nichirin.demon_arts.current": "Current: %s",
   "gui.nichirin.demon_arts.instructions": "Click to select a demon art:",
@@ -237,6 +238,7 @@
 
   "key.categories.nichirin": "Breath of Nichirin",
   "key.nichirin.attack_wheel": "Open Attack Wheel",
+  "key.nichirin.sheathe": "Sheathe / Unsheathe",
   "key.nichirin.movement": "Movement",
   "key.nichirin.open_gui": "Open Gui",
   "key.nichirin.block": "Block/Parry",

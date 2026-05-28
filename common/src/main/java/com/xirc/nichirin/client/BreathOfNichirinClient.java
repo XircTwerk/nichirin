@@ -154,6 +154,7 @@ public class BreathOfNichirinClient {
             // Register handlers AFTER keybinds
             BigGuiKeyHandler.register();
             AttackWheelHandler.register();
+            SheathingKeyHandler.register();
             ClientDoubleJumpHandler.register();
             CooldownDisplayPacket.registerClient();
 

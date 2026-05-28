@@ -5,6 +5,7 @@ import com.xirc.nichirin.client.gui.CooldownHUD;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.attack.moveset.DefaultKatanaMoveset;
 import com.xirc.nichirin.common.data.MovesetHelper;
+import com.xirc.nichirin.common.system.sheathing.SheathingManager;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
@@ -57,6 +58,7 @@ public class SimpleKatana extends Item {
         if (!canPerformAttack(player)) return;
         if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) return;
         if (player.hasEffect(NichirinEffectRegistry.BLOCKING.get())) return;
+        if (SheathingManager.isSelectedKatanaSheathed(player)) return;
 
         AbstractMoveset moveset = MovesetHelper.getBreathingMoveset(player);
         // If the breathing moveset claims the hit (returns true) we're done.
@@ -72,6 +74,8 @@ public class SimpleKatana extends Item {
         if (player.hasEffect(NichirinEffectRegistry.STUNNED.get()))
             return InteractionResultHolder.pass(player.getItemInHand(hand));
         if (player.hasEffect(NichirinEffectRegistry.BLOCKING.get()))
+            return InteractionResultHolder.pass(player.getItemInHand(hand));
+        if (SheathingManager.isSelectedKatanaSheathed(player))
             return InteractionResultHolder.pass(player.getItemInHand(hand));
 
         boolean isCrouching = player.isShiftKeyDown() || player.isCrouching();
@@ -93,6 +97,7 @@ public class SimpleKatana extends Item {
         if (player.level().isClientSide()) return;
         if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) return;
         if (player.hasEffect(NichirinEffectRegistry.BLOCKING.get())) return;
+        if (SheathingManager.isSelectedKatanaSheathed(player)) return;
 
         DefaultKatanaMoveset.INSTANCE.performMove(player, moveIndex);
     }

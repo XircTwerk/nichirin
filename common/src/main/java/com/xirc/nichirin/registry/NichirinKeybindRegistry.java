@@ -37,6 +37,12 @@ public interface NichirinKeybindRegistry {
             "key.categories.nichirin"
     );
 
+    KeyMapping SHEATHE_KEY = new KeyMapping(
+            "key.nichirin.sheathe",
+            GLFW.GLFW_KEY_Y,
+            "key.categories.nichirin"
+    );
+
     KeyMapping OPEN_GUI_KEY = new KeyMapping(
             "key.nichirin.open_gui",
             GLFW.GLFW_KEY_G,
@@ -64,6 +70,7 @@ public interface NichirinKeybindRegistry {
 
     static void register() {
         KeyMappingRegistry.register(ATTACK_WHEEL_KEY);
+        KeyMappingRegistry.register(SHEATHE_KEY);
         KeyMappingRegistry.register(OPEN_GUI_KEY);
         KeyMappingRegistry.register(BLOCK_KEY);
         KeyMappingRegistry.register(MOVEMENT_KEY);
