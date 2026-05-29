@@ -7,7 +7,6 @@ import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.entity.npc.ThunderBreathingTrainerEntity;
 import com.xirc.nichirin.common.system.movement.EntityMovement;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.phys.Vec3;
 
@@ -90,10 +89,8 @@ public class ThunderBreathingAttackGoal extends MeleeAttackGoal {
         // Reactive blocking
         float ai = aiNorm();
         if (!trainer.isGuardUp() && distSq < 6.0 * 6.0) {
-            boolean targetAttacking = target.swinging || target.attackAnim > 0;
-            if (target instanceof Player p) {
-                targetAttacking = targetAttacking || MoveExecutor.hasActiveAttacks(p);
-            }
+            boolean targetAttacking = target.swinging || target.attackAnim > 0
+                    || MoveExecutor.hasActiveAttacks(target);
             if (!targetAttacking && globalCooldown > 0 && distSq < 3.5 * 3.5) {
                 targetAttacking = trainer.getRandom().nextFloat() < 0.08f * ai;
             }

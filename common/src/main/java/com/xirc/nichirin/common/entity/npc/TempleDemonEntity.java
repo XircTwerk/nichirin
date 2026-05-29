@@ -510,7 +510,7 @@ public class TempleDemonEntity extends DemonNPCEntity {
 
         private void fireHighJump() {
             demon.getMoveset().handleRightClick(demon, true);
-            cooldownHighJump = 80;
+            cooldownHighJump = 200;
             globalCooldown   = 3;
             pendingStomp     = true;
             stompDelay       = 8;
@@ -556,7 +556,11 @@ public class TempleDemonEntity extends DemonNPCEntity {
          *   Far         â†’ dash strike â†’ slash
          */
         private int selectAttack(double distance, boolean movingAway, boolean inAir, boolean lowHp) {
-            if (inAir && distance <= 4.0 && cooldownHighJump == 0 && demon.onGround()) {
+            LivingEntity tgt = demon.getTarget();
+            boolean targetAbove = tgt != null && tgt.getY() > demon.getY() + 2.0;
+
+            // High jump only when target is significantly above us
+            if (targetAbove && cooldownHighJump == 0 && demon.onGround() && distance <= 6.0) {
                 return ATTACK_HIGH_JUMP;
             }
 
@@ -581,7 +585,6 @@ public class TempleDemonEntity extends DemonNPCEntity {
             if (distance <= 5.5) {
                 if (movingAway || inAir) {
                     if (cooldownMove1 == 0 && canWheelMove(1))        return 1;
-                    if (cooldownHighJump == 0 && demon.onGround())    return ATTACK_HIGH_JUMP;
                 }
                 if (cooldownRight == 0)                                return ATTACK_RIGHT;
                 if (cooldownMove0 == 0 && canWheelMove(0))            return 0;
@@ -590,7 +593,6 @@ public class TempleDemonEntity extends DemonNPCEntity {
 
             if (distance <= 9.0) {
                 if (cooldownMove1 == 0 && canWheelMove(1))            return 1;
-                if (cooldownHighJump == 0 && demon.onGround())        return ATTACK_HIGH_JUMP;
             }
 
             return ATTACK_NONE;

@@ -670,10 +670,8 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
             // Block check runs independently of globalCooldown so trainer can defend while on cooldown
             if (!trainer.isGuardUp() && distSq < 6.0 * 6.0) {
                 boolean targetAttacking = target.swinging || target.attackAnim > 0
-                        || target.hurtTime > 0 && target.hurtTime < 5; // recently took damage = exchanging blows
-                if (target instanceof Player p) {
-                    targetAttacking = targetAttacking || MoveExecutor.hasActiveAttacks(p);
-                }
+                        || target.hurtTime > 0 && target.hurtTime < 5
+                        || MoveExecutor.hasActiveAttacks(target);
                 // Also proactively block sometimes when close and on cooldown
                 float ai = aiNorm();
                 if (!targetAttacking && globalCooldown > 0 && distSq < 3.5 * 3.5) {

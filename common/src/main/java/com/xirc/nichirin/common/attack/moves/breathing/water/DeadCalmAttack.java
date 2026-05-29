@@ -115,11 +115,6 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
                 SoundEvents.ENCHANTMENT_TABLE_USE, SoundSource.PLAYERS, 0.8f, 0.8f);
     }
 
-    private void applySlowdown() {
-        // Max slowness (220) immobilizes the user during the field without applying knockback resistance
-        user.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, duration, 220, false, false));
-    }
-
     private void maintainCalmField() {
         if (fieldCenter == null || frozenPos == null) return;
 
@@ -192,9 +187,6 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
 
     private void scheduleSlash(LivingEntity target, Vec3 targetPos, int delay) {
         hitTargetNoImmunity(target);
-
-        Vec3 centerDirection = fieldCenter.subtract(target.position()).normalize();
-        target.push(centerDirection.x * knockback * 0.2, 0.01, centerDirection.z * knockback * 0.2);
 
         createAutoSlashEffect(targetPos, delay);
 
