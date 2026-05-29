@@ -345,6 +345,13 @@ public class WhirlpoolAttack extends WaterBreathingAttackBase {
         // User gentle descent
         user.setDeltaMovement(0, -0.2, 0); // Gentle downward velocity
 
+        if (whirlpoolCenter == null) {
+            spinningingEntities.clear();
+            whirlpoolTicks = 0;
+            whirlpoolStarted = false;
+            return;
+        }
+
         // Final whirlpool dissolution effect
         if (world instanceof ServerLevel serverLevel) {
             // Whirlpool collapsing effect

@@ -44,8 +44,7 @@ public class VenomStatusEffect extends MobEffect {
         float damageMultiplier = 1.0f + (amplifier * DAMAGE_MULTIPLIER_PER_TIER);
         float damage = BASE_DAMAGE * damageMultiplier;
 
-        // Apply magic damage (bypasses armor like poison)
-        entity.hurt(entity.damageSources().magic(), damage);
+        entity.hurt(entity.damageSources().wither(), damage);
 
         // Add particles that scale with stack intensity
         if (entity.level() instanceof ServerLevel serverLevel) {

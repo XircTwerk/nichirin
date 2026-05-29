@@ -169,9 +169,6 @@ public class SheathingSection extends AbstractGuiPage {
             case REVERSE_DRAW_SLASH -> "Reverse";
             case OVERHEAD_BACKDRAW -> "Overhead";
             case DIAGONAL_BACKDRAW -> "Diagonal";
-            case SPRINTING_DRAW_DASH -> "Sprint";
-            case CROUCHING_LOW_DRAW -> "Low";
-            case AERIAL_DRAW_SLASH -> "Aerial";
             case DUAL_CROSS_SLASH -> "Dual";
         };
     }

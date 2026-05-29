@@ -5,9 +5,6 @@ public enum UnsheatheAttackType {
     REVERSE_DRAW_SLASH("Reverse Draw Slash"),
     OVERHEAD_BACKDRAW("Overhead Backdraw"),
     DIAGONAL_BACKDRAW("Diagonal Backdraw"),
-    SPRINTING_DRAW_DASH("Sprinting Draw Dash"),
-    CROUCHING_LOW_DRAW("Crouching Low Draw"),
-    AERIAL_DRAW_SLASH("Aerial Draw Slash"),
     DUAL_CROSS_SLASH("Dual Cross Slash");
 
     private final String displayName;

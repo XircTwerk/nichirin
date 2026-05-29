@@ -21,6 +21,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.nbt.CompoundTag;
@@ -31,7 +32,8 @@ import java.util.UUID;
 
 /**
  * Katana blocking and parrying system.
- * Uses stance as the blocking resource, not stamina.
+ * Works for both players and NPCs (trainers, demons).
+ * Uses stance as the blocking resource for players; NPCs block freely but are time-limited by their AI.
  */
 public class KatanaBlock {
 
@@ -47,9 +49,6 @@ public class KatanaBlock {
 
     private static final ResourceLocation COOLDOWN_PACKET_ID = new ResourceLocation("nichirin", "cooldown_display");
 
-    /**
-     * Blocking stance enum
-     */
     public enum BlockingStance {
         NONE,
         BLOCKING,
@@ -58,9 +57,6 @@ public class KatanaBlock {
         PARRY_FAILED
     }
 
-    /**
-     * Player blocking state data
-     */
     private static class BlockingState {
         BlockingStance stance = BlockingStance.NONE;
         int blockTicks = 0;
@@ -83,275 +79,241 @@ public class KatanaBlock {
         }
     }
 
-    /**
-     * Starts blocking for a player
-     */
-    public static boolean startBlocking(Player player) {
-        if (player.level().isClientSide) return false;
+    // ── Start blocking ──────────────────────────────────────────────
 
-        BlockingState state = getOrCreateState(player);
+    public static boolean startBlocking(LivingEntity entity) {
+        if (entity.level().isClientSide) return false;
 
-        // Check if player can block
-        if (!canStartBlocking(player, state)) {
-            return false;
-        }
+        BlockingState state = getOrCreateState(entity);
 
-        // Start blocking - open parry window only when parry system is enabled
+        if (!canStartBlocking(entity, state)) return false;
+
         state.blockTicks = 0;
         if (NichirinModConfig.get().combat.enableParrySystem) {
             state.stance = BlockingStance.PARRY_READY;
             state.parryWindowTicks = NichirinModConfig.get().combat.parryWindowTicks;
-            player.displayClientMessage(
-                    Component.literal("⚔ Guard Up!")
-                            .withStyle(style -> style.withColor(0xFFAA00).withBold(true)),
-                    true
-            );
+            if (entity instanceof Player player) {
+                player.displayClientMessage(
+                        Component.literal("⚔ Guard Up!")
+                                .withStyle(style -> style.withColor(0xFFAA00).withBold(true)),
+                        true);
+            }
         } else {
             state.stance = BlockingStance.BLOCKING;
             state.parryWindowTicks = 0;
-            player.displayClientMessage(
-                    Component.literal("⚔ Blocking")
-                            .withStyle(style -> style.withColor(0xAAAAAA)),
-                    true
-            );
+            if (entity instanceof Player player) {
+                player.displayClientMessage(
+                        Component.literal("⚔ Blocking")
+                                .withStyle(style -> style.withColor(0xAAAAAA)),
+                        true);
+            }
         }
 
-        // Apply blocking effect
-        applyBlockingEffect(player);
+        applyBlockingEffect(entity);
 
-        // Block katana inputs
-        InputHandler.blockAfterBreathingMove(player);
+        if (entity instanceof Player player) {
+            InputHandler.blockAfterBreathingMove(player);
+        }
 
-        // Play blocking sound
-        player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
+        entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(),
                 SoundEvents.SHIELD_BLOCK, SoundSource.PLAYERS, 0.7f, 1.2f);
 
-        // Trigger block animation
-        if (player instanceof ServerPlayer serverPlayer) {
+        if (entity instanceof ServerPlayer serverPlayer) {
             NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer,
                     new PlayerAnimationPacket(serverPlayer.getId(), "sword.block"));
+        } else if (entity instanceof com.xirc.nichirin.common.entity.npc.BaseBreathingTrainerEntity trainer) {
+            trainer.setAnimation("sword.block", 1.0f);
         }
 
         return true;
     }
 
-    /**
-     * Stops blocking for a player
-     */
-    public static void stopBlocking(Player player) {
-        if (player.level().isClientSide) return;
+    // ── Stop blocking ───────────────────────────────────────────────
 
-        BlockingState state = BLOCKING_STATES.get(player.getUUID());
+    public static void stopBlocking(LivingEntity entity) {
+        if (entity.level().isClientSide) return;
+
+        BlockingState state = BLOCKING_STATES.get(entity.getUUID());
         if (state == null || state.stance == BlockingStance.NONE) return;
 
-        long currentTime = player.level().getGameTime();
+        long currentTime = entity.level().getGameTime();
         boolean wasInParryWindow = (state.stance == BlockingStance.PARRY_READY && state.parryWindowTicks > 0);
 
-        // Check for early release punishment
         if (wasInParryWindow) {
-            // Player released during parry window without getting hit - punish them
-            applyEarlyReleasePunishment(player);
-
-            // Still set cooldown for early release
+            if (entity instanceof Player player) {
+                applyEarlyReleasePunishment(player);
+            }
             state.setBlockCooldown(currentTime);
         } else if (state.stance != BlockingStance.PARRY_SUCCESS) {
-            // Normal block end - set cooldown (unless it was a successful parry)
             state.setBlockCooldown(currentTime);
         }
-        // Note: Successful parries don't get cooldown (already handled in handleSuccessfulParry)
 
-        // Remove blocking effect
-        removeBlockingEffect(player);
+        removeBlockingEffect(entity);
 
-        // Stop the block animation on all nearby clients.
-        // Exception: if a parry just landed, sword.parry is still playing — don't cancel it.
-        // It is non-looping so it will self-terminate naturally.
-        if (player instanceof ServerPlayer serverPlayer && state.stance != BlockingStance.PARRY_SUCCESS) {
+        if (entity instanceof ServerPlayer serverPlayer && state.stance != BlockingStance.PARRY_SUCCESS) {
             NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer,
                     new PlayerAnimationPacket(serverPlayer.getId(), ""));
+        } else if (!(entity instanceof Player) && state.stance != BlockingStance.PARRY_SUCCESS) {
+            if (entity instanceof com.xirc.nichirin.common.entity.npc.BaseBreathingTrainerEntity trainer) {
+                trainer.setAnimation("", 1.0f);
+            }
         }
 
-        // Reset state
         state.reset();
     }
 
-    /**
-     * Attempts to parry for a player
-     */
-    public static boolean attemptParry(Player player) {
-        // Remove this method - parrying is now automatic at start of blocking
-        return false;
-    }
+    // ── Incoming damage ─────────────────────────────────────────────
 
-    /**
-     * Handles incoming damage for blocking/parrying
-     */
-    public static boolean handleIncomingDamage(Player player, Player attacker, float damage) {
-        if (player.level().isClientSide) return false;
+    public static boolean handleIncomingDamage(LivingEntity defender, LivingEntity attacker, float damage) {
+        if (defender.level().isClientSide) return false;
 
-        BlockingState state = BLOCKING_STATES.get(player.getUUID());
+        BlockingState state = BLOCKING_STATES.get(defender.getUUID());
         if (state == null || state.stance == BlockingStance.NONE) return false;
 
-        // Check for backstab ONLY if attacker is a player
-        if (attacker != null && isBackstab(player, attacker)) {
-            stopBlocking(player);
-            return false; // Block negated by backstab
+        if (attacker != null && isBackstab(defender, attacker)) {
+            stopBlocking(defender);
+            return false;
         }
 
-        // Handle parry window - works against ALL damage sources
         if (state.stance == BlockingStance.PARRY_READY && state.parryWindowTicks > 0
                 && NichirinModConfig.get().combat.enableParrySystem) {
-            return handleSuccessfulParry(player, attacker, state);
+            return handleSuccessfulParry(defender, attacker, state);
         }
 
-        // Handle regular blocking - works against ALL damage sources
         if (state.stance == BlockingStance.BLOCKING) {
-            return handleSuccessfulBlock(player, state, damage);
+            return handleSuccessfulBlock(defender, state, damage);
         }
 
         return false;
     }
 
-    /**
-     * Ticks the blocking system for a player
-     */
-    public static void tick(Player player) {
-        if (player.level().isClientSide) return;
+    // Keep old signature for backwards compat
+    public static boolean handleIncomingDamage(Player player, Player attacker, float damage) {
+        return handleIncomingDamage((LivingEntity) player, (LivingEntity) attacker, damage);
+    }
 
-        BlockingState state = BLOCKING_STATES.get(player.getUUID());
+    // ── Tick ─────────────────────────────────────────────────────────
+
+    public static void tick(LivingEntity entity) {
+        if (entity.level().isClientSide) return;
+
+        BlockingState state = BLOCKING_STATES.get(entity.getUUID());
         if (state == null) return;
 
-        boolean isBlocking = (state.stance == BlockingStance.BLOCKING ||
+        boolean currentlyBlocking = (state.stance == BlockingStance.BLOCKING ||
                 state.stance == BlockingStance.PARRY_READY);
 
-        if (isBlocking) {
+        if (currentlyBlocking) {
             state.blockTicks++;
 
-            // Handle parry window countdown
             if (state.stance == BlockingStance.PARRY_READY) {
                 state.parryWindowTicks--;
                 if (state.parryWindowTicks <= 0) {
-                    // Parry window expired - transition to regular blocking
                     state.stance = BlockingStance.BLOCKING;
                 }
             }
 
-            // Apply blocking effect if not already applied
-            if (!player.hasEffect(NichirinEffectRegistry.BLOCKING.get())) {
-                applyBlockingEffect(player);
+            if (!entity.hasEffect(NichirinEffectRegistry.BLOCKING.get())) {
+                applyBlockingEffect(entity);
             }
         } else {
-            // Clean up if no longer blocking
             if (state.wasBlockingLastTick) {
-                removeBlockingEffect(player);
+                removeBlockingEffect(entity);
             }
         }
 
-        state.wasBlockingLastTick = isBlocking;
+        state.wasBlockingLastTick = currentlyBlocking;
     }
 
-    /**
-     * Gets the current blocking stance for a player
-     */
-    public static BlockingStance getStance(Player player) {
-        BlockingState state = BLOCKING_STATES.get(player.getUUID());
+    // Keep old Player signature
+    public static void tick(Player player) { tick((LivingEntity) player); }
+
+    // ── Queries ──────────────────────────────────────────────────────
+
+    public static BlockingStance getStance(LivingEntity entity) {
+        BlockingState state = BLOCKING_STATES.get(entity.getUUID());
         return state != null ? state.stance : BlockingStance.NONE;
     }
 
-    /**
-     * Checks if player is currently blocking
-     */
-    public static boolean isBlocking(Player player) {
-        BlockingStance stance = getStance(player);
+    public static boolean isBlocking(LivingEntity entity) {
+        BlockingStance stance = getStance(entity);
         return stance == BlockingStance.BLOCKING || stance == BlockingStance.PARRY_READY;
     }
 
-    /**
-     * Cleanup when player disconnects
-     */
     public static void cleanupPlayer(Player player) {
         BLOCKING_STATES.remove(player.getUUID());
     }
 
-    // Private helper methods
-
-    private static BlockingState getOrCreateState(Player player) {
-        return BLOCKING_STATES.computeIfAbsent(player.getUUID(), k -> new BlockingState());
+    public static void cleanup(LivingEntity entity) {
+        BLOCKING_STATES.remove(entity.getUUID());
     }
 
-    private static boolean canStartBlocking(Player player, BlockingState state) {
-        // Can't block if already blocking
+    // ── Private helpers ──────────────────────────────────────────────
+
+    private static BlockingState getOrCreateState(LivingEntity entity) {
+        return BLOCKING_STATES.computeIfAbsent(entity.getUUID(), k -> new BlockingState());
+    }
+
+    private static boolean canStartBlocking(LivingEntity entity, BlockingState state) {
         if (state.stance != BlockingStance.NONE) return false;
 
-        // Can't block if stunned
-        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
-            player.displayClientMessage(
-                    Component.literal("Cannot block while stunned!")
-                            .withStyle(style -> style.withColor(0xFF5555)),
-                    true
-            );
+        if (entity.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+            if (entity instanceof Player player) {
+                player.displayClientMessage(
+                        Component.literal("Cannot block while stunned!")
+                                .withStyle(style -> style.withColor(0xFF5555)),
+                        true);
+            }
             return false;
         }
 
-        // Check block cooldown (0.75 seconds after last block ended)
-        long currentTime = player.level().getGameTime();
+        long currentTime = entity.level().getGameTime();
         if (state.isOnCooldown(currentTime)) {
-            int remainingTicks = (int)(state.blockCooldownUntil - currentTime);
-            player.displayClientMessage(
-                    Component.literal("Block on cooldown (" + (remainingTicks / 20.0f) + "s)")
-                            .withStyle(style -> style.withColor(0xFF5555)),
-                    true
-            );
+            if (entity instanceof Player player) {
+                int remainingTicks = (int) (state.blockCooldownUntil - currentTime);
+                player.displayClientMessage(
+                        Component.literal("Block on cooldown (" + (remainingTicks / 20.0f) + "s)")
+                                .withStyle(style -> style.withColor(0xFF5555)),
+                        true);
+            }
             return false;
         }
 
-        // Must have minimum STANCE
-        if (!StanceManager.hasStance(player, BLOCK_STANCE_DRAIN * 25)) {
-            player.displayClientMessage(
-                    Component.literal("Not enough stance to block!")
-                            .withStyle(style -> style.withColor(0xFF5555)),
-                    true
-            );
-            return false;
+        // Stance check only for players
+        if (entity instanceof Player player) {
+            if (!StanceManager.hasStance(player, BLOCK_STANCE_DRAIN * 25)) {
+                player.displayClientMessage(
+                        Component.literal("Not enough stance to block!")
+                                .withStyle(style -> style.withColor(0xFF5555)),
+                        true);
+                return false;
+            }
         }
 
         return true;
     }
 
-    /**
-     * Apply punishment for releasing block key during parry window
-     */
     private static void applyEarlyReleasePunishment(Player player) {
-        // Apply short stun (0.2 seconds)
         MobEffectInstance stunEffect = new MobEffectInstance(
                 NichirinEffectRegistry.STUNNED.get(),
-                EARLY_RELEASE_STUN_TICKS, // 0.2 seconds (4 ticks)
-                0, // Amplifier
-                false, // Ambient
-                false, // Show particles
-                true   // Show icon
-        );
+                EARLY_RELEASE_STUN_TICKS, 0, false, false, true);
         player.addEffect(stunEffect);
 
-        // Send message to player
         player.displayClientMessage(
                 Component.literal("✗ Early release!")
                         .withStyle(style -> style.withColor(0xFF5555)),
-                true // Overlay message
-        );
+                true);
 
-        // Play failure sound
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.SHIELD_BREAK, SoundSource.PLAYERS, 0.5f, 1.5f);
 
-        // Trigger early release / flinch animation
         if (player instanceof ServerPlayer serverPlayer) {
             NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer,
                     new PlayerAnimationPacket(serverPlayer.getId(), "sword.early_release"));
         }
     }
 
-    private static boolean isBackstab(Player defender, Player attacker) {
+    private static boolean isBackstab(LivingEntity defender, LivingEntity attacker) {
         Vec3 defenderLook = defender.getLookAngle();
         Vec3 flatLook = new Vec3(defenderLook.x, 0, defenderLook.z).normalize();
         Vec3 toAttacker = attacker.position().subtract(defender.position());
@@ -366,163 +328,140 @@ public class KatanaBlock {
         return angle > BACKSTAB_ANGLE;
     }
 
-    private static boolean handleSuccessfulParry(Player player, Player attacker, BlockingState state) {
-        // Set parry success state
+    private static boolean handleSuccessfulParry(LivingEntity defender, LivingEntity attacker, BlockingState state) {
         state.stance = BlockingStance.PARRY_SUCCESS;
         state.parryWindowTicks = 0;
 
-        // NO COOLDOWN for successful parry - can immediately block again!
-        // This bypasses the normal 0.75 second cooldown
-
-        // Show successful parry message
-        player.displayClientMessage(
-                Component.literal("✦ Perfect Parry!")
-                        .withStyle(style -> style.withColor(0x00FF00).withBold(true)),
-                true // Overlay message
-        );
-
-        // Remove stun from the defender if present
-        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
-            player.removeEffect(NichirinEffectRegistry.STUNNED.get());
+        if (defender instanceof Player player) {
+            player.displayClientMessage(
+                    Component.literal("✦ Perfect Parry!")
+                            .withStyle(style -> style.withColor(0x00FF00).withBold(true)),
+                    true);
         }
 
-        // Trigger parry animation on defender
-        if (player instanceof ServerPlayer serverPlayer) {
+        if (defender.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+            defender.removeEffect(NichirinEffectRegistry.STUNNED.get());
+        }
+
+        // Defender parry animation
+        if (defender instanceof ServerPlayer serverPlayer) {
             NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer,
                     new PlayerAnimationPacket(serverPlayer.getId(), "sword.parry"));
+        } else if (defender instanceof com.xirc.nichirin.common.entity.npc.BaseBreathingTrainerEntity trainer) {
+            trainer.setAnimation("sword.parry", 1.0f);
         }
 
-        // Interrupt the attacker's moves but don't stun them
-        if (attacker instanceof ServerPlayer serverPlayer) {
-            interruptAttackerMoves(serverPlayer);
+        // Interrupt + stun the attacker
+        if (attacker != null) {
+            interruptAttacker(attacker);
         }
 
-        return true; // Damage completely negated
+        return true;
     }
 
-    /**
-     * Interrupt the attacker's moves when they get parried, and stun them for 1 second.
-     */
-    private static void interruptAttackerMoves(ServerPlayer attacker) {
+    private static void interruptAttacker(LivingEntity attacker) {
         try {
             MoveExecutor.clearAttacks(attacker);
-            AbstractBreathingAttack.clearSelfTickingAttacks(attacker);
-            DefaultKatanaMoveset.interruptPlayerAttack(attacker);
-            NichirinPacketRegistry.clearInputBlock(attacker);
-            sendParriedCooldown(attacker, "Move (Parried)", PARRIED_ATTACK_COOLDOWN);
+            if (attacker instanceof Player p) {
+                AbstractBreathingAttack.clearSelfTickingAttacks(p);
+            }
 
-            // Stun the attacker for 1 second (20 ticks); amplifier 1 triggers movement restriction
+            if (attacker instanceof ServerPlayer serverPlayer) {
+                DefaultKatanaMoveset.interruptPlayerAttack(serverPlayer);
+                NichirinPacketRegistry.clearInputBlock(serverPlayer);
+                sendParriedCooldown(serverPlayer, "Move (Parried)", PARRIED_ATTACK_COOLDOWN);
+            }
+
             attacker.addEffect(new MobEffectInstance(
                     NichirinEffectRegistry.STUNNED.get(),
                     20, 1, false, false, true));
 
-            attacker.displayClientMessage(
-                    Component.literal("✗ Parried!")
-                            .withStyle(style -> style.withColor(0xFF5555).withBold(true)),
-                    true
-            );
+            if (attacker instanceof Player player) {
+                player.displayClientMessage(
+                        Component.literal("✗ Parried!")
+                                .withStyle(style -> style.withColor(0xFF5555).withBold(true)),
+                        true);
+            }
 
             attacker.level().playSound(null, attacker.getX(), attacker.getY(), attacker.getZ(),
                     SoundEvents.SHIELD_BREAK, SoundSource.PLAYERS, 0.8f, 0.8f);
 
         } catch (Exception e) {
-            sendParriedCooldown(attacker, "Move (Parried)", PARRIED_ATTACK_COOLDOWN);
+            if (attacker instanceof ServerPlayer serverPlayer) {
+                sendParriedCooldown(serverPlayer, "Move (Parried)", PARRIED_ATTACK_COOLDOWN);
+            }
         }
     }
 
-    /**
-     * Send cooldown info to client for parried attacks
-     */
     private static void sendParriedCooldown(ServerPlayer player, String moveName, int cooldownTicks) {
         try {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             buf.writeUtf(moveName);
             buf.writeInt(cooldownTicks);
-
             NetworkManager.sendToPlayer(player, COOLDOWN_PACKET_ID, buf);
         } catch (Exception ignored) {
         }
     }
 
-    private static boolean handleSuccessfulBlock(Player player, BlockingState state, float damage) {
-        // Flaw: Glass Stance — stance shatters on the first hit while blocking
-        boolean glassStance = PlayerDataProvider.getData(player).getPerkData().hasFlaw("glass_stance");
-        float stanceCost = glassStance ? Float.MAX_VALUE : 10.0f;
-        if (!StanceManager.consume(player, stanceCost)) {
-            // Out of stance - stance broken! Apply stun to the blocker
-            MobEffectInstance stunEffect = new MobEffectInstance(
-                    NichirinEffectRegistry.STUNNED.get(),
-                    60, // 3 seconds (60 ticks)
-                    0, // Amplifier
-                    false, // Ambient
-                    true, // Show particles
-                    true   // Show icon
-            );
-            player.addEffect(stunEffect);
-
-            // Stop blocking
-            stopBlocking(player);
-
-            // Send message to player
-            player.displayClientMessage(
-                    Component.literal("✗ Stance broken!")
-                            .withStyle(style -> style.withColor(0xFF5555).withBold(true)),
-                    true // Overlay message
-            );
-
-            return false; // Stance broken, take full damage
+    private static boolean handleSuccessfulBlock(LivingEntity defender, BlockingState state, float damage) {
+        // Stance cost only for players
+        if (defender instanceof Player player) {
+            boolean glassStance = PlayerDataProvider.getData(player).getPerkData().hasFlaw("glass_stance");
+            float stanceCost = glassStance ? Float.MAX_VALUE : 10.0f;
+            if (!StanceManager.consume(player, stanceCost)) {
+                MobEffectInstance stunEffect = new MobEffectInstance(
+                        NichirinEffectRegistry.STUNNED.get(),
+                        60, 0, false, true, true);
+                player.addEffect(stunEffect);
+                stopBlocking(player);
+                player.displayClientMessage(
+                        Component.literal("✗ Stance broken!")
+                                .withStyle(style -> style.withColor(0xFF5555).withBold(true)),
+                        true);
+                return false;
+            }
         }
+        // NPCs don't use stance — they always block successfully (AI controls guard duration)
 
-        // Play block clang sound and re-trigger the block animation so it snaps
-        // back to frame 0 — gives a visible "clang" jolt on the client.
-        if (player instanceof ServerPlayer serverPlayer) {
+        // Clang feedback
+        if (defender instanceof ServerPlayer serverPlayer) {
             NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer,
                     new PlayerAnimationPacket(serverPlayer.getId(), "sword.block"));
+        } else if (defender instanceof com.xirc.nichirin.common.entity.npc.BaseBreathingTrainerEntity trainer) {
+            trainer.setAnimation("sword.block", 1.0f);
         }
-        player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
+        defender.level().playSound(null, defender.getX(), defender.getY(), defender.getZ(),
                 NicirinSoundRegistry.BLOCK_CLANG.get(), SoundSource.PLAYERS, 0.9f, 1.0f);
 
-        player.displayClientMessage(
-                Component.literal("🛡 Blocked!")
-                        .withStyle(style -> style.withColor(0xAAAAAA)),
-                true
-        );
+        if (defender instanceof Player player) {
+            player.displayClientMessage(
+                    Component.literal("🛡 Blocked!")
+                            .withStyle(style -> style.withColor(0xAAAAAA)),
+                    true);
+        }
 
-        return true; // Damage reduced by blocking effect (80% resistance)
+        return true;
     }
 
-    private static void applyBlockingEffect(Player player) {
-        // Apply blocking status effect (40% slowdown + prevents sprinting)
+    private static void applyBlockingEffect(LivingEntity entity) {
         MobEffectInstance blockingEffect = new MobEffectInstance(
                 NichirinEffectRegistry.BLOCKING.get(),
-                Integer.MAX_VALUE, // Permanent while blocking
-                0, // Amplifier
-                false, // Ambient
-                false, // Show particles
-                true   // Show icon
-        );
-        player.addEffect(blockingEffect);
+                Integer.MAX_VALUE, 0, false, false, true);
+        entity.addEffect(blockingEffect);
 
-        // Apply Resistance IV (80% damage reduction)
         MobEffectInstance resistanceEffect = new MobEffectInstance(
                 MobEffects.DAMAGE_RESISTANCE,
-                Integer.MAX_VALUE, // Permanent while blocking
-                3, // Amplifier 3 = Resistance IV (80% damage reduction)
-                false, // Ambient
-                false, // Show particles
-                true   // Show icon
-        );
-        player.addEffect(resistanceEffect);
+                Integer.MAX_VALUE, 3, false, false, true);
+        entity.addEffect(resistanceEffect);
     }
 
-    private static void removeBlockingEffect(Player player) {
-        player.removeEffect(NichirinEffectRegistry.BLOCKING.get());
-        player.removeEffect(MobEffects.DAMAGE_RESISTANCE);
+    private static void removeBlockingEffect(LivingEntity entity) {
+        entity.removeEffect(NichirinEffectRegistry.BLOCKING.get());
+        entity.removeEffect(MobEffects.DAMAGE_RESISTANCE);
     }
 
-    /**
-     * Save blocking data to NBT
-     */
+    // ── NBT persistence (Player only) ────────────────────────────────
+
     public static void save(Player player, CompoundTag tag) {
         BlockingState state = BLOCKING_STATES.get(player.getUUID());
         if (state != null) {
@@ -535,28 +474,29 @@ public class KatanaBlock {
         }
     }
 
-    /**
-     * Load blocking data from NBT
-     */
     public static void load(Player player, CompoundTag tag) {
         if (tag.contains("BlockingData")) {
             CompoundTag blockingTag = tag.getCompound("BlockingData");
             BlockingState state = getOrCreateState(player);
-
             try {
                 state.stance = BlockingStance.valueOf(blockingTag.getString("stance"));
                 state.blockTicks = blockingTag.getInt("blockTicks");
                 state.parryWindowTicks = blockingTag.getInt("parryWindowTicks");
                 state.blockCooldownUntil = blockingTag.getLong("blockCooldownUntil");
-
-                // Reapply blocking effect if needed
                 if (state.stance == BlockingStance.BLOCKING || state.stance == BlockingStance.PARRY_READY) {
                     applyBlockingEffect(player);
                 }
             } catch (IllegalArgumentException e) {
-                // Invalid stance name, reset to none
                 state.reset();
             }
         }
     }
+
+    // Legacy Player-only overloads
+    public static boolean startBlocking(Player player) { return startBlocking((LivingEntity) player); }
+    public static void stopBlocking(Player player) { stopBlocking((LivingEntity) player); }
+    public static BlockingStance getStance(Player player) { return getStance((LivingEntity) player); }
+    public static boolean isBlocking(Player player) { return isBlocking((LivingEntity) player); }
+
+    public static boolean attemptParry(Player player) { return false; }
 }

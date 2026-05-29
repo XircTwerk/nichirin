@@ -301,42 +301,48 @@ public class SheathingManager {
         slot.setCooldownTicks(SLOT_COOLDOWN_TICKS);
         MoveExecutor.sendCooldownDisplay(player, "Unsheathe", GLOBAL_COOLDOWN_TICKS);
 
-        UnsheatheAttackType attackType = chooseAttack(player, slot);
-        feedback(player, "Quickdraw: " + attackType.getDisplayName(), 0x55FF55, true);
-        executeDrawAttack(player, attackType);
+        executeConditionalOrDefault(player, slot);
     }
 
-    private static UnsheatheAttackType chooseAttack(Player player, SheathSlotData slot) {
-        if (player.isSprinting()) return UnsheatheAttackType.SPRINTING_DRAW_DASH;
-        if (player.isShiftKeyDown()) return UnsheatheAttackType.CROUCHING_LOW_DRAW;
-        if (!player.onGround()) return UnsheatheAttackType.AERIAL_DRAW_SLASH;
-        return slot.getTapAttack();
-    }
+    private static final String COND_SPRINTING = "Sprinting Draw Dash";
+    private static final String COND_CROUCHING = "Crouching Low Draw";
+    private static final String COND_AERIAL = "Aerial Draw Slash";
 
-    private static void executeDrawAttack(Player player, UnsheatheAttackType type) {
-        Object attack = switch (type) {
-            case SPRINTING_DRAW_DASH -> KatanaThrustAttack.createDefault();
-            case CROUCHING_LOW_DRAW -> DrawSlashAttack.lowDraw();
-            case OVERHEAD_BACKDRAW -> KatanaOverheadAttack.createDefault();
-            case AERIAL_DRAW_SLASH -> DrawSlashAttack.aerialDraw();
-            case REVERSE_DRAW_SLASH -> DrawSlashAttack.reverseDraw();
-            case DIAGONAL_BACKDRAW -> DrawSlashAttack.diagonalDraw();
-            case DUAL_CROSS_SLASH -> DrawSlashAttack.dualCross();
-            case QUICKDRAW_SLASH -> DrawSlashAttack.quickdraw();
-        };
-        MoveExecutor.executeAttackWithInfo(player, attack, type.getDisplayName(), SLOT_COOLDOWN_TICKS);
-        if (player instanceof ServerPlayer serverPlayer) {
-            NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer, new PlayerAnimationPacket(player.getId(), drawAnimation(type)));
+    private static void executeConditionalOrDefault(Player player, SheathSlotData slot) {
+        Object attack;
+        String name;
+        String anim;
+
+        if (player.isSprinting()) {
+            attack = KatanaThrustAttack.createDefault();
+            name = COND_SPRINTING;
+            anim = "sword.thrust";
+        } else if (player.isShiftKeyDown()) {
+            attack = DrawSlashAttack.lowDraw();
+            name = COND_CROUCHING;
+            anim = "sword.check";
+        } else if (!player.onGround()) {
+            attack = DrawSlashAttack.aerialDraw();
+            name = COND_AERIAL;
+            anim = "sword.vertical";
+        } else {
+            UnsheatheAttackType type = slot.getTapAttack();
+            attack = switch (type) {
+                case OVERHEAD_BACKDRAW -> KatanaOverheadAttack.createDefault();
+                case REVERSE_DRAW_SLASH -> DrawSlashAttack.reverseDraw();
+                case DIAGONAL_BACKDRAW -> DrawSlashAttack.diagonalDraw();
+                case DUAL_CROSS_SLASH -> DrawSlashAttack.dualCross();
+                case QUICKDRAW_SLASH -> DrawSlashAttack.quickdraw();
+            };
+            name = type.getDisplayName();
+            anim = type == UnsheatheAttackType.OVERHEAD_BACKDRAW ? "sword.vertical" : "sheathing.quick_draw";
         }
-    }
 
-    private static String drawAnimation(UnsheatheAttackType type) {
-        return switch (type) {
-            case OVERHEAD_BACKDRAW, AERIAL_DRAW_SLASH -> "sword.vertical";
-            case SPRINTING_DRAW_DASH -> "sword.thrust";
-            case CROUCHING_LOW_DRAW -> "sword.check";
-            default -> "sheathing.quick_draw";
-        };
+        feedback(player, "Quickdraw: " + name, 0x55FF55, true);
+        MoveExecutor.executeAttackWithInfo(player, attack, name, SLOT_COOLDOWN_TICKS);
+        if (player instanceof ServerPlayer serverPlayer) {
+            NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer, new PlayerAnimationPacket(player.getId(), anim));
+        }
     }
 
     public static void applyClientSync(Player player, SheathPosition position, boolean enabled, int hotbarSlot,

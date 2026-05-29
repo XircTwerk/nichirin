@@ -37,6 +37,10 @@ public class NichirinModConfig implements ConfigData {
         @ConfigEntry.Gui.Tooltip
         public boolean enableParrySystem = true;
 
+        @ConfigEntry.Gui.Tooltip
+        @ConfigEntry.BoundedDiscrete(min = 1, max = 25)
+        public int npcAiLevel = 25;
+
         /** @deprecated moved to {@link StaminaConfig#staminaRegenRate}. */
         @Deprecated
         @ConfigEntry.Gui.Excluded

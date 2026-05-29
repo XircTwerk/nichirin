@@ -127,9 +127,14 @@ public class ThunderBallEntity extends Entity {
             // Only damage each entity once every 20 ticks (1 second) to prevent spam
             if (!damagedEntities.contains(entity) || this.tickCount % 20 == 0) {
                 // Create damage source
-                DamageSource damageSource = this.owner != null ?
-                        this.level().damageSources().magic() :
-                        this.level().damageSources().generic();
+                DamageSource damageSource;
+                if (this.owner instanceof net.minecraft.world.entity.player.Player p) {
+                    damageSource = this.level().damageSources().playerAttack(p);
+                } else if (this.owner instanceof LivingEntity le) {
+                    damageSource = this.level().damageSources().mobAttack(le);
+                } else {
+                    damageSource = this.level().damageSources().generic();
+                }
 
                 // Apply damage
                 entity.hurt(damageSource, damage);

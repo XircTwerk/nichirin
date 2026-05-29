@@ -71,6 +71,11 @@ public class ClientInputHandler {
 
             // For demons not holding katanas - check if vanilla would handle this interaction
             if (canPerformDemonAttacks(player, hand)) {
+                // Crouch+interact passes through to vanilla entity interaction (e.g. talk to NPCs)
+                if (isCrouchInputDown(player)) {
+                    return EventResult.pass();
+                }
+
                 // Test if vanilla would handle this interaction
                 ItemStack heldItem = player.getItemInHand(hand);
 
@@ -79,9 +84,17 @@ public class ClientInputHandler {
                     return EventResult.pass(); // Let vanilla handle it
                 }
 
-                // Vanilla won't handle it, use custom demon attack
-                sendRightClick(player);
-                return EventResult.interruptTrue(); // Block vanilla to prevent double processing
+                // Vanilla won't handle it, use custom demon slash (not high jump)
+                MultiplayerInputHandler.InputType inputType = MultiplayerInputHandler.InputType.RIGHT_CLICK;
+                try {
+                    MultiplayerInputHandler.sendInput(inputType, player);
+                } catch (Exception e) {
+                    try {
+                        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+                        NetworkManager.sendToServer(RIGHT_CLICK_ID, buf);
+                    } catch (Exception ignored) {}
+                }
+                return EventResult.interruptTrue();
             }
 
             return EventResult.pass(); // Allow normal entity interaction

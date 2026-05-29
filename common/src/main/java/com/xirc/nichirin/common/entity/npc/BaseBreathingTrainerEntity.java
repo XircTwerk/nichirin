@@ -2,6 +2,8 @@ package com.xirc.nichirin.common.entity.npc;
 
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
+import com.xirc.nichirin.common.config.NichirinModConfig;
+import com.xirc.nichirin.common.system.blocking.KatanaBlock;
 import com.xirc.nichirin.common.data.ProgressionHelper;
 import com.xirc.nichirin.common.entity.MovesetCapableNPC;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
@@ -137,6 +139,22 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
                 return (mode == TrainerMode.DUELING || mode == TrainerMode.SELF_DEFENSE) && super.canUse();
             }
         });
+        targetSelector.addGoal(2, new net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal<>(
+                this, TempleDemonEntity.class, true) {
+            @Override
+            public boolean canUse() {
+                if (mode == TrainerMode.DUELING) return false;
+                return super.canUse();
+            }
+            @Override
+            public void start() {
+                super.start();
+                if (mode == TrainerMode.PEACEFUL && getTarget() instanceof TempleDemonEntity) {
+                    mode = TrainerMode.SELF_DEFENSE;
+                    duelDifficulty = DuelDifficulty.HARD;
+                }
+            }
+        });
     }
 
     @Override
@@ -199,13 +217,8 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
         moveset.performMove(this, moveIndex);
     }
 
-    /** Multiplier applied to per-move cooldowns. Hard = 0.35x (very frequent), Easy = 1.3x (slow). */
     protected float getDifficultyCooldownScale() {
-        return switch (duelDifficulty) {
-            case EASY   -> 1.3f;
-            case MEDIUM -> 0.75f;
-            case HARD   -> 0.35f;
-        };
+        return 1.0f;
     }
 
     @Override
@@ -435,6 +448,12 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
 
     @Override
     public boolean hurt(@NotNull DamageSource source, float amount) {
+        if ((mode == TrainerMode.DUELING || mode == TrainerMode.SELF_DEFENSE)
+                && source.getEntity() instanceof LivingEntity attacker
+                && KatanaBlock.handleIncomingDamage(this, attacker, amount)) {
+            return false;
+        }
+
         if (mode == TrainerMode.DUELING) {
             // Clamp so trainer can't be killed — duel ends at DUEL_WIN_HP_THRESHOLD
             float safe = Math.min(amount, Math.max(0, getHealth() - DUEL_WIN_HP_THRESHOLD));
@@ -454,21 +473,18 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
             return super.hurt(source, amount);
         }
 
-        // PEACEFUL — provoked combat warning system
+        // PEACEFUL — first hit warns and immediately enters self-defense
         boolean result = super.hurt(source, amount);
         if (result && source.getEntity() instanceof Player attacker) {
             if (provokedWarnedBy == null || !provokedWarnedBy.equals(attacker.getUUID())) {
-                // First hit: warn
                 provokedWarnedBy = attacker.getUUID();
                 if (attacker instanceof ServerPlayer sp) {
                     sp.sendSystemMessage(
                             Component.literal(trainerType.npcName + ": Are you sure you want to do this?")
                                     .withStyle(s -> s.withColor(0xFFAA00)));
                 }
-            } else {
-                // Second hit from same player: enter self-defense
-                enterSelfDefense(attacker);
             }
+            enterSelfDefense(attacker);
         }
         return result;
     }
@@ -476,11 +492,21 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
     protected void enterSelfDefense(Player aggressor) {
         mode = TrainerMode.SELF_DEFENSE;
         duelDifficulty = DuelDifficulty.HARD;
-        provokedWarnedBy = null;
         setTarget(aggressor);
         Objects.requireNonNull(getAttribute(Attributes.MAX_HEALTH)).setBaseValue(DUEL_HP);
     }
 
+    public void raiseGuard() {
+        KatanaBlock.startBlocking(this);
+    }
+
+    public void dropGuard() {
+        KatanaBlock.stopBlocking(this);
+    }
+
+    public boolean isGuardUp() {
+        return KatanaBlock.isBlocking(this);
+    }
 
     @Override
     public void tick() {
@@ -495,6 +521,7 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
         if (level().isClientSide) return;
 
         if (duelCooldownTicks > 0) duelCooldownTicks--;
+        KatanaBlock.tick(this);
 
         if (mode == TrainerMode.DUELING && duelPlayerId != null) {
             Player duelist = level().getPlayerByUUID(duelPlayerId);
@@ -578,12 +605,32 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
     @Override protected boolean shouldDespawnInPeaceful()       { return false; }
     @Override public boolean removeWhenFarAway(double dist)     { return false; }
 
+    /**
+     * Generic combat AI for all breathing trainers that don't have a custom AttackGoal.
+     * Uses the full moveset: left-click basic attacks, wheel moves, right-click moves,
+     * dashing, backsteps, and double jumps.
+     */
     private static class TrainerDuelGoal extends MeleeAttackGoal {
+        private static final int BACKSTEP_RELEASE_DELAY = 10;
+
         private final BaseBreathingTrainerEntity trainer;
-        private int moveCooldown = 0;
+
+        private int globalCooldown     = 0;
+        private int leftClickCooldown  = 0;
+        private int backstepCooldown   = 0;
+        private int doubleJumpCooldown = 0;
+        private int thinkPauseTicks    = 0;
+        private int guardHeldTicks     = 0;
+
+        private int pendingMoveIndex   = -1;
+        private int pendingMoveDelay   = 0;
+
+        private int    stuckCheckTimer = 0;
+        private double lastDistSq      = 0;
+        private int    timesStuck      = 0;
 
         TrainerDuelGoal(BaseBreathingTrainerEntity trainer) {
-            super(trainer, 1.1, true);
+            super(trainer, 1.2, true);
             this.trainer = trainer;
             setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
         }
@@ -598,40 +645,237 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
         }
 
         @Override protected double getAttackReachSqr(@NotNull LivingEntity t) { return 9.0; }
-        @Override protected int getAttackInterval() { return 25; }
+        @Override protected int getAttackInterval() { return 10; }
+        @Override protected void checkAndPerformAttack(@NotNull LivingEntity target, double distSq) { }
 
         @Override
         public void tick() {
             super.tick();
 
-            if (trainer.moveset == null) return;
+            if (globalCooldown     > 0) globalCooldown--;
+            if (leftClickCooldown  > 0) leftClickCooldown--;
+            if (backstepCooldown   > 0) backstepCooldown--;
+            if (doubleJumpCooldown > 0) doubleJumpCooldown--;
+            if (pendingMoveDelay   > 0) pendingMoveDelay--;
+            if (thinkPauseTicks    > 0) thinkPauseTicks--;
 
-            if (moveCooldown > 0) {
-                moveCooldown--;
+            LivingEntity target = trainer.getTarget();
+            if (target == null || !target.isAlive()) return;
+
+            trainer.getLookControl().setLookAt(target, 360f, 360f);
+
+            double distSq = trainer.distanceToSqr(target);
+
+            // Reactive blocking — detect target attacking and raise guard
+            // Block check runs independently of globalCooldown so trainer can defend while on cooldown
+            if (!trainer.isGuardUp() && distSq < 6.0 * 6.0) {
+                boolean targetAttacking = target.swinging || target.attackAnim > 0
+                        || target.hurtTime > 0 && target.hurtTime < 5; // recently took damage = exchanging blows
+                if (target instanceof Player p) {
+                    targetAttacking = targetAttacking || MoveExecutor.hasActiveAttacks(p);
+                }
+                // Also proactively block sometimes when close and on cooldown
+                float ai = aiNorm();
+                if (!targetAttacking && globalCooldown > 0 && distSq < 3.5 * 3.5) {
+                    targetAttacking = trainer.getRandom().nextFloat() < 0.08f * ai;
+                }
+                if (targetAttacking) {
+                    if (trainer.getRandom().nextFloat() < 0.1f + 0.5f * ai) {
+                        trainer.raiseGuard();
+                        guardHeldTicks = 0;
+                        return;
+                    }
+                }
+            }
+            // Drop guard after a while to resume offense
+            if (trainer.isGuardUp()) {
+                guardHeldTicks++;
+                int maxGuard = 20 + trainer.getRandom().nextInt(25);
+                if (guardHeldTicks > maxGuard) {
+                    trainer.dropGuard();
+                    guardHeldTicks = 0;
+                }
+                return; // Don't attack while guarding
+            }
+
+            stuckCheckTimer++;
+            if (stuckCheckTimer >= 40) {
+                stuckCheckTimer = 0;
+                if (Math.abs(distSq - lastDistSq) < 1.0) {
+                    if (++timesStuck > 2) {
+                        trainer.getNavigation().stop();
+                        trainer.getNavigation().moveTo(target, 1.5);
+                        timesStuck = 0;
+                    }
+                } else {
+                    timesStuck = 0;
+                }
+                lastDistSq = distSq;
+            }
+
+            if (pendingMoveIndex >= 0 && pendingMoveDelay == 0) {
+                int idx = pendingMoveIndex;
+                pendingMoveIndex = -1;
+                if (trainer.moveset != null && trainer.canUseMove(idx)) {
+                    snapToFaceTarget();
+                    trainer.performMovesetMove(idx);
+                    globalCooldown = cooldownAfterMove(idx);
+                }
                 return;
             }
 
-            // Try to use a moveset move when close enough to the target
+            if (thinkPauseTicks > 0 || pendingMoveIndex >= 0) return;
+
+            if (trainer.moveset == null) return;
+
+            if (globalCooldown > 0) {
+                double approachSpeed = 1.5;
+                if (distSq > 3.5 * 3.5) trainer.getNavigation().moveTo(target, approachSpeed);
+                return;
+            }
+
+            if (!trainer.onGround() && doubleJumpCooldown == 0) {
+                com.xirc.nichirin.common.system.movement.EntityMovement.applyAirDodge(
+                        trainer, target.position().subtract(trainer.position()).normalize());
+                doubleJumpCooldown = 40;
+            }
+
+            if (trainer.onGround() && target.getY() > trainer.getY() + 2.0 && trainer.canDoubleJump()) {
+                trainer.markDoubleJumped();
+                com.xirc.nichirin.common.system.movement.EntityMovement.applyDoubleJump(
+                        trainer, target.position().subtract(trainer.position()));
+            }
+
+            // Low AI levels hesitate before attacking
+            float ai = aiNorm();
+            if (ai < 1.0f && trainer.getRandom().nextFloat() > ai) {
+                thinkPauseTicks = 8 + trainer.getRandom().nextInt(20);
+                return;
+            }
+
+            decideAction(target, distSq);
+        }
+
+        private void decideAction(LivingEntity target, double distSq) {
+            int moveCount = trainer.moveset.getMoveCount();
+
+            if (distSq < 3.5 * 3.5) {
+                // Very close — attack immediately with whatever is ready
+                if (leftClickCooldown == 0) {
+                    fireLeftClick();
+                } else if (tryRandomMove(moveCount)) {
+                    // used a move
+                } else if (trainer.canUseRightClickMove(false)) {
+                    useRightClick(false);
+                } else {
+                    // Nothing ready — left click spam
+                    if (leftClickCooldown <= 3) {
+                        fireLeftClick();
+                    } else {
+                        applyDash(target);
+                    }
+                }
+
+            } else if (distSq < 7.0 * 7.0) {
+                // Close-mid — close gap and attack
+                if (tryRandomMove(moveCount)) {
+                    // used a move
+                } else if (trainer.canUseRightClickMove(false)) {
+                    useRightClick(false);
+                } else {
+                    applyDash(target);
+                }
+
+            } else if (distSq < 15.0 * 15.0) {
+                // Mid — gap close aggressively
+                if (trainer.canUseRightClickMove(false)) {
+                    useRightClick(false);
+                } else if (tryRandomMove(moveCount)) {
+                    // used a move
+                } else {
+                    applyDash(target);
+                }
+
+            } else {
+                // Long range — close the gap
+                if (trainer.canUseRightClickMove(false)) {
+                    useRightClick(false);
+                } else {
+                    applyDash(target);
+                }
+            }
+        }
+
+        private boolean tryRandomMove(int moveCount) {
+            if (moveCount == 0) return false;
+            int start = trainer.getRandom().nextInt(moveCount);
+            for (int i = 0; i < moveCount; i++) {
+                int idx = (start + i) % moveCount;
+                if (trainer.canUseMove(idx)) {
+                    useMove(idx);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private static float aiNorm() {
+            return NichirinModConfig.get().combat.npcAiLevel / 25f;
+        }
+
+        private void fireLeftClick() {
+            if (trainer.moveset == null) return;
+            snapToFaceTarget();
+            trainer.moveset.handleLeftClick(trainer);
+            leftClickCooldown = 4;
+            globalCooldown = 2;
+        }
+
+        private void useMove(int idx) {
+            if (!trainer.canUseMove(idx)) return;
+            snapToFaceTarget();
+            trainer.performMovesetMove(idx);
+            globalCooldown = cooldownAfterMove(idx);
+        }
+
+        private void useRightClick(boolean crouching) {
+            if (!trainer.canUseRightClickMove(crouching)) return;
+            snapToFaceTarget();
+            trainer.performRightClickMove(crouching);
+            globalCooldown = 3;
+        }
+
+        private void snapToFaceTarget() {
             LivingEntity target = trainer.getTarget();
             if (target == null) return;
+            double dx = target.getX() - trainer.getX();
+            double dz = target.getZ() - trainer.getZ();
+            float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
+            trainer.setYRot(yaw);
+            trainer.yRotO = yaw;
+            trainer.setYBodyRot(yaw);
+            trainer.setYHeadRot(yaw);
+        }
 
-            double distSq = trainer.distanceToSqr(target);
-            if (distSq > 100.0) return; // Only use moves within 10 blocks
+        private void queueAfterBackstep(int idx) {
+            com.xirc.nichirin.common.system.movement.EntityMovement.applyBackstep(trainer);
+            backstepCooldown = 50;
+            pendingMoveIndex = idx;
+            pendingMoveDelay = BACKSTEP_RELEASE_DELAY;
+        }
 
-            int moveCount = trainer.moveset.getMoveCount();
-            if (moveCount == 0) return;
+        private void applyDash(LivingEntity target) {
+            net.minecraft.world.phys.Vec3 toTarget = target.position().subtract(trainer.position()).normalize();
+            com.xirc.nichirin.common.system.movement.EntityMovement.applyDash(trainer, toTarget);
+            globalCooldown = 3;
+        }
 
-            // Pick a random available move and execute it
-            int attempts = 0;
-            while (attempts < moveCount) {
-                int moveIndex = trainer.level().random.nextInt(moveCount);
-                if (trainer.canUseMove(moveIndex)) {
-                    trainer.performMovesetMove(moveIndex);
-                    moveCooldown = 40; // 2 second cooldown between moveset uses
-                    break;
-                }
-                attempts++;
-            }
+        private int cooldownAfterMove(int idx) {
+            com.xirc.nichirin.common.attack.moveset.AbstractMoveset.MoveConfiguration cfg =
+                    trainer.moveset != null ? trainer.moveset.getMove(idx) : null;
+            if (cfg == null) return 10;
+
+            return cfg.getWindupOrDefault(8) + cfg.getDurationOrDefault(15);
         }
     }
 }

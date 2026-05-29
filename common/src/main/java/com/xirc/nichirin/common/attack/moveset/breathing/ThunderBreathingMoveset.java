@@ -125,11 +125,11 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withAnimation("nichirin:heat_lightning", 9)
                         .withTiming(180, 10, 14)
                         .withDamage(4.0f) // Single hit + lightning follow-up
-                        .withRange(2.0f)
+                        .withRange(2.5f)
                         .withKnockback(0.1f) // Minimal horizontal, focuses on launch
                         .withBreathCost(30.0f)
                         .withHitStun(25) // Good combo potential
-                        .withHitboxSize(2.0f)
+                        .withHitboxSize(3.0f)
                         .withDescription("Upward slash that launches the target into the air.")
                         .withAction(entity -> {
                             HeatLightningAttack attack = new HeatLightningAttack();

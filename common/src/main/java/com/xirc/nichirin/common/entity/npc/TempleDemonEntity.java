@@ -293,8 +293,13 @@ public class TempleDemonEntity extends DemonNPCEntity {
         private int cooldownMove3     = 0;  // Grab
         private int cooldownHighJump  = 0;  // High Jump
 
-        // Slash combo tracking: if we recently did a slash, try to chain immediately
-        private int slashChainWindow = 0;
+        // Combo system: chain attacks when target is in hitstun
+        private int comboHits = 0;
+        private int comboWindow = 0;
+        private int lastComboAttack = ATTACK_NONE;
+        private static final int MAX_COMBO_LENGTH = 8;
+        private static final int COMBO_WINDOW_TICKS = 25;
+        private static final int COMBO_GLOBAL_CD = 4;
 
         // Stomp tracking: set after high jump, cleared when stomp fires
         private boolean pendingStomp = false;
@@ -322,7 +327,13 @@ public class TempleDemonEntity extends DemonNPCEntity {
             if (cooldownMove2    > 0) cooldownMove2--;
             if (cooldownMove3    > 0) cooldownMove3--;
             if (cooldownHighJump > 0) cooldownHighJump--;
-            if (slashChainWindow > 0) slashChainWindow--;
+            if (comboWindow > 0) {
+                comboWindow--;
+                if (comboWindow == 0) {
+                    comboHits = 0;
+                    lastComboAttack = ATTACK_NONE;
+                }
+            }
 
             // Auto-stomp after high jump: wait until airborne then fire stomp
             if (stompDelay > 0) {
@@ -351,6 +362,11 @@ public class TempleDemonEntity extends DemonNPCEntity {
                         timesStuck = 0;
                     }
                     lastDistanceToTarget = currentDistance;
+                }
+
+                // Drive attacks from tick() directly instead of waiting for MeleeAttackGoal's internal timer
+                if (globalCooldown <= 0 && demon.getMoveset() != null) {
+                    performAttackDecision(target);
                 }
             }
         }
@@ -384,26 +400,46 @@ public class TempleDemonEntity extends DemonNPCEntity {
 
         @Override
         protected void checkAndPerformAttack(LivingEntity target, double distanceSquared) {
-            if (target == null || !target.isAlive() || demon.getMoveset() == null) return;
-            if (!isLookingAtTarget(target)) return;
-            if (globalCooldown > 0) return;
+            // No-op: attacks are driven from tick() directly
+        }
 
-            double distance = Math.sqrt(distanceSquared);
+        private void performAttackDecision(LivingEntity target) {
+            double distance = Math.sqrt(demon.distanceToSqr(target));
             boolean targetMovingAway = isTargetMovingAway(target);
             boolean targetInAir = !target.onGround();
             boolean targetLowHp = target.getHealth() < target.getMaxHealth() * 0.4f;
 
-            if (slashChainWindow > 0 && cooldownRight == 0 && distance <= 5.0) {
-                fireRightClick();
+            int chosen;
+
+            // Combo continuation: if we're in a combo, pick a different attack to chain
+            if (comboWindow > 0 && comboHits < MAX_COMBO_LENGTH && distance <= 5.0) {
+                chosen = selectComboAttack(distance);
+            } else {
+                chosen = selectAttack(distance, targetMovingAway, targetInAir, targetLowHp);
+            }
+
+            if (chosen == ATTACK_NONE) {
+                // No attack ready — dash toward target aggressively
+                Vec3 toTarget = target.position().subtract(demon.position()).normalize();
+                com.xirc.nichirin.common.system.movement.EntityMovement.applyDash(demon, toTarget);
+                globalCooldown = 5;
                 return;
             }
 
-            int chosen = selectAttack(distance, targetMovingAway, targetInAir, targetLowHp);
-            if (chosen == ATTACK_NONE) return;
+            // Face target before attacking
+            double dx = target.getX() - demon.getX();
+            double dz = target.getZ() - demon.getZ();
+            float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
+            demon.setYRot(yaw);
+            demon.yRotO = yaw;
+            demon.setYBodyRot(yaw);
+            demon.setYHeadRot(yaw);
 
-            this.resetAttackCooldown();
             timesStuck = 0;
+            executeAttack(chosen);
+        }
 
+        private void executeAttack(int chosen) {
             switch (chosen) {
                 case ATTACK_LEFT      -> fireLeftClick();
                 case ATTACK_RIGHT     -> fireRightClick();
@@ -411,63 +447,102 @@ public class TempleDemonEntity extends DemonNPCEntity {
                 case ATTACK_GRAB      -> fireGrab();
                 default               -> fireWheelMove(chosen);
             }
+            // Start or extend combo
+            if (chosen != ATTACK_HIGH_JUMP) {
+                comboHits++;
+                comboWindow = COMBO_WINDOW_TICKS;
+                lastComboAttack = chosen;
+                // Override global cooldown with shorter combo CD
+                if (comboHits > 1) {
+                    globalCooldown = COMBO_GLOBAL_CD;
+                }
+            }
+        }
+
+        private int selectComboAttack(double distance) {
+            // Build list of available attacks, excluding the last one used
+            int[] candidates;
+            if (distance <= 3.5) {
+                candidates = new int[]{ATTACK_LEFT, ATTACK_RIGHT, 0, 2}; // gut punch, slash, kick, bite
+            } else {
+                candidates = new int[]{ATTACK_RIGHT, 0, 1}; // slash, kick, dash strike
+            }
+
+            // Shuffle to vary combos
+            for (int i = candidates.length - 1; i > 0; i--) {
+                int j = demon.getRandom().nextInt(i + 1);
+                int tmp = candidates[i];
+                candidates[i] = candidates[j];
+                candidates[j] = tmp;
+            }
+
+            for (int c : candidates) {
+                if (c == lastComboAttack) continue;
+                if (isAttackReady(c)) return c;
+            }
+            return ATTACK_NONE;
+        }
+
+        private boolean isAttackReady(int attack) {
+            return switch (attack) {
+                case ATTACK_LEFT  -> cooldownLeft == 0;
+                case ATTACK_RIGHT -> cooldownRight == 0;
+                case 0            -> cooldownMove0 == 0 && canWheelMove(0);
+                case 1            -> cooldownMove1 == 0 && canWheelMove(1);
+                case 2            -> cooldownMove2 == 0 && canWheelMove(2);
+                case 3            -> cooldownMove3 == 0 && canWheelMove(3);
+                default           -> false;
+            };
         }
 
 
         private void fireLeftClick() {
             demon.getMoveset().handleLeftClick(demon);
-            cooldownLeft   = 40;
-            globalCooldown = 25;
+            cooldownLeft   = comboWindow > 0 ? 8 : 15;
+            globalCooldown = comboWindow > 0 ? COMBO_GLOBAL_CD : 8;
         }
 
         private void fireRightClick() {
             demon.getMoveset().handleRightClick(demon, false);
-            int wasInChain = slashChainWindow;
-            if (wasInChain > 0) {
-                cooldownRight    = 60;
-                slashChainWindow = 0;
-            } else {
-                cooldownRight    = 15;
-                slashChainWindow = 25;
-            }
-            globalCooldown = 12;
+            cooldownRight  = comboWindow > 0 ? 8 : 12;
+            globalCooldown = comboWindow > 0 ? COMBO_GLOBAL_CD : 6;
         }
 
         private void fireHighJump() {
-            demon.getMoveset().handleRightClick(demon, true); // sets canStompAfterHighJump
-            cooldownHighJump = 160;
-            globalCooldown   = 5;
+            demon.getMoveset().handleRightClick(demon, true);
+            cooldownHighJump = 80;
+            globalCooldown   = 3;
             pendingStomp     = true;
-            stompDelay       = 10; // wait 10 ticks to be well airborne
+            stompDelay       = 8;
         }
 
         private void fireGrab() {
-            demon.performMovesetMove(3); // index 3 = Grab
-            cooldownMove3  = 100; // long cooldown after initiating a grab
-            globalCooldown = 15;
+            demon.performMovesetMove(3);
+            cooldownMove3  = 50;
+            globalCooldown = 8;
         }
 
         private void fireWheelMove(int moveIndex) {
             demon.performMovesetMove(moveIndex);
-            int cd = getWheelMoveCooldown(moveIndex);
+            int cd = comboWindow > 0 ? getWheelMoveCooldown(moveIndex) / 3 : getWheelMoveCooldown(moveIndex);
             switch (moveIndex) {
                 case 0 -> cooldownMove0 = cd;
                 case 1 -> cooldownMove1 = cd;
                 case 2 -> cooldownMove2 = cd;
                 case 3 -> cooldownMove3 = cd;
             }
-            globalCooldown = 30;
+            globalCooldown = comboWindow > 0 ? COMBO_GLOBAL_CD : 8;
         }
 
         private int getWheelMoveCooldown(int index) {
             AbstractMoveset.MoveConfiguration cfg = demon.getMoveset().getMove(index);
-            if (cfg != null && cfg.hasCooldown()) return cfg.getCooldown();
+            if (cfg != null && cfg.hasCooldown()) return cfg.getCooldown() / 2;
             return switch (index) {
-                case 0 -> 60;   // Kick
-                case 1 -> 80;   // Dashing Strike
-                case 2 -> 100;  // Bite
-                case 3 -> 80;   // Grab
-                default -> 60;
+                case 0 -> 25;   // Kick
+                case 1 -> 35;   // Dashing Strike
+                case 2 -> 40;   // Bite
+                case 3 -> 50;   // Grab
+                default -> 30;
             };
         }
 
