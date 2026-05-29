@@ -83,7 +83,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("thunder_swarm", "Thunder Swarm")
                         .withAnimation("nichirin:thunder_swarm", 9)
                         .withTiming(140, 12, 25) // 7 second cooldown, windup, duration
-                        .withDamage(3.0f) // 4 slashes = 24 damage total (was 8.0f = 32 total)
+                        .withDamage(3.0f)
                         .withRange(7.0f) // Large area around player
                         .withKnockback(0.4f)
                         .withBreathCost(45.0f) // Higher cost for AOE
@@ -104,7 +104,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("distant_thunder", "Distant Thunder")
                         .withAnimation("nichirin:distant_thunder", 7)
                         .withTiming(320, 7, 84) // 10 second cooldown, windup, 6 second duration
-                        .withDamage(8.0f) // 3 strikes = 27 damage over time (was 12.0f = 36 total)
+                        .withDamage(8.0f)
                         .withRange(15.0f) // Large AOE radius
                         .withKnockback(0.3f)
                         .withBreathCost(45.0f) // High cost for area denial
@@ -124,7 +124,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("heat_lightning", "Heat Lightning")
                         .withAnimation("nichirin:heat_lightning", 9)
                         .withTiming(180, 10, 14)
-                        .withDamage(4.0f) // Single hit + lightning follow-up (was 18.0f)
+                        .withDamage(4.0f) // Single hit + lightning follow-up
                         .withRange(2.0f)
                         .withKnockback(0.1f) // Minimal horizontal, focuses on launch
                         .withBreathCost(30.0f)
@@ -145,7 +145,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("rumble_flash", "Rumble and Flash")
                         .withAnimation("nichirin:rumble_flash", 8)
                         .withTiming(180, 9, 18) // 9 second cooldown, windup, duration
-                        .withDamage(7.5f) // High damage for long range precision (was 22.0f)
+                        .withDamage(7.5f)
                         .withRange(20.0f) // Very long range
                         .withKnockback(0.6f)
                         .withBreathCost(40.0f) // High cost for range and damage

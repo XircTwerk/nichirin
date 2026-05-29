@@ -224,7 +224,9 @@ public class ConstantFluxAttack extends WaterBreathingAttackBase {
 
         // Water dragon finisher sounds
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
-                SoundEvents.ENDER_DRAGON_GROWL, SoundSource.PLAYERS, 1.0f, 1.5f);
+                SoundEvents.ENDER_DRAGON_GROWL, SoundSource.PLAYERS, 2.0f, 0.8f);
+        world.playSound(null, user.getX(), user.getY(), user.getZ(),
+                SoundEvents.ENDER_DRAGON_FLAP, SoundSource.PLAYERS, 1.4f, 0.7f);
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.GENERIC_SPLASH, SoundSource.PLAYERS, 1.5f, 0.7f);
     }

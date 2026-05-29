@@ -19,7 +19,7 @@ public class StanceManager {
 
     // Stance configuration (different from stamina)
     private static final float DEFAULT_MAX_STANCE = 100f; // Lower than stamina
-    private static final float DEFAULT_REGEN_RATE = 0.8f; // Slower than stamina (was 1.2`f)
+    private static final float DEFAULT_REGEN_RATE = 0.8f; // Slower than stamina
     private static final int DEFAULT_REGEN_DELAY = 80;
     private static final float MIN_REGEN_THRESHOLD = 0.1f;
 

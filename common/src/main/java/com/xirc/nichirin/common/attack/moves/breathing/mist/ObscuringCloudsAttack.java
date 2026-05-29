@@ -4,7 +4,6 @@ import com.xirc.nichirin.common.entity.effect.PlayerCloneEntity;
 import com.xirc.nichirin.registry.NichirinEntityRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -116,11 +115,7 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
         user.setYRot(newYaw);
 
         user.setDeltaMovement(Vec3.ZERO);
-        if (user instanceof ServerPlayer sp) {
-            sp.teleportTo(initPos.x, initPos.y, initPos.z);
-        } else {
-            user.absMoveTo(initPos.x, initPos.y, initPos.z, newYaw, user.getXRot());
-        }
+        teleportSafe(new Vec3(newX, y, newZ));
 
         // Hit nearby targets every HIT_INTERVAL ticks
         if (ticksSinceWindup % 3 == 0) {

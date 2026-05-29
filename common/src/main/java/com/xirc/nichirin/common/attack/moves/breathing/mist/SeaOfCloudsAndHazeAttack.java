@@ -2,7 +2,6 @@ package com.xirc.nichirin.common.attack.moves.breathing.mist;
 
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -19,7 +18,7 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
 
     private static final int   ZIGZAG_COUNT    = 7;
     private static final int   DASH_DURATION   = 6;
-    private static final int   DASH_INTERVAL   = 5;  // ticks between hops (was 2, now more watchable)
+    private static final int   DASH_INTERVAL   = 5;  // ticks between hops
     private static final float DASH_DIST_FACTOR = 0.55f; // dashSpeed * this = blocks per hop
 
     private int     zigzagsExecuted = 0;
@@ -76,14 +75,9 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
                 double s = t * t * (3.0 - 2.0 * t); // smoothstep
                 double lerpX = dashStartPos.x + (dashEndPos.x - dashStartPos.x) * s;
                 double lerpZ = dashStartPos.z + (dashEndPos.z - dashStartPos.z) * s;
-                // Always use current Y — never lift the player off the ground
+                // Always use current Y, and stop at block collision instead of tunneling through walls.
                 double y = user.getY();
-                if (user instanceof ServerPlayer sp) {
-                    sp.teleportTo(lerpX, y, lerpZ);
-                } else {
-                    user.absMoveTo(lerpX, y, lerpZ, user.getYRot(), user.getXRot());
-                }
-                user.setDeltaMovement(Vec3.ZERO);
+                teleportSafe(new Vec3(lerpX, y, lerpZ));
             }
         }
 

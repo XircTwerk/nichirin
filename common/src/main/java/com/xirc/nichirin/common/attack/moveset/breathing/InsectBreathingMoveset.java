@@ -137,7 +137,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                         .withAnimation("nichirin:centipede", 15)
                         .withTiming(240, 20, 35) // 12 second cooldown, complex movement
                         .withDamage(14.0f) // High damage finisher
-                        .withDashSpeed(4.0f) // Multiple zigzag dashes (was 8.0f)
+                        .withDashSpeed(4.0f)
                         .withRange(2.0f)
                         .withKnockback(0.8f) // Strong finisher knockback
                         .withBreathCost(45.0f) // Expensive ultimate-level move
