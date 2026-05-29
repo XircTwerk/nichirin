@@ -62,7 +62,7 @@
 					"parent": "Blade",
 					"pivot": [0, 0, 0],
 					"cubes": [
-						{"origin": [-0.5, 11.4, 1], "size": [1, 20, 2], "inflate": 0.2, "uv": [23, 2]}
+						{"origin": [-0.5, 11.4, 1], "size": [1, 20, 2], "inflate": 0.4, "uv": [23, 2]}
 					]
 				}
 			]
