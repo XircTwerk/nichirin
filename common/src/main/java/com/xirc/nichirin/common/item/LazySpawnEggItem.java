@@ -17,11 +17,7 @@ public class LazySpawnEggItem extends SpawnEggItem {
     private final RegistrySupplier<? extends EntityType<? extends Entity>> entityTypeSupplier;
 
     public LazySpawnEggItem(RegistrySupplier<? extends EntityType<? extends Entity>> entityTypeSupplier, Properties properties) {
-        this(entityTypeSupplier, 0xFFFFFF, 0xFFFFFF, properties);
-    }
-
-    public LazySpawnEggItem(RegistrySupplier<? extends EntityType<? extends Entity>> entityTypeSupplier, int backgroundColor, int highlightColor, Properties properties) {
-        super(null, backgroundColor, highlightColor, properties);
+        super(null, 0xFFFFFF, 0xFFFFFF, properties);
         this.entityTypeSupplier = entityTypeSupplier;
     }
 

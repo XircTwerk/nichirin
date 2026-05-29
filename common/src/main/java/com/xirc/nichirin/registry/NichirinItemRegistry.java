@@ -19,7 +19,6 @@ import com.xirc.nichirin.common.item.LazySpawnEggItem;
 import com.xirc.nichirin.common.item.tool.DrinkingGourdItem;
 import com.xirc.nichirin.common.item.scroll.PerkScrollItem;
 import com.xirc.nichirin.common.item.scroll.CursedScrollItem;
-import com.xirc.nichirin.common.util.enums.BreathingStyle;
 import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
@@ -329,13 +328,13 @@ public interface NichirinItemRegistry {
 
     // Spawn eggs
     RegistrySupplier<Item> TEMPLE_DEMON_SPAWN_EGG = register("temple_demon_spawn_egg",
-            () -> new LazySpawnEggItem(NichirinEntityRegistry.TEMPLE_DEMON, 0x33213D, 0xB33549, settings()));
+            () -> new LazySpawnEggItem(NichirinEntityRegistry.TEMPLE_DEMON, settings()));
     RegistrySupplier<Item> BOAR_SPAWN_EGG = register("boar_spawn_egg",
-            () -> new LazySpawnEggItem(NichirinEntityRegistry.BOAR, 0x6B4A35, 0xD2B18A, settings()));
+            () -> new LazySpawnEggItem(NichirinEntityRegistry.BOAR, settings()));
     RegistrySupplier<Item> WATER_BREATHING_TRAINER_SPAWN_EGG = register("water_breathing_trainer_spawn_egg",
-            () -> new LazySpawnEggItem(NichirinEntityRegistry.WATER_BREATHING_TRAINER, BreathingStyle.WATER.getColor(), 0xF0D2B8, settings()));
-    RegistrySupplier<Item>  THUNDER_BREATHING_TRAINER_SPAWN_EGG = register("thunder_breathing_trainer_spawn_egg",
-            () -> new LazySpawnEggItem(NichirinEntityRegistry.THUNDER_BREATHING_TRAINER, 0xCDA287, 0x987040, settings()));
+            () -> new LazySpawnEggItem(NichirinEntityRegistry.WATER_BREATHING_TRAINER, settings()));
+    RegistrySupplier<Item> THUNDER_BREATHING_TRAINER_SPAWN_EGG = register("thunder_breathing_trainer_spawn_egg",
+            () -> new LazySpawnEggItem(NichirinEntityRegistry.THUNDER_BREATHING_TRAINER, settings()));
 
     // Perk scrolls
     RegistrySupplier<Item> PERK_SCROLL = register("perk_scroll",

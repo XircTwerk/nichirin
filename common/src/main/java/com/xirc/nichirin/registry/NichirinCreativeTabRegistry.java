@@ -1,8 +1,10 @@
 package com.xirc.nichirin.registry;
 
 import com.xirc.nichirin.BreathOfNichirin;
+import dev.architectury.registry.CreativeTabRegistry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.ItemStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,10 +49,6 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinItemRegistry.SCARLET_GEM.get());
                         entries.accept(NichirinItemRegistry.SMOKE_BOMB.get());
                         entries.accept(NichirinItemRegistry.FLASH_BOMB.get());
-                        entries.accept(NichirinItemRegistry.TEMPLE_DEMON_SPAWN_EGG.get());
-                        entries.accept(NichirinItemRegistry.BOAR_SPAWN_EGG.get());
-                        entries.accept(NichirinItemRegistry.WATER_BREATHING_TRAINER_SPAWN_EGG.get());
-                        entries.accept(NichirinItemRegistry.THUNDER_BREATHING_TRAINER_SPAWN_EGG.get());
                     })
                     .build();
         });
@@ -164,6 +162,13 @@ public interface NichirinCreativeTabRegistry {
                     })
                     .build();
         });
+
+        CreativeTabRegistry.append(CreativeModeTabs.SPAWN_EGGS,
+                NichirinItemRegistry.TEMPLE_DEMON_SPAWN_EGG,
+                NichirinItemRegistry.BOAR_SPAWN_EGG,
+                NichirinItemRegistry.WATER_BREATHING_TRAINER_SPAWN_EGG,
+                NichirinItemRegistry.THUNDER_BREATHING_TRAINER_SPAWN_EGG
+        );
 
     }
 }
