@@ -51,7 +51,9 @@ public class SheathedKatanaLayer extends RenderLayer<AbstractClientPlayer, Playe
         getParentModel().body.translateAndRotate(poseStack);
         applySlotTransform(poseStack, slot.getPosition());
         poseStack.scale(0.72f, 0.72f, 0.72f);
-        Minecraft.getInstance().getItemRenderer().renderStatic(player, stack, displayContext(slot.getPosition()),
+        ItemStack renderStack = stack.copy();
+        renderStack.getOrCreateTag().putBoolean("nichirin_sheathed_render", true);
+        Minecraft.getInstance().getItemRenderer().renderStatic(player, renderStack, displayContext(slot.getPosition()),
                 false, poseStack, buffer, player.level(), packedLight, OverlayTexture.NO_OVERLAY,
                 player.getId() + slot.getPosition().ordinal());
         poseStack.popPose();

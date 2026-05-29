@@ -8,6 +8,7 @@ import com.xirc.nichirin.client.shader.*;
 import dev.architectury.event.events.client.ClientGuiEvent;
 import com.xirc.nichirin.client.particle.*;
 import com.xirc.nichirin.client.renderer.armor.ArmorRendererManager;
+import com.xirc.nichirin.client.renderer.item.KatanaRendererManager;
 import com.xirc.nichirin.common.util.InputHandler;
 import com.xirc.nichirin.registry.NichirinKeybindRegistry;
 import com.xirc.nichirin.client.renderer.gui.BreathingBarRenderer;
@@ -98,6 +99,9 @@ public class BreathOfNichirinClient {
         try {
             // Register armor renderers EARLY - before anything else that might need them
             ArmorRendererManager.registerAll();
+
+            // Register katana item renderers (AzureLib geo models)
+            KatanaRendererManager.registerAll();
 
             // Register client tick event to monitor player state
             ClientTickEvent.CLIENT_POST.register(minecraft -> {
