@@ -30,16 +30,9 @@ public class Dash {
             return;
         }
 
-        // Calculate dash direction
-        Vec3 dashDirection = calculateDashDirection(player, input);
-
-        if (dashDirection.equals(Vec3.ZERO)) {
-            // Fallback to forward dash if no valid input
-            dashDirection = player.getLookAngle().normalize();
-        }
-
-        // Start dash
-        startDash(player, dashDirection);
+        // Start dash — direction is recomputed each tick from live look (see tickAllDashes),
+        // so the input snapshot is what gets stored, not a baked direction.
+        startDash(player, input);
 
         // Play dash sound
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
@@ -76,11 +69,13 @@ public class Dash {
     }
 
     /**
-     * Start a new dash
+     * Start a new dash. Stores the input snapshot — the actual world-space direction is
+     * recomputed each tick in {@link #tickAllDashes()} from the live look angle, so the
+     * player can STEER the dash by turning the camera.
      */
-    private static void startDash(Player player, Vec3 direction) {
+    private static void startDash(Player player, MovementContext.DashInput input) {
         DashState dashState = new DashState();
-        dashState.direction = direction;
+        dashState.input = input;
         dashState.remainingTicks = DASH_DURATION;
         dashState.force = DASH_FORCE;
 
@@ -103,8 +98,16 @@ public class Dash {
             // REDUCED AIR ACCELERATION: Much gentler when in air
             Vec3 currentVelocity = player.getDeltaMovement();
 
+            // Recompute direction LIVE from the current look angle so the player can steer
+            // mid-dash. Falls back to pure look-forward if the original input was directionless.
+            Vec3 liveDirection = calculateDashDirection(player, dashState.input);
+            if (liveDirection.equals(Vec3.ZERO)) {
+                liveDirection = player.getLookAngle().normalize();
+                liveDirection = new Vec3(liveDirection.x, 0, liveDirection.z).normalize();
+            }
+
             double forceMultiplier = player.onGround() ? 0.1 : 0.05; // Half acceleration in air
-            Vec3 dashVelocity = dashState.direction.scale(dashState.force * forceMultiplier);
+            Vec3 dashVelocity = liveDirection.scale(dashState.force * forceMultiplier);
 
             // Always additive - preserves natural momentum
             Vec3 newVelocity = new Vec3(
@@ -167,10 +170,11 @@ public class Dash {
     }
 
     /**
-     * Internal dash state tracking
+     * Internal dash state tracking. {@code input} is the snapshot of WASD-relative direction
+     * the player held when the dash started; the look angle is read live per tick.
      */
     private static class DashState {
-        Vec3 direction;
+        MovementContext.DashInput input;
         int remainingTicks;
         float force;
     }

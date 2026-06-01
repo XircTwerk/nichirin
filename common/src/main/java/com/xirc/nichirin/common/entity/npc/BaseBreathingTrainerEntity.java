@@ -69,10 +69,16 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
     protected static float peacefulHp() { return (float) NichirinModConfig.get().combat.npcPeacefulHealth; }
     /** Duel boss HP — config-tunable. */
     protected float duelHp() { return NichirinModConfig.get().combat.npcDuelHealth; }
-    /** Health floor that ends a non-lethal duel (trainer can't be killed in a spar) — config-tunable. */
-    protected static float duelWinHpThreshold() { return (float) NichirinModConfig.get().combat.npcDuelWinHpThreshold; }
-    /** Minimum health a trainer leaves a defeated opponent at (mercy) — config-tunable. */
-    protected static float playerDuelMinHp() { return (float) NichirinModConfig.get().combat.npcPlayerDuelMinHealth; }
+    /**
+     * Health floor that ends a non-lethal spar (trainer can't be killed during a spar).
+     * Breathing trainers end the spar at 20% of the duel HP — the trainer "yields" rather than dying.
+     */
+    protected float duelWinHpThreshold() { return duelHp() * 0.20f; }
+    /**
+     * Minimum health a trainer leaves a defeated opponent at (mercy). For breathing trainer
+     * spars this is 10% of the player's max — the trainer holds back to that floor.
+     */
+    protected float playerDuelMinHp(Player p) { return p.getMaxHealth() * 0.10f; }
     /** Ticks before a trainer can be challenged again after a duel — config-tunable (seconds × 20). */
     protected int duelCooldownDuration() { return NichirinModConfig.get().combat.npcDuelCooldownSeconds * 20; }
 
@@ -443,8 +449,9 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
             // If trainer is already near-dead the player is about to win — don't claim trainer wins
             if (getHealth() <= duelWinHpThreshold() + 1.0f) return false;
             float atk = (float) getAttributeValue(Attributes.ATTACK_DAMAGE);
-            if (p.getHealth() - atk <= playerDuelMinHp()) {
-                p.setHealth(playerDuelMinHp());
+            float playerFloor = playerDuelMinHp(p);
+            if (p.getHealth() - atk <= playerFloor) {
+                p.setHealth(playerFloor);
                 endDuel(false);
                 p.displayClientMessage(
                         Component.literal(trainerType.duelLoseMsg)
@@ -457,8 +464,9 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
         // half a heart and stands down rather than killing them.
         if (mode == TrainerMode.SELF_DEFENSE && target instanceof Player p) {
             float atk = (float) getAttributeValue(Attributes.ATTACK_DAMAGE);
-            if (p.getHealth() - atk <= playerDuelMinHp()) {
-                p.setHealth(playerDuelMinHp());
+            float playerFloor = playerDuelMinHp(p);
+            if (p.getHealth() - atk <= playerFloor) {
+                p.setHealth(playerFloor);
                 standDownFromSelfDefense(p);
                 return false;
             }
@@ -495,9 +503,11 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
             return super.hurt(source, amount);
         }
 
-        // PEACEFUL — first hit warns and immediately enters self-defense
+        // PEACEFUL — first hit warns and immediately enters self-defense.
+        // Creative-mode players are running tests / sandbox; skip the dialogue and the
+        // self-defense escalation entirely so they can poke at trainers without spam.
         boolean result = super.hurt(source, amount);
-        if (result && source.getEntity() instanceof Player attacker) {
+        if (result && source.getEntity() instanceof Player attacker && !attacker.isCreative()) {
             if (provokedWarnedBy == null || !provokedWarnedBy.equals(attacker.getUUID())) {
                 provokedWarnedBy = attacker.getUUID();
                 if (attacker instanceof ServerPlayer sp) {

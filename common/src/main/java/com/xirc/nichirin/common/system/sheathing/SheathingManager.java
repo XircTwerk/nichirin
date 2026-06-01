@@ -25,6 +25,11 @@ public class SheathingManager {
     public static final int GLOBAL_COOLDOWN_TICKS = 80;
     public static final int SLOT_COOLDOWN_TICKS = 35;
     public static final float DRAW_ATTACK_STAMINA_COST = 10.0f;
+    /**
+     * Releasing the sheathe key after this many ticks of holding counts as "just unsheathe"
+     * (plain draw, no quickdraw attack, no stamina cost). Below this it's a quickdraw tap.
+     */
+    public static final int HOLD_UNSHEATHE_THRESHOLD_TICKS = 8;
 
     private static final Map<UUID, PlayerSheathData> PLAYER_DATA = new ConcurrentHashMap<>();
     private static final Map<UUID, String> LAST_SYNC = new ConcurrentHashMap<>();
@@ -169,7 +174,8 @@ public class SheathingManager {
                     if (slot.getState() == SheathState.SHEATHING) {
                         slot.setState(SheathState.SHEATHED);
                     } else {
-                        finishUnsheathe(player, data, slot);
+                        // Legacy slow-transition completion: preserve original quickdraw-on-finish behavior.
+                        finishUnsheathe(player, data, slot, true);
                     }
                 }
             }
@@ -213,7 +219,9 @@ public class SheathingManager {
         if (charging != null) {
             SheathSlotData slot = data.getSlot(charging);
             data.setChargingSlot(null);
-            startUnsheathe(player, data, slot);
+            // Tap (release fast) → quickdraw attack. Hold (release after threshold) → just draw.
+            boolean attackOnUnsheathe = heldTicks < HOLD_UNSHEATHE_THRESHOLD_TICKS;
+            startUnsheathe(player, data, slot, attackOnUnsheathe);
             return;
         }
 
@@ -263,7 +271,8 @@ public class SheathingManager {
         feedback(player, "Sheathing: " + slot.getPosition().getDisplayName(), 0xFFE0A6, false);
     }
 
-    private static void startUnsheathe(ServerPlayer player, PlayerSheathData data, SheathSlotData slot) {
+    private static void startUnsheathe(ServerPlayer player, PlayerSheathData data, SheathSlotData slot,
+                                       boolean attackOnUnsheathe) {
         if (slot == null || slot.getState() != SheathState.SHEATHED) return;
         if (data.getGlobalCooldownTicks() > 0) {
             feedback(player, "Quickdraw cooldown (" + formatSeconds(data.getGlobalCooldownTicks()) + "s)", 0xFF5555, false);
@@ -281,16 +290,18 @@ public class SheathingManager {
             feedback(player, "Hotbar " + (slot.getLinkedHotbarSlot() + 1) + " must be empty to draw!", 0xFF5555, false);
             return;
         }
-        if (!StaminaManager.consume(player, DRAW_ATTACK_STAMINA_COST)) {
+        // Stamina cost applies only to the quickdraw (attack) path. A plain hold-unsheathe is free.
+        if (attackOnUnsheathe && !StaminaManager.consume(player, DRAW_ATTACK_STAMINA_COST)) {
             feedback(player, "Not enough stamina to quickdraw!", 0xFF5555, false);
             return;
         }
 
         player.getInventory().selected = slot.getLinkedHotbarSlot();
-        finishUnsheathe(player, data, slot);
+        finishUnsheathe(player, data, slot, attackOnUnsheathe);
     }
 
-    private static void finishUnsheathe(Player player, PlayerSheathData data, SheathSlotData slot) {
+    private static void finishUnsheathe(Player player, PlayerSheathData data, SheathSlotData slot,
+                                        boolean attackOnUnsheathe) {
         if (slot.hasStoredSword() && player.getInventory().getItem(slot.getLinkedHotbarSlot()).isEmpty()) {
             player.getInventory().setItem(slot.getLinkedHotbarSlot(), slot.getStoredSword());
             slot.setStoredSword(ItemStack.EMPTY);
@@ -301,7 +312,12 @@ public class SheathingManager {
         slot.setCooldownTicks(SLOT_COOLDOWN_TICKS);
         MoveExecutor.sendCooldownDisplay(player, "Unsheathe", GLOBAL_COOLDOWN_TICKS);
 
-        executeConditionalOrDefault(player, slot);
+        if (attackOnUnsheathe) {
+            executeConditionalOrDefault(player, slot);
+        } else {
+            // Plain unsheathe — no attack, no animation, just the katana lands in your hand.
+            feedback(player, "Unsheathed " + slot.getPosition().getDisplayName(), 0x88BBFF, true);
+        }
     }
 
     private static final String COND_SPRINTING = "Sprinting Draw Dash";

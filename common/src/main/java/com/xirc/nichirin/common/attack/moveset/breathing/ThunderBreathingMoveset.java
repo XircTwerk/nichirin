@@ -3,23 +3,17 @@ package com.xirc.nichirin.common.attack.moveset.breathing;
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.breathing.thunder.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
-import com.xirc.nichirin.common.network.s2c.MovesetConfigSyncPacket;
 import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
 import com.xirc.nichirin.common.util.EntityResources;
-import com.xirc.nichirin.registry.NichirinPacketRegistry;
-import dev.architectury.networking.NetworkManager;
-import io.netty.buffer.Unpooled;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.AABB;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import net.minecraft.world.phys.AABB;
 
 public class ThunderBreathingMoveset extends AbstractMoveset {
 
@@ -29,41 +23,59 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
 
     public ThunderBreathingMoveset() {
         super("thunder_breathing", "Thunder Breathing", MovesetType.BREATHING, createBuilder());
-        captureInitialConfigs();
-    }
-
-    private void captureInitialConfigs() {
-        createAndCaptureThunderclapFlashConfig();
-    }
-
-    private void createAndCaptureThunderclapFlashConfig() {
-        MoveConfiguration tempConfig = new MoveBuilder("thunderclap_flash", "Thunderclap and Flash")
-                .withAnimation("nichirin:thunderclap_flash", 10)
-                .withTiming(0, 1, 11)
-                .withDamage(7.0f)
-                .withTeleportDistance(12.0f)
-                .withKnockback(0.2f)
-                .withBreathCost(12.0f)
-                .withHitStun(14)
-                .withHitboxSize(2.0f)
-                .withDescription("Teleport dash forward, hitting anything in the way.")
-                .build();
-        this.captureRightClickConfig(tempConfig, false);
     }
 
     private static MovesetBuilder createBuilder() {
+        // Both right-click and crouch right-click run the same Thunder Clap Flash attack — only
+        // the dash direction differs (setTurnBackwards).
         return new MovesetBuilder()
                 .withIdleAnimation("nichirin:thunder_idle")
                 .withSpeedMultiplier(1.5f)
 
-                // SKIP INDEX 0 - Thunder Clap Flash is right-click only, not in attack wheel
+                .withRightClickMove(new MoveBuilder("thunderclap_flash", "Thunderclap and Flash")
+                        .withAnimation("nichirin:thunderclap_flash", 10)
+                        .withTiming(0, 1, 11)
+                        .withDamage(7.0f)
+                        .withTeleportDistance(12.0f)
+                        .withKnockback(0.2f)
+                        .withBreathCost(12.0f)
+                        .withHitStun(14)
+                        .withHitboxSize(2.0f)
+                        .withDescription("Teleport dash forward, hitting anything in the way.")
+                        .withAction(entity -> {
+                            ThunderClapFlashAttack attack = new ThunderClapFlashAttack();
+                            attack.setTurnBackwards(false);
+                            ThunderBreathingMoveset moveset = getCurrentMoveset();
+                            if (moveset != null) attack.configure(moveset.getRightClickConfiguration());
+                            MoveExecutor.executeAttack(entity, attack, "thunder_breathing", "thunderclap_flash");
+                        })
+                )
+
+                .withCrouchRightClickMove(new MoveBuilder("thunderclap_flash_backwards", "Thunderclap and Flash (Backwards)")
+                        .withAnimation("nichirin:thunderclap_flash", 10)
+                        .withTiming(0, 1, 11)
+                        .withDamage(7.0f)
+                        .withTeleportDistance(12.0f)
+                        .withKnockback(0.2f)
+                        .withBreathCost(12.0f)
+                        .withHitStun(14)
+                        .withHitboxSize(2.0f)
+                        .withDescription("Teleport dash backward, hitting anything in the way.")
+                        .withAction(entity -> {
+                            ThunderClapFlashAttack attack = new ThunderClapFlashAttack();
+                            attack.setTurnBackwards(true);
+                            ThunderBreathingMoveset moveset = getCurrentMoveset();
+                            if (moveset != null) attack.configure(moveset.getCrouchRightClickConfiguration());
+                            MoveExecutor.executeAttack(entity, attack, "thunder_breathing", "thunderclap_flash");
+                        })
+                )
 
                 // Second Form: Rice Spirit - 5 quick slashes (INDEX 0 in wheel)
                 .withMove(new MoveBuilder("rice_spirit", "Rice Spirit")
                         .withAnimation("nichirin:rice_spirit", 8)
-                        .withTiming(120, 8, 84) // 5 second cooldown, windup, duration
+                        .withTiming(120, 8, 84)
                         .withDamage(2.0f)
-                        .withRange(10.0f) // Medium range
+                        .withRange(10.0f)
                         .withKnockback(0.2f)
                         .withBreathCost(30.0f)
                         .withHitStun(4)
@@ -72,9 +84,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withAction(entity -> {
                             RiceSpiritAttack attack = new RiceSpiritAttack();
                             ThunderBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) {
-                                attack.configure(moveset.getMove(0));
-                            }
+                            if (moveset != null) attack.configure(moveset.getMove(0));
                             MoveExecutor.executeAttack(entity, attack, "thunder_breathing", "rice_spirit");
                         })
                 )
@@ -82,20 +92,18 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 // Third Form: Thunder Swarm - AOE slashes (INDEX 1 in wheel)
                 .withMove(new MoveBuilder("thunder_swarm", "Thunder Swarm")
                         .withAnimation("nichirin:thunder_swarm", 9)
-                        .withTiming(140, 12, 25) // 7 second cooldown, windup, duration
+                        .withTiming(140, 12, 25)
                         .withDamage(3.0f)
-                        .withRange(7.0f) // Large area around player
+                        .withRange(7.0f)
                         .withKnockback(0.4f)
-                        .withBreathCost(45.0f) // Higher cost for AOE
+                        .withBreathCost(45.0f)
                         .withHitStun(14)
-                        .withHitboxSize(2.5f) // Large hitbox for AOE
+                        .withHitboxSize(2.5f)
                         .withDescription("4 AOE slashes around the player in quick succession.")
                         .withAction(entity -> {
                             ThunderSwarmAttack attack = new ThunderSwarmAttack();
                             ThunderBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) {
-                                attack.configure(moveset.getMove(1));
-                            }
+                            if (moveset != null) attack.configure(moveset.getMove(1));
                             MoveExecutor.executeAttack(entity, attack, "thunder_breathing", "thunder_swarm");
                         })
                 )
@@ -103,19 +111,17 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 // Fourth Form: Distant Thunder - Lightning over time (INDEX 2 in wheel)
                 .withMove(new MoveBuilder("distant_thunder", "Distant Thunder")
                         .withAnimation("nichirin:distant_thunder", 7)
-                        .withTiming(320, 7, 84) // 10 second cooldown, windup, 6 second duration
+                        .withTiming(320, 7, 84)
                         .withDamage(8.0f)
-                        .withRange(15.0f) // Large AOE radius
+                        .withRange(15.0f)
                         .withKnockback(0.3f)
-                        .withBreathCost(45.0f) // High cost for area denial
+                        .withBreathCost(45.0f)
                         .withHitStun(25)
                         .withDescription("Calls down 3 delayed lightning strikes over a large area.")
                         .withAction(entity -> {
                             DistantThunderAttack attack = new DistantThunderAttack();
                             ThunderBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) {
-                                attack.configure(moveset.getMove(2));
-                            }
+                            if (moveset != null) attack.configure(moveset.getMove(2));
                             MoveExecutor.executeAttack(entity, attack, "thunder_breathing", "distant_thunder");
                         })
                 )
@@ -124,19 +130,17 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("heat_lightning", "Heat Lightning")
                         .withAnimation("nichirin:heat_lightning", 9)
                         .withTiming(180, 10, 14)
-                        .withDamage(4.0f) // Single hit + lightning follow-up
+                        .withDamage(4.0f)
                         .withRange(2.5f)
-                        .withKnockback(0.1f) // Minimal horizontal, focuses on launch
+                        .withKnockback(0.1f)
                         .withBreathCost(30.0f)
-                        .withHitStun(25) // Good combo potential
+                        .withHitStun(25)
                         .withHitboxSize(3.0f)
                         .withDescription("Upward slash that launches the target into the air.")
                         .withAction(entity -> {
                             HeatLightningAttack attack = new HeatLightningAttack();
                             ThunderBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) {
-                                attack.configure(moveset.getMove(3));
-                            }
+                            if (moveset != null) attack.configure(moveset.getMove(3));
                             MoveExecutor.executeAttack(entity, attack, "thunder_breathing", "heat_lightning");
                         })
                 )
@@ -144,19 +148,17 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 // Sixth Form: Rumble and Flash - Long range precision (INDEX 4 in wheel)
                 .withMove(new MoveBuilder("rumble_flash", "Rumble and Flash")
                         .withAnimation("nichirin:rumble_flash", 8)
-                        .withTiming(180, 9, 18) // 9 second cooldown, windup, duration
+                        .withTiming(180, 9, 18)
                         .withDamage(7.5f)
-                        .withRange(20.0f) // Very long range
+                        .withRange(20.0f)
                         .withKnockback(0.6f)
-                        .withBreathCost(40.0f) // High cost for range and damage
-                        .withHitStun(35) // Good stun for follow-up
+                        .withBreathCost(40.0f)
+                        .withHitStun(35)
                         .withDescription("Long-range dash slash with 20-block reach.")
                         .withAction(entity -> {
                             RumbleFlashAttack attack = new RumbleFlashAttack();
                             ThunderBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) {
-                                attack.configure(moveset.getMove(4));
-                            }
+                            if (moveset != null) attack.configure(moveset.getMove(4));
                             MoveExecutor.executeAttack(entity, attack, "thunder_breathing", "rumble_flash");
                         })
                 )
@@ -164,20 +166,18 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 // Seventh Form: Honoikazuchi no Kami - Ultimate finisher (INDEX 5 in wheel)
                 .withMove(new MoveBuilder("honoikazuchi_no_kami", "Honoikazuchi no Kami")
                         .withAnimation("nichirin:honoikazuchi_no_kami", 15)
-                        .withTiming(600, 120, 7) // 30 second cooldown, windup, execution
-                        .withDamage(48.0f) // Very high damage ultimate
-                        .withTeleportDistance(20.0f) // Long dash
-                        .withKnockback(2.0f) // High knockback
-                        .withBreathCost(70.0f) // Very expensive ultimate
-                        .withHitStun(60) // 3 second stun
-                        .withHitboxSize(3.5f) // Large hitbox for ultimate
+                        .withTiming(600, 120, 7)
+                        .withDamage(48.0f)
+                        .withTeleportDistance(20.0f)
+                        .withKnockback(2.0f)
+                        .withBreathCost(70.0f)
+                        .withHitStun(60)
+                        .withHitboxSize(3.5f)
                         .withDescription("Massive-damage teleport slash. 30-second cooldown.")
                         .withAction(entity -> {
                             HonoikazuchiNoKamiAttack attack = new HonoikazuchiNoKamiAttack();
                             ThunderBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) {
-                                attack.configure(moveset.getMove(5));
-                            }
+                            if (moveset != null) attack.configure(moveset.getMove(5));
                             MoveExecutor.executeAttack(entity, attack, "thunder_breathing", "honoikazuchi_no_kami");
                         })
                 );
@@ -188,29 +188,21 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
         return 6;
     }
 
+    /** Breathing movesets pace themselves inside their attack classes — skip auto-stun. */
+    @Override
+    protected boolean shouldAutoStunClickMoves() {
+        return false;
+    }
+
     @Override
     public boolean handleRightClick(LivingEntity entity, boolean isCrouching) {
-        createAndCaptureThunderclapFlashConfig();
-        MoveConfiguration tempConfig = getRightClickConfiguration();
-        if (tempConfig == null) return false;
-        if (!canPerformMoves(entity) || !hasResourcesForMove(entity, tempConfig)) return true;
-
-        if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer) {
-            MovesetConfigSyncPacket packet = new MovesetConfigSyncPacket(
-                    "thunder_breathing",
-                    this.getRightClickConfiguration(),
-                    this.getCrouchRightClickConfiguration()
-            );
-            NichirinPacketRegistry.sendToPlayer(packet, serverPlayer);
+        if (!canPerformMoves(entity)) return true;
+        CURRENT_MOVESET.set(this);
+        try {
+            return super.handleRightClick(entity, isCrouching);
+        } finally {
+            CURRENT_MOVESET.remove();
         }
-
-        triggerAnimation(entity, "thunderclap_flash");
-        ThunderClapFlashAttack attack = new ThunderClapFlashAttack();
-        attack.setTurnBackwards(isCrouching);
-        attack.configure(tempConfig);
-        MoveExecutor.executeAttack(entity, attack, "thunder_breathing", "thunderclap_flash");
-        onMovePerformed(entity, -1, isCrouching);
-        return true;
     }
 
     @Override
@@ -340,5 +332,4 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
         entityCooldowns.remove(entity.getUUID());
         executingMove.remove(entity.getUUID());
     }
-
 }

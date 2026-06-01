@@ -47,6 +47,9 @@ public class WaterBreathingTrainerEntity extends BaseBreathingTrainerEntity {
         this.maxStamina            = 100.0f;
         this.breathRegenMultiplier = 2.0f;
         this.dispatcher            = new WaterBreathingTrainerDispatcher(this);
+        // Dead Calm (index 8) is Giyu's signature — blacklist it on the trainer.
+        // Players still get access to the move; only the NPC AI can't pick it.
+        this.blacklistedMoves.add(8);
     }
 
     public static AttributeSupplier.Builder createAttributes() {

@@ -75,10 +75,37 @@ public class TempleDemonEntity extends DemonNPCEntity {
         this.goalSelector.addGoal(4, new WaterAvoidingRandomStrollGoal(this, 1.0));
         this.goalSelector.addGoal(5, new RandomLookAroundGoal(this));
 
-        this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
-        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false, null));
+        // HurtByTargetGoal with a kin filter: retaliate against anything that hits us, but
+        // don't ever turn on fellow demons (other DemonNPCs or demon players).
+        // alertSameType=false (the no-vararg HurtByTargetGoal default) prevents pack escalation.
+        this.targetSelector.addGoal(1, new HurtByTargetGoal(this) {
+            @Override
+            public boolean canContinueToUse() {
+                if (TempleDemonEntity.this.getTarget() != null
+                        && isDemonKin(TempleDemonEntity.this.getTarget())) {
+                    TempleDemonEntity.this.setTarget(null);
+                    return false;
+                }
+                return super.canContinueToUse();
+            }
+        });
+        // Auto-target players ONLY if they aren't demons themselves — fellow demons are neutral.
+        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
+                entity -> !(entity instanceof Player p) || !com.xirc.nichirin.common.system.DemonManager.isDemon(p)));
+        // Auto-target hostile mobs, excluding any kind of demon (TempleDemon or future demon entities).
         this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Monster.class, 10, true, false,
-                entity -> !(entity instanceof TempleDemonEntity)));
+                entity -> !isDemonKin(entity)));
+    }
+
+    /**
+     * Whether {@code entity} is a "demon" for the purposes of intra-kind neutrality:
+     * any DemonNPCEntity (TempleDemon and future demon variants) or any player with the
+     * demon moveset assigned.
+     */
+    private static boolean isDemonKin(net.minecraft.world.entity.Entity entity) {
+        if (entity instanceof DemonNPCEntity) return true;
+        if (entity instanceof Player p) return com.xirc.nichirin.common.system.DemonManager.isDemon(p);
+        return false;
     }
 
     public static AttributeSupplier.Builder createAttributes() {

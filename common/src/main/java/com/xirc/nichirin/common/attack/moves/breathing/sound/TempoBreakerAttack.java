@@ -119,11 +119,10 @@ public class TempoBreakerAttack extends SoundBreathingAttackBase {
                     }
 
                     if (explosion.ticksRemaining <= 0) {
-                        if (explosion.target != null && explosion.target.isAlive()) {
-                            createTNTExplosion(explosion.target.position());
-                        } else {
-                            createTNTExplosion(explosion.position);
-                        }
+                        // Detonate at the marked position, NOT the target's current position —
+                        // otherwise the marker (flames at `explosion.position`) and the actual
+                        // explosion disagree whenever the target moves after being hit.
+                        createTNTExplosion(explosion.position);
                         return true;
                     }
 
@@ -158,7 +157,7 @@ public class TempoBreakerAttack extends SoundBreathingAttackBase {
     private void createTNTExplosion(Vec3 position) {
         if (world.isClientSide) return;
 
-        world.explode(null, position.x, position.y, position.z, 1.5f, ExplosionInteraction.NONE);
+        world.explode(null, position.x, position.y, position.z, 3.5f, ExplosionInteraction.NONE);
 
         if (world instanceof ServerLevel serverLevel) {
             serverLevel.sendParticles(ParticleTypes.EXPLOSION_EMITTER,
@@ -268,11 +267,8 @@ public class TempoBreakerAttack extends SoundBreathingAttackBase {
             }
 
             if (explosion.ticksRemaining <= 0) {
-                if (explosion.target.isAlive()) {
-                    createGlobalTNTExplosion(explosion.target.level(), explosion.target.position());
-                } else {
-                    createGlobalTNTExplosion(explosion.target.level(), explosion.position);
-                }
+                // Detonate at the marked position so the warning marker matches the boom.
+                createGlobalTNTExplosion(explosion.target.level(), explosion.position);
                 return true;
             }
 
@@ -298,7 +294,7 @@ public class TempoBreakerAttack extends SoundBreathingAttackBase {
     private static void createGlobalTNTExplosion(Level world, Vec3 position) {
         if (world.isClientSide) return;
 
-        world.explode(null, position.x, position.y, position.z, 3.0f,
+        world.explode(null, position.x, position.y, position.z, 5.0f,
                 ExplosionInteraction.NONE);
 
         if (world instanceof ServerLevel serverLevel) {

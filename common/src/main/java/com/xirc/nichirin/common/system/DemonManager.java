@@ -40,10 +40,12 @@ public class DemonManager {
     }
 
     /**
-     * Gets blood points for a player
+     * Gets blood points for a player. New demons spawn with one blood point below the
+     * configured max — see project rules: "when you're a demon you spawn at 1 less than max blood".
      */
     public static int getBloodPoints(Player player) {
-        return playerBloodPoints.getOrDefault(player.getUUID(), NichirinModConfig.get().demon.maxBloodPoints);
+        int max = NichirinModConfig.get().demon.maxBloodPoints;
+        return playerBloodPoints.getOrDefault(player.getUUID(), Math.max(0, max - 1));
     }
 
     /**
@@ -216,21 +218,15 @@ public class DemonManager {
         }
     }
 
+    /**
+     * Periodic blood drain is disabled by design: demons should ONLY lose blood from taking
+     * damage. The config flag {@code demon.bloodDrainEnabled} is left in place so a server
+     * owner could re-enable it via mixin / fork, but the tick handler no longer triggers it.
+     * Kept as a no-op (rather than deleted) so save data with {@code lastBloodDrainTick}
+     * keys still loads cleanly.
+     */
     private static void handleBloodDrain(Player player) {
-        NichirinModConfig cfg = NichirinModConfig.get();
-        if (!cfg.demon.bloodDrainEnabled) return;
-        if (player.level().getDifficulty() == Difficulty.PEACEFUL && cfg.demon.peacefulModeMaxBlood) return;
-        if (player.isCreative()) return;
-
-        UUID uuid = player.getUUID();
-        long now = player.level().getGameTime();
-        long interval = (long) cfg.demon.bloodDrainIntervalSeconds * 20L;
-
-        long last = lastBloodDrainTick.getOrDefault(uuid, 0L);
-        if (now - last >= interval) {
-            removeBloodPoints(player, 1);
-            lastBloodDrainTick.put(uuid, now);
-        }
+        // intentionally empty — blood is now lost only from damage, see DemonFoodHandler.
     }
 
     /**

@@ -40,7 +40,6 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
 
     // Stat sources for the click attacks (slash combo, double slash, rising slash).
     // Edit these to tune the attacks — the values here override the attack-class defaults.
-    // withTiming(cooldown, windup, duration); windup->startup, duration->active.
     private static final MoveConfiguration SLASH1_CONFIG = new MoveBuilder("slash", "Slash")
             .withTiming(0, 0, 7).withDamage(4.0f).withRange(2.5f).withKnockback(0.3f).withHitboxSize(2.0f).withHitStun(5).build();
     private static final MoveConfiguration SLASH2_CONFIG = new MoveBuilder("slash", "Slash")
@@ -204,6 +203,14 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
 
             if (config.animationId != null) {
                 triggerAnimation(entity, config.animationId.getPath());
+            }
+
+            // Executing a wheel move breaks the slash-combo chain — pressing M1 after this
+            // starts a fresh Slash, not Slash2.
+            ComboState combo = comboStates.get(entity.getUUID());
+            if (combo != null) {
+                combo.comboCount = 0;
+                combo.lastAttackTime = 0;
             }
 
             config.startAction.accept(entity);

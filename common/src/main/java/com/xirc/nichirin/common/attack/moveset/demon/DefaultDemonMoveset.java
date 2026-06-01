@@ -9,12 +9,8 @@ import com.xirc.nichirin.common.attack.moves.demon.basic.DemonKickAttack;
 import com.xirc.nichirin.common.attack.moves.demon.basic.DemonSlashAttack;
 import com.xirc.nichirin.common.attack.moves.demon.basic.DemonStompAttack;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
-import com.xirc.nichirin.common.system.GrabManager;
-import com.xirc.nichirin.common.entity.MovesetCapableNPC;
-import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
 import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
-import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -32,9 +28,63 @@ import java.util.UUID;
  * - Left-click: Gut Punch
  * - Right-click: 2-stage Slash combo
  * - Crouch + Right-click: High Jump (then crouch again mid-air for Stomp)
- * - Wheel moves: Kick, Dashing Strike, Bite
+ * - Wheel moves: Kick, Dashing Strike, Bite, Grab
  */
 public class DefaultDemonMoveset extends AbstractMoveset {
+
+    // ── Click-move stat sources ──
+    // ONE declaration per move. Both the builder (so AbstractMoveset can resolve
+    // getLeftClickConfiguration() etc.) and the custom handlers below read from these constants —
+    // no duplicated stats, no drift bugs.
+    private static final MoveConfiguration GUT_PUNCH_CONFIG = new MoveBuilder("demon_gut_punch", "Gut Punch")
+            .withAnimation("nichirin:demon_gut_punch", 6)
+            .withTiming(15, 1, 7)
+            .withDamage(6.0f)
+            .withRange(2.0f)
+            .withKnockback(0.1f)
+            .withHitStun(15)
+            .withHitboxSize(2.8f)
+            .withDescription("Powerful close-range punch that stuns enemies")
+            .build();
+
+    private static final MoveConfiguration SLASH_1_CONFIG = new MoveBuilder("demon_slash", "Slash")
+            .withAnimation("nichirin:demon_slash", 6)
+            .withTiming(0, 0, 14)
+            .withDamage(4.0f)
+            .withRange(3.0f)
+            .withKnockback(0f)
+            .withHitStun(10)
+            .withHitboxSize(2.0f)
+            .withDescription("Basic claw slash — press again for finisher")
+            .build();
+
+    private static final MoveConfiguration SLASH_2_CONFIG = new MoveBuilder("demon_slash_2", "Slash Finisher")
+            .withAnimation("nichirin:demon_slash_2", 6)
+            .withTiming(5, 0, 18)
+            .withDamage(6.0f)
+            .withRange(3.0f)
+            .withKnockback(0.5f)
+            .withHitStun(5)
+            .withHitboxSize(2.2f)
+            .withDescription("Finishing slash after the initial claw")
+            .build();
+
+    private static final MoveConfiguration HIGH_JUMP_CONFIG = new MoveBuilder("high_jump", "High Jump")
+            .withAnimation("nichirin:demon_high_jump", 8)
+            .withTiming(220, 0, 4)
+            .withDescription("Launch into the air, crouch mid-air to stomp down")
+            .build();
+
+    private static final MoveConfiguration STOMP_CONFIG = new MoveBuilder("demon_stomp", "Stomp")
+            .withAnimation("nichirin:demon_stomp", 6)
+            .withTiming(60, 0, 11)
+            .withDamage(10.0f)
+            .withRange(4.0f)
+            .withKnockback(0.8f)
+            .withHitStun(30)
+            .withHitboxSize(3.0f)
+            .withDescription("Stomp down on enemies after high jumping")
+            .build();
 
     private static final Map<UUID, Map<Integer, Long>> entityCooldowns = new HashMap<>();
     private static final Map<UUID, Boolean> executingHighJump = new HashMap<>();
@@ -80,33 +130,10 @@ public class DefaultDemonMoveset extends AbstractMoveset {
                 .withIdleAnimation("nichirin:demon_idle")
                 .withSpeedMultiplier(1.05f)
 
-                .withLeftClickMove(new MoveBuilder("demon_gut_punch", "Gut Punch")
-                        .withAnimation("nichirin:demon_gut_punch", 6)
-                        .withTiming(15, 1, 7)
-                        .withDamage(8.0f)
-                        .withRange(2.0f)
-                        .withKnockback(0.1f)
-                        .withHitStun(15)
-                        .withHitboxSize(2.8f)
-                        .withDescription("Powerful close-range punch that stuns enemies")
-                )
-
-                .withRightClickMove(new MoveBuilder("demon_slash", "Slash")
-                        .withAnimation("nichirin:demon_slash", 6)
-                        .withTiming(0, 0, 14)
-                        .withDamage(4.0f)
-                        .withRange(3.0f)
-                        .withKnockback(0f)
-                        .withHitStun(15)
-                        .withHitboxSize(2.0f)
-                        .withDescription("Basic claw slash - press again for finisher")
-                )
-
-                .withCrouchRightClickMove(new MoveBuilder("high_jump", "High Jump")
-                        .withAnimation("nichirin:demon_high_jump", 8)
-                        .withTiming(220, 0, 4)
-                        .withDescription("Launch into the air, crouch mid-air to stomp down")
-                )
+                // Click moves: stats come from the static MoveConfiguration constants above.
+                .withLeftClickMove(GUT_PUNCH_CONFIG)
+                .withRightClickMove(SLASH_1_CONFIG)
+                .withCrouchRightClickMove(HIGH_JUMP_CONFIG)
 
                 .withMove(new MoveBuilder("demon_kick", "Kick")
                         .withAnimation("nichirin:demon_kick", 8)
@@ -175,20 +202,17 @@ public class DefaultDemonMoveset extends AbstractMoveset {
         if (entity.level().isClientSide) return false;
         if (entity.hasEffect(NichirinEffectRegistry.STUNNED.get())) return true;
         if (!canUseMove(entity, -3)) {
-            if (entity instanceof Player player) showCooldownMessage(player, -3, "Gut Punch");
+            if (entity instanceof Player player) showCooldownMessage(player, -3, GUT_PUNCH_CONFIG.getDisplayName());
             return true;
         }
-
-        MoveConfiguration gutPunchConfig = getLeftClickConfiguration();
-        if (gutPunchConfig == null) return false;
 
         triggerAnimation(entity, "demon_gut_punch");
 
         DemonGutPunchAttack gutPunchAttack = new DemonGutPunchAttack();
-        gutPunchAttack.configure(gutPunchConfig);
+        gutPunchAttack.configure(GUT_PUNCH_CONFIG);
         MoveExecutor.executeAttack(entity, gutPunchAttack, "default_demon", "demon_gut_punch");
 
-        setMoveCooldown(entity, -3, gutPunchConfig.getCooldownOrDefault(0));
+        setMoveCooldown(entity, -3, GUT_PUNCH_CONFIG.getCooldownOrDefault(0));
         return true;
     }
 
@@ -218,37 +242,15 @@ public class DefaultDemonMoveset extends AbstractMoveset {
 
         // Fresh start — start slash1
         if (!canUseMove(entity, -1)) {
-            if (entity instanceof Player player) showCooldownMessage(player, -1, "Slash");
+            if (entity instanceof Player player) showCooldownMessage(player, -1, SLASH_1_CONFIG.getDisplayName());
             return true;
         }
         return executeSlashStage(entity, 0, comboState, currentTick);
     }
 
     private boolean executeSlashStage(LivingEntity entity, int stage, SlashComboState comboState, long currentTick) {
-        MoveConfiguration slashConfig;
-        String animationName;
-
-        if (stage == 0) {
-            slashConfig = new MoveBuilder("demon_slash_1", "Slash")
-                    .withTiming(0, 0, 14)
-                    .withDamage(4.0f)
-                    .withRange(3.0f)
-                    .withKnockback(0f)
-                    .withHitStun(15)
-                    .withHitboxSize(2.0f)
-                    .build();
-            animationName = "demon_slash";
-        } else {
-            slashConfig = new MoveBuilder("demon_slash_2", "Slash Finisher")
-                    .withTiming(5, 0, 18)
-                    .withDamage(6.0f)
-                    .withRange(3.0f)
-                    .withKnockback(0.5f)
-                    .withHitStun(20)
-                    .withHitboxSize(2.2f)
-                    .build();
-            animationName = "demon_slash_2";
-        }
+        MoveConfiguration slashConfig = stage == 0 ? SLASH_1_CONFIG : SLASH_2_CONFIG;
+        String animationName = stage == 0 ? "demon_slash" : "demon_slash_2";
 
         triggerAnimation(entity, animationName);
 
@@ -256,8 +258,7 @@ public class DefaultDemonMoveset extends AbstractMoveset {
         slashAttack.setSlashStage(stage + 1);
         slashAttack.configure(slashConfig);
 
-        String displayName = stage == 0 ? "Slash" : "Slash Finisher";
-        MoveExecutor.executeAttackWithInfo(entity, slashAttack, displayName, slashConfig.getCooldownOrDefault(0));
+        MoveExecutor.executeAttackWithInfo(entity, slashAttack, slashConfig.getDisplayName(), slashConfig.getCooldownOrDefault(0));
 
         if (stage == 0) {
             comboState.recordSlash1(currentTick);
@@ -265,7 +266,7 @@ public class DefaultDemonMoveset extends AbstractMoveset {
             comboState.reset();
             setMoveCooldown(entity, -1, slashConfig.getCooldownOrDefault(0));
             if (entity instanceof ServerPlayer sp) {
-                sendCooldownPacket(sp, "Slash Finisher", slashConfig.getCooldownOrDefault(0));
+                sendCooldownPacket(sp, slashConfig.getDisplayName(), slashConfig.getCooldownOrDefault(0));
             }
         }
         return true;
@@ -292,7 +293,7 @@ public class DefaultDemonMoveset extends AbstractMoveset {
         if (!entity.onGround() && hasUsedHighJumpInAir.getOrDefault(entityUUID, false)) return true;
 
         if (!canUseMove(entity, -2)) {
-            if (entity instanceof Player player) showCooldownMessage(player, -2, "High Jump");
+            if (entity instanceof Player player) showCooldownMessage(player, -2, HIGH_JUMP_CONFIG.getDisplayName());
             return true;
         }
 
@@ -302,9 +303,6 @@ public class DefaultDemonMoveset extends AbstractMoveset {
         lastHighJumpTick.put(entityUUID, currentTick);
 
         try {
-            MoveConfiguration highJumpConfig = getCrouchRightClickConfiguration();
-            if (highJumpConfig == null) return false;
-
             triggerAnimation(entity, "demon_high_jump");
 
             Vec3 currentMotion = entity.getDeltaMovement();
@@ -325,9 +323,9 @@ public class DefaultDemonMoveset extends AbstractMoveset {
             hasUsedHighJumpInAir.put(entityUUID, true);
             canStompAfterHighJump.put(entityUUID, true);
 
-            setMoveCooldown(entity, -2, highJumpConfig.getCooldownOrDefault(0));
+            setMoveCooldown(entity, -2, HIGH_JUMP_CONFIG.getCooldownOrDefault(0));
             if (entity instanceof ServerPlayer serverPlayer) {
-                sendCooldownPacket(serverPlayer, "High Jump", highJumpConfig.getCooldownOrDefault(0));
+                sendCooldownPacket(serverPlayer, HIGH_JUMP_CONFIG.getDisplayName(), HIGH_JUMP_CONFIG.getCooldownOrDefault(0));
             }
             return true;
         } finally {
@@ -338,25 +336,16 @@ public class DefaultDemonMoveset extends AbstractMoveset {
     private boolean executeStompAttack(LivingEntity entity) {
         UUID entityUUID = entity.getUUID();
 
-        MoveConfiguration stompConfig = new MoveBuilder("demon_stomp", "Stomp")
-                .withTiming(0, 0, 11)
-                .withDamage(10.0f)
-                .withRange(4.0f)
-                .withKnockback(0.8f)
-                .withHitStun(30)
-                .withHitboxSize(3.0f)
-                .build();
-
         triggerAnimation(entity, "demon_stomp");
 
         DemonStompAttack stompAttack = new DemonStompAttack();
-        stompAttack.configure(stompConfig);
+        stompAttack.configure(STOMP_CONFIG);
         MoveExecutor.executeAttack(entity, stompAttack, "default_demon", "demon_stomp");
 
         canStompAfterHighJump.remove(entityUUID);
-        setMoveCooldown(entity, -4, 60);
+        setMoveCooldown(entity, -4, STOMP_CONFIG.getCooldownOrDefault(0));
         if (entity instanceof ServerPlayer serverPlayer) {
-            sendCooldownPacket(serverPlayer, "Stomp", 60);
+            sendCooldownPacket(serverPlayer, STOMP_CONFIG.getDisplayName(), STOMP_CONFIG.getCooldownOrDefault(0));
         }
         return true;
     }
@@ -459,13 +448,13 @@ public class DefaultDemonMoveset extends AbstractMoveset {
     public int getRightClickMoveIndex(boolean isCrouching) { return isCrouching ? -2 : -1; }
 
     @Override
-    public String getLeftClickMoveName() { return "Gut Punch"; }
+    public String getLeftClickMoveName() { return GUT_PUNCH_CONFIG.getDisplayName(); }
 
     @Override
-    public String getRightClickMoveName() { return "Slash"; }
+    public String getRightClickMoveName() { return SLASH_1_CONFIG.getDisplayName(); }
 
     @Override
-    public String getCrouchRightClickMoveName() { return "High Jump"; }
+    public String getCrouchRightClickMoveName() { return HIGH_JUMP_CONFIG.getDisplayName(); }
 
     public static void tickEntity(LivingEntity entity) {
         if (entity.onGround()) {

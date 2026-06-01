@@ -16,7 +16,7 @@ import java.util.Set;
 // Fourth Form: Dance of the Centipede. Zigzag dash (22.5° / -22.5° / 22.5°) drags caught enemies into a straight finisher.
 public class CentipedeAttack extends InsectBreathingAttackBase {
 
-    private static final int ZIGZAG_COUNT = 3;
+    private static final int ZIGZAG_COUNT = 4;
     private static final int DASH_DURATION = 10;
     private static final int DASH_INTERVAL = 10;
 
@@ -85,15 +85,9 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
             baseDirection = aimedDirection.normalize();
         }
 
-        Vec3 zigzagDirection;
-        // 22.5° / -22.5° / 22.5° alternating pattern
-        if (zigzagsExecuted == 0) {
-            zigzagDirection = rotateDirection(baseDirection, 22.5);
-        } else if (zigzagsExecuted == 1) {
-            zigzagDirection = rotateDirection(baseDirection, -22.5);
-        } else {
-            zigzagDirection = rotateDirection(baseDirection, 22.5);
-        }
+        // Alternating zigzag: +22.5° / -22.5° / +22.5° / -22.5° ...
+        double offsetDegrees = (zigzagsExecuted % 2 == 0) ? 22.5 : -22.5;
+        Vec3 zigzagDirection = rotateDirection(baseDirection, offsetDegrees);
 
         Vec3 dashVelocity = zigzagDirection.scale(dashSpeed * 0.67);
         user.setDeltaMovement(dashVelocity);

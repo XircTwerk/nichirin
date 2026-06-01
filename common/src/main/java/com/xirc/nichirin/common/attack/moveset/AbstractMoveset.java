@@ -128,6 +128,12 @@ public abstract class  AbstractMoveset {
             canQueue = false;
         }
 
+        /** The move this queue is tracking, or null if the queue has been cleared. */
+        @Nullable
+        public MoveConfiguration getCurrentMove() {
+            return currentMove;
+        }
+
         public boolean isAttackActive(long currentTime) {
             if (currentMove == null) return false;
 
@@ -220,12 +226,15 @@ public abstract class  AbstractMoveset {
 
         if (leftClickMove != null && leftClickMove.startAction != null) {
             if (!hasResourcesForMove(entity, leftClickMove)) return true;
-            applyMoveStun(entity, leftClickMove);
+            if (shouldAutoStunClickMoves()) applyMoveStun(entity, leftClickMove);
 
             // AUTOMATIC ANIMATION HANDLING - Player or NPC
             if (leftClickMove.animationId != null) {
                 triggerAnimation(entity, leftClickMove.animationId.getPath());
             }
+
+            // Executing a new move always breaks any pending followup chain from a different move.
+            resetFollowupQueueIfDifferent(entity, leftClickMove);
 
             // Initialize followup queue
             if (leftClickMove.hasFollowups()) {
@@ -267,12 +276,15 @@ public abstract class  AbstractMoveset {
 
         if (config != null && config.startAction != null) {
             if (!hasResourcesForMove(entity, config)) return true;
-            applyMoveStun(entity, config);
+            if (shouldAutoStunClickMoves()) applyMoveStun(entity, config);
 
             // AUTOMATIC ANIMATION HANDLING
             if (config.animationId != null) {
                 triggerAnimation(entity, config.animationId.getPath());
             }
+
+            // Executing a new move always breaks any pending followup chain from a different move.
+            resetFollowupQueueIfDifferent(entity, config);
 
             // Initialize followup queue
             if (config.hasFollowups()) {
@@ -402,6 +414,9 @@ public abstract class  AbstractMoveset {
                 triggerAnimation(entity, config.animationId.getPath());
             }
 
+            // Executing a new move always breaks any pending followup chain from a different move.
+            resetFollowupQueueIfDifferent(entity, config);
+
             // Initialize followup queue
             if (config.hasFollowups()) {
                 FollowupQueue queue = new FollowupQueue();
@@ -415,6 +430,19 @@ public abstract class  AbstractMoveset {
             if (config.startAction != null) {
                 config.startAction.accept(entity);
             }
+        }
+    }
+
+    /**
+     * Clears any existing followup queue if it's tracking a different move than {@code newMove}.
+     * Called at the start of every move so executing a different move always breaks the chain.
+     * (The "queue next followup" stunned-input path is unaffected — it doesn't go through here.)
+     */
+    private void resetFollowupQueueIfDifferent(LivingEntity entity, MoveConfiguration newMove) {
+        FollowupQueue existing = entityFollowupQueues.get(entity.getUUID());
+        if (existing != null && existing.getCurrentMove() != newMove) {
+            existing.clear();
+            entityFollowupQueues.remove(entity.getUUID());
         }
     }
 
@@ -494,6 +522,17 @@ public abstract class  AbstractMoveset {
     /**
      * Apply stun effect for a move configuration
      */
+    /**
+     * Whether the default {@link #handleLeftClick}/{@link #handleRightClick} should auto-apply
+     * the STUNNED effect for the move's windup+duration before running its action.
+     * <p>Defaults to {@code true} — the historical behavior. Breathing movesets override to
+     * {@code false} because their attack classes manage their own pacing (the original
+     * pre-refactor handlers never applied the stun, so opting out preserves that feel).</p>
+     */
+    protected boolean shouldAutoStunClickMoves() {
+        return true;
+    }
+
     protected void applyMoveStun(LivingEntity entity, MoveConfiguration config) {
         int windupTicks = config.getWindupOrDefault(0);
         int durationTicks = config.getDurationOrDefault(0);
@@ -1187,6 +1226,24 @@ public abstract class  AbstractMoveset {
 
         public MovesetBuilder withCrouchRightClickMove(MoveBuilder moveBuilder) {
             this.crouchRightClickMove = moveBuilder.build();
+            return this;
+        }
+
+        // Overloads that take an already-built MoveConfiguration. Use these when the same config
+        // needs to be referenced from outside the builder (e.g. a combo executor that reads the
+        // exact same stats) — guarantees a single source of truth across declaration and use.
+        public MovesetBuilder withLeftClickMove(MoveConfiguration config) {
+            this.leftClickMove = config;
+            return this;
+        }
+
+        public MovesetBuilder withRightClickMove(MoveConfiguration config) {
+            this.rightClickMove = config;
+            return this;
+        }
+
+        public MovesetBuilder withCrouchRightClickMove(MoveConfiguration config) {
+            this.crouchRightClickMove = config;
             return this;
         }
 

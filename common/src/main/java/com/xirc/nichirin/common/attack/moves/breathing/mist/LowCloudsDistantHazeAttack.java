@@ -68,6 +68,9 @@ public class LowCloudsDistantHazeAttack extends MistBreathingAttackBase {
 
         if (dashTick < dashDuration) {
             dashTick++;
+            // Recompute the dash direction each tick so the player can STEER mid-dash by
+            // turning the camera — the dash isn't locked to its starting heading anymore.
+            dashDirection = angledDashDirection();
             // Velocity-based dash (smooth, client-predicted) instead of per-tick teleport.
             // Covers range*10 blocks over dashDuration ticks.
             float speedPerTick = (range * 10f) / dashDuration;

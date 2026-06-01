@@ -3,10 +3,8 @@ package com.xirc.nichirin.common.attack.moveset.breathing;
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.breathing.beast.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
-import com.xirc.nichirin.common.network.s2c.MovesetConfigSyncPacket;
 import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
 import com.xirc.nichirin.common.util.EntityResources;
-import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
@@ -21,68 +19,76 @@ public class BeastBreathingMoveset extends AbstractMoveset {
     private static final Map<UUID, Boolean> executingMove = new HashMap<>();
     private static final ThreadLocal<BeastBreathingMoveset> CURRENT_MOVESET = new ThreadLocal<>();
 
+    // Explosive Rush has its own per-player cooldown separate from the wheel-move map.
+    private static final Map<UUID, Long> explosiveRushCooldownEnd = new HashMap<>();
+
     public BeastBreathingMoveset() {
         super("beast_breathing", "Beast Breathing", MovesetType.BREATHING, createBuilder());
-        captureInitialConfigs();
-    }
-
-    private void captureInitialConfigs() {
-        capturePierceConfig();
-        captureSliceConfig();
-        captureExplosiveRushConfig();
-    }
-
-    private void capturePierceConfig() {
-        MoveConfiguration cfg = new MoveBuilder("pierce", "Pierce")
-                .withAnimation("nichirin:beast_pierce", 7)
-                .withTiming(0, 0, 6)
-                .withDamage(3.0f)
-                .withRange(4.0f)
-                .withKnockback(0.4f)
-                .withBreathCost(8.0f)
-                .withStaminaCost(10.0f)
-                .withHitStun(10)
-                .withHitboxSize(1.5f)
-                .withDescription("Stabs forward")
-                .build();
-        this.captureLeftClickConfig(cfg);
-    }
-
-    private void captureSliceConfig() {
-        MoveConfiguration cfg = new MoveBuilder("x_slice", "Slice")
-                .withAnimation("nichirin:beast_x_slice", 8)
-                .withTiming(0, 0, 8)
-                .withDamage(5.0f)
-                .withRange(6.0f)
-                .withKnockback(0.3f)
-                .withBreathCost(25.0f)
-                .withHitStun(12)
-                .withHitboxSize(2.0f)
-                .withDescription("Two progressing X-shaped slash projectiles.")
-                .build();
-        this.captureRightClickConfig(cfg, false);
-    }
-
-    private void captureExplosiveRushConfig() {
-        MoveConfiguration cfg = new MoveBuilder("explosive_rush", "Explosive Rush")
-                .withAnimation("nichirin:beast_explosive_rush", 12)
-                .withTiming(0, 0, 11)
-                .withDamage(12.0f)
-                .withDashSpeed(40.0f)
-                .withRange(16.0f)
-                .withKnockback(0.5f)
-                .withBreathCost(25.0f)
-                .withHitStun(20)
-                .withHitboxSize(2.5f)
-                .withDescription("Invulnerable dash at blinding speed; deflects all projectiles.")
-                .build();
-        this.captureRightClickConfig(cfg, true);
     }
 
     private static MovesetBuilder createBuilder() {
         return new MovesetBuilder()
                 .withIdleAnimation("nichirin:beast_idle")
                 .withSpeedMultiplier(1.2f)
+
+                .withLeftClickMove(new MoveBuilder("pierce", "Pierce")
+                        .withAnimation("nichirin:beast_pierce", 7)
+                        .withTiming(0, 0, 6)
+                        .withDamage(3.0f)
+                        .withRange(4.0f)
+                        .withKnockback(0.4f)
+                        .withBreathCost(8.0f)
+                        .withStaminaCost(10.0f)
+                        .withHitStun(10)
+                        .withHitboxSize(1.5f)
+                        .withDescription("Stabs forward")
+                        .withAction(entity -> {
+                            BeastPierceAttack attack = new BeastPierceAttack();
+                            BeastBreathingMoveset m = getCurrentMoveset();
+                            if (m != null) attack.configure(m.getLeftClickConfiguration());
+                            MoveExecutor.executeAttack(entity, attack, "beast_breathing", "pierce");
+                        })
+                )
+
+                .withRightClickMove(new MoveBuilder("x_slice", "Slice")
+                        .withAnimation("nichirin:beast_x_slice", 8)
+                        .withTiming(0, 0, 8)
+                        .withDamage(5.0f)
+                        .withRange(6.0f)
+                        .withKnockback(0.3f)
+                        .withBreathCost(25.0f)
+                        .withHitStun(12)
+                        .withHitboxSize(2.0f)
+                        .withDescription("Two progressing X-shaped slash projectiles.")
+                        .withAction(entity -> {
+                            BeastXSliceAttack attack = new BeastXSliceAttack();
+                            BeastBreathingMoveset m = getCurrentMoveset();
+                            if (m != null) attack.configure(m.getRightClickConfiguration());
+                            MoveExecutor.executeAttack(entity, attack, "beast_breathing", "x_slice");
+                        })
+                )
+
+                .withCrouchRightClickMove(new MoveBuilder("explosive_rush", "Explosive Rush")
+                        .withAnimation("nichirin:beast_explosive_rush", 12)
+                        .withTiming(0, 0, 11)
+                        .withDamage(12.0f)
+                        .withDashSpeed(40.0f)
+                        .withRange(16.0f)
+                        .withKnockback(0.5f)
+                        .withBreathCost(25.0f)
+                        .withHitStun(20)
+                        .withHitboxSize(2.5f)
+                        .withDescription("Invulnerable dash at blinding speed; deflects all projectiles.")
+                        .withAction(entity -> {
+                            BeastExplosiveRushAttack attack = new BeastExplosiveRushAttack();
+                            BeastBreathingMoveset m = getCurrentMoveset();
+                            if (m != null) {
+                                attack.configure(m.getCrouchRightClickConfiguration());
+                                m.setExplosiveRushCooldown(entity);
+                            }
+                            MoveExecutor.executeAttack(entity, attack, "beast_breathing", "explosive_rush");
+                        })
+                )
 
                 // 0 - Third Fang: Devour
                 .withMove(new MoveBuilder("devour", "Devour")
@@ -97,7 +103,7 @@ public class BeastBreathingMoveset extends AbstractMoveset {
                         .withDescription("Two simultaneous horizontal slashes. No knockback, heavy stun.")
                         .withAction(entity -> {
                             BeastDevourAttack attack = new BeastDevourAttack();
-                            BeastBreathingMoveset m = CURRENT_MOVESET.get();
+                            BeastBreathingMoveset m = getCurrentMoveset();
                             if (m != null) attack.configure(m.getMove(0));
                             MoveExecutor.executeAttack(entity, attack, "beast_breathing", "devour");
                         })
@@ -116,7 +122,7 @@ public class BeastBreathingMoveset extends AbstractMoveset {
                         .withDescription("8 rapid diagonal slashes. Each hit bypasses immunity frames.")
                         .withAction(entity -> {
                             BeastSliceNDiceAttack attack = new BeastSliceNDiceAttack();
-                            BeastBreathingMoveset m = CURRENT_MOVESET.get();
+                            BeastBreathingMoveset m = getCurrentMoveset();
                             if (m != null) attack.configure(m.getMove(1));
                             MoveExecutor.executeAttack(entity, attack, "beast_breathing", "slice_n_dice");
                         })
@@ -135,7 +141,7 @@ public class BeastBreathingMoveset extends AbstractMoveset {
                         .withDescription("Omnidirectional slicing while levitating.")
                         .withAction(entity -> {
                             BeastCrazyCuttingAttack attack = new BeastCrazyCuttingAttack();
-                            BeastBreathingMoveset m = CURRENT_MOVESET.get();
+                            BeastBreathingMoveset m = getCurrentMoveset();
                             if (m != null) attack.configure(m.getMove(2));
                             MoveExecutor.executeAttack(entity, attack, "beast_breathing", "crazy_cutting");
                         })
@@ -154,7 +160,7 @@ public class BeastBreathingMoveset extends AbstractMoveset {
                         .withDescription("Four wide progressing slashes in a saw-like pattern.")
                         .withAction(entity -> {
                             BeastPalisadeBiteAttack attack = new BeastPalisadeBiteAttack();
-                            BeastBreathingMoveset m = CURRENT_MOVESET.get();
+                            BeastBreathingMoveset m = getCurrentMoveset();
                             if (m != null) attack.configure(m.getMove(3));
                             MoveExecutor.executeAttack(entity, attack, "beast_breathing", "palisade_bite");
                         })
@@ -173,7 +179,7 @@ public class BeastBreathingMoveset extends AbstractMoveset {
                         .withDescription("Sense all enemies through walls via glowing. 10-second cooldown.")
                         .withAction(entity -> {
                             BeastSpatialAwarenessAttack attack = new BeastSpatialAwarenessAttack();
-                            BeastBreathingMoveset m = CURRENT_MOVESET.get();
+                            BeastBreathingMoveset m = getCurrentMoveset();
                             if (m != null) attack.configure(m.getMove(4));
                             MoveExecutor.executeAttack(entity, attack, "beast_breathing", "spatial_awareness");
                         })
@@ -192,7 +198,7 @@ public class BeastBreathingMoveset extends AbstractMoveset {
                         .withDescription("Long-range frontal slash. No windup; covers everything in front.")
                         .withAction(entity -> {
                             BeastBendySlashAttack attack = new BeastBendySlashAttack();
-                            BeastBreathingMoveset m = CURRENT_MOVESET.get();
+                            BeastBreathingMoveset m = getCurrentMoveset();
                             if (m != null) attack.configure(m.getMove(5));
                             MoveExecutor.executeAttack(entity, attack, "beast_breathing", "bendy_slash");
                         })
@@ -211,7 +217,7 @@ public class BeastBreathingMoveset extends AbstractMoveset {
                         .withDescription("Rapid spin; deflects all projectiles around you.")
                         .withAction(entity -> {
                             BeastWhirlingFangsAttack attack = new BeastWhirlingFangsAttack();
-                            BeastBreathingMoveset m = CURRENT_MOVESET.get();
+                            BeastBreathingMoveset m = getCurrentMoveset();
                             if (m != null) attack.configure(m.getMove(6));
                             MoveExecutor.executeAttack(entity, attack, "beast_breathing", "whirling_fangs");
                         })
@@ -230,7 +236,7 @@ public class BeastBreathingMoveset extends AbstractMoveset {
                         .withDescription("Throws both katanas as piercing projectiles. Stick to blocks, expire in 10s.")
                         .withAction(entity -> {
                             BeastThrowingStrikeAttack attack = new BeastThrowingStrikeAttack();
-                            BeastBreathingMoveset m = CURRENT_MOVESET.get();
+                            BeastBreathingMoveset m = getCurrentMoveset();
                             if (m != null) attack.configure(m.getMove(7));
                             MoveExecutor.executeAttack(entity, attack, "beast_breathing", "throwing_strike");
                         })
@@ -242,70 +248,42 @@ public class BeastBreathingMoveset extends AbstractMoveset {
         return 8;
     }
 
+    /** Breathing movesets pace themselves inside their attack classes — skip auto-stun. */
+    @Override
+    protected boolean shouldAutoStunClickMoves() {
+        return false;
+    }
+
     @Override
     public boolean handleLeftClick(LivingEntity entity) {
-        MoveConfiguration cfg = getLeftClickConfiguration();
-        if (cfg == null) capturePierceConfig();
-        cfg = getLeftClickConfiguration();
-        if (cfg == null) return false;
-        if (!canPerformMoves(entity) || !hasResourcesForMove(entity, cfg)) return true;
-
-        BeastPierceAttack attack = new BeastPierceAttack();
-        attack.configure(cfg);
-        triggerAnimation(entity, "beast_pierce");
-        MoveExecutor.executeAttack(entity, attack, "beast_breathing", "pierce");
-        onMovePerformed(entity, -3, false);
-        return true;
+        if (!canPerformMoves(entity)) return true;
+        CURRENT_MOVESET.set(this);
+        try {
+            return super.handleLeftClick(entity);
+        } finally {
+            CURRENT_MOVESET.remove();
+        }
     }
 
     @Override
     public boolean handleRightClick(LivingEntity entity, boolean isCrouching) {
         if (!canPerformMoves(entity)) return true;
-
-        if (isCrouching) {
-            return executeExplosiveRush(entity);
-        } else {
-            return executeXSlice(entity);
-        }
-    }
-
-    private boolean executeXSlice(LivingEntity entity) {
-        MoveConfiguration cfg = getRightClickConfiguration();
-        if (cfg == null) return false;
-        if (!hasResourcesForMove(entity, cfg)) return true;
-
-        syncConfigPacket(entity);
-        BeastXSliceAttack attack = new BeastXSliceAttack();
-        attack.configure(cfg);
-        triggerAnimation(entity, "beast_x_slice");
-        MoveExecutor.executeAttack(entity, attack, "beast_breathing", "x_slice");
-        onMovePerformed(entity, -1, false);
-        return true;
-    }
-
-    private boolean executeExplosiveRush(LivingEntity entity) {
-        MoveConfiguration cfg = getCrouchRightClickConfiguration();
-        if (cfg == null) return false;
-        if (!hasResourcesForMove(entity, cfg)) return true;
-
-        // Check cooldown
-        if (!canUseRightClickMove(entity)) {
-            Long end = rightClickCooldownEnd.get(entity.getUUID());
+        // Explosive Rush (crouch-right) has its own cooldown — gate before delegating so the
+        // animation/stamina aren't consumed when blocked.
+        if (isCrouching && !canUseExplosiveRush(entity)) {
+            Long end = explosiveRushCooldownEnd.get(entity.getUUID());
             long remaining = end != null ? (end - entity.level().getGameTime()) / 20 : 0;
             EntityResources.sendMessage(entity,
                     Component.literal("Explosive Rush on cooldown! " + remaining + "s remaining")
                             .withStyle(s -> s.withColor(0xB0C4DE)), true);
             return true;
         }
-
-        syncConfigPacket(entity);
-        BeastExplosiveRushAttack attack = new BeastExplosiveRushAttack();
-        attack.configure(cfg);
-        triggerAnimation(entity, "beast_explosive_rush");
-        MoveExecutor.executeAttack(entity, attack, "beast_breathing", "explosive_rush");
-        setRightClickCooldown(entity);
-        onMovePerformed(entity, -2, true);
-        return true;
+        CURRENT_MOVESET.set(this);
+        try {
+            return super.handleRightClick(entity, isCrouching);
+        } finally {
+            CURRENT_MOVESET.remove();
+        }
     }
 
     @Override
@@ -358,20 +336,17 @@ public class BeastBreathingMoveset extends AbstractMoveset {
         }
     }
 
-
-    private static final Map<UUID, Long> rightClickCooldownEnd = new HashMap<>();
-
-    private boolean canUseRightClickMove(LivingEntity entity) {
-        Long end = rightClickCooldownEnd.get(entity.getUUID());
+    private boolean canUseExplosiveRush(LivingEntity entity) {
+        Long end = explosiveRushCooldownEnd.get(entity.getUUID());
         if (end == null) return true;
         return entity.level().getGameTime() >= end;
     }
 
-    private void setRightClickCooldown(LivingEntity entity) {
+    private void setExplosiveRushCooldown(LivingEntity entity) {
         MoveConfiguration config = getCrouchRightClickConfiguration();
         long cooldown = config != null ? config.getCooldownOrDefault(0) : 0;
         if (cooldown > 0) {
-            rightClickCooldownEnd.put(entity.getUUID(), entity.level().getGameTime() + cooldown);
+            explosiveRushCooldownEnd.put(entity.getUUID(), entity.level().getGameTime() + cooldown);
         }
     }
 
@@ -392,19 +367,6 @@ public class BeastBreathingMoveset extends AbstractMoveset {
         entityCooldowns.computeIfAbsent(entity.getUUID(), k -> new HashMap<>()).put(moveIndex, end);
     }
 
-    private void syncConfigPacket(LivingEntity entity) {
-        if (!entity.level().isClientSide && entity instanceof ServerPlayer sp) {
-            MovesetConfigSyncPacket packet = new MovesetConfigSyncPacket(
-                    "beast_breathing",
-                    this.getRightClickConfiguration(),
-                    this.getCrouchRightClickConfiguration()
-            );
-            NichirinPacketRegistry.sendToPlayer(packet, sp);
-        }
-    }
-
-
-
     @Override
     public String getRightClickMoveName() {
         return "Second Fang: Slice";
@@ -421,12 +383,12 @@ public class BeastBreathingMoveset extends AbstractMoveset {
 
     public static void resetCooldowns(LivingEntity entity) {
         entityCooldowns.remove(entity.getUUID());
-        rightClickCooldownEnd.remove(entity.getUUID());
+        explosiveRushCooldownEnd.remove(entity.getUUID());
     }
 
     public static void cleanupPlayer(LivingEntity entity) {
         entityCooldowns.remove(entity.getUUID());
         executingMove.remove(entity.getUUID());
-        rightClickCooldownEnd.remove(entity.getUUID());
+        explosiveRushCooldownEnd.remove(entity.getUUID());
     }
 }

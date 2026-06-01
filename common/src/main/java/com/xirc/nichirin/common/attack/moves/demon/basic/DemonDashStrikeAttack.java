@@ -9,18 +9,34 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 /**
- * Demon dashing strike attack - dash 4 blocks forward and deliver devastating punch
- * High damage punch at the end of dash with good range
+ * Demon dashing strike: charge forward, clipping enemies along the path for moderate damage,
+ * then plant a heavy finishing hitbox at the user's stopping position for big damage.
+ *
+ * <p>Each path-sample tick hits enemies once per move (tracked by UUID) so an enemy who gets
+ * clipped during the dash isn't double-dipped by the finisher unless they line up in it.</p>
  */
 public class DemonDashStrikeAttack extends AbstractDemonAttack<DemonDashStrikeAttack, IDemonAttacker> {
+
+    /** Multiplier applied to base damage for per-tick path clips (each is a glancing blow). */
+    private static final float PATH_HIT_DAMAGE_MULT = 0.35f;
+    /** Multiplier for the finisher hitbox at the dash endpoint (this is the payoff). */
+    private static final float FINISHER_DAMAGE_MULT = 2.0f;
+    /** How wide the finisher hitbox is relative to the configured range. */
+    private static final float FINISHER_RADIUS_MULT = 1.6f;
+    /** How many ticks the dash sustains velocity before the finisher fires. */
+    private static final int DASH_DURATION_TICKS = 12;
 
     private boolean dashExecuted = false;
     private boolean punchExecuted = false;
     private Vec3 dashDirection;
     private Vec3 startPosition;
+    private final Set<UUID> pathHitTargets = new HashSet<>();
 
     public DemonDashStrikeAttack() {
         // Configuration comes from moveset
@@ -30,6 +46,7 @@ public class DemonDashStrikeAttack extends AbstractDemonAttack<DemonDashStrikeAt
     protected void onStart() {
         dashExecuted = false;
         punchExecuted = false;
+        pathHitTargets.clear();
 
         if (user != null) {
             dashDirection = user.getLookAngle().normalize();
@@ -51,19 +68,52 @@ public class DemonDashStrikeAttack extends AbstractDemonAttack<DemonDashStrikeAt
             dashExecuted = true;
         }
 
-        // Sustain dash velocity until the punch fires
+        // Sustain dash velocity until the finisher fires, and clip enemies along the path each tick.
         if (dashExecuted && !punchExecuted && dashDirection != null) {
             double dashStrength = 2.4;
             Vec3 current = user.getDeltaMovement();
             user.setDeltaMovement(dashDirection.x * dashStrength, current.y, dashDirection.z * dashStrength);
             user.hurtMarked = true;
+            sweepPathHitbox();
         }
 
-        // Execute punch at end of dash (during active frames)
-        if (dashExecuted && !punchExecuted && tickCount >= windup + 12) {
-            executePunch();
+        // Finisher fires once the dash duration is up.
+        if (dashExecuted && !punchExecuted && tickCount >= windup + DASH_DURATION_TICKS) {
+            executeFinisher();
             punchExecuted = true;
         }
+    }
+
+    /**
+     * Per-tick path sample: hit anything currently in the user's reach with reduced damage.
+     * Each target is recorded so the dash doesn't re-hit them again on subsequent ticks.
+     */
+    private void sweepPathHitbox() {
+        if (user == null) return;
+
+        List<LivingEntity> targets = getTargetsInCircle((float) range, 2);
+        if (targets.isEmpty()) return;
+
+        float originalDamage = damage;
+        damage = originalDamage * PATH_HIT_DAMAGE_MULT;
+        try {
+            for (LivingEntity target : targets) {
+                if (target == null || !target.isAlive()) continue;
+                if (!pathHitTargets.add(target.getUUID())) continue;
+
+                hitTarget(target);
+
+                // Carry-along nudge: gives the visual that the dash "drags" them.
+                Vec3 nudge = dashDirection.scale(knockback * 0.3);
+                target.setDeltaMovement(target.getDeltaMovement().add(nudge.x, 0.1, nudge.z));
+                target.hurtMarked = true;
+            }
+        } finally {
+            damage = originalDamage;
+        }
+
+        // Subtle trail particles to mark the swept volume
+        createDashTrail();
     }
 
     private void executeDash() {
@@ -87,38 +137,48 @@ public class DemonDashStrikeAttack extends AbstractDemonAttack<DemonDashStrikeAt
                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.2f, 0.8f);
     }
 
-    private void executePunch() {
+    /**
+     * Finisher: a single big hitbox at the user's CURRENT position (i.e. wherever the dash
+     * ended), with significantly amplified damage. Enemies caught only by the finisher take
+     * the full hit; enemies who already took a path-clip can still get re-hit here because the
+     * finisher is the explicit endpoint payoff.
+     */
+    private void executeFinisher() {
         if (user == null) return;
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
-        Vec3 punchPos = userPos.add(dashDirection.scale(2.0)); // Punch 2 blocks in front
 
-        // Create powerful punch effect
-        createPunchImpact(punchPos);
+        // Bigger, more dramatic impact effect at the stopping point.
+        createPunchImpact(userPos);
 
-        // Hit enemies in front with high damage
-        List<LivingEntity> targets = getTargetsInCircle((float)range, 3);
+        float finisherRange = (float) range * FINISHER_RADIUS_MULT;
+        List<LivingEntity> targets = getTargetsInCircle(finisherRange, 3);
 
-        for (LivingEntity target : targets) {
-            // High damage punch
-            hitTarget(target);
+        float originalDamage = damage;
+        damage = originalDamage * FINISHER_DAMAGE_MULT;
+        try {
+            for (LivingEntity target : targets) {
+                if (target == null || !target.isAlive()) continue;
 
-            // Moderate knockback in dash direction
-            Vec3 knockbackDir = dashDirection.normalize();
-            Vec3 knockbackForce = knockbackDir.scale(knockback);
-            target.setDeltaMovement(target.getDeltaMovement().add(knockbackForce.x, 0.3, knockbackForce.z));
-            target.hurtMarked = true;
-            target.hasImpulse = true;
+                hitTarget(target);
 
-            // Impact sound per target
-            world.playSound(null, target.getX(), target.getY(), target.getZ(),
-                    SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.PLAYERS, 1.0f, 0.9f);
+                // Strong knockback in the dash direction.
+                Vec3 kb = dashDirection.scale(knockback * 1.4);
+                target.setDeltaMovement(target.getDeltaMovement().add(kb.x, 0.4, kb.z));
+                target.hurtMarked = true;
+                target.hasImpulse = true;
+
+                // Per-target impact sound.
+                world.playSound(null, target.getX(), target.getY(), target.getZ(),
+                        SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.PLAYERS, 1.0f, 0.9f);
+            }
+        } finally {
+            damage = originalDamage;
         }
 
-        // Main punch sound
+        // Master impact sounds (independent of how many targets we caught).
         world.playSound(null, userPos.x, userPos.y, userPos.z,
                 SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.PLAYERS, 1.3f, 0.7f);
-
         world.playSound(null, userPos.x, userPos.y, userPos.z,
                 SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 0.8f, 1.2f);
     }
@@ -172,5 +232,6 @@ public class DemonDashStrikeAttack extends AbstractDemonAttack<DemonDashStrikeAt
         punchExecuted = false;
         dashDirection = null;
         startPosition = null;
+        pathHitTargets.clear();
     }
 }

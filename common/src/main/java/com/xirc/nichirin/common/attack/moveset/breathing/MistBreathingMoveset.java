@@ -3,15 +3,9 @@ package com.xirc.nichirin.common.attack.moveset.breathing;
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.breathing.mist.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
-import com.xirc.nichirin.common.network.s2c.MovesetConfigSyncPacket;
 import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
 import com.xirc.nichirin.common.util.EntityResources;
-import com.xirc.nichirin.registry.NichirinPacketRegistry;
-import dev.architectury.networking.NetworkManager;
-import io.netty.buffer.Unpooled;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 
@@ -27,47 +21,50 @@ public class MistBreathingMoveset extends AbstractMoveset {
 
     public MistBreathingMoveset() {
         super("mist_breathing", "Mist Breathing", MovesetType.BREATHING, createBuilder());
-        captureInitialConfigs();
-    }
-
-    private void captureInitialConfigs() {
-        captureRightClickConfig(buildEightLayeredMistConfig(), false);
-        captureRightClickConfig(buildLowCloudsConfig(), true);
-    }
-
-    private MoveConfiguration buildEightLayeredMistConfig() {
-        return new MoveBuilder("eight_layered_mist", "Eight-Layered Mist")
-                .withAnimation("nichirin:mist_rapid_slash", 6)
-                .withTiming(0, 9, 17)
-                .withDamage(1.0f)
-                .withRange(2.5f)
-                .withKnockback(0.05f)
-                .withBreathCost(15.0f)
-                .withHitStun(12)
-                .withHitboxSize(4.5f)
-                .withDescription("Eight rapid slashes that ignore immunity frames.")
-                .build();
-    }
-
-    private MoveConfiguration buildLowCloudsConfig() {
-        return new MoveBuilder("low_clouds_distant_haze", "Low Clouds, Distant Haze")
-                .withAnimation("nichirin:mist_thrust", 7)
-                .withTiming(0, 5, 6)
-                .withDamage(7.0f)
-                .withRange(1.5f)
-                .withKnockback(0.3f)
-                .withDashSpeed(12.0f)
-                .withBreathCost(10.0f)
-                .withHitStun(16)
-                .withHitboxSize(100.5f)
-                .withDescription("Lightning-fast thrusting lunge that pierces multiple enemies.")
-                .build();
     }
 
     private static MovesetBuilder createBuilder() {
         return new MovesetBuilder()
                 .withIdleAnimation("nichirin:mist_idle")
-                .withSpeedMultiplier(1.2f) // Fast and fluid
+                .withSpeedMultiplier(1.2f)
+
+                .withRightClickMove(new MoveBuilder("eight_layered_mist", "Eight-Layered Mist")
+                        .withAnimation("nichirin:mist_rapid_slash", 6)
+                        .withTiming(0, 9, 17)
+                        .withDamage(1.0f)
+                        .withRange(2.5f)
+                        .withKnockback(0.05f)
+                        .withBreathCost(15.0f)
+                        .withHitStun(12)
+                        .withHitboxSize(4.5f)
+                        .withDescription("Eight rapid slashes that ignore immunity frames.")
+                        .withAction(entity -> {
+                            EightLayeredMistAttack attack = new EightLayeredMistAttack();
+                            MistBreathingMoveset moveset = getCurrentMoveset();
+                            if (moveset != null) attack.configure(moveset.getRightClickConfiguration());
+                            MoveExecutor.executeAttack(entity, attack, "mist_breathing", "eight_layered_mist");
+                        })
+                )
+
+                .withCrouchRightClickMove(new MoveBuilder("low_clouds_distant_haze", "Low Clouds, Distant Haze")
+                        .withAnimation("nichirin:mist_thrust", 7)
+                        .withTiming(0, 5, 12)
+                        .withDamage(7.0f)
+                        .withRange(8.0f)
+                        .withKnockback(0.3f)
+                        // The thrust dash is a signature mist movement tool — needs serious distance.
+                        .withDashSpeed(28.0f)
+                        .withBreathCost(10.0f)
+                        .withHitStun(16)
+                        .withHitboxSize(2.5f)
+                        .withDescription("Lightning-fast thrusting lunge that pierces multiple enemies.")
+                        .withAction(entity -> {
+                            LowCloudsDistantHazeAttack attack = new LowCloudsDistantHazeAttack();
+                            MistBreathingMoveset moveset = getCurrentMoveset();
+                            if (moveset != null) attack.configure(moveset.getCrouchRightClickConfiguration());
+                            MoveExecutor.executeAttack(entity, attack, "mist_breathing", "low_clouds_distant_haze");
+                        })
+                )
 
                 // Form 3: Scattering Mist Splash (INDEX 0 in wheel)
                 .withMove(new MoveBuilder("scattering_mist_splash", "Scattering Mist Splash")
@@ -178,57 +175,20 @@ public class MistBreathingMoveset extends AbstractMoveset {
         return 5;
     }
 
+    /** Breathing movesets pace themselves inside their attack classes — skip auto-stun. */
+    @Override
+    protected boolean shouldAutoStunClickMoves() {
+        return false;
+    }
+
     @Override
     public boolean handleRightClick(LivingEntity entity, boolean isCrouching) {
         if (!canPerformMoves(entity)) return true;
-
-        if (isCrouching) {
-            return executeLowClouds(entity);
-        } else {
-            return executeEightLayeredMist(entity);
-        }
-    }
-
-    private boolean executeEightLayeredMist(LivingEntity entity) {
-        captureRightClickConfig(buildEightLayeredMistConfig(), false);
-        MoveConfiguration tempConfig = getRightClickConfiguration();
-        if (tempConfig == null) return false;
-        if (!hasResourcesForMove(entity, tempConfig)) return true;
-
-        syncConfigToClient(entity, tempConfig);
-
-        triggerAnimation(entity, "eight_layered_mist");
-        EightLayeredMistAttack attack = new EightLayeredMistAttack();
-        attack.configure(tempConfig);
-        MoveExecutor.executeAttack(entity, attack, "mist_breathing", "eight_layered_mist");
-        onMovePerformed(entity, -1, false);
-        return true;
-    }
-
-    private boolean executeLowClouds(LivingEntity entity) {
-        captureRightClickConfig(buildLowCloudsConfig(), true);
-        MoveConfiguration tempConfig = getCrouchRightClickConfiguration();
-        if (tempConfig == null) return false;
-        if (!hasResourcesForMove(entity, tempConfig)) return true;
-
-        syncConfigToClient(entity, tempConfig);
-
-        triggerAnimation(entity, "low_clouds_distant_haze");
-        LowCloudsDistantHazeAttack attack = new LowCloudsDistantHazeAttack();
-        attack.configure(tempConfig);
-        MoveExecutor.executeAttack(entity, attack, "mist_breathing", "low_clouds_distant_haze");
-        onMovePerformed(entity, -2, true);
-        return true;
-    }
-
-    private void syncConfigToClient(LivingEntity entity, MoveConfiguration config) {
-        if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer) {
-            MovesetConfigSyncPacket packet = new MovesetConfigSyncPacket(
-                    "mist_breathing",
-                    getRightClickConfiguration(),
-                    getCrouchRightClickConfiguration()
-            );
-            NichirinPacketRegistry.sendToPlayer(packet, serverPlayer);
+        CURRENT_MOVESET.set(this);
+        try {
+            return super.handleRightClick(entity, isCrouching);
+        } finally {
+            CURRENT_MOVESET.remove();
         }
     }
 

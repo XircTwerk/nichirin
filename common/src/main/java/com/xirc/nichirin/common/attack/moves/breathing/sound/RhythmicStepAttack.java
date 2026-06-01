@@ -128,10 +128,6 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
 
                 hitEntities.add(target);
 
-                // Light knockback during dash
-                Vec3 dashKnockback = dashDirection.scale(knockback * 0.3);
-                target.push(dashKnockback.x, 0.05, dashKnockback.z);
-
                 // Create impact particles
                 createDashHitEffect(target.position());
 
@@ -168,11 +164,6 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
                 hitTarget(target);
 
                 damage = originalDamage; // Restore
-
-                // Strong finishing knockback
-                Vec3 slashKnockback = rightDir.scale(knockback * (i > 0 ? 1 : -1) * 1.5);
-                slashKnockback = slashKnockback.add(lookDir.scale(knockback * 0.5));
-                target.push(slashKnockback.x, 0.4, slashKnockback.z);
 
                 // Extended stun
                 target.addEffect(new MobEffectInstance(
