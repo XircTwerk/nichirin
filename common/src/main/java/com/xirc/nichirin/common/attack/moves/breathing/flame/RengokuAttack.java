@@ -63,6 +63,12 @@ public class RengokuAttack extends FlameBreathingAttackBase {
                 world.playSound(null, user.getX(), user.getY(), user.getZ(),
                         SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, 1.0f, 0.5f);
             }
+            // Pulse a flame nova around the user every half-second of the windup — the dragon
+            // is already coiled around them, so it should be cooking anyone foolish enough to
+            // close in instead of giving free positioning time.
+            if (tickCount > 0 && tickCount % 10 == 0) {
+                dealWindupAura();
+            }
             return;
         }
 
@@ -86,6 +92,32 @@ public class RengokuAttack extends FlameBreathingAttackBase {
         if (isDashing && dashTicks >= DASH_DURATION) {
             endFastDash();
             isDashing = false;
+        }
+    }
+
+    /**
+     * Windup damage tick — small flame burst around the user that scorches anyone in melee
+     * range. Damage per pulse is intentionally a fraction of the full hit so the windup chip
+     * is meaningful pressure but doesn't out-damage the actual dash. Sets targets on fire so
+     * the punishment lingers even if they back off.
+     */
+    private void dealWindupAura() {
+        Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
+        float auraRange = 4.0f;
+        List<LivingEntity> targets = getTargetsInCustomHitbox(userPos, auraRange, 3.0, auraRange);
+        float originalDamage = damage;
+        damage = Math.max(2.0f, originalDamage * 0.1f);
+        try {
+            for (LivingEntity target : targets) {
+                hitTarget(target);
+                target.setSecondsOnFire(3);
+            }
+        } finally {
+            damage = originalDamage;
+        }
+        if (!targets.isEmpty()) {
+            world.playSound(null, user.getX(), user.getY(), user.getZ(),
+                    SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 0.6f, 1.4f);
         }
     }
 

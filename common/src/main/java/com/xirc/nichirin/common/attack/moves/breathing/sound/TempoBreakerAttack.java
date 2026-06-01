@@ -57,7 +57,12 @@ public class TempoBreakerAttack extends SoundBreathingAttackBase {
                 executeTempoBreaker();
                 hasExecuted = true;
             }
-            processPendingExplosions();
+            // Pending explosions are intentionally NOT processed here anymore — they're keyed
+            // by target UUID in a static map and ticked from the global server tick handler
+            // (BreathOfNichirinEventHandler), so they keep counting down even after this attack
+            // instance ends. The old per-instance call meant a delayed boom could orphan itself
+            // if the attack's duration ended before the timer ran out, which is why the M2
+            // looked like it "didn't blow up".
         } catch (Exception e) {
             e.printStackTrace();
         }

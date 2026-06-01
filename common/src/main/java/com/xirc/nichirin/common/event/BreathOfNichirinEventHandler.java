@@ -2,9 +2,15 @@ package com.xirc.nichirin.common.event;
 
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.component.AbstractDemonAttack;
+import com.xirc.nichirin.common.attack.moves.breathing.sound.TempoBreakerAttack;
 import com.xirc.nichirin.common.attack.moveset.DefaultKatanaMoveset;
+import com.xirc.nichirin.common.attack.moveset.demon.DefaultDemonMoveset;
+import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
+import com.xirc.nichirin.common.data.PlayerDataStorage;
+import com.xirc.nichirin.common.entity.npc.DemonNPCEntity;
+import com.xirc.nichirin.common.item.DemonBloodVialItem;
 import com.xirc.nichirin.common.event.item.RiceInteractionHandler;
 import com.xirc.nichirin.common.event.system.DemonFoodHandler;
 import com.xirc.nichirin.common.system.BloodMoonManager;
@@ -26,6 +32,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
 import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
@@ -58,6 +65,12 @@ public class BreathOfNichirinEventHandler {
         dev.architectury.event.events.common.EntityEvent.LIVING_DEATH.register((entity, source) -> {
             if (source != null && source.getEntity() instanceof ServerPlayer killer) {
                 KillRewardManager.onKill(killer, entity);
+            }
+            // 100% demon-blood-vial drop from any slain DemonNPCEntity (Temple Demons, etc.) —
+            // drops regardless of who killed it so other mob-vs-demon kills still produce vials.
+            if (entity instanceof DemonNPCEntity demon && !demon.level().isClientSide) {
+                ItemStack vial = new ItemStack(NichirinItemRegistry.DEMON_BLOOD_VIAL.get());
+                demon.spawnAtLocation(vial);
             }
             return dev.architectury.event.EventResult.pass();
         });
@@ -117,6 +130,7 @@ public class BreathOfNichirinEventHandler {
         SheathingManager.clearAll();
         DefaultKatanaMoveset.clearAll();
         InputHandler.clearAll();
+        DemonBloodVialItem.clearAll();
     }
 
     private static void onServerTick(MinecraftServer server) {
@@ -124,6 +138,9 @@ public class BreathOfNichirinEventHandler {
             BloodMoonManager.onServerTick(server);
             MoveExecutor.tickAllAttacks(server);
             AbstractDemonAttack.tickAllActiveAttacks(server);
+            // Tempo Breaker's delayed-explosion timer lives outside any single attack instance —
+            // tick it here so explosions still fire after the attack itself has finished.
+            TempoBreakerAttack.processPendingExplosionsGlobal(server);
 
             // Check for demon players with 0 blood and kill them; keep night vision active
             for (ServerPlayer player : server.getPlayerList().getPlayers()) {
@@ -158,6 +175,29 @@ public class BreathOfNichirinEventHandler {
             DemonManager.cleanupPlayer(player);
             DemonFoodHandler.cleanupPlayer(player);
             DemonManager.setBloodPoints(player, 10);
+
+            // Config-gated "redemption arc" — strip demon status on respawn. Off by default so
+            // drinking demon blood remains a permanent commitment. The full removal path
+            // mirrors the /nichirin remove demon command so the player ends up in the exact
+            // same clean state.
+            if (NichirinModConfig.get().demon.removeDemonOnDeath
+                    && player instanceof ServerPlayer serverPlayer
+                    && MovesetHelper.hasDemonMoveset(serverPlayer)) {
+                PlayerDataProvider.getData(serverPlayer).getMovesetData().setDemonMovesetId(null);
+                DemonManager.cleanupPlayer(serverPlayer);
+                serverPlayer.getFoodData().setFoodLevel(20);
+                serverPlayer.getFoodData().setSaturation(5.0f);
+                serverPlayer.getFoodData().setExhaustion(0.0f);
+                if (serverPlayer.isOnFire()) serverPlayer.clearFire();
+                PlayerDataStorage.savePlayerData(serverPlayer);
+                if (serverPlayer.server != null) PlayerDataProvider.forceSync(serverPlayer.server);
+                NichirinPacketRegistry.sendDemonSync(serverPlayer, 0, 0, false);
+                try { DefaultDemonMoveset.cleanupPlayer(serverPlayer); } catch (Exception ignored) {}
+                serverPlayer.displayClientMessage(
+                        net.minecraft.network.chat.Component.translatable("nichirin.message.demon_lost_on_death")
+                                .withStyle(net.minecraft.ChatFormatting.AQUA),
+                        false);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -172,6 +212,7 @@ public class BreathOfNichirinEventHandler {
             MovementContext.cleanupPlayer(player);
             SheathingManager.cleanupPlayer(player);
             DefaultKatanaMoveset.cleanupPlayer(player);
+            DemonBloodVialItem.clearPending(player.getUUID());
         } catch (Exception e) {
             e.printStackTrace();
         }

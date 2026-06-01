@@ -49,7 +49,13 @@ public class SheathSyncPacket {
         for (SlotSync slot : slots) {
             SheathingManager.applyClientSync(player, slot.position, slot.enabled, slot.hotbarSlot,
                     slot.priority, slot.state, slot.cooldownTicks, slot.visible);
-            SheathingManager.get(player).getSlot(slot.position).setStoredSword(slot.storedSword);
+            SheathSlotData clientSlot = SheathingManager.get(player).getSlot(slot.position);
+            clientSlot.setStoredSword(slot.storedSword);
+            // Sync the offhand-origin flag so the render layer can pick LEFT_HAND vs RIGHT_HAND
+            // display context for the stored katana — without this the offhand half of a dual
+            // sheathe renders with the wrong orientation because left/right katana models have
+            // asymmetric `thirdperson_*hand` transforms.
+            clientSlot.setStoredFromOffhand(slot.storedFromOffhand);
         }
     }
 
@@ -62,6 +68,7 @@ public class SheathSyncPacket {
         private final int cooldownTicks;
         private final boolean visible;
         private final ItemStack storedSword;
+        private final boolean storedFromOffhand;
 
         private SlotSync(SheathSlotData slot) {
             this.position = slot.getPosition();
@@ -72,6 +79,7 @@ public class SheathSyncPacket {
             this.cooldownTicks = slot.getCooldownTicks();
             this.visible = slot.isVisible();
             this.storedSword = slot.getStoredSword().copy();
+            this.storedFromOffhand = slot.isStoredFromOffhand();
         }
 
         private SlotSync(FriendlyByteBuf buf) {
@@ -83,6 +91,7 @@ public class SheathSyncPacket {
             this.cooldownTicks = buf.readInt();
             this.visible = buf.readBoolean();
             this.storedSword = buf.readItem();
+            this.storedFromOffhand = buf.readBoolean();
         }
 
         private void write(FriendlyByteBuf buf) {
@@ -94,6 +103,7 @@ public class SheathSyncPacket {
             buf.writeInt(cooldownTicks);
             buf.writeBoolean(visible);
             buf.writeItem(storedSword);
+            buf.writeBoolean(storedFromOffhand);
         }
     }
 }

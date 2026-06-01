@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Set;
 
 // Second Form: Dance of the Bee Sting. Dash through enemies in a straight line, piercing each with light venom stabs.
+// Hit targets are carried along with the player for the rest of the dash, so a single sting can chain
+// multiple enemies into one impact point instead of leaving them scattered behind.
 public class BeeStingAttack extends InsectBreathingAttackBase {
 
     private static final int DASH_DURATION = 13;
@@ -22,12 +24,14 @@ public class BeeStingAttack extends InsectBreathingAttackBase {
     private Vec3 dashDirection;
     private Vec3 lastDashPos;
     private final Set<LivingEntity> hitEntities = new HashSet<>();
+    private final List<LivingEntity> draggedEnemies = new ArrayList<>();
     private int trailEffectCounter = 0;
 
     @Override
     protected void onStart() {
         dashStarted = false;
         hitEntities.clear();
+        draggedEnemies.clear();
         trailEffectCounter = 0;
         lastDashPos = null;
         dashDirection = user.getLookAngle().normalize();
@@ -105,11 +109,50 @@ public class BeeStingAttack extends InsectBreathingAttackBase {
             if (!hitEntities.contains(target)) {
                 hitTarget(target);
                 hitEntities.add(target);
-                target.push(dashDirection.x * knockback * 0.5, 0.1, dashDirection.z * knockback * 0.5);
+                draggedEnemies.add(target);
                 createPierceImpactEffect(target.position());
                 world.playSound(null, target.getX(), target.getY(), target.getZ(),
                         SoundEvents.PLAYER_ATTACK_WEAK, SoundSource.PLAYERS, 0.6f, 1.8f);
             }
+        }
+
+        dragHitEnemies(user.position());
+    }
+
+    /**
+     * Drag every hit enemy along the dash — horizontal only, so they don't get launched into
+     * the air by Y-axis math, and clamped to a sane speed so a far-away catch doesn't yank them
+     * across the world in one tick. Stops applying drag if the user has effectively stopped
+     * moving (e.g. the dash ended or got cut short) so they're not stuck eternally orbiting.
+     */
+    private void dragHitEnemies(Vec3 userFootPos) {
+        // Anchor at the user's feet, slightly behind along the dash direction. Using foot Y
+        // (not center) keeps the math at the same vertical level the mob already stands at.
+        Vec3 horizontalDash = new Vec3(dashDirection.x, 0, dashDirection.z).normalize();
+        Vec3 dragAnchor = userFootPos.subtract(horizontalDash.scale(1.2));
+
+        Vec3 userVel = user.getDeltaMovement();
+        double userSpeedSqr = userVel.x * userVel.x + userVel.z * userVel.z;
+        boolean userMoving = userSpeedSqr > 0.04; // ~0.2 b/t threshold
+
+        draggedEnemies.removeIf(enemy -> !enemy.isAlive() || enemy.isRemoved());
+        for (LivingEntity dragged : draggedEnemies) {
+            if (!userMoving) {
+                // Stop dragging — let gravity take over so they don't keep coasting.
+                Vec3 existing = dragged.getDeltaMovement();
+                dragged.setDeltaMovement(0, Math.min(existing.y, 0), 0);
+                dragged.hurtMarked = true;
+                continue;
+            }
+            Vec3 toAnchor = dragAnchor.subtract(dragged.position());
+            // Horizontal-only pull, capped per tick so a 6-block catch doesn't punt them.
+            double vx = Math.max(-1.2, Math.min(1.2, toAnchor.x * 0.4));
+            double vz = Math.max(-1.2, Math.min(1.2, toAnchor.z * 0.4));
+            // Preserve gravity / negative Y so they fall normally, but don't ever push them up.
+            double vy = Math.min(0, dragged.getDeltaMovement().y);
+            dragged.setDeltaMovement(vx, vy, vz);
+            dragged.hurtMarked = true;
+            dragged.fallDistance = 0f;
         }
     }
 
@@ -177,6 +220,15 @@ public class BeeStingAttack extends InsectBreathingAttackBase {
 
     @Override
     protected void onStop() {
+        // Release every dragged enemy: zero horizontal velocity so they don't go skidding
+        // off when the dash ends, but keep any natural fall velocity intact.
+        for (LivingEntity dragged : draggedEnemies) {
+            if (dragged.isAlive()) {
+                Vec3 existing = dragged.getDeltaMovement();
+                dragged.setDeltaMovement(0, Math.min(existing.y, 0), 0);
+                dragged.hurtMarked = true;
+            }
+        }
         user.setDeltaMovement(Vec3.ZERO);
 
         if (world instanceof ServerLevel serverLevel) {
@@ -192,6 +244,7 @@ public class BeeStingAttack extends InsectBreathingAttackBase {
         dashStarted = false;
         lastDashPos = null;
         hitEntities.clear();
+        draggedEnemies.clear();
         trailEffectCounter = 0;
     }
 }

@@ -238,6 +238,14 @@ public class NichirinModConfig implements ConfigData {
         @ConfigEntry.Gui.Tooltip
         @ConfigEntry.BoundedDiscrete(min = 100, max = 300)
         public int demonMaxBreathPercent = 150;
+
+        /**
+         * When true, dying as a demon strips demon status on respawn. Off by default so the
+         * choice to drink demon blood is genuinely permanent — turn this on for servers that
+         * want death to function as a "redemption arc" reset.
+         */
+        @ConfigEntry.Gui.Tooltip
+        public boolean removeDemonOnDeath = false;
     }
 
     @ConfigEntry.Gui.CollapsibleObject

@@ -282,17 +282,27 @@ public class SheathingManager {
             return;
         }
 
+        // Copy stacks BEFORE mutating inventory — defensive against any reference aliasing.
+        ItemStack mainhandCopy = sword.copy();
+        ItemStack offhandCopy = dualWield ? offhand.copy() : ItemStack.EMPTY;
+
         // Mainhand katana → current slot
-        slot.setStoredSword(sword.copy());
+        slot.setStoredSword(mainhandCopy);
         slot.setStoredFromOffhand(false);
+        slot.setEnabled(true);
+        slot.setVisible(true);
         player.getInventory().setItem(slot.getLinkedHotbarSlot(), ItemStack.EMPTY);
         slot.setState(SheathState.SHEATHING);
         slot.setTransitionTicks(NORMAL_TRANSITION_TICKS);
 
-        // Offhand katana → adjacent slot, flagged so it returns to offhand on unsheathe
+        // Offhand katana → adjacent slot, flagged so it returns to offhand on unsheathe.
+        // The partner slot is force-enabled/visible here so the render layer always picks it up,
+        // even if the player had previously hidden/disabled the adjacent slot via the GUI.
         if (dualWield) {
-            partner.setStoredSword(offhand.copy());
+            partner.setStoredSword(offhandCopy);
             partner.setStoredFromOffhand(true);
+            partner.setEnabled(true);
+            partner.setVisible(true);
             player.setItemSlot(EquipmentSlot.OFFHAND, ItemStack.EMPTY);
             partner.setState(SheathState.SHEATHING);
             partner.setTransitionTicks(NORMAL_TRANSITION_TICKS);
@@ -301,6 +311,11 @@ public class SheathingManager {
         NichirinPacketRegistry.broadcastPlayerAnimation(player, new PlayerAnimationPacket(player.getId(), "sheathing.sheathe"));
         feedback(player, "Sheathing: " + slot.getPosition().getDisplayName()
                 + (dualWield ? " + " + partner.getPosition().getDisplayName() + " (offhand)" : ""), 0xFFE0A6, false);
+
+        // Force an immediate sync so the client sees both stored swords this frame — without this
+        // the client renders only what it saw last tick (just the mainhand) until the next tick's
+        // syncIfChanged fires, which can leave the offhand blade invisibly sheathed for a beat.
+        syncPlayer(player);
     }
 
     /**
@@ -346,22 +361,42 @@ public class SheathingManager {
         finishUnsheathe(player, data, slot, attackOnUnsheathe);
     }
 
+    /**
+     * Pull a slot's stored sword back out: offhand-flagged ones go to the offhand, everything
+     * else goes to its linked hotbar slot. Silently no-ops if the destination is occupied —
+     * the slot keeps holding the sword so we don't dupe or vaporise the item.
+     */
+    private static void restoreStoredSwordTo(Player player, SheathSlotData slot) {
+        if (!slot.hasStoredSword()) return;
+        if (slot.isStoredFromOffhand()) {
+            if (player.getOffhandItem().isEmpty()) {
+                player.setItemSlot(EquipmentSlot.OFFHAND, slot.getStoredSword());
+                slot.setStoredSword(ItemStack.EMPTY);
+                slot.setStoredFromOffhand(false);
+            }
+        } else if (player.getInventory().getItem(slot.getLinkedHotbarSlot()).isEmpty()) {
+            player.getInventory().setItem(slot.getLinkedHotbarSlot(), slot.getStoredSword());
+            slot.setStoredSword(ItemStack.EMPTY);
+        }
+    }
+
     private static void finishUnsheathe(Player player, PlayerSheathData data, SheathSlotData slot,
                                         boolean attackOnUnsheathe) {
-        if (slot.hasStoredSword()) {
-            // Offhand-stored swords go back to the offhand; hotbar swords go back to their linked slot.
-            if (slot.isStoredFromOffhand()) {
-                if (player.getOffhandItem().isEmpty()) {
-                    player.setItemSlot(EquipmentSlot.OFFHAND, slot.getStoredSword());
-                    slot.setStoredSword(ItemStack.EMPTY);
-                    slot.setStoredFromOffhand(false);
-                }
-            } else if (player.getInventory().getItem(slot.getLinkedHotbarSlot()).isEmpty()) {
-                player.getInventory().setItem(slot.getLinkedHotbarSlot(), slot.getStoredSword());
-                slot.setStoredSword(ItemStack.EMPTY);
-                player.getInventory().selected = slot.getLinkedHotbarSlot();
-            }
+        restoreStoredSwordTo(player, slot);
+
+        // Dual-wield unsheathe: if the adjacent slot holds the offhand half of a paired sheathe,
+        // restore that one too. Without this the IndividualBeastKatana / IndividualSoundKatana
+        // pair-loss tick fires after a few frames (only one half is in hand → not a proper pair)
+        // and combines them back into the bundled BEAST_KATANAS / SOUND_KATANAS item dropped on
+        // the floor — which is the "one katana unsheathes, then they both vanish and recombine"
+        // bug the player was seeing.
+        SheathSlotData partner = data.getSlot(slot.getPosition().adjacent());
+        if (partner != null && partner.hasStoredSword() && partner.isStoredFromOffhand()) {
+            restoreStoredSwordTo(player, partner);
+            partner.setState(SheathState.DRAWN);
+            partner.setCooldownTicks(SLOT_COOLDOWN_TICKS);
         }
+
         slot.setState(SheathState.DRAWN);
         data.setGlobalCooldownTicks(GLOBAL_COOLDOWN_TICKS);
         slot.setCooldownTicks(SLOT_COOLDOWN_TICKS);
@@ -446,7 +481,8 @@ public class SheathingManager {
                     .append(slot.getCooldownTicks()).append(',')
                     .append(slot.isVisible()).append(',')
                     .append(slot.getStoredSword().getDescriptionId()).append(',')
-                    .append(slot.getStoredSword().getCount()).append(';');
+                    .append(slot.getStoredSword().getCount()).append(',')
+                    .append(slot.isStoredFromOffhand()).append(';');
         }
         return builder.toString();
     }

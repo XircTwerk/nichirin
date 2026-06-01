@@ -19,6 +19,7 @@ import com.xirc.nichirin.common.item.LazySpawnEggItem;
 import com.xirc.nichirin.common.item.tool.DrinkingGourdItem;
 import com.xirc.nichirin.common.item.scroll.PerkScrollItem;
 import com.xirc.nichirin.common.item.scroll.CursedScrollItem;
+import com.xirc.nichirin.common.item.DemonBloodVialItem;
 import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
@@ -342,6 +343,10 @@ public interface NichirinItemRegistry {
 
     RegistrySupplier<Item> CURSED_SCROLL = register("cursed_scroll",
             () -> new CursedScrollItem(settings().rarity(Rarity.EPIC)));
+
+    /** One-way demonic transformation. Drops 100% from slain demons; double right-click to drink. */
+    RegistrySupplier<Item> DEMON_BLOOD_VIAL = register("demon_blood_vial",
+            () -> new DemonBloodVialItem(settings().rarity(Rarity.EPIC).stacksTo(16)));
 
 
     static <T extends Item> RegistrySupplier<T> register(String id, Supplier<? extends T> supplier) {
