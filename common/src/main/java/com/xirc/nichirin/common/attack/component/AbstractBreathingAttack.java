@@ -457,19 +457,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         // Convert dimensions to our new system
         float size = (float) Math.max(width, Math.max(height, depth));
 
-        // Determine best shape based on dimensions
-        HitboxData.HitboxShape shape;
-        if (width > height && width > depth) {
-            shape = HitboxData.HitboxShape.WIDE;
-        } else if (height > width && height > depth) {
-            shape = HitboxData.HitboxShape.TALL;
-        } else if (depth > width && depth > height) {
-            shape = HitboxData.HitboxShape.LONG;
-        } else {
-            shape = HitboxData.HitboxShape.CUBE;
-        }
-
-        return getTargetsInCustomHitbox(center, size, shape);
+        return getTargetsInCustomHitbox(center, size, HitboxData.HitboxShape.CUBE);
     }
 
     /**
@@ -493,7 +481,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
             Vec3 hitboxCenter = start.lerp(end, progress);
 
             // Create a LONG shaped hitbox oriented along the line direction
-            HitboxData hitboxData = new HitboxData((float) thickness, HitboxData.HitboxShape.LONG);
+            HitboxData hitboxData = new HitboxData((float) thickness, HitboxData.HitboxShape.CUBE);
             AABB hitbox = hitboxData.createAABB(hitboxCenter, lineDirection, lineYaw);
             lineHitboxes.add(hitbox);
 
@@ -652,7 +640,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
             Vec3 hitboxCenter = playerPos.add(rotatedDirection.scale(sweepRange));
 
             // Create WIDE hitbox for sweep attacks
-            HitboxData hitboxData = new HitboxData(hitboxSize, HitboxData.HitboxShape.WIDE);
+            HitboxData hitboxData = new HitboxData(hitboxSize, HitboxData.HitboxShape.CUBE);
             AABB hitbox = hitboxData.createAABB(hitboxCenter, rotatedDirection, hitboxYaw);
             sweepHitboxes.add(hitbox);
 
@@ -688,7 +676,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         Vec3 hitboxCenter = playerPos.add(lookDirection.scale(range / 2));
 
         // Create a LONG hitbox with the range as the size
-        HitboxData hitboxData = new HitboxData(range, HitboxData.HitboxShape.LONG);
+        HitboxData hitboxData = new HitboxData(range, HitboxData.HitboxShape.CUBE);
         AABB hitbox = hitboxData.createAABBFromEntity(user);
 
         // Override center position

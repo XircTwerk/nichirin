@@ -13,7 +13,7 @@ import net.minecraft.server.level.ServerPlayer;
 
 /**
  * Fifth Form: Blessed Rain After the Drought
- * Ultimate level single hit dash that drops Â½ a healthbar on hit
+ * Ultimate level single hit dash that drops ½ a healthbar on hit
  * Very small 1.0 block hitbox - precision attack that can be angled downwards
  * Similar to Butterfly Attack but with teleport instead of dash after leap
  */

@@ -13,16 +13,20 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 
 /**
  * Velocity-only movement primitives for any LivingEntity.
- * No stamina consumed here â€” callers are responsible for resource checks.
+ * No stamina consumed here — callers are responsible for resource checks.
  * Player-specific wrappers in Dash/Backstep/Dodge/PlayerDoubleJump delegate here.
  */
 public final class EntityMovement {
 
-    private static final double DASH_FORCE        = 2.0;
-    private static final double DOUBLE_JUMP_VEL   = 0.63;  // same as PlayerDoubleJump Ã— 1.5
-    private static final double BACKSTEP_DIST     = 3.0;
-    private static final double AIR_DODGE_DIST    = 0.5;
-    private static final double SPRINT_MULTIPLIER = 1.3;
+    // Movement tuning is read from config (movement.* in nichirin-server.toml).
+    private static com.xirc.nichirin.common.config.NichirinModConfig.MovementConfig mcfg() {
+        return com.xirc.nichirin.common.config.NichirinModConfig.get().movement;
+    }
+    private static double dashForce()       { return mcfg().dashForce; }
+    private static double doubleJumpVel()    { return mcfg().doubleJumpVelocity; }
+    private static double backstepDist()     { return mcfg().backstepDistance; }
+    private static double airDodgeDist()     { return mcfg().airDodgeDistance; }
+    private static double sprintMultiplier() { return mcfg().sprintMultiplier; }
 
     private EntityMovement() {}
 
@@ -38,9 +42,9 @@ public final class EntityMovement {
 
         Vec3 current = entity.getDeltaMovement();
         entity.setDeltaMovement(
-                current.x + dir.x * DASH_FORCE,
+                current.x + dir.x * dashForce(),
                 Math.max(current.y, 0.1),
-                current.z + dir.z * DASH_FORCE
+                current.z + dir.z * dashForce()
         );
         entity.hasImpulse = true;
 
@@ -52,13 +56,13 @@ public final class EntityMovement {
 
 
     /**
-     * Teleports the entity backward up to BACKSTEP_DIST blocks, stopping at obstacles.
+     * Teleports the entity backward up to backstepDist() blocks, stopping at obstacles.
      */
     public static void applyBackstep(LivingEntity entity) {
         Vec3 back = entity.getLookAngle().scale(-1);
         Vec3 horiz = new Vec3(back.x, 0, back.z).normalize();
 
-        Vec3 dest = findSafePosition(entity, horiz, BACKSTEP_DIST);
+        Vec3 dest = findSafePosition(entity, horiz, backstepDist());
         if (dest == null) return;
 
         entity.teleportTo(dest.x, dest.y, dest.z);
@@ -85,9 +89,9 @@ public final class EntityMovement {
 
         Vec3 current = entity.getDeltaMovement();
         entity.setDeltaMovement(
-                current.x + dir.x * AIR_DODGE_DIST,
+                current.x + dir.x * airDodgeDist(),
                 current.y + 0.15,
-                current.z + dir.z * AIR_DODGE_DIST
+                current.z + dir.z * airDodgeDist()
         );
         entity.hasImpulse = true;
 
@@ -110,7 +114,7 @@ public final class EntityMovement {
         Vec3 current = entity.getDeltaMovement();
         entity.setDeltaMovement(
                 current.x + horiz.x,
-                DOUBLE_JUMP_VEL,
+                doubleJumpVel(),
                 current.z + horiz.z
         );
         entity.hasImpulse = true;
@@ -143,7 +147,7 @@ public final class EntityMovement {
         var existing = speedAttr.getModifier(SPRINT_UUID);
         if (existing == null) {
             speedAttr.addTransientModifier(new AttributeModifier(
-                    SPRINT_UUID, "npc_sprint", SPRINT_MULTIPLIER - 1.0, AttributeModifier.Operation.MULTIPLY_BASE
+                    SPRINT_UUID, "npc_sprint", sprintMultiplier() - 1.0, AttributeModifier.Operation.MULTIPLY_BASE
             ));
         }
     }

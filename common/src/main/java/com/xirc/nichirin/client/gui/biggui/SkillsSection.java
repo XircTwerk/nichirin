@@ -63,17 +63,15 @@ public class SkillsSection extends AbstractGuiPage {
 
     public boolean handleClick(double mouseX, double mouseY, Player player, int contentWidth, int contentHeight) {
         if (mouseY >= 0 && mouseY < HEADER_H) {
-            int tabW = 86;
-            int gap = 8;
-            int totalW = SkillsTab.values().length * tabW + (SkillsTab.values().length - 1) * gap;
+            int totalW = SkillsTab.values().length * TAB_WIDTH + (SkillsTab.values().length - 1) * TAB_SPACING;
             int x = Math.max(154, (contentWidth - totalW) / 2);
             int y = 22;
             for (SkillsTab tab : SkillsTab.values()) {
-                if (isIn(mouseX, mouseY, x, y, tabW, 24)) {
+                if (isIn(mouseX, mouseY, x, y, TAB_WIDTH, TAB_HEIGHT)) {
                     currentTab = tab;
                     return true;
                 }
-                x += tabW + gap;
+                x += TAB_WIDTH + TAB_SPACING;
             }
             return false;
         }
@@ -104,6 +102,10 @@ public class SkillsSection extends AbstractGuiPage {
         return false;
     }
 
+    private static final int TAB_WIDTH = 120;
+    private static final int TAB_HEIGHT = 25;
+    private static final int TAB_SPACING = 5;
+
     private void renderHeader(GuiGraphics g, Player player, Font font, int w, int mx, int my) {
         g.fill(0, 0, w, HEADER_H, PANEL);
 
@@ -112,21 +114,35 @@ public class SkillsSection extends AbstractGuiPage {
         String name = player != null ? player.getName().getString() : "Unknown Slayer";
         g.drawString(font, trimToWidth(font, name, 120), nameX, nameY, TEXT, false);
 
-        int tabW = 86;
-        int gap = 8;
-        int totalW = SkillsTab.values().length * tabW + (SkillsTab.values().length - 1) * gap;
+        int totalW = SkillsTab.values().length * TAB_WIDTH + (SkillsTab.values().length - 1) * TAB_SPACING;
         int x = Math.max(154, (w - totalW) / 2);
         int y = 22;
         for (SkillsTab tab : SkillsTab.values()) {
             boolean active = tab == currentTab;
-            boolean hovered = !active && isIn(mx, my, x, y, tabW, 24);
-            g.fill(x, y, x + tabW, y + 24, hovered ? PANEL_HOVER : PANEL);
-            int tc = active ? TEXT : TEXT_DIM;
-            g.drawString(font, tab.label, x + (tabW - font.width(tab.label)) / 2, y + 7, tc, false);
+            boolean hovered = !active && isIn(mx, my, x, y, TAB_WIDTH, TAB_HEIGHT);
+
+            int bg = active ? COLOR_PALETTE.PILL_BG.argb()
+                    : hovered ? COLOR_PALETTE.PANEL_HOVER.argb() : COLOR_PALETTE.PANEL_MID.argb();
+            int border = active ? COLOR_PALETTE.ACCENT.argb()
+                    : hovered ? COLOR_PALETTE.BORDER_HI.argb() : COLOR_PALETTE.BORDER.argb();
+            int tc = active ? COLOR_PALETTE.ACCENT_LIGHT.rgb()
+                    : hovered ? COLOR_PALETTE.TEXT.rgb() : COLOR_PALETTE.TEXT_DIM.rgb();
+
             if (active) {
-                g.fill(x + 12, y + 22, x + tabW - 12, y + 24, ACCENT);
+                g.fill(x - 3, y - 3, x + TAB_WIDTH + 3, y + TAB_HEIGHT + 3, withAlpha(border, 0x22));
             }
-            x += tabW + gap;
+            g.fill(x - 1, y - 1, x + TAB_WIDTH + 1, y + TAB_HEIGHT + 1, border);
+            g.fill(x, y, x + TAB_WIDTH, y + TAB_HEIGHT, bg);
+            if (active || hovered) {
+                g.fill(x, y, x + TAB_WIDTH, y + 2, border);
+            }
+
+            g.drawString(font, tab.label,
+                    x + (TAB_WIDTH - font.width(tab.label)) / 2,
+                    y + (TAB_HEIGHT - font.lineHeight) / 2,
+                    tc, false);
+
+            x += TAB_WIDTH + TAB_SPACING;
         }
 
         g.fill(0, HEADER_H - 1, w, HEADER_H, DIVIDER);

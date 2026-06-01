@@ -35,11 +35,12 @@ import java.util.concurrent.TimeUnit;
  * Supports custom left-click attacks.
  */
 @Getter
-public abstract class AbstractMoveset {
+public abstract class  AbstractMoveset {
 
     // UUID for the movement speed modifier
     private static final UUID SPEED_MODIFIER_UUID = UUID.fromString("A1B2C3D4-E5F6-7890-ABCD-EF1234567890");
 
+    // Simple getters for AbstractMoveset fields (Lombok @Getter not working)
     private final String movesetId;
     private final String displayName;
     private final MovesetType movesetType;
@@ -156,19 +157,6 @@ public abstract class AbstractMoveset {
 
         moves.addAll(builder.moveConfigs);
     }
-
-    // Simple getters for AbstractMoveset fields (Lombok @Getter not working)
-    public String getMovesetId() { return movesetId; }
-    public String getDisplayName() { return displayName; }
-    public MovesetType getMovesetType() { return movesetType; }
-    public ResourceLocation getIdleAnimation() { return idleAnimation; }
-    public float getSpeedMultiplier() { return speedMultiplier; }
-    public float getFallDamageMultiplier() { return fallDamageMultiplier; }
-    public float getHealthRegenMultiplier() { return healthRegenMultiplier; }
-    public MoveConfiguration getLeftClickMove() { return leftClickMove; }
-    public MoveConfiguration getRightClickMove() { return rightClickMove; }
-    public MoveConfiguration getCrouchRightClickMove() { return crouchRightClickMove; }
-    public List<MoveConfiguration> getMoves() { return moves; }
 
     /**
      * Distinguishes moveset resource type: breathing styles use breath gauge,
@@ -309,7 +297,7 @@ public abstract class AbstractMoveset {
      */
     public void triggerAnimation(LivingEntity entity, String animationName) {
         if (entity instanceof ServerPlayer serverPlayer) {
-            // Player animation â€” broadcast to all players in the same level so others can see it
+            // Player animation — broadcast to all players in the same level so others can see it
             PlayerAnimationPacket packet = new PlayerAnimationPacket(serverPlayer.getId(), animationName);
             NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer, packet);
         } else if (entity instanceof MovesetCapableNPC npc) {
@@ -364,6 +352,31 @@ public abstract class AbstractMoveset {
             return moves.get(index);
         }
         return null;
+    }
+
+    /**
+     * How many ticks an animation should occupy, derived from the matching move's configured
+     * windup+duration. NPCs use this to time client-side animation playback instead of
+     * hardcoded per-animation tables. Falls back to {@code fallback} for animations that aren't
+     * moveset moves (dash, backstep, double jump, etc.).
+     */
+    public int getAnimationDurationTicks(String animationName, int fallback) {
+        if (animationName == null || animationName.isEmpty()) return fallback;
+        for (int i = 0; i < getMoveCount(); i++) {
+            int d = animMatchDuration(getMove(i), animationName);
+            if (d >= 0) return d;
+        }
+        int d;
+        if ((d = animMatchDuration(getLeftClickConfiguration(), animationName)) >= 0) return d;
+        if ((d = animMatchDuration(getRightClickConfiguration(), animationName)) >= 0) return d;
+        if ((d = animMatchDuration(getCrouchRightClickConfiguration(), animationName)) >= 0) return d;
+        return fallback;
+    }
+
+    private int animMatchDuration(MoveConfiguration cfg, String animationName) {
+        if (cfg == null || cfg.animationId == null) return -1;
+        if (!cfg.animationId.getPath().equals(animationName)) return -1;
+        return cfg.getWindupOrDefault(0) + cfg.getDurationOrDefault(0);
     }
 
     /**

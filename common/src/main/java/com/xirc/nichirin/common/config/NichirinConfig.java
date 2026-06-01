@@ -7,7 +7,7 @@ import java.util.Collections;
 /**
  * Lightweight runtime config for Breath of Nichirin.
  * Values live in memory and can be changed via {@code /nichirin config set}.
- * They reset to defaults on server restart (no file I/O by design â€” keep it simple).
+ * They reset to defaults on server restart (no file I/O by design — keep it simple).
  */
 public class NichirinConfig {
 
@@ -72,7 +72,7 @@ public class NichirinConfig {
             };
             if (clothValue != null) return clothValue;
         } catch (Exception ignored) {
-            // AutoConfig not yet initialised â€” fall through to in-memory map
+            // AutoConfig not yet initialised — fall through to in-memory map
         }
         Entry e = entries.get(key);
         return e != null ? e.value : 0;

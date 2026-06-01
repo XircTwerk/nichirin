@@ -48,7 +48,7 @@ public class BeastPalisadeBiteAttack extends BeastBreathingAttackBase {
                     .add(look.scale(baseDistance))
                     .add(perp.scale(perpOffset + i * 0.7));
 
-            List<LivingEntity> targets = getTargetsInCustomHitbox(center, 1.8f, HitboxData.HitboxShape.WIDE);
+            List<LivingEntity> targets = getTargetsInCustomHitbox(center, hitboxSize, HitboxData.HitboxShape.CUBE);
             for (LivingEntity target : targets) {
                 hitTarget(target);
             }

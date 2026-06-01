@@ -36,7 +36,7 @@ public class BurningStatusEffect extends MobEffect {
             // Keep the fire visual but deal damage directly at 1/3 rate
             // (ticks every 60 ticks = once per 3 seconds, dealing 1 damage each time)
             entity.setRemainingFireTicks(2);
-            entity.hurt(entity.damageSources().onFire(), 1.0f);
+            entity.hurt(entity.damageSources().onFire(), 0.5f);
         }
     }
 

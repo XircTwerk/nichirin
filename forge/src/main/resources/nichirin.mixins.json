@@ -4,11 +4,22 @@
   "package": "com.xirc.nichirin.mixin",
   "compatibilityLevel": "JAVA_17",
   "refmap": "nichirin.refmap.json",
-  "mixins": [
-  ],
   "client": [
+    "client.AbstractClientPlayerMixin",
+    "client.FogRendererMixin",
+    "client.GuiMixin",
+    "client.KeyboardInputMixin",
+    "client.LevelRendererMixin",
+    "client.MouseHandlerMixin",
+    "client.PlayerModelAccessor",
+    "client.PlayerRendererMixin",
+    "client.LivingEntityRendererMixin",
+    "client.ItemInHandLayerMixin",
+    "client.RenderTargetDepthMixin"
   ],
-  "server": [
+  "mixins": [
+    "LivingEntityMixin",
+    "PlayerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

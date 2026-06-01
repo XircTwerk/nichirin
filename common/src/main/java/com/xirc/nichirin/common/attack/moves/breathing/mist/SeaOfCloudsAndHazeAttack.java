@@ -13,23 +13,20 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-// Form 5: 5-hop zigzag charge with large hitboxes. Drags enemies into a straight finisher.
+// Form 5: Fast multi-hop zigzag charge with large hitboxes. Drags enemies into a straight finisher.
 public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
 
-    private static final int   ZIGZAG_COUNT    = 7;
-    private static final int   DASH_DURATION   = 6;
-    private static final int   DASH_INTERVAL   = 5;  // ticks between hops
-    private static final float DASH_DIST_FACTOR = 0.55f; // dashSpeed * this = blocks per hop
+    private static final int   ZIGZAG_COUNT   = 10;  // many quick dashes
+    private static final int   DASH_DURATION  = 4;   // hit-sampling window per hop
+    private static final int   DASH_INTERVAL  = 1;   // ticks between hops
+    private static final float ZIGZAG_ANGLE   = 30f; // alternating left/right angle
+    private static final float SPEED_FACTOR   = 0.9f; // dashSpeed * this = hop velocity (blocks/tick)
 
     private int     zigzagsExecuted = 0;
     private int     nextZigzagTick  = 0;
     private boolean finisherExecuted = false;
     private Vec3    baseDirection;
-
-    // Smooth lerp state for current hop
-    private Vec3 dashStartPos = null;
-    private Vec3 dashEndPos   = null;
-    private int  dashStartTick = 0;
+    private Vec3    lastDashPos;
 
     private final Set<LivingEntity>  caughtEnemies  = new HashSet<>();
     private final List<LivingEntity> draggedEnemies = new ArrayList<>();
@@ -41,8 +38,7 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
         zigzagsExecuted  = 0;
         nextZigzagTick   = 0;
         finisherExecuted = false;
-        dashStartPos     = null;
-        dashEndPos       = null;
+        lastDashPos      = null;
         caughtEnemies.clear();
         draggedEnemies.clear();
         spawnedClones.clear();
@@ -60,59 +56,53 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
     protected void perform() {
         if (world.isClientSide) return;
 
-        // ── 1. Trigger next zigzag hop ──────────────────────────────────────
+        // 1. Trigger next zigzag hop (velocity-based, smooth)
         if (zigzagsExecuted < ZIGZAG_COUNT && tickCount >= windup + nextZigzagTick) {
-            setupZigzagDash();
+            executeZigzagDash();
             zigzagsExecuted++;
             nextZigzagTick += DASH_DURATION + DASH_INTERVAL;
         }
 
-        // ── 2. Lerp position across DASH_DURATION ticks (smooth, grounded) ──
-        if (dashStartPos != null && dashEndPos != null) {
-            int tickInDash = tickCount - dashStartTick;
-            if (tickInDash >= 0 && tickInDash <= DASH_DURATION) {
-                double t = (double) tickInDash / DASH_DURATION;
-                double s = t * t * (3.0 - 2.0 * t); // smoothstep
-                double lerpX = dashStartPos.x + (dashEndPos.x - dashStartPos.x) * s;
-                double lerpZ = dashStartPos.z + (dashEndPos.z - dashStartPos.z) * s;
-                // Always use current Y, and stop at block collision instead of tunneling through walls.
-                double y = user.getY();
-                teleportSafe(new Vec3(lerpX, y, lerpZ));
+        // 2. Sample hits every tick during the current hop's travel window
+        if (zigzagsExecuted > 0 && !finisherExecuted) {
+            int lastDashStartTick = windup + (zigzagsExecuted - 1) * (DASH_DURATION + DASH_INTERVAL);
+            int travelTick = tickCount - lastDashStartTick;
+            if (travelTick > 0 && travelTick <= DASH_DURATION) {
+                hitEnemiesAlongPath();
             }
         }
 
-        // ── 3. Finisher ─────────────────────────────────────────────────────
-        int finisherStartTick = windup + (ZIGZAG_COUNT * (DASH_DURATION + DASH_INTERVAL)) + 5;
+        // 3. Finisher once all hops are done
+        int finisherStartTick = windup + (ZIGZAG_COUNT * (DASH_DURATION + DASH_INTERVAL)) + 3;
         if (!finisherExecuted && zigzagsExecuted >= ZIGZAG_COUNT && tickCount >= finisherStartTick) {
             executeFinisher();
             finisherExecuted = true;
         }
 
-        // ── 4. Drag between hops ─────────────────────────────────────────────
+        // 4. Drag caught enemies between hops
         if (zigzagsExecuted > 0 && !finisherExecuted) {
             continueDragEffect();
         }
     }
 
-    /** Sets up a single zigzag hop: stores lerp start/end, snap camera, queue hits. */
-    private void setupZigzagDash() {
-        double[] angles = {45, -45, 35, -35, 20, -20, 0};
-        double angle = zigzagsExecuted < angles.length ? angles[zigzagsExecuted] : 0;
+    /** Executes a single zigzag hop using velocity (smooth, client-predicted). */
+    private void executeZigzagDash() {
+        double angle = (zigzagsExecuted % 2 == 0) ? ZIGZAG_ANGLE : -ZIGZAG_ANGLE;
         Vec3 dir = rotateDirection(baseDirection, angle);
 
-        float dist = dashSpeed != null ? dashSpeed * DASH_DIST_FACTOR : 5.0f;
-        dashStartPos  = user.position();
-        dashEndPos    = new Vec3(dashStartPos.x + dir.x * dist, dashStartPos.y, dashStartPos.z + dir.z * dist);
-        dashStartTick = tickCount;
-
+        float speed = dashSpeed != null ? dashSpeed * SPEED_FACTOR : 6.0f;
+        Vec3 vel = dir.scale(speed);
+        user.setDeltaMovement(vel.x, 0.0, vel.z);
+        user.hurtMarked = true;
+        user.hasImpulse = true;
         user.setInvulnerable(true);
+        lastDashPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
         catchAndDragEnemies();
-        hitEnemiesAlongPath();
         createHopTrailEffect();
 
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
-                SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 0.7f, 1.3f + zigzagsExecuted * 0.1f);
+                SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 0.7f, 1.3f + zigzagsExecuted * 0.08f);
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.8f, 1.2f);
     }
@@ -159,7 +149,13 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
 
     private void hitEnemiesAlongPath() {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
-        List<LivingEntity> targets = getTargetsInCustomHitbox(userPos, hitboxSize * 1.5, hitboxSize, hitboxSize * 1.5);
+        Vec3 previousPos = lastDashPos;
+        lastDashPos = userPos;
+
+        // Sample along the path between last and current position so fast hops don't skip enemies.
+        List<LivingEntity> targets = previousPos != null
+                ? getTargetsAlongPath(previousPos, userPos, hitboxSize * 1.5f)
+                : getTargetsInCustomHitbox(userPos, hitboxSize * 1.5, hitboxSize, hitboxSize * 1.5);
 
         for (LivingEntity target : targets) {
             float originalDamage = damage;
@@ -179,6 +175,20 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
                 damage = originalDamage;
             }
         }
+    }
+
+    private List<LivingEntity> getTargetsAlongPath(Vec3 from, Vec3 to, float radius) {
+        Vec3 path = to.subtract(from);
+        double distance = path.length();
+        if (distance < 0.01) return getTargetsInCustomHitbox(to, radius, hitboxSize, radius);
+
+        Set<LivingEntity> found = new HashSet<>();
+        int steps = Math.max(1, (int) Math.ceil(distance / Math.max(radius * 0.25, 0.1)));
+        for (int i = 0; i <= steps; i++) {
+            Vec3 sample = from.add(path.scale((double) i / steps));
+            found.addAll(getTargetsInCustomHitbox(sample, radius, hitboxSize, radius));
+        }
+        return new ArrayList<>(found);
     }
 
     private void executeFinisher() {
@@ -255,8 +265,7 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
         zigzagsExecuted  = 0;
         nextZigzagTick   = 0;
         finisherExecuted = false;
-        dashStartPos     = null;
-        dashEndPos       = null;
+        lastDashPos      = null;
         caughtEnemies.clear();
         draggedEnemies.clear();
         spawnedClones.clear();

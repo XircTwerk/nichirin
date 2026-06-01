@@ -16,7 +16,7 @@ import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 
-// First Form: Dance of the Butterfly â€“ Caprice. Leap upward then dash forward at the aimed direction for a precision venom thrust.
+// First Form: Dance of the Butterfly — Caprice. Leap upward then dash forward at the aimed direction for a precision venom thrust.
 public class ButterflyAttack extends InsectBreathingAttackBase {
 
     private boolean dashStarted = false;
@@ -55,7 +55,7 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
         }
 
         if (dashStarted && !secondDashExecuted && tickCount == windup + 21) {
-            // Capture aim direction right before the dash â€” not at onStart â€” so the player can steer the leap
+            // Capture aim direction right before the dash — not at onStart — so the player can steer the leap
             dashDirection = user.getLookAngle().normalize();
             executeForwardDash();
             secondDashExecuted = true;
@@ -71,7 +71,6 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
 
             for (LivingEntity dashTarget : dashTargets) {
                 executeThrust(dashTarget);
-                break;
             }
         }
     }

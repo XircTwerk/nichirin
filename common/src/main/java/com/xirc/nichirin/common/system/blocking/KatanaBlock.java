@@ -39,13 +39,18 @@ public class KatanaBlock {
 
     private static final Map<UUID, BlockingState> BLOCKING_STATES = new HashMap<>();
 
-    private static final float BLOCK_STANCE_DRAIN = 0.8f;
-    private static final float PARRY_STANCE_COST = 15.0f;
     private static final int PARRY_WINDOW_TICKS = 10;
-    private static final int BLOCK_COOLDOWN_TICKS = 15;
-    private static final int EARLY_RELEASE_STUN_TICKS = 4;
-    private static final float BACKSTAB_ANGLE = 90.0f;
     private static final int PARRIED_ATTACK_COOLDOWN = 100;
+
+    // Blocking tuning is read from config (blocking.* in nichirin-server.toml).
+    private static com.xirc.nichirin.common.config.NichirinModConfig.BlockingConfig bcfg() {
+        return com.xirc.nichirin.common.config.NichirinModConfig.get().blocking;
+    }
+    private static float blockStanceDrain()      { return (float) bcfg().blockStanceDrain; }
+    private static float parryStanceCost()       { return (float) bcfg().parryStanceCost; }
+    private static int   blockCooldownTicks()    { return bcfg().blockCooldownTicks; }
+    private static int   earlyReleaseStunTicks() { return bcfg().earlyReleaseStunTicks; }
+    private static float backstabAngle()         { return (float) bcfg().backstabAngle; }
 
     private static final ResourceLocation COOLDOWN_PACKET_ID = new ResourceLocation("nichirin", "cooldown_display");
 
@@ -71,7 +76,7 @@ public class KatanaBlock {
         }
 
         void setBlockCooldown(long currentTime) {
-            blockCooldownUntil = currentTime + BLOCK_COOLDOWN_TICKS;
+            blockCooldownUntil = currentTime + blockCooldownTicks();
         }
 
         boolean isOnCooldown(long currentTime) {
@@ -281,7 +286,7 @@ public class KatanaBlock {
 
         // Stance check only for players
         if (entity instanceof Player player) {
-            if (!StanceManager.hasStance(player, BLOCK_STANCE_DRAIN * 25)) {
+            if (!StanceManager.hasStance(player, blockStanceDrain() * 25)) {
                 player.displayClientMessage(
                         Component.literal("Not enough stance to block!")
                                 .withStyle(style -> style.withColor(0xFF5555)),
@@ -296,7 +301,7 @@ public class KatanaBlock {
     private static void applyEarlyReleasePunishment(Player player) {
         MobEffectInstance stunEffect = new MobEffectInstance(
                 NichirinEffectRegistry.STUNNED.get(),
-                EARLY_RELEASE_STUN_TICKS, 0, false, false, true);
+                earlyReleaseStunTicks(), 0, false, false, true);
         player.addEffect(stunEffect);
 
         player.displayClientMessage(
@@ -325,7 +330,7 @@ public class KatanaBlock {
 
         double dot = flatLook.dot(flatToAttacker);
         double angle = Math.toDegrees(Math.acos(Math.max(-1.0, Math.min(1.0, dot))));
-        return angle > BACKSTAB_ANGLE;
+        return angle > backstabAngle();
     }
 
     private static boolean handleSuccessfulParry(LivingEntity defender, LivingEntity attacker, BlockingState state) {

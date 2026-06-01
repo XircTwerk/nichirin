@@ -6,7 +6,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 public class UrokodakiCapeRenderer extends NichirinArmorRenderer {
 
     public UrokodakiCapeRenderer() {
-        super("urokodaki_cape", "urokodaki_cape", new NichirinCapeArmorBoneProvider("Cape"), null);
+        super("urokodaki_cape", "urokodaki_cape", new NichirinCapeArmorBoneProvider("Cape"), "kimono");
     }
 
     @Override

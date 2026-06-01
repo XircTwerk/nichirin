@@ -71,7 +71,7 @@ public class BeastExplosiveRushAttack extends BeastBreathingAttackBase {
         deflectProjectiles();
 
         Vec3 center = user.position().add(0, user.getBbHeight() / 2, 0);
-        List<LivingEntity> targets = getTargetsInCustomHitbox(center, hitboxSize, HitboxData.HitboxShape.LONG);
+        List<LivingEntity> targets = getTargetsInCustomHitbox(center, hitboxSize, HitboxData.HitboxShape.CUBE);
         for (LivingEntity target : targets) {
             hitTarget(target);
             // Cancel user movement on hit

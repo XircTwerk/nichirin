@@ -49,7 +49,7 @@ public class BeastDevourAttack extends BeastBreathingAttackBase {
 
         for (int i = -3; i <= 3; i++) {
             Vec3 center = origin.add(perp.scale(i * 0.6)).add(look.scale(1.5));
-            List<LivingEntity> targets = getTargetsInCustomHitbox(center, 1.5f, HitboxData.HitboxShape.WIDE);
+            List<LivingEntity> targets = getTargetsInCustomHitbox(center, hitboxSize, HitboxData.HitboxShape.CUBE);
             for (LivingEntity target : targets) {
                 // Suppress knockback so stun pins the target in place
                 float savedKnockback = knockback;

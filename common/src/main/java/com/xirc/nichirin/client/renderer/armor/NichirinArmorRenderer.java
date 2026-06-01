@@ -49,7 +49,10 @@ public class NichirinArmorRenderer extends AzArmorRenderer {
     protected ItemStack currentStack;
 
     @Nullable private final String animationName;
-    private boolean wasMoving = false;
+    // Per-entity last-known movement state. The renderer instance is shared across every wearer,
+    // so a single boolean field would let one entity's movement corrupt another's animation state.
+    // null = not yet seen this entity (forces an initial dispatch so idle starts at rest).
+    private final java.util.Map<java.util.UUID, Boolean> lastMovingByEntity = new java.util.WeakHashMap<>();
 
     /** For uniforms: uses NichirinArmorBoneProvider which maps our geo bone names to standard slots */
     protected NichirinArmorRenderer(String armorName) {
@@ -117,7 +120,7 @@ public class NichirinArmorRenderer extends AzArmorRenderer {
                 try {
                     super.scaleBoneWithModelPart(context, boneContext, isReRender);
                 } catch (NullPointerException ignored) {
-                    // Body bone is null by design â€” skip body scaling.
+                    // Body bone is null by design — skip body scaling.
                 }
             }
         };
@@ -140,13 +143,16 @@ public class NichirinArmorRenderer extends AzArmorRenderer {
             applyBoneTransformations();
         }
 
-        // Dispatch cape animation on state change only (avoids snap/restart every frame)
+        // Dispatch the looping animation when the wearer's movement state changes (avoids snap/restart
+        // every frame). On first sight of an entity (lastMoving == null) we always dispatch so the idle
+        // loop actually starts at rest instead of waiting for the first movement transition.
         if (animationName != null && entity instanceof LivingEntity living && animator() != null) {
             boolean moving = living.getDeltaMovement().horizontalDistanceSqr() > 0.0001;
-            if (moving != wasMoving) {
+            Boolean lastMoving = lastMovingByEntity.get(living.getUUID());
+            if (lastMoving == null || lastMoving != moving) {
                 AzCommand cmd = moving ? ANIM_WALKING : ANIM_IDLE;
                 cmd.actions().forEach(action -> action.handle(AzDispatchSide.CLIENT, animator()));
-                wasMoving = moving;
+                lastMovingByEntity.put(living.getUUID(), moving);
             }
         }
     }
@@ -189,7 +195,7 @@ public class NichirinArmorRenderer extends AzArmorRenderer {
         matchRotation(currentBaseModel.rightLeg, getBone("rightBoot"));
         matchRotation(currentBaseModel.leftLeg, getBone("leftBoot"));
 
-        // Wide (Steve) skins have 4px arms vs slim (Alex) 3px â€” scale arm bones to match.
+        // Wide (Steve) skins have 4px arms vs slim (Alex) 3px — scale arm bones to match.
         boolean slim = currentBaseModel instanceof PlayerModel<?>
                 && ((PlayerModelAccessor) currentBaseModel).isSlim();
         float armScaleX = slim ? 0.75f : (4.0f / 3.0f) + 0.05f;
@@ -215,7 +221,7 @@ public class NichirinArmorRenderer extends AzArmorRenderer {
     protected void scaleArmBones(AzBone leftArmBone, AzBone rightArmBone, float multiplier) {
         // Reliable slim detection isn't available here (AzureLib passes plain HumanoidModel,
         // not PlayerModel, and getModelName() is unreliable for offline/dev players).
-        // Default to Steve width (4/3) for everyone â€” slightly wide for Alex but acceptable.
+        // Default to Steve width (4/3) for everyone — slightly wide for Alex but acceptable.
         float scaleX = multiplier * (4.0f / 3.0f);
         if (leftArmBone  != null) leftArmBone.setScaleX(scaleX);
         if (rightArmBone != null) rightArmBone.setScaleX(scaleX);
@@ -289,7 +295,7 @@ public class NichirinArmorRenderer extends AzArmorRenderer {
      * Override in subclasses.
      */
     protected void applyBoneVisibilityBySlot(EquipmentSlot slot) {
-        // Base implementation â€” override in subclasses
+        // Base implementation — override in subclasses
         setAllVisible(false);
     }
 

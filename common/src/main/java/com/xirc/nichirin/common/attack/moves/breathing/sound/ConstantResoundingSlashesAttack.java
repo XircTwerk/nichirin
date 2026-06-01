@@ -24,7 +24,7 @@ import net.minecraft.world.phys.AABB;
  * enabling the blades to destroy anything it makes contact with for powerful defensive capabilities.
  *
  * Mechanics:
- * - 360Â° hitbox, 3.5 block radius
+ * - 360° hitbox, 3.5 block radius
  * - Deals rapid multi-hit damage (small hits stacking into big DPS)
  * - Reflects or destroys projectiles during active frames
  * - 1.5s duration, movement speed slowed by ~20% while active
@@ -99,7 +99,7 @@ public class ConstantResoundingSlashesAttack extends SoundBreathingAttackBase {
         // Create spinning particle effect
         createSpinningBladeEffect(userPos);
 
-        // Hit all enemies in 360Â° radius
+        // Hit all enemies in 360° radius
         List<LivingEntity> targets = getTargetsInCustomHitbox(userPos, range, 2.0, range);
 
         for (LivingEntity target : targets) {

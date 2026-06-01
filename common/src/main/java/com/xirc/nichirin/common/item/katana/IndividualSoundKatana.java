@@ -44,7 +44,7 @@ public class IndividualSoundKatana extends SimpleKatana {
         if (level.isClientSide) return;
 
         if (slotId < 0 || slotId > 40) {
-            // Item is in a non-standard inventory (chest, hopper, etc.) â€” convert and drop
+            // Item is in a non-standard inventory (chest, hopper, etc.) — convert and drop
             ItemStack soundKatanas = new ItemStack(NichirinItemRegistry.SOUND_KATANAS.get());
             if (entity.level().getBlockEntity(entity.blockPosition()) != null) {
                 entity.spawnAtLocation(soundKatanas);

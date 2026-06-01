@@ -65,11 +65,16 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
     private static final EntityDataAccessor<Boolean> ANIMATION_RESET   =
             SynchedEntityData.defineId(BaseBreathingTrainerEntity.class, EntityDataSerializers.BOOLEAN);
 
-    protected static final float DUEL_HP               = 100.0f;
-    protected static final float PEACEFUL_HP           = 200.0f;
-    protected static final float DUEL_WIN_HP_THRESHOLD = 1.0f;
-    protected static final float PLAYER_DUEL_MIN_HP    = 0.5f;
-    protected static final int   DUEL_COOLDOWN_TICKS   = 20 * 60 * 3;
+    /** Trainer health outside combat (also the base MAX_HEALTH attribute) — config-tunable. */
+    protected static float peacefulHp() { return (float) NichirinModConfig.get().combat.npcPeacefulHealth; }
+    /** Duel boss HP — config-tunable. */
+    protected float duelHp() { return NichirinModConfig.get().combat.npcDuelHealth; }
+    /** Health floor that ends a non-lethal duel (trainer can't be killed in a spar) — config-tunable. */
+    protected static float duelWinHpThreshold() { return (float) NichirinModConfig.get().combat.npcDuelWinHpThreshold; }
+    /** Minimum health a trainer leaves a defeated opponent at (mercy) — config-tunable. */
+    protected static float playerDuelMinHp() { return (float) NichirinModConfig.get().combat.npcPlayerDuelMinHealth; }
+    /** Ticks before a trainer can be challenged again after a duel — config-tunable (seconds × 20). */
+    protected int duelCooldownDuration() { return NichirinModConfig.get().combat.npcDuelCooldownSeconds * 20; }
 
     public enum TrainerMode { PEACEFUL, DUELING, SELF_DEFENSE }
 
@@ -86,6 +91,11 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
 
     // Provoked combat — tracks who hit us while peaceful so we can warn then fight
     private UUID provokedWarnedBy = null;
+    // Grace period (ticks) before a self-defense fight reverts to peaceful after the target is lost.
+    // Prevents the "Are you sure?" warning from re-arming every time the target is briefly out of range.
+    /** Self-defense grace duration (ticks) — config-tunable. */
+    protected static int selfDefenseGraceDuration() { return NichirinModConfig.get().combat.npcSelfDefenseGraceTicks; }
+    private int selfDefenseGraceTicks = 0;
 
     protected AbstractMoveset moveset;
     protected float maxBreathGauge         = 100.0f;
@@ -117,7 +127,7 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
 
     public static AttributeSupplier.Builder createAttributes() {
         return PathfinderMob.createMobAttributes()
-                .add(Attributes.MAX_HEALTH,           PEACEFUL_HP)
+                .add(Attributes.MAX_HEALTH,           peacefulHp())
                 .add(Attributes.MOVEMENT_SPEED,       0.28)
                 .add(Attributes.ATTACK_DAMAGE,        5.0)
                 .add(Attributes.ARMOR,                6.0)
@@ -128,7 +138,7 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
     @Override
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
-        goalSelector.addGoal(1, new TrainerDuelGoal(this));
+        goalSelector.addGoal(1, new com.xirc.nichirin.common.entity.ai.SmartTrainerAttackGoal(this, 1.2, true));
         goalSelector.addGoal(2, new LookAtPlayerGoal(this, Player.class, 16.0f));
         goalSelector.addGoal(3, new WaterAvoidingRandomStrollGoal(this, 0.6));
         goalSelector.addGoal(4, new RandomLookAroundGoal(this));
@@ -366,8 +376,8 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
         duelDifficulty = difficulty;
         playersInDuel.put(challenger.getUUID(), getUUID());
 
-        Objects.requireNonNull(getAttribute(Attributes.MAX_HEALTH)).setBaseValue(DUEL_HP);
-        setHealth(DUEL_HP);
+        Objects.requireNonNull(getAttribute(Attributes.MAX_HEALTH)).setBaseValue(duelHp());
+        setHealth(duelHp());
         setTarget(challenger);
 
         // Create boss bar
@@ -390,13 +400,13 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
 
     protected void endDuel(boolean playerWon) {
         mode = TrainerMode.PEACEFUL;
-        duelCooldownTicks = DUEL_COOLDOWN_TICKS;
+        duelCooldownTicks = duelCooldownDuration();
         provokedWarnedBy = null;
         if (duelPlayerId != null) playersInDuel.remove(duelPlayerId);
         setTarget(null);
 
-        Objects.requireNonNull(getAttribute(Attributes.MAX_HEALTH)).setBaseValue(PEACEFUL_HP);
-        setHealth(PEACEFUL_HP);
+        Objects.requireNonNull(getAttribute(Attributes.MAX_HEALTH)).setBaseValue(peacefulHp());
+        setHealth(peacefulHp());
 
         if (playerWon) hasBeatenTrainer = true;
 
@@ -431,10 +441,10 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
         if (mode == TrainerMode.DUELING && target instanceof Player p
                 && p.getUUID().equals(duelPlayerId)) {
             // If trainer is already near-dead the player is about to win — don't claim trainer wins
-            if (getHealth() <= DUEL_WIN_HP_THRESHOLD + 1.0f) return false;
+            if (getHealth() <= duelWinHpThreshold() + 1.0f) return false;
             float atk = (float) getAttributeValue(Attributes.ATTACK_DAMAGE);
-            if (p.getHealth() - atk <= PLAYER_DUEL_MIN_HP) {
-                p.setHealth(PLAYER_DUEL_MIN_HP);
+            if (p.getHealth() - atk <= playerDuelMinHp()) {
+                p.setHealth(playerDuelMinHp());
                 endDuel(false);
                 p.displayClientMessage(
                         Component.literal(trainerType.duelLoseMsg)
@@ -442,6 +452,18 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
                 return false;
             }
         }
+
+        // Provoked combat: the trainer fights for real but spares the player — leaves them at
+        // half a heart and stands down rather than killing them.
+        if (mode == TrainerMode.SELF_DEFENSE && target instanceof Player p) {
+            float atk = (float) getAttributeValue(Attributes.ATTACK_DAMAGE);
+            if (p.getHealth() - atk <= playerDuelMinHp()) {
+                p.setHealth(playerDuelMinHp());
+                standDownFromSelfDefense(p);
+                return false;
+            }
+        }
+
         return super.doHurtTarget(target);
     }
 
@@ -455,12 +477,12 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
         }
 
         if (mode == TrainerMode.DUELING) {
-            // Clamp so trainer can't be killed — duel ends at DUEL_WIN_HP_THRESHOLD
-            float safe = Math.min(amount, Math.max(0, getHealth() - DUEL_WIN_HP_THRESHOLD));
+            // Clamp so trainer can't be killed — duel ends at duelWinHpThreshold()
+            float safe = Math.min(amount, Math.max(0, getHealth() - duelWinHpThreshold()));
             boolean hit = safe > 0 && super.hurt(source, safe);
             // End duel whenever health is at threshold, even if this specific hit was
             // blocked by hurtTime immunity (safe=0 or super.hurt returned false).
-            if (getHealth() <= DUEL_WIN_HP_THRESHOLD && mode == TrainerMode.DUELING) {
+            if (getHealth() <= duelWinHpThreshold() && mode == TrainerMode.DUELING) {
                 boolean won = source.getEntity() instanceof Player atk
                         && atk.getUUID().equals(duelPlayerId);
                 endDuel(won);
@@ -493,7 +515,33 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
         mode = TrainerMode.SELF_DEFENSE;
         duelDifficulty = DuelDifficulty.HARD;
         setTarget(aggressor);
-        Objects.requireNonNull(getAttribute(Attributes.MAX_HEALTH)).setBaseValue(DUEL_HP);
+        selfDefenseGraceTicks = selfDefenseGraceDuration();
+        Objects.requireNonNull(getAttribute(Attributes.MAX_HEALTH)).setBaseValue(duelHp());
+    }
+
+    /**
+     * Mercy stand-down: the trainer spares a defeated aggressor (leaves them at half a heart)
+     * and returns to peaceful instead of killing them. The trainer itself can still be killed
+     * in self-defense (handled in {@link #hurt}).
+     */
+    private void standDownFromSelfDefense(Player spared) {
+        mode = TrainerMode.PEACEFUL;
+        provokedWarnedBy = null;
+        selfDefenseGraceTicks = 0;
+        setTarget(null);
+        Objects.requireNonNull(getAttribute(Attributes.MAX_HEALTH)).setBaseValue(peacefulHp());
+        setHealth(peacefulHp());
+        spared.displayClientMessage(
+                Component.literal(trainerType.npcName + ": Enough. You've learned your lesson.")
+                        .withStyle(s -> s.withColor(0xFFAA00)), false);
+    }
+
+    /**
+     * Whether the trainer is in a formal duel waiting for the player's first blow before fighting.
+     * Subclasses that implement the "wait for first strike" duel intro override this.
+     */
+    public boolean isWaitingForFirstBlow() {
+        return false;
     }
 
     public void raiseGuard() {
@@ -528,18 +576,27 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
             if (duelist == null || !duelist.isAlive()) endDuel(false);
         }
 
-        // Self-defense ends when target is gone or trainer is killed (natural death handles the latter)
+        // Self-defense ends only after the target has been gone for a grace period, so a
+        // momentary loss doesn't drop to peaceful and re-arm the "Are you sure?" warning.
         if (mode == TrainerMode.SELF_DEFENSE) {
             LivingEntity selfDefenseTarget = getTarget();
             if (selfDefenseTarget == null || !selfDefenseTarget.isAlive()) {
-                mode = TrainerMode.PEACEFUL;
-                provokedWarnedBy = null;
-                setTarget(null);
+                if (--selfDefenseGraceTicks <= 0) {
+                    mode = TrainerMode.PEACEFUL;
+                    provokedWarnedBy = null;
+                    setTarget(null);
+                }
+            } else {
+                selfDefenseGraceTicks = selfDefenseGraceDuration();
             }
         }
 
         if (bossBar != null && mode == TrainerMode.DUELING) {
-            bossBar.setProgress(Math.max(0f, Math.min(1f, getHealth() / DUEL_HP)));
+            // Normalize to the usable HP band [threshold, duelHp()] so the bar reads exactly 0
+            // when the duel is about to end (health is clamped and never reaches true zero).
+            float usable = duelHp() - duelWinHpThreshold();
+            float progress = (getHealth() - duelWinHpThreshold()) / usable;
+            bossBar.setProgress(Math.max(0f, Math.min(1f, progress)));
         }
 
         if (onGround()) resetDoubleJump();

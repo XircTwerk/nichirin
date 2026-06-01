@@ -19,8 +19,8 @@ import net.minecraft.world.damagesource.DamageSource;
 
 /**
  * Unlocks Beast Breathing when a player kills a Boar and equips the dropped boar head.
- * Step 1: Kill a boar â†’ receive boar head in inventory.
- * Step 2: Equip the boar head â†’ Beast Breathing unlocked.
+ * Step 1: Kill a boar → receive boar head in inventory.
+ * Step 2: Equip the boar head → Beast Breathing unlocked.
  */
 public class BeastBreathingUnlockHandler {
 

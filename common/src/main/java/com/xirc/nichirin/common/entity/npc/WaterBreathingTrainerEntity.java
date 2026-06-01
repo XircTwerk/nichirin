@@ -2,7 +2,6 @@ package com.xirc.nichirin.common.entity.npc;
 
 import com.xirc.nichirin.client.renderer.entity.dispatcher.WaterBreathingTrainerDispatcher;
 import com.xirc.nichirin.common.attack.moveset.breathing.WaterBreathingMoveset;
-import com.xirc.nichirin.common.entity.ai.WaterBreathingAttackGoal;
 import com.xirc.nichirin.registry.NichirinItemRegistry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
@@ -62,7 +61,7 @@ public class WaterBreathingTrainerEntity extends BaseBreathingTrainerEntity {
     @Override
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
-        goalSelector.addGoal(1, new WaterBreathingAttackGoal(this, 1.2, true));
+        goalSelector.addGoal(1, new com.xirc.nichirin.common.entity.ai.SmartTrainerAttackGoal(this, 1.2, true));
         goalSelector.addGoal(2, new LookAtPlayerGoal(this, Player.class, 16.0f));
         goalSelector.addGoal(3, new WaterAvoidingRandomStrollGoal(this, 0.7));
         goalSelector.addGoal(4, new RandomLookAroundGoal(this));
@@ -156,7 +155,7 @@ public class WaterBreathingTrainerEntity extends BaseBreathingTrainerEntity {
         if (!serverAnim.isEmpty() && (!serverAnim.equals(consumedAttackAnim) || wasAnimationReset())) {
             dispatcher.playAnimation(serverAnim);
             consumedAttackAnim = serverAnim;
-            animCooldownTicks = getAnimDurationTicks(serverAnim);
+            animCooldownTicks = moveset != null ? moveset.getAnimationDurationTicks(serverAnim, 16) : 16;
             lastWasWalking = null;
         }
 
@@ -177,21 +176,6 @@ public class WaterBreathingTrainerEntity extends BaseBreathingTrainerEntity {
         }
     }
 
-    private int getAnimDurationTicks(String animName) {
-        return switch (animName) {
-            case "water_surface_slash"  -> 14;
-            case "water_wheel"          -> 22;
-            case "flowing_dance"        -> 20;
-            case "striking_tide"        -> 17;
-            case "drop_ripple_thrust"   -> 12;
-            case "constant_flux"        -> 30;
-            case "dash"                 -> 8;
-            case "backstep"             -> 7;
-            case "air_dodge"            -> 6;
-            case "double_jump"          -> 10;
-            default                     -> 20;
-        };
-    }
 
     @Override
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {

@@ -74,7 +74,7 @@ public class ThunderBallEntity extends Entity {
     public void tick() {
         super.tick();
 
-        // Move on both sides â€” client applies deltaMovement each tick so rendering is smooth
+        // Move on both sides — client applies deltaMovement each tick so rendering is smooth
         // rather than snapping between server-synced positions.
         Vec3 motion = this.getDeltaMovement();
         this.setPos(this.getX() + motion.x, this.getY() + motion.y, this.getZ() + motion.z);

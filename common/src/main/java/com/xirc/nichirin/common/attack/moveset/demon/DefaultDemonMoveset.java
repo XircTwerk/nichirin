@@ -12,11 +12,9 @@ import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.system.GrabManager;
 import com.xirc.nichirin.common.entity.MovesetCapableNPC;
 import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
+import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
-import dev.architectury.networking.NetworkManager;
-import io.netty.buffer.Unpooled;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -45,6 +43,7 @@ public class DefaultDemonMoveset extends AbstractMoveset {
     private static final Map<UUID, Boolean> hasUsedHighJumpInAir = new HashMap<>();
     private static final Map<UUID, Long> lastHighJumpTick = new HashMap<>();
     private static final ThreadLocal<DefaultDemonMoveset> CURRENT_MOVESET = new ThreadLocal<>();
+    private static final int DEMON_COOLDOWN_COLOR = 0xFFDDDDDD;
 
     private static class SlashComboState {
         int currentStage = 0;
@@ -379,16 +378,29 @@ public class DefaultDemonMoveset extends AbstractMoveset {
     }
 
     private void sendCooldownPacket(ServerPlayer player, MoveConfiguration config) {
-        sendCooldownPacket(player, config.getDisplayName(), config.getCooldownOrDefault(0));
+        if (config.getCooldownOrDefault(0) > 0) {
+            CooldownDisplayPacket.sendToClient(player, getMovesetId(), config);
+        }
     }
 
     private void sendCooldownPacket(ServerPlayer player, String moveName, int cooldownTicks) {
         if (cooldownTicks > 0) {
-            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-            buf.writeUtf(moveName);
-            buf.writeInt(cooldownTicks);
-            NetworkManager.sendToPlayer(player, new ResourceLocation("nichirin", "cooldown_display"), buf);
+            CooldownDisplayPacket.sendToClient(player, moveName, cooldownTicks,
+                    getSpecialMoveIcon(moveName), DEMON_COOLDOWN_COLOR);
         }
+    }
+
+    private ResourceLocation getSpecialMoveIcon(String moveName) {
+        String moveId = switch (moveName) {
+            case "High Jump" -> "high_jump";
+            case "Stomp" -> "demon_stomp";
+            default -> "default_move";
+        };
+
+        if ("default_move".equals(moveId)) {
+            return new ResourceLocation("nichirin", "textures/icons/default_move.png");
+        }
+        return new ResourceLocation("nichirin", "textures/icons/default_demon/" + moveId + ".png");
     }
 
     private void setMoveCooldown(LivingEntity entity, int moveIndex, int cooldownTicks) {

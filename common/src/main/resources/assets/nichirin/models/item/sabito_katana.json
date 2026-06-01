@@ -5,8 +5,7 @@
 			"translation": [0, -9.25, 0]
 		},
 		"thirdperson_lefthand": {
-			"rotation": [-180, -180, 0],
-			"translation": [-1, -5.25, -0.5]
+			"translation": [0, -9.25, 0]
 		},
 		"firstperson_righthand": {
 			"translation": [0, -8, 0],

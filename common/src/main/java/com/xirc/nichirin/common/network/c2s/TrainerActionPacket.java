@@ -9,7 +9,7 @@ import java.util.UUID;
 import net.minecraft.server.level.ServerLevel;
 
 /**
- * C2S â€” player picks a dialogue option on the trainer dialogue screen.
+ * C2S — player picks a dialogue option on the trainer dialogue screen.
  */
 public class TrainerActionPacket {
 

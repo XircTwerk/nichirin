@@ -350,7 +350,11 @@ public class AttackWheelOverlay {
 
             String movesetId = null;
             if (holdingKatana) {
-                movesetId = MovesetHelper.getBreathingMovesetId(player);
+                if (MovesetHelper.hasBreathingMoveset(player)) {
+                    movesetId = MovesetHelper.getBreathingMovesetId(player);
+                } else {
+                    movesetId = DefaultKatanaMoveset.INSTANCE.getMovesetId();
+                }
             } else {
                 movesetId = MovesetHelper.getDemonMovesetId(player);
             }

@@ -44,8 +44,23 @@ public class BreathOfNichirinEventHandler {
 
         PlayerDataProvider.register();
         registerDemonEvents();
+        registerKillRewards();
         RiceInteractionHandler.register();
         registerLootInjection();
+    }
+
+    /**
+     * Fires kill rewards (heal / cooldown / stamina / breath / stance) whenever a player
+     * lands the killing blow on any entity. Without this registration the KillRewardManager
+     * was never invoked, so none of the killReward config options had any effect.
+     */
+    private static void registerKillRewards() {
+        dev.architectury.event.events.common.EntityEvent.LIVING_DEATH.register((entity, source) -> {
+            if (source != null && source.getEntity() instanceof ServerPlayer killer) {
+                KillRewardManager.onKill(killer, entity);
+            }
+            return dev.architectury.event.EventResult.pass();
+        });
     }
 
     private static final Set<ResourceLocation> RICE_LOOT_TABLES = Set.of(

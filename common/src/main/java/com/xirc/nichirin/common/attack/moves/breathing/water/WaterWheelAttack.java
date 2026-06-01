@@ -8,9 +8,9 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 /**
  * Second Form: Water Wheel (Wheel Version)
@@ -20,7 +20,7 @@ import java.util.Set;
 public class WaterWheelAttack extends WaterBreathingAttackBase {
 
     private boolean wheelStarted = false;
-    private Set<LivingEntity> hitEntities = new HashSet<>();
+    private final Map<LivingEntity, Integer> hitTickMap = new HashMap<>();
     private final List<LivingEntity> draggedEnemies = new ArrayList<>();
     private int wheelTicks = 0;
     private Vec3 lastWheelPos;
@@ -31,7 +31,7 @@ public class WaterWheelAttack extends WaterBreathingAttackBase {
     @Override
     protected void onStart() {
         wheelStarted = false;
-        hitEntities.clear();
+        hitTickMap.clear();
         draggedEnemies.clear();
         wheelTicks = 0;
         lastWheelPos = null;
@@ -121,16 +121,13 @@ public class WaterWheelAttack extends WaterBreathingAttackBase {
     }
 
     private boolean hasRecentlyHit(LivingEntity target) {
-        // Allow hitting the same target again after 12 ticks (0.6 seconds)
-        return hitEntities.contains(target) && wheelTicks % 12 > 6;
+        Integer lastHitTick = hitTickMap.get(target);
+        if (lastHitTick == null) return false;
+        return (wheelTicks - lastHitTick) < 12;
     }
 
     private void trackRecentHit(LivingEntity target) {
-        hitEntities.add(target);
-        // Clear old hits periodically to allow re-hitting
-        if (wheelTicks % 24 == 0) {
-            hitEntities.clear();
-        }
+        hitTickMap.put(target, wheelTicks);
     }
 
     private void catchAndHitTarget(LivingEntity target) {
@@ -246,7 +243,7 @@ public class WaterWheelAttack extends WaterBreathingAttackBase {
         user.setDeltaMovement(Vec3.ZERO);
 
         // Clear hit tracking
-        hitEntities.clear();
+        hitTickMap.clear();
         draggedEnemies.clear();
         wheelTicks = 0;
         wheelStarted = false;

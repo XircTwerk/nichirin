@@ -52,7 +52,7 @@ public class InsectBreathingUnlockHandler {
         PlayerDataProvider.updateAndSync(player, "insect_breathing");
 
         player.displayClientMessage(
-                Component.literal("ðŸ¦‹ Toxic Elegance achieved! You have mastered poison and unlocked Insect Breathing! ðŸ¦‹")
+                Component.literal(" Toxic Elegance achieved! You have mastered poison and unlocked Insect Breathing! ")
                         .withStyle(style -> style.withColor(0x9932CC).withBold(true)),
                 false
         );

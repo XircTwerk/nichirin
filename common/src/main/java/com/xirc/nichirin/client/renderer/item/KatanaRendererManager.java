@@ -8,7 +8,7 @@ import net.minecraft.world.item.Item;
 public class KatanaRendererManager {
 
     public static void registerAll() {
-        registerKatana(NichirinItemRegistry.SABITO_KATANA.get(), "katana_sabito", "sabito_katana");
+        registerKatana(NichirinItemRegistry.SABITO_KATANA.get(), "sabito_katana", "sabito_katana");
         registerKatana(NichirinItemRegistry.MIST_KATANA.get(), "muichiro_katana", "mist_katana");
     }
 

@@ -114,7 +114,7 @@ public class SimpleKatana extends Item {
         } else {
             CooldownHUD.setCooldown("Slash1", 0);
         }
-        NichirinAnimations.playAnimation(player, "sword.slash");
+        // Animation is played via server broadcast — don't play locally to avoid stutter
     }
 
     /** CLIENT ONLY: Update the cooldown HUD for right-click attacks. */
@@ -124,10 +124,8 @@ public class SimpleKatana extends Item {
         if (MovesetHelper.getBreathingMoveset(player) != null) return;
 
         if (isCrouching) {
-            NichirinAnimations.playAnimation(player, "sword.vertical");
             CooldownHUD.setCooldown("Rising Slash", 25);
         } else {
-            NichirinAnimations.playAnimation(player, "sword.doubleslash");
             CooldownHUD.setCooldown("Double Slash", 20);
         }
     }

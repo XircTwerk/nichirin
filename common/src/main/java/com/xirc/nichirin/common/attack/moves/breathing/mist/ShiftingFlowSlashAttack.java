@@ -76,12 +76,18 @@ public class ShiftingFlowSlashAttack extends MistBreathingAttackBase {
     }
 
     private void sustainDash() {
-        if (dashStartPos != null && dashSpeed != null) {
+        if (dashStartPos != null && dashSpeed != null && dashTick < duration) {
             dashTick++;
-            float progress = (float) dashTick / Math.max(duration, 1);
-            Vec3 targetPos = dashStartPos.add(dashDirection.scale(range * progress));
             lastDashPos = user.position();
-            teleportSafe(targetPos);
+            // Velocity-based dash (smooth, client-predicted) instead of per-tick teleport.
+            // Covers `range` blocks over `duration` ticks.
+            float speedPerTick = range / Math.max(duration, 1);
+            user.setDeltaMovement(
+                    dashDirection.x * speedPerTick,
+                    dashDirection.y * speedPerTick,
+                    dashDirection.z * speedPerTick);
+            user.hurtMarked = true;
+            user.hasImpulse = true;
         }
         if (world instanceof ServerLevel serverLevel) {
             Vec3 pos = user.position();

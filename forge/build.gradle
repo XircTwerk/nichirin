@@ -50,6 +50,9 @@ task copyCommonResources(type: Copy) {
     exclude 'fabric.mod.json'
     exclude 'architectury.common.json'
     dependsOn ':common:processResources'
+    doFirst {
+        delete new File(sourceSets.main.output.resourcesDir, 'assets/nichirin/geo')
+    }
 }
 
 classes.dependsOn copyCommonClasses, copyCommonResources

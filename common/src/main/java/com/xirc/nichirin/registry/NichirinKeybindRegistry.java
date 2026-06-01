@@ -23,6 +23,8 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 /**
  * Extended keybind registry with movement system and move index hotkeys
@@ -68,26 +70,43 @@ public interface NichirinKeybindRegistry {
     // Maximum number of move slots to support (covers all movesets)
     int MAX_MOVE_SLOTS = 12;
 
+    AtomicBoolean MOVE_HOTKEYS_REGISTERED = new AtomicBoolean(false);
+    AtomicBoolean CLIENT_TICK_REGISTERED = new AtomicBoolean(false);
+
     static void register() {
-        KeyMappingRegistry.register(ATTACK_WHEEL_KEY);
-        KeyMappingRegistry.register(SHEATHE_KEY);
-        KeyMappingRegistry.register(OPEN_GUI_KEY);
-        KeyMappingRegistry.register(BLOCK_KEY);
-        KeyMappingRegistry.register(MOVEMENT_KEY);
+        registerKeyMappings(KeyMappingRegistry::register);
+        registerClientTickHandler();
+    }
+
+    static void registerKeyMappings(Consumer<KeyMapping> registrar) {
+        registrar.accept(ATTACK_WHEEL_KEY);
+        registrar.accept(SHEATHE_KEY);
+        registrar.accept(OPEN_GUI_KEY);
+        registrar.accept(BLOCK_KEY);
+        registrar.accept(MOVEMENT_KEY);
 
         // Register move index hotkeys
-        registerMoveHotkeys();
+        registerMoveHotkeys(registrar);
+    }
 
+    static void registerClientTickHandler() {
         // Register tick event for input handling - ARCHITECTURY WAY
         // NOTE: Attack wheel is handled by AttackWheelHandler, not here
-        ClientTickEvent.CLIENT_POST.register(NichirinKeybindRegistry::onClientTick);
+        if (CLIENT_TICK_REGISTERED.compareAndSet(false, true)) {
+            ClientTickEvent.CLIENT_POST.register(NichirinKeybindRegistry::onClientTick);
+        }
     }
 
     /**
      * Register hotkeys for move indexes 0-11 (supports up to 12 moves per moveset)
      * All default to NOT_BOUND and are in "Nichirin Hotkeys" category
      */
-    private static void registerMoveHotkeys() {
+    private static void registerMoveHotkeys(Consumer<KeyMapping> registrar) {
+        if (!MOVE_HOTKEYS_REGISTERED.compareAndSet(false, true)) {
+            MOVE_HOTKEYS.values().forEach(registrar);
+            return;
+        }
+
         for (int i = 0; i < MAX_MOVE_SLOTS; i++) {
             KeyMapping moveHotkey = new KeyMapping(
                     "key.nichirin.move_" + i,
@@ -96,7 +115,7 @@ public interface NichirinKeybindRegistry {
             );
 
             MOVE_HOTKEYS.put(i, moveHotkey);
-            KeyMappingRegistry.register(moveHotkey);
+            registrar.accept(moveHotkey);
         }
     }
 

@@ -118,7 +118,7 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
     private void maintainCalmField() {
         if (fieldCenter == null || frozenPos == null) return;
 
-        // Anchor the user in place â€” teleport overrides client-side prediction
+        // Anchor the user in place — teleport overrides client-side prediction
         if (user instanceof ServerPlayer sp) {
             sp.teleportTo(frozenPos.x, frozenPos.y, frozenPos.z);
         } else {

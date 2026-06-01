@@ -41,10 +41,105 @@ public class NichirinModConfig implements ConfigData {
         @ConfigEntry.BoundedDiscrete(min = 1, max = 25)
         public int npcAiLevel = 25;
 
+        /** Ticks an NPC must wait between dash impulses (stops infinite dashing). */
+        @ConfigEntry.Gui.Tooltip
+        @ConfigEntry.BoundedDiscrete(min = 1, max = 60)
+        public int npcDashCooldownTicks = 18;
+
+        /** Ticks an NPC waits between mobility moves used to scale up to elevated targets. */
+        @ConfigEntry.Gui.Tooltip
+        @ConfigEntry.BoundedDiscrete(min = 1, max = 120)
+        public int npcMobilityCooldownTicks = 40;
+
+        /** Health a trainer has during a formal duel (the boss-bar fight). */
+        @ConfigEntry.Gui.Tooltip
+        @ConfigEntry.BoundedDiscrete(min = 20, max = 1000)
+        public int npcDuelHealth = 100;
+
+        /** Seconds a trainer must recover before it can be challenged to another duel. */
+        @ConfigEntry.Gui.Tooltip
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 600)
+        public int npcDuelCooldownSeconds = 180;
+
+        /** Trainer health while peaceful (also the base MAX_HEALTH attribute). */
+        @ConfigEntry.Gui.Tooltip
+        public double npcPeacefulHealth = 200.0;
+
+        /** Trainer health floor at which a non-lethal duel ends (trainer can't be killed in a spar). */
+        @ConfigEntry.Gui.Tooltip
+        public double npcDuelWinHpThreshold = 1.0;
+
+        /** Minimum health a trainer leaves a defeated opponent at (mercy; 0.5 = half a heart). */
+        @ConfigEntry.Gui.Tooltip
+        public double npcPlayerDuelMinHealth = 0.5;
+
+        /** Ticks a self-defense fight persists after the target is lost before reverting to peaceful. */
+        @ConfigEntry.Gui.Tooltip
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 400)
+        public int npcSelfDefenseGraceTicks = 100;
+
         /** @deprecated moved to {@link StaminaConfig#staminaRegenRate}. */
         @Deprecated
         @ConfigEntry.Gui.Excluded
         public int staminaRegenRate = 8;
+    }
+
+    // Movement
+
+    @ConfigEntry.Gui.CollapsibleObject
+    public MovementConfig movement = new MovementConfig();
+
+    public static class MovementConfig {
+
+        /** Horizontal impulse applied by a dash. */
+        @ConfigEntry.Gui.Tooltip
+        public double dashForce = 2.0;
+
+        /** Upward velocity of a double jump. */
+        @ConfigEntry.Gui.Tooltip
+        public double doubleJumpVelocity = 0.63;
+
+        /** Maximum distance (blocks) a backstep travels. */
+        @ConfigEntry.Gui.Tooltip
+        public double backstepDistance = 3.0;
+
+        /** Horizontal burst distance of an air dodge. */
+        @ConfigEntry.Gui.Tooltip
+        public double airDodgeDistance = 0.5;
+
+        /** Sprint movement-speed multiplier. */
+        @ConfigEntry.Gui.Tooltip
+        public double sprintMultiplier = 1.3;
+    }
+
+    // Blocking
+
+    @ConfigEntry.Gui.CollapsibleObject
+    public BlockingConfig blocking = new BlockingConfig();
+
+    public static class BlockingConfig {
+
+        /** Stance drained per tick while holding a block. */
+        @ConfigEntry.Gui.Tooltip
+        public double blockStanceDrain = 0.8;
+
+        /** Stance consumed by a parry attempt. */
+        @ConfigEntry.Gui.Tooltip
+        public double parryStanceCost = 15.0;
+
+        /** Ticks before you can block again after dropping guard. */
+        @ConfigEntry.Gui.Tooltip
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 60)
+        public int blockCooldownTicks = 15;
+
+        /** Self-stun ticks for releasing a block too early (failed parry). */
+        @ConfigEntry.Gui.Tooltip
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 40)
+        public int earlyReleaseStunTicks = 4;
+
+        /** Cone half-angle (degrees) behind the defender that counts as a backstab (ignores block). */
+        @ConfigEntry.Gui.Tooltip
+        public double backstabAngle = 90.0;
     }
 
     // Stamina

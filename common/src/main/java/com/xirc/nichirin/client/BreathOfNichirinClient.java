@@ -33,10 +33,13 @@ import net.minecraft.client.renderer.RenderType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 @Environment(EnvType.CLIENT)
 public class BreathOfNichirinClient {
     private static final Logger LOGGER = LoggerFactory.getLogger(BreathOfNichirinClient.class);
     private static boolean initialized = false;
+    private static final AtomicBoolean PARTICLES_REGISTERED = new AtomicBoolean(false);
 
     // Store shader effect for easy access
     private static DeadCalmShaderEffect deadCalmEffect;
@@ -44,7 +47,11 @@ public class BreathOfNichirinClient {
     private static FlameBreathingAuraShader flameAuraShader;
     private static WaterBreathingAuraShader waterAuraShader;
 
-    private static void registerParticles() {
+    public static void registerParticles() {
+        if (!PARTICLES_REGISTERED.compareAndSet(false, true)) {
+            return;
+        }
+
         try {
             ParticleProviderRegistry.register(NichirinParticleRegistry.THUNDER, ThunderParticleProvider::new);
             ParticleProviderRegistry.register(NichirinParticleRegistry.SHOCKWAVE, ShockwaveParticleProvider::new);

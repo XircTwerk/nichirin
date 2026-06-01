@@ -3,13 +3,11 @@ package com.xirc.nichirin.common.attack.moveset;
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.*;
 import com.xirc.nichirin.common.config.NichirinModConfig;
-import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
 import com.xirc.nichirin.common.util.StaminaManager;
-import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.Map;
@@ -19,8 +17,8 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Default katana moveset — used when the player holds a katana but has no breathing style.
  *
- * <p>Owns all attack state and logic so {@link com.xirc.nichirin.common.item.katana.SimpleKatana}
- * is reduced to a thin delegation layer.</p>
+ * <p>Routes all attacks through {@link AbstractMoveset}'s unified animation and
+ * {@link MoveExecutor} systems.</p>
  *
  * <ul>
  *   <li>Left-click — Slash / Slash2 combo</li>
@@ -33,16 +31,29 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class DefaultKatanaMoveset extends AbstractMoveset {
 
-    /** Shared instance — client-side display + server-side attack routing. */
     public static final DefaultKatanaMoveset INSTANCE = new DefaultKatanaMoveset();
 
-    private static final int  COMBO_WINDOW            = 20;   // ticks between hits to chain combo
-    private static final float SPECIAL_STAMINA_COST   = 15.0f;
+    private static final int COMBO_WINDOW = 20;
+    private static final float SPECIAL_STAMINA_COST = 15.0f;
 
-    // Per-player attack state (server-side)
-    private static final Map<UUID, KatanaState> playerStates = new ConcurrentHashMap<>();
+    private static final Map<UUID, ComboState> comboStates = new ConcurrentHashMap<>();
 
-    //  Constructor / builder
+    // Stat sources for the click attacks (slash combo, double slash, rising slash).
+    // Edit these to tune the attacks — the values here override the attack-class defaults.
+    // withTiming(cooldown, windup, duration); windup->startup, duration->active.
+    private static final MoveConfiguration SLASH1_CONFIG = new MoveBuilder("slash", "Slash")
+            .withTiming(0, 0, 7).withDamage(4.0f).withRange(2.5f).withKnockback(0.3f).withHitboxSize(2.0f).withHitStun(5).build();
+    private static final MoveConfiguration SLASH2_CONFIG = new MoveBuilder("slash", "Slash")
+            .withTiming(0, 0, 10).withDamage(5.0f).withRange(2.5f).withKnockback(0.5f).withHitboxSize(2.0f).withHitStun(5).build();
+    private static final MoveConfiguration DOUBLE_SLASH_CONFIG = new MoveBuilder("double_slash", "Double Slash")
+            .withTiming(20, 0, 16).withDamage(3.5f).withRange(2.8f).withKnockback(0.4f).withHitboxSize(2.0f).withHitStun(7).build();
+    private static final MoveConfiguration RISING_SLASH_CONFIG = new MoveBuilder("rising_slash", "Rising Slash")
+            .withTiming(25, 0, 10).withDamage(4.0f).withRange(2.5f).withKnockback(0.2f).withHitboxSize(2.0f).withHitStun(10).build();
+
+    private static class ComboState {
+        long lastAttackTime = 0;
+        int comboCount = 0;
+    }
 
     private DefaultKatanaMoveset() {
         super("default_katana", "Katana Arts", MovesetType.NEUTRAL, createBuilder());
@@ -50,305 +61,216 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
 
     private static MovesetBuilder createBuilder() {
         return new MovesetBuilder()
-                .withLeftClickMove(new MoveBuilder("slash", "Slash")
-                        .withDescription("Light slash — combo for a heavier follow-up.")
-                        .withAction(entity -> { if (entity instanceof Player p) performLeftClick(p); })
-                )
-
-                .withRightClickMove(new MoveBuilder("double_slash", "Double Slash")
-                        .withDescription("Powerful double slash. Costs stamina.")
-                        .withAction(entity -> { if (entity instanceof Player p) performRightClick(p, false); })
-                )
-
-                .withCrouchRightClickMove(new MoveBuilder("rising_slash", "Rising Slash")
-                        .withDescription("Launches the target upward. Costs stamina.")
-                        .withAction(entity -> { if (entity instanceof Player p) performRightClick(p, true); })
-                )
-
                 .withMove(new MoveBuilder("check", "Check")
+                        .withAnimation("nichirin:sword.check", 6)
                         .withDescription("Shoulder bash with the katana handle. Close-range stun.")
-                        .withTiming(0, 1, 2)
-                        .withCooldown(30)
+                        .withTiming(30, 0, 1)
                         .withStaminaCost(SPECIAL_STAMINA_COST)
                         .withDamage(2.0f)
                         .withRange(0.9f)
                         .withKnockback(2.2f)
                         .withHitboxSize(2.0f)
-                        .withAction(entity -> { if (entity instanceof Player p) performWheelMove(p, 0); })
+                        .withAction(entity -> {
+                            if (!(entity instanceof Player p)) return;
+                            KatanaCheckAttack attack = KatanaCheckAttack.createDefault();
+                            attack.configure(INSTANCE.getMove(0));
+                            MoveExecutor.executeAttack(p, attack, "default_katana", "check");
+                        })
                 )
 
                 .withMove(new MoveBuilder("overhead", "Overhead")
+                        .withAnimation("nichirin:sword.vertical", 12)
                         .withDescription("Heavy downward slash. Slams airborne targets.")
-                        .withTiming(4, 8, 4)
-                        .withCooldown(40)
+                        .withTiming(40, 4, 8)
                         .withStaminaCost(SPECIAL_STAMINA_COST)
                         .withDamage(10.0f)
                         .withRange(2.8f)
                         .withKnockback(1.0f)
                         .withHitboxSize(2.0f)
-                        .withAction(entity -> { if (entity instanceof Player p) performWheelMove(p, 1); })
+                        .withAction(entity -> {
+                            if (!(entity instanceof Player p)) return;
+                            KatanaOverheadAttack attack = KatanaOverheadAttack.createDefault();
+                            attack.configure(INSTANCE.getMove(1));
+                            MoveExecutor.executeAttack(p, attack, "default_katana", "overhead");
+                        })
                 )
 
                 .withMove(new MoveBuilder("thrust", "Thrust")
+                        .withAnimation("nichirin:sword.thrust", 14)
                         .withDescription("Forward dash attack. Great knockback.")
-                        .withTiming(3, 10, 4)
-                        .withCooldown(50)
+                        .withTiming(50, 3, 10)
                         .withStaminaCost(SPECIAL_STAMINA_COST)
                         .withDamage(8.0f)
                         .withRange(7.0f)
                         .withKnockback(1.2f)
                         .withHitboxSize(2.0f)
-                        .withAction(entity -> { if (entity instanceof Player p) performWheelMove(p, 2); })
+                        .withAction(entity -> {
+                            if (!(entity instanceof Player p)) return;
+                            KatanaThrustAttack attack = KatanaThrustAttack.createDefault();
+                            attack.configure(INSTANCE.getMove(2));
+                            MoveExecutor.executeAttack(p, attack, "default_katana", "thrust");
+                        })
                 );
     }
 
-    //  State management
-
-    public static KatanaState getOrCreateState(Player player) {
-        return playerStates.computeIfAbsent(player.getUUID(), u -> new KatanaState());
+    @Override
+    public int getMoveCount() {
+        return 3;
     }
 
-    public static void cleanupPlayer(Player player) {
-        playerStates.remove(player.getUUID());
-    }
+    @Override
+    public boolean handleLeftClick(LivingEntity entity) {
+        if (entity.level().isClientSide) return true;
+        if (MoveExecutor.hasActiveAttacks(entity)) return true;
 
-    public static void clearAll() {
-        playerStates.clear();
-    }
+        ComboState combo = comboStates.computeIfAbsent(entity.getUUID(), k -> new ComboState());
+        long now = entity.level().getGameTime();
+        boolean isCombo = (now - combo.lastAttackTime) <= COMBO_WINDOW && combo.comboCount > 0;
 
-    public static void interruptPlayerAttack(Player player) {
-        KatanaState state = playerStates.get(player.getUUID());
-        if (state == null) return;
-
-        stopAttack(state.currentSlash);
-        stopAttack(state.currentDoubleSlash);
-        stopAttack(state.currentRisingSlash);
-        stopAttack(state.currentCheck);
-        stopAttack(state.currentOverhead);
-        stopAttack(state.currentThrust);
-
-        state.currentSlash = null;
-        state.currentDoubleSlash = null;
-        state.currentRisingSlash = null;
-        state.currentCheck = null;
-        state.currentOverhead = null;
-        state.currentThrust = null;
-        state.comboCount = 0;
-        state.lastAttackTime = 0;
-    }
-
-    private static boolean isAttackActive(Object attack) {
-        if (attack == null) return false;
-        if (attack instanceof AbstractKatanaAttack katana) return katana.isActive();
-        return false;
-    }
-
-    /** Called every tick from {@code SimpleKatana.inventoryTick} while the katana is selected. */
-    public static void tick(Player player) {
-        KatanaState state = playerStates.get(player.getUUID());
-        if (state == null) return;
-        // Attack ticking is handled by MoveExecutor.tickAllAttacks
-
-        // Reset combo if the window expired
-        long now = player.level().getGameTime();
-        if (now - state.lastAttackTime > COMBO_WINDOW && state.comboCount > 0) {
-            state.comboCount = 0;
-        }
-
-        // Periodically remove inactive state entries (keeps the map tidy).
-        // Do NOT remove while any cooldown is still active — that would wipe the timestamps.
-        if (now % 100 == 0) {
-            playerStates.entrySet().removeIf(e -> {
-                KatanaState s = e.getValue();
-                return (s.currentSlash       == null || !s.currentSlash.isActive())
-                    && (s.currentDoubleSlash == null || !s.currentDoubleSlash.isActive())
-                    && (s.currentRisingSlash == null || !s.currentRisingSlash.isActive())
-                    && (s.currentCheck       == null || !s.currentCheck.isActive())
-                    && (s.currentOverhead    == null || !s.currentOverhead.isActive())
-                    && (s.currentThrust      == null || !s.currentThrust.isActive())
-                    && s.comboCount == 0
-                    && now >= s.slash1CooldownUntil
-                    && now >= s.slash2CooldownUntil
-                    && now >= s.doubleSlashCooldownUntil
-                    && now >= s.risingSlashCooldownUntil
-                    && now >= s.checkCooldownUntil
-                    && now >= s.overheadCooldownUntil
-                    && now >= s.thrustCooldownUntil;
-            });
-        }
-    }
-
-    //  Attack entry points (called by SimpleKatana)
-
-    /**
-     * Left-click handler — slash combo.
-     * Guard checks (stun, blocking, canPerformAttack) are done by the caller.
-     */
-    public static void performLeftClick(Player player) {
-        if (player.level().isClientSide) return;
-
-        KatanaState state = getOrCreateState(player);
-        if (isAnyAttackActive(state)) return;
-
-        long now = player.level().getGameTime();
-        boolean isCombo = (now - state.lastAttackTime) <= COMBO_WINDOW && state.comboCount > 0;
-
-        if (!isCombo && now < state.slash1CooldownUntil) return;
-        if (isCombo  && now < state.slash2CooldownUntil) return;
-
-        if (isCombo && state.comboCount == 1) {
-            state.currentSlash = KatanaSlashAttack.createSlash2();
-            state.comboCount = 2;
-            state.slash2CooldownUntil = now + state.currentSlash.getCooldown();
-            MoveExecutor.executeAttack(player, state.currentSlash, "default_katana", "slash");
-            if (player instanceof ServerPlayer sp)
-                NichirinPacketRegistry.broadcastPlayerAnimation(sp, new PlayerAnimationPacket(sp.getId(), "sword.slash"));
+        if (isCombo && combo.comboCount == 1) {
+            KatanaSlashAttack attack = KatanaSlashAttack.createSlash2();
+            attack.configure(SLASH2_CONFIG);
+            combo.comboCount = 2;
+            triggerAnimation(entity, "sword.slash");
+            MoveExecutor.executeAttack(entity, attack, "default_katana", "slash");
         } else {
-            state.currentSlash = KatanaSlashAttack.createSlash1();
-            state.comboCount = 1;
-            state.slash1CooldownUntil = now + state.currentSlash.getCooldown();
-            MoveExecutor.executeAttack(player, state.currentSlash, "default_katana", "slash");
-            if (player instanceof ServerPlayer sp)
-                NichirinPacketRegistry.broadcastPlayerAnimation(sp, new PlayerAnimationPacket(sp.getId(), "sword.slash"));
+            KatanaSlashAttack attack = KatanaSlashAttack.createSlash1();
+            attack.configure(SLASH1_CONFIG);
+            combo.comboCount = 1;
+            triggerAnimation(entity, "sword.slash");
+            MoveExecutor.executeAttack(entity, attack, "default_katana", "slash");
         }
 
-        state.lastAttackTime = now;
+        combo.lastAttackTime = now;
+        return true;
     }
 
-    /**
-     * Right-click handler — double slash (normal) or rising slash (crouching).
-     * Guard checks (stun, blocking, canPerformAttack) are done by the caller.
-     */
-    public static void performRightClick(Player player, boolean isCrouching) {
-        if (player.level().isClientSide) return;
+    @Override
+    public boolean handleRightClick(LivingEntity entity, boolean isCrouching) {
+        if (entity.level().isClientSide) return true;
+        if (MoveExecutor.hasActiveAttacks(entity)) return true;
+        if (!(entity instanceof Player player)) return false;
 
-        KatanaState state = getOrCreateState(player);
-        if (isAnyAttackActive(state)) return;
-
-        long now = player.level().getGameTime();
         float cost = NichirinModConfig.get().stamina.heavyAttackStaminaCost;
 
         if (!StaminaManager.hasStamina(player, cost)) {
             player.displayClientMessage(
                     Component.literal("Not enough stamina for special attack!")
-                             .withStyle(s -> s.withColor(0xFF5555)), true);
+                            .withStyle(s -> s.withColor(0xFF5555)), true);
             player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                     SoundEvents.NOTE_BLOCK_BASS.value(), SoundSource.PLAYERS, 0.5f, 0.5f);
-            return;
+            return true;
         }
+
+        if (!StaminaManager.consume(player, cost)) return true;
 
         if (isCrouching) {
-            if (now < state.risingSlashCooldownUntil) return;
-            if (!StaminaManager.consume(player, cost)) return;
-
-            state.currentRisingSlash = KatanaRisingSlashAttack.createDefault();
-            state.risingSlashCooldownUntil = now + state.currentRisingSlash.getCooldown();
-            MoveExecutor.executeAttack(player, state.currentRisingSlash, "default_katana", "rising_slash");
-            if (player instanceof ServerPlayer sp)
-                NichirinPacketRegistry.broadcastPlayerAnimation(sp, new PlayerAnimationPacket(sp.getId(), "sword.vertical"));
-
+            KatanaRisingSlashAttack attack = KatanaRisingSlashAttack.createDefault();
+            attack.configure(RISING_SLASH_CONFIG);
+            triggerAnimation(entity, "sword.vertical");
+            MoveExecutor.executeAttack(player, attack, "default_katana", "rising_slash");
         } else {
-            if (now < state.doubleSlashCooldownUntil) return;
-            if (!StaminaManager.consume(player, cost)) return;
-
-            state.currentDoubleSlash = KatanaDoubleSlashAttack.createDefault();
-            state.doubleSlashCooldownUntil = now + state.currentDoubleSlash.getCooldown();
-            MoveExecutor.executeAttack(player, state.currentDoubleSlash, "default_katana", "double_slash");
-            if (player instanceof ServerPlayer sp)
-                NichirinPacketRegistry.broadcastPlayerAnimation(sp, new PlayerAnimationPacket(sp.getId(), "sword.doubleslash"));
+            KatanaDoubleSlashAttack attack = KatanaDoubleSlashAttack.createDefault();
+            attack.configure(DOUBLE_SLASH_CONFIG);
+            triggerAnimation(entity, "sword.doubleslash");
+            MoveExecutor.executeAttack(player, attack, "default_katana", "double_slash");
         }
 
-        state.comboCount = 0;
-        state.lastAttackTime = 0;
+        ComboState combo = comboStates.get(entity.getUUID());
+        if (combo != null) {
+            combo.comboCount = 0;
+            combo.lastAttackTime = 0;
+        }
+
+        return true;
     }
 
-    /**
-     * Wheel move handler — Check (0), Overhead (1), Thrust (2).
-     * Guard checks (stun, blocking) are done by the caller.
-     */
-    public static void performWheelMove(Player player, int moveIndex) {
-        if (player.level().isClientSide) return;
+    @Override
+    public void performMove(LivingEntity entity, int moveIndex) {
+        if (entity.level().isClientSide) return;
+        if (MoveExecutor.hasActiveAttacks(entity)) return;
+        if (!(entity instanceof Player player)) return;
 
-        KatanaState state = getOrCreateState(player);
-        if (isAnyAttackActive(state)) return;
-
-        long now = player.level().getGameTime();
         if (!StaminaManager.hasStamina(player, SPECIAL_STAMINA_COST)) {
             player.displayClientMessage(
                     Component.literal("Not enough stamina!")
-                             .withStyle(s -> s.withColor(0xFF5555)), true);
+                            .withStyle(s -> s.withColor(0xFF5555)), true);
             return;
         }
 
-        switch (moveIndex) {
-            case 0 -> { // Check
-                if (now < state.checkCooldownUntil) return;
-                if (!StaminaManager.consume(player, SPECIAL_STAMINA_COST)) return;
-                state.currentCheck = KatanaCheckAttack.createDefault();
-                state.checkCooldownUntil = now + state.currentCheck.getCooldown();
-                MoveExecutor.executeAttack(player, state.currentCheck, "default_katana", "check");
-                if (player instanceof ServerPlayer sp)
-                    NichirinPacketRegistry.broadcastPlayerAnimation(sp, new PlayerAnimationPacket(sp.getId(), "sword.check"));
+        MoveConfiguration config = getMove(moveIndex);
+        if (config != null && config.startAction != null) {
+            if (!StaminaManager.consume(player, SPECIAL_STAMINA_COST)) return;
+
+            if (config.animationId != null) {
+                triggerAnimation(entity, config.animationId.getPath());
             }
-            case 1 -> { // Overhead
-                if (now < state.overheadCooldownUntil) return;
-                if (!StaminaManager.consume(player, SPECIAL_STAMINA_COST)) return;
-                state.currentOverhead = KatanaOverheadAttack.createDefault();
-                state.overheadCooldownUntil = now + state.currentOverhead.getCooldown();
-                MoveExecutor.executeAttack(player, state.currentOverhead, "default_katana", "overhead");
-                if (player instanceof ServerPlayer sp)
-                    NichirinPacketRegistry.broadcastPlayerAnimation(sp, new PlayerAnimationPacket(sp.getId(), "sword.vertical"));
-            }
-            case 2 -> { // Thrust
-                if (now < state.thrustCooldownUntil) return;
-                if (!StaminaManager.consume(player, SPECIAL_STAMINA_COST)) return;
-                state.currentThrust = KatanaThrustAttack.createDefault();
-                state.thrustCooldownUntil = now + state.currentThrust.getCooldown();
-                MoveExecutor.executeAttack(player, state.currentThrust, "default_katana", "thrust");
-                if (player instanceof ServerPlayer sp)
-                    NichirinPacketRegistry.broadcastPlayerAnimation(sp, new PlayerAnimationPacket(sp.getId(), "sword.thrust"));
-            }
+
+            config.startAction.accept(entity);
         }
     }
 
-    //  Private helpers
+    public static void tick(Player player) {
+        ComboState combo = comboStates.get(player.getUUID());
+        if (combo == null) return;
 
-    private static boolean isAnyAttackActive(KatanaState s) {
-        return isAttackActive(s.currentSlash)
-            || isAttackActive(s.currentDoubleSlash)
-            || isAttackActive(s.currentRisingSlash)
-            || isAttackActive(s.currentCheck)
-            || isAttackActive(s.currentOverhead)
-            || isAttackActive(s.currentThrust);
-    }
+        long now = player.level().getGameTime();
+        if (now - combo.lastAttackTime > COMBO_WINDOW && combo.comboCount > 0) {
+            combo.comboCount = 0;
+        }
 
-    private static void stopAttack(Object attack) {
-        if (attack == null) return;
-        try {
-            attack.getClass().getMethod("stop").invoke(attack);
-        } catch (Exception ignored) {
+        if (now % 100 == 0) {
+            comboStates.entrySet().removeIf(e -> {
+                ComboState s = e.getValue();
+                return s.comboCount == 0 && now - s.lastAttackTime > COMBO_WINDOW;
+            });
         }
     }
 
-    //  Per-player state
+    public static KatanaState getOrCreateState(Player player) {
+        ComboState combo = comboStates.computeIfAbsent(player.getUUID(), k -> new ComboState());
+        KatanaState state = new KatanaState();
+        state.lastAttackTime = combo.lastAttackTime;
+        state.comboCount = combo.comboCount;
+        return state;
+    }
 
+    public static void cleanupPlayer(Player player) {
+        comboStates.remove(player.getUUID());
+    }
+
+    public static void clearAll() {
+        comboStates.clear();
+    }
+
+    public static void interruptPlayerAttack(Player player) {
+        MoveExecutor.clearAttacks(player);
+        comboStates.remove(player.getUUID());
+    }
+
+    @Override
+    public void onMovePerformed(LivingEntity entity, int moveIndex, boolean isCrouching) {}
+
+    @Override
+    public int getRightClickMoveIndex(boolean isCrouching) {
+        return isCrouching ? -2 : -1;
+    }
+
+    @Override
+    public String getRightClickMoveName() {
+        return "Double Slash";
+    }
+
+    @Override
+    public String getCrouchRightClickMoveName() {
+        return "Rising Slash";
+    }
+
+    /**
+     * Kept for backward compatibility with client-side HUD code.
+     */
     public static class KatanaState {
         public long lastAttackTime = 0;
-        public int  comboCount     = 0;
-
-        public KatanaSlashAttack        currentSlash       = null;
-        public KatanaDoubleSlashAttack  currentDoubleSlash = null;
-        public KatanaRisingSlashAttack  currentRisingSlash = null;
-        public KatanaCheckAttack        currentCheck       = null;
-        public KatanaOverheadAttack     currentOverhead    = null;
-        public KatanaThrustAttack       currentThrust      = null;
-
-        public long slash1CooldownUntil      = 0;
-        public long slash2CooldownUntil      = 0;
-        public long doubleSlashCooldownUntil = 0;
-        public long risingSlashCooldownUntil = 0;
-        public long checkCooldownUntil       = 0;
-        public long overheadCooldownUntil    = 0;
-        public long thrustCooldownUntil      = 0;
+        public int comboCount = 0;
     }
 }

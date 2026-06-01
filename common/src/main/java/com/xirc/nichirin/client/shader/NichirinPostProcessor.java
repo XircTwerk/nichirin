@@ -202,7 +202,7 @@ public abstract class NichirinPostProcessor {
         // Match the GL state vanilla uses for its own post effects.
         // Depth testing and blending left over from world rendering will
         // either kill the fullscreen quad (depth fail) or blend it against
-        // black â€” both produce a black screen.
+        // black — both produce a black screen.
         RenderSystem.disableDepthTest();
         RenderSystem.disableBlend();
         RenderSystem.resetTextureMatrix();

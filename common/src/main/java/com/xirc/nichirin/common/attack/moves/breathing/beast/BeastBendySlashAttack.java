@@ -35,7 +35,7 @@ public class BeastBendySlashAttack extends BeastBreathingAttackBase {
 
         for (int dist = 1; dist <= (int) range; dist++) {
             Vec3 center = origin.add(look.scale(dist));
-            List<LivingEntity> targets = getTargetsInCustomHitbox(center, hitboxSize, HitboxData.HitboxShape.WIDE);
+            List<LivingEntity> targets = getTargetsInCustomHitbox(center, hitboxSize, HitboxData.HitboxShape.CUBE);
             for (LivingEntity target : targets) {
                 hitTarget(target);
             }

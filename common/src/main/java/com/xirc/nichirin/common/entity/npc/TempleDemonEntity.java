@@ -109,7 +109,7 @@ public class TempleDemonEntity extends DemonNPCEntity {
         Level level = this.level();
         if (!level.isDay()) return;
         if (!level.canSeeSky(this.blockPosition())) return;
-        // Exposed to direct sunlight â€” take heavy damage every 4 ticks (5 HP/s)
+        // Exposed to direct sunlight — take heavy damage every 4 ticks (5 HP/s)
         if ((level.getGameTime() % 4) == 0) {
             this.hurt(this.damageSources().onFire(), 1.0f);
         }
@@ -123,7 +123,7 @@ public class TempleDemonEntity extends DemonNPCEntity {
         if (!serverAnim.isEmpty() && (!serverAnim.equals(consumedAttackAnim) || wasAnimationReset())) {
             dispatcher.playAnimation(serverAnim);
             consumedAttackAnim = serverAnim;
-            animCooldownTicks = getAnimDurationTicks(serverAnim);
+            animCooldownTicks = getMoveset() != null ? getMoveset().getAnimationDurationTicks(serverAnim, 16) : 16;
             lastWasWalking = false;
         }
 
@@ -133,12 +133,12 @@ public class TempleDemonEntity extends DemonNPCEntity {
             return;
         }
 
-        // Server cleared the anim â€” allow same anim name to re-trigger next time
+        // Server cleared the anim — allow same anim name to re-trigger next time
         if (serverAnim.isEmpty()) {
             consumedAttackAnim = "";
         }
 
-        // Idle/walk â€” only re-dispatch when state changes (lastWasWalking == null on first tick)
+        // Idle/walk — only re-dispatch when state changes (lastWasWalking == null on first tick)
         boolean walking = moveAnalysis.isMovingHorizontally();
         if (!Boolean.valueOf(walking).equals(lastWasWalking)) {
             if (walking) {
@@ -154,7 +154,7 @@ public class TempleDemonEntity extends DemonNPCEntity {
     public void triggerMovesetAnimation(String animationName) {
         super.triggerMovesetAnimation(animationName);
         // Give it a small buffer over the client-side duration so it always fully plays
-        serverAnimTicksRemaining = getAnimDurationTicks(animationName) + 4;
+        serverAnimTicksRemaining = (getMoveset() != null ? getMoveset().getAnimationDurationTicks(animationName, 16) : 16) + 4;
     }
 
     @Override
@@ -165,27 +165,14 @@ public class TempleDemonEntity extends DemonNPCEntity {
                 stopAnimation();
             }
         } else {
-            // Safety: no countdown set (e.g. from old save data) â€” clear immediately
+            // Safety: no countdown set (e.g. from old save data) — clear immediately
             stopAnimation();
         }
     }
 
-    private int getAnimDurationTicks(String animName) {
-        return switch (animName) {
-            case "demon_slash", "demon_slash_2" -> 10;
-            case "demon_gut_punch"              -> 10;
-            case "demon_grab"                   -> 10;
-            case "demon_high_jump"              -> 15;
-            case "demon_stomp"                  -> 12;
-            case "demon_bite"                   -> 14;
-            case "demon_kick"                   -> 12;
-            case "demon_dash_strike"            -> 20;
-            default                             -> 20;
-        };
-    }
 
     /**
-     * AI goal â€” during daytime, if the demon is exposed to direct sky, seek nearby covered shelter.
+     * AI goal — during daytime, if the demon is exposed to direct sky, seek nearby covered shelter.
      * Does not apply while the demon has an active target (attacking takes priority).
      */
     private static class DayShelterGoal extends Goal {
@@ -254,14 +241,14 @@ public class TempleDemonEntity extends DemonNPCEntity {
                     return Vec3.atCenterOf(surface);
                 }
             }
-            // No surface shelter found â€” try going one layer underground
+            // No surface shelter found — try going one layer underground
             BlockPos under = demon.blockPosition().below(4);
             return Vec3.atCenterOf(under);
         }
     }
 
     /**
-     * Smart AI goal â€” uses ALL demon moves: left click, right click combos, and wheel moves.
+     * Smart AI goal — uses ALL demon moves: left click, right click combos, and wheel moves.
      *
      * Move indices used here:
      *   ATTACK_LEFT  (-3) = Gut Punch     (handleLeftClick)
@@ -310,6 +297,9 @@ public class TempleDemonEntity extends DemonNPCEntity {
         private double lastDistanceToTarget = 0;
         private int timesStuck = 0;
 
+        // Movement cooldown so the demon doesn't dash every tick
+        private int dashCooldown = 0;
+
         public SmartDemonAttackGoal(TempleDemonEntity demon, double speedModifier, boolean followingTargetEvenIfNotSeen) {
             super(demon, speedModifier, followingTargetEvenIfNotSeen);
             this.demon = demon;
@@ -339,14 +329,22 @@ public class TempleDemonEntity extends DemonNPCEntity {
             if (stompDelay > 0) {
                 stompDelay--;
             } else if (pendingStomp && !demon.onGround() && demon.getTarget() != null) {
-                demon.getMoveset().handleRightClick(demon, true); // canStompAfterHighJump is set â†’ stomp
+                demon.getMoveset().handleRightClick(demon, true); // canStompAfterHighJump is set → stomp
                 pendingStomp  = false;
                 globalCooldown = 20;
             }
 
+            if (dashCooldown > 0) dashCooldown--;
+
             LivingEntity target = demon.getTarget();
             if (target != null && target.isAlive()) {
                 demon.getLookControl().setLookAt(target, 30.0F, 30.0F);
+
+                // Stunned demons can't act or move — no dashing or attacking.
+                if (demon.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.STUNNED.get())) {
+                    demon.getNavigation().stop();
+                    return;
+                }
 
                 stuckCheckTimer++;
                 if (stuckCheckTimer >= 40) {
@@ -419,10 +417,16 @@ public class TempleDemonEntity extends DemonNPCEntity {
             }
 
             if (chosen == ATTACK_NONE) {
-                // No attack ready — dash toward target aggressively
-                Vec3 toTarget = target.position().subtract(demon.position()).normalize();
-                com.xirc.nichirin.common.system.movement.EntityMovement.applyDash(demon, toTarget);
-                globalCooldown = 5;
+                // No attack ready — close the gap. Dash on a cooldown; otherwise just walk.
+                if (dashCooldown <= 0) {
+                    Vec3 toTarget = target.position().subtract(demon.position()).normalize();
+                    com.xirc.nichirin.common.system.movement.EntityMovement.applyDash(demon, toTarget);
+                    dashCooldown = 18;
+                    globalCooldown = 5;
+                } else {
+                    demon.getNavigation().moveTo(target, 1.2);
+                    globalCooldown = 3;
+                }
                 return;
             }
 
@@ -550,10 +554,10 @@ public class TempleDemonEntity extends DemonNPCEntity {
         /**
          * Returns the attack constant/index to use, or ATTACK_NONE.
          * Priority logic mirrors a real combo fighter:
-         *   Very close  â†’ gut punch or bite â†’ slash
-         *   Close       â†’ slash â†’ kick â†’ gut punch
-         *   Medium      â†’ slash â†’ kick â†’ dash strike
-         *   Far         â†’ dash strike â†’ slash
+         *   Very close  → gut punch or bite → slash
+         *   Close       → slash → kick → gut punch
+         *   Medium      → slash → kick → dash strike
+         *   Far         → dash strike → slash
          */
         private int selectAttack(double distance, boolean movingAway, boolean inAir, boolean lowHp) {
             LivingEntity tgt = demon.getTarget();

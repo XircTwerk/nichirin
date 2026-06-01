@@ -123,6 +123,10 @@ public final class NichirinServerConfig {
         out.append("# Change the value before each inline comment. The comment shows the default.\n\n");
         appendCombat(out, cfg.combat, defaults.combat);
         out.append('\n');
+        appendMovement(out, cfg.movement, defaults.movement);
+        out.append('\n');
+        appendBlocking(out, cfg.blocking, defaults.blocking);
+        out.append('\n');
         appendStamina(out, cfg.stamina, defaults.stamina);
         out.append('\n');
         appendBreathing(out, cfg.breathing, defaults.breathing);
@@ -144,7 +148,34 @@ public final class NichirinServerConfig {
         appendValue(out, 4, "comboWindowTicks", cfg.comboWindowTicks, defaults.comboWindowTicks, true);
         appendValue(out, 4, "parryWindowTicks", cfg.parryWindowTicks, defaults.parryWindowTicks, true);
         appendValue(out, 4, "enableParrySystem", cfg.enableParrySystem, defaults.enableParrySystem, true);
+        appendValue(out, 4, "npcAiLevel", cfg.npcAiLevel, defaults.npcAiLevel, true);
+        appendValue(out, 4, "npcDashCooldownTicks", cfg.npcDashCooldownTicks, defaults.npcDashCooldownTicks, true);
+        appendValue(out, 4, "npcMobilityCooldownTicks", cfg.npcMobilityCooldownTicks, defaults.npcMobilityCooldownTicks, true);
+        appendValue(out, 4, "npcDuelHealth", cfg.npcDuelHealth, defaults.npcDuelHealth, true);
+        appendValue(out, 4, "npcDuelCooldownSeconds", cfg.npcDuelCooldownSeconds, defaults.npcDuelCooldownSeconds, true);
+        appendValue(out, 4, "npcPeacefulHealth", cfg.npcPeacefulHealth, defaults.npcPeacefulHealth, true);
+        appendValue(out, 4, "npcDuelWinHpThreshold", cfg.npcDuelWinHpThreshold, defaults.npcDuelWinHpThreshold, true);
+        appendValue(out, 4, "npcPlayerDuelMinHealth", cfg.npcPlayerDuelMinHealth, defaults.npcPlayerDuelMinHealth, true);
+        appendValue(out, 4, "npcSelfDefenseGraceTicks", cfg.npcSelfDefenseGraceTicks, defaults.npcSelfDefenseGraceTicks, true);
         appendValue(out, 4, "staminaRegenRate", cfg.staminaRegenRate, defaults.staminaRegenRate, false);
+    }
+
+    private static void appendMovement(StringBuilder out, NichirinModConfig.MovementConfig cfg, NichirinModConfig.MovementConfig defaults) {
+        out.append("[movement]\n");
+        appendValue(out, 4, "dashForce", cfg.dashForce, defaults.dashForce, true);
+        appendValue(out, 4, "doubleJumpVelocity", cfg.doubleJumpVelocity, defaults.doubleJumpVelocity, true);
+        appendValue(out, 4, "backstepDistance", cfg.backstepDistance, defaults.backstepDistance, true);
+        appendValue(out, 4, "airDodgeDistance", cfg.airDodgeDistance, defaults.airDodgeDistance, true);
+        appendValue(out, 4, "sprintMultiplier", cfg.sprintMultiplier, defaults.sprintMultiplier, false);
+    }
+
+    private static void appendBlocking(StringBuilder out, NichirinModConfig.BlockingConfig cfg, NichirinModConfig.BlockingConfig defaults) {
+        out.append("[blocking]\n");
+        appendValue(out, 4, "blockStanceDrain", cfg.blockStanceDrain, defaults.blockStanceDrain, true);
+        appendValue(out, 4, "parryStanceCost", cfg.parryStanceCost, defaults.parryStanceCost, true);
+        appendValue(out, 4, "blockCooldownTicks", cfg.blockCooldownTicks, defaults.blockCooldownTicks, true);
+        appendValue(out, 4, "earlyReleaseStunTicks", cfg.earlyReleaseStunTicks, defaults.earlyReleaseStunTicks, true);
+        appendValue(out, 4, "backstabAngle", cfg.backstabAngle, defaults.backstabAngle, false);
     }
 
     private static void appendStamina(StringBuilder out, NichirinModConfig.StaminaConfig cfg, NichirinModConfig.StaminaConfig defaults) {
@@ -225,6 +256,10 @@ public final class NichirinServerConfig {
     }
 
     private static void appendValue(StringBuilder out, int spaces, String key, boolean value, boolean defaultValue, boolean comma) {
+        appendLine(out, spaces, key, String.valueOf(value), String.valueOf(defaultValue), comma);
+    }
+
+    private static void appendValue(StringBuilder out, int spaces, String key, double value, double defaultValue, boolean comma) {
         appendLine(out, spaces, key, String.valueOf(value), String.valueOf(defaultValue), comma);
     }
 

@@ -72,7 +72,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                 .withIdleAnimation("nichirin:flame_idle")
                 .withSpeedMultiplier(1.15f)
 
-                // INDEX 0: Rising Scorching Sun â€” upward arc, launches enemies
+                // INDEX 0: Rising Scorching Sun — upward arc, launches enemies
                 .withMove(new MoveBuilder("rising_scorching_sun", "Scorching Sun")
                         .withAnimation("nichirin:rising_scorching_sun", 8)
                         .withTiming(100, 12, 18) // 5 second cooldown
@@ -93,7 +93,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         })
                 )
 
-                // INDEX 1: Blazing Universe â€” charged downward strike, explodes on impact
+                // INDEX 1: Blazing Universe — charged downward strike, explodes on impact
                 .withMove(new MoveBuilder("blazing_universe", "Blazing Universe")
                         .withAnimation("nichirin:blazing_universe", 12)
                         .withTiming(160, 13, 35) // 8 second cooldown, windup, explosive finish
@@ -114,7 +114,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         })
                 )
 
-                // INDEX 2: Blooming Flame Undulation â€” 360Â° defense
+                // INDEX 2: Blooming Flame Undulation — 360° defense
                 .withMove(new MoveBuilder("blooming_flame_undulation", "Blooming Flame")
                         .withAnimation("nichirin:blooming_flame_undulation", 10)
                         .withTiming(140, 11, 25) // 7 second cooldown
@@ -124,7 +124,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(25.0f)
                         .withHitStun(15)
                         .withHitboxSize(3.5f) // Full radius
-                        .withDescription("Full 360Â° slash hitting all nearby enemies.")
+                        .withDescription("Full 360° slash hitting all nearby enemies.")
                         .withAction(entity -> {
                             BloomingFlameUndulationAttack attack = new BloomingFlameUndulationAttack();
                             FlameBreathingMoveset moveset = getCurrentMoveset();
@@ -135,7 +135,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         })
                 )
 
-                // INDEX 3: Flame Tiger â€” dashing multi-hit strike
+                // INDEX 3: Flame Tiger — dashing multi-hit strike
                 .withMove(new MoveBuilder("flame_tiger", "Flame Tiger")
                         .withAnimation("nichirin:flame_tiger", 11)
                         .withTiming(120, 10, 28) // 6 second cooldown, dash duration
@@ -157,7 +157,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         })
                 )
 
-                // INDEX 4: Rengoku â€” ultimate dragon dash, 30-second cooldown
+                // INDEX 4: Rengoku — ultimate dragon dash, 30-second cooldown
                 .withMove(new MoveBuilder("rengoku", "Rengoku")
                         .withAnimation("nichirin:rengoku", 20)
                         .withTiming(600, 120, 42) // 30 second cooldown, windup, dragon dash

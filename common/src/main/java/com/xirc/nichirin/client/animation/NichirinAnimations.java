@@ -6,6 +6,7 @@ import dev.kosmx.playerAnim.api.layered.KeyframeAnimationPlayer;
 import dev.kosmx.playerAnim.api.layered.ModifierLayer;
 import dev.kosmx.playerAnim.core.data.KeyframeAnimation;
 import dev.kosmx.playerAnim.core.util.Ease;
+import dev.kosmx.playerAnim.minecraftApi.PlayerAnimationAccess;
 import dev.kosmx.playerAnim.minecraftApi.PlayerAnimationRegistry;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -16,10 +17,14 @@ import net.minecraft.world.entity.player.Player;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
+import java.util.WeakHashMap;
+
 @Environment(EnvType.CLIENT)
 public class NichirinAnimations {
 
     private static final Logger LOGGER = LoggerFactory.getLogger("NichirinAnimations");
+    private static final Map<AbstractClientPlayer, ModifierLayer<IAnimation>> FALLBACK_LAYERS = new WeakHashMap<>();
 
     // No init() needed — layer registration is handled by AbstractClientPlayerMixin.
     public static void init() {}
@@ -151,7 +156,11 @@ public class NichirinAnimations {
         if (player instanceof INichirinAnimatedPlayer animated) {
             return animated.nichirin_getAnimLayer();
         }
-        LOGGER.warn("[Nichirin] Player '{}' does not implement INichirinAnimatedPlayer — AbstractClientPlayerMixin missing?", player.getScoreboardName());
-        return null;
+
+        return FALLBACK_LAYERS.computeIfAbsent(player, clientPlayer -> {
+            NichirinPlayerModifierLayer<IAnimation> layer = new NichirinPlayerModifierLayer<>();
+            PlayerAnimationAccess.getPlayerAnimLayer(clientPlayer).addAnimLayer(1001, layer);
+            return layer;
+        });
     }
 }

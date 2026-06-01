@@ -1,10 +1,14 @@
 package com.xirc.nichirin.common.attack.moves.breathing.mist;
 
+import com.xirc.nichirin.common.util.HitboxData;
+import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.HashSet;
@@ -64,19 +68,40 @@ public class LowCloudsDistantHazeAttack extends MistBreathingAttackBase {
 
         if (dashTick < dashDuration) {
             dashTick++;
-            float progress = (float) dashTick / dashDuration;
-            Vec3 targetPos = dashStartPos.add(dashDirection.scale(range * 10 * progress));
-            teleportSafe(targetPos);
+            // Velocity-based dash (smooth, client-predicted) instead of per-tick teleport.
+            // Covers range*10 blocks over dashDuration ticks.
+            float speedPerTick = (range * 10f) / dashDuration;
+            user.setDeltaMovement(
+                    dashDirection.x * speedPerTick,
+                    dashDirection.y * speedPerTick,
+                    dashDirection.z * speedPerTick);
+            user.hurtMarked = true;
+            user.hasImpulse = true;
         }
 
         createMistTrail(user.position(), user.position().subtract(dashDirection.scale(1.5)));
 
-        List<LivingEntity> targets = getTargetsInRangeLine(1.2f);
+        Vec3 center = user.position().add(0, user.getBbHeight() / 2, 0);
+        boolean isFinalTick = dashTick >= dashDuration;
+        float boxSize = isFinalTick ? hitboxSize * 1.5f : hitboxSize;
+        HitboxData hb = new HitboxData(boxSize);
+        AABB hitbox = hb.createAABB(center, dashDirection, (float) Math.toRadians(user.getYRot()));
+
+        if (user instanceof ServerPlayer sp) {
+            NichirinPacketRegistry.sendHitboxToClient(sp, hitbox, 200L);
+        }
+
+        List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
+                e -> e != user && e.isAlive());
         for (LivingEntity target : targets) {
             if (!hitEntities.contains(target)) {
                 hitTarget(target);
                 hitEntities.add(target);
-                dashTick = dashDuration; // stop dash on hit
+                if (!isFinalTick) {
+                    dashTick = dashDuration;
+                    user.setDeltaMovement(Vec3.ZERO);
+                    user.hurtMarked = true;
+                }
             }
         }
     }
@@ -103,6 +128,6 @@ public class LowCloudsDistantHazeAttack extends MistBreathingAttackBase {
 
     private Vec3 angledDashDirection() {
         Vec3 look = user.getLookAngle();
-        return new Vec3(look.x, Math.max(-0.25, Math.min(0.25, look.y)), look.z).normalize();
+        return new Vec3(look.x, Math.max(0, Math.min(0.15, look.y)), look.z).normalize();
     }
 }

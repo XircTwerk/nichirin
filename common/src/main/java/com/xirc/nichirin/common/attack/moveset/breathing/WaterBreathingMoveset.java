@@ -308,6 +308,8 @@ public class WaterBreathingMoveset extends AbstractMoveset {
     }
 
     private boolean executeWaterSurfaceSlashCombo(LivingEntity entity) {
+        if (MoveExecutor.hasActiveAttacks(entity)) return true;
+
         ComboState comboState = playerComboStates.computeIfAbsent(entity.getUUID(), k -> new ComboState());
 
         int nextStage;

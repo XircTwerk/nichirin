@@ -6,7 +6,9 @@ import mod.azure.azurelib.render.AzRendererPipelineContext;
 import mod.azure.azurelib.render.item.AzItemRenderer;
 import mod.azure.azurelib.render.item.AzItemRendererConfig;
 import mod.azure.azurelib.render.item.AzItemRendererPipeline;
+import mod.azure.azurelib.render.item.AzItemRendererPipelineContext;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.Optional;
@@ -17,7 +19,9 @@ public class KatanaItemRenderer extends AzItemRenderer {
     private static final String SHEATH_BONE = "Sheath";
 
     public KatanaItemRenderer(ResourceLocation geoModel, ResourceLocation texture) {
-        super(AzItemRendererConfig.builder(geoModel, texture).build());
+        super(AzItemRendererConfig.builder(geoModel, texture)
+                .useEntityGuiLighting()
+                .build());
     }
 
     @Override
@@ -25,6 +29,10 @@ public class KatanaItemRenderer extends AzItemRenderer {
         return new AzItemRendererPipeline(config, this) {
             @Override
             public void preRender(AzRendererPipelineContext<UUID, ItemStack> context, boolean isReRender) {
+                var itemContext = (AzItemRendererPipelineContext) context;
+                if (itemContext.getTransformType() == ItemDisplayContext.GUI) {
+                    context.poseStack().translate(0, 0, 0.1);
+                }
                 super.preRender(context, isReRender);
                 hideOrShowSheath(context);
             }

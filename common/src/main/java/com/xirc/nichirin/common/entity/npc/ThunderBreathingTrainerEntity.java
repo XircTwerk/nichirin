@@ -2,7 +2,6 @@ package com.xirc.nichirin.common.entity.npc;
 
 import com.xirc.nichirin.client.renderer.entity.dispatcher.ThunderBreathingTrainerDispatcher;
 import com.xirc.nichirin.common.attack.moveset.breathing.ThunderBreathingMoveset;
-import com.xirc.nichirin.common.entity.ai.ThunderBreathingAttackGoal;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.BossEvent;
@@ -45,6 +44,8 @@ public class ThunderBreathingTrainerEntity extends BaseBreathingTrainerEntity {
         this.maxStamina            = 100.0f;
         this.breathRegenMultiplier = 2.5f;
         this.dispatcher            = new ThunderBreathingTrainerDispatcher(this);
+        // Seventh Form (Honoikazuchi no Kami, index 5) is unique to Zenitsu — Jigoro can't use it.
+        this.blacklistedMoves.add(5);
     }
 
     @Override
@@ -64,7 +65,7 @@ public class ThunderBreathingTrainerEntity extends BaseBreathingTrainerEntity {
     @Override
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
-        goalSelector.addGoal(1, new ThunderBreathingAttackGoal(this, 1.4, true));
+        goalSelector.addGoal(1, new com.xirc.nichirin.common.entity.ai.SmartTrainerAttackGoal(this, 1.4, true));
         goalSelector.addGoal(2, new LookAtPlayerGoal(this, Player.class, 16.0f));
         goalSelector.addGoal(3, new WaterAvoidingRandomStrollGoal(this, 0.7));
         goalSelector.addGoal(4, new RandomLookAroundGoal(this));
@@ -153,7 +154,7 @@ public class ThunderBreathingTrainerEntity extends BaseBreathingTrainerEntity {
         if (!serverAnim.isEmpty() && (!serverAnim.equals(consumedAttackAnim) || wasAnimationReset())) {
             dispatcher.playAnimation(serverAnim);
             consumedAttackAnim = serverAnim;
-            animCooldownTicks = getAnimDurationTicks(serverAnim);
+            animCooldownTicks = moveset != null ? moveset.getAnimationDurationTicks(serverAnim, 16) : 16;
             lastWasWalking = null;
         }
 
@@ -184,22 +185,6 @@ public class ThunderBreathingTrainerEntity extends BaseBreathingTrainerEntity {
         }
     }
 
-    private int getAnimDurationTicks(String animName) {
-        return switch (animName) {
-            case "thunderclap_flash"    -> 4;
-            case "rice_spirit"          -> 12;
-            case "thunder_swarm"        -> 18;
-            case "distant_thunder"      -> 11;
-            case "heat_lightning"       -> 14;
-            case "rumble_flash"         -> 13;
-            case "honoikazuchi_no_kami" -> 30;
-            case "dash"                 -> 6;
-            case "backstep"             -> 7;
-            case "air_dodge"            -> 6;
-            case "double_jump"          -> 10;
-            default                     -> 16;
-        };
-    }
 
     @Override
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {

@@ -94,7 +94,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                         })
                 )
 
-                // Fourth Form: Constant Resounding Slashes - 360Â° defense (INDEX 1 in wheel)
+                // Fourth Form: Constant Resounding Slashes - 360° defense (INDEX 1 in wheel)
                 .withMove(new MoveBuilder("constant_resounding_slashes", "Constant Resounding Slashes")
                         .withAnimation("nichirin:constant_resounding_slashes", 12)
                         .withTiming(180, 5, 35)
@@ -103,8 +103,8 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                         .withKnockback(0f) // Light knockback to keep enemies close
                         .withBreathCost(25.0f)
                         .withHitStun(10) // Brief stun per hit
-                        .withHitboxSize(12.25f) // Full 360Â° radius
-                        .withDescription("Spinning 360Â° attack that hits all nearby enemies multiple times.")
+                        .withHitboxSize(12.25f) // Full 360° radius
+                        .withDescription("Spinning 360° attack that hits all nearby enemies multiple times.")
                         .withAction(entity -> {
                             ConstantResoundingSlashesAttack attack = new ConstantResoundingSlashesAttack();
                             SoundBreathingMoveset moveset = getCurrentMoveset();
@@ -125,7 +125,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                         .withKnockback(0f) // Light knockback during dash
                         .withBreathCost(40.0f) // Expensive ultimate-style move
                         .withHitStun(20) // Good stun
-                        .withHitboxSize(3.5f) // Wide chain hitbox
+                        .withHitboxSize(7f) // Wide chain hitbox
                         .withDescription("Multi-segment dash that strikes everything along a 16-block path.")
                         .withAction(entity -> {
                             StringPerformanceAttack attack = new StringPerformanceAttack();

@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.attack.moves;
 
+import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.util.ComboIntegration;
 import com.xirc.nichirin.common.util.NichirinArmorDamage;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
@@ -35,16 +36,18 @@ import java.util.Set;
  */
 public abstract class AbstractKatanaAttack {
 
-    protected final int startup;
-    protected final int active;
-    protected final int recovery;
-    protected final int cooldown;
-    protected final float damage;
-    protected final float range;
-    protected final float knockback;
-    protected final float hitboxSize;
+    // Stat fields are non-final so they can be overridden by a moveset MoveConfiguration
+    // via {@link #configure}. Defaults come from the subclass Builder; the moveset is authoritative.
+    protected int startup;
+    protected int active;
+    protected int recovery;
+    protected int cooldown;
+    protected float damage;
+    protected float range;
+    protected float knockback;
+    protected float hitboxSize;
     protected final Vec3 hitboxOffset;
-    protected final int hitStun;
+    protected int hitStun;
     protected final SoundEvent startSound;
     protected final SoundEvent hitSound;
 
@@ -79,6 +82,24 @@ public abstract class AbstractKatanaAttack {
         this.hitSound     = hitSound;
     }
 
+
+    /**
+     * Overrides this attack's stats from a moveset {@link AbstractMoveset.MoveConfiguration}.
+     * Any value the config doesn't specify keeps the subclass Builder default.
+     * Timing maps: windup -> startup, duration -> active, recovery -> recovery.
+     */
+    public void configure(AbstractMoveset.MoveConfiguration config) {
+        if (config == null) return;
+        this.startup    = config.getWindupOrDefault(this.startup);
+        this.active     = config.getDurationOrDefault(this.active);
+        this.recovery   = config.getRecoveryOrDefault(this.recovery);
+        this.cooldown   = config.getCooldownOrDefault(this.cooldown);
+        this.damage     = config.getDamageOrDefault(this.damage);
+        this.range      = config.getRangeOrDefault(this.range);
+        this.knockback  = config.getKnockbackOrDefault(this.knockback);
+        this.hitboxSize = config.getHitboxSizeOrDefault(this.hitboxSize);
+        this.hitStun    = config.getHitStunOrDefault(this.hitStun);
+    }
 
     public final void start(LivingEntity player) {
         if (player.level().isClientSide()) return;

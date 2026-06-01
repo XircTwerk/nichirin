@@ -50,7 +50,7 @@ public class BeastSliceNDiceAttack extends BeastBreathingAttackBase {
         Vec3 diagDir = look.add(perp.scale(diagOffset)).normalize();
         Vec3 slashCenter = origin.add(diagDir.scale(1.5));
 
-        List<LivingEntity> targets = getTargetsInCustomHitbox(slashCenter, 2.0f, HitboxData.HitboxShape.WIDE);
+        List<LivingEntity> targets = getTargetsInCustomHitbox(slashCenter, hitboxSize, HitboxData.HitboxShape.CUBE);
         for (LivingEntity target : targets) {
             hitTargetNoImmunity(target);
         }

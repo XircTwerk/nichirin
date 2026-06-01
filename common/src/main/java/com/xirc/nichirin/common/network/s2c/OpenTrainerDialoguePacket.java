@@ -8,18 +8,18 @@ import java.util.UUID;
 import net.minecraft.client.Minecraft;
 
 /**
- * S2C â€” tells the client to open the trainer dialogue screen.
+ * S2C — tells the client to open the trainer dialogue screen.
  */
 public class OpenTrainerDialoguePacket {
 
     public enum DialogueState {
         /** Player hasn't brought the prerequisite items yet. */
         STRANGER,
-        /** Player has the prerequisite items â€” offer to start the duel. */
+        /** Player has the prerequisite items — offer to start the duel. */
         PREREQ_MET,
-        /** Player already has the breathing style â€” offer a practice spar. */
+        /** Player already has the breathing style — offer a practice spar. */
         STUDENT,
-        /** Trainer recently dueled â€” resting. */
+        /** Trainer recently dueled — resting. */
         DUEL_COOLDOWN
     }
 

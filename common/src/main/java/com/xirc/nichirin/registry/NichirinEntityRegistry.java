@@ -88,7 +88,7 @@ public interface NichirinEntityRegistry {
     RegistrySupplier<EntityType<ThunderBreathingTrainerEntity>> THUNDER_BREATHING_TRAINER =
             ENTITY_TYPES.register("thunder_breathing_trainer", () -> EntityType.Builder.<ThunderBreathingTrainerEntity>of(
                             ThunderBreathingTrainerEntity::new, MobCategory.CREATURE)
-                    .sized(0.6f, 1.95f)
+                    .sized(0.6f, 1.6f)
                     .clientTrackingRange(10)
                     .updateInterval(3)
                     .build("thunder_breathing_trainer"));

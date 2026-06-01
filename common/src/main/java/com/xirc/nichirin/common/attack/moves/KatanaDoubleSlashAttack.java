@@ -93,7 +93,9 @@ public class KatanaDoubleSlashAttack extends AbstractKatanaAttack {
         }
 
         List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
-                entity -> entity != user && entity.isAlive() && !hitCooldowns.containsKey(entity));
+                entity -> entity != user && entity.isAlive()
+                        && !hitCooldowns.containsKey(entity)
+                        && perTargetHitCount.getOrDefault(entity, 0) < 2);
 
         if (targets.isEmpty()) return;
 

@@ -11,16 +11,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class InosukeUniformRenderer extends NichirinArmorRenderer {
 
-    // Inosuke's geo uses lowercase "head" rather than "Head"
-    private static final NichirinArmorBoneProvider INOSUKE_BONE_PROVIDER = new NichirinArmorBoneProvider() {
-        @Override
-        public @Nullable AzBone getHeadBone(AzBakedModel model) {
-            return model.getBone("head").orElse(null);
-        }
-    };
-
     public InosukeUniformRenderer() {
-        super("inosuke_uniform", "inosuke_uniform", INOSUKE_BONE_PROVIDER);
+        super("inosuke_uniform", "inosuke_uniform");
     }
 
     private boolean isHoldingBeastKatanas() {
@@ -41,7 +33,7 @@ public class InosukeUniformRenderer extends NichirinArmorRenderer {
         setAllVisible(false);
         switch (slot) {
             case HEAD -> {
-                setBoneVisible(getBone("head"), true);
+                setBoneVisible(getBone("Head"), true);
                 setBoneVisible(getBone("Back"), true);
                 setBoneVisible(getBone("left2"), true);
                 setBoneVisible(getBone("right2"), true);
