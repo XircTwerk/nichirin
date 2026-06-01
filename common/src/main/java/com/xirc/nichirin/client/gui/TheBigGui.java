@@ -57,6 +57,7 @@ public class TheBigGui extends Screen {
     private final QuestsSection questsSection = new QuestsSection();
     private final ReputationSection reputationSection = new ReputationSection();
     private final MovesetSection movesetSection = new MovesetSection();
+    // ObtainmentSection lives as a subtab inside MovesetSection now, not as a top-level section.
 
     public TheBigGui(Player player) {
         super(Component.translatable("gui.nichirin.main.title"));

@@ -141,7 +141,9 @@ public class DemonManager {
     private static void handleFireDamage(Player player) {
         if (player.isCreative()) return;
         if (player.getRemainingFireTicks() > 0 && player.getRemainingFireTicks() % 20 == 0) {
-            player.hurt(player.damageSources().magic(), NichirinModConfig.get().demon.sunDamagePerSecond);
+            // Sunlight chews through 20% of max health every second — keep demon players honest.
+            float damage = player.getMaxHealth() * 0.20f;
+            player.hurt(player.damageSources().magic(), damage);
         }
     }
 

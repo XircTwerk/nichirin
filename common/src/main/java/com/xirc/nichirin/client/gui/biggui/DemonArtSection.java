@@ -295,7 +295,7 @@ public class DemonArtSection extends AbstractGuiPage {
                 mouseY >= noneButtonY && mouseY <= noneButtonY + noneButtonHeight) {
 
             // Set default demon moveset (basic demon abilities)
-            NichirinPacketRegistry.requestStyleChange("default_demon");
+            NichirinPacketRegistry.requestMovesetChange("default_demon");
 
             // Play click sound
             Minecraft.getInstance().getSoundManager().play(
@@ -330,7 +330,7 @@ public class DemonArtSection extends AbstractGuiPage {
         // Art is unlocked - only set if not already selected
         if (!artName.equals(currentStyle)) {
             // Set demon art (becomes a demon)
-            NichirinPacketRegistry.requestStyleChange(artName);
+            NichirinPacketRegistry.requestMovesetChange(artName);
 
             // Play success sound
             Minecraft.getInstance().getSoundManager().play(

@@ -649,7 +649,11 @@ public interface NichirinPacketRegistry {
         }
     }
 
-    static void requestStyleChange(String movesetId) {
+    /**
+     * Request the server to set the player's active moveset. Works for both breathing styles
+     * and demon arts — the server routes to the right field based on the moveset id.
+     */
+    static void requestMovesetChange(String movesetId) {
         try {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             buf.writeBoolean(movesetId != null);

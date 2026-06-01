@@ -211,7 +211,7 @@ public class BreathingStylesSection extends AbstractGuiPage {
         int noneH   = 20;
 
         if (mouseX >= noneX && mouseX <= noneX + noneW && mouseY >= noneY && mouseY <= noneY + noneH) {
-            NichirinPacketRegistry.requestStyleChange(null);
+            NichirinPacketRegistry.requestMovesetChange(null);
             playClick(1.0f);
             lastClickTime = now;
             return true;
@@ -227,7 +227,7 @@ public class BreathingStylesSection extends AbstractGuiPage {
             return true;
         }
         if (!styleId.equals(currentStyle)) {
-            NichirinPacketRegistry.requestStyleChange(styleId);
+            NichirinPacketRegistry.requestMovesetChange(styleId);
             playClick(1.0f);
         }
         lastClickTime = now;

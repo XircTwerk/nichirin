@@ -13,6 +13,11 @@ public class SheathSlotData {
     private int cooldownTicks;
     private boolean visible = true;
     private ItemStack storedSword = ItemStack.EMPTY;
+    /**
+     * True when the stored sword came from the player's offhand (the second blade of a dual
+     * wield). On unsheathe it's restored to the offhand instead of the linked hotbar slot.
+     */
+    private boolean storedFromOffhand = false;
 
     public SheathSlotData(SheathPosition position, int linkedHotbarSlot, int priority, UnsheatheAttackType tapAttack) {
         this.position = position;
@@ -41,4 +46,7 @@ public class SheathSlotData {
     public ItemStack getStoredSword() { return storedSword; }
     public void setStoredSword(ItemStack storedSword) { this.storedSword = storedSword == null ? ItemStack.EMPTY : storedSword; }
     public boolean hasStoredSword() { return !storedSword.isEmpty(); }
+
+    public boolean isStoredFromOffhand() { return storedFromOffhand; }
+    public void setStoredFromOffhand(boolean storedFromOffhand) { this.storedFromOffhand = storedFromOffhand; }
 }

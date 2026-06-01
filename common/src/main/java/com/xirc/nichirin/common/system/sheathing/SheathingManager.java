@@ -5,6 +5,8 @@ import com.xirc.nichirin.common.attack.moves.DrawSlashAttack;
 import com.xirc.nichirin.common.attack.moves.KatanaCheckAttack;
 import com.xirc.nichirin.common.attack.moves.KatanaOverheadAttack;
 import com.xirc.nichirin.common.attack.moves.KatanaThrustAttack;
+import com.xirc.nichirin.common.item.katana.IndividualBeastKatana;
+import com.xirc.nichirin.common.item.katana.IndividualSoundKatana;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
 import com.xirc.nichirin.common.util.StaminaManager;
@@ -13,6 +15,7 @@ import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
@@ -69,6 +72,9 @@ public class SheathingManager {
             if (slot.hasStoredSword()) {
                 slotTag.put("StoredSword", slot.getStoredSword().save(new CompoundTag()));
             }
+            if (slot.isStoredFromOffhand()) {
+                slotTag.putBoolean("FromOffhand", true);
+            }
             slotsTag.put(slot.getPosition().name(), slotTag);
         }
         tag.put("Slots", slotsTag);
@@ -109,6 +115,7 @@ public class SheathingManager {
             } else {
                 slot.setStoredSword(ItemStack.EMPTY);
             }
+            slot.setStoredFromOffhand(slotTag.getBoolean("FromOffhand"));
 
             if (slot.hasStoredSword()) {
                 slot.setState(SheathState.SHEATHED);
@@ -263,12 +270,51 @@ public class SheathingManager {
             return;
         }
 
+        // Dual wield: player is holding a beast or sound dual-katana pair (the individual halves
+        // in main+off). Generic SimpleKatanas in both hands are NOT treated as dual — those are
+        // just two separate weapons and shouldn't auto-sheathe together.
+        ItemStack offhand = player.getOffhandItem();
+        boolean dualWield = isDualKatanaPair(sword, offhand);
+        SheathSlotData partner = dualWield ? data.getSlot(slot.getPosition().adjacent()) : null;
+        if (dualWield && partner.hasStoredSword()) {
+            feedback(player, "Dual wield needs the adjacent slot ("
+                    + slot.getPosition().adjacent().getDisplayName() + ") free", 0xFF5555, false);
+            return;
+        }
+
+        // Mainhand katana → current slot
         slot.setStoredSword(sword.copy());
+        slot.setStoredFromOffhand(false);
         player.getInventory().setItem(slot.getLinkedHotbarSlot(), ItemStack.EMPTY);
         slot.setState(SheathState.SHEATHING);
         slot.setTransitionTicks(NORMAL_TRANSITION_TICKS);
+
+        // Offhand katana → adjacent slot, flagged so it returns to offhand on unsheathe
+        if (dualWield) {
+            partner.setStoredSword(offhand.copy());
+            partner.setStoredFromOffhand(true);
+            player.setItemSlot(EquipmentSlot.OFFHAND, ItemStack.EMPTY);
+            partner.setState(SheathState.SHEATHING);
+            partner.setTransitionTicks(NORMAL_TRANSITION_TICKS);
+        }
+
         NichirinPacketRegistry.broadcastPlayerAnimation(player, new PlayerAnimationPacket(player.getId(), "sheathing.sheathe"));
-        feedback(player, "Sheathing: " + slot.getPosition().getDisplayName(), 0xFFE0A6, false);
+        feedback(player, "Sheathing: " + slot.getPosition().getDisplayName()
+                + (dualWield ? " + " + partner.getPosition().getDisplayName() + " (offhand)" : ""), 0xFFE0A6, false);
+    }
+
+    /**
+     * True when the player is dual-wielding a recognised katana pair (Inosuke's beast set or
+     * the sound katana pair). These are the only weapons that conceptually represent two halves
+     * of one weapon and therefore auto-sheathe both blades together.
+     */
+    private static boolean isDualKatanaPair(ItemStack mainHand, ItemStack offHand) {
+        if (mainHand.isEmpty() || offHand.isEmpty()) return false;
+        boolean beastPair = mainHand.getItem() instanceof IndividualBeastKatana
+                && offHand.getItem() instanceof IndividualBeastKatana;
+        boolean soundPair = mainHand.getItem() instanceof IndividualSoundKatana
+                && offHand.getItem() instanceof IndividualSoundKatana;
+        return beastPair || soundPair;
     }
 
     private static void startUnsheathe(ServerPlayer player, PlayerSheathData data, SheathSlotData slot,
@@ -302,10 +348,19 @@ public class SheathingManager {
 
     private static void finishUnsheathe(Player player, PlayerSheathData data, SheathSlotData slot,
                                         boolean attackOnUnsheathe) {
-        if (slot.hasStoredSword() && player.getInventory().getItem(slot.getLinkedHotbarSlot()).isEmpty()) {
-            player.getInventory().setItem(slot.getLinkedHotbarSlot(), slot.getStoredSword());
-            slot.setStoredSword(ItemStack.EMPTY);
-            player.getInventory().selected = slot.getLinkedHotbarSlot();
+        if (slot.hasStoredSword()) {
+            // Offhand-stored swords go back to the offhand; hotbar swords go back to their linked slot.
+            if (slot.isStoredFromOffhand()) {
+                if (player.getOffhandItem().isEmpty()) {
+                    player.setItemSlot(EquipmentSlot.OFFHAND, slot.getStoredSword());
+                    slot.setStoredSword(ItemStack.EMPTY);
+                    slot.setStoredFromOffhand(false);
+                }
+            } else if (player.getInventory().getItem(slot.getLinkedHotbarSlot()).isEmpty()) {
+                player.getInventory().setItem(slot.getLinkedHotbarSlot(), slot.getStoredSword());
+                slot.setStoredSword(ItemStack.EMPTY);
+                player.getInventory().selected = slot.getLinkedHotbarSlot();
+            }
         }
         slot.setState(SheathState.DRAWN);
         data.setGlobalCooldownTicks(GLOBAL_COOLDOWN_TICKS);

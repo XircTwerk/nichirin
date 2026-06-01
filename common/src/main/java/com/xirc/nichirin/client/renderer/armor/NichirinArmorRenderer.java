@@ -249,6 +249,15 @@ public class NichirinArmorRenderer extends AzArmorRenderer {
     }
 
     /**
+     * Scales the given bone and all of its descendants uniformly. Use for "make this body
+     * part X times larger" cases (e.g. the inosuke boar helmet).
+     */
+    protected void scaleBoneTree(@Nullable AzBone bone, float scale) {
+        if (bone == null) return;
+        scaleBonesRecursive(bone, scale);
+    }
+
+    /**
      * Offsets a body-following bone (one set up by NichirinCapeArmorBoneProvider) by upOffset pixels
      * upward and backOffset pixels toward the back of the player.
      */

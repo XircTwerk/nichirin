@@ -68,6 +68,16 @@ public class ProgressionHelper {
                         NichirinCriteriaTriggers.WATER_BREATHING_TRIGGER.trigger(serverPlayer);
                     }
                 }
+                case "beast_breathing" -> {
+                    if (NichirinCriteriaTriggers.BEAST_BREATHING_TRIGGER != null) {
+                        NichirinCriteriaTriggers.BEAST_BREATHING_TRIGGER.trigger(serverPlayer);
+                    }
+                }
+                case "mist_breathing" -> {
+                    if (NichirinCriteriaTriggers.MIST_BREATHING_TRIGGER != null) {
+                        NichirinCriteriaTriggers.MIST_BREATHING_TRIGGER.trigger(serverPlayer);
+                    }
+                }
             }
 
             // Trigger First Technique advancement if this was their first moveset

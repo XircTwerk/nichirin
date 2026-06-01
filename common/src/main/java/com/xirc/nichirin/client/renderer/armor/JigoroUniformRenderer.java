@@ -38,7 +38,10 @@ public class JigoroUniformRenderer extends NichirinArmorRenderer {
                 setBoneVisible(getBone("chestplate"), true);
                 setBoneVisible(getBone("leftArm"), true);
                 setBoneVisible(getBone("rightArm"), true);
-                setBoneVisible(getBone("Cape"), true);
+                // Cape contains the kimono skirt (Lowerpartsfront/Lowerpartsback). setAllVisible(false)
+                // above hid the children too — re-enable the whole Cape subtree recursively or
+                // the skirt geometry stays invisible even though the parent bone is shown.
+                setAllBonesRecursive(getBone("Cape"), true);
             }
             case LEGS -> {
                 setBoneVisible(getBone("leftLeg"), true);

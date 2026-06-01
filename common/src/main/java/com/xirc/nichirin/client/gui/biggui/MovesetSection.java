@@ -18,6 +18,7 @@ public class MovesetSection extends AbstractGuiPage {
     public enum MovesetTab {
         BREATHING_STYLES("gui.nichirin.moveset.tab.breathing_styles"),
         DEMON_ARTS("gui.nichirin.moveset.tab.demon_arts"),
+        OBTAINMENT("gui.nichirin.moveset.tab.obtainment"),
         DATA("gui.nichirin.moveset.tab.data");
 
         private final String translationKey;
@@ -36,6 +37,7 @@ public class MovesetSection extends AbstractGuiPage {
     private final BreathingStylesSection breathingStylesSection = new BreathingStylesSection();
     private final DemonArtSection demonArtSection = new DemonArtSection();
     private final MovesetDataSection dataSection = new MovesetDataSection();
+    private final ObtainmentSection obtainmentSection = new ObtainmentSection();
     // SheathingSection removed — the sheathing GUI page exposed only default-static info
     // that the user never wanted to tune from here. The sheathing system itself is unaffected.
 
@@ -44,7 +46,7 @@ public class MovesetSection extends AbstractGuiPage {
                        int contentWidth, int contentHeight, int mouseX, int mouseY) {
         drawWorkspaceChrome(graphics, font, contentWidth, contentHeight,
                 "Moveset", "Breathing styles, demon arts, and move data.",
-                currentTabLabel(), "Select a tab to inspect your kit", "ready");
+                currentTabLabel(), "", "");
         renderSubtabs(graphics, font, tabsStartX(contentWidth), 22, mouseX, mouseY);
 
         int bodyY = workspaceBodyY();
@@ -57,6 +59,8 @@ public class MovesetSection extends AbstractGuiPage {
                     graphics, player, contentWidth, bodyH, font, mouseX, bodyMouseY);
             case DEMON_ARTS -> demonArtSection.render(
                     graphics, player, contentWidth, bodyH, font, mouseX, bodyMouseY);
+            case OBTAINMENT -> obtainmentSection.render(
+                    graphics, player, font, contentWidth, bodyH, mouseX, bodyMouseY);
             case DATA -> dataSection.render(
                     graphics, player, contentWidth, bodyH, font, mouseX, bodyMouseY);
         }
@@ -117,6 +121,7 @@ public class MovesetSection extends AbstractGuiPage {
         return switch (currentTab) {
             case BREATHING_STYLES -> breathingStylesSection.handleClick(mouseX, bodyMouseY, player, contentWidth);
             case DEMON_ARTS -> demonArtSection.handleClick(mouseX, bodyMouseY, player, contentWidth);
+            case OBTAINMENT -> obtainmentSection.handleClick(mouseX, bodyMouseY, player);
             case DATA -> dataSection.handleClick(mouseX, bodyMouseY, player, contentWidth);
         };
     }
@@ -143,6 +148,7 @@ public class MovesetSection extends AbstractGuiPage {
         return switch (currentTab) {
             case BREATHING_STYLES -> "Breathing Styles";
             case DEMON_ARTS -> "Demon Arts";
+            case OBTAINMENT -> "Obtainment";
             case DATA -> "Move Data";
         };
     }

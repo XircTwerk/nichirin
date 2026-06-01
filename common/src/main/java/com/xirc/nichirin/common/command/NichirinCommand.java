@@ -1,15 +1,22 @@
 package com.xirc.nichirin.common.command;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import com.xirc.nichirin.common.attack.moveset.demon.DefaultDemonMoveset;
 import com.xirc.nichirin.common.config.NichirinConfig;
+import com.xirc.nichirin.common.config.NichirinModConfig;
+import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
+import com.xirc.nichirin.common.data.PlayerDataStorage;
 import com.xirc.nichirin.common.data.ProgressionHelper;
-import com.xirc.nichirin.common.system.BloodMoonManager;
 import com.xirc.nichirin.common.network.s2c.ProgressionSyncPacket;
+import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
+import com.xirc.nichirin.common.system.BloodMoonManager;
+import com.xirc.nichirin.common.system.DemonManager;
 import com.xirc.nichirin.registry.NichirinMovesetRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.commands.CommandSourceStack;
@@ -23,69 +30,72 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * /nichirin — top-level hub command for Breath of Nichirin.
+ * /nichirin — single command hub for Breath of Nichirin.
  *
  * <pre>
  *   /nichirin help
- *   /nichirin version
- *   /nichirin config list
- *   /nichirin config get  <key>
- *   /nichirin config set  <key> <value>   (op 2)
- *   /nichirin config reset <key>          (op 2)
- *   /nichirin config resetall             (op 2)
+ *   /nichirin bloodmoon                                (op 2)
+ *   /nichirin unlockall &lt;player&gt;                       (op 2)
+ *   /nichirin cooldown  &lt;player&gt;                       (op 2)  — resets ALL cooldowns
+ *
+ *   /nichirin breathing give &lt;player&gt; &lt;style&gt; [set]    (op 2)
+ *   /nichirin breathing set  &lt;player&gt; &lt;style&gt;          (op 2)
+ *
+ *   /nichirin demon become &lt;player&gt;                    (op 2)
+ *   /nichirin demon remove &lt;player&gt;                    (op 2)
+ *   /nichirin demon give   &lt;player&gt; &lt;art&gt; [set]        (op 2)
+ *   /nichirin demon set    &lt;player&gt; &lt;art&gt;              (op 2)
+ *
+ *   /nichirin config ...                               (op 2)
  * </pre>
  */
 public class NichirinCommand {
 
     // Color palette
-    private static final int COL_HEADER  = 0xE8C87A; // warm gold
-    private static final int COL_KEY     = 0x7EC8E3; // light blue
-    private static final int COL_VALUE   = 0xFFFFFF; // white
-    private static final int COL_DIM     = 0x888888; // grey
-    private static final int COL_OK      = 0x55FF55; // green
-    private static final int COL_WARN    = 0xFFAA00; // orange
-    private static final int COL_ERR     = 0xFF5555; // red
+    private static final int COL_HEADER  = 0xE8C87A;
+    private static final int COL_KEY     = 0x7EC8E3;
+    private static final int COL_VALUE   = 0xFFFFFF;
+    private static final int COL_DIM     = 0x888888;
+    private static final int COL_OK      = 0x55FF55;
+    private static final int COL_WARN    = 0xFFAA00;
+    private static final int COL_ERR     = 0xFF5555;
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("nichirin")
 
-                // /nichirin  (bare — same as help)
-                .executes(ctx -> showHelp(ctx))
+                .executes(NichirinCommand::showHelp)
 
-                // /nichirin help
                 .then(Commands.literal("help")
-                        .executes(ctx -> showHelp(ctx)))
+                        .executes(NichirinCommand::showHelp))
 
-                // /nichirin bloodmoon  (op 2 — toggle blood moon on/off)
                 .then(Commands.literal("bloodmoon")
                         .requires(src -> src.hasPermission(2))
-                        .executes(ctx -> toggleBloodMoon(ctx)))
+                        .executes(NichirinCommand::toggleBloodMoon))
 
-                // /nichirin unlockall <player>  (op 2)
                 .then(Commands.literal("unlockall")
                         .requires(src -> src.hasPermission(2))
                         .then(Commands.argument("player", EntityArgument.player())
                                 .executes(ctx -> unlockAll(ctx, EntityArgument.getPlayer(ctx, "player")))))
 
-                // /nichirin config ...
+                // Single unified cooldown reset — clears every registered move's cooldown.
+                .then(Commands.literal("cooldown")
+                        .requires(src -> src.hasPermission(2))
+                        .then(Commands.argument("player", EntityArgument.player())
+                                .executes(ctx -> resetAllCooldowns(ctx, EntityArgument.getPlayer(ctx, "player")))))
+
+                // Breathing and Demon subtrees — same shape as the old /breathing and /demon roots.
+                .then(buildBreathingSubcommand())
+                .then(buildDemonSubcommand())
+
                 .then(Commands.literal("config")
                         .requires(src -> src.hasPermission(2))
-
-                        // /nichirin config  (bare — opens the GUI, OP only)
-                        .executes(ctx -> openConfigGui(ctx))
-
-                        // /nichirin config list
+                        .executes(NichirinCommand::openConfigGui)
                         .then(Commands.literal("list")
-                                .executes(ctx -> configList(ctx)))
-
-                        // /nichirin config get <key>
+                                .executes(NichirinCommand::configList))
                         .then(Commands.literal("get")
                                 .then(Commands.argument("key", StringArgumentType.word())
                                         .suggests(NichirinCommand::suggestConfigKeys)
-                                        .executes(ctx -> configGet(ctx,
-                                                StringArgumentType.getString(ctx, "key")))))
-
-                        // /nichirin config set <key> <value>  (op 2)
+                                        .executes(ctx -> configGet(ctx, StringArgumentType.getString(ctx, "key")))))
                         .then(Commands.literal("set")
                                 .requires(src -> src.hasPermission(2))
                                 .then(Commands.argument("key", StringArgumentType.word())
@@ -95,24 +105,300 @@ public class NichirinCommand {
                                                 .executes(ctx -> configSet(ctx,
                                                         StringArgumentType.getString(ctx, "key"),
                                                         StringArgumentType.getString(ctx, "value"))))))
-
-                        // /nichirin config reset <key>  (op 2)
                         .then(Commands.literal("reset")
                                 .requires(src -> src.hasPermission(2))
                                 .then(Commands.argument("key", StringArgumentType.word())
                                         .suggests(NichirinCommand::suggestConfigKeys)
-                                        .executes(ctx -> configReset(ctx,
-                                                StringArgumentType.getString(ctx, "key")))))
-
-                        // /nichirin config resetall  (op 2)
+                                        .executes(ctx -> configReset(ctx, StringArgumentType.getString(ctx, "key")))))
                         .then(Commands.literal("resetall")
                                 .requires(src -> src.hasPermission(2))
-                                .executes(ctx -> configResetAll(ctx)))
+                                .executes(NichirinCommand::configResetAll))
                 )
         );
     }
 
-    // Subcommand handlers
+    // ─── /nichirin breathing ───
+
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> buildBreathingSubcommand() {
+        return Commands.literal("breathing")
+                .requires(src -> src.hasPermission(2))
+
+                .then(Commands.literal("give")
+                        .then(Commands.argument("player", EntityArgument.player())
+                                .then(Commands.argument("style", StringArgumentType.string())
+                                        .suggests(NichirinCommand::suggestBreathingStyles)
+                                        .executes(ctx -> giveBreathingStyle(ctx,
+                                                EntityArgument.getPlayer(ctx, "player"),
+                                                StringArgumentType.getString(ctx, "style"),
+                                                true))
+                                        .then(Commands.argument("set", BoolArgumentType.bool())
+                                                .executes(ctx -> giveBreathingStyle(ctx,
+                                                        EntityArgument.getPlayer(ctx, "player"),
+                                                        StringArgumentType.getString(ctx, "style"),
+                                                        BoolArgumentType.getBool(ctx, "set")))))))
+
+                .then(Commands.literal("set")
+                        .then(Commands.argument("player", EntityArgument.player())
+                                .then(Commands.argument("style", StringArgumentType.string())
+                                        .suggests((ctx, b) -> suggestUnlockedBreathingStyles(ctx, b, EntityArgument.getPlayer(ctx, "player")))
+                                        .executes(ctx -> setBreathingStyle(ctx,
+                                                EntityArgument.getPlayer(ctx, "player"),
+                                                StringArgumentType.getString(ctx, "style"))))));
+    }
+
+    private static int giveBreathingStyle(CommandContext<CommandSourceStack> ctx, ServerPlayer player, String style, boolean setActive) {
+        CommandSourceStack src = ctx.getSource();
+        String playerName = player.getName().getString();
+        String formatted = formatStyleName(style);
+
+        if (!isBreathingStyle(style)) {
+            src.sendFailure(Component.literal(style + " is not a breathing technique").withStyle(s -> s.withColor(COL_ERR)));
+            return 0;
+        }
+        if (!NichirinMovesetRegistry.isRegistered(style)) {
+            src.sendFailure(Component.literal("Unknown breathing style: " + style).withStyle(s -> s.withColor(COL_ERR)));
+            return 0;
+        }
+        if (ProgressionHelper.isMovesetUnlocked(player, style)) {
+            src.sendFailure(Component.literal(playerName + " already has " + formatted + " unlocked").withStyle(s -> s.withColor(COL_WARN)));
+            return 0;
+        }
+        if (setActive) {
+            String currentStyle = PlayerDataProvider.getData(player).getMovesetData().getMovesetId();
+            if (style.equals(currentStyle)) {
+                src.sendFailure(Component.literal(playerName + " already has " + formatted + " active").withStyle(s -> s.withColor(COL_WARN)));
+                return 0;
+            }
+        }
+
+        ProgressionHelper.unlockMoveset(player, style);
+
+        if (setActive) {
+            PlayerDataProvider.updateAndSync(player, style);
+            src.sendSuccess(() -> Component.literal("Gave and activated " + formatted + " for " + playerName).withStyle(s -> s.withColor(COL_OK)), true);
+            player.displayClientMessage(Component.literal("You have been granted " + formatted + "!").withStyle(s -> s.withColor(0x55FFFF)), false);
+        } else {
+            src.sendSuccess(() -> Component.literal("Unlocked " + formatted + " for " + playerName + " (not set as active)").withStyle(s -> s.withColor(COL_OK)), true);
+            player.displayClientMessage(Component.literal("You have unlocked " + formatted + "! Use the GUI to set it active.").withStyle(s -> s.withColor(0x55FFFF)), false);
+        }
+        return 1;
+    }
+
+    private static int setBreathingStyle(CommandContext<CommandSourceStack> ctx, ServerPlayer player, String style) {
+        CommandSourceStack src = ctx.getSource();
+
+        if (!isBreathingStyle(style)) {
+            src.sendFailure(Component.literal(style + " is not a breathing technique").withStyle(s -> s.withColor(COL_ERR)));
+            return 0;
+        }
+        if (!NichirinMovesetRegistry.isRegistered(style)) {
+            src.sendFailure(Component.literal("Unknown breathing style: " + style).withStyle(s -> s.withColor(COL_ERR)));
+            return 0;
+        }
+        if (!ProgressionHelper.isMovesetUnlocked(player, style)) {
+            src.sendFailure(Component.literal(player.getName().getString() + " has not unlocked " + formatStyleName(style)).withStyle(s -> s.withColor(COL_ERR)));
+            return 0;
+        }
+        String currentStyle = PlayerDataProvider.getData(player).getMovesetData().getMovesetId();
+        if (style.equals(currentStyle)) {
+            src.sendFailure(Component.literal(player.getName().getString() + " already has " + formatStyleName(style) + " active").withStyle(s -> s.withColor(COL_WARN)));
+            return 0;
+        }
+
+        PlayerDataProvider.updateAndSync(player, style);
+        src.sendSuccess(() -> Component.literal("Set " + player.getName().getString() + "'s breathing style to " + formatStyleName(style)).withStyle(s -> s.withColor(COL_OK)), true);
+        player.displayClientMessage(Component.literal("Your breathing style is now " + formatStyleName(style)).withStyle(s -> s.withColor(0x55FFFF)), false);
+        return 1;
+    }
+
+    // ─── /nichirin demon ───
+
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> buildDemonSubcommand() {
+        return Commands.literal("demon")
+                .requires(src -> src.hasPermission(2))
+
+                .then(Commands.literal("become")
+                        .then(Commands.argument("player", EntityArgument.player())
+                                .executes(ctx -> becomeDemon(ctx, EntityArgument.getPlayer(ctx, "player")))))
+
+                .then(Commands.literal("remove")
+                        .then(Commands.argument("player", EntityArgument.player())
+                                .executes(ctx -> removeDemon(ctx, EntityArgument.getPlayer(ctx, "player")))))
+
+                .then(Commands.literal("give")
+                        .then(Commands.argument("player", EntityArgument.player())
+                                .then(Commands.argument("art", StringArgumentType.string())
+                                        .suggests(NichirinCommand::suggestDemonArts)
+                                        .executes(ctx -> giveDemonArt(ctx,
+                                                EntityArgument.getPlayer(ctx, "player"),
+                                                StringArgumentType.getString(ctx, "art"),
+                                                true))
+                                        .then(Commands.argument("set", BoolArgumentType.bool())
+                                                .executes(ctx -> giveDemonArt(ctx,
+                                                        EntityArgument.getPlayer(ctx, "player"),
+                                                        StringArgumentType.getString(ctx, "art"),
+                                                        BoolArgumentType.getBool(ctx, "set")))))))
+
+                .then(Commands.literal("set")
+                        .then(Commands.argument("player", EntityArgument.player())
+                                .then(Commands.argument("art", StringArgumentType.string())
+                                        .suggests((ctx, b) -> suggestUnlockedDemonArts(ctx, b, EntityArgument.getPlayer(ctx, "player")))
+                                        .executes(ctx -> setDemonArt(ctx,
+                                                EntityArgument.getPlayer(ctx, "player"),
+                                                StringArgumentType.getString(ctx, "art"))))));
+    }
+
+    private static int becomeDemon(CommandContext<CommandSourceStack> ctx, ServerPlayer player) {
+        CommandSourceStack src = ctx.getSource();
+        String playerName = player.getName().getString();
+
+        String currentDemonMoveset = PlayerDataProvider.getData(player).getMovesetData().getDemonMovesetId();
+        if (currentDemonMoveset != null) {
+            src.sendFailure(Component.literal(playerName + " is already a demon with " + formatArtName(currentDemonMoveset)).withStyle(s -> s.withColor(COL_WARN)));
+            return 0;
+        }
+
+        if (!ProgressionHelper.isMovesetUnlocked(player, "default_demon")) {
+            ProgressionHelper.unlockMoveset(player, "default_demon");
+        }
+        PlayerDataProvider.getData(player).getMovesetData().setDemonMovesetId("default_demon");
+        DemonManager.setBloodPoints(player, NichirinModConfig.get().demon.maxBloodPoints);
+        PlayerDataStorage.savePlayerData(player);
+        PlayerDataProvider.forceSync(player.server);
+
+        if (!MovesetHelper.hasDemonMoveset(player) || !"default_demon".equals(MovesetHelper.getDemonMovesetId(player))) {
+            src.sendFailure(Component.literal("Failed to make " + playerName + " a demon (sync issue)").withStyle(s -> s.withColor(COL_ERR)));
+            return 0;
+        }
+
+        src.sendSuccess(() -> Component.literal("Made " + playerName + " a demon").withStyle(s -> s.withColor(COL_OK)), true);
+        player.displayClientMessage(Component.literal("You have become a demon! You now have demon abilities and passives.").withStyle(s -> s.withColor(COL_ERR)), false);
+        return 1;
+    }
+
+    private static int removeDemon(CommandContext<CommandSourceStack> ctx, ServerPlayer player) {
+        CommandSourceStack src = ctx.getSource();
+        String playerName = player.getName().getString();
+
+        String currentDemonMoveset = PlayerDataProvider.getData(player).getMovesetData().getDemonMovesetId();
+        if (currentDemonMoveset == null) {
+            src.sendFailure(Component.literal(playerName + " is not a demon").withStyle(s -> s.withColor(COL_WARN)));
+            return 0;
+        }
+
+        PlayerDataProvider.getData(player).getMovesetData().setDemonMovesetId(null);
+        DemonManager.cleanupPlayer(player);
+        player.getFoodData().setFoodLevel(20);
+        player.getFoodData().setSaturation(5.0f);
+        player.getFoodData().setExhaustion(0.0f);
+        if (player.isOnFire()) player.clearFire();
+
+        PlayerDataStorage.savePlayerData(player);
+        PlayerDataProvider.forceSync(player.server);
+        NichirinPacketRegistry.sendDemonSync(player, 0, 0, false);
+
+        try {
+            DefaultDemonMoveset.cleanupPlayer(player);
+        } catch (Exception ignored) {}
+
+        if (MovesetHelper.hasDemonMoveset(player)) {
+            src.sendFailure(Component.literal("Failed to remove demon status from " + playerName + " (sync issue)").withStyle(s -> s.withColor(COL_ERR)));
+            return 0;
+        }
+
+        src.sendSuccess(() -> Component.literal("Removed demon status from " + playerName).withStyle(s -> s.withColor(COL_OK)), true);
+        player.displayClientMessage(Component.literal("You are no longer a demon. Your demon abilities have been removed.").withStyle(s -> s.withColor(0x55FFFF)), false);
+        return 1;
+    }
+
+    private static int giveDemonArt(CommandContext<CommandSourceStack> ctx, ServerPlayer player, String art, boolean setActive) {
+        CommandSourceStack src = ctx.getSource();
+        String playerName = player.getName().getString();
+        String formatted = formatArtName(art);
+
+        if (!isDemonArt(art)) {
+            src.sendFailure(Component.literal(art + " is not a demon art").withStyle(s -> s.withColor(COL_ERR)));
+            return 0;
+        }
+        if (!NichirinMovesetRegistry.isRegistered(art)) {
+            src.sendFailure(Component.literal("Unknown demon art: " + art).withStyle(s -> s.withColor(COL_ERR)));
+            return 0;
+        }
+        if (ProgressionHelper.isMovesetUnlocked(player, art)) {
+            src.sendFailure(Component.literal(playerName + " already has " + formatted + " unlocked").withStyle(s -> s.withColor(COL_WARN)));
+            return 0;
+        }
+        if (setActive) {
+            String currentDemonArt = PlayerDataProvider.getData(player).getMovesetData().getDemonMovesetId();
+            if (art.equals(currentDemonArt)) {
+                src.sendFailure(Component.literal(playerName + " already has " + formatted + " active").withStyle(s -> s.withColor(COL_WARN)));
+                return 0;
+            }
+        }
+
+        ProgressionHelper.unlockMoveset(player, art);
+
+        if (setActive) {
+            PlayerDataProvider.getData(player).getMovesetData().setDemonMovesetId(art);
+            PlayerDataStorage.savePlayerData(player);
+            PlayerDataProvider.forceSync(player.server);
+            src.sendSuccess(() -> Component.literal("Gave and activated " + formatted + " for " + playerName).withStyle(s -> s.withColor(COL_OK)), true);
+            player.displayClientMessage(Component.literal("You have been granted " + formatted + "!").withStyle(s -> s.withColor(COL_ERR)), false);
+        } else {
+            src.sendSuccess(() -> Component.literal("Unlocked " + formatted + " for " + playerName + " (not set as active)").withStyle(s -> s.withColor(COL_OK)), true);
+            player.displayClientMessage(Component.literal("You have unlocked " + formatted + "! Use the GUI to set it active.").withStyle(s -> s.withColor(COL_ERR)), false);
+        }
+        return 1;
+    }
+
+    private static int setDemonArt(CommandContext<CommandSourceStack> ctx, ServerPlayer player, String art) {
+        CommandSourceStack src = ctx.getSource();
+
+        if (!isDemonArt(art)) {
+            src.sendFailure(Component.literal(art + " is not a demon art").withStyle(s -> s.withColor(COL_ERR)));
+            return 0;
+        }
+        if (!NichirinMovesetRegistry.isRegistered(art)) {
+            src.sendFailure(Component.literal("Unknown demon art: " + art).withStyle(s -> s.withColor(COL_ERR)));
+            return 0;
+        }
+        if (!ProgressionHelper.isMovesetUnlocked(player, art)) {
+            src.sendFailure(Component.literal(player.getName().getString() + " has not unlocked " + formatArtName(art)).withStyle(s -> s.withColor(COL_ERR)));
+            return 0;
+        }
+        String currentDemonArt = PlayerDataProvider.getData(player).getMovesetData().getDemonMovesetId();
+        if (art.equals(currentDemonArt)) {
+            src.sendFailure(Component.literal(player.getName().getString() + " already has " + formatArtName(art) + " active").withStyle(s -> s.withColor(COL_WARN)));
+            return 0;
+        }
+
+        PlayerDataProvider.getData(player).getMovesetData().setDemonMovesetId(art);
+        PlayerDataStorage.savePlayerData(player);
+        PlayerDataProvider.forceSync(player.server);
+        src.sendSuccess(() -> Component.literal("Set " + player.getName().getString() + "'s demon art to " + formatArtName(art)).withStyle(s -> s.withColor(COL_OK)), true);
+        player.displayClientMessage(Component.literal("Your demon art is now " + formatArtName(art)).withStyle(s -> s.withColor(COL_ERR)), false);
+        return 1;
+    }
+
+    // ─── /nichirin cooldown — unified ───
+
+    private static int resetAllCooldowns(CommandContext<CommandSourceStack> ctx, ServerPlayer player) {
+        CommandSourceStack src = ctx.getSource();
+        String playerName = player.getName().getString();
+
+        int cleared = 0;
+        for (NichirinMovesetRegistry.MoveInfo moveInfo : NichirinMovesetRegistry.getAllMoves().values()) {
+            CooldownDisplayPacket.sendToClient(player, moveInfo.displayName, 0);
+            cleared++;
+        }
+
+        int finalCleared = cleared;
+        src.sendSuccess(() -> Component.literal("Reset all cooldowns for " + playerName + " (" + finalCleared + " moves cleared)").withStyle(s -> s.withColor(COL_OK)), true);
+        player.displayClientMessage(Component.literal("All your cooldowns have been reset!").withStyle(s -> s.withColor(0x55FFFF)), false);
+        return 1;
+    }
+
+    // ─── /nichirin admin / config ───
 
     private static int unlockAll(CommandContext<CommandSourceStack> ctx, ServerPlayer player) {
         CommandSourceStack src = ctx.getSource();
@@ -129,23 +415,15 @@ public class NichirinCommand {
                 firstStyle = id;
             }
         }
-        // Set an active style if the player has none
         String currentStyle = PlayerDataProvider.getData(player).getMovesetData().getMovesetId();
         if ((currentStyle == null || currentStyle.isEmpty()) && firstStyle != null) {
             PlayerDataProvider.updateAndSync(player, firstStyle);
         }
-
         ProgressionSyncPacket.sendToPlayer(player);
 
         int finalStyles = stylesUnlocked;
-        src.sendSuccess(() -> Component.literal("Unlocked everything for " + name + ": " +
-                finalStyles + " style(s).")
-                .withStyle(s -> s.withColor(COL_OK)), true);
-
-        player.displayClientMessage(
-                Component.literal("All breathing styles unlocked!")
-                        .withStyle(s -> s.withColor(0x55FFFF)), false);
-
+        src.sendSuccess(() -> Component.literal("Unlocked everything for " + name + ": " + finalStyles + " style(s).").withStyle(s -> s.withColor(COL_OK)), true);
+        player.displayClientMessage(Component.literal("All breathing styles unlocked!").withStyle(s -> s.withColor(0x55FFFF)), false);
         return 1;
     }
 
@@ -171,7 +449,6 @@ public class NichirinCommand {
         if (src.getEntity() instanceof ServerPlayer player) {
             NichirinPacketRegistry.sendOpenConfigScreen(player);
         } else {
-            // Console / command block — fall back to listing values in chat
             configList(ctx);
         }
         return 1;
@@ -179,19 +456,19 @@ public class NichirinCommand {
 
     private static int showHelp(CommandContext<CommandSourceStack> ctx) {
         CommandSourceStack src = ctx.getSource();
-
         src.sendSuccess(() -> header("— Breath of Nichirin Help —"), false);
-        src.sendSuccess(() -> line(COL_DIM,  "Operator commands (permission level 2):"), false);
-        src.sendSuccess(() -> cmd("/nichirin unlockall <player>",                  "Unlock all styles"), false);
-        src.sendSuccess(() -> cmd("/nichirin config",                              "Open config GUI"), false);
-        src.sendSuccess(() -> cmd("/nichirin config list",                         "List all config values"), false);
-        src.sendSuccess(() -> cmd("/nichirin config get <key>",                    "Show a single config value"), false);
-        src.sendSuccess(() -> cmd("/nichirin config set <key> <value>",            "Change a config value"), false);
-        src.sendSuccess(() -> cmd("/nichirin config reset <key>",                  "Reset one value to default"), false);
-        src.sendSuccess(() -> cmd("/nichirin config resetall",                     "Reset all values to defaults"), false);
-        src.sendSuccess(() -> line(COL_DIM,  "Other command roots:"), false);
-        src.sendSuccess(() -> cmd("/breathing ...",  "Give / set breathing styles"), false);
-        src.sendSuccess(() -> cmd("/demon ...",      "Give / manage demon arts"), false);
+        src.sendSuccess(() -> line(COL_DIM, "Operator commands (permission level 2):"), false);
+        src.sendSuccess(() -> cmd("/nichirin breathing give <player> <style> [set]", "Unlock a breathing style"), false);
+        src.sendSuccess(() -> cmd("/nichirin breathing set <player> <style>",        "Set active style (must be unlocked)"), false);
+        src.sendSuccess(() -> cmd("/nichirin demon become <player>",                 "Make player a demon"), false);
+        src.sendSuccess(() -> cmd("/nichirin demon remove <player>",                 "Remove demon status"), false);
+        src.sendSuccess(() -> cmd("/nichirin demon give <player> <art> [set]",       "Unlock a demon art"), false);
+        src.sendSuccess(() -> cmd("/nichirin demon set <player> <art>",              "Set active demon art"), false);
+        src.sendSuccess(() -> cmd("/nichirin cooldown <player>",                     "Reset ALL move cooldowns"), false);
+        src.sendSuccess(() -> cmd("/nichirin unlockall <player>",                    "Unlock every moveset"), false);
+        src.sendSuccess(() -> cmd("/nichirin bloodmoon",                             "Toggle the Blood Moon"), false);
+        src.sendSuccess(() -> cmd("/nichirin config",                                "Open config GUI"), false);
+        src.sendSuccess(() -> cmd("/nichirin config list|get|set|reset|resetall",    "Config from chat"), false);
         return 1;
     }
 
@@ -200,7 +477,7 @@ public class NichirinCommand {
         src.sendSuccess(() -> header("— Config Values —"), false);
 
         for (Map.Entry<String, NichirinConfig.Entry> e : NichirinConfig.getAll().entrySet()) {
-            String key   = e.getKey();
+            String key = e.getKey();
             NichirinConfig.Entry entry = e.getValue();
 
             String rangePart = entry.isBoolean()
@@ -210,8 +487,7 @@ public class NichirinCommand {
                     .append(Component.literal(key).withStyle(s -> s.withColor(COL_KEY)))
                     .append(Component.literal(" = ").withStyle(s -> s.withColor(COL_DIM)))
                     .append(Component.literal(entry.displayValue()).withStyle(s -> s.withColor(COL_VALUE)))
-                    .append(Component.literal("  (" + rangePart + ")")
-                            .withStyle(s -> s.withColor(COL_DIM)));
+                    .append(Component.literal("  (" + rangePart + ")").withStyle(s -> s.withColor(COL_DIM)));
 
             src.sendSuccess(() -> line, false);
         }
@@ -268,8 +544,7 @@ public class NichirinCommand {
         ctx.getSource().sendSuccess(() ->
                 Component.literal("Reset ").withStyle(s -> s.withColor(COL_OK))
                         .append(Component.literal(key).withStyle(s -> s.withColor(COL_KEY)))
-                        .append(Component.literal(" to default (" + entry.value() + ")")
-                                .withStyle(s -> s.withColor(COL_DIM))),
+                        .append(Component.literal(" to default (" + entry.value() + ")").withStyle(s -> s.withColor(COL_DIM))),
                 true);
         return 1;
     }
@@ -277,13 +552,54 @@ public class NichirinCommand {
     private static int configResetAll(CommandContext<CommandSourceStack> ctx) {
         NichirinConfig.resetAll();
         ctx.getSource().sendSuccess(() ->
-                Component.literal("All config values reset to defaults.")
-                        .withStyle(s -> s.withColor(COL_OK)),
+                Component.literal("All config values reset to defaults.").withStyle(s -> s.withColor(COL_OK)),
                 true);
         return 1;
     }
 
-    // Suggestions
+    // ─── Suggestions ───
+
+    private static CompletableFuture<Suggestions> suggestBreathingStyles(
+            CommandContext<CommandSourceStack> ctx, SuggestionsBuilder builder) {
+        String input = builder.getRemaining().toLowerCase();
+        for (String id : NichirinMovesetRegistry.getAllMovesetIds()) {
+            if (isBreathingStyle(id) && id.toLowerCase().startsWith(input)) builder.suggest(id);
+        }
+        return builder.buildFuture();
+    }
+
+    private static CompletableFuture<Suggestions> suggestUnlockedBreathingStyles(
+            CommandContext<CommandSourceStack> ctx, SuggestionsBuilder builder, ServerPlayer player) {
+        String input = builder.getRemaining().toLowerCase();
+        var progression = PlayerDataProvider.getData(player).getProgression();
+        for (String id : NichirinMovesetRegistry.getAllMovesetIds()) {
+            if (isBreathingStyle(id) && progression.isMovesetUnlocked(id) && id.toLowerCase().startsWith(input)) {
+                builder.suggest(id);
+            }
+        }
+        return builder.buildFuture();
+    }
+
+    private static CompletableFuture<Suggestions> suggestDemonArts(
+            CommandContext<CommandSourceStack> ctx, SuggestionsBuilder builder) {
+        String input = builder.getRemaining().toLowerCase();
+        for (String id : NichirinMovesetRegistry.getAllMovesetIds()) {
+            if (isDemonArt(id) && id.toLowerCase().startsWith(input)) builder.suggest(id);
+        }
+        return builder.buildFuture();
+    }
+
+    private static CompletableFuture<Suggestions> suggestUnlockedDemonArts(
+            CommandContext<CommandSourceStack> ctx, SuggestionsBuilder builder, ServerPlayer player) {
+        String input = builder.getRemaining().toLowerCase();
+        var progression = PlayerDataProvider.getData(player).getProgression();
+        for (String id : NichirinMovesetRegistry.getAllMovesetIds()) {
+            if (isDemonArt(id) && progression.isMovesetUnlocked(id) && id.toLowerCase().startsWith(input)) {
+                builder.suggest(id);
+            }
+        }
+        return builder.buildFuture();
+    }
 
     private static CompletableFuture<Suggestions> suggestConfigKeys(
             CommandContext<CommandSourceStack> ctx, SuggestionsBuilder builder) {
@@ -307,7 +623,31 @@ public class NichirinCommand {
         return builder.buildFuture();
     }
 
-    // Formatting helpers
+    // ─── Helpers ───
+
+    private static boolean isBreathingStyle(String movesetId) {
+        return movesetId != null && movesetId.contains("breathing");
+    }
+
+    private static boolean isDemonArt(String movesetId) {
+        if (movesetId == null) return false;
+        return movesetId.equals("default_demon") || movesetId.contains("demon");
+    }
+
+    private static String formatStyleName(String styleId) {
+        String[] parts = styleId.split("_");
+        StringBuilder out = new StringBuilder();
+        for (String p : parts) {
+            if (out.length() > 0) out.append(' ');
+            out.append(Character.toUpperCase(p.charAt(0))).append(p.substring(1));
+        }
+        return out.toString();
+    }
+
+    private static String formatArtName(String artId) {
+        if (artId.equals("default_demon")) return "Demon Arts";
+        return formatStyleName(artId);
+    }
 
     private static MutableComponent header(String text) {
         return Component.literal(text).withStyle(s -> s.withColor(COL_HEADER).withBold(true));

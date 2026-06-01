@@ -1,11 +1,14 @@
 package com.xirc.nichirin.datagen.providers.data;
 
 import com.xirc.nichirin.BreathOfNichirin;
+import com.xirc.nichirin.common.advancement.BeastBreathingTrigger;
 import com.xirc.nichirin.common.advancement.FirstBreathTrigger;
 import com.xirc.nichirin.common.advancement.FlameBreathingTrigger;
 import com.xirc.nichirin.common.advancement.InsectBreathingTrigger;
+import com.xirc.nichirin.common.advancement.MistBreathingTrigger;
 import com.xirc.nichirin.common.advancement.SoundBreathingTrigger;
 import com.xirc.nichirin.common.advancement.ThunderBreathingTrigger;
+import com.xirc.nichirin.common.advancement.WaterBreathingTrigger;
 import com.xirc.nichirin.registry.NichirinItemRegistry;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricAdvancementProvider;
@@ -128,6 +131,48 @@ public class NichirinAdvancementProvider extends FabricAdvancementProvider {
                         SoundBreathingTrigger.TriggerInstance.soundBreathingUnlock())
                 .build(BreathOfNichirin.id("sound_breathing"));
 
+        final Advancement waterBreathing = Advancement.Builder.advancement()
+                .parent(firstBreath)
+                .display(new ItemStack(Items.HEART_OF_THE_SEA), // Water-themed icon
+                        Component.literal("Current of Life"),
+                        Component.literal("Slay a Drowned with your bare hands to obtain Water Breathing"),
+                        null,
+                        FrameType.CHALLENGE,
+                        true,
+                        true,
+                        false)
+                .addCriterion("has_water_breathing",
+                        WaterBreathingTrigger.TriggerInstance.waterBreathingUnlock())
+                .build(BreathOfNichirin.id("water_breathing"));
+
+        final Advancement beastBreathing = Advancement.Builder.advancement()
+                .parent(firstBreath)
+                .display(new ItemStack(Items.PORKCHOP), // Boar-themed icon (placeholder until BOAR_HEAD item)
+                        Component.literal("One with the Beast"),
+                        Component.literal("Slay a boar and equip its head to obtain Beast Breathing"),
+                        null,
+                        FrameType.CHALLENGE,
+                        true,
+                        true,
+                        false)
+                .addCriterion("has_beast_breathing",
+                        BeastBreathingTrigger.TriggerInstance.beastBreathingUnlock())
+                .build(BreathOfNichirin.id("beast_breathing"));
+
+        final Advancement mistBreathing = Advancement.Builder.advancement()
+                .parent(firstBreath)
+                .display(new ItemStack(Items.WHITE_WOOL), // Cloudy/misty icon
+                        Component.literal("The Mountain Mist"),
+                        Component.literal("Slay a mob in a mountain biome while it rains to obtain Mist Breathing"),
+                        null,
+                        FrameType.CHALLENGE,
+                        true,
+                        true,
+                        false)
+                .addCriterion("has_mist_breathing",
+                        MistBreathingTrigger.TriggerInstance.mistBreathingUnlock())
+                .build(BreathOfNichirin.id("mist_breathing"));
+
 
         consumer.accept(root);
         consumer.accept(obtainKatana);
@@ -138,5 +183,8 @@ public class NichirinAdvancementProvider extends FabricAdvancementProvider {
         consumer.accept(flameBreathing);
         consumer.accept(insectBreathing);
         consumer.accept(soundBreathing);
+        consumer.accept(waterBreathing);
+        consumer.accept(beastBreathing);
+        consumer.accept(mistBreathing);
     }
 }

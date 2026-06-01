@@ -62,7 +62,7 @@ public class MovesetProgression {
             case "insect_breathing" -> "Throw a poison potion";
             case "sound_breathing" -> "Play a music disc in a jukebox";
             case "water_breathing" -> "Kill a Drowned with your bare hands";
-            case "mist_breathing"  -> "No unlock trigger is registered yet";
+            case "mist_breathing"  -> "Kill a mob in a mountain biome while it's raining";
             case "beast_breathing" -> "Kill a boar, then equip the boar head";
             case "default_demon" -> "Become a demon to unlock basic demon arts";
             default -> "Unknown requirement";

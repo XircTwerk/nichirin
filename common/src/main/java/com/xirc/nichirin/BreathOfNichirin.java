@@ -65,6 +65,7 @@ public final class BreathOfNichirin {
         SoundBreathingUnlockHandler.register();
         WaterBreathingUnlockHandler.register();
         BeastBreathingUnlockHandler.register();
+        MistBreathingUnlockHandler.register();
 
         // SERVER-SIDE handlers only
         BreathOfNichirinEventHandler.init();

@@ -33,7 +33,8 @@ public class InosukeUniformRenderer extends NichirinArmorRenderer {
         setAllVisible(false);
         switch (slot) {
             case HEAD -> {
-                setBoneVisible(getBone("Head"), true);
+                AzBone head = getBone("Head");
+                setBoneVisible(head, true);
                 setBoneVisible(getBone("Back"), true);
                 setBoneVisible(getBone("left2"), true);
                 setBoneVisible(getBone("right2"), true);
@@ -42,6 +43,9 @@ public class InosukeUniformRenderer extends NichirinArmorRenderer {
                 setBoneVisible(getBone("Snout"), true);
                 setBoneVisible(getBone("eyeLeft"), true);
                 setBoneVisible(getBone("eyeRight"), true);
+                // Make the boar helmet 1.1× larger. Scale Head + all its parented children
+                // (Back, left2, right2, Ears, Tusks, Snout, eyeLeft, eyeRight all have parent=Head).
+                scaleBoneTree(head, 1.1f);
             }
             case CHEST -> {
             }
