@@ -7,6 +7,7 @@ import com.xirc.nichirin.common.system.sheathing.SheathPosition;
 import com.xirc.nichirin.common.system.sheathing.SheathSlotData;
 import com.xirc.nichirin.common.system.sheathing.SheathState;
 import com.xirc.nichirin.common.system.sheathing.SheathingManager;
+import com.xirc.nichirin.registry.NichirinItemRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -51,12 +52,34 @@ public class SheathedKatanaLayer extends RenderLayer<AbstractClientPlayer, Playe
         getParentModel().body.translateAndRotate(poseStack);
         applySlotTransform(poseStack, slot.getPosition());
         poseStack.scale(0.72f, 0.72f, 0.72f);
-        ItemStack renderStack = stack.copy();
+        // Use the mainhand twin's model for sheathed display. LEFT_*_KATANA and RIGHT_*_KATANA
+        // share the same mesh but have asymmetric `thirdperson_righthand` transforms; the LEFT
+        // version bakes in a 180° flip so it looks correct when actually held in the right hand.
+        // That flip is wrong for a sheathed model. Swapping the stack to the RIGHT twin lets
+        // the existing render system (same display context, same slot transform) handle both
+        // halves of a dual sheathe identically with no special-case math.
+        ItemStack renderStack = renderTwin(stack).copy();
         renderStack.getOrCreateTag().putBoolean("nichirin_sheathed_render", true);
-        Minecraft.getInstance().getItemRenderer().renderStatic(player, renderStack, displayContext(slot.getPosition()),
+        Minecraft.getInstance().getItemRenderer().renderStatic(player, renderStack, displayContext(slot),
                 false, poseStack, buffer, player.level(), packedLight, OverlayTexture.NO_OVERLAY,
                 player.getId() + slot.getPosition().ordinal());
         poseStack.popPose();
+    }
+
+    /**
+     * If the stack is the left half of a dual-katana pair, return a fresh stack of the right
+     * half so sheathed rendering reuses the canonical orientation. NBT (custom names, damage,
+     * etc.) is not copied because the sheathed render only needs the model — gameplay state
+     * lives on the actual stored {@link ItemStack}, which is untouched.
+     */
+    private ItemStack renderTwin(ItemStack stack) {
+        if (stack.is(NichirinItemRegistry.LEFT_BEAST_KATANA.get())) {
+            return new ItemStack(NichirinItemRegistry.RIGHT_BEAST_KATANA.get());
+        }
+        if (stack.is(NichirinItemRegistry.LEFT_SOUND_KATANA.get())) {
+            return new ItemStack(NichirinItemRegistry.RIGHT_SOUND_KATANA.get());
+        }
+        return stack;
     }
 
     private void applySlotTransform(PoseStack poseStack, SheathPosition position) {
@@ -69,19 +92,25 @@ public class SheathedKatanaLayer extends RenderLayer<AbstractClientPlayer, Playe
                 poseStack.translate(-0.25, 0.70, 0);
                 poseStack.mulPose(rotation(70, 0, 0));
             }
+            // BACK is the canonical single-katana back-sheathe spot — vertical, centered, the
+            // shape Minecraft players recognize. BACK_2 sits off to the opposite side of the
+            // spine with a mirrored Z rotation so a dual sheathe forms a wide V instead of
+            // colliding at the same point. The single-katana case keeps the familiar BACK
+            // orientation; the dual case adds the second blade beside it without distorting
+            // the first.
             case BACK -> {
                 poseStack.translate(0.0, 0.25, 0.15);
                 poseStack.mulPose(rotation(0, 0, -90));
             }
             case BACK_2 -> {
                 poseStack.translate(0.0, 0.25, 0.15);
-                poseStack.mulPose(rotation(0, 180, -90));
+                poseStack.mulPose(rotation(0, 0, 90));
             }
         }
     }
 
-    private ItemDisplayContext displayContext(SheathPosition position) {
-        return switch (position) {
+    private ItemDisplayContext displayContext(SheathSlotData slot) {
+        return switch (slot.getPosition()) {
             case BACK, BACK_2 -> ItemDisplayContext.FIXED;
             default -> ItemDisplayContext.THIRD_PERSON_RIGHT_HAND;
         };

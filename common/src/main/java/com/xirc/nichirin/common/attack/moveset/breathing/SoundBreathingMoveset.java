@@ -87,7 +87,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                 // Fourth Form: Constant Resounding Slashes - 360° defense (INDEX 1 in wheel)
                 .withMove(new MoveBuilder("constant_resounding_slashes", "Constant Resounding Slashes")
                         .withAnimation("nichirin:constant_resounding_slashes", 12)
-                        .withTiming(180, 5, 70)
+                        .withTiming(180, 5, 140)
                         .withDamage(6.0f)
                         .withRange(20.0f)
                         .withKnockback(0f)

@@ -158,5 +158,8 @@ public class NichirinModelProvider extends FabricModelProvider {
 
         // Inosuke armor
         generator.generateFlatItem(NichirinItemRegistry.BOAR_HEAD.get(), ModelTemplates.FLAT_ITEM);
+
+        // Demon items
+        generator.generateFlatItem(NichirinItemRegistry.DEMON_BLOOD_VIAL.get(), ModelTemplates.FLAT_ITEM);
     }
 }

@@ -28,6 +28,7 @@ public class MistBreathingMoveset extends AbstractMoveset {
                 .withIdleAnimation("nichirin:mist_idle")
                 .withSpeedMultiplier(1.2f)
 
+                //Mist breathing second form
                 .withRightClickMove(new MoveBuilder("eight_layered_mist", "Eight-Layered Mist")
                         .withAnimation("nichirin:mist_rapid_slash", 6)
                         .withTiming(0, 9, 17)
@@ -46,13 +47,13 @@ public class MistBreathingMoveset extends AbstractMoveset {
                         })
                 )
 
+                //First form
                 .withCrouchRightClickMove(new MoveBuilder("low_clouds_distant_haze", "Low Clouds, Distant Haze")
                         .withAnimation("nichirin:mist_thrust", 7)
                         .withTiming(0, 5, 12)
                         .withDamage(7.0f)
                         .withRange(8.0f)
                         .withKnockback(0.3f)
-                        // The thrust dash is a signature mist movement tool — needs serious distance.
                         .withDashSpeed(28.0f)
                         .withBreathCost(10.0f)
                         .withHitStun(16)
@@ -153,7 +154,7 @@ public class MistBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("obscuring_clouds", "Obscuring Clouds")
                         .withAnimation("nichirin:mist_vanish", 16)
                         .withTiming(640, 5, 210)
-                        .withDamage(2.0f)
+                        .withDamage(4.0f)
                         .withRange(8.0f)
                         .withKnockback(0.0f)
                         .withBreathCost(55.0f)

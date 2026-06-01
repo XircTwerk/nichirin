@@ -52,6 +52,11 @@ public class HonoikazuchiNoKamiAttack extends ThunderBreathingAttackBase {
             if (!user.isInvulnerable()) {
                 user.setInvulnerable(true);
             }
+            // Crackle a lightning aura around the user every half-second of the windup so the
+            // charge isn't free positioning — anyone caught in melee range eats chip damage.
+            if (tickCount > 0 && tickCount % 10 == 0) {
+                dealWindupAura();
+            }
             return;
         }
 
@@ -72,6 +77,35 @@ public class HonoikazuchiNoKamiAttack extends ThunderBreathingAttackBase {
         // Apply speed boost after dash completes
         if (tickCount == windup + duration - 1) {
             applySpeedBoost();
+        }
+    }
+
+    /**
+     * Windup damage tick — small lightning AOE around the user during the long charge so the
+     * 6-second windup doesn't just hand the opponent a free reposition. Damage per pulse is
+     * a small fraction of the full strike so chip-pressure < single-hit ult damage.
+     */
+    private void dealWindupAura() {
+        Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
+        float auraRange = 4.0f;
+        List<LivingEntity> targets = getTargetsInCustomHitbox(userPos, auraRange, 3.0, auraRange);
+        float originalDamage = damage;
+        damage = Math.max(3.0f, originalDamage * 0.08f);
+        try {
+            for (LivingEntity target : targets) {
+                hitTarget(target);
+            }
+        } finally {
+            damage = originalDamage;
+        }
+        if (world instanceof ServerLevel serverLevel) {
+            serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK,
+                    userPos.x, userPos.y, userPos.z,
+                    25, auraRange, 1.0, auraRange, 0.2);
+        }
+        if (!targets.isEmpty()) {
+            world.playSound(null, user.getX(), user.getY(), user.getZ(),
+                    SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.PLAYERS, 0.5f, 1.6f);
         }
     }
 

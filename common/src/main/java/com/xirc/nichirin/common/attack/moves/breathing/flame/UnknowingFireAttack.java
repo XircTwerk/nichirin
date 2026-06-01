@@ -9,6 +9,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -33,6 +34,8 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
     private Vec3 startPosition;
     private Vec3 lastDashPos = null;
     private Set<LivingEntity> hitEntities = new HashSet<>();
+    // Hit targets ride along with the user until the final slash so they all get caught in the big swing.
+    private final List<LivingEntity> draggedEnemies = new ArrayList<>();
 
     // Invulnerability and fall damage protection
     private boolean wasInvulnerable = false;
@@ -47,6 +50,7 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
         slashExecuted = false;
         lastDashPos = null;
         hitEntities.clear();
+        draggedEnemies.clear();
 
         dashDirection = user.getLookAngle().normalize();
         startPosition = user.position();
@@ -167,14 +171,46 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
                 damage = originalDamage;
 
                 hitEntities.add(target);
-
-                // Light knockback during dash
-                Vec3 dashKnockback = dashDirection.scale(knockback * 0.3);
-                target.push(dashKnockback.x, 0.05, dashKnockback.z);
+                draggedEnemies.add(target);
 
                 // Create impact particles
                 createDashImpactParticles(target.position());
             }
+        }
+
+        dragHitEnemies();
+    }
+
+    /**
+     * Drag every hit enemy toward where the final slash will land — horizontal only so they
+     * don't get launched into the air, capped per-tick so a far-away catch doesn't yank them
+     * across the map, and only while the user is actually still moving. The moment the dash
+     * ends or the user stops, the pull stops too.
+     */
+    private void dragHitEnemies() {
+        Vec3 horizontalDash = new Vec3(dashDirection.x, 0, dashDirection.z).normalize();
+        // Anchor in FRONT of the user (at foot level) so caught mobs pile up where the slash hits.
+        Vec3 dragAnchor = user.position().add(horizontalDash.scale(1.0));
+
+        Vec3 userVel = user.getDeltaMovement();
+        double userSpeedSqr = userVel.x * userVel.x + userVel.z * userVel.z;
+        boolean userMoving = userSpeedSqr > 0.04;
+
+        draggedEnemies.removeIf(enemy -> !enemy.isAlive() || enemy.isRemoved());
+        for (LivingEntity dragged : draggedEnemies) {
+            if (!userMoving) {
+                Vec3 existing = dragged.getDeltaMovement();
+                dragged.setDeltaMovement(0, Math.min(existing.y, 0), 0);
+                dragged.hurtMarked = true;
+                continue;
+            }
+            Vec3 toAnchor = dragAnchor.subtract(dragged.position());
+            double vx = Math.max(-1.2, Math.min(1.2, toAnchor.x * 0.4));
+            double vz = Math.max(-1.2, Math.min(1.2, toAnchor.z * 0.4));
+            double vy = Math.min(0, dragged.getDeltaMovement().y);
+            dragged.setDeltaMovement(vx, vy, vz);
+            dragged.hurtMarked = true;
+            dragged.fallDistance = 0f;
         }
     }
 
@@ -362,6 +398,15 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
 
     @Override
     protected void onStop() {
+        // Release every dragged enemy: zero horizontal drag, preserve gravity, so they don't
+        // skid forever after the dash ends.
+        for (LivingEntity dragged : draggedEnemies) {
+            if (dragged.isAlive()) {
+                Vec3 existing = dragged.getDeltaMovement();
+                dragged.setDeltaMovement(0, Math.min(existing.y, 0), 0);
+                dragged.hurtMarked = true;
+            }
+        }
         // Restore original invulnerability state
         user.setInvulnerable(wasInvulnerable);
 
@@ -401,6 +446,7 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
         slashExecuted = false;
         lastDashPos = null;
         hitEntities.clear();
+        draggedEnemies.clear();
     }
 
     @Override

@@ -45,7 +45,9 @@ This release is a major gameplay and polish update for Nichirin. We've managed t
 - Fixed Sound and Thunder Breathing damage, hitboxes, knockback, windups, and lingering hit timing.
 - Fixed attack interruption, parry stun, combo reset, animation stutter, and invalid animation playback when attacks fail to execute.
 - Fixed demon blood loss, creative and peaceful-mode behavior, regeneration stalls, move-wheel state, and delayed inputs.
-- Fixed config storage, Forge compatibility regressions, cape rendering, GUI scaling, duplicate cooldowns, missing language entries
+- Fixed config storage, Forge compatibility regressions, cape rendering, GUI scaling, duplicate cooldowns, missing language entries.
+- Fixed some attacks not displaying their hitboxes.
+- Fixed dash attacks not creating enough hitboxes
 
 ## Known Issues
 
@@ -56,7 +58,7 @@ This release is a major gameplay and polish update for Nichirin. We've managed t
 
 ## Contributors
 
-Thanks you Mika and Bob for the assets, and thank you Nacho for doing some extra balancing.
+Thanks you Mika and Bob for the assets, thank you Uster for being a great help with beta testing and suggestions, and thank you Nacho for doing some extra balancing.
 
 ## Full History
 
