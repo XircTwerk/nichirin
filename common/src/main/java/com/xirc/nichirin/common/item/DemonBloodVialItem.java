@@ -119,8 +119,6 @@ public class DemonBloodVialItem extends Item {
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         tooltip.add(Component.translatable("item.nichirin.demon_blood_vial.tooltip_line1")
                 .withStyle(ChatFormatting.DARK_RED));
-        tooltip.add(Component.translatable("item.nichirin.demon_blood_vial.tooltip_line2")
-                .withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
     }
 
     /** Drop the pending-confirm entry when the player logs out so it can't dangle forever. */

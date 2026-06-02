@@ -346,7 +346,7 @@ public interface NichirinItemRegistry {
 
     /** One-way demonic transformation. Drops 100% from slain demons; double right-click to drink. */
     RegistrySupplier<Item> DEMON_BLOOD_VIAL = register("demon_blood_vial",
-            () -> new DemonBloodVialItem(settings().rarity(Rarity.EPIC).stacksTo(16)));
+            () -> new DemonBloodVialItem(settings().stacksTo(16)));
 
 
     static <T extends Item> RegistrySupplier<T> register(String id, Supplier<? extends T> supplier) {

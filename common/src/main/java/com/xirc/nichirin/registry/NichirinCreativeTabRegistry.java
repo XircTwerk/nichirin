@@ -49,6 +49,7 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinItemRegistry.SCARLET_GEM.get());
                         entries.accept(NichirinItemRegistry.SMOKE_BOMB.get());
                         entries.accept(NichirinItemRegistry.FLASH_BOMB.get());
+                        entries.accept(NichirinItemRegistry.DEMON_BLOOD_VIAL.get());
                     })
                     .build();
         });

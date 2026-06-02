@@ -22,6 +22,8 @@ This release is a major gameplay and polish update for Nichirin. We've managed t
 - Server-side JSON configuration support and additional gameplay config options.
 - Urokodaki spawns in his house.
 - New recipes, spawn eggs, language entries, animations, sounds, and visual assets.
+- Demon blood vial item so you can actually become a demon in survival.
+- Using the 1-9 keys with attack wheel open actually executes a move, so you dont have to click on the indiviual segments anymore. 
 
 ## Changed
 
@@ -36,6 +38,7 @@ This release is a major gameplay and polish update for Nichirin. We've managed t
 - Improved GUI scaling, cooldown icons, combo display behavior, and skills-page navigation.
 - Centralized commands and cleaned up registries, move definitions, embedded library files, and stale project metadata.
 - Updated Rengoku armor to look cooler/more polished.
+- Demon "Grab" move renamed to throw
 
 ## Fixed
 
