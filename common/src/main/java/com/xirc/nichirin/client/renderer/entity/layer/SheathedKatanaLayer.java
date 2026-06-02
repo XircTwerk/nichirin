@@ -52,18 +52,22 @@ public class SheathedKatanaLayer extends RenderLayer<AbstractClientPlayer, Playe
         getParentModel().body.translateAndRotate(poseStack);
         applySlotTransform(poseStack, slot.getPosition());
         poseStack.scale(0.72f, 0.72f, 0.72f);
-        // Use the mainhand twin's model for sheathed display. LEFT_*_KATANA and RIGHT_*_KATANA
-        // share the same mesh but have asymmetric `thirdperson_righthand` transforms; the LEFT
-        // version bakes in a 180° flip so it looks correct when actually held in the right hand.
-        // That flip is wrong for a sheathed model. Swapping the stack to the RIGHT twin lets
-        // the existing render system (same display context, same slot transform) handle both
-        // halves of a dual sheathe identically with no special-case math.
-        ItemStack renderStack = renderTwin(stack).copy();
+        // Twin substitution only applies to hip slots — back slots use FIXED display context
+        // which has identical transforms for LEFT/RIGHT models, so swapping there does nothing
+        // useful and changes nothing visually. Keeping the original stack for back means back
+        // rendering stays bit-for-bit identical to its pre-fix behavior (which the user said
+        // was correct), while hips still get the LEFT→RIGHT twin swap that fixed the flipped
+        // orientation there.
+        ItemStack renderStack = isHipSlot(slot.getPosition()) ? renderTwin(stack).copy() : stack.copy();
         renderStack.getOrCreateTag().putBoolean("nichirin_sheathed_render", true);
         Minecraft.getInstance().getItemRenderer().renderStatic(player, renderStack, displayContext(slot),
                 false, poseStack, buffer, player.level(), packedLight, OverlayTexture.NO_OVERLAY,
                 player.getId() + slot.getPosition().ordinal());
         poseStack.popPose();
+    }
+
+    private boolean isHipSlot(SheathPosition position) {
+        return position == SheathPosition.LEFT_HIP || position == SheathPosition.RIGHT_HIP;
     }
 
     /**
@@ -92,19 +96,15 @@ public class SheathedKatanaLayer extends RenderLayer<AbstractClientPlayer, Playe
                 poseStack.translate(-0.25, 0.70, 0);
                 poseStack.mulPose(rotation(70, 0, 0));
             }
-            // BACK is the canonical single-katana back-sheathe spot — vertical, centered, the
-            // shape Minecraft players recognize. BACK_2 sits off to the opposite side of the
-            // spine with a mirrored Z rotation so a dual sheathe forms a wide V instead of
-            // colliding at the same point. The single-katana case keeps the familiar BACK
-            // orientation; the dual case adds the second blade beside it without distorting
-            // the first.
+            // BACK / BACK_2 are the original pre-fix transforms. The single-katana case was
+            // already working — leave it alone.
             case BACK -> {
                 poseStack.translate(0.0, 0.25, 0.15);
                 poseStack.mulPose(rotation(0, 0, -90));
             }
             case BACK_2 -> {
                 poseStack.translate(0.0, 0.25, 0.15);
-                poseStack.mulPose(rotation(0, 0, 90));
+                poseStack.mulPose(rotation(0, 180, -90));
             }
         }
     }
