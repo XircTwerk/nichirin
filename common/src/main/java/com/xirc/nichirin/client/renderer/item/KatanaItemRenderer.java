@@ -22,7 +22,6 @@ public class KatanaItemRenderer extends AzItemRenderer {
 
     public KatanaItemRenderer(ResourceLocation geoModel, ResourceLocation texture) {
         super(AzItemRendererConfig.builder(geoModel, texture)
-                .useEntityGuiLighting()
                 .build());
     }
 
@@ -33,10 +32,12 @@ public class KatanaItemRenderer extends AzItemRenderer {
             public void preRender(AzRendererPipelineContext<UUID, ItemStack> context, boolean isReRender) {
                 var itemContext = (AzItemRendererPipelineContext) context;
                 if (itemContext.getTransformType() == ItemDisplayContext.GUI) {
-                    Lighting.setupForEntityInInventory();
                     context.poseStack().translate(0, 0, 0.1);
                 }
                 super.preRender(context, isReRender);
+                if (itemContext.getTransformType() == ItemDisplayContext.GUI) {
+                    Lighting.setupFor3DItems();
+                }
                 hideOrShowSheath(context);
             }
         };

@@ -113,7 +113,7 @@ public class TrainerDialogueScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mx, int my, float pt) {
-        renderBackground(g, mx, my, pt);
+        renderTransparentBackground(g);
 
         // Outer border
         g.fill(dialogX - 2, dialogY - 2, dialogX + dialogW + 2, dialogY + dialogH + 2, COL_BORDER);
