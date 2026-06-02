@@ -60,7 +60,7 @@ public abstract class NichirinPostProcessor {
 
         try {
             ResourceLocation id = getShaderEffectId();
-            ResourceLocation file = new ResourceLocation(
+            ResourceLocation file = ResourceLocation.fromNamespaceAndPath(
                     id.getNamespace(),
                     "shaders/post/" + id.getPath() + ".json"
             );
@@ -192,7 +192,7 @@ public abstract class NichirinPostProcessor {
         // Must happen after init() since effects[] is populated there.
         bindDepthTexture(getMainDepthTexId());
 
-        time += MC.getDeltaFrameTime() / 20.0;
+        time += MC.getTimer().getRealtimeDeltaTicks() / 20.0;
 
         applyCommonUniforms(viewModelStack);
         beforeProcess(viewModelStack);
@@ -207,7 +207,7 @@ public abstract class NichirinPostProcessor {
         RenderSystem.disableBlend();
         RenderSystem.resetTextureMatrix();
 
-        shaderEffect.process(MC.getFrameTime());
+        shaderEffect.process(MC.getTimer().getGameTimeDeltaPartialTick(true));
 
         // Restore the main render target as the active draw FBO and reset
         // the GL viewport, then re-enable depth testing for any subsequent

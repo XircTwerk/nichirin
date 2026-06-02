@@ -20,7 +20,7 @@ public class KeyboardInputMixin {
 
         // Get the current player
         if (Minecraft.getInstance().player != null) {
-            MobEffectInstance disorientedEffect = Minecraft.getInstance().player.getEffect(NichirinEffectRegistry.DISORIENTED.get());
+            MobEffectInstance disorientedEffect = Minecraft.getInstance().player.getEffect(NichirinEffectRegistry.disoriented());
 
             if (disorientedEffect != null) {
                 int amplifier = disorientedEffect.getAmplifier();

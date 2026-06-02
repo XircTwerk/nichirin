@@ -19,7 +19,7 @@ public class JigoroUniformRenderer extends NichirinArmorRenderer {
         // transform never moves it — it would stay at the geo origin and not follow the player.
         // Bind it to the body the same way the cape provider does for the chest piece.
         if (currentBaseModel != null) {
-            matchBodyBone(currentBaseModel.body, getBone("Cape"));
+            matchKimonoBone(getBone("Cape"));
         }
     }
 

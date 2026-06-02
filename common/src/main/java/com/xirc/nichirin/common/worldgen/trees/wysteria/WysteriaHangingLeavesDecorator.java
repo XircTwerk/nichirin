@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.worldgen.trees.wysteria;
 
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.xirc.nichirin.registry.NichirinBlockRegistry;
@@ -14,7 +15,7 @@ import net.minecraft.core.Direction.Plane;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class WysteriaHangingLeavesDecorator extends TreeDecorator {
-    public static final Codec<WysteriaHangingLeavesDecorator> CODEC = RecordCodecBuilder.create((instance) ->
+    public static final MapCodec<WysteriaHangingLeavesDecorator> CODEC = RecordCodecBuilder.mapCodec((instance) ->
             instance.group(
                     Codec.intRange(1, 8).fieldOf("min_length").forGetter(decorator -> decorator.minLength),
                     Codec.intRange(2, 20).fieldOf("max_length").forGetter(decorator -> decorator.maxLength)

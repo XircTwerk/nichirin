@@ -335,7 +335,7 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
                 draggedEnemy.push(finalKnockback.x, 0.5, finalKnockback.z);
 
                 // Extended fire duration
-                draggedEnemy.setSecondsOnFire(getFireDuration() + 5);
+                draggedEnemy.igniteForSeconds(getFireDuration() + 5);
 
                 // Final claw marks
                 createClawMarksEffect(draggedEnemy.position());

@@ -10,6 +10,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerEntity;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
@@ -229,11 +230,11 @@ public class PlayerCloneEntity extends Monster {
     }
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        entityData.define(MASTER_UUID, Optional.empty());
-        entityData.define(MASTER_NAME, "");
-        entityData.define(PART_MASK, (byte) 0);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(MASTER_UUID, Optional.empty());
+        builder.define(MASTER_NAME, "");
+        builder.define(PART_MASK, (byte) 0);
     }
 
     @Override
@@ -284,8 +285,8 @@ public class PlayerCloneEntity extends Monster {
     }
 
     @Override
-    public Packet<ClientGamePacketListener> getAddEntityPacket() {
-        return NetworkManager.createAddEntityPacket(this);
+    public Packet<ClientGamePacketListener> getAddEntityPacket(ServerEntity entity) {
+        return NetworkManager.createAddEntityPacket(this, entity);
     }
 
     public UUID getMasterUUID()   { return entityData.get(MASTER_UUID).orElse(null); }

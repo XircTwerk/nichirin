@@ -23,7 +23,7 @@ public class DeadCalmShaderEffect extends NichirinPostProcessor {
 
     @Override
     public ResourceLocation getShaderEffectId() {
-        return new ResourceLocation(BreathOfNichirin.MOD_ID, "dead_calm");
+        return ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "dead_calm");
     }
 
     @Override

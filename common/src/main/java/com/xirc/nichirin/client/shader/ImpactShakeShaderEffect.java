@@ -50,7 +50,7 @@ public class ImpactShakeShaderEffect extends NichirinPostProcessor {
 
     @Override
     public ResourceLocation getShaderEffectId() {
-        return new ResourceLocation(BreathOfNichirin.MOD_ID, "impact_shake");
+        return ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "impact_shake");
     }
 
     @Override
@@ -58,7 +58,7 @@ public class ImpactShakeShaderEffect extends NichirinPostProcessor {
         if (effects == null || effects.length == 0) return;
 
         Minecraft mc = Minecraft.getInstance();
-        float frameDelta = mc.getDeltaFrameTime() / 20.0f; // seconds per frame
+        float frameDelta = mc.getTimer().getRealtimeDeltaTicks() / 20.0f; // seconds per frame
         elapsedSeconds += frameDelta;
 
         // Progress uniform (0..1)

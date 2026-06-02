@@ -1,10 +1,13 @@
 package com.xirc.nichirin.common.blocks;
 
 import com.xirc.nichirin.common.item.tool.BentoBoxItem;
+import com.xirc.nichirin.common.util.ItemStackData;
 import com.xirc.nichirin.registry.NichirinBlockEntityRegistry;
 import com.xirc.nichirin.registry.NichirinItemRegistry;
+import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.Container;
@@ -20,6 +23,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
@@ -39,6 +43,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class BentoBoxBlock extends BaseEntityBlock {
+    public static final MapCodec<BentoBoxBlock> CODEC = simpleCodec(BentoBoxBlock::new);
     private static final Logger LOGGER = LoggerFactory.getLogger(BentoBoxBlock.class);
     private static final VoxelShape SHAPE = Block.box(2.0D, 0.0D, 2.0D, 14.0D, 4.0D, 14.0D);
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
@@ -46,6 +51,11 @@ public class BentoBoxBlock extends BaseEntityBlock {
     public BentoBoxBlock(Properties properties) {
         super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
+    }
+
+    @Override
+    protected MapCodec<? extends BaseEntityBlock> codec() {
+        return CODEC;
     }
 
     @Override
@@ -70,12 +80,12 @@ public class BentoBoxBlock extends BaseEntityBlock {
 
     // Use stripped oak log texture for break particles
     @Override
-    public @NotNull ItemStack getCloneItemStack(@NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull BlockState state) {
+    public @NotNull ItemStack getCloneItemStack(@NotNull LevelReader level, @NotNull BlockPos pos, @NotNull BlockState state) {
         return new ItemStack(NichirinItemRegistry.BENTO_BOX.get());
     }
 
     @Override
-    public @NotNull InteractionResult use(@NotNull BlockState state, Level level, @NotNull BlockPos pos, @NotNull Player player, @NotNull InteractionHand hand, @NotNull BlockHitResult hit) {
+    protected @NotNull InteractionResult useWithoutItem(@NotNull BlockState state, Level level, @NotNull BlockPos pos, @NotNull Player player, @NotNull BlockHitResult hit) {
         if (level.isClientSide) {
             return InteractionResult.SUCCESS;
         }
@@ -105,7 +115,7 @@ public class BentoBoxBlock extends BaseEntityBlock {
         ItemStack bentoBoxItem = new ItemStack(NichirinItemRegistry.BENTO_BOX.get());
 
         // Transfer the contents from block entity to item
-        bentoBoxEntity.saveToItem(bentoBoxItem);
+        bentoBoxEntity.saveToItem(bentoBoxItem, level.registryAccess());
 
         // Remove the block
         level.removeBlock(pos, false);
@@ -125,7 +135,7 @@ public class BentoBoxBlock extends BaseEntityBlock {
         if (!level.isClientSide && stack.getItem() instanceof BentoBoxItem) {
             BlockEntity blockEntity = level.getBlockEntity(pos);
             if (blockEntity instanceof BentoBoxBlockEntity bentoBoxEntity) {
-                bentoBoxEntity.loadFromItem(stack);
+                bentoBoxEntity.loadFromItem(stack, level.registryAccess());
             }
         }
     }
@@ -169,27 +179,26 @@ public class BentoBoxBlock extends BaseEntityBlock {
         }
 
         @Override
-        public void load(@NotNull CompoundTag tag) {
-            super.load(tag);
-            BentoBoxItem.loadItemsFromNbt(tag, inventory);
+        protected void loadAdditional(@NotNull CompoundTag tag, HolderLookup.Provider provider) {
+            super.loadAdditional(tag, provider);
+            BentoBoxItem.loadItemsFromNbt(tag, inventory, provider);
         }
 
         @Override
-        protected void saveAdditional(@NotNull CompoundTag tag) {
-            super.saveAdditional(tag);
-            BentoBoxItem.saveItemsToNbt(tag, inventory);
+        protected void saveAdditional(@NotNull CompoundTag tag, HolderLookup.Provider provider) {
+            super.saveAdditional(tag, provider);
+            BentoBoxItem.saveItemsToNbt(tag, inventory, provider);
         }
 
-        public void loadFromItem(ItemStack stack) {
-            if (stack.hasTag()) {
-                BentoBoxItem.loadItemsFromNbt(stack.getOrCreateTag(), inventory);
+        public void loadFromItem(ItemStack stack, HolderLookup.Provider provider) {
+            if (ItemStackData.has(stack, "Items")) {
+                BentoBoxItem.loadItemsFromNbt(ItemStackData.get(stack), inventory, provider);
                 setChanged();
             }
         }
 
-        public void saveToItem(ItemStack stack) {
-            CompoundTag tag = stack.getOrCreateTag();
-            BentoBoxItem.saveItemsToNbt(tag, inventory);
+        public void saveToItem(ItemStack stack, HolderLookup.Provider provider) {
+            ItemStackData.update(stack, tag -> BentoBoxItem.saveItemsToNbt(tag, inventory, provider));
         }
 
         public Container getContainer() {

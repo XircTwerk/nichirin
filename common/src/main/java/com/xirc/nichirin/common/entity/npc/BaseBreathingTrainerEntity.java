@@ -9,6 +9,7 @@ import com.xirc.nichirin.common.entity.MovesetCapableNPC;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.network.s2c.OpenTrainerDialoguePacket;
 import com.xirc.nichirin.common.system.NPCResourceManager;
+import com.xirc.nichirin.common.util.NetworkBufferUtils;
 import com.xirc.nichirin.registry.NichirinMovesetRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.networking.NetworkManager;
@@ -119,16 +120,15 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
                                           Level level, TrainerType trainerType) {
         super(type, level);
         this.trainerType = trainerType;
-        this.setMaxUpStep(1.0f);
         this.setPersistenceRequired();
     }
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        entityData.define(CURRENT_ANIMATION, "");
-        entityData.define(ANIMATION_SPEED, 1.0f);
-        entityData.define(ANIMATION_RESET, false);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(CURRENT_ANIMATION, "");
+        builder.define(ANIMATION_SPEED, 1.0f);
+        builder.define(ANIMATION_RESET, false);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -138,7 +138,8 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
                 .add(Attributes.ATTACK_DAMAGE,        5.0)
                 .add(Attributes.ARMOR,                6.0)
                 .add(Attributes.FOLLOW_RANGE,         32.0)
-                .add(Attributes.KNOCKBACK_RESISTANCE, 0.5);
+                .add(Attributes.KNOCKBACK_RESISTANCE, 0.5)
+                .add(Attributes.STEP_HEIGHT,          1.0);
     }
 
     @Override
@@ -175,8 +176,8 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
 
     @Override
     public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor level, @NotNull DifficultyInstance difficulty,
-                                        @NotNull MobSpawnType spawnType, SpawnGroupData data, CompoundTag tag) {
-        SpawnGroupData result = super.finalizeSpawn(level, difficulty, spawnType, data, tag);
+                                        @NotNull MobSpawnType spawnType, SpawnGroupData data) {
+        SpawnGroupData result = super.finalizeSpawn(level, difficulty, spawnType, data);
         equipArmor();
         return result;
     }
@@ -350,7 +351,7 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
         try {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             new OpenTrainerDialoguePacket(this.getUUID(), trainerType, state, hasBeatenTrainer).toBytes(buf);
-            NetworkManager.sendToPlayer(player, NichirinPacketRegistry.OPEN_TRAINER_DIALOGUE_ID, buf);
+            NetworkManager.sendToPlayer(player, NichirinPacketRegistry.OPEN_TRAINER_DIALOGUE_ID, NetworkBufferUtils.server(buf, player));
         } catch (Exception ignored) {}
     }
 
@@ -668,7 +669,7 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
     }
 
 
-    @Override public boolean canBeLeashed(@NotNull Player p)    { return false; }
+    @Override public boolean canBeLeashed()                     { return false; }
     @Override protected boolean shouldDespawnInPeaceful()       { return false; }
     @Override public boolean removeWhenFarAway(double dist)     { return false; }
 
@@ -711,9 +712,8 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
                     && super.canContinueToUse();
         }
 
-        @Override protected double getAttackReachSqr(@NotNull LivingEntity t) { return 9.0; }
         @Override protected int getAttackInterval() { return 10; }
-        @Override protected void checkAndPerformAttack(@NotNull LivingEntity target, double distSq) { }
+        @Override protected void checkAndPerformAttack(@NotNull LivingEntity target) { }
 
         @Override
         public void tick() {

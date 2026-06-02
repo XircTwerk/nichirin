@@ -7,6 +7,7 @@ import com.xirc.nichirin.common.system.sheathing.SheathState;
 import com.xirc.nichirin.common.system.sheathing.SheathingManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -24,7 +25,7 @@ public class SheathSyncPacket {
         }
     }
 
-    public SheathSyncPacket(FriendlyByteBuf buf) {
+    public SheathSyncPacket(RegistryFriendlyByteBuf buf) {
         this.entityId = buf.readInt();
         int count = buf.readInt();
         this.slots = new SlotSync[count];
@@ -33,7 +34,7 @@ public class SheathSyncPacket {
         }
     }
 
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(RegistryFriendlyByteBuf buf) {
         buf.writeInt(entityId);
         buf.writeInt(slots.length);
         for (SlotSync slot : slots) {
@@ -82,7 +83,7 @@ public class SheathSyncPacket {
             this.storedFromOffhand = slot.isStoredFromOffhand();
         }
 
-        private SlotSync(FriendlyByteBuf buf) {
+        private SlotSync(RegistryFriendlyByteBuf buf) {
             this.position = buf.readEnum(SheathPosition.class);
             this.enabled = buf.readBoolean();
             this.hotbarSlot = buf.readInt();
@@ -90,11 +91,11 @@ public class SheathSyncPacket {
             this.state = buf.readEnum(SheathState.class);
             this.cooldownTicks = buf.readInt();
             this.visible = buf.readBoolean();
-            this.storedSword = buf.readItem();
+            this.storedSword = ItemStack.OPTIONAL_STREAM_CODEC.decode(buf);
             this.storedFromOffhand = buf.readBoolean();
         }
 
-        private void write(FriendlyByteBuf buf) {
+        private void write(RegistryFriendlyByteBuf buf) {
             buf.writeEnum(position);
             buf.writeBoolean(enabled);
             buf.writeInt(hotbarSlot);
@@ -102,7 +103,7 @@ public class SheathSyncPacket {
             buf.writeEnum(state);
             buf.writeInt(cooldownTicks);
             buf.writeBoolean(visible);
-            buf.writeItem(storedSword);
+            ItemStack.OPTIONAL_STREAM_CODEC.encode(buf, storedSword);
             buf.writeBoolean(storedFromOffhand);
         }
     }

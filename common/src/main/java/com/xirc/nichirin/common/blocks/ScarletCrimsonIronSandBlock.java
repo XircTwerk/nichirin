@@ -8,10 +8,9 @@ import net.minecraft.world.level.material.MapColor;
 public class ScarletCrimsonIronSandBlock extends DropExperienceBlock {
 
     public ScarletCrimsonIronSandBlock() {
-        super(BlockBehaviour.Properties.of()
+        super(UniformInt.of(2, 5), BlockBehaviour.Properties.of()
                         .mapColor(MapColor.COLOR_RED)
                         .strength(2.0f, 3.0f)
-                        .requiresCorrectToolForDrops(),
-                UniformInt.of(2, 5)); // This handles XP drops automatically
+                        .requiresCorrectToolForDrops()); // This handles XP drops automatically
     }
 }

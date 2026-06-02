@@ -34,7 +34,7 @@ public interface NichirinMovesetRegistry {
         for (int i = 0; i < moveset.getMoveCount(); i++) {
             AbstractMoveset.MoveConfiguration config = moveset.getMove(i);
             if (config != null) {
-                ResourceLocation moveId = new ResourceLocation(BreathOfNichirin.MOD_ID,
+                ResourceLocation moveId = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID,
                         moveset.getMovesetId() + "/" + config.getMoveId());
                 GLOBAL_MOVES.put(moveId, new MoveInfo(
                         moveset.getMovesetId(), config.getMoveId(),
@@ -100,7 +100,7 @@ public interface NichirinMovesetRegistry {
 
     @Nullable
     static MoveInfo getMove(String movesetId, String moveId) {
-        return getMove(new ResourceLocation(BreathOfNichirin.MOD_ID, movesetId + "/" + moveId));
+        return getMove(ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, movesetId + "/" + moveId));
     }
 
     static List<MoveInfo> getMovesForMoveset(String movesetId) {

@@ -4,6 +4,9 @@ import com.xirc.nichirin.common.util.AttackInterruptTracker;
 import com.xirc.nichirin.common.util.NichirinArmorDamage;
 import com.xirc.nichirin.common.util.ComboTracker;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
+import com.xirc.nichirin.common.effect.ShockedStatusEffect;
+import com.xirc.nichirin.common.effect.StunnedStatusEffect;
+import net.minecraft.core.Holder;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
@@ -25,7 +28,7 @@ import java.util.Map;
 public abstract class LivingEntityMixin {
 
     @Shadow
-    public abstract Map<MobEffect, MobEffectInstance> getActiveEffectsMap();
+    public abstract Map<Holder<MobEffect>, MobEffectInstance> getActiveEffectsMap();
 
     @ModifyVariable(method = "hurtArmor", at = @At("HEAD"), argsOnly = true, ordinal = 0)
     private float nichirin$reduceAttackArmorWear(float damageAmount, DamageSource damageSource) {
@@ -42,7 +45,7 @@ public abstract class LivingEntityMixin {
      * This is called when effects are naturally removed due to duration expiry
      */
     @Inject(method = "removeEffect", at = @At("HEAD"))
-    private void onEffectRemoved(MobEffect effect, CallbackInfoReturnable<Boolean> cir) {
+    private void onEffectRemoved(Holder<MobEffect> effect, CallbackInfoReturnable<Boolean> cir) {
         LivingEntity entity = (LivingEntity) (Object) this;
 
         // Only handle on server side
@@ -51,7 +54,7 @@ public abstract class LivingEntityMixin {
         }
 
         // Check if the effect being removed is our STUNNED effect
-        if (effect == NichirinEffectRegistry.STUNNED.get()) {
+        if (effect.value() == NichirinEffectRegistry.stunned().value()) {
             // Get the current effect instance to check if it's expiring naturally
             MobEffectInstance currentEffect = getActiveEffectsMap().get(effect);
 
@@ -67,6 +70,12 @@ public abstract class LivingEntityMixin {
                     ComboTracker.handleStunExpired(entity);
                 }
             }
+
+            StunnedStatusEffect.removeMovementModifier(entity);
+        }
+
+        if (effect.value() == NichirinEffectRegistry.shocked().value()) {
+            ShockedStatusEffect.spawnRemovalParticles(entity);
         }
     }
 
@@ -84,7 +93,7 @@ public abstract class LivingEntityMixin {
         }
 
         // Check if we have a STUNNED effect that just expired (duration == 0)
-        MobEffectInstance stunEffect = getActiveEffectsMap().get(NichirinEffectRegistry.STUNNED.get());
+        MobEffectInstance stunEffect = getActiveEffectsMap().get(NichirinEffectRegistry.stunned());
 
         if (stunEffect != null && stunEffect.getDuration() == 0) {
             System.out.println("STUNNED effect detected at 0 duration for " +

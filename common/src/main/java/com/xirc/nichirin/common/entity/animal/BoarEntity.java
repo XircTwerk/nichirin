@@ -2,7 +2,7 @@ package com.xirc.nichirin.common.entity.animal;
 
 import com.xirc.nichirin.client.renderer.entity.dispatcher.BoarEntityDispatcher;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
-import mod.azure.azurelib.util.MoveAnalysis;
+import mod.azure.azurelib.common.util.MoveAnalysis;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -65,7 +65,7 @@ public class BoarEntity extends TamableAnimal {
 
     public BoarEntity(EntityType<? extends BoarEntity> entityType, Level level) {
         super(entityType, level);
-        this.setTame(false);
+        this.setTame(false, false);
         this.dispatcher = new BoarEntityDispatcher(this);
         this.moveAnalysis = new MoveAnalysis(this);
     }
@@ -80,14 +80,14 @@ public class BoarEntity extends TamableAnimal {
     }
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(ENRAGED, false);
-        this.entityData.define(MOVEMENT_STATE, MOVEMENT_WALKING);
-        this.entityData.define(ATTACK_TICK, 0);
-        this.entityData.define(ATTACK_TYPE, ATTACK_NONE);
-        this.entityData.define(SIT_TICKS, 0);
-        this.entityData.define(CHASE_TICKS, 0);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(ENRAGED, false);
+        builder.define(MOVEMENT_STATE, MOVEMENT_WALKING);
+        builder.define(ATTACK_TICK, 0);
+        builder.define(ATTACK_TYPE, ATTACK_NONE);
+        builder.define(SIT_TICKS, 0);
+        builder.define(CHASE_TICKS, 0);
     }
 
     @Override
@@ -99,7 +99,7 @@ public class BoarEntity extends TamableAnimal {
                 Ingredient.of(Items.RED_MUSHROOM, Items.BROWN_MUSHROOM, Items.BEETROOT), false));
         this.goalSelector.addGoal(5, new FollowParentGoal(this, 1.1D));
         this.goalSelector.addGoal(6, new BoarAttackGoal(this));
-        this.goalSelector.addGoal(7, new FollowOwnerGoal(this, 1.0D, 10.0F, 2.0F, false));
+        this.goalSelector.addGoal(7, new FollowOwnerGoal(this, 1.0D, 10.0F, 2.0F));
         this.goalSelector.addGoal(8, new WaterAvoidingRandomStrollGoal(this, 1.0D));
         this.goalSelector.addGoal(9, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(10, new RandomLookAroundGoal(this));
@@ -369,7 +369,7 @@ public class BoarEntity extends TamableAnimal {
             entity.hurt(this.level().damageSources().mobAttack(this), finalDamage);
 
             entity.addEffect(new MobEffectInstance(
-                    NichirinEffectRegistry.STUNNED.get(),
+                    NichirinEffectRegistry.stunned(),
                     STUN_DURATION,
                     0,
                     false,
@@ -399,7 +399,7 @@ public class BoarEntity extends TamableAnimal {
             entity.setDeltaMovement(entity.getDeltaMovement().add(direction.scale(CHARGE_KNOCKBACK)));
 
             entity.addEffect(new MobEffectInstance(
-                    NichirinEffectRegistry.STUNNED.get(),
+                    NichirinEffectRegistry.stunned(),
                     STUN_DURATION,
                     0,
                     false,
@@ -571,7 +571,7 @@ public class BoarEntity extends TamableAnimal {
         UUID uuid = this.getOwnerUUID();
         if (uuid != null) {
             baby.setOwnerUUID(uuid);
-            baby.setTame(true);
+            baby.setTame(true, true);
         }
         return baby;
     }
@@ -636,13 +636,13 @@ public class BoarEntity extends TamableAnimal {
         }
 
         @Override
-        protected void checkAndPerformAttack(LivingEntity target, double distance) {
+        protected void checkAndPerformAttack(LivingEntity target) {
             // Only attack if cooldown is ready and not currently attacking
             if (attackCooldown > 0 || this.boar.getAttackType() != ATTACK_NONE) {
                 return;
             }
 
-            if (distance <= this.getAttackReachSqr(target) && this.getTicksUntilNextAttack() <= 0) {
+            if (this.canPerformAttack(target)) {
                 int movementState = this.boar.getMovementState();
 
                 switch (movementState) {
@@ -655,7 +655,7 @@ public class BoarEntity extends TamableAnimal {
                         attackCooldown = 35; // Cooldown after pounce
                         break;
                     default:
-                        super.checkAndPerformAttack(target, distance);
+                        super.checkAndPerformAttack(target);
                         attackCooldown = 15; // Cooldown after normal attack
                         return;
                 }

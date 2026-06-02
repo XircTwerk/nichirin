@@ -4,13 +4,22 @@ import com.xirc.nichirin.registry.NichirinBlockRegistry;
 import com.xirc.nichirin.registry.NichirinItemRegistry;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricBlockLootTableProvider;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
 import net.minecraft.world.level.storage.loot.functions.ApplyBonusCount;
 
+import java.util.concurrent.CompletableFuture;
+
 public class NichirinLootTableProvider extends FabricBlockLootTableProvider {
-    public NichirinLootTableProvider(FabricDataOutput dataOutput) {
-        super(dataOutput);
+    private final Holder<Enchantment> fortune;
+
+    public NichirinLootTableProvider(FabricDataOutput dataOutput, CompletableFuture<HolderLookup.Provider> registriesFuture) {
+        super(dataOutput, registriesFuture);
+        fortune = registriesFuture.join().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.FORTUNE);
     }
 
     @Override
@@ -20,7 +29,7 @@ public class NichirinLootTableProvider extends FabricBlockLootTableProvider {
                 createSilkTouchDispatchTable(
                         NichirinBlockRegistry.SCARLET_CRIMSON_IRON_SAND.get(),
                         LootItem.lootTableItem(NichirinItemRegistry.SCARLET_CRIMSON_IRON_GEM.get())
-                                .apply(ApplyBonusCount.addOreBonusCount(Enchantments.BLOCK_FORTUNE))
+                                .apply(ApplyBonusCount.addOreBonusCount(fortune))
                 )
         );
 
@@ -29,7 +38,7 @@ public class NichirinLootTableProvider extends FabricBlockLootTableProvider {
                 createSilkTouchDispatchTable(
                         NichirinBlockRegistry.SCARLET_ORE.get(),
                         LootItem.lootTableItem(NichirinItemRegistry.SCARLET_GEM.get())
-                                .apply(ApplyBonusCount.addOreBonusCount(Enchantments.BLOCK_FORTUNE))
+                                .apply(ApplyBonusCount.addOreBonusCount(fortune))
                 )
         );
 

@@ -2,8 +2,8 @@ package com.xirc.nichirin.client.renderer.armor;
 
 import com.xirc.nichirin.client.renderer.armor.core.NichirinArmorBoneProvider;
 import com.xirc.nichirin.registry.NichirinItemRegistry;
-import mod.azure.azurelib.model.AzBakedModel;
-import mod.azure.azurelib.model.AzBone;
+import mod.azure.azurelib.common.model.AzBakedModel;
+import mod.azure.azurelib.common.model.AzBone;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;

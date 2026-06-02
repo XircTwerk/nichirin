@@ -1,7 +1,10 @@
 package com.xirc.nichirin.common.item.tool;
 
 import com.xirc.nichirin.common.blocks.BentoBoxBlock;
+import com.xirc.nichirin.common.util.ItemStackData;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -22,6 +25,7 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.Item.TooltipContext;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -98,11 +102,11 @@ public class BentoBoxItem extends BlockItem {
      * Returns the number of food items stored in the bento box
      */
     public static int getFoodCount(ItemStack stack) {
-        if (!stack.hasTag() || !stack.getTag().contains(ITEMS_TAG)) {
+        if (!ItemStackData.has(stack, ITEMS_TAG)) {
             return 0;
         }
 
-        ListTag nbtList = stack.getTag().getList(ITEMS_TAG, 10);
+        ListTag nbtList = ItemStackData.get(stack).getList(ITEMS_TAG, 10);
         return nbtList.size();
     }
 
@@ -116,7 +120,7 @@ public class BentoBoxItem extends BlockItem {
         return new BentoBoxMenu(syncId, playerInventory, inventory, pos);
     }
 
-    public static void loadItemsFromNbt(CompoundTag nbt, Container inventory) {
+    public static void loadItemsFromNbt(CompoundTag nbt, Container inventory, HolderLookup.Provider provider) {
         if (!nbt.contains(ITEMS_TAG)) {
             return;
         }
@@ -127,13 +131,13 @@ public class BentoBoxItem extends BlockItem {
             int slot = itemTag.getInt("Slot");
 
             if (slot >= 0 && slot < BENTO_SIZE) {
-                ItemStack loadedStack = ItemStack.of(itemTag);
+                ItemStack loadedStack = ItemStack.parseOptional(provider, itemTag);
                 inventory.setItem(slot, loadedStack);
             }
         }
     }
 
-    public static void saveItemsToNbt(CompoundTag nbt, Container inventory) {
+    public static void saveItemsToNbt(CompoundTag nbt, Container inventory, HolderLookup.Provider provider) {
         ListTag nbtList = new ListTag();
 
         for (int i = 0; i < BENTO_SIZE; i++) {
@@ -142,7 +146,7 @@ public class BentoBoxItem extends BlockItem {
             if (!slotStack.isEmpty() && canStoreItem(slotStack)) {
                 CompoundTag itemTag = new CompoundTag();
                 itemTag.putInt("Slot", i);
-                slotStack.save(itemTag);
+                slotStack.save(provider, itemTag);
                 nbtList.add(itemTag);
             }
         }
@@ -167,7 +171,7 @@ public class BentoBoxItem extends BlockItem {
         @Override
         public AbstractContainerMenu createMenu(int syncId, Inventory playerInventory, Player player) {
             SimpleContainer inventory = new SimpleContainer(BENTO_SIZE);
-            loadItemsFromNbt(bentoBoxStack.getOrCreateTag(), inventory);
+            loadItemsFromNbt(ItemStackData.get(bentoBoxStack), inventory, player.registryAccess());
 
             return new BentoBoxMenu(syncId, playerInventory, inventory, bentoBoxSlotIndex);
         }
@@ -246,7 +250,8 @@ public class BentoBoxItem extends BlockItem {
             if (bentoBoxSlotIndex >= 0 && bentoBoxSlotIndex < player.getInventory().items.size()) {
                 ItemStack bentoBoxStack = player.getInventory().items.get(bentoBoxSlotIndex);
                 if (bentoBoxStack.getItem() instanceof BentoBoxItem) {
-                    saveItemsToNbt(bentoBoxStack.getOrCreateTag(), (Container) this.getContainer());
+                    ItemStackData.update(bentoBoxStack,
+                            tag -> saveItemsToNbt(tag, (Container) this.getContainer(), player.registryAccess()));
                 }
             }
         }
@@ -291,17 +296,17 @@ public class BentoBoxItem extends BlockItem {
             return false;
         }
 
-        if (item.getItem().getFoodProperties() != null) {
+        if (item.has(DataComponents.FOOD)) {
             return true;
         }
 
-        TagKey<Item> bentotag = TagKey.create(Registries.ITEM, new ResourceLocation("nichirin", "can_be_bento_boxed"));
+        TagKey<Item> bentotag = TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("nichirin", "can_be_bento_boxed"));
         return item.is(bentotag);
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
-        super.appendHoverText(stack, level, tooltip, flag);
+    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+        super.appendHoverText(stack, context, tooltip, flag);
 
         int foodCount = getFoodCount(stack);
 

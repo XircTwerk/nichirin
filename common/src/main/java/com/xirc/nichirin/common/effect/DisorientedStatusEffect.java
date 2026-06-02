@@ -15,24 +15,14 @@ public class DisorientedStatusEffect extends MobEffect {
     }
 
     @Override
-    public void applyEffectTick(LivingEntity entity, int amplifier) {
+    public boolean applyEffectTick(LivingEntity entity, int amplifier) {
         // Server-side effects can go here if needed
-        super.applyEffectTick(entity, amplifier);
+        return super.applyEffectTick(entity, amplifier);
     }
 
     @Override
-    public boolean isDurationEffectTick(int duration, int amplifier) {
+    public boolean shouldApplyEffectTickThisTick(int duration, int amplifier) {
         return true; // Apply every tick
-    }
-
-    @Override
-    public void removeAttributeModifiers(LivingEntity entity, AttributeMap attributeMap, int amplifier) {
-        super.removeAttributeModifiers(entity, attributeMap, amplifier);
-    }
-
-    @Override
-    public void addAttributeModifiers(LivingEntity entity, AttributeMap attributeMap, int amplifier) {
-        super.addAttributeModifiers(entity, attributeMap, amplifier);
     }
 
     // Helper methods for applying different tiers
@@ -40,7 +30,7 @@ public class DisorientedStatusEffect extends MobEffect {
     // Tier 1: Movement disorientation only (amplifier 0)
     public static void applyTier1Disorientation(Player player, int duration) {
         player.addEffect(new MobEffectInstance(
-                NichirinEffectRegistry.DISORIENTED.get(),
+                NichirinEffectRegistry.disoriented(),
                 duration,
                 0, // amplifier 0 = tier 1
                 false,
@@ -52,7 +42,7 @@ public class DisorientedStatusEffect extends MobEffect {
     // Tier 2: Mouse disorientation only (amplifier 1)
     public static void applyTier2Disorientation(Player player, int duration) {
         player.addEffect(new MobEffectInstance(
-                NichirinEffectRegistry.DISORIENTED.get(),
+                NichirinEffectRegistry.disoriented(),
                 duration,
                 1, // amplifier 1 = tier 2
                 false,
@@ -64,7 +54,7 @@ public class DisorientedStatusEffect extends MobEffect {
     // Tier 3: Both movement and mouse disorientation (amplifier 2)
     public static void applyTier3Disorientation(Player player, int duration) {
         player.addEffect(new MobEffectInstance(
-                NichirinEffectRegistry.DISORIENTED.get(),
+                NichirinEffectRegistry.disoriented(),
                 duration,
                 2, // amplifier 2 = tier 3
                 false,
@@ -76,7 +66,7 @@ public class DisorientedStatusEffect extends MobEffect {
     // General method to create the disoriented effect instance with custom amplifier
     public static void applyDisorientedEffect(Player player, int duration, int amplifier) {
         player.addEffect(new MobEffectInstance(
-                NichirinEffectRegistry.DISORIENTED.get(),
+                NichirinEffectRegistry.disoriented(),
                 duration,
                 amplifier,
                 false,

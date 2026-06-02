@@ -96,8 +96,8 @@ public class PlayerDoubleJump {
         }
 
         // Check if player is stunned or disoriented - prevent double jump
-        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get()) ||
-                player.hasEffect(NichirinEffectRegistry.DISORIENTED.get())) {
+        if (player.hasEffect(NichirinEffectRegistry.stunned()) ||
+                player.hasEffect(NichirinEffectRegistry.disoriented())) {
             return false;
         }
 

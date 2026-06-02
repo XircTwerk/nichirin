@@ -16,9 +16,12 @@ import com.xirc.nichirin.common.system.DemonComponent;
 import com.xirc.nichirin.common.system.blocking.KatanaBlock;
 import com.xirc.nichirin.common.util.MultiplayerInputHandler;
 import dev.architectury.networking.NetworkManager;
+import dev.architectury.platform.Platform;
+import dev.architectury.utils.Env;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -38,47 +41,51 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+
+import static com.xirc.nichirin.common.util.NetworkBufferUtils.client;
+import static com.xirc.nichirin.common.util.NetworkBufferUtils.server;
+import static com.xirc.nichirin.common.util.NetworkBufferUtils.serverCopy;
 import java.util.concurrent.ConcurrentHashMap;
 
 public interface NichirinPacketRegistry {
 
     // Packet IDs
-    ResourceLocation DOUBLE_JUMP_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "double_jump");
-    ResourceLocation BREATHING_MOVE_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "breathing_move");
-    ResourceLocation BREATHING_EFFECT_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "breathing_effect");
-    ResourceLocation SYNC_BREATH_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "sync_breath");
-    ResourceLocation SYNC_STAMINA_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "sync_stamina");
-    ResourceLocation SYNC_STANCE_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "sync_stance");
-    ResourceLocation BLOCK_START_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "block_start");
-    ResourceLocation BLOCK_STOP_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "block_stop");
-    ResourceLocation PARRY_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "parry");
-    ResourceLocation PLAYER_ANIMATION_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "player_animation");
-    ResourceLocation MOVEMENT_INPUT_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "movement_input");
-    ResourceLocation MOVEMENT_INPUT_SYNC_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "movement_input_sync");
-    ResourceLocation SYNC_BREATHING_STYLE = new ResourceLocation(BreathOfNichirin.MOD_ID, "sync_breathing_style");
-    ResourceLocation REQUEST_STYLE_CHANGE = new ResourceLocation(BreathOfNichirin.MOD_ID, "request_style_change");
-    ResourceLocation COMBO_COUNTER_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "combo_counter");
-    ResourceLocation HITBOX_PACKET_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "hitbox_data");
-    ResourceLocation MOVE_HOTKEY_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "move_hotkey");
-    ResourceLocation SYNC_PROGRESSION_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "sync_progression");
-    ResourceLocation DEMON_MOVE_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "demon_move");
-    ResourceLocation MOVESET_CONFIG_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "moveset_config_sync");
-    ResourceLocation DEMON_SYNC_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "demon_sync");
-    ResourceLocation DEMON_INPUT_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "demon_input");
-    ResourceLocation ATTACK_WHEEL_STATE_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "attack_wheel_state");
-    ResourceLocation KATANA_INPUT_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "katana_input");
-    ResourceLocation TRIGGER_SHADER_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "trigger_shader");
-    ResourceLocation PARRY_SPARK_ID        = new ResourceLocation(BreathOfNichirin.MOD_ID, "parry_spark");
-    ResourceLocation OPEN_CONFIG_SCREEN_ID = new ResourceLocation(BreathOfNichirin.MOD_ID, "open_config_screen");
-    ResourceLocation BLOOD_MOON_SYNC_ID    = new ResourceLocation(BreathOfNichirin.MOD_ID, "blood_moon_sync");
-    ResourceLocation PERK_SYNC_ID                  = new ResourceLocation(BreathOfNichirin.MOD_ID, "perk_sync");
-    ResourceLocation PERK_ACTION_ID                = new ResourceLocation(BreathOfNichirin.MOD_ID, "perk_action");
-    ResourceLocation OPEN_TRAINER_DIALOGUE_ID      = new ResourceLocation(BreathOfNichirin.MOD_ID, "open_trainer_dialogue");
-    ResourceLocation TRAINER_ACTION_ID             = new ResourceLocation(BreathOfNichirin.MOD_ID, "trainer_action");
-    ResourceLocation MIST_CLONES_ID                = new ResourceLocation(BreathOfNichirin.MOD_ID, "mist_clones");
-    ResourceLocation SHEATH_INPUT_ID               = new ResourceLocation(BreathOfNichirin.MOD_ID, "sheath_input");
-    ResourceLocation SHEATH_CONFIG_ID              = new ResourceLocation(BreathOfNichirin.MOD_ID, "sheath_config");
-    ResourceLocation SHEATH_SYNC_ID                = new ResourceLocation(BreathOfNichirin.MOD_ID, "sheath_sync");
+    ResourceLocation DOUBLE_JUMP_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "double_jump");
+    ResourceLocation BREATHING_MOVE_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "breathing_move");
+    ResourceLocation BREATHING_EFFECT_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "breathing_effect");
+    ResourceLocation SYNC_BREATH_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "sync_breath");
+    ResourceLocation SYNC_STAMINA_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "sync_stamina");
+    ResourceLocation SYNC_STANCE_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "sync_stance");
+    ResourceLocation BLOCK_START_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "block_start");
+    ResourceLocation BLOCK_STOP_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "block_stop");
+    ResourceLocation PARRY_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "parry");
+    ResourceLocation PLAYER_ANIMATION_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "player_animation");
+    ResourceLocation MOVEMENT_INPUT_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "movement_input");
+    ResourceLocation MOVEMENT_INPUT_SYNC_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "movement_input_sync");
+    ResourceLocation SYNC_BREATHING_STYLE = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "sync_breathing_style");
+    ResourceLocation REQUEST_STYLE_CHANGE = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "request_style_change");
+    ResourceLocation COMBO_COUNTER_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "combo_counter");
+    ResourceLocation HITBOX_PACKET_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "hitbox_data");
+    ResourceLocation MOVE_HOTKEY_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "move_hotkey");
+    ResourceLocation SYNC_PROGRESSION_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "sync_progression");
+    ResourceLocation DEMON_MOVE_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "demon_move");
+    ResourceLocation MOVESET_CONFIG_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "moveset_config_sync");
+    ResourceLocation DEMON_SYNC_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "demon_sync");
+    ResourceLocation DEMON_INPUT_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "demon_input");
+    ResourceLocation ATTACK_WHEEL_STATE_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "attack_wheel_state");
+    ResourceLocation KATANA_INPUT_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "katana_input");
+    ResourceLocation TRIGGER_SHADER_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "trigger_shader");
+    ResourceLocation PARRY_SPARK_ID        = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "parry_spark");
+    ResourceLocation OPEN_CONFIG_SCREEN_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "open_config_screen");
+    ResourceLocation BLOOD_MOON_SYNC_ID    = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "blood_moon_sync");
+    ResourceLocation PERK_SYNC_ID                  = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "perk_sync");
+    ResourceLocation PERK_ACTION_ID                = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "perk_action");
+    ResourceLocation OPEN_TRAINER_DIALOGUE_ID      = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "open_trainer_dialogue");
+    ResourceLocation TRAINER_ACTION_ID             = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "trainer_action");
+    ResourceLocation MIST_CLONES_ID                = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "mist_clones");
+    ResourceLocation SHEATH_INPUT_ID               = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "sheath_input");
+    ResourceLocation SHEATH_CONFIG_ID              = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "sheath_config");
+    ResourceLocation SHEATH_SYNC_ID                = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "sheath_sync");
 
     // Packet class mappings
     Map<Class<?>, ResourceLocation> PACKET_IDS = new HashMap<>();
@@ -113,7 +120,9 @@ public interface NichirinPacketRegistry {
     static void registerPackets() {
         try {
             registerC2SPackets();
-            registerS2CPacketsWithFallback();
+            if (Platform.getEnvironment() == Env.CLIENT) {
+                registerS2CPacketsWithFallback();
+            }
         } catch (Exception e) {
             throw new RuntimeException("Packet registration failed", e);
         }
@@ -438,11 +447,11 @@ public interface NichirinPacketRegistry {
     static boolean shouldBlockInputsServer(Player player) {
         if (player.level().isClientSide) return false;
 
-        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+        if (player.hasEffect(NichirinEffectRegistry.stunned())) {
             return true;
         }
 
-        if (player.hasEffect(NichirinEffectRegistry.BLOCKING.get())) {
+        if (player.hasEffect(NichirinEffectRegistry.blocking())) {
             return true;
         }
 
@@ -476,11 +485,16 @@ public interface NichirinPacketRegistry {
     }
 
     static void handleDemonInput(ServerPlayer player, MultiplayerInputHandler.InputType inputType) {
-        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+        if (inputType == MultiplayerInputHandler.InputType.LEFT_CLICK
+                && !player.getMainHandItem().isEmpty()) {
             return;
         }
 
-        if (player.hasEffect(NichirinEffectRegistry.BLOCKING.get())) {
+        if (player.hasEffect(NichirinEffectRegistry.stunned())) {
+            return;
+        }
+
+        if (player.hasEffect(NichirinEffectRegistry.blocking())) {
             return;
         }
 
@@ -564,7 +578,7 @@ public interface NichirinPacketRegistry {
             buf.writeDouble(y);
             buf.writeDouble(z);
             for (ServerPlayer player : serverLevel.getServer().getPlayerList().getPlayers()) {
-                NetworkManager.sendToPlayer(player, PARRY_SPARK_ID, new FriendlyByteBuf(buf.copy()));
+                NetworkManager.sendToPlayer(player, PARRY_SPARK_ID, serverCopy(buf, player));
             }
             buf.release();
         } catch (Exception e) {
@@ -575,7 +589,7 @@ public interface NichirinPacketRegistry {
     static void sendOpenConfigScreen(ServerPlayer player) {
         try {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-            NetworkManager.sendToPlayer(player, OPEN_CONFIG_SCREEN_ID, buf);
+            NetworkManager.sendToPlayer(player, OPEN_CONFIG_SCREEN_ID, server(buf, player));
         } catch (Exception e) {
             // ignore
         }
@@ -595,7 +609,7 @@ public interface NichirinPacketRegistry {
             buf.writeDouble(hitbox.maxZ);
             buf.writeLong(durationMs);
             for (ServerPlayer player : serverLevel.getServer().getPlayerList().getPlayers()) {
-                NetworkManager.sendToPlayer(player, HITBOX_PACKET_ID, new FriendlyByteBuf(buf.copy()));
+                NetworkManager.sendToPlayer(player, HITBOX_PACKET_ID, serverCopy(buf, player));
             }
             buf.release();
         } catch (Exception e) {
@@ -614,7 +628,7 @@ public interface NichirinPacketRegistry {
             buf.writeDouble(hitbox.maxY);
             buf.writeDouble(hitbox.maxZ);
             buf.writeLong(durationMs);
-            NetworkManager.sendToPlayer(player, HITBOX_PACKET_ID, buf);
+            NetworkManager.sendToPlayer(player, HITBOX_PACKET_ID, server(buf, player));
         } catch (Exception e) {
             // Handle error
         }
@@ -627,7 +641,7 @@ public interface NichirinPacketRegistry {
             if (movesetId != null) {
                 buf.writeUtf(movesetId);
             }
-            NetworkManager.sendToPlayer(player, SYNC_BREATHING_STYLE, buf);
+            NetworkManager.sendToPlayer(player, SYNC_BREATHING_STYLE, server(buf, player));
         } catch (Exception e) {
             // Handle error
         }
@@ -643,7 +657,7 @@ public interface NichirinPacketRegistry {
 
             player.server.getPlayerList().getPlayers().stream()
                     .filter(p -> p.level() == player.level())
-                    .forEach(p -> NetworkManager.sendToPlayer(p, SYNC_BREATHING_STYLE, buf));
+                    .forEach(p -> NetworkManager.sendToPlayer(p, SYNC_BREATHING_STYLE, serverCopy(buf, p)));
         } catch (Exception e) {
             // Handle error
         }
@@ -660,7 +674,7 @@ public interface NichirinPacketRegistry {
             if (movesetId != null) {
                 buf.writeUtf(movesetId);
             }
-            NetworkManager.sendToServer(REQUEST_STYLE_CHANGE, buf);
+            NetworkManager.sendToServer(REQUEST_STYLE_CHANGE, client(buf));
         } catch (Exception e) {
             // Handle error
         }
@@ -669,7 +683,7 @@ public interface NichirinPacketRegistry {
     static void sendBlockStart() {
         try {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-            NetworkManager.sendToServer(BLOCK_START_ID, buf);
+            NetworkManager.sendToServer(BLOCK_START_ID, client(buf));
         } catch (Exception e) {
             // Handle error
         }
@@ -678,7 +692,7 @@ public interface NichirinPacketRegistry {
     static void sendBlockStop() {
         try {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-            NetworkManager.sendToServer(BLOCK_STOP_ID, buf);
+            NetworkManager.sendToServer(BLOCK_STOP_ID, client(buf));
         } catch (Exception e) {
             // Handle error
         }
@@ -687,7 +701,7 @@ public interface NichirinPacketRegistry {
     static void sendParry() {
         try {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-            NetworkManager.sendToServer(PARRY_ID, buf);
+            NetworkManager.sendToServer(PARRY_ID, client(buf));
         } catch (Exception e) {
             // Handle error
         }
@@ -698,7 +712,7 @@ public interface NichirinPacketRegistry {
         if (id != null) {
             try {
                 FriendlyByteBuf buf = encodePacket(packet);
-                NetworkManager.sendToPlayer(player, id, buf);
+                NetworkManager.sendToPlayer(player, id, server(buf, player));
             } catch (Exception e) {
                 // Handle error
             }
@@ -710,7 +724,7 @@ public interface NichirinPacketRegistry {
         if (id != null) {
             try {
                 FriendlyByteBuf buf = encodePacket(packet);
-                NetworkManager.sendToServer(id, buf);
+                NetworkManager.sendToServer(id, client(buf));
             } catch (Exception e) {
                 // Handle error
             }
@@ -731,7 +745,7 @@ public interface NichirinPacketRegistry {
                             && p.distanceToSqr(animatedPlayer) <= 256.0 * 256.0)
                     .forEach(p -> {
                         try {
-                            NetworkManager.sendToPlayer(p, id, new FriendlyByteBuf(buf.copy()));
+                            NetworkManager.sendToPlayer(p, id, serverCopy(buf, p));
                         } catch (Exception ignored) {}
                     });
             buf.release();
@@ -753,7 +767,7 @@ public interface NichirinPacketRegistry {
             buf.writeInt(bloodPoints);
             buf.writeInt(halfBloodPoints);
             buf.writeBoolean(isDemon);
-            NetworkManager.sendToPlayer(player, DEMON_SYNC_ID, buf);
+            NetworkManager.sendToPlayer(player, DEMON_SYNC_ID, server(buf, player));
         } catch (Exception e) {
             // Handle error
         }
@@ -796,8 +810,6 @@ public interface NichirinPacketRegistry {
             p.toBytes(buf);
         } else if (packet instanceof SheathConfigPacket p) {
             p.toBytes(buf);
-        } else if (packet instanceof SheathSyncPacket p) {
-            p.toBytes(buf);
         }
 
         return buf;
@@ -817,7 +829,7 @@ public interface NichirinPacketRegistry {
             serverLevel.getServer().getPlayerList().getPlayers().stream()
                     .filter(p -> p.level() == caster.level()
                             && p.distanceToSqr(caster) <= 256.0 * 256.0)
-                    .forEach(p -> NetworkManager.sendToPlayer(p, MIST_CLONES_ID, new FriendlyByteBuf(buf.copy())));
+                    .forEach(p -> NetworkManager.sendToPlayer(p, MIST_CLONES_ID, serverCopy(buf, p)));
             buf.release();
         } catch (Exception e) {
             // ignore
@@ -829,10 +841,11 @@ public interface NichirinPacketRegistry {
         ResourceLocation id = PACKET_IDS.get(SheathSyncPacket.class);
         if (id == null) return;
         try {
-            FriendlyByteBuf buf = encodePacket(packet);
+            RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(Unpooled.buffer(), player.registryAccess());
+            packet.toBytes(buf);
             player.server.getPlayerList().getPlayers().stream()
                     .filter(p -> p.level() == player.level() && p.distanceToSqr(player) <= 256.0 * 256.0)
-                    .forEach(p -> NetworkManager.sendToPlayer(p, id, new FriendlyByteBuf(buf.copy())));
+                    .forEach(p -> NetworkManager.sendToPlayer(p, id, serverCopy(buf, p)));
             buf.release();
         } catch (Exception ignored) {
         }

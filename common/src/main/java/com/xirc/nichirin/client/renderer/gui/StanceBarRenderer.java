@@ -16,7 +16,7 @@ public class StanceBarRenderer {
     public static void register() {
         // Register the render event
         ClientGuiEvent.RENDER_HUD.register((graphics, tickDelta) -> {
-            renderStanceBar(graphics, tickDelta);
+            renderStanceBar(graphics, tickDelta.getGameTimeDeltaPartialTick(true));
         });
     }
 

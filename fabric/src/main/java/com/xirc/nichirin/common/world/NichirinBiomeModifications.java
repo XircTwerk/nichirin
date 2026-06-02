@@ -29,7 +29,7 @@ public class NichirinBiomeModifications {
                 BiomeSelectors.all(), // Use all() instead of includeByKey to work with TerraBlender
                 GenerationStep.Decoration.UNDERGROUND_ORES,
                 ResourceKey.create(Registries.PLACED_FEATURE,
-                        new ResourceLocation(BreathOfNichirin.MOD_ID, "scarlet_crimson_iron_sand"))
+                        ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "scarlet_crimson_iron_sand"))
         );
 
         // Add Scarlet Ore to ALL biomes, then filter by biome type
@@ -37,7 +37,7 @@ public class NichirinBiomeModifications {
                 BiomeSelectors.all(), // Use all() instead of includeByKey to work with TerraBlender
                 GenerationStep.Decoration.UNDERGROUND_ORES,
                 ResourceKey.create(Registries.PLACED_FEATURE,
-                        new ResourceLocation(BreathOfNichirin.MOD_ID, "scarlet_ore"))
+                        ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "scarlet_ore"))
         );
 
     }

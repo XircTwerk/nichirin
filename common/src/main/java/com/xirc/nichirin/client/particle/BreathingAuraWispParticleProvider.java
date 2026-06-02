@@ -158,10 +158,10 @@ public class BreathingAuraWispParticleProvider implements ParticleProvider<Simpl
             float v1 = getV1();
             int light = getLightColor(partialTick);
 
-            buffer.vertex(corners[0].x(), corners[0].y(), corners[0].z()).uv(u1, v1).color(rCol, gCol, bCol, alpha).uv2(light).endVertex();
-            buffer.vertex(corners[1].x(), corners[1].y(), corners[1].z()).uv(u1, v0).color(rCol, gCol, bCol, alpha).uv2(light).endVertex();
-            buffer.vertex(corners[2].x(), corners[2].y(), corners[2].z()).uv(u0, v0).color(rCol, gCol, bCol, alpha).uv2(light).endVertex();
-            buffer.vertex(corners[3].x(), corners[3].y(), corners[3].z()).uv(u0, v1).color(rCol, gCol, bCol, alpha).uv2(light).endVertex();
+            buffer.addVertex(corners[0].x(), corners[0].y(), corners[0].z()).setUv(u1, v1).setColor(rCol, gCol, bCol, alpha).setLight(light);
+            buffer.addVertex(corners[1].x(), corners[1].y(), corners[1].z()).setUv(u1, v0).setColor(rCol, gCol, bCol, alpha).setLight(light);
+            buffer.addVertex(corners[2].x(), corners[2].y(), corners[2].z()).setUv(u0, v0).setColor(rCol, gCol, bCol, alpha).setLight(light);
+            buffer.addVertex(corners[3].x(), corners[3].y(), corners[3].z()).setUv(u0, v1).setColor(rCol, gCol, bCol, alpha).setLight(light);
         }
 
         @Override

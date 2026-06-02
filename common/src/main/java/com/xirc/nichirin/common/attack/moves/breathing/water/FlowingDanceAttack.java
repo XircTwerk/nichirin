@@ -62,7 +62,7 @@ public class FlowingDanceAttack extends WaterBreathingAttackBase {
 
     private void startDance() {
         // Unlock the player from the move-stun so they can combo into other attacks
-        user.removeEffect(NichirinEffectRegistry.STUNNED.get());
+        user.removeEffect(NichirinEffectRegistry.stunned());
 
         // Apply empowerment effects to user
         applyEmpowerment();

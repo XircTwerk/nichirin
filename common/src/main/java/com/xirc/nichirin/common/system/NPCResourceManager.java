@@ -44,7 +44,7 @@ public class NPCResourceManager {
 
     private static void tickBloodRegen(MovesetCapableNPC npc, LivingEntity entity) {
         if (!npc.canRegenBlood()) return;
-        if (entity.hasEffect(NichirinEffectRegistry.STUNNED.get())) return;
+        if (entity.hasEffect(NichirinEffectRegistry.stunned())) return;
         if (entity.getRemainingFireTicks() > 0) return;
 
         long now = entity.level().getGameTime();

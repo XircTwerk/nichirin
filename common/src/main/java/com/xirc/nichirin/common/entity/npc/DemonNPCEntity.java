@@ -56,13 +56,13 @@ public abstract class DemonNPCEntity extends Monster implements MovesetCapableNP
     }
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        entityData.define(CURRENT_ANIMATION, "");
-        entityData.define(ANIMATION_SPEED, 1.0f);
-        entityData.define(ANIMATION_RESET, false);
-        entityData.define(DEMON_TYPE, getDefaultDemonType());
-        entityData.define(RENDER_SCALE, 1.0f);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(CURRENT_ANIMATION, "");
+        builder.define(ANIMATION_SPEED, 1.0f);
+        builder.define(ANIMATION_RESET, false);
+        builder.define(DEMON_TYPE, getDefaultDemonType());
+        builder.define(RENDER_SCALE, 1.0f);
     }
 
     protected abstract String getDefaultDemonType();

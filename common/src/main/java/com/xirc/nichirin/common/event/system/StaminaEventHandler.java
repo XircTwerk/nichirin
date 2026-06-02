@@ -38,7 +38,7 @@ public class StaminaEventHandler {
             StaminaManager.cleanupPlayer(player);
         });
 
-        PlayerEvent.PLAYER_RESPAWN.register((newPlayer, conqueredEnd) -> {
+        PlayerEvent.PLAYER_RESPAWN.register((newPlayer, conqueredEnd, removalReason) -> {
             if (!conqueredEnd) {
                 StaminaManager.restoreFull(newPlayer);
                 PlayerDoubleJump.resetDoubleJump(newPlayer);

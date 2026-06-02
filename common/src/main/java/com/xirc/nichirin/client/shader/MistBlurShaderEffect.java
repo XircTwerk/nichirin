@@ -21,7 +21,7 @@ public class MistBlurShaderEffect extends NichirinPostProcessor {
 
     @Override
     public ResourceLocation getShaderEffectId() {
-        return new ResourceLocation("nichirin", "mist_blur");
+        return ResourceLocation.fromNamespaceAndPath("nichirin", "mist_blur");
     }
 
     /** Called by MistBlurShaderHandler each tick. */
@@ -35,7 +35,7 @@ public class MistBlurShaderEffect extends NichirinPostProcessor {
 
         // Framerate-independent exponential smoothing.
         // dt is in seconds; multiply by appropriate rate depending on direction.
-        float dt = Minecraft.getInstance().getDeltaFrameTime() / 20.0f;
+        float dt = Minecraft.getInstance().getTimer().getRealtimeDeltaTicks() / 20.0f;
         float rate = (targetIntensity > smoothedIntensity) ? FADE_IN_RATE : FADE_OUT_RATE;
         smoothedIntensity += (targetIntensity - smoothedIntensity) * rate * dt;
         smoothedIntensity = Math.max(0f, Math.min(1f, smoothedIntensity));

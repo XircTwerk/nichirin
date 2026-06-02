@@ -121,7 +121,7 @@ public class RisingScorchingSunAttack extends FlameBreathingAttackBase {
                         createFlameHitParticles(target.position().add(0, 1, 0));
 
                         // Bonus fire duration
-                        target.setSecondsOnFire(getFireDuration() + 5);
+                        target.igniteForSeconds(getFireDuration() + 5);
                     } else {
                         hitTarget(target);
                     }

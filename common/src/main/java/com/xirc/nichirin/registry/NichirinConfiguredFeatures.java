@@ -16,6 +16,6 @@ public interface NichirinConfiguredFeatures {
     // Helper method to create resource keys
     private static ResourceKey<ConfiguredFeature<?, ?>> createKey(String name) {
         return ResourceKey.create(Registries.CONFIGURED_FEATURE,
-                new ResourceLocation(BreathOfNichirin.MOD_ID, name));
+                ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, name));
     }
 }

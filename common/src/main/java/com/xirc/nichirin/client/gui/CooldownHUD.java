@@ -3,6 +3,7 @@ package com.xirc.nichirin.client.gui;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
@@ -54,7 +55,7 @@ public class CooldownHUD {
     public static void render(GuiGraphics graphics, float partialTicks) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player == null || minecraft.font == null || (minecraft.screen != null && !(minecraft.screen instanceof ChatScreen))
-                || minecraft.options.hideGui || minecraft.options.renderDebug || !minecraft.player.isAlive()) {
+                || minecraft.options.hideGui || minecraft.getDebugOverlay().showDebugScreen() || !minecraft.player.isAlive()) {
             return;
         }
 
@@ -209,8 +210,7 @@ public class CooldownHUD {
                                          float outerRadius, int argb, float alpha) {
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
         Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder buffer = tesselator.getBuilder();
-        buffer.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
+        BufferBuilder buffer = tesselator.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
 
         int innerColor = withAlpha(argb, alpha);
         int outerColor = withAlpha(argb, 0.0f);
@@ -237,7 +237,7 @@ public class CooldownHUD {
             vertex(buffer, matrix, x2Inner, y2Inner, innerColor);
         }
 
-        tesselator.end();
+        BufferUploader.drawWithShader(buffer.buildOrThrow());
     }
 
     private static void drawArc(Matrix4f matrix, float centerX, float centerY, float radius, float stroke,
@@ -248,8 +248,7 @@ public class CooldownHUD {
 
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
         Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder buffer = tesselator.getBuilder();
-        buffer.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
+        BufferBuilder buffer = tesselator.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
 
         int segments = Math.max(1, Mth.ceil(RING_SEGMENTS * progress));
         float start = -Mth.HALF_PI;
@@ -279,13 +278,13 @@ public class CooldownHUD {
             vertex(buffer, matrix, x2Inner, y2Inner, argb);
         }
 
-        tesselator.end();
+        BufferUploader.drawWithShader(buffer.buildOrThrow());
     }
 
     private static void vertex(BufferBuilder buffer, Matrix4f matrix, float x, float y, int argb) {
-        buffer.vertex(matrix, x, y, 0.0f)
-                .color((argb >> 16) & 0xFF, (argb >> 8) & 0xFF, argb & 0xFF, (argb >>> 24) & 0xFF)
-                .endVertex();
+        buffer.addVertex(matrix, x, y, 0.0f)
+                .setColor((argb >> 16) & 0xFF, (argb >> 8) & 0xFF, argb & 0xFF, (argb >>> 24) & 0xFF)
+                ;
     }
 
     private static int withAlpha(int argb, float alpha) {

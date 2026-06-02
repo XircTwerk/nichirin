@@ -60,13 +60,13 @@ public class FlashBombEntity extends ThrowableItemProjectile {
     }
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(IS_ARMED, false);
-        this.entityData.define(TIMEOUT_TIMER, MAX_TIMEOUT);
-        this.entityData.define(FUSE_TIMER, FUSE_TIME);
-        this.entityData.define(EXPLOSION_COUNT, 0);
-        this.entityData.define(EXPLOSION_DELAY, 0);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(IS_ARMED, false);
+        builder.define(TIMEOUT_TIMER, MAX_TIMEOUT);
+        builder.define(FUSE_TIMER, FUSE_TIME);
+        builder.define(EXPLOSION_COUNT, 0);
+        builder.define(EXPLOSION_DELAY, 0);
     }
 
     public boolean isArmed() {

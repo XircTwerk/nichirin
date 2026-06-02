@@ -5,6 +5,7 @@ import com.xirc.nichirin.common.util.StaminaManager;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
@@ -177,7 +178,7 @@ public abstract class AbstractSimpleAttack<T extends AbstractSimpleAttack<T, A>,
 
     @SuppressWarnings("unchecked")
     public T withAnimation(String animationId, int priority) {
-        return withAnimation(new ResourceLocation(animationId), priority);
+        return withAnimation(ResourceLocation.parse(animationId), priority);
     }
 
     @SuppressWarnings("unchecked")
@@ -371,7 +372,7 @@ public abstract class AbstractSimpleAttack<T extends AbstractSimpleAttack<T, A>,
 
         // Apply target effects
         targetEffects.forEach((effect, data) -> {
-            target.addEffect(new MobEffectInstance(effect, data.duration, data.amplifier));
+            target.addEffect(new MobEffectInstance(BuiltInRegistries.MOB_EFFECT.wrapAsHolder(effect), data.duration, data.amplifier));
         });
 
         // Play hit sound

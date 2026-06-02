@@ -1,17 +1,17 @@
 package com.xirc.nichirin.common.particle;
 
-import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import net.minecraft.core.particles.SimpleParticleType;
 
 public class SlashImpactSparkParticleType extends SimpleParticleType {
-    public static final Codec<SimpleParticleType> CODEC = Codec.unit(SlashImpactSparkParticleType::new);
+    public static final MapCodec<SimpleParticleType> CODEC = MapCodec.unit(SlashImpactSparkParticleType::new);
 
     public SlashImpactSparkParticleType() {
         super(false);
     }
 
     @Override
-    public Codec<SimpleParticleType> codec() {
+    public MapCodec<SimpleParticleType> codec() {
         return CODEC;
     }
 }

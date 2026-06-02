@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.worldgen.trees.wysteria;
 
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.xirc.nichirin.registry.NichirinBlockRegistry;
@@ -11,7 +12,7 @@ import net.minecraft.world.level.levelgen.feature.treedecorators.TreeDecoratorTy
 import net.minecraft.world.level.block.state.BlockState;
 
 public class WysteriaRootDecorator extends TreeDecorator {
-    public static final Codec<WysteriaRootDecorator> CODEC = RecordCodecBuilder.create((instance) ->
+    public static final MapCodec<WysteriaRootDecorator> CODEC = RecordCodecBuilder.mapCodec((instance) ->
             instance.group(Codec.floatRange(0.0F, 1.0F).fieldOf("probability").forGetter(decorator -> decorator.probability))
                     .apply(instance, WysteriaRootDecorator::new));
 

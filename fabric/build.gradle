@@ -56,16 +56,18 @@ dependencies {
     modImplementation "dev.architectury:architectury-fabric:$rootProject.architectury_api_version"
 
     // Cloth Config — bundled so players don't need a separate install
-    include modImplementation("me.shedaniel.cloth:cloth-config-fabric:${rootProject.cloth_config_version}")
+    modImplementation "me.shedaniel.cloth:cloth-config-fabric:${rootProject.cloth_config_version}"
 
     // AzureLib
-    include modImplementation("mod.azure.azurelib:azurelib-fabric-1.20.1:${azurelib_version}")
+    modImplementation "mod.azure.azurelib:azurelib-fabric-1.21.1:${azurelib_version}"
 
     // Player Anim
-    include modImplementation("dev.kosmx.player-anim:player-animation-lib-fabric:${rootProject.player_anim_version}")
+    modImplementation("com.zigythebird.playeranim:PlayerAnimationLibFabric:${rootProject.pal_version}") {
+        exclude group: "com.zigythebird.playeranim", module: "PlayerAnimationLibCore"
+    }
 
     // TerraBlender - Fixed to use Modrinth format
-    include modImplementation("com.github.glitchfiend:TerraBlender-fabric:${minecraft_version}-${terrablender_version}")
+    modImplementation "com.github.glitchfiend:TerraBlender-fabric:${minecraft_version}-${terrablender_version}"
 
     common(project(path: ':common', configuration: 'namedElements')) { transitive false }
     shadowBundle project(path: ':common', configuration: 'transformProductionFabric')

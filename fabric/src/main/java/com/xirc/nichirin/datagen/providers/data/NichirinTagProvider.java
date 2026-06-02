@@ -16,7 +16,7 @@ public class NichirinTagProvider extends FabricTagProvider.BlockTagProvider {
 
     // Create custom item tag for bento box compatibility
     public static final TagKey<Item> CAN_BE_BENTO_BOXED = TagKey.create(Registries.ITEM,
-            new ResourceLocation("nichirin", "can_be_bento_boxed"));
+            ResourceLocation.fromNamespaceAndPath("nichirin", "can_be_bento_boxed"));
 
     public NichirinTagProvider(FabricDataOutput output, CompletableFuture<HolderLookup.Provider> registriesFuture) {
         super(output, registriesFuture);

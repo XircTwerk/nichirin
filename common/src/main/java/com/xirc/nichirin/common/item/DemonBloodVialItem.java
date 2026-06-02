@@ -6,17 +6,24 @@ import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.data.ProgressionHelper;
 import com.xirc.nichirin.common.data.PlayerDataStorage;
 import com.xirc.nichirin.common.system.DemonManager;
+import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemUtils;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.Item.TooltipContext;
+import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,9 +45,11 @@ public class DemonBloodVialItem extends Item {
 
     /** How long the first-click "are you sure" prompt stays active before resetting (ticks). */
     private static final long CONFIRM_WINDOW_TICKS = 200L; // 10 seconds
+    private static final int DRINK_DURATION_TICKS = 32;
 
     /** Maps player UUID → game-time tick at which their confirmation window expires. */
     private static final ConcurrentHashMap<UUID, Long> PENDING_CONFIRM = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<UUID, Long> CLIENT_PENDING_CONFIRM = new ConcurrentHashMap<>();
 
     public DemonBloodVialItem(Properties properties) {
         super(properties);
@@ -61,13 +70,20 @@ public class DemonBloodVialItem extends Item {
             return InteractionResultHolder.fail(stack);
         }
 
-        if (level.isClientSide || !(player instanceof ServerPlayer serverPlayer)) {
-            // Client-side and non-server runs return success so the server-side handler runs;
-            // actual transformation only happens on the server.
-            return InteractionResultHolder.success(stack);
+        long now = level.getGameTime();
+        if (level.isClientSide) {
+            Long deadline = CLIENT_PENDING_CONFIRM.get(player.getUUID());
+            if (deadline == null || now > deadline) {
+                CLIENT_PENDING_CONFIRM.put(player.getUUID(), now + CONFIRM_WINDOW_TICKS);
+                return InteractionResultHolder.success(stack);
+            }
+            return ItemUtils.startUsingInstantly(level, player, hand);
         }
 
-        long now = level.getGameTime();
+        if (!(player instanceof ServerPlayer)) {
+            return InteractionResultHolder.fail(stack);
+        }
+
         Long deadline = PENDING_CONFIRM.get(player.getUUID());
 
         if (deadline == null || now > deadline) {
@@ -82,13 +98,53 @@ public class DemonBloodVialItem extends Item {
             return InteractionResultHolder.consume(stack);
         }
 
-        // Second click within the window — commit the transformation.
-        PENDING_CONFIRM.remove(player.getUUID());
+        // Second click within the window starts the drinking animation.
+        return ItemUtils.startUsingInstantly(level, player, hand);
+    }
+
+    @Override
+    public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity entity) {
+        if (!(entity instanceof Player player)) {
+            return stack;
+        }
+
+        CLIENT_PENDING_CONFIRM.remove(player.getUUID());
+        if (!(player instanceof ServerPlayer serverPlayer)) {
+            return stack;
+        }
+
+        Long deadline = PENDING_CONFIRM.remove(player.getUUID());
+        if (deadline == null || level.getGameTime() > deadline || MovesetHelper.hasDemonMoveset(player)) {
+            return stack;
+        }
+
+        CriteriaTriggers.CONSUME_ITEM.trigger(serverPlayer, stack);
+        serverPlayer.awardStat(Stats.ITEM_USED.get(this));
         transformIntoDemon(serverPlayer);
         if (!player.getAbilities().instabuild) {
             stack.shrink(1);
         }
-        return InteractionResultHolder.consume(stack);
+        return stack;
+    }
+
+    @Override
+    public int getUseDuration(ItemStack stack, LivingEntity entity) {
+        return DRINK_DURATION_TICKS;
+    }
+
+    @Override
+    public UseAnim getUseAnimation(ItemStack stack) {
+        return UseAnim.DRINK;
+    }
+
+    @Override
+    public SoundEvent getDrinkingSound() {
+        return SoundEvents.GENERIC_DRINK;
+    }
+
+    @Override
+    public SoundEvent getEatingSound() {
+        return SoundEvents.GENERIC_DRINK;
     }
 
     /**
@@ -116,7 +172,7 @@ public class DemonBloodVialItem extends Item {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
+    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
         tooltip.add(Component.translatable("item.nichirin.demon_blood_vial.tooltip_line1")
                 .withStyle(ChatFormatting.DARK_RED));
     }
@@ -124,9 +180,11 @@ public class DemonBloodVialItem extends Item {
     /** Drop the pending-confirm entry when the player logs out so it can't dangle forever. */
     public static void clearPending(UUID playerId) {
         PENDING_CONFIRM.remove(playerId);
+        CLIENT_PENDING_CONFIRM.remove(playerId);
     }
 
     public static void clearAll() {
         PENDING_CONFIRM.clear();
+        CLIENT_PENDING_CONFIRM.clear();
     }
 }

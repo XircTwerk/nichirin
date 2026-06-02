@@ -8,10 +8,9 @@ import net.minecraft.world.level.material.MapColor;
 public class ScarletOreBlock extends DropExperienceBlock {
 
     public ScarletOreBlock() {
-        super(BlockBehaviour.Properties.of()
+        super(UniformInt.of(3, 7), BlockBehaviour.Properties.of()
                         .mapColor(MapColor.COLOR_RED)
                         .strength(3.0f, 3.0f)
-                        .requiresCorrectToolForDrops(),
-                UniformInt.of(3, 7)); // This handles XP drops automatically
+                        .requiresCorrectToolForDrops()); // This handles XP drops automatically
     }
 }

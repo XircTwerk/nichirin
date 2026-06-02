@@ -54,7 +54,7 @@ public class DemonGrabAttack {
         LivingEntity target = targets.get(0);
 
         // Remove any stun so launch velocity isn't suppressed
-        target.removeEffect(NichirinEffectRegistry.STUNNED.get());
+        target.removeEffect(NichirinEffectRegistry.stunned());
 
         // Instant throw — launch forward-upward
         target.setDeltaMovement(forward.x * 2.0, 1.5, forward.z * 2.0);

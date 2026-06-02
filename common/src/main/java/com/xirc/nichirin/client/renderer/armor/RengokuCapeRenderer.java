@@ -1,7 +1,7 @@
 package com.xirc.nichirin.client.renderer.armor;
 
 import com.xirc.nichirin.client.renderer.armor.core.NichirinCapeArmorBoneProvider;
-import mod.azure.azurelib.model.AzBone;
+import mod.azure.azurelib.common.model.AzBone;
 import net.minecraft.world.entity.EquipmentSlot;
 
 public class RengokuCapeRenderer extends NichirinArmorRenderer {

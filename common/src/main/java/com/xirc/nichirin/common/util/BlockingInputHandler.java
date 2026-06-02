@@ -21,9 +21,9 @@ import net.minecraft.world.item.ItemStack;
 public class BlockingInputHandler {
 
     // Packet IDs
-    private static final ResourceLocation BLOCK_START_ID = new ResourceLocation("nichirin", "block_start");
-    private static final ResourceLocation BLOCK_STOP_ID = new ResourceLocation("nichirin", "block_stop");
-    private static final ResourceLocation PARRY_ID = new ResourceLocation("nichirin", "parry");
+    private static final ResourceLocation BLOCK_START_ID = ResourceLocation.fromNamespaceAndPath("nichirin", "block_start");
+    private static final ResourceLocation BLOCK_STOP_ID = ResourceLocation.fromNamespaceAndPath("nichirin", "block_stop");
+    private static final ResourceLocation PARRY_ID = ResourceLocation.fromNamespaceAndPath("nichirin", "parry");
 
     private static boolean isCurrentlyBlocking = false;
     private static int blockRetryTicks = 0;
@@ -58,7 +58,7 @@ public class BlockingInputHandler {
         }
 
         boolean blockKeyPressed = NichirinKeybindRegistry.BLOCK_KEY.isDown();
-        boolean serverAcceptedBlock = player.hasEffect(NichirinEffectRegistry.BLOCKING.get());
+        boolean serverAcceptedBlock = player.hasEffect(NichirinEffectRegistry.blocking());
 
         // Handle key press
         if (blockKeyPressed && !isCurrentlyBlocking) {
@@ -67,7 +67,7 @@ public class BlockingInputHandler {
             isCurrentlyBlocking = true;
             blockRetryTicks = BLOCK_START_RETRY_TICKS;
         } else if (blockKeyPressed && isCurrentlyBlocking && !serverAcceptedBlock) {
-            if (blockRetryTicks-- <= 0 && !player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+            if (blockRetryTicks-- <= 0 && !player.hasEffect(NichirinEffectRegistry.stunned())) {
                 sendBlockStart();
                 blockRetryTicks = BLOCK_START_RETRY_TICKS;
             }
@@ -83,12 +83,12 @@ public class BlockingInputHandler {
 
     private static void sendBlockStart() {
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-        NetworkManager.sendToServer(BLOCK_START_ID, buf);
+        NetworkManager.sendToServer(BLOCK_START_ID, NetworkBufferUtils.client(buf));
     }
 
     private static void sendBlockStop() {
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-        NetworkManager.sendToServer(BLOCK_STOP_ID, buf);
+        NetworkManager.sendToServer(BLOCK_STOP_ID, NetworkBufferUtils.client(buf));
     }
 
     /**
@@ -98,12 +98,12 @@ public class BlockingInputHandler {
         Minecraft mc = Minecraft.getInstance();
 
         // Check if player has blocking effect - BLOCK ALL INPUTS
-        if (mc.player != null && mc.player.hasEffect(NichirinEffectRegistry.BLOCKING.get())) {
+        if (mc.player != null && mc.player.hasEffect(NichirinEffectRegistry.blocking())) {
             return true;
         }
 
         // Check if player is stunned - BLOCK ALL INPUTS
-        if (mc.player != null && mc.player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+        if (mc.player != null && mc.player.hasEffect(NichirinEffectRegistry.stunned())) {
             return true;
         }
 

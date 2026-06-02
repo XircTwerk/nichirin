@@ -2,12 +2,11 @@ package com.xirc.nichirin.mixin.client;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.xirc.nichirin.client.handler.BloodMoonClientState;
-import com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer;
 import com.xirc.nichirin.client.shader.DeadCalmShaderEffect;
 import com.xirc.nichirin.client.shader.NichirinShaderManager;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Camera;
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LightTexture;
@@ -21,35 +20,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(LevelRenderer.class)
 public class LevelRendererMixin {
-
-    @Inject(method = "renderLevel",
-            at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/client/renderer/debug/DebugRenderer;render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;DDD)V",
-                    shift = At.Shift.AFTER))
-    private void renderAttackHitboxes(PoseStack poseStack, float partialTick, long finishNanoTime,
-                                      boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer,
-                                      LightTexture lightTexture, Matrix4f projectionMatrix, CallbackInfo ci) {
-
-        if (Minecraft.getInstance().getEntityRenderDispatcher().shouldRenderHitBoxes() &&
-                AttackHitboxRenderer.getHitboxCount() > 0) {
-
-            AttackHitboxRenderer.render(
-                    poseStack,
-                    camera.getPosition(),
-                    (LevelRenderer)(Object)this,
-                    Minecraft.getInstance().renderBuffers().bufferSource()
-            );
-        }
-
-        // RENDER BLUE BLOCKS HERE
-        DeadCalmShaderEffect effect = NichirinShaderManager.getInstance()
-                .getProcessor(DeadCalmShaderEffect.class);
-
-        if (effect != null && effect.getBlockRenderer().isActive()) {
-            System.out.println("DEBUG: Rendering blue blocks!");
-            effect.getBlockRenderer().render(poseStack);
-        }
-    }
 
     /**
      * Tints the moon disc deep red during a blood moon.
@@ -77,7 +47,7 @@ public class LevelRendererMixin {
      */
     @Inject(method = "renderSky", at = @At("TAIL"))
     private void nichirin$afterSkyRender(
-            PoseStack poseStack, Matrix4f projectionMatrix, float partialTick,
+            Matrix4f modelViewMatrix, Matrix4f projectionMatrix, float partialTick,
             Camera camera, boolean isFoggy, Runnable setupFog, CallbackInfo ci) {
         if (BloodMoonClientState.isActive()) {
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
@@ -93,7 +63,7 @@ public class LevelRendererMixin {
             cancellable = true
     )
     private void nichirin$renderDeadCalmSky(
-            PoseStack poseStack,
+            Matrix4f modelViewMatrix,
             Matrix4f projectionMatrix,
             float partialTick,
             Camera camera,
@@ -106,6 +76,8 @@ public class LevelRendererMixin {
 
         if (effect != null && effect.getSkyboxRenderer().isActive()) {
             System.out.println("DEBUG: Rendering Dead Calm skybox!");
+            PoseStack poseStack = new PoseStack();
+            poseStack.mulPose(modelViewMatrix);
             effect.getSkyboxRenderer().render(poseStack, projectionMatrix, partialTick);
             ci.cancel(); // Don't render normal sky
         }
@@ -122,16 +94,15 @@ public class LevelRendererMixin {
             at = @At("TAIL")
     )
     private void nichirin$processShaders(
-            PoseStack poseStack,
-            float partialTick,
-            long finishNanoTime,
+            DeltaTracker deltaTracker,
             boolean renderBlockOutline,
             Camera camera,
             GameRenderer gameRenderer,
             LightTexture lightTexture,
+            Matrix4f frustumMatrix,
             Matrix4f projectionMatrix,
             CallbackInfo ci
     ) {
-        NichirinShaderManager.getInstance().processAll(poseStack);
+        NichirinShaderManager.getInstance().processAll(new PoseStack());
     }
 }

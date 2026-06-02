@@ -102,7 +102,7 @@ public class WaterfallBasinAttack extends WaterBreathingAttackBase {
 
         applySlowdown();
         // Re-apply stun each tick so the player cannot cancel into other moves
-        user.addEffect(new MobEffectInstance(NichirinEffectRegistry.STUNNED.get(), 5, 0, false, false));
+        user.addEffect(new MobEffectInstance(NichirinEffectRegistry.stunned(), 5, 0, false, false));
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDir = user.getLookAngle();

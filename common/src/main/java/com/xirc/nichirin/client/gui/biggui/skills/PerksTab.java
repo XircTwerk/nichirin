@@ -12,6 +12,7 @@ import com.xirc.nichirin.common.system.perks.PerkDefinition;
 import com.xirc.nichirin.common.system.perks.PerkTag;
 import com.xirc.nichirin.common.system.perks.PerkTier;
 import com.xirc.nichirin.common.system.perks.PerkUpgradeCost;
+import com.xirc.nichirin.common.util.NetworkBufferUtils;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
@@ -919,7 +920,7 @@ public class PerksTab extends AbstractGuiPage {
         try {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             packet.toBytes(buf);
-            NetworkManager.sendToServer(NichirinPacketRegistry.PERK_ACTION_ID, buf);
+            NetworkManager.sendToServer(NichirinPacketRegistry.PERK_ACTION_ID, NetworkBufferUtils.client(buf));
         } catch (Exception ignored) {
         }
     }

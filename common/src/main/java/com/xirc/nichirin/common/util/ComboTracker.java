@@ -105,7 +105,7 @@ public class ComboTracker {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             packet.toBytes(buf);
             NetworkManager.sendToPlayer(serverPlayer,
-                    NichirinPacketRegistry.COMBO_COUNTER_ID, buf);
+                    NichirinPacketRegistry.COMBO_COUNTER_ID, NetworkBufferUtils.server(buf, serverPlayer));
         } catch (Exception e) {
         }
     }
@@ -137,7 +137,7 @@ public class ComboTracker {
 
         // Apply STUNNED effect
         MobEffectInstance stunEffect = new MobEffectInstance(
-                NichirinEffectRegistry.STUNNED.get(),
+                NichirinEffectRegistry.stunned(),
                 durationTicks,
                 1, // Amplifier 1 — full lockdown (movement + AI disabled)
                 false, // Not ambient
@@ -159,7 +159,7 @@ public class ComboTracker {
             return false;
         }
 
-        MobEffectInstance stunEffect = victim.getEffect(NichirinEffectRegistry.STUNNED.get());
+        MobEffectInstance stunEffect = victim.getEffect(NichirinEffectRegistry.stunned());
         return stunEffect != null && stunEffect.getDuration() > 0;
     }
 
@@ -185,7 +185,7 @@ public class ComboTracker {
                     FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
                     packet.toBytes(buf);
                     NetworkManager.sendToPlayer(serverPlayer,
-                            NichirinPacketRegistry.COMBO_COUNTER_ID, buf);
+                            NichirinPacketRegistry.COMBO_COUNTER_ID, NetworkBufferUtils.server(buf, serverPlayer));
                 } catch (Exception e) {
                 }
             }
@@ -212,7 +212,7 @@ public class ComboTracker {
                 Player attacker = victim.level().getPlayerByUUID(attackerUUID);
                 if (attacker != null && attacker instanceof IComboCounter comboCounter) {
                     // Only reset if this victim is their current target
-                    if (comboCounter.nichirin$getLastAttacked() == victim) {  
+                    if (comboCounter.nichirin$getLastAttacked() == victim) {
 
                         // Reset combo to 0
                         comboCounter.nichirin$setComboCount(0);
@@ -225,7 +225,7 @@ public class ComboTracker {
                                 FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
                                 packet.toBytes(buf);
                                 NetworkManager.sendToPlayer(serverPlayer,
-                                        NichirinPacketRegistry.COMBO_COUNTER_ID, buf);
+                                        NichirinPacketRegistry.COMBO_COUNTER_ID, NetworkBufferUtils.server(buf, serverPlayer));
                             } catch (Exception e) {
                             }
                         }
@@ -249,7 +249,7 @@ public class ComboTracker {
             return 0;
         }
 
-        MobEffectInstance stunEffect = entity.getEffect(NichirinEffectRegistry.STUNNED.get());
+        MobEffectInstance stunEffect = entity.getEffect(NichirinEffectRegistry.stunned());
         return stunEffect != null ? stunEffect.getDuration() : 0;
     }
 

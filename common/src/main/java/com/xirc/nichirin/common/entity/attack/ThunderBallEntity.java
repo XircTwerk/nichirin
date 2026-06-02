@@ -10,6 +10,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerEntity;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -66,8 +67,8 @@ public class ThunderBallEntity extends Entity {
     }
 
     @Override
-    public void defineSynchedData() {
-        this.entityData.define(LIFE_TICKS, 0);
+    public void defineSynchedData(SynchedEntityData.Builder builder) {
+        builder.define(LIFE_TICKS, 0);
     }
 
     @Override
@@ -141,7 +142,7 @@ public class ThunderBallEntity extends Entity {
 
                 // Apply shocked effect
                 entity.addEffect(new MobEffectInstance(
-                        NichirinEffectRegistry.SHOCKED.get(),
+                        NichirinEffectRegistry.shocked(),
                         hitStun,
                         0,
                         false,
@@ -244,7 +245,7 @@ public class ThunderBallEntity extends Entity {
     }
 
     @Override
-    public Packet<ClientGamePacketListener> getAddEntityPacket() {
-        return NetworkManager.createAddEntityPacket(this);
+    public Packet<ClientGamePacketListener> getAddEntityPacket(ServerEntity entity) {
+        return NetworkManager.createAddEntityPacket(this, entity);
     }
 }

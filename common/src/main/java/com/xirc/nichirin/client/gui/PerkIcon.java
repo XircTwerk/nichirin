@@ -29,11 +29,11 @@ public class PerkIcon {
         String key = perkId + ":" + tier.name();
         if (CACHE.containsKey(key)) return CACHE.get(key);
 
-        ResourceLocation specific = new ResourceLocation(MOD_ID,
+        ResourceLocation specific = ResourceLocation.fromNamespaceAndPath(MOD_ID,
                 BASE_PATH + perkId + "_" + tier.name().toLowerCase() + ".png");
 
         ResourceLocation result = exists(specific) ? specific
-                : new ResourceLocation(MOD_ID, DEFAULT_PATH);
+                : ResourceLocation.fromNamespaceAndPath(MOD_ID, DEFAULT_PATH);
 
         CACHE.put(key, result);
         return result;

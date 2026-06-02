@@ -63,7 +63,7 @@ public class GrabManager {
         if (target == null) return;
         if (launch) {
             // Remove stun before launching so it doesn't suppress the velocity
-            target.removeEffect(NichirinEffectRegistry.STUNNED.get());
+            target.removeEffect(NichirinEffectRegistry.stunned());
             Vec3 forward = demon.getLookAngle();
             target.setDeltaMovement(forward.x * 1.5, 1.2, forward.z * 1.5);
             target.hurtMarked  = true;
@@ -90,7 +90,7 @@ public class GrabManager {
 
         // Continuously stun (short duration re-applies each tick)
         target.addEffect(new MobEffectInstance(
-                NichirinEffectRegistry.STUNNED.get(), 10, 1, false, false));
+                NichirinEffectRegistry.stunned(), 10, 1, false, false));
 
         data.ticksRemaining--;
         if (data.ticksRemaining <= 0) {

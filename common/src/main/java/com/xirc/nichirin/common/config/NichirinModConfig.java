@@ -12,7 +12,7 @@ import java.util.List;
  * Cloth Config / AutoConfig-backed configuration for Breath of Nichirin.
  *
  * <p>Saved to {@code .minecraft/config/nichirin-server.toml} and editable through
- * the Cloth Config GUI (accessible via the Mods screen on Fabric/Forge).</p>
+ * the Cloth Config GUI (accessible via the Mods screen on Fabric/NeoForge).</p>
  *
  * <p>Use {@link #get()} anywhere in the codebase to read current values.</p>
  */

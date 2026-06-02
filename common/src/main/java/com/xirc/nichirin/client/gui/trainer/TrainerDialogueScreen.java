@@ -4,6 +4,7 @@ import com.xirc.nichirin.common.entity.npc.BaseBreathingTrainerEntity;
 import com.xirc.nichirin.common.entity.npc.TrainerType;
 import com.xirc.nichirin.common.network.c2s.TrainerActionPacket;
 import com.xirc.nichirin.common.network.s2c.OpenTrainerDialoguePacket;
+import com.xirc.nichirin.common.util.NetworkBufferUtils;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
@@ -112,7 +113,7 @@ public class TrainerDialogueScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mx, int my, float pt) {
-        renderBackground(g);
+        renderBackground(g, mx, my, pt);
 
         // Outer border
         g.fill(dialogX - 2, dialogY - 2, dialogX + dialogW + 2, dialogY + dialogH + 2, COL_BORDER);
@@ -273,7 +274,7 @@ public class TrainerDialogueScreen extends Screen {
         try {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             new TrainerActionPacket(trainerUUID, action, difficulty).toBytes(buf);
-            NetworkManager.sendToServer(NichirinPacketRegistry.TRAINER_ACTION_ID, buf);
+            NetworkManager.sendToServer(NichirinPacketRegistry.TRAINER_ACTION_ID, NetworkBufferUtils.client(buf));
         } catch (Exception e) {
             // ignore
         }

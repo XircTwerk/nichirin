@@ -4,9 +4,10 @@ import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.common.effect.*;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.effect.MobEffect;
-import net.minecraft.world.entity.Mob;
 
 public interface NichirinEffectRegistry {
 
@@ -20,6 +21,34 @@ public interface NichirinEffectRegistry {
     RegistrySupplier<MobEffect> VENOM = EFFECT_REGISTRY.register("venom", VenomStatusEffect::new);
     RegistrySupplier<MobEffect> DISORIENTED = EFFECT_REGISTRY.register("disoriented", DisorientedStatusEffect::new);
     RegistrySupplier<MobEffect> BLURRY = EFFECT_REGISTRY.register("blurry", BlurryStatusEffect::new);
+
+    static Holder<MobEffect> shocked() {
+        return BuiltInRegistries.MOB_EFFECT.wrapAsHolder(SHOCKED.get());
+    }
+
+    static Holder<MobEffect> blocking() {
+        return BuiltInRegistries.MOB_EFFECT.wrapAsHolder(BLOCKING.get());
+    }
+
+    static Holder<MobEffect> stunned() {
+        return BuiltInRegistries.MOB_EFFECT.wrapAsHolder(STUNNED.get());
+    }
+
+    static Holder<MobEffect> burning() {
+        return BuiltInRegistries.MOB_EFFECT.wrapAsHolder(BURNING.get());
+    }
+
+    static Holder<MobEffect> venom() {
+        return BuiltInRegistries.MOB_EFFECT.wrapAsHolder(VENOM.get());
+    }
+
+    static Holder<MobEffect> disoriented() {
+        return BuiltInRegistries.MOB_EFFECT.wrapAsHolder(DISORIENTED.get());
+    }
+
+    static Holder<MobEffect> blurry() {
+        return BuiltInRegistries.MOB_EFFECT.wrapAsHolder(BLURRY.get());
+    }
 
     static void init() {
         // Register the deferred register

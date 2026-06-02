@@ -4,14 +4,14 @@ import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.client.renderer.entity.BaseAZNichirinEntityRenderer;
 import com.xirc.nichirin.client.renderer.entity.animator.ThunderBallAnimator;
 import com.xirc.nichirin.common.entity.attack.ThunderBallEntity;
-import mod.azure.azurelib.render.entity.AzEntityRendererConfig;
+import mod.azure.azurelib.common.render.entity.AzEntityRendererConfig;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 
 public class ThunderBallRenderer extends BaseAZNichirinEntityRenderer<ThunderBallEntity> {
 
-    private static final ResourceLocation GEO = new ResourceLocation(BreathOfNichirin.MOD_ID, "geo/thunder_ball.geo.json");
-    private static final ResourceLocation TEX = new ResourceLocation(BreathOfNichirin.MOD_ID, "textures/entity/thunder_ball.png");
+    private static final ResourceLocation GEO = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "geo/thunder_ball.geo.json");
+    private static final ResourceLocation TEX = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "textures/entity/thunder_ball.png");
 
     public ThunderBallRenderer(EntityRendererProvider.Context context) {
         super(

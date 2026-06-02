@@ -162,12 +162,12 @@ public interface NichirinKeybindRegistry {
         if (client.player == null) return;
 
         // Same checks as attack wheel
-        if (client.player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+        if (client.player.hasEffect(NichirinEffectRegistry.stunned())) {
             return;
         }
 
         // Check if player has blocking effect - CAN'T USE HOTKEYS
-        if (client.player.hasEffect(NichirinEffectRegistry.BLOCKING.get())) {
+        if (client.player.hasEffect(NichirinEffectRegistry.blocking())) {
             return;
         }
 

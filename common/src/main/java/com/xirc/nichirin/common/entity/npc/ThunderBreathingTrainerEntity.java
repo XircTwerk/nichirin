@@ -82,8 +82,8 @@ public class ThunderBreathingTrainerEntity extends BaseBreathingTrainerEntity {
 
     @Override
     public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor level, @NotNull DifficultyInstance difficulty,
-                                        @NotNull MobSpawnType spawnType, SpawnGroupData data, CompoundTag tag) {
-        SpawnGroupData result = super.finalizeSpawn(level, difficulty, spawnType, data, tag);
+                                        @NotNull MobSpawnType spawnType, SpawnGroupData data) {
+        SpawnGroupData result = super.finalizeSpawn(level, difficulty, spawnType, data);
         moveset = new ThunderBreathingMoveset();
         setBreathGauge(maxBreathGauge);
         setStamina(maxStamina);

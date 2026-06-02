@@ -34,7 +34,7 @@ public class MoveIcon {
 
         // Build the path: textures/icons/thunder_breathing/rice_spirit.png
         String iconPath = BASE_PATH + breathingStyle + "/" + moveName + ".png";
-        ResourceLocation iconLocation = new ResourceLocation("nichirin", iconPath);
+        ResourceLocation iconLocation = ResourceLocation.fromNamespaceAndPath("nichirin", iconPath);
 
         // Check if the texture exists
         if (textureExists(iconLocation)) {
@@ -43,7 +43,7 @@ public class MoveIcon {
         }
 
         // Fall back to default icon
-        ResourceLocation defaultIcon = new ResourceLocation("nichirin", DEFAULT_ICON_PATH);
+        ResourceLocation defaultIcon = ResourceLocation.fromNamespaceAndPath("nichirin", DEFAULT_ICON_PATH);
         ICON_CACHE.put(cacheKey, defaultIcon);
         return defaultIcon;
     }
@@ -94,7 +94,7 @@ public class MoveIcon {
      * Gets the default icon when no specific icon is found
      */
     public static ResourceLocation getDefaultIcon() {
-        return new ResourceLocation("nichirin", DEFAULT_ICON_PATH);
+        return ResourceLocation.fromNamespaceAndPath("nichirin", DEFAULT_ICON_PATH);
     }
 
     /**

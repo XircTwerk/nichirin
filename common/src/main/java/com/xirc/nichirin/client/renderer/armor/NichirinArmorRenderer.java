@@ -3,19 +3,19 @@ package com.xirc.nichirin.client.renderer.armor;
 import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.client.renderer.armor.core.NichirinArmorAnimator;
 import com.xirc.nichirin.client.renderer.armor.core.NichirinArmorBoneProvider;
-import mod.azure.azurelib.animation.dispatch.AzDispatchSide;
-import mod.azure.azurelib.animation.dispatch.command.AzCommand;
-import mod.azure.azurelib.animation.play_behavior.AzPlayBehaviors;
-import mod.azure.azurelib.model.AzBakedModel;
-import mod.azure.azurelib.model.AzBone;
-import mod.azure.azurelib.render.AzRendererConfig;
-import mod.azure.azurelib.render.AzRendererPipelineContext;
-import mod.azure.azurelib.render.armor.AzArmorRenderer;
-import mod.azure.azurelib.render.armor.AzArmorRendererConfig;
-import mod.azure.azurelib.render.armor.AzArmorRendererPipeline;
-import mod.azure.azurelib.render.armor.AzArmorRendererPipelineContext;
-import mod.azure.azurelib.render.armor.bone.AzArmorBoneContext;
-import mod.azure.azurelib.render.armor.bone.AzArmorBoneProvider;
+import mod.azure.azurelib.common.animation.dispatch.AzDispatchSide;
+import mod.azure.azurelib.common.animation.dispatch.command.AzCommand;
+import mod.azure.azurelib.common.animation.play_behavior.AzPlayBehaviors;
+import mod.azure.azurelib.common.model.AzBakedModel;
+import mod.azure.azurelib.common.model.AzBone;
+import mod.azure.azurelib.common.render.AzRendererConfig;
+import mod.azure.azurelib.common.render.AzRendererPipelineContext;
+import mod.azure.azurelib.common.render.armor.AzArmorRenderer;
+import mod.azure.azurelib.common.render.armor.AzArmorRendererConfig;
+import mod.azure.azurelib.common.render.armor.AzArmorRendererPipeline;
+import mod.azure.azurelib.common.render.armor.AzArmorRendererPipelineContext;
+import mod.azure.azurelib.common.render.armor.bone.AzArmorBoneContext;
+import mod.azure.azurelib.common.render.armor.bone.AzArmorBoneProvider;
 import net.minecraft.client.model.HumanoidModel;
 import com.xirc.nichirin.mixin.client.PlayerModelAccessor;
 import net.minecraft.client.model.PlayerModel;
@@ -41,6 +41,7 @@ public class NichirinArmorRenderer extends AzArmorRenderer {
 
     private static final AzCommand ANIM_WALKING = AzCommand.create("movement_controller", "walking", AzPlayBehaviors.LOOP);
     private static final AzCommand ANIM_IDLE = AzCommand.create("movement_controller", "idle", AzPlayBehaviors.LOOP);
+    private static final AzCommand ANIM_CROUCHING = AzCommand.create("movement_controller", "crouching", AzPlayBehaviors.LOOP);
 
     protected Entity currentEntity;
     protected EquipmentSlot currentSlot;
@@ -49,10 +50,16 @@ public class NichirinArmorRenderer extends AzArmorRenderer {
     protected ItemStack currentStack;
 
     @Nullable private final String animationName;
-    // Per-entity last-known movement state. The renderer instance is shared across every wearer,
-    // so a single boolean field would let one entity's movement corrupt another's animation state.
+    // Per-entity last-known animation state. The renderer instance is shared across every wearer,
+    // so a single field would let one entity's movement corrupt another's animation state.
     // null = not yet seen this entity (forces an initial dispatch so idle starts at rest).
-    private final java.util.Map<java.util.UUID, Boolean> lastMovingByEntity = new java.util.WeakHashMap<>();
+    private final java.util.Map<java.util.UUID, MovementAnimation> lastAnimationByEntity = new java.util.WeakHashMap<>();
+
+    private enum MovementAnimation {
+        IDLE,
+        WALKING,
+        CROUCHING
+    }
 
     /** For uniforms: uses NichirinArmorBoneProvider which maps our geo bone names to standard slots */
     protected NichirinArmorRenderer(String armorName) {
@@ -144,15 +151,23 @@ public class NichirinArmorRenderer extends AzArmorRenderer {
         }
 
         // Dispatch the looping animation when the wearer's movement state changes (avoids snap/restart
-        // every frame). On first sight of an entity (lastMoving == null) we always dispatch so the idle
+        // every frame). On first sight of an entity (lastAnimation == null) we always dispatch so the idle
         // loop actually starts at rest instead of waiting for the first movement transition.
         if (animationName != null && entity instanceof LivingEntity living && animator() != null) {
-            boolean moving = living.getDeltaMovement().horizontalDistanceSqr() > 0.0001;
-            Boolean lastMoving = lastMovingByEntity.get(living.getUUID());
-            if (lastMoving == null || lastMoving != moving) {
-                AzCommand cmd = moving ? ANIM_WALKING : ANIM_IDLE;
+            MovementAnimation animation = living.isCrouching()
+                    ? MovementAnimation.CROUCHING
+                    : living.getDeltaMovement().horizontalDistanceSqr() > 0.0001
+                            ? MovementAnimation.WALKING
+                            : MovementAnimation.IDLE;
+            MovementAnimation lastAnimation = lastAnimationByEntity.get(living.getUUID());
+            if (lastAnimation != animation) {
+                AzCommand cmd = switch (animation) {
+                    case IDLE -> ANIM_IDLE;
+                    case WALKING -> ANIM_WALKING;
+                    case CROUCHING -> ANIM_CROUCHING;
+                };
                 cmd.actions().forEach(action -> action.handle(AzDispatchSide.CLIENT, animator()));
-                lastMovingByEntity.put(living.getUUID(), moving);
+                lastAnimationByEntity.put(living.getUUID(), animation);
             }
         }
     }
@@ -283,6 +298,12 @@ public class NichirinArmorRenderer extends AzArmorRenderer {
         }
     }
 
+    /** Matches the kimono torso root to the player's body. */
+    protected void matchKimonoBone(AzBone bone) {
+        if (bone == null || currentBaseModel == null || currentBaseModel.body == null) return;
+        matchBodyBone(currentBaseModel.body, bone);
+    }
+
     /**
      * Matches rotation AND position of an arm ModelPart to a geo bone.
      * Mirrors what AzArmorBoneContext.applyBaseTransformations does for arm bones.
@@ -337,7 +358,7 @@ public class NichirinArmorRenderer extends AzArmorRenderer {
                 PropertyMap properties = profile.getProperties();
                 if (properties.containsKey("textures")) {
                     Property textureProperty = properties.get("textures").iterator().next();
-                    String texturesJson = new String(Base64.getDecoder().decode(textureProperty.getValue()));
+                    String texturesJson = new String(Base64.getDecoder().decode(textureProperty.value()));
                     if (texturesJson.contains("\"slim\"")) {
                         return true;
                     }
@@ -347,8 +368,8 @@ public class NichirinArmorRenderer extends AzArmorRenderer {
 
         try {
             // Method 2: Check the player's model name
-            if (player.getSkinTextureLocation() != null) {
-                return "slim".equals(player.getModelName());
+            if (player.getSkin().texture() != null) {
+                return "slim".equals(player.getSkin().model().id());
             }
         } catch (Exception ignored) {}
 

@@ -2,7 +2,7 @@ package com.xirc.nichirin.common.worldgen.trees.wysteria;
 
 import com.xirc.nichirin.registry.NichirinBlockRegistry;
 import com.xirc.nichirin.registry.NichirinConfiguredFeatures;
-import net.minecraft.data.worldgen.BootstapContext;
+import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.util.valueproviders.UniformInt;
@@ -16,7 +16,7 @@ import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfigur
 
 public class WysteriaConfiguredFeatures {
 
-    public static void bootstrap(BootstapContext<ConfiguredFeature<?, ?>> context) {
+    public static void bootstrap(BootstrapContext<ConfiguredFeature<?, ?>> context) {
         register(context, NichirinConfiguredFeatures.SMALL_WYSTERIA, Feature.TREE, createSmallWysteria().build());
         register(context, NichirinConfiguredFeatures.MEDIUM_WYSTERIA, Feature.TREE, createMediumWysteria().build());
         register(context, NichirinConfiguredFeatures.LARGE_WYSTERIA, Feature.TREE, createLargeWysteria().build());
@@ -62,7 +62,7 @@ public class WysteriaConfiguredFeatures {
     }
 
     private static <FC extends FeatureConfiguration, F extends Feature<FC>>
-    void register(BootstapContext<ConfiguredFeature<?, ?>> context, ResourceKey<ConfiguredFeature<?, ?>> key, F feature, FC configuration) {
+    void register(BootstrapContext<ConfiguredFeature<?, ?>> context, ResourceKey<ConfiguredFeature<?, ?>> key, F feature, FC configuration) {
         context.register(key, new ConfiguredFeature<>(feature, configuration));
     }
 }

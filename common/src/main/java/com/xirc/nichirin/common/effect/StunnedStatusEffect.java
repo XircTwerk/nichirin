@@ -6,6 +6,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
@@ -21,8 +22,8 @@ import net.minecraft.world.entity.ai.attributes.AttributeMap;
  */
 public class StunnedStatusEffect extends MobEffect {
 
-    // UUID for the movement speed modifier
-    private static final UUID MOVEMENT_MODIFIER_UUID = UUID.fromString("9107DE5E-9CE8-5030-941E-514C1F160892");
+    private static final ResourceLocation MOVEMENT_MODIFIER_ID =
+            ResourceLocation.fromNamespaceAndPath("nichirin", "stunned_movement_reduction");
 
     // Track entities that were recently knocked back to allow their movement
     private static final Map<UUID, Long> recentKnockback = new HashMap<>();
@@ -59,27 +60,28 @@ public class StunnedStatusEffect extends MobEffect {
         recentKnockback.remove(entity.getUUID());
     }
 
-    @Override
-    public void addAttributeModifiers(LivingEntity entity, AttributeMap attributeMap, int amplifier) {
+    private static void updateMovementModifier(LivingEntity entity, int amplifier) {
+        var attribute = entity.getAttribute(Attributes.MOVEMENT_SPEED);
+        if (attribute == null) return;
+
         if (amplifier >= 1) {
-            var attribute = entity.getAttribute(Attributes.MOVEMENT_SPEED);
-            if (attribute != null) {
+            if (!attribute.hasModifier(MOVEMENT_MODIFIER_ID)) {
                 AttributeModifier modifier = new AttributeModifier(
-                        MOVEMENT_MODIFIER_UUID,
-                        "Stunned movement reduction",
+                        MOVEMENT_MODIFIER_ID,
                         -0.95, // 95% reduction
-                        AttributeModifier.Operation.MULTIPLY_TOTAL
+                        AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL
                 );
                 attribute.addTransientModifier(modifier);
             }
+        } else {
+            attribute.removeModifier(MOVEMENT_MODIFIER_ID);
         }
     }
 
-    @Override
-    public void removeAttributeModifiers(LivingEntity entity, AttributeMap attributeMap, int amplifier) {
+    public static void removeMovementModifier(LivingEntity entity) {
         var attribute = entity.getAttribute(Attributes.MOVEMENT_SPEED);
         if (attribute != null) {
-            attribute.removeModifier(MOVEMENT_MODIFIER_UUID);
+            attribute.removeModifier(MOVEMENT_MODIFIER_ID);
         }
         // Restore building/flight abilities that were disabled during stun
         if (entity instanceof Player player) {
@@ -92,12 +94,13 @@ public class StunnedStatusEffect extends MobEffect {
     }
 
     @Override
-    public boolean isDurationEffectTick(int duration, int amplifier) {
+    public boolean shouldApplyEffectTickThisTick(int duration, int amplifier) {
         return true; // Apply every tick
     }
 
     @Override
-    public void applyEffectTick(LivingEntity entity, int amplifier) {
+    public boolean applyEffectTick(LivingEntity entity, int amplifier) {
+        updateMovementModifier(entity, amplifier);
         // Check if entity is in knockback grace period
         Long graceEnd = recentKnockback.get(entity.getUUID());
         boolean inGracePeriod = graceEnd != null && entity.level().getGameTime() < graceEnd;
@@ -134,5 +137,7 @@ public class StunnedStatusEffect extends MobEffect {
             mob.setAggressive(false);
             mob.getNavigation().stop();
         }
+
+        return true;
     }
 }

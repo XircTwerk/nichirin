@@ -14,7 +14,7 @@ public abstract class ThunderBreathingAttackBase extends AbstractBreathingAttack
         if (world.isClientSide) return;
         super.hitTarget(target);
         if (hitStun > 0) {
-            target.addEffect(new MobEffectInstance(NichirinEffectRegistry.SHOCKED.get(), hitStun, 0, false, true));
+            target.addEffect(new MobEffectInstance(NichirinEffectRegistry.shocked(), hitStun, 0, false, true));
         }
     }
 
@@ -23,7 +23,7 @@ public abstract class ThunderBreathingAttackBase extends AbstractBreathingAttack
         if (world.isClientSide) return;
         super.hitTargetNoImmunity(target);
         if (hitStun > 0) {
-            target.addEffect(new MobEffectInstance(NichirinEffectRegistry.SHOCKED.get(), hitStun, 0, false, true));
+            target.addEffect(new MobEffectInstance(NichirinEffectRegistry.shocked(), hitStun, 0, false, true));
         }
     }
 

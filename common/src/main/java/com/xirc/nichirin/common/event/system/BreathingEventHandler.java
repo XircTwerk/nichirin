@@ -43,7 +43,7 @@ public class BreathingEventHandler {
         });
 
         // Restore full breath on respawn
-        PlayerEvent.PLAYER_RESPAWN.register((newPlayer, conqueredEnd) -> {
+        PlayerEvent.PLAYER_RESPAWN.register((newPlayer, conqueredEnd, removalReason) -> {
             if (!conqueredEnd) {
                 BreathingManager.restoreFull(newPlayer);
 

@@ -219,13 +219,13 @@ public class TheBigGui extends Screen {
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
         double lx = mouseX / contentScale - CONTENT_X;
         double ly = mouseY / contentScale - CONTENT_Y;
         if (currentSection == GuiSection.SKILLS) {
-            if (skillsSection.handleScroll(lx, ly, delta)) return true;
+            if (skillsSection.handleScroll(lx, ly, verticalAmount)) return true;
         }
-        return super.mouseScrolled(mouseX / contentScale, mouseY / contentScale, delta);
+        return super.mouseScrolled(mouseX / contentScale, mouseY / contentScale, horizontalAmount, verticalAmount);
     }
 
     @Override

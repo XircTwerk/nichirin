@@ -1,7 +1,7 @@
 package com.xirc.nichirin.registry;
 
 import com.xirc.nichirin.common.blocks.*;
-import com.xirc.nichirin.common.worldgen.trees.wysteria.WysteriaTreeGrower;
+import com.xirc.nichirin.common.worldgen.trees.wysteria.WysteriaSaplingBlock;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.minecraft.core.registries.Registries;
@@ -37,69 +37,68 @@ public interface NichirinBlockRegistry {
                     .noOcclusion()));
 
     RegistrySupplier<Block> WYSTERIA_LOG = BLOCKS.register("wysteria_log",
-            () -> new RotatedPillarBlock(BlockBehaviour.Properties.copy(Blocks.OAK_LOG).mapColor(MapColor.COLOR_PURPLE)));
+            () -> new RotatedPillarBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_LOG).mapColor(MapColor.COLOR_PURPLE)));
 
     RegistrySupplier<Block> STRIPPED_WYSTERIA_LOG = BLOCKS.register("stripped_wysteria_log",
-            () -> new RotatedPillarBlock(BlockBehaviour.Properties.copy(Blocks.STRIPPED_OAK_LOG).mapColor(MapColor.COLOR_PURPLE)));
+            () -> new RotatedPillarBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.STRIPPED_OAK_LOG).mapColor(MapColor.COLOR_PURPLE)));
 
     RegistrySupplier<Block> WYSTERIA_WOOD = BLOCKS.register("wysteria_wood",
-            () -> new RotatedPillarBlock(BlockBehaviour.Properties.copy(Blocks.OAK_WOOD).mapColor(MapColor.COLOR_PURPLE)));
+            () -> new RotatedPillarBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_WOOD).mapColor(MapColor.COLOR_PURPLE)));
 
     RegistrySupplier<Block> STRIPPED_WYSTERIA_WOOD = BLOCKS.register("stripped_wysteria_wood",
-            () -> new RotatedPillarBlock(BlockBehaviour.Properties.copy(Blocks.STRIPPED_OAK_WOOD).mapColor(MapColor.COLOR_PURPLE)));
+            () -> new RotatedPillarBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.STRIPPED_OAK_WOOD).mapColor(MapColor.COLOR_PURPLE)));
 
     RegistrySupplier<Block> WYSTERIA_PLANKS = BLOCKS.register("wysteria_planks",
-            () -> new Block(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS).mapColor(MapColor.COLOR_PURPLE)));
+            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_PLANKS).mapColor(MapColor.COLOR_PURPLE)));
 
     RegistrySupplier<Block> WYSTERIA_LEAVES = BLOCKS.register("wysteria_leaves",
-            () -> new WysteriaLeavesBlock(BlockBehaviour.Properties.copy(Blocks.OAK_LEAVES).mapColor(MapColor.COLOR_PURPLE)));
+            () -> new WysteriaLeavesBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_LEAVES).mapColor(MapColor.COLOR_PURPLE)));
 
     RegistrySupplier<Block> WYSTERIA_STAIRS = BLOCKS.register("wysteria_stairs",
             () -> new StairBlock(WYSTERIA_PLANKS.get().defaultBlockState(),
-                    BlockBehaviour.Properties.copy(Blocks.OAK_STAIRS).mapColor(MapColor.COLOR_PURPLE)));
+                    BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_STAIRS).mapColor(MapColor.COLOR_PURPLE)));
 
     RegistrySupplier<Block> WYSTERIA_SLAB = BLOCKS.register("wysteria_slab",
-            () -> new SlabBlock(BlockBehaviour.Properties.copy(Blocks.OAK_SLAB).mapColor(MapColor.COLOR_PURPLE)));
+            () -> new SlabBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_SLAB).mapColor(MapColor.COLOR_PURPLE)));
 
     RegistrySupplier<Block> WYSTERIA_FENCE = BLOCKS.register("wysteria_fence",
-            () -> new FenceBlock(BlockBehaviour.Properties.copy(Blocks.OAK_FENCE).mapColor(MapColor.COLOR_PURPLE)));
+            () -> new FenceBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_FENCE).mapColor(MapColor.COLOR_PURPLE)));
 
     RegistrySupplier<Block> WYSTERIA_FENCE_GATE = BLOCKS.register("wysteria_fence_gate",
-            () -> new FenceGateBlock(BlockBehaviour.Properties.copy(Blocks.OAK_FENCE_GATE).mapColor(MapColor.COLOR_PURPLE),
-                    NichirinWoodTypes.WYSTERIA));
+            () -> new FenceGateBlock(NichirinWoodTypes.WYSTERIA,
+                    BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_FENCE_GATE).mapColor(MapColor.COLOR_PURPLE)));
 
     RegistrySupplier<Block> WYSTERIA_DOOR = BLOCKS.register("wysteria_door",
-            () -> new DoorBlock(BlockBehaviour.Properties.copy(Blocks.OAK_DOOR).mapColor(MapColor.COLOR_PURPLE),
-                    NichirinBlockSetTypes.WYSTERIA));
+            () -> new DoorBlock(NichirinBlockSetTypes.WYSTERIA,
+                    BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_DOOR).mapColor(MapColor.COLOR_PURPLE)));
 
     RegistrySupplier<Block> WYSTERIA_TRAPDOOR = BLOCKS.register("wysteria_trapdoor",
-            () -> new TrapDoorBlock(BlockBehaviour.Properties.copy(Blocks.OAK_TRAPDOOR).mapColor(MapColor.COLOR_PURPLE),
-                    NichirinBlockSetTypes.WYSTERIA));
+            () -> new TrapDoorBlock(NichirinBlockSetTypes.WYSTERIA,
+                    BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_TRAPDOOR).mapColor(MapColor.COLOR_PURPLE)));
 
     RegistrySupplier<Block> WYSTERIA_PRESSURE_PLATE = BLOCKS.register("wysteria_pressure_plate",
-            () -> new PressurePlateBlock(PressurePlateBlock.Sensitivity.EVERYTHING,
-                    BlockBehaviour.Properties.copy(Blocks.OAK_PRESSURE_PLATE).mapColor(MapColor.COLOR_PURPLE),
-                    NichirinBlockSetTypes.WYSTERIA));
+            () -> new PressurePlateBlock(NichirinBlockSetTypes.WYSTERIA,
+                    BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_PRESSURE_PLATE).mapColor(MapColor.COLOR_PURPLE)));
 
     RegistrySupplier<Block> WYSTERIA_BUTTON = BLOCKS.register("wysteria_button",
-            () -> new ButtonBlock(BlockBehaviour.Properties.copy(Blocks.OAK_BUTTON).mapColor(MapColor.COLOR_PURPLE),
-                    NichirinBlockSetTypes.WYSTERIA, 30, true));
+            () -> new ButtonBlock(NichirinBlockSetTypes.WYSTERIA, 30,
+                    BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_BUTTON).mapColor(MapColor.COLOR_PURPLE)));
 
     RegistrySupplier<Block> WYSTERIA_SAPLING = BLOCKS.register("wysteria_sapling",
-            () -> new SaplingBlock(new WysteriaTreeGrower(), BlockBehaviour.Properties.copy(Blocks.OAK_SAPLING)));
+            () -> new WysteriaSaplingBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_SAPLING)));
 
     // Tatami shi by Nacho
     RegistrySupplier<Block> TATAMI_BLOCK = BLOCKS.register("tatami_block",
-            () -> new RotatedPillarBlock(BlockBehaviour.Properties.copy(Blocks.OAK_LOG)));
+            () -> new RotatedPillarBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_LOG)));
 
     RegistrySupplier<Item> TATAMI_BLOCK_ITEM = ITEMS.register("tatami_block",
             () -> new BlockItem(TATAMI_BLOCK.get(), new Item.Properties()));
 
     RegistrySupplier<Block> INFINITY_GLASS1 = BLOCKS.register("infinity_glass1",
-            () -> new Block(BlockBehaviour.Properties.copy(Blocks.GLASS)));
+            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.GLASS)));
 
     RegistrySupplier<Block> INFINITY_GLASS2 = BLOCKS.register("infinity_glass2",
-            () -> new Block(BlockBehaviour.Properties.copy(Blocks.GLASS)));
+            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.GLASS)));
     RegistrySupplier<Item> INFINITY_GLASS1_ITEM = ITEMS.register("infinity_glass1",
             () -> new BlockItem(INFINITY_GLASS1.get(), new Item.Properties()));
     RegistrySupplier<Item> INFINITY_GLASS2_ITEM = ITEMS.register("infinity_glass2",

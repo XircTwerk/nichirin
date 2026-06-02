@@ -408,26 +408,25 @@ public class AttackWheelOverlay {
 
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
         Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder bufferBuilder = tesselator.getBuilder();
 
-        bufferBuilder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
+        BufferBuilder bufferBuilder = tesselator.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
 
         for (int i = 0; i < segments; i++) {
             float angle1 = (float) Math.toRadians(i * angleStep);
             float angle2 = (float) Math.toRadians((i + 1) * angleStep);
 
-            bufferBuilder.vertex(centerX, centerY, 0).color(r, g, b, a).endVertex();
+            bufferBuilder.addVertex(centerX, centerY, 0).setColor(r, g, b, a);
 
             float x1 = centerX + radius * (float) Math.cos(angle1);
             float y1 = centerY + radius * (float) Math.sin(angle1);
             float x2 = centerX + radius * (float) Math.cos(angle2);
             float y2 = centerY + radius * (float) Math.sin(angle2);
 
-            bufferBuilder.vertex(x1, y1, 0).color(r, g, b, a).endVertex();
-            bufferBuilder.vertex(x2, y2, 0).color(r, g, b, a).endVertex();
+            bufferBuilder.addVertex(x1, y1, 0).setColor(r, g, b, a);
+            bufferBuilder.addVertex(x2, y2, 0).setColor(r, g, b, a);
         }
 
-        tesselator.end();
+        BufferUploader.drawWithShader(bufferBuilder.buildOrThrow());
     }
 
     private void drawSegment(GuiGraphics guiGraphics, int centerX, int centerY, float startAngle, float endAngle, boolean isHovered) {
@@ -436,9 +435,8 @@ public class AttackWheelOverlay {
 
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
         Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder bufferBuilder = tesselator.getBuilder();
 
-        bufferBuilder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
+        BufferBuilder bufferBuilder = tesselator.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
 
         float r = isHovered ? 0.4f : 0.3f;
         float g = isHovered ? 0.4f : 0.3f;
@@ -460,17 +458,17 @@ public class AttackWheelOverlay {
             float y2Outer = centerY + OUTER_RADIUS * (float) Math.sin(angle2);
 
             // Triangle 1
-            bufferBuilder.vertex(x1Inner, y1Inner, 0).color(r, g, b, a).endVertex();
-            bufferBuilder.vertex(x1Outer, y1Outer, 0).color(r, g, b, a).endVertex();
-            bufferBuilder.vertex(x2Outer, y2Outer, 0).color(r, g, b, a).endVertex();
+            bufferBuilder.addVertex(x1Inner, y1Inner, 0).setColor(r, g, b, a);
+            bufferBuilder.addVertex(x1Outer, y1Outer, 0).setColor(r, g, b, a);
+            bufferBuilder.addVertex(x2Outer, y2Outer, 0).setColor(r, g, b, a);
 
             // Triangle 2
-            bufferBuilder.vertex(x1Inner, y1Inner, 0).color(r, g, b, a).endVertex();
-            bufferBuilder.vertex(x2Outer, y2Outer, 0).color(r, g, b, a).endVertex();
-            bufferBuilder.vertex(x2Inner, y2Inner, 0).color(r, g, b, a).endVertex();
+            bufferBuilder.addVertex(x1Inner, y1Inner, 0).setColor(r, g, b, a);
+            bufferBuilder.addVertex(x2Outer, y2Outer, 0).setColor(r, g, b, a);
+            bufferBuilder.addVertex(x2Inner, y2Inner, 0).setColor(r, g, b, a);
         }
 
-        tesselator.end();
+        BufferUploader.drawWithShader(bufferBuilder.buildOrThrow());
     }
 
     private void drawCircle(GuiGraphics guiGraphics, int centerX, int centerY, int radius, float r, float g, float b, float a) {

@@ -2,20 +2,24 @@ package com.xirc.nichirin.common.blocks;
 
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.registry.NichirinBlockEntityRegistry;
+import com.mojang.serialization.MapCodec;
 import lombok.Getter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.Item.TooltipContext;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -42,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class KatanaHolderBlock extends BaseEntityBlock {
+    public static final MapCodec<KatanaHolderBlock> CODEC = simpleCodec(KatanaHolderBlock::new);
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
     public static final BooleanProperty ROTATED = BooleanProperty.create("rotated");
 
@@ -64,6 +69,11 @@ public class KatanaHolderBlock extends BaseEntityBlock {
         this.registerDefaultState(this.stateDefinition.any()
                 .setValue(FACING, Direction.UP)
                 .setValue(ROTATED, false));
+    }
+
+    @Override
+    protected MapCodec<? extends BaseEntityBlock> codec() {
+        return CODEC;
     }
 
     @Override
@@ -102,7 +112,7 @@ public class KatanaHolderBlock extends BaseEntityBlock {
     }
 
     @Override
-    public @NotNull ItemStack getCloneItemStack(@NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull BlockState state) {
+    public @NotNull ItemStack getCloneItemStack(@NotNull LevelReader level, @NotNull BlockPos pos, @NotNull BlockState state) {
         return new ItemStack(this);
     }
 
@@ -123,7 +133,7 @@ public class KatanaHolderBlock extends BaseEntityBlock {
     }
 
     @Override
-    public void appendHoverText(@NotNull ItemStack stack, @javax.annotation.Nullable BlockGetter level, List<Component> tooltip, @NotNull TooltipFlag flag) {
+    public void appendHoverText(@NotNull ItemStack stack, TooltipContext context, List<Component> tooltip, @NotNull TooltipFlag flag) {
         tooltip.add(Component.literal("Crouch Right click the block to rotate by 90°").withStyle(ChatFormatting.GRAY));
     }
 
@@ -137,7 +147,19 @@ public class KatanaHolderBlock extends BaseEntityBlock {
     }
 
     @Override
-    public @NotNull InteractionResult use(@NotNull BlockState state, Level level, @NotNull BlockPos pos, @NotNull Player player, @NotNull InteractionHand hand, @NotNull BlockHitResult hit) {
+    protected @NotNull InteractionResult useWithoutItem(@NotNull BlockState state, Level level, @NotNull BlockPos pos, @NotNull Player player, @NotNull BlockHitResult hit) {
+        return interact(state, level, pos, player, InteractionHand.MAIN_HAND);
+    }
+
+    @Override
+    protected @NotNull ItemInteractionResult useItemOn(@NotNull ItemStack stack, @NotNull BlockState state, Level level,
+                                                       @NotNull BlockPos pos, @NotNull Player player,
+                                                       @NotNull InteractionHand hand, @NotNull BlockHitResult hit) {
+        interact(state, level, pos, player, hand);
+        return ItemInteractionResult.sidedSuccess(level.isClientSide);
+    }
+
+    private InteractionResult interact(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand) {
         if (level.isClientSide) {
             return InteractionResult.SUCCESS;
         }
@@ -168,7 +190,7 @@ public class KatanaHolderBlock extends BaseEntityBlock {
             katanaToPlace.setCount(1);
             holderEntity.setKatana(katanaToPlace);
             handItem.shrink(1);
-            level.playSound(null, pos, SoundEvents.ARMOR_EQUIP_GENERIC, SoundSource.BLOCKS, 0.8f, 1.2f);
+            level.playSound(null, pos, SoundEvents.ARMOR_EQUIP_GENERIC.value(), SoundSource.BLOCKS, 0.8f, 1.2f);
         }
 
         return InteractionResult.SUCCESS;
@@ -269,10 +291,10 @@ public class KatanaHolderBlock extends BaseEntityBlock {
         }
 
         @Override
-        public void load(@NotNull CompoundTag tag) {
-            super.load(tag);
+        protected void loadAdditional(@NotNull CompoundTag tag, HolderLookup.Provider provider) {
+            super.loadAdditional(tag, provider);
             if (tag.contains(KATANA_TAG)) {
-                storedKatana = ItemStack.of(tag.getCompound(KATANA_TAG));
+                storedKatana = ItemStack.parseOptional(provider, tag.getCompound(KATANA_TAG));
             } else {
                 // Explicit empty marker OR missing tag both mean no katana
                 storedKatana = ItemStack.EMPTY;
@@ -280,18 +302,18 @@ public class KatanaHolderBlock extends BaseEntityBlock {
         }
 
         @Override
-        protected void saveAdditional(@NotNull CompoundTag tag) {
-            super.saveAdditional(tag);
+        protected void saveAdditional(@NotNull CompoundTag tag, HolderLookup.Provider provider) {
+            super.saveAdditional(tag, provider);
             if (!storedKatana.isEmpty()) {
-                tag.put(KATANA_TAG, storedKatana.save(new CompoundTag()));
+                tag.put(KATANA_TAG, storedKatana.save(provider, new CompoundTag()));
             }
         }
 
         @Override
-        public @NotNull CompoundTag getUpdateTag() {
-            CompoundTag tag = super.getUpdateTag();
+        public @NotNull CompoundTag getUpdateTag(HolderLookup.Provider provider) {
+            CompoundTag tag = super.getUpdateTag(provider);
             if (!storedKatana.isEmpty()) {
-                tag.put(KATANA_TAG, storedKatana.save(new CompoundTag()));
+                tag.put(KATANA_TAG, storedKatana.save(provider, new CompoundTag()));
             } else {
                 // Always write an explicit empty marker so the client clears its rendered katana
                 tag.putBoolean("HasKatana", false);

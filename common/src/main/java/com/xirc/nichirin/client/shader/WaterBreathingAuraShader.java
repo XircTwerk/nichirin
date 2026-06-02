@@ -19,7 +19,7 @@ public class WaterBreathingAuraShader extends NichirinPostProcessor {
 
     @Override
     public ResourceLocation getShaderEffectId() {
-        return new ResourceLocation("nichirin", "water_breathing_aura");
+        return ResourceLocation.fromNamespaceAndPath("nichirin", "water_breathing_aura");
     }
 
     public void setBreathIntensity(float intensity) {

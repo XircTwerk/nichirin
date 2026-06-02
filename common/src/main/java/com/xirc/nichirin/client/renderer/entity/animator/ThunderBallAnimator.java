@@ -2,18 +2,18 @@ package com.xirc.nichirin.client.renderer.entity.animator;
 
 import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.common.entity.attack.ThunderBallEntity;
-import mod.azure.azurelib.animation.controller.AzAnimationController;
-import mod.azure.azurelib.animation.controller.AzAnimationControllerContainer;
-import mod.azure.azurelib.animation.dispatch.AzDispatchSide;
-import mod.azure.azurelib.animation.dispatch.command.AzCommand;
-import mod.azure.azurelib.animation.impl.AzEntityAnimator;
-import mod.azure.azurelib.animation.play_behavior.AzPlayBehaviors;
+import mod.azure.azurelib.common.animation.controller.AzAnimationController;
+import mod.azure.azurelib.common.animation.controller.AzAnimationControllerContainer;
+import mod.azure.azurelib.common.animation.dispatch.AzDispatchSide;
+import mod.azure.azurelib.common.animation.dispatch.command.AzCommand;
+import mod.azure.azurelib.common.animation.impl.AzEntityAnimator;
+import mod.azure.azurelib.common.animation.play_behavior.AzPlayBehaviors;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 
 public class ThunderBallAnimator extends AzEntityAnimator<ThunderBallEntity> {
 
-    private static final ResourceLocation ANIMATIONS = new ResourceLocation(
+    private static final ResourceLocation ANIMATIONS = ResourceLocation.fromNamespaceAndPath(
             BreathOfNichirin.MOD_ID,
             "animations/thunder_ball.animation.json"
     );

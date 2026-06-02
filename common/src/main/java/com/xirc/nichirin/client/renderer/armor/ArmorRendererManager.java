@@ -1,9 +1,9 @@
 package com.xirc.nichirin.client.renderer.armor;
 
 import com.xirc.nichirin.registry.NichirinItemRegistry;
-import mod.azure.azurelib.animation.cache.AzIdentityRegistry;
-import mod.azure.azurelib.render.armor.AzArmorRenderer;
-import mod.azure.azurelib.render.armor.AzArmorRendererRegistry;
+import mod.azure.azurelib.common.animation.cache.AzIdentityRegistry;
+import mod.azure.azurelib.common.render.armor.AzArmorRenderer;
+import mod.azure.azurelib.common.render.armor.AzArmorRendererRegistry;
 import net.minecraft.world.item.Item;
 
 import java.util.function.Supplier;

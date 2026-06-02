@@ -1,8 +1,8 @@
 package com.xirc.nichirin.client.renderer.armor.core;
 
-import mod.azure.azurelib.model.AzBakedModel;
-import mod.azure.azurelib.model.AzBone;
-import mod.azure.azurelib.render.armor.bone.AzArmorBoneProvider;
+import mod.azure.azurelib.common.model.AzBakedModel;
+import mod.azure.azurelib.common.model.AzBone;
+import mod.azure.azurelib.common.render.armor.bone.AzArmorBoneProvider;
 import org.jetbrains.annotations.Nullable;
 
 /**

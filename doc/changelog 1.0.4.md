@@ -23,7 +23,7 @@ This release is a major gameplay and polish update for Nichirin. We've managed t
 - Urokodaki spawns in his house.
 - New recipes, spawn eggs, language entries, animations, sounds, and visual assets.
 - Demon blood vial item so you can actually become a demon in survival.
-- Using the 1-9 keys with attack wheel open actually executes a move, so you dont have to click on the indiviual segments anymore. 
+- Using the 1-9 keys with attack wheel open actually executes a move, so you dont have to click on the indiviual segments anymore.
 
 ## Changed
 

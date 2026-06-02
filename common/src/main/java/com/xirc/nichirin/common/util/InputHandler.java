@@ -40,10 +40,10 @@ public class InputHandler {
     private static final long INTERACTION_BLOCK_TICKS = 0;
 
     // Packet IDs
-    private static final ResourceLocation LEFT_CLICK_ID = new ResourceLocation("nichirin", "katana_left");
-    private static final ResourceLocation RIGHT_CLICK_ID = new ResourceLocation("nichirin", "katana_right");
-    private static final ResourceLocation RIGHT_CROUCH_ID = new ResourceLocation("nichirin", "katana_right_crouch");
-    private static final ResourceLocation FEEDBACK_ID = new ResourceLocation("nichirin", "katana_feedback");
+    private static final ResourceLocation LEFT_CLICK_ID = ResourceLocation.fromNamespaceAndPath("nichirin", "katana_left");
+    private static final ResourceLocation RIGHT_CLICK_ID = ResourceLocation.fromNamespaceAndPath("nichirin", "katana_right");
+    private static final ResourceLocation RIGHT_CROUCH_ID = ResourceLocation.fromNamespaceAndPath("nichirin", "katana_right_crouch");
+    private static final ResourceLocation FEEDBACK_ID = ResourceLocation.fromNamespaceAndPath("nichirin", "katana_feedback");
 
     public static void register() {
         registerServerPackets();
@@ -167,7 +167,7 @@ public class InputHandler {
         }
 
         // Check effect blocking
-        return player.hasEffect(NichirinEffectRegistry.BLOCKING.get());
+        return player.hasEffect(NichirinEffectRegistry.blocking());
     }
 
     private static void sendFeedback(ServerPlayer player, String moveName, boolean crouch) {
@@ -183,7 +183,7 @@ public class InputHandler {
                 buf.writeBoolean(crouch);
             }
 
-            NetworkManager.sendToPlayer(player, FEEDBACK_ID, buf);
+            NetworkManager.sendToPlayer(player, FEEDBACK_ID, NetworkBufferUtils.server(buf, player));
         } catch (Exception e) {
             // Ignore networking errors
         }

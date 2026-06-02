@@ -32,7 +32,7 @@ public class MistBlurShaderHandler {
     private static void tick(Minecraft minecraft) {
         if (minecraft.player == null || minecraft.level == null) return;
 
-        boolean hasEffect = minecraft.player.hasEffect(NichirinEffectRegistry.BLURRY.get());
+        boolean hasEffect = minecraft.player.hasEffect(NichirinEffectRegistry.blurry());
 
         if (hasEffect) {
             if (!shader.isActive()) shader.setActive(true);

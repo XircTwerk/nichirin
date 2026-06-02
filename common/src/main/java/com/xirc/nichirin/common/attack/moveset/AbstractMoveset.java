@@ -37,8 +37,8 @@ import java.util.concurrent.TimeUnit;
 @Getter
 public abstract class  AbstractMoveset {
 
-    // UUID for the movement speed modifier
-    private static final UUID SPEED_MODIFIER_UUID = UUID.fromString("A1B2C3D4-E5F6-7890-ABCD-EF1234567890");
+    private static final ResourceLocation SPEED_MODIFIER_ID =
+            ResourceLocation.fromNamespaceAndPath("nichirin", "moveset_speed_modifier");
 
     // Simple getters for AbstractMoveset fields (Lombok @Getter not working)
     private final String movesetId;
@@ -199,10 +199,9 @@ public abstract class  AbstractMoveset {
             modifierValue = Math.max(-0.95, Math.min(modifierValue, 10.0));
 
             AttributeModifier modifier = new AttributeModifier(
-                    SPEED_MODIFIER_UUID,
-                    "moveset_speed_modifier",
+                    SPEED_MODIFIER_ID,
                     modifierValue,
-                    AttributeModifier.Operation.MULTIPLY_TOTAL
+                    AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL
             );
 
             Objects.requireNonNull(entity.getAttribute(Attributes.MOVEMENT_SPEED)).addTransientModifier(modifier);
@@ -213,14 +212,14 @@ public abstract class  AbstractMoveset {
      * Remove the moveset's speed modifier from an entity
      */
     public void removeSpeedModifier(LivingEntity entity) {
-        Objects.requireNonNull(entity.getAttribute(Attributes.MOVEMENT_SPEED)).removeModifier(SPEED_MODIFIER_UUID);
+        Objects.requireNonNull(entity.getAttribute(Attributes.MOVEMENT_SPEED)).removeModifier(SPEED_MODIFIER_ID);
     }
 
     /**
      * Override the left-click (M1) behavior - works for both Player and NPC
      */
     public boolean handleLeftClick(LivingEntity entity) {
-        if (entity.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+        if (entity.hasEffect(NichirinEffectRegistry.stunned())) {
             return true;
         }
 
@@ -259,7 +258,7 @@ public abstract class  AbstractMoveset {
      * Override the right-click (M2) behavior for SimpleKatana with stun checking and followup queuing
      */
     public boolean handleRightClick(LivingEntity entity, boolean isCrouching) {
-        if (entity.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+        if (entity.hasEffect(NichirinEffectRegistry.stunned())) {
             // Check if we should queue a followup
             FollowupQueue queue = entityFollowupQueues.get(entity.getUUID());
             if (queue != null && queue.isAttackActive(System.currentTimeMillis()) && queue.canQueueNext()) {
@@ -402,7 +401,7 @@ public abstract class  AbstractMoveset {
      * Performs a move by index with automatic animation handling - WORKS FOR ENTITIES
      */
     public void performMove(LivingEntity entity, int moveIndex) {
-        if (entity.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+        if (entity.hasEffect(NichirinEffectRegistry.stunned())) {
             return;
         }
 
@@ -540,7 +539,7 @@ public abstract class  AbstractMoveset {
 
         if (totalStunTicks > 0) {
             MobEffectInstance stunEffect = new MobEffectInstance(
-                    NichirinEffectRegistry.STUNNED.get(),
+                    NichirinEffectRegistry.stunned(),
                     totalStunTicks,
                     0,
                     false,
@@ -555,7 +554,7 @@ public abstract class  AbstractMoveset {
      * Check if the entity can perform moves (not stunned)
      */
     public boolean canPerformMoves(LivingEntity entity) {
-        return !entity.hasEffect(NichirinEffectRegistry.STUNNED.get());
+        return !entity.hasEffect(NichirinEffectRegistry.stunned());
     }
 
     /**
@@ -951,7 +950,7 @@ public abstract class  AbstractMoveset {
         }
 
         public FollowupBuilder withAnimation(String animationId, int priority) {
-            this.followupAnimationId = new ResourceLocation(animationId);
+            this.followupAnimationId = ResourceLocation.parse(animationId);
             this.followupAnimationPriority = priority;
             return this;
         }
@@ -1057,7 +1056,7 @@ public abstract class  AbstractMoveset {
         }
 
         public MoveBuilder withAnimation(String animationId, int priority) {
-            this.animationId = new ResourceLocation(animationId);
+            this.animationId = ResourceLocation.parse(animationId);
             this.animationPriority = priority;
             return this;
         }
@@ -1190,7 +1189,7 @@ public abstract class  AbstractMoveset {
         final List<MoveConfiguration> moveConfigs = new ArrayList<>();
 
         public MovesetBuilder withIdleAnimation(String idleAnimation) {
-            this.idleAnimation = new ResourceLocation(idleAnimation);
+            this.idleAnimation = ResourceLocation.parse(idleAnimation);
             return this;
         }
 

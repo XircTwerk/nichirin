@@ -8,7 +8,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.phys.Vec3;
-import java.util.UUID;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 
 /**
@@ -144,10 +144,10 @@ public final class EntityMovement {
         var speedAttr = entity.getAttribute(Attributes.MOVEMENT_SPEED);
         if (speedAttr == null) return;
 
-        var existing = speedAttr.getModifier(SPRINT_UUID);
+        var existing = speedAttr.getModifier(SPRINT_ID);
         if (existing == null) {
             speedAttr.addTransientModifier(new AttributeModifier(
-                    SPRINT_UUID, "npc_sprint", sprintMultiplier() - 1.0, AttributeModifier.Operation.MULTIPLY_BASE
+                    SPRINT_ID, sprintMultiplier() - 1.0, AttributeModifier.Operation.ADD_MULTIPLIED_BASE
             ));
         }
     }
@@ -155,11 +155,11 @@ public final class EntityMovement {
     public static void clearSprint(LivingEntity entity) {
         entity.setSprinting(false);
         var speedAttr = entity.getAttribute(Attributes.MOVEMENT_SPEED);
-        if (speedAttr != null) speedAttr.removeModifier(SPRINT_UUID);
+        if (speedAttr != null) speedAttr.removeModifier(SPRINT_ID);
     }
 
-    private static final UUID SPRINT_UUID =
-            UUID.fromString("B3C4D5E6-F7A8-9012-BCDE-F12345678901");
+    private static final ResourceLocation SPRINT_ID =
+            ResourceLocation.fromNamespaceAndPath("nichirin", "npc_sprint");
 
 
     private static Vec3 findSafePosition(LivingEntity entity, Vec3 direction, double maxDist) {

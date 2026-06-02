@@ -106,7 +106,7 @@ public class PlayerDataProvider {
         });
 
         // Handle player respawn
-        PlayerEvent.PLAYER_RESPAWN.register((newPlayer, conqueredEnd) -> {
+        PlayerEvent.PLAYER_RESPAWN.register((newPlayer, conqueredEnd, removalReason) -> {
             // Only process server players
             if (newPlayer.level().isClientSide()) return;
 

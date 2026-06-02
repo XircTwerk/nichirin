@@ -1,6 +1,6 @@
 package com.xirc.nichirin.common.worldgen.structure;
 
-import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.xirc.nichirin.common.worldgen.structure.pieces.UrokodakiHousePiece;
 import com.xirc.nichirin.registry.NichirinStructureTypeRegistry;
 import net.minecraft.core.BlockPos;
@@ -14,7 +14,7 @@ import net.minecraft.world.level.levelgen.structure.pieces.StructurePiecesBuilde
 import java.util.Optional;
 
 public class UrokodakiHouseStructure extends Structure {
-    public static final Codec<UrokodakiHouseStructure> CODEC =
+    public static final MapCodec<UrokodakiHouseStructure> CODEC =
             simpleCodec(UrokodakiHouseStructure::new);
 
     public UrokodakiHouseStructure(StructureSettings settings) {

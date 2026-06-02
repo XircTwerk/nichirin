@@ -44,7 +44,7 @@ public class KatanaHolderBlockRenderer implements BlockEntityRenderer<KatanaHold
 
         Minecraft mc = Minecraft.getInstance();
         ModelResourceLocation modelLocation = new ModelResourceLocation(
-                new ResourceLocation("nichirin", "katana_holder_block"), "facing=up,rotated=false");
+                ResourceLocation.fromNamespaceAndPath("nichirin", "katana_holder_block"), "facing=up,rotated=false");
         BakedModel model = mc.getModelManager().getModel(modelLocation);
 
         if (model == null || model == mc.getModelManager().getMissingModel()) {
@@ -107,13 +107,13 @@ public class KatanaHolderBlockRenderer implements BlockEntityRenderer<KatanaHold
         for (Direction dir : Direction.values()) {
             List<BakedQuad> quads = model.getQuads(blockEntity.getBlockState(), dir, random);
             for (BakedQuad quad : quads) {
-                buffer.putBulkData(poseStack.last(), quad, 1.0f, 1.0f, 1.0f, packedLight, packedOverlay);
+                buffer.putBulkData(poseStack.last(), quad, 1.0f, 1.0f, 1.0f, 1.0f, packedLight, packedOverlay);
             }
         }
 
         List<BakedQuad> generalQuads = model.getQuads(blockEntity.getBlockState(), null, random);
         for (BakedQuad quad : generalQuads) {
-            buffer.putBulkData(poseStack.last(), quad, 1.0f, 1.0f, 1.0f, packedLight, packedOverlay);
+            buffer.putBulkData(poseStack.last(), quad, 1.0f, 1.0f, 1.0f, 1.0f, packedLight, packedOverlay);
         }
 
         poseStack.popPose();

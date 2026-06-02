@@ -3,6 +3,7 @@ package com.xirc.nichirin.common.network.s2c;
 import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.client.data.ClientProgressionCache;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
+import com.xirc.nichirin.common.util.NetworkBufferUtils;
 import com.xirc.nichirin.registry.NichirinMovesetRegistry;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
@@ -18,7 +19,7 @@ import java.util.Set;
  */
 public class ProgressionSyncPacket {
 
-    public static final ResourceLocation SYNC_PROGRESSION = new ResourceLocation(BreathOfNichirin.MOD_ID, "sync_progression");
+    public static final ResourceLocation SYNC_PROGRESSION = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "sync_progression");
 
     public static void register() {
         // Client receives unlock status from server
@@ -56,6 +57,6 @@ public class ProgressionSyncPacket {
             buf.writeUtf(moveset);
         }
 
-        NetworkManager.sendToPlayer(player, SYNC_PROGRESSION, buf);
+        NetworkManager.sendToPlayer(player, SYNC_PROGRESSION, NetworkBufferUtils.server(buf, player));
     }
 }

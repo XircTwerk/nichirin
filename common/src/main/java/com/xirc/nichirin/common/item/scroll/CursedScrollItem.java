@@ -9,6 +9,7 @@ import com.xirc.nichirin.common.system.perks.PerkData;
 import com.xirc.nichirin.common.system.perks.PerkDefinition;
 import com.xirc.nichirin.common.system.perks.PerkManager;
 import com.xirc.nichirin.common.system.perks.PerkTier;
+import com.xirc.nichirin.common.util.ItemStackData;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -20,6 +21,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.Item.TooltipContext;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,14 +42,14 @@ public class CursedScrollItem extends Item {
 
     public static ItemStack forPerk(Item scrollItem, String perkId) {
         ItemStack stack = new ItemStack(scrollItem);
-        stack.getOrCreateTag().putString(TAG_PERK_ID, perkId);
+        ItemStackData.update(stack, tag -> tag.putString(TAG_PERK_ID, perkId));
         return stack;
     }
 
     @Nullable
     public static String getPerkId(ItemStack stack) {
-        if (!stack.hasTag()) return null;
-        String id = stack.getTag().getString(TAG_PERK_ID);
+        if (!ItemStackData.has(stack, TAG_PERK_ID)) return null;
+        String id = ItemStackData.get(stack).getString(TAG_PERK_ID);
         return id.isEmpty() ? null : id;
     }
 
@@ -150,8 +152,8 @@ public class CursedScrollItem extends Item {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
-        super.appendHoverText(stack, level, tooltip, flag);
+    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+        super.appendHoverText(stack, context, tooltip, flag);
         if (PerkArchive.ARCHIVED) return;
         String perkId = getPerkId(stack);
         if (perkId == null) {

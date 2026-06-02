@@ -4,7 +4,7 @@ import com.xirc.nichirin.client.renderer.entity.dispatcher.TempleDemonDispatcher
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.attack.moveset.demon.DefaultDemonMoveset;
 import com.xirc.nichirin.common.system.GrabManager;
-import mod.azure.azurelib.util.MoveAnalysis;
+import mod.azure.azurelib.common.util.MoveAnalysis;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -140,7 +140,7 @@ public class TempleDemonEntity extends DemonNPCEntity {
         if ((level.getGameTime() % 4) == 0) {
             this.hurt(this.damageSources().onFire(), 1.0f);
         }
-        this.setSecondsOnFire(4);
+        this.igniteForSeconds(4);
     }
 
     private void updateAnimations() {
@@ -368,7 +368,7 @@ public class TempleDemonEntity extends DemonNPCEntity {
                 demon.getLookControl().setLookAt(target, 30.0F, 30.0F);
 
                 // Stunned demons can't act or move — no dashing or attacking.
-                if (demon.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.STUNNED.get())) {
+                if (demon.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.stunned())) {
                     demon.getNavigation().stop();
                     return;
                 }
@@ -424,7 +424,7 @@ public class TempleDemonEntity extends DemonNPCEntity {
         }
 
         @Override
-        protected void checkAndPerformAttack(LivingEntity target, double distanceSquared) {
+        protected void checkAndPerformAttack(LivingEntity target) {
             // No-op: attacks are driven from tick() directly
         }
 
@@ -644,11 +644,6 @@ public class TempleDemonEntity extends DemonNPCEntity {
             Vec3 toTarget = target.position().subtract(demon.position()).normalize();
             Vec3 targetVel = target.getDeltaMovement().normalize();
             return toTarget.dot(targetVel) < -0.3;
-        }
-
-        @Override
-        protected double getAttackReachSqr(LivingEntity target) {
-            return 100.0; // Actual range is enforced per-move above
         }
 
         @Override

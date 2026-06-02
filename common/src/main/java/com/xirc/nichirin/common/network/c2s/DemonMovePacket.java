@@ -39,7 +39,7 @@ public class DemonMovePacket {
     }
 
     public void handle(ServerPlayer player) {
-        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+        if (player.hasEffect(NichirinEffectRegistry.stunned())) {
             return;
         }
 

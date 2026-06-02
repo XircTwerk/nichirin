@@ -1,8 +1,8 @@
 package com.xirc.nichirin.client.renderer.entity.dispatcher;
 
 import com.xirc.nichirin.common.entity.npc.TempleDemonEntity;
-import mod.azure.azurelib.animation.dispatch.command.AzCommand;
-import mod.azure.azurelib.animation.play_behavior.AzPlayBehaviors;
+import mod.azure.azurelib.common.animation.dispatch.command.AzCommand;
+import mod.azure.azurelib.common.animation.play_behavior.AzPlayBehaviors;
 
 public class TempleDemonDispatcher {
 

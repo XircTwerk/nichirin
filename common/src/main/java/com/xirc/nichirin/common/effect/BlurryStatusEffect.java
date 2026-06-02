@@ -19,15 +19,15 @@ public class BlurryStatusEffect extends MobEffect {
     }
 
     @Override
-    public boolean isDurationEffectTick(int duration, int amplifier) {
+    public boolean shouldApplyEffectTickThisTick(int duration, int amplifier) {
         // Apply every 10 ticks (0.5s) to avoid flooding navigation
         return duration % 10 == 0;
     }
 
     @Override
-    public void applyEffectTick(LivingEntity entity, int amplifier) {
-        if (entity.level().isClientSide) return;
-        if (!(entity instanceof Mob mob)) return;
+    public boolean applyEffectTick(LivingEntity entity, int amplifier) {
+        if (entity.level().isClientSide) return false;
+        if (!(entity instanceof Mob mob)) return false;
 
         // Send the mob to a random position far from their actual target
         Vec3 pos = entity.position();
@@ -39,5 +39,6 @@ public class BlurryStatusEffect extends MobEffect {
         mob.getNavigation().moveTo(targetX, pos.y, targetZ, 1.0);
         // Also temporarily forget the current attack target so they don't immediately snap back
         mob.setTarget(null);
+        return true;
     }
 }

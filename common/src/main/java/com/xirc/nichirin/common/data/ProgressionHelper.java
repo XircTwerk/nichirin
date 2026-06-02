@@ -45,44 +45,44 @@ public class ProgressionHelper {
             switch (movesetId) {
                 case "thunder_breathing" -> {
                     if (NichirinCriteriaTriggers.THUNDER_BREATHING_TRIGGER != null) {
-                        NichirinCriteriaTriggers.THUNDER_BREATHING_TRIGGER.trigger(serverPlayer);
+                        NichirinCriteriaTriggers.THUNDER_BREATHING_TRIGGER.get().trigger(serverPlayer);
                     }
                 }
                 case "flame_breathing" -> {
                     if (NichirinCriteriaTriggers.FLAME_BREATHING_TRIGGER != null) {
-                        NichirinCriteriaTriggers.FLAME_BREATHING_TRIGGER.trigger(serverPlayer);
+                        NichirinCriteriaTriggers.FLAME_BREATHING_TRIGGER.get().trigger(serverPlayer);
                     }
                 }
                 case "insect_breathing" -> {
                     if (NichirinCriteriaTriggers.INSECT_BREATHING_TRIGGER != null) {
-                        NichirinCriteriaTriggers.INSECT_BREATHING_TRIGGER.trigger(serverPlayer);
+                        NichirinCriteriaTriggers.INSECT_BREATHING_TRIGGER.get().trigger(serverPlayer);
                     }
                 }
                 case "sound_breathing" -> {
                     if (NichirinCriteriaTriggers.SOUND_BREATHING_TRIGGER != null) {
-                        NichirinCriteriaTriggers.SOUND_BREATHING_TRIGGER.trigger(serverPlayer);
+                        NichirinCriteriaTriggers.SOUND_BREATHING_TRIGGER.get().trigger(serverPlayer);
                     }
                 }
                 case "water_breathing" -> {
                     if (NichirinCriteriaTriggers.WATER_BREATHING_TRIGGER != null) {
-                        NichirinCriteriaTriggers.WATER_BREATHING_TRIGGER.trigger(serverPlayer);
+                        NichirinCriteriaTriggers.WATER_BREATHING_TRIGGER.get().trigger(serverPlayer);
                     }
                 }
                 case "beast_breathing" -> {
                     if (NichirinCriteriaTriggers.BEAST_BREATHING_TRIGGER != null) {
-                        NichirinCriteriaTriggers.BEAST_BREATHING_TRIGGER.trigger(serverPlayer);
+                        NichirinCriteriaTriggers.BEAST_BREATHING_TRIGGER.get().trigger(serverPlayer);
                     }
                 }
                 case "mist_breathing" -> {
                     if (NichirinCriteriaTriggers.MIST_BREATHING_TRIGGER != null) {
-                        NichirinCriteriaTriggers.MIST_BREATHING_TRIGGER.trigger(serverPlayer);
+                        NichirinCriteriaTriggers.MIST_BREATHING_TRIGGER.get().trigger(serverPlayer);
                     }
                 }
             }
 
             // Trigger First Technique advancement if this was their first moveset
             if (wasFirstMoveset && NichirinCriteriaTriggers.FIRST_BREATH_TRIGGER != null) {
-                NichirinCriteriaTriggers.FIRST_BREATH_TRIGGER.trigger(serverPlayer);
+                NichirinCriteriaTriggers.FIRST_BREATH_TRIGGER.get().trigger(serverPlayer);
             }
         }
 

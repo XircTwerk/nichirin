@@ -61,12 +61,12 @@ public abstract class FlameBreathingAttackBase extends AbstractBreathingAttack<F
         int fireSeconds = Math.min(8, Math.max(DEFAULT_FIRE_DURATION, (int)(damage / 4.0f)));
 
         // Apply direct fire (we know this works from debug)
-        target.setSecondsOnFire(fireSeconds);
+        target.igniteForSeconds(fireSeconds);
         target.setRemainingFireTicks(Math.max(target.getRemainingFireTicks(), fireSeconds * 20));
 
         int burningDurationTicks = fireSeconds * 20;
         target.addEffect(new MobEffectInstance(
-                NichirinEffectRegistry.BURNING.get(),
+                NichirinEffectRegistry.burning(),
                 burningDurationTicks,
                 0, false, true
         ));

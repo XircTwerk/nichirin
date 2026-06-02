@@ -1,7 +1,11 @@
 package com.xirc.nichirin.mixin.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.xirc.nichirin.client.animation.NichirinAnimations;
+import com.zigythebird.playeranimcore.api.firstPerson.FirstPersonMode;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -23,6 +27,15 @@ public class LivingEntityRendererMixin<T extends LivingEntity, M extends Humanoi
                                                   T entity, EquipmentSlot slot, int packedLight,
                                                   A model, CallbackInfo ci) {
         if (entity.isInvisible()) {
+            ci.cancel();
+            return;
+        }
+
+        Minecraft minecraft = Minecraft.getInstance();
+        if (entity == minecraft.player
+                && entity instanceof AbstractClientPlayer player
+                && NichirinAnimations.isAnimationPlaying(player)
+                && FirstPersonMode.isFirstPersonPass()) {
             ci.cancel();
         }
     }

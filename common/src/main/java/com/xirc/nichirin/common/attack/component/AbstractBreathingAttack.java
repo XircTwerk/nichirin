@@ -310,7 +310,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
 
             // Apply actual stun effect
             MobEffectInstance stunInstance = new MobEffectInstance(
-                    NichirinEffectRegistry.STUNNED.get(),
+                    NichirinEffectRegistry.stunned(),
                     hitStun, // Duration in ticks
                     2, // Amplifier
                     false, // Ambient
@@ -368,7 +368,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
 
             // Apply actual stun effect
             MobEffectInstance stunInstance = new MobEffectInstance(
-                    NichirinEffectRegistry.STUNNED.get(),
+                    NichirinEffectRegistry.stunned(),
                     hitStun, // Duration in ticks
                     2, // Amplifier
                     false, // Ambient
@@ -817,7 +817,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     }
 
     private boolean isExternallyStunned() {
-        MobEffectInstance stun = user.getEffect(NichirinEffectRegistry.STUNNED.get());
+        MobEffectInstance stun = user.getEffect(NichirinEffectRegistry.stunned());
         return stun != null && stun.getAmplifier() > 0;
     }
 

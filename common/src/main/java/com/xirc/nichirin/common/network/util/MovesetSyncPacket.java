@@ -5,6 +5,7 @@ import com.xirc.nichirin.common.data.MovesetData;
 import com.xirc.nichirin.registry.NichirinMovesetRegistry;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.data.ProgressionHelper;
+import com.xirc.nichirin.common.util.NetworkBufferUtils;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
@@ -123,7 +124,7 @@ public class MovesetSyncPacket {
             buf.writeUtf(movesetId);
         }
 
-        NetworkManager.sendToPlayer(player, SYNC_MOVESET, buf);
+        NetworkManager.sendToPlayer(player, SYNC_MOVESET, NetworkBufferUtils.server(buf, player));
     }
 
     /**
@@ -139,7 +140,7 @@ public class MovesetSyncPacket {
         // Send to all players in the same dimension
         player.server.getPlayerList().getPlayers().stream()
                 .filter(p -> p.level() == player.level())
-                .forEach(p -> NetworkManager.sendToPlayer(p, SYNC_MOVESET, buf));
+                .forEach(p -> NetworkManager.sendToPlayer(p, SYNC_MOVESET, NetworkBufferUtils.serverCopy(buf, p)));
     }
 
     /**
@@ -152,7 +153,7 @@ public class MovesetSyncPacket {
             buf.writeUtf(movesetId);
         }
 
-        NetworkManager.sendToServer(REQUEST_MOVESET_CHANGE, buf);
+        NetworkManager.sendToServer(REQUEST_MOVESET_CHANGE, NetworkBufferUtils.client(buf));
     }
 
     // Legacy methods for backwards compatibility

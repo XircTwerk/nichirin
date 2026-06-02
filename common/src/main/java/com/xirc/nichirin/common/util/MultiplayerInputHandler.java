@@ -18,9 +18,9 @@ import net.minecraft.world.entity.player.Player;
 public class MultiplayerInputHandler {
 
     // Network packet IDs
-    private static final ResourceLocation ATTACK_WHEEL_STATE_PACKET = new ResourceLocation("nichirin", "attack_wheel_state");
-    private static final ResourceLocation KATANA_INPUT_PACKET = new ResourceLocation("nichirin", "katana_input");
-    private static final ResourceLocation DEMON_INPUT_PACKET = new ResourceLocation("nichirin", "demon_input");
+    private static final ResourceLocation ATTACK_WHEEL_STATE_PACKET = ResourceLocation.fromNamespaceAndPath("nichirin", "attack_wheel_state");
+    private static final ResourceLocation KATANA_INPUT_PACKET = ResourceLocation.fromNamespaceAndPath("nichirin", "katana_input");
+    private static final ResourceLocation DEMON_INPUT_PACKET = ResourceLocation.fromNamespaceAndPath("nichirin", "demon_input");
 
     // Client-side state
     private static volatile boolean clientWheelOpen = false;
@@ -71,7 +71,7 @@ public class MultiplayerInputHandler {
             try {
                 FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
                 buf.writeBoolean(open);
-                NetworkManager.sendToServer(ATTACK_WHEEL_STATE_PACKET, buf);
+                NetworkManager.sendToServer(ATTACK_WHEEL_STATE_PACKET, NetworkBufferUtils.client(buf));
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -111,21 +111,25 @@ public class MultiplayerInputHandler {
                 try {
                     FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
                     buf.writeEnum(inputType);
-                    NetworkManager.sendToServer(KATANA_INPUT_PACKET, buf);
+                    NetworkManager.sendToServer(KATANA_INPUT_PACKET, NetworkBufferUtils.client(buf));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             } else {
-                if (MovesetHelper.hasDemonMoveset(player)) {
-                    try {
-                        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-                        buf.writeUtf(inputType.name());
-                        NetworkManager.sendToServer(DEMON_INPUT_PACKET, buf);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
+                sendDemonInput(inputType, player);
             }
+        }
+    }
+
+    public static void sendDemonInput(InputType inputType, Player player) {
+        if (!player.level().isClientSide || !MovesetHelper.hasDemonMoveset(player)) return;
+
+        try {
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+            buf.writeUtf(inputType.name());
+            NetworkManager.sendToServer(DEMON_INPUT_PACKET, NetworkBufferUtils.client(buf));
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

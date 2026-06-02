@@ -16,7 +16,7 @@ public class MouseHandlerMixin {
     private void invertMouseMovement(LocalPlayer player, double deltaX, double deltaY) {
         // Check if player has disoriented effect
         if (Minecraft.getInstance().player != null) {
-            MobEffectInstance disorientedEffect = Minecraft.getInstance().player.getEffect(NichirinEffectRegistry.DISORIENTED.get());
+            MobEffectInstance disorientedEffect = Minecraft.getInstance().player.getEffect(NichirinEffectRegistry.disoriented());
 
             if (disorientedEffect != null) {
                 int amplifier = disorientedEffect.getAmplifier();

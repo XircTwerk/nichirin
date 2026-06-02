@@ -2,6 +2,7 @@ package com.xirc.nichirin.common.effect;
 
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.LivingEntity;
@@ -22,8 +23,8 @@ import java.util.UUID;
  */
 public class ShockedStatusEffect extends MobEffect {
 
-    // UUID for the movement speed modifier
-    private static final UUID MOVEMENT_MODIFIER_UUID = UUID.fromString("7107DE5E-7CE8-4030-940E-514C1F160890");
+    private static final ResourceLocation MOVEMENT_MODIFIER_ID =
+            ResourceLocation.fromNamespaceAndPath("nichirin", "shocked_movement_reduction");
     private static final Map<UUID, Long> recentLaunches = new HashMap<>();
     private static final int LAUNCH_GRACE_TICKS = 12;
 
@@ -33,9 +34,9 @@ public class ShockedStatusEffect extends MobEffect {
         // Add attribute modifiers
         this.addAttributeModifier(
                 Attributes.MOVEMENT_SPEED,
-                MOVEMENT_MODIFIER_UUID.toString(),
+                MOVEMENT_MODIFIER_ID,
                 -0.75, // 75% reduction
-                AttributeModifier.Operation.MULTIPLY_TOTAL
+                AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL
         );
     }
 
@@ -44,13 +45,13 @@ public class ShockedStatusEffect extends MobEffect {
     }
 
     @Override
-    public boolean isDurationEffectTick(int duration, int amplifier) {
+    public boolean shouldApplyEffectTickThisTick(int duration, int amplifier) {
         // Apply effect every tick for continuous particles and movement restriction
         return true;
     }
 
     @Override
-    public void applyEffectTick(LivingEntity entity, int amplifier) {
+    public boolean applyEffectTick(LivingEntity entity, int amplifier) {
         // Restrict movement but not rotation
         Vec3 motion = entity.getDeltaMovement();
         Long graceEnd = recentLaunches.get(entity.getUUID());
@@ -84,6 +85,8 @@ public class ShockedStatusEffect extends MobEffect {
         if (!entity.level().isClientSide() && entity.level() instanceof ServerLevel serverLevel) {
             spawnThunderParticles(serverLevel, entity);
         }
+
+        return true;
     }
 
     private void spawnThunderParticles(ServerLevel level, LivingEntity entity) {
@@ -131,10 +134,7 @@ public class ShockedStatusEffect extends MobEffect {
         }
     }
 
-    @Override
-    public void removeAttributeModifiers(LivingEntity entity, AttributeMap attributeMap, int amplifier) {
-        super.removeAttributeModifiers(entity, attributeMap, amplifier);
-
+    public static void spawnRemovalParticles(LivingEntity entity) {
         // Spawn a final burst of particles when effect ends
         if (!entity.level().isClientSide() && entity.level() instanceof ServerLevel serverLevel) {
             serverLevel.sendParticles(

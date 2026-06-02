@@ -77,23 +77,23 @@ public class BreathOfNichirinEventHandler {
     }
 
     private static final Set<ResourceLocation> RICE_LOOT_TABLES = Set.of(
-            new ResourceLocation("minecraft", "chests/shipwreck_supply"),
-            new ResourceLocation("minecraft", "chests/village/village_plains_house"),
-            new ResourceLocation("minecraft", "chests/village/village_taiga_house"),
-            new ResourceLocation("minecraft", "chests/village/village_snowy_house"),
-            new ResourceLocation("minecraft", "chests/village/village_savanna_house"),
-            new ResourceLocation("minecraft", "chests/village/village_desert_house"),
-            new ResourceLocation("minecraft", "chests/pillager_outpost"),
-            new ResourceLocation("minecraft", "chests/abandoned_mineshaft")
+            ResourceLocation.fromNamespaceAndPath("minecraft", "chests/shipwreck_supply"),
+            ResourceLocation.fromNamespaceAndPath("minecraft", "chests/village/village_plains_house"),
+            ResourceLocation.fromNamespaceAndPath("minecraft", "chests/village/village_taiga_house"),
+            ResourceLocation.fromNamespaceAndPath("minecraft", "chests/village/village_snowy_house"),
+            ResourceLocation.fromNamespaceAndPath("minecraft", "chests/village/village_savanna_house"),
+            ResourceLocation.fromNamespaceAndPath("minecraft", "chests/village/village_desert_house"),
+            ResourceLocation.fromNamespaceAndPath("minecraft", "chests/pillager_outpost"),
+            ResourceLocation.fromNamespaceAndPath("minecraft", "chests/abandoned_mineshaft")
     );
 
     private static void registerLootInjection() {
-        LootEvent.MODIFY_LOOT_TABLE.register((manager, id, context, builtin) -> {
+        LootEvent.MODIFY_LOOT_TABLE.register((id, context, builtin) -> {
             if (RICE_LOOT_TABLES.contains(id)) {
                 context.addPool(LootPool.lootPool()
                         .add(LootItem.lootTableItem(NichirinItemRegistry.RICE.get())
                                 .apply(SetItemCountFunction.setCount(UniformGenerator.between(1, 6))))
-                        .build());
+                        );
             }
         });
     }
@@ -102,7 +102,7 @@ public class BreathOfNichirinEventHandler {
     }
 
     private static void registerDemonEvents() {
-        PlayerEvent.PLAYER_RESPAWN.register((oldPlayer, keepEverything) -> {
+        PlayerEvent.PLAYER_RESPAWN.register((oldPlayer, keepEverything, removalReason) -> {
             if (MovesetHelper.hasDemonMoveset(oldPlayer)) {
                 handlePlayerRespawn(oldPlayer);
             }

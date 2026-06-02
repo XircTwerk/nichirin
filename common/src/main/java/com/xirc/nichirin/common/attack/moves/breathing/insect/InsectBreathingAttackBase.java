@@ -3,6 +3,7 @@ package com.xirc.nichirin.common.attack.moves.breathing.insect;
 import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
 import com.xirc.nichirin.common.attack.component.IBreathingAttacker;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
+import net.minecraft.core.Holder;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -65,8 +66,8 @@ public abstract class InsectBreathingAttackBase extends AbstractBreathingAttack<
             return;
         }
 
-        MobEffect venomEffect =
-                NichirinEffectRegistry.VENOM.get();
+        Holder<MobEffect> venomEffect =
+                NichirinEffectRegistry.venom();
 
         MobEffectInstance existingVenom = target.getEffect(venomEffect);
 

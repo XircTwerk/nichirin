@@ -4,6 +4,7 @@ import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.common.system.sheathing.SheathingManager;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
+import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.storage.LevelResource;
 
@@ -46,7 +47,7 @@ public class PlayerDataStorage {
             tag.put("BreathingStyle", data.getBreathingStyleData().save());
 
             // Write to file
-            NbtIo.writeCompressed(tag, playerFile);
+            NbtIo.writeCompressed(tag, playerFile.toPath());
 
         } catch (IOException e) {
             BreathOfNichirin.LOGGER.error("Failed to save player data for {}", player.getName().getString(), e);
@@ -62,7 +63,7 @@ public class PlayerDataStorage {
             File playerFile = new File(dataDir, player.getUUID().toString() + FILE_SUFFIX);
 
             if (playerFile.exists()) {
-                CompoundTag tag = NbtIo.readCompressed(playerFile);
+                CompoundTag tag = NbtIo.readCompressed(playerFile.toPath(), NbtAccounter.unlimitedHeap());
                 PlayerData data = PlayerDataProvider.getData(player);
 
                 // Try to load new format first

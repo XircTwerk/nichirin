@@ -70,7 +70,7 @@ public class SheathingManager {
             slotTag.putInt("CooldownTicks", slot.getCooldownTicks());
             slotTag.putBoolean("Visible", slot.isVisible());
             if (slot.hasStoredSword()) {
-                slotTag.put("StoredSword", slot.getStoredSword().save(new CompoundTag()));
+                slotTag.put("StoredSword", slot.getStoredSword().save(player.registryAccess(), new CompoundTag()));
             }
             if (slot.isStoredFromOffhand()) {
                 slotTag.putBoolean("FromOffhand", true);
@@ -111,7 +111,7 @@ public class SheathingManager {
                 }
             }
             if (slotTag.contains("StoredSword")) {
-                slot.setStoredSword(ItemStack.of(slotTag.getCompound("StoredSword")));
+                slot.setStoredSword(ItemStack.parseOptional(player.registryAccess(), slotTag.getCompound("StoredSword")));
             } else {
                 slot.setStoredSword(ItemStack.EMPTY);
             }
@@ -169,7 +169,7 @@ public class SheathingManager {
             }
 
             if (slot.getState() == SheathState.SHEATHING || slot.getState() == SheathState.UNSHEATHING) {
-                if (player.hasEffect(NichirinEffectRegistry.STUNNED.get()) || player.hurtTime > 0) {
+                if (player.hasEffect(NichirinEffectRegistry.stunned()) || player.hurtTime > 0) {
                     slot.setState(slot.getState() == SheathState.UNSHEATHING ? SheathState.SHEATHED : SheathState.DRAWN);
                     slot.setTransitionTicks(0);
                     data.setChargingSlot(null);
@@ -191,11 +191,11 @@ public class SheathingManager {
     }
 
     public static void handleInput(ServerPlayer player, SheathInputAction action, boolean shiftDown, int heldTicks) {
-        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+        if (player.hasEffect(NichirinEffectRegistry.stunned())) {
             feedback(player, "Cannot sheathe while stunned!", 0xFF5555, false);
             return;
         }
-        if (player.hasEffect(NichirinEffectRegistry.BLOCKING.get())) {
+        if (player.hasEffect(NichirinEffectRegistry.blocking())) {
             feedback(player, "Cannot sheathe while blocking!", 0xFF5555, false);
             return;
         }

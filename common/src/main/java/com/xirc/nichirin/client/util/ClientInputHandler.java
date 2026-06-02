@@ -4,6 +4,7 @@ import com.xirc.nichirin.client.handler.AttackWheelHandler;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.util.MultiplayerInputHandler;
+import com.xirc.nichirin.common.util.NetworkBufferUtils;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.InteractionEvent;
@@ -14,28 +15,23 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.animal.Animal;
-import net.minecraft.world.entity.decoration.ArmorStand;
-import net.minecraft.world.entity.decoration.ItemFrame;
-import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 
 /**
  * CLIENT-ONLY handler with proper vanilla interaction priority
  */
 public class ClientInputHandler {
 
-    private static final ResourceLocation LEFT_CLICK_ID = new ResourceLocation("nichirin", "katana_left");
-    private static final ResourceLocation RIGHT_CLICK_ID = new ResourceLocation("nichirin", "katana_right");
-    private static final ResourceLocation RIGHT_CROUCH_ID = new ResourceLocation("nichirin", "katana_right_crouch");
-    private static final ResourceLocation FEEDBACK_ID = new ResourceLocation("nichirin", "katana_feedback");
+    private static final ResourceLocation LEFT_CLICK_ID = ResourceLocation.fromNamespaceAndPath("nichirin", "katana_left");
+    private static final ResourceLocation RIGHT_CLICK_ID = ResourceLocation.fromNamespaceAndPath("nichirin", "katana_right");
+    private static final ResourceLocation RIGHT_CROUCH_ID = ResourceLocation.fromNamespaceAndPath("nichirin", "katana_right_crouch");
+    private static final ResourceLocation FEEDBACK_ID = ResourceLocation.fromNamespaceAndPath("nichirin", "katana_feedback");
+    private static boolean registered;
 
     public static void registerClientEvents() {
+        if (registered) return;
+        registered = true;
         registerClientInteractions();
     }
 
@@ -58,46 +54,9 @@ public class ClientInputHandler {
                 return;
             }
 
-            if (canPerformAttacks(player, hand)) {
+            if (canPerformKatanaAttacks(player, hand)) {
                 sendRightClick(player);
             }
-        });
-
-        // Entity interaction - let vanilla happen first, only use custom if vanilla doesn't handle it
-        InteractionEvent.INTERACT_ENTITY.register((player, entity, hand) -> {
-            if (isInputBlocked()) {
-                return EventResult.pass();
-            }
-
-            // For demons not holding katanas - check if vanilla would handle this interaction
-            if (canPerformDemonAttacks(player, hand)) {
-                // Crouch+interact passes through to vanilla entity interaction (e.g. talk to NPCs)
-                if (isCrouchInputDown(player)) {
-                    return EventResult.pass();
-                }
-
-                // Test if vanilla would handle this interaction
-                ItemStack heldItem = player.getItemInHand(hand);
-
-                // Check common vanilla interactions that should take priority
-                if (wouldVanillaHandleEntityInteraction(entity, heldItem)) {
-                    return EventResult.pass(); // Let vanilla handle it
-                }
-
-                // Vanilla won't handle it, use custom demon slash (not high jump)
-                MultiplayerInputHandler.InputType inputType = MultiplayerInputHandler.InputType.RIGHT_CLICK;
-                try {
-                    MultiplayerInputHandler.sendInput(inputType, player);
-                } catch (Exception e) {
-                    try {
-                        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-                        NetworkManager.sendToServer(RIGHT_CLICK_ID, buf);
-                    } catch (Exception ignored) {}
-                }
-                return EventResult.interruptTrue();
-            }
-
-            return EventResult.pass(); // Allow normal entity interaction
         });
 
         // Entity attack blocking (LEFT CLICK ON ENTITIES)
@@ -119,45 +78,21 @@ public class ClientInputHandler {
     }
 
     /**
-     * Check if vanilla would handle this entity interaction
+     * Called after Minecraft has tried block, entity, and item use for both hands without
+     * any vanilla or modded interaction claiming the right click.
      */
-    private static boolean wouldVanillaHandleEntityInteraction(Entity entity, ItemStack heldItem) {
-        // Check for animal feeding
-        if (entity instanceof Animal animal) {
-            if (animal.isFood(heldItem)) {
-                return true; // Vanilla will handle feeding
-            }
-            if (!animal.isBaby() && animal.canFallInLove()) {
-                return true; // Vanilla might handle breeding
-            }
-        }
+    public static void sendDemonRightClickFallback() {
+        Minecraft minecraft = Minecraft.getInstance();
+        Player player = minecraft.player;
+        if (player == null || isInputBlocked() || !MovesetHelper.hasDemonMoveset(player)) return;
 
-        // Check for other common vanilla interactions
-        if (entity instanceof Villager) {
-            return true; // Trading
-        }
+        // Nichirin katanas own their right-click path already.
+        if (player.getMainHandItem().getItem() instanceof SimpleKatana) return;
 
-        if (entity instanceof ItemFrame) {
-            return true; // Item frame interactions
-        }
-
-        if (entity instanceof ArmorStand) {
-            return true; // Armor stand interactions
-        }
-
-        // Check for lead usage
-        if (heldItem.is(Items.LEAD) &&
-                entity instanceof Mob) {
-            return true;
-        }
-
-        // Check for name tag usage
-        if (heldItem.is(Items.NAME_TAG) &&
-                heldItem.hasCustomHoverName()) {
-            return true;
-        }
-
-        return false; // No vanilla interaction expected
+        MultiplayerInputHandler.InputType inputType = isCrouchInputDown(player)
+                ? MultiplayerInputHandler.InputType.RIGHT_CLICK_CROUCH
+                : MultiplayerInputHandler.InputType.RIGHT_CLICK;
+        MultiplayerInputHandler.sendDemonInput(inputType, player);
     }
 
     private static boolean canPerformAttacks(Player player, InteractionHand hand) {
@@ -168,27 +103,19 @@ public class ClientInputHandler {
             return true; // Katana holders can use breathing abilities
         }
 
-        // NOT holding katana - check if has demon moveset
-        return MovesetHelper.hasDemonMoveset(player);
+        // Demon attacks are an empty-hand fallback. Any held item keeps vanilla behavior.
+        return item.isEmpty() && MovesetHelper.hasDemonMoveset(player);
     }
 
-    /**
-     * Check if player can perform demon attacks specifically (no katana held)
-     */
-    private static boolean canPerformDemonAttacks(Player player, InteractionHand hand) {
-        ItemStack item = player.getItemInHand(hand);
-        boolean holdingKatana = item.getItem() instanceof SimpleKatana;
-        boolean hasDemon = MovesetHelper.hasDemonMoveset(player);
-
-        // Must NOT be holding katana AND must have demon moveset
-        return !holdingKatana && hasDemon;
+    private static boolean canPerformKatanaAttacks(Player player, InteractionHand hand) {
+        return player.getItemInHand(hand).getItem() instanceof SimpleKatana;
     }
 
     private static boolean isInputBlocked() {
         try {
             Minecraft mc = Minecraft.getInstance();
 
-            if (mc.player != null && mc.player.hasEffect(NichirinEffectRegistry.BLOCKING.get())) {
+            if (mc.player != null && mc.player.hasEffect(NichirinEffectRegistry.blocking())) {
                 return true;
             }
 
@@ -230,7 +157,7 @@ public class ClientInputHandler {
             // Fallback to direct packet for backwards compatibility
             try {
                 FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-                NetworkManager.sendToServer(LEFT_CLICK_ID, buf);
+                NetworkManager.sendToServer(LEFT_CLICK_ID, NetworkBufferUtils.client(buf));
             } catch (Exception fallbackException) {
             }
         }
@@ -259,7 +186,7 @@ public class ClientInputHandler {
             try {
                 ResourceLocation id = crouch ? RIGHT_CROUCH_ID : RIGHT_CLICK_ID;
                 FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-                NetworkManager.sendToServer(id, buf);
+                NetworkManager.sendToServer(id, NetworkBufferUtils.client(buf));
             } catch (Exception fallbackException) {
             }
         }

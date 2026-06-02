@@ -6,7 +6,6 @@ import com.xirc.nichirin.client.config.NichirinClientConfig;
 import com.xirc.nichirin.client.handler.*;
 import com.xirc.nichirin.client.shader.*;
 import dev.architectury.event.events.client.ClientGuiEvent;
-import com.xirc.nichirin.client.particle.*;
 import com.xirc.nichirin.client.renderer.armor.ArmorRendererManager;
 import com.xirc.nichirin.client.renderer.item.KatanaRendererManager;
 import com.xirc.nichirin.common.util.InputHandler;
@@ -23,7 +22,6 @@ import com.xirc.nichirin.common.util.BlockingInputHandler;
 import com.xirc.nichirin.common.util.PlayerStats;
 import com.xirc.nichirin.registry.*;
 import dev.architectury.event.events.client.ClientTickEvent;
-import dev.architectury.registry.client.particle.ParticleProviderRegistry;
 import dev.architectury.registry.client.rendering.RenderTypeRegistry;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -33,42 +31,16 @@ import net.minecraft.client.renderer.RenderType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
 @Environment(EnvType.CLIENT)
 public class BreathOfNichirinClient {
     private static final Logger LOGGER = LoggerFactory.getLogger(BreathOfNichirinClient.class);
     private static boolean initialized = false;
-    private static final AtomicBoolean PARTICLES_REGISTERED = new AtomicBoolean(false);
 
     // Store shader effect for easy access
     private static DeadCalmShaderEffect deadCalmEffect;
     private static ImpactShakeShaderEffect impactShakeShaderEffect;
     private static FlameBreathingAuraShader flameAuraShader;
     private static WaterBreathingAuraShader waterAuraShader;
-
-    public static void registerParticles() {
-        if (!PARTICLES_REGISTERED.compareAndSet(false, true)) {
-            return;
-        }
-
-        try {
-            ParticleProviderRegistry.register(NichirinParticleRegistry.THUNDER, ThunderParticleProvider::new);
-            ParticleProviderRegistry.register(NichirinParticleRegistry.SHOCKWAVE, ShockwaveParticleProvider::new);
-            ParticleProviderRegistry.register(NichirinParticleRegistry.SOUND, SoundParticleProvider::new);
-            ParticleProviderRegistry.register(NichirinParticleRegistry.FLASH1, Flash1ParticleProvider::new);
-            ParticleProviderRegistry.register(NichirinParticleRegistry.FLASH2, Flash2ParticleProvider::new);
-            ParticleProviderRegistry.register(NichirinParticleRegistry.BLUE_FLASH1, BlueFlash1ParticleProvider::new);
-            ParticleProviderRegistry.register(NichirinParticleRegistry.BLUE_FLASH2, BlueFlash2ParticleProvider::new);
-            ParticleProviderRegistry.register(NichirinParticleRegistry.BLUE_SHOCKWAVE, BlueShockwaveParticleProvider::new);
-            ParticleProviderRegistry.register(NichirinParticleRegistry.BUTTERFLY, ButterflyParticleProvider::new);
-            ParticleProviderRegistry.register(NichirinParticleRegistry.BLOOD_SPLAT, BloodSplatParticleProvider::new);
-            ParticleProviderRegistry.register(NichirinParticleRegistry.BREATHING_AURA_WISP, BreathingAuraWispParticleProvider::new);
-            ParticleProviderRegistry.register(NichirinParticleRegistry.SLASH_IMPACT_SPARK, SlashImpactSparkParticleProvider::new);
-        } catch (Exception e) {
-            LOGGER.error("Failed to register particles: {}", e.getMessage());
-        }
-    }
 
     private static void registerShaders() {
         try {
@@ -171,9 +143,6 @@ public class BreathOfNichirinClient {
 
             // Register animations
             NichirinAnimations.init();
-
-            // Register other client components
-            registerParticles();
 
             // Register UI renderers
             BreathingBarRenderer.register();

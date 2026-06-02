@@ -110,7 +110,7 @@ public abstract class MistBreathingAttackBase extends AbstractBreathingAttack<Mi
                 new AABB(pos.subtract(r, r, r), pos.add(r, r, r)),
                 e -> e.isAlive() && e != user)
             .forEach(e -> e.addEffect(new MobEffectInstance(
-                    NichirinEffectRegistry.BLURRY.get(),
+                    NichirinEffectRegistry.blurry(),
                     durationTicks, 0, false, false, false)));
     }
 
@@ -120,7 +120,7 @@ public abstract class MistBreathingAttackBase extends AbstractBreathingAttack<Mi
         super.hitTarget(target);
         createMistHitParticles(target.position());
         playMistHitSound(target.position());
-        target.addEffect(new MobEffectInstance(NichirinEffectRegistry.BLURRY.get(), 60, 0, false, false, false));
+        target.addEffect(new MobEffectInstance(NichirinEffectRegistry.blurry(), 60, 0, false, false, false));
     }
 
     @Override
@@ -129,7 +129,7 @@ public abstract class MistBreathingAttackBase extends AbstractBreathingAttack<Mi
         super.hitTargetNoImmunity(target);
         createMistHitParticles(target.position());
         playMistHitSound(target.position());
-        target.addEffect(new MobEffectInstance(NichirinEffectRegistry.BLURRY.get(), 60, 0, false, false, false));
+        target.addEffect(new MobEffectInstance(NichirinEffectRegistry.blurry(), 60, 0, false, false, false));
     }
 
     protected void playMistSound() {

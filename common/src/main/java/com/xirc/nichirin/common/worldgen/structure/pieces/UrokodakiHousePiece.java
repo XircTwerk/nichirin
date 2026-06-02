@@ -25,7 +25,7 @@ import net.minecraft.world.entity.MobSpawnType;
 
 public class UrokodakiHousePiece extends StructurePiece {
     private static final ResourceLocation STRUCTURE_LOCATION =
-            new ResourceLocation(BreathOfNichirin.MOD_ID, "urokodaki_house");
+            ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "urokodaki_house");
 
     private final Rotation rotation;
     private final BlockPos structurePos;
@@ -86,7 +86,7 @@ public class UrokodakiHousePiece extends StructurePiece {
             WaterBreathingTrainerEntity trainer = NichirinEntityRegistry.WATER_BREATHING_TRAINER.get().create(world.getLevel());
             if (trainer != null) {
                 trainer.moveTo(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5, 0f, 0f);
-                trainer.finalizeSpawn(world, world.getCurrentDifficultyAt(spawnPos), MobSpawnType.STRUCTURE, null, null);
+                trainer.finalizeSpawn(world, world.getCurrentDifficultyAt(spawnPos), MobSpawnType.STRUCTURE, null);
                 world.addFreshEntity(trainer);
                 trainerSpawned = true;
             }

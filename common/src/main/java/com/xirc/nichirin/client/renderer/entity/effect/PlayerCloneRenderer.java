@@ -41,6 +41,6 @@ public class PlayerCloneRenderer extends HumanoidMobRenderer<PlayerCloneEntity, 
 
     @Override
     public ResourceLocation getTextureLocation(PlayerCloneEntity entity) {
-        return CloneSkinTracker.getSkinFor(entity, MinecraftProfileTexture.Type.SKIN);
+        return CloneSkinTracker.getSkinFor(entity).texture();
     }
 }

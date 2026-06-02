@@ -19,7 +19,7 @@ public class FlameBreathingAuraShader extends NichirinPostProcessor {
 
     @Override
     public ResourceLocation getShaderEffectId() {
-        return new ResourceLocation("nichirin", "flame_breathing_aura");
+        return ResourceLocation.fromNamespaceAndPath("nichirin", "flame_breathing_aura");
     }
 
     public void setBreathIntensity(float intensity) {

@@ -68,7 +68,7 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
             if (target.isAlive() && hitStun > 0) {
                 target.invulnerableTime = hitStun;
                 target.addEffect(new MobEffectInstance(
-                        NichirinEffectRegistry.STUNNED.get(),
+                        NichirinEffectRegistry.stunned(),
                         hitStun, 2, false, true, true));
             }
         });
@@ -106,7 +106,7 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
             if (target.isAlive() && hitStun > 0) {
                 target.invulnerableTime = hitStun;
                 target.addEffect(new MobEffectInstance(
-                        NichirinEffectRegistry.STUNNED.get(),
+                        NichirinEffectRegistry.stunned(),
                         hitStun, 2, false, true, true));
             }
         });
@@ -142,7 +142,7 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
             if (target.isAlive() && hitStun > 0) {
                 target.invulnerableTime = hitStun;
                 target.addEffect(new MobEffectInstance(
-                        NichirinEffectRegistry.STUNNED.get(),
+                        NichirinEffectRegistry.stunned(),
                         hitStun, 2, false, true, true));
             }
         });
@@ -209,7 +209,7 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
     protected void applyDisorientedEffect(LivingEntity target) {
         if (target instanceof Player player && player.isCreative()) return;
         target.addEffect(new MobEffectInstance(
-                NichirinEffectRegistry.DISORIENTED.get(),
+                NichirinEffectRegistry.disoriented(),
                 30, 0, false, true, true));
     }
 

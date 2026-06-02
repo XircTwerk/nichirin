@@ -2,6 +2,7 @@ package com.xirc.nichirin.client.renderer.entity.layer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.common.util.ItemStackData;
 import com.xirc.nichirin.common.system.sheathing.PlayerSheathData;
 import com.xirc.nichirin.common.system.sheathing.SheathPosition;
 import com.xirc.nichirin.common.system.sheathing.SheathSlotData;
@@ -59,7 +60,7 @@ public class SheathedKatanaLayer extends RenderLayer<AbstractClientPlayer, Playe
         // was correct), while hips still get the LEFT→RIGHT twin swap that fixed the flipped
         // orientation there.
         ItemStack renderStack = isHipSlot(slot.getPosition()) ? renderTwin(stack).copy() : stack.copy();
-        renderStack.getOrCreateTag().putBoolean("nichirin_sheathed_render", true);
+        ItemStackData.update(renderStack, tag -> tag.putBoolean("nichirin_sheathed_render", true));
         Minecraft.getInstance().getItemRenderer().renderStatic(player, renderStack, displayContext(slot),
                 false, poseStack, buffer, player.level(), packedLight, OverlayTexture.NO_OVERLAY,
                 player.getId() + slot.getPosition().ordinal());

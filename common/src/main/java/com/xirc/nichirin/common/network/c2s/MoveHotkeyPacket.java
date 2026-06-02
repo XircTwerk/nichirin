@@ -43,11 +43,11 @@ public class MoveHotkeyPacket {
         ItemStack mainHand = player.getMainHandItem();
         if (!(mainHand.getItem() instanceof SimpleKatana)) return;
 
-        if (player.hasEffect(NichirinEffectRegistry.BLOCKING.get())) {
+        if (player.hasEffect(NichirinEffectRegistry.blocking())) {
             return;
         }
 
-        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+        if (player.hasEffect(NichirinEffectRegistry.stunned())) {
             return;
         }
 

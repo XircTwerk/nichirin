@@ -3,11 +3,13 @@ package com.xirc.nichirin.common.system;
 import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.entity.npc.TempleDemonEntity;
 import com.xirc.nichirin.common.network.s2c.BloodMoonSyncPacket;
+import com.xirc.nichirin.common.util.NetworkBufferUtils;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -16,16 +18,12 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.phys.AABB;
 
-import java.util.UUID;
-
 public class BloodMoonManager {
 
-    // Attribute modifier UUIDs
-    private static final UUID ATTACK_MODIFIER_UUID = UUID.fromString("b100d000-0000-0000-0000-000000000001");
-    private static final UUID SPEED_MODIFIER_UUID  = UUID.fromString("b100d000-0000-0000-0000-000000000002");
-
-    private static final String ATTACK_MODIFIER_NAME = "blood_moon_attack";
-    private static final String SPEED_MODIFIER_NAME  = "blood_moon_speed";
+    private static final ResourceLocation ATTACK_MODIFIER_ID =
+            ResourceLocation.fromNamespaceAndPath("nichirin", "blood_moon_attack");
+    private static final ResourceLocation SPEED_MODIFIER_ID =
+            ResourceLocation.fromNamespaceAndPath("nichirin", "blood_moon_speed");
 
     // Blood moon state
     private static boolean active = false;
@@ -126,22 +124,20 @@ public class BloodMoonManager {
         double speedBoost  = cfg.demonSpeedBoostPercent  / 100.0;
 
         AttributeInstance attackAttr = demon.getAttribute(Attributes.ATTACK_DAMAGE);
-        if (attackAttr != null && attackAttr.getModifier(ATTACK_MODIFIER_UUID) == null && attackBoost > 0) {
+        if (attackAttr != null && attackAttr.getModifier(ATTACK_MODIFIER_ID) == null && attackBoost > 0) {
             attackAttr.addPermanentModifier(new AttributeModifier(
-                    ATTACK_MODIFIER_UUID,
-                    ATTACK_MODIFIER_NAME,
+                    ATTACK_MODIFIER_ID,
                     attackBoost,
-                    AttributeModifier.Operation.MULTIPLY_TOTAL
+                    AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL
             ));
         }
 
         AttributeInstance speedAttr = demon.getAttribute(Attributes.MOVEMENT_SPEED);
-        if (speedAttr != null && speedAttr.getModifier(SPEED_MODIFIER_UUID) == null && speedBoost > 0) {
+        if (speedAttr != null && speedAttr.getModifier(SPEED_MODIFIER_ID) == null && speedBoost > 0) {
             speedAttr.addPermanentModifier(new AttributeModifier(
-                    SPEED_MODIFIER_UUID,
-                    SPEED_MODIFIER_NAME,
+                    SPEED_MODIFIER_ID,
                     speedBoost,
-                    AttributeModifier.Operation.MULTIPLY_TOTAL
+                    AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL
             ));
         }
     }
@@ -149,12 +145,12 @@ public class BloodMoonManager {
     private static void removeBoosts(TempleDemonEntity demon) {
         AttributeInstance attackAttr = demon.getAttribute(Attributes.ATTACK_DAMAGE);
         if (attackAttr != null) {
-            attackAttr.removeModifier(ATTACK_MODIFIER_UUID);
+            attackAttr.removeModifier(ATTACK_MODIFIER_ID);
         }
 
         AttributeInstance speedAttr = demon.getAttribute(Attributes.MOVEMENT_SPEED);
         if (speedAttr != null) {
-            speedAttr.removeModifier(SPEED_MODIFIER_UUID);
+            speedAttr.removeModifier(SPEED_MODIFIER_ID);
         }
     }
 
@@ -174,7 +170,7 @@ public class BloodMoonManager {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             packet.toBytes(buf);
             for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-                NetworkManager.sendToPlayer(player, NichirinPacketRegistry.BLOOD_MOON_SYNC_ID, new FriendlyByteBuf(buf.copy()));
+                NetworkManager.sendToPlayer(player, NichirinPacketRegistry.BLOOD_MOON_SYNC_ID, NetworkBufferUtils.serverCopy(buf, player));
             }
             buf.release();
         } catch (Exception e) {

@@ -15,6 +15,8 @@ import dev.architectury.event.events.common.InteractionEvent;
 import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.event.events.common.TickEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.core.Holder;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -29,15 +31,13 @@ import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.phys.AABB;
 
 import java.util.List;
-import java.util.UUID;
 
 public class PlayerTickHandler {
 
-    // Fixed UUIDs for perk attribute modifiers
-    private static final UUID STEADFAST_KB_UUID   = UUID.fromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
-    private static final UUID NIGHT_PROWLER_UUID  = UUID.fromString("b2c3d4e5-f6a7-8901-bcde-f01234567891");
-    private static final UUID LIGHTFOOT_UUID      = UUID.fromString("c3d4e5f6-a7b8-9012-cdef-012345678902");
-    private static final UUID JUGGERNAUT_UUID     = UUID.fromString("d4e5f6a7-b8c9-0123-def0-123456789013");
+    private static final ResourceLocation STEADFAST_KB_ID = id("steadfast_kb");
+    private static final ResourceLocation NIGHT_PROWLER_ID = id("night_prowler");
+    private static final ResourceLocation LIGHTFOOT_ID = id("lightfoot");
+    private static final ResourceLocation JUGGERNAUT_ID = id("juggernaut");
 
     public static void register() {
         TickEvent.PLAYER_POST.register(PlayerTickHandler::onPlayerTick);
@@ -148,7 +148,7 @@ public class PlayerTickHandler {
         }
     }
 
-    private static boolean hasEffect(ServerPlayer player, MobEffect effect, int minAmplifier) {
+    private static boolean hasEffect(ServerPlayer player, Holder<MobEffect> effect, int minAmplifier) {
         var inst = player.getEffect(effect);
         return inst != null && inst.getAmplifier() >= minAmplifier && inst.getDuration() > 20;
     }
@@ -160,25 +160,25 @@ public class PlayerTickHandler {
         applyOrRemoveModifier(
                 player,
                 Attributes.KNOCKBACK_RESISTANCE,
-                STEADFAST_KB_UUID,
+                STEADFAST_KB_ID,
                 "Steadfast KB",
                 PerkManager.getSteadfastKnockbackResistance(player),
-                AttributeModifier.Operation.ADDITION
+                AttributeModifier.Operation.ADD_VALUE
         );
 
         float jugPenalty = PerkManager.getJuggernautSpeedPenalty(player);
 
-        applyOrRemoveModifier(player, Attributes.MOVEMENT_SPEED, NIGHT_PROWLER_UUID,
+        applyOrRemoveModifier(player, Attributes.MOVEMENT_SPEED, NIGHT_PROWLER_ID,
                 "Night Prowler Speed", PerkManager.getNightProwlerSpeedBonus(player),
-                AttributeModifier.Operation.MULTIPLY_BASE);
+                AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
 
-        applyOrRemoveModifier(player, Attributes.MOVEMENT_SPEED, LIGHTFOOT_UUID,
+        applyOrRemoveModifier(player, Attributes.MOVEMENT_SPEED, LIGHTFOOT_ID,
                 "Lightfoot Speed", PerkManager.getLightfootSpeedBonus(player),
-                AttributeModifier.Operation.MULTIPLY_BASE);
+                AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
 
-        applyOrRemoveModifier(player, Attributes.MOVEMENT_SPEED, JUGGERNAUT_UUID,
+        applyOrRemoveModifier(player, Attributes.MOVEMENT_SPEED, JUGGERNAUT_ID,
                 "Juggernaut Penalty", jugPenalty,
-                AttributeModifier.Operation.MULTIPLY_BASE);
+                AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
 
         if (PerkManager.hasNightProwlerNightVision(player)) {
             if (!player.hasEffect(MobEffects.NIGHT_VISION)
@@ -206,30 +206,34 @@ public class PlayerTickHandler {
      * Skips no-op (value == 0) cases by removing the modifier cleanly.
      */
     private static void applyOrRemoveModifier(ServerPlayer player,
-                                               Attribute attribute,
-                                               UUID uuid, String name,
+                                               Holder<Attribute> attribute,
+                                               ResourceLocation id, String name,
                                                float value,
                                                AttributeModifier.Operation op) {
         AttributeInstance inst = player.getAttribute(attribute);
         if (inst == null) return;
 
-        AttributeModifier existing = inst.getModifier(uuid);
+        AttributeModifier existing = inst.getModifier(id);
         if (value == 0f) {
-            if (existing != null) inst.removeModifier(uuid);
+            if (existing != null) inst.removeModifier(id);
             return;
         }
         // Only update if the value changed
-        if (existing != null && (float) existing.getAmount() == value) return;
-        if (existing != null) inst.removeModifier(uuid);
-        inst.addTransientModifier(new AttributeModifier(uuid, name, value, op));
+        if (existing != null && (float) existing.amount() == value) return;
+        if (existing != null) inst.removeModifier(id);
+        inst.addTransientModifier(new AttributeModifier(id, value, op));
     }
 
     private static void removeAllPerkModifiers(ServerPlayer player) {
-        for (UUID uuid : new UUID[]{STEADFAST_KB_UUID, NIGHT_PROWLER_UUID, LIGHTFOOT_UUID, JUGGERNAUT_UUID}) {
+        for (ResourceLocation id : new ResourceLocation[]{STEADFAST_KB_ID, NIGHT_PROWLER_ID, LIGHTFOOT_ID, JUGGERNAUT_ID}) {
             AttributeInstance kbInst = player.getAttribute(Attributes.KNOCKBACK_RESISTANCE);
-            if (kbInst != null) kbInst.removeModifier(uuid);
+            if (kbInst != null) kbInst.removeModifier(id);
             AttributeInstance spInst = player.getAttribute(Attributes.MOVEMENT_SPEED);
-            if (spInst != null) spInst.removeModifier(uuid);
+            if (spInst != null) spInst.removeModifier(id);
         }
+    }
+
+    private static ResourceLocation id(String path) {
+        return ResourceLocation.fromNamespaceAndPath("nichirin", path);
     }
 }

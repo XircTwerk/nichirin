@@ -56,8 +56,8 @@ public class SimpleKatana extends Item {
         if (player.level().isClientSide) return;
         if (player.isSpectator()) return;
         if (!canPerformAttack(player)) return;
-        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) return;
-        if (player.hasEffect(NichirinEffectRegistry.BLOCKING.get())) return;
+        if (player.hasEffect(NichirinEffectRegistry.stunned())) return;
+        if (player.hasEffect(NichirinEffectRegistry.blocking())) return;
         if (SheathingManager.isSelectedKatanaSheathed(player)) return;
 
         AbstractMoveset moveset = MovesetHelper.getBreathingMoveset(player);
@@ -71,9 +71,9 @@ public class SimpleKatana extends Item {
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         if (level.isClientSide) return InteractionResultHolder.pass(player.getItemInHand(hand));
         if (!canPerformAttack(player)) return InteractionResultHolder.pass(player.getItemInHand(hand));
-        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get()))
+        if (player.hasEffect(NichirinEffectRegistry.stunned()))
             return InteractionResultHolder.pass(player.getItemInHand(hand));
-        if (player.hasEffect(NichirinEffectRegistry.BLOCKING.get()))
+        if (player.hasEffect(NichirinEffectRegistry.blocking()))
             return InteractionResultHolder.pass(player.getItemInHand(hand));
         if (SheathingManager.isSelectedKatanaSheathed(player))
             return InteractionResultHolder.pass(player.getItemInHand(hand));
@@ -95,8 +95,8 @@ public class SimpleKatana extends Item {
     // Called by MoveHotkeyPacket when the player has no breathing style.
     public void performWheelMove(Player player, int moveIndex) {
         if (player.level().isClientSide()) return;
-        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get())) return;
-        if (player.hasEffect(NichirinEffectRegistry.BLOCKING.get())) return;
+        if (player.hasEffect(NichirinEffectRegistry.stunned())) return;
+        if (player.hasEffect(NichirinEffectRegistry.blocking())) return;
         if (SheathingManager.isSelectedKatanaSheathed(player)) return;
 
         DefaultKatanaMoveset.INSTANCE.performMove(player, moveIndex);

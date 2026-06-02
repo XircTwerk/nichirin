@@ -303,7 +303,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
 
             // Apply actual stun effect
             MobEffectInstance stunInstance = new MobEffectInstance(
-                    NichirinEffectRegistry.STUNNED.get(),
+                    NichirinEffectRegistry.stunned(),
                     hitStun, // Duration in ticks
                     2, // Amplifier
                     false, // Ambient
@@ -360,7 +360,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
 
             // Apply actual stun effect
             MobEffectInstance stunInstance = new MobEffectInstance(
-                    NichirinEffectRegistry.STUNNED.get(),
+                    NichirinEffectRegistry.stunned(),
                     hitStun, // Duration in ticks
                     2, // Amplifier
                     false, // Ambient
@@ -794,7 +794,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
     }
 
     private boolean isExternallyStunned() {
-        MobEffectInstance stun = user.getEffect(NichirinEffectRegistry.STUNNED.get());
+        MobEffectInstance stun = user.getEffect(NichirinEffectRegistry.stunned());
         return stun != null && stun.getAmplifier() > 0;
     }
 

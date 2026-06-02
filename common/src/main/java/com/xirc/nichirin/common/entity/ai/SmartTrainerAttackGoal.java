@@ -81,7 +81,7 @@ public class SmartTrainerAttackGoal extends MeleeAttackGoal {
     }
 
     @Override
-    protected void checkAndPerformAttack(LivingEntity target, double distSq) { }
+    protected void checkAndPerformAttack(LivingEntity target) { }
 
     @Override
     public void tick() {
@@ -103,7 +103,7 @@ public class SmartTrainerAttackGoal extends MeleeAttackGoal {
         if (target == null || !target.isAlive()) return;
 
         // Frozen while stunned — no acting, dashing, or guarding.
-        if (trainer.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+        if (trainer.hasEffect(NichirinEffectRegistry.stunned())) {
             trainer.getNavigation().stop();
             return;
         }

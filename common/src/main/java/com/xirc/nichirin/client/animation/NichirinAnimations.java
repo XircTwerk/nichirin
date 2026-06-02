@@ -1,13 +1,14 @@
 package com.xirc.nichirin.client.animation;
 
-import com.xirc.nichirin.common.util.INichirinAnimatedPlayer;
-import dev.kosmx.playerAnim.api.layered.IAnimation;
-import dev.kosmx.playerAnim.api.layered.KeyframeAnimationPlayer;
-import dev.kosmx.playerAnim.api.layered.ModifierLayer;
-import dev.kosmx.playerAnim.core.data.KeyframeAnimation;
-import dev.kosmx.playerAnim.core.util.Ease;
-import dev.kosmx.playerAnim.minecraftApi.PlayerAnimationAccess;
-import dev.kosmx.playerAnim.minecraftApi.PlayerAnimationRegistry;
+import com.zigythebird.playeranim.animation.PlayerAnimResources;
+import com.zigythebird.playeranim.animation.PlayerAnimationController;
+import com.zigythebird.playeranim.animation.PlayerRawAnimationBuilder;
+import com.zigythebird.playeranim.api.PlayerAnimationAccess;
+import com.zigythebird.playeranim.api.PlayerAnimationFactory;
+import com.zigythebird.playeranimcore.api.firstPerson.FirstPersonConfiguration;
+import com.zigythebird.playeranimcore.api.firstPerson.FirstPersonMode;
+import com.zigythebird.playeranimcore.easing.EasingType;
+import com.zigythebird.playeranimcore.enums.PlayState;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -17,54 +18,69 @@ import net.minecraft.world.entity.player.Player;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
-import java.util.WeakHashMap;
-
 @Environment(EnvType.CLIENT)
-public class NichirinAnimations {
+public final class NichirinAnimations {
 
     private static final Logger LOGGER = LoggerFactory.getLogger("NichirinAnimations");
-    private static final Map<AbstractClientPlayer, ModifierLayer<IAnimation>> FALLBACK_LAYERS = new WeakHashMap<>();
+    private static final ResourceLocation CONTROLLER_ID =
+            ResourceLocation.fromNamespaceAndPath("nichirin", "animation_controller");
+    private static final FirstPersonConfiguration FIRST_PERSON_CONFIG =
+            new FirstPersonConfiguration(true, true, true, true);
+    private static boolean initialized;
 
-    // No init() needed — layer registration is handled by AbstractClientPlayerMixin.
-    public static void init() {}
+    private NichirinAnimations() {}
+
+    public static void init() {
+        if (initialized) return;
+        initialized = true;
+
+        PlayerAnimationFactory.ANIMATION_DATA_FACTORY.registerFactory(
+                CONTROLLER_ID,
+                1001,
+                player -> {
+                    PlayerAnimationController controller =
+                            new PlayerAnimationController(player, (current, state, setter) -> PlayState.STOP);
+                    controller.setFirstPersonMode(FirstPersonMode.THIRD_PERSON_MODEL);
+                    controller.setFirstPersonConfiguration(FIRST_PERSON_CONFIG);
+                    controller.setOverrideEasingType(EasingType.EASE_IN_OUT_SINE);
+                    return controller;
+                });
+    }
 
     public static void playAnimation(Player player, String animationName) {
         if (!(player instanceof AbstractClientPlayer clientPlayer)) return;
 
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft == null || minecraft.level == null) return;
+        if (minecraft.level == null) return;
 
         if (animationName == null || animationName.isEmpty()) {
             stopAnimation(clientPlayer);
             return;
         }
 
-        try {
-            KeyframeAnimation animation = findAnimation(animationName);
-            if (animation == null) {
-                LOGGER.error("[Nichirin] Could not find animation '{}' for player '{}' — check that the animation JSON is registered under the correct resource path.", animationName, player.getScoreboardName());
-                return;
-            }
+        PlayerAnimationController controller = getController(clientPlayer);
+        if (controller == null) {
+            LOGGER.error("[Nichirin] Animation controller is missing for player '{}'.", player.getScoreboardName());
+            return;
+        }
 
-            ModifierLayer<IAnimation> layer = getLayer(clientPlayer);
-            if (layer == null) {
-                LOGGER.error("[Nichirin] Animation layer is null for player '{}' — mixin may not have fired.", player.getScoreboardName());
-                return;
-            }
+        ResourceLocation animation = findAnimation(animationName);
+        if (animation == null) {
+            LOGGER.error("[Nichirin] Could not find animation '{}' for player '{}'.",
+                    animationName, player.getScoreboardName());
+            return;
+        }
 
-            layer.setAnimation(new KeyframeAnimationPlayer(postProcess(animationName, animation)));
-
-        } catch (Exception e) {
-            LOGGER.error("[Nichirin] Exception while playing animation '{}': {}", animationName, e.getMessage(), e);
+        if ("sword.block".equals(animationName)) {
+            controller.triggerAnimation(PlayerRawAnimationBuilder.begin().thenPlayAndHold(animation).build());
+        } else {
+            controller.triggerAnimation(animation);
         }
     }
 
-    private static KeyframeAnimation findAnimation(String animationName) {
-        // Try direct lookup first (e.g. "nichirin:water/first_form")
-        ResourceLocation directLoc = new ResourceLocation("nichirin", animationName);
-        KeyframeAnimation result = PlayerAnimationRegistry.getAnimation(directLoc);
-        if (result != null) return result;
+    private static ResourceLocation findAnimation(String animationName) {
+        ResourceLocation direct = ResourceLocation.fromNamespaceAndPath("nichirin", animationName);
+        if (PlayerAnimResources.hasAnimation(direct)) return direct;
 
         String[] prefixes = {
                 "attacks/basic/",
@@ -80,87 +96,33 @@ public class NichirinAnimations {
         };
 
         for (String prefix : prefixes) {
-            result = PlayerAnimationRegistry.getAnimation(new ResourceLocation("nichirin", prefix + animationName));
-            if (result != null) return result;
+            ResourceLocation candidate =
+                    ResourceLocation.fromNamespaceAndPath("nichirin", prefix + animationName);
+            if (PlayerAnimResources.hasAnimation(candidate)) return candidate;
         }
 
-        // Last-ditch: replace underscores with slashes
-        result = PlayerAnimationRegistry.getAnimation(new ResourceLocation("nichirin", animationName.replace("_", "/")));
-        if (result != null) return result;
+        ResourceLocation slashed =
+                ResourceLocation.fromNamespaceAndPath("nichirin", animationName.replace("_", "/"));
+        if (PlayerAnimResources.hasAnimation(slashed)) return slashed;
 
-        LOGGER.warn("[Nichirin] Animation '{}' not found in any known path. Tried: nichirin:{} and {} prefix variants.", animationName, animationName, prefixes.length);
         return null;
     }
 
     public static void stopAnimation(AbstractClientPlayer player) {
-        ModifierLayer<IAnimation> layer = getLayer(player);
-        if (layer != null) {
-            layer.setAnimation(null);
+        PlayerAnimationController controller = getController(player);
+        if (controller != null) {
+            controller.stopTriggeredAnimation();
+            controller.stop();
         }
     }
 
     public static boolean isAnimationPlaying(AbstractClientPlayer player) {
-        ModifierLayer<IAnimation> layer = getLayer(player);
-        if (layer == null) return false;
-        IAnimation current = layer.getAnimation();
-        return current != null && current.isActive();
+        PlayerAnimationController controller = getController(player);
+        return controller != null && controller.isActive();
     }
 
-    /**
-     * Post-processes a loaded animation:
-     * 1. Plain [x,y,z] arrays in JSON are parsed by PlayerAnim as Ease.CONSTANT (instant snap).
-     *    We replace CONSTANT with INOUTSINE so all animations interpolate smoothly, matching
-     *    the original catmullrom intent. (The linter strips lerp_mode from JSON, so this is
-     *    the only reliable way to get smooth interpolation.)
-     * 2. sword.block forces returnTick == endTick so it holds its last frame instead of
-     *    restarting.
-     */
-    private static KeyframeAnimation postProcess(String animationName, KeyframeAnimation animation) {
-        KeyframeAnimation.AnimationBuilder builder = animation.mutableCopy();
-
-        for (String partName : animation.getBodyParts().keySet()) {
-            KeyframeAnimation.StateCollection part = builder.getPart(partName);
-            if (part == null) continue;
-            fixEasing(part.pitch);
-            fixEasing(part.yaw);
-            fixEasing(part.roll);
-            fixEasing(part.x);
-            fixEasing(part.y);
-            fixEasing(part.z);
-            if (part.bend != null) fixEasing(part.bend);
-            if (part.bendDirection != null) fixEasing(part.bendDirection);
-        }
-
-        // sword.block: force loop and hold on its last frame so it never snaps back to
-        // the start. returnTick = endTick means "when done, jump to the last frame" — a freeze.
-        // We guard endTick > 0 in case the linter strips animation_length again.
-        if ("sword.block".equals(animationName) && builder.endTick > 0) {
-            builder.isLooped   = true;
-            builder.returnTick = builder.endTick;
-        }
-
-        return builder.build();
-    }
-
-    /** Replace Ease.CONSTANT (plain array default) with Ease.INOUTSINE on every keyframe. */
-    private static void fixEasing(KeyframeAnimation.StateCollection.State state) {
-        if (state == null) return;
-        for (int i = 0; i < state.getKeyFrames().size(); i++) {
-            if (state.getKeyFrames().get(i).ease == Ease.CONSTANT) {
-                state.replaceEase(i, Ease.INOUTSINE);
-            }
-        }
-    }
-
-    private static ModifierLayer<IAnimation> getLayer(AbstractClientPlayer player) {
-        if (player instanceof INichirinAnimatedPlayer animated) {
-            return animated.nichirin_getAnimLayer();
-        }
-
-        return FALLBACK_LAYERS.computeIfAbsent(player, clientPlayer -> {
-            NichirinPlayerModifierLayer<IAnimation> layer = new NichirinPlayerModifierLayer<>();
-            PlayerAnimationAccess.getPlayerAnimLayer(clientPlayer).addAnimLayer(1001, layer);
-            return layer;
-        });
+    private static PlayerAnimationController getController(AbstractClientPlayer player) {
+        return PlayerAnimationAccess.getPlayerAnimationLayer(player, CONTROLLER_ID)
+                instanceof PlayerAnimationController controller ? controller : null;
     }
 }

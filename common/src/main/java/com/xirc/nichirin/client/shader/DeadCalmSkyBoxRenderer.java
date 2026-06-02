@@ -163,7 +163,6 @@ public class DeadCalmSkyBoxRenderer {
 
     private void renderBlueSky(PoseStack poseStack) {
         Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder buffer = tesselator.getBuilder();
 
         poseStack.pushPose();
 
@@ -191,12 +190,12 @@ public class DeadCalmSkyBoxRenderer {
 
             float finalAlpha = Math.max(alpha * 0.9f, 0.3f);
 
-            buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-            buffer.vertex(matrix, -2000.0F, -2000.0F, -2000.0F).color(r, g, b, finalAlpha).endVertex();
-            buffer.vertex(matrix, -2000.0F, -2000.0F, 2000.0F).color(r, g, b, finalAlpha).endVertex();
-            buffer.vertex(matrix, 2000.0F, -2000.0F, 2000.0F).color(r, g, b, finalAlpha).endVertex();
-            buffer.vertex(matrix, 2000.0F, -2000.0F, -2000.0F).color(r, g, b, finalAlpha).endVertex();
-            tesselator.end();
+            BufferBuilder buffer = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+            buffer.addVertex(matrix, -2000.0F, -2000.0F, -2000.0F).setColor(r, g, b, finalAlpha);
+            buffer.addVertex(matrix, -2000.0F, -2000.0F, 2000.0F).setColor(r, g, b, finalAlpha);
+            buffer.addVertex(matrix, 2000.0F, -2000.0F, 2000.0F).setColor(r, g, b, finalAlpha);
+            buffer.addVertex(matrix, 2000.0F, -2000.0F, -2000.0F).setColor(r, g, b, finalAlpha);
+            BufferUploader.drawWithShader(buffer.buildOrThrow());
 
             poseStack.popPose();
         }
@@ -208,7 +207,6 @@ public class DeadCalmSkyBoxRenderer {
         if (startupWaves.isEmpty()) return;
 
         Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder buffer = tesselator.getBuilder();
 
         Minecraft mc = Minecraft.getInstance();
         Vec3 camera = mc.gameRenderer.getMainCamera().getPosition();
@@ -227,17 +225,17 @@ public class DeadCalmSkyBoxRenderer {
             float r = wave.radius;
             float a = wave.alpha * alpha;
 
-            buffer.begin(VertexFormat.Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR);
+            BufferBuilder buffer = tesselator.begin(VertexFormat.Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR);
 
             int segments = 64;
             for (int i = 0; i <= segments; i++) {
                 float angle = (float) (i * Math.PI * 2.0 / segments);
                 float x = Mth.cos(angle) * r;
                 float z = Mth.sin(angle) * r;
-                buffer.vertex(matrix, x, 0, z).color(0.6f, 0.9f, 1.0f, a * 1.5f).endVertex();
+                buffer.addVertex(matrix, x, 0, z).setColor(0.6f, 0.9f, 1.0f, a * 1.5f);
             }
 
-            tesselator.end();
+            BufferUploader.drawWithShader(buffer.buildOrThrow());
 
             poseStack.popPose();
         }
@@ -247,7 +245,6 @@ public class DeadCalmSkyBoxRenderer {
         if (alpha < 0.1f) return;
 
         Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder buffer = tesselator.getBuilder();
 
         Minecraft mc = Minecraft.getInstance();
         Vec3 camera = mc.gameRenderer.getMainCamera().getPosition();
@@ -266,17 +263,17 @@ public class DeadCalmSkyBoxRenderer {
             float r = ripple.radius;
             float a = ripple.alpha * alpha;
 
-            buffer.begin(VertexFormat.Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR);
+            BufferBuilder buffer = tesselator.begin(VertexFormat.Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR);
 
             int segments = 32;
             for (int i = 0; i <= segments; i++) {
                 float angle = (float) (i * Math.PI * 2.0 / segments);
                 float x = Mth.cos(angle) * r;
                 float z = Mth.sin(angle) * r;
-                buffer.vertex(matrix, x, 0, z).color(0.5f, 0.8f, 1.0f, a).endVertex();
+                buffer.addVertex(matrix, x, 0, z).setColor(0.5f, 0.8f, 1.0f, a);
             }
 
-            tesselator.end();
+            BufferUploader.drawWithShader(buffer.buildOrThrow());
 
             poseStack.popPose();
         }
@@ -286,12 +283,11 @@ public class DeadCalmSkyBoxRenderer {
         if (alpha < 0.1f) return;
 
         Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder buffer = tesselator.getBuilder();
 
         Minecraft mc = Minecraft.getInstance();
         Vec3 camera = mc.gameRenderer.getMainCamera().getPosition();
 
-        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+        BufferBuilder buffer = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
 
         for (WaterDroplet droplet : droplets) {
             poseStack.pushPose();
@@ -306,15 +302,15 @@ public class DeadCalmSkyBoxRenderer {
             float size = droplet.size;
             float a = droplet.alpha * alpha;
 
-            buffer.vertex(matrix, -size, -size, 0).color(0.7f, 0.9f, 1.0f, a).endVertex();
-            buffer.vertex(matrix, -size, size, 0).color(0.7f, 0.9f, 1.0f, a).endVertex();
-            buffer.vertex(matrix, size, size, 0).color(0.7f, 0.9f, 1.0f, a).endVertex();
-            buffer.vertex(matrix, size, -size, 0).color(0.7f, 0.9f, 1.0f, a).endVertex();
+            buffer.addVertex(matrix, -size, -size, 0).setColor(0.7f, 0.9f, 1.0f, a);
+            buffer.addVertex(matrix, -size, size, 0).setColor(0.7f, 0.9f, 1.0f, a);
+            buffer.addVertex(matrix, size, size, 0).setColor(0.7f, 0.9f, 1.0f, a);
+            buffer.addVertex(matrix, size, -size, 0).setColor(0.7f, 0.9f, 1.0f, a);
 
             poseStack.popPose();
         }
 
-        tesselator.end();
+        BufferUploader.drawWithShader(buffer.buildOrThrow());
     }
 
     // STARTUP WAVE - Big radial waves on activation

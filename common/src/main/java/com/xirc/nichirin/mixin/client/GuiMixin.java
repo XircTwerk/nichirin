@@ -1,8 +1,8 @@
 package com.xirc.nichirin.mixin.client;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.system.DemonComponent;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
@@ -10,17 +10,18 @@ import net.minecraft.world.entity.player.Player;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Gui.class)
 public class GuiMixin {
 
     @Unique
-    private static final ResourceLocation BLOOD_FULL = new ResourceLocation("nichirin", "textures/gui/blood_full.png");
+    private static final ResourceLocation BLOOD_FULL = ResourceLocation.fromNamespaceAndPath("nichirin", "textures/gui/blood_full.png");
     @Unique
-    private static final ResourceLocation BLOOD_HALF = new ResourceLocation("nichirin", "textures/gui/blood_half.png");
+    private static final ResourceLocation BLOOD_HALF = ResourceLocation.fromNamespaceAndPath("nichirin", "textures/gui/blood_half.png");
     @Unique
-    private static final ResourceLocation BLOOD_EMPTY = new ResourceLocation("nichirin", "textures/gui/blood_empty.png");
+    private static final ResourceLocation BLOOD_EMPTY = ResourceLocation.fromNamespaceAndPath("nichirin", "textures/gui/blood_empty.png");
 
     @Unique
     private static final int BLOOD_BAR_WIDTH = 9;
@@ -28,60 +29,24 @@ public class GuiMixin {
     private static final int BLOOD_BAR_HEIGHT = 9;
 
     /**
-     * Intercepts hunger bar rendering and replaces with blood bar for demons
-     * Uses coordinate-based segment detection to maintain the original segment logic
+     * Replaces the hunger bar with the blood bar for demon players.
      */
-    @Redirect(method = "renderPlayerHealth",
-            at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/client/gui/GuiGraphics;blit(Lnet/minecraft/resources/ResourceLocation;IIIIII)V"))
-    private void nichirin$replaceHungerWithBlood(GuiGraphics graphics, ResourceLocation texture,
-                                                 int x, int y, int u, int v, int width, int height) {
-        Minecraft minecraft = Minecraft.getInstance();
-        Player player = minecraft.player;
-
-        // Check if this is a hunger bar blit for a demon player
-        boolean isDemon = player != null && MovesetHelper.hasDemonMoveset(player);
-        boolean isHungerBarBlit = v == 27; // Food icons are at v=27 in GUI_ICONS_LOCATION
-        boolean isCreativeOrSpectator = player != null && (player.isCreative() || player.isSpectator());
-
-        if (isDemon && isHungerBarBlit && !isCreativeOrSpectator) {
-            // Calculate which segment this is based on x coordinate
-            int segmentIndex = nichirin$calculateSegmentIndex(x, minecraft.getWindow().getGuiScaledWidth());
-
-            if (segmentIndex >= 0) {
-                // Get the appropriate blood texture for this segment
-                ResourceLocation bloodTexture = nichirin$getBloodTextureForSegment(segmentIndex);
-
-                // Render blood icon instead of hunger icon
-                graphics.blit(bloodTexture, x, y, 0, 0, width, height,
-                        BLOOD_BAR_WIDTH, BLOOD_BAR_HEIGHT);
-                return;
-            }
+    @Inject(method = "renderFood", at = @At("HEAD"), cancellable = true)
+    private void nichirin$renderBloodInsteadOfFood(GuiGraphics graphics, Player player, int y, int right,
+                                                   CallbackInfo ci) {
+        if (!MovesetHelper.hasDemonMoveset(player) || player.isCreative() || player.isSpectator()) {
+            return;
         }
 
-        // Render normal GUI element (not demon hunger bar)
-        graphics.blit(texture, x, y, u, v, width, height);
-    }
-
-    /**
-     * Calculates which blood segment is being rendered based on x coordinate
-     * Mirrors the positioning logic from the original DemonBloodGui
-     */
-    @Unique
-    private int nichirin$calculateSegmentIndex(int x, int screenWidth) {
-        // Calculate hunger bar position (same as original code)
-        int hungerBarLeft = screenWidth / 2 + 91;
-
-        // Each segment is 8 pixels apart, starting from the right
-        // Segment 0 = rightmost, segment 9 = leftmost
+        RenderSystem.enableBlend();
         for (int i = 0; i < 10; i++) {
-            int segmentX = hungerBarLeft - i * 8 - 9;
-            if (x == segmentX) {
-                return i;
-            }
+            int x = right - i * 8 - BLOOD_BAR_WIDTH;
+            ResourceLocation texture = nichirin$getBloodTextureForSegment(i);
+            graphics.blit(texture, x, y, 0, 0, BLOOD_BAR_WIDTH, BLOOD_BAR_HEIGHT,
+                    BLOOD_BAR_WIDTH, BLOOD_BAR_HEIGHT);
         }
-
-        return -1; // Not a blood segment
+        RenderSystem.disableBlend();
+        ci.cancel();
     }
 
     /**

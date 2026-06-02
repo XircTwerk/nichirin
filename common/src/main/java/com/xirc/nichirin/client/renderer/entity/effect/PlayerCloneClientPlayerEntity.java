@@ -1,14 +1,20 @@
 package com.xirc.nichirin.client.renderer.entity.effect;
 
 import com.mojang.authlib.GameProfile;
-import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import com.xirc.nichirin.common.entity.effect.PlayerCloneEntity;
+import com.zigythebird.playeranim.animation.PlayerAnimManager;
+import com.zigythebird.playeranim.animation.PlayerAnimationProcessor;
+import com.zigythebird.playeranim.api.PlayerAnimationAccess;
+import com.zigythebird.playeranim.api.PlayerAnimationFactory;
+import com.zigythebird.playeranimcore.animation.AnimationProcessor;
+import com.zigythebird.playeranimcore.animation.layered.IAnimation;
 import dev.architectury.event.events.client.ClientTickEvent;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.resources.PlayerSkin;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -16,6 +22,8 @@ import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.WeakHashMap;
@@ -33,6 +41,9 @@ public class PlayerCloneClientPlayerEntity extends AbstractClientPlayer {
             new GameProfile(UUID.nameUUIDFromBytes("nichirin$playerClone".getBytes()), null);
 
     private final PlayerCloneEntity clone;
+    private final Map<ResourceLocation, IAnimation> modAnimationData = new HashMap<>();
+    private final PlayerAnimManager animationManager = createAnimationStack();
+    private final AnimationProcessor animationProcessor = new PlayerAnimationProcessor(this);
 
     static {
         ClientTickEvent.CLIENT_LEVEL_POST.register(world ->
@@ -58,38 +69,30 @@ public class PlayerCloneClientPlayerEntity extends AbstractClientPlayer {
     protected PlayerInfo getPlayerInfo() { return null; }
 
     @Override
-    public boolean isSkinLoaded() {
-        return CloneSkinTracker.getSkinFor(clone, MinecraftProfileTexture.Type.SKIN) != null;
+    public PlayerSkin getSkin() {
+        return CloneSkinTracker.getSkinFor(clone);
     }
 
     @Override
-    public ResourceLocation getSkinTextureLocation() {
-        return CloneSkinTracker.getSkinFor(clone, MinecraftProfileTexture.Type.SKIN);
+    public PlayerAnimManager playerAnimLib$getAnimManager() {
+        return animationManager;
     }
 
     @Override
-    public boolean isCapeLoaded() {
-        return CloneSkinTracker.getSkinFor(clone, MinecraftProfileTexture.Type.CAPE) != null;
+    public IAnimation playerAnimLib$getAnimation(ResourceLocation id) {
+        return modAnimationData.get(id);
     }
 
     @Override
-    public ResourceLocation getCloakTextureLocation() {
-        return CloneSkinTracker.getSkinFor(clone, MinecraftProfileTexture.Type.CAPE);
+    public AnimationProcessor playerAnimLib$getAnimProcessor() {
+        return animationProcessor;
     }
 
-    @Override
-    public boolean isElytraLoaded() {
-        return CloneSkinTracker.getSkinFor(clone, MinecraftProfileTexture.Type.ELYTRA) != null;
-    }
-
-    @Override
-    public ResourceLocation getElytraTextureLocation() {
-        return CloneSkinTracker.getSkinFor(clone, MinecraftProfileTexture.Type.ELYTRA);
-    }
-
-    @Override
-    public String getModelName() {
-        return CloneSkinTracker.isSlimFor(clone) ? "slim" : "default";
+    private PlayerAnimManager createAnimationStack() {
+        PlayerAnimManager manager = new PlayerAnimManager(this);
+        PlayerAnimationFactory.ANIMATION_DATA_FACTORY.prepareAnimations(this, manager, modAnimationData);
+        PlayerAnimationAccess.REGISTER_ANIMATION_EVENT.invoker().registerAnimation(this, manager);
+        return manager;
     }
 
     @Override
@@ -98,6 +101,7 @@ public class PlayerCloneClientPlayerEntity extends AbstractClientPlayer {
     @Override
     public void tick() {
         super.tick();
+        animationProcessor.handleAnimations(0, true);
         tickCount++;
         setMainArm(clone.isLeftHanded() ? HumanoidArm.LEFT : HumanoidArm.RIGHT);
         entityData.set(Player.DATA_PLAYER_MODE_CUSTOMISATION, clone.getPartMask());

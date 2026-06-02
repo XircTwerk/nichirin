@@ -243,7 +243,7 @@ public class Dodge {
      */
     private static void applyDodgeStun(Player player) {
         MobEffectInstance stunEffect = new MobEffectInstance(
-                NichirinEffectRegistry.STUNNED.get(),
+                NichirinEffectRegistry.stunned(),
                 STUN_DURATION,
                 0,
                 false,

@@ -120,7 +120,7 @@ public class HonoikazuchiNoKamiAttack extends ThunderBreathingAttackBase {
         TeleportUtil.TeleportOptions options = new TeleportUtil.TeleportOptions()
                 .withParticles(ParticleTypes.ELECTRIC_SPARK, ParticleTypes.EXPLOSION)
                 .withTrail(ParticleTypes.ELECTRIC_SPARK, 16.0f) // Very dense trail
-                .withSounds(SoundEvents.LIGHTNING_BOLT_THUNDER, SoundEvents.GENERIC_EXPLODE)
+                .withSounds(SoundEvents.LIGHTNING_BOLT_THUNDER, SoundEvents.GENERIC_EXPLODE.value())
                 .withDamageCallback(target -> {
                     // Hit targets along the path
                     if (!hitEntities.contains(target)) {

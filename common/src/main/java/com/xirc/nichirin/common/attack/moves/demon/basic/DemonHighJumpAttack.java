@@ -85,7 +85,7 @@ public class DemonHighJumpAttack extends AbstractDemonAttack<DemonHighJumpAttack
 
             // Apply stunned effect to launched entities
             MobEffectInstance stunEffect = new MobEffectInstance(
-                    NichirinEffectRegistry.STUNNED.get(),
+                    NichirinEffectRegistry.stunned(),
                     20,
                     2,
                     false,

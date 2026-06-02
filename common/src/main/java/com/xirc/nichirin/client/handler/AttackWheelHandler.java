@@ -197,12 +197,12 @@ public class AttackWheelHandler {
             return;
         }
 
-        if (mc.player.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+        if (mc.player.hasEffect(NichirinEffectRegistry.stunned())) {
             return;
         }
 
         // Check if player has blocking effect - CAN'T OPEN WHEEL
-        if (mc.player.hasEffect(NichirinEffectRegistry.BLOCKING.get())) {
+        if (mc.player.hasEffect(NichirinEffectRegistry.blocking())) {
             return;
         }
 

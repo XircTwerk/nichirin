@@ -8,7 +8,6 @@ import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.EntityTypeTags;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.food.FoodData;
@@ -134,7 +133,7 @@ public class DemonManager {
         Level level = player.level();
         if (level.isDay() && !level.isRaining() && !level.isThundering()
                 && level.canSeeSky(player.blockPosition())) {
-            player.setSecondsOnFire(SUN_FIRE_DURATION / 20);
+            player.igniteForSeconds(SUN_FIRE_DURATION / 20);
         }
     }
 
@@ -153,7 +152,7 @@ public class DemonManager {
     private static void handleBloodRegeneration(Player player) {
         long currentTime = player.level().getGameTime();
         UUID playerUUID = player.getUUID();
-        boolean hasStunEffect = player.hasEffect(NichirinEffectRegistry.STUNNED.get());
+        boolean hasStunEffect = player.hasEffect(NichirinEffectRegistry.stunned());
         if (hasStunEffect) {
             return; // Block regen during any stun
         }
@@ -259,8 +258,7 @@ public class DemonManager {
      */
     private static boolean hasBlood(LivingEntity entity) {
         // Most living entities have blood except undead
-        return !entity.getType().is(EntityTypeTags.SKELETONS) &&
-                entity.getMobType() != MobType.UNDEAD;
+        return !entity.getType().is(EntityTypeTags.UNDEAD);
     }
 
     /**

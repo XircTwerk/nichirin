@@ -18,10 +18,10 @@ dependencies {
     modImplementation "net.fabricmc:fabric-loader:$rootProject.fabric_loader_version"
     modImplementation "dev.architectury:architectury:$rootProject.architectury_api_version"
 
-    compileOnly "mod.azure.azurelib:azurelib-common-1.20.1:${azurelib_version}"
+    compileOnly "mod.azure.azurelib:azurelib-common-1.21.1:${azurelib_version}"
 
-    modImplementation "dev.kosmx.player-anim:player-animation-lib:${rootProject.player_anim_version}"
-    modImplementation "dev.kosmx.player-anim:anim-core:${rootProject.player_anim_version}"
+    modApi "com.zigythebird.playeranim:PlayerAnimationLibCommon:${rootProject.pal_version}"
+    modCompileOnly "com.zigythebird.playeranim:PlayerAnimationLibCore:${rootProject.pal_version}"
 
     // Cloth Config — compile against the fabric jar (same API surface on both platforms)
     modCompileOnly "me.shedaniel.cloth:cloth-config-fabric:${rootProject.cloth_config_version}"

@@ -31,7 +31,7 @@ public class CooldownClearEventHandler {
         });
 
         // Clear cooldowns when player respawns
-        PlayerEvent.PLAYER_RESPAWN.register((newPlayer, conqueredEnd) -> {
+        PlayerEvent.PLAYER_RESPAWN.register((newPlayer, conqueredEnd, removalReason) -> {
             if (!conqueredEnd && !newPlayer.level().isClientSide) {
                 clearPlayerCooldowns(newPlayer);
                 BreathOfNichirin.LOGGER.debug("Cleared cooldowns for {} on respawn",

@@ -1,0 +1,61 @@
+modLoader = "javafml"
+loaderVersion = "[4,)"
+license = "All Rights Reserved"
+
+[[mods]]
+modId = "nichirin"
+version = "${version}"
+displayName = "Demon Slayer: Breath of Nichirin"
+authors = "XircTwerk"
+description = '''
+Vanilla+ styled demon slayer mod.
+'''
+
+[[dependencies.nichirin]]
+modId = "neoforge"
+type = "required"
+versionRange = "[21.1,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.nichirin]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.21,1.21.2)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.nichirin]]
+modId = "architectury"
+type = "required"
+versionRange = "[13.0.8,)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.nichirin]]
+modId = "azurelib"
+type = "required"
+versionRange = "[3.1.8,)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.nichirin]]
+modId = "player_animation_library"
+type = "required"
+versionRange = "[1.1.4,)"
+ordering = "AFTER"
+side = "CLIENT"
+
+[[dependencies.nichirin]]
+modId = "terrablender"
+type = "required"
+versionRange = "[4.1.0.8,)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.nichirin]]
+modId = "cloth_config"
+type = "required"
+versionRange = "[15.0.140,)"
+ordering = "AFTER"
+side = "CLIENT"

@@ -4,7 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.client.renderer.entity.BaseAZNichirinEntityRenderer;
 import com.xirc.nichirin.common.entity.npc.DemonNPCEntity;
-import mod.azure.azurelib.render.entity.AzEntityRendererConfig;
+import mod.azure.azurelib.common.render.entity.AzEntityRendererConfig;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
@@ -15,8 +15,8 @@ import net.minecraft.resources.ResourceLocation;
  */
 public class DemonNPCRenderer extends BaseAZNichirinEntityRenderer<DemonNPCEntity> {
 
-    private static final ResourceLocation DEFAULT_GEO = new ResourceLocation(BreathOfNichirin.MOD_ID, "geo/demon_npc.geo.json");
-    private static final ResourceLocation DEFAULT_TEXTURE = new ResourceLocation(BreathOfNichirin.MOD_ID, "textures/entity/npc/demon_npc.png");
+    private static final ResourceLocation DEFAULT_GEO = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "geo/demon_npc.geo.json");
+    private static final ResourceLocation DEFAULT_TEXTURE = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "textures/entity/npc/demon_npc.png");
 
     public DemonNPCRenderer(EntityRendererProvider.Context context) {
         super(
@@ -50,7 +50,7 @@ public class DemonNPCRenderer extends BaseAZNichirinEntityRenderer<DemonNPCEntit
         // No "demon_" prefix - exact match to texture file name
         String demonType = entity.getDemonType();
         if (demonType != null && !demonType.isEmpty()) {
-            return new ResourceLocation(BreathOfNichirin.MOD_ID, "textures/entity/npc/" + demonType + ".png");
+            return ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "textures/entity/npc/" + demonType + ".png");
         }
         return DEFAULT_TEXTURE;
     }

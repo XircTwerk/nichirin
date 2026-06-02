@@ -4,12 +4,13 @@ import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.data.ProgressionHelper;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import dev.architectury.event.events.common.PlayerEvent;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.projectile.ThrownPotion;
-import net.minecraft.world.item.alchemy.PotionUtils;
+import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.alchemy.Potions;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.EntityEvent;
@@ -40,9 +41,10 @@ public class InsectBreathingUnlockHandler {
     private static void checkPoisonPotionThrow(ServerPlayer player, ThrownPotion thrownPotion) {
         if (ProgressionHelper.isStyleUnlocked(player, "insect_breathing")) return;
 
-        if (PotionUtils.getPotion(thrownPotion.getItem()) == Potions.POISON ||
-                PotionUtils.getPotion(thrownPotion.getItem()) == Potions.LONG_POISON ||
-                PotionUtils.getPotion(thrownPotion.getItem()) == Potions.STRONG_POISON) {
+        PotionContents contents = thrownPotion.getItem().getOrDefault(DataComponents.POTION_CONTENTS, PotionContents.EMPTY);
+        if (contents.is(Potions.POISON) ||
+                contents.is(Potions.LONG_POISON) ||
+                contents.is(Potions.STRONG_POISON)) {
             unlockInsectBreathing(player);
         }
     }

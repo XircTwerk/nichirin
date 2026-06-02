@@ -4,9 +4,9 @@ import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.client.renderer.entity.BaseAZNichirinEntityRenderer;
 import com.xirc.nichirin.client.renderer.entity.animator.WaterBreathingTrainerAnimator;
 import com.xirc.nichirin.common.entity.npc.WaterBreathingTrainerEntity;
-import mod.azure.azurelib.model.AzBone;
-import mod.azure.azurelib.render.entity.AzEntityRendererConfig;
-import mod.azure.azurelib.render.layer.AzBlockAndItemLayer;
+import mod.azure.azurelib.common.model.AzBone;
+import mod.azure.azurelib.common.render.entity.AzEntityRendererConfig;
+import mod.azure.azurelib.common.render.layer.AzBlockAndItemLayer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -15,8 +15,8 @@ import net.minecraft.world.item.ItemStack;
 
 public class WaterBreathingTrainerRenderer extends BaseAZNichirinEntityRenderer<WaterBreathingTrainerEntity> {
 
-    private static final ResourceLocation GEO = new ResourceLocation(BreathOfNichirin.MOD_ID, "geo/urokodaki_npc.geo.json");
-    private static final ResourceLocation TEX = new ResourceLocation(BreathOfNichirin.MOD_ID, "textures/entity/npc/urokodaki_skin.png");
+    private static final ResourceLocation GEO = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "geo/urokodaki_npc.geo.json");
+    private static final ResourceLocation TEX = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "textures/entity/npc/urokodaki_skin.png");
 
     public WaterBreathingTrainerRenderer(EntityRendererProvider.Context context) {
         super(

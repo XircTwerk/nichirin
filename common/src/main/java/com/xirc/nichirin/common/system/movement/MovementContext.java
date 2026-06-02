@@ -53,11 +53,11 @@ public class MovementContext {
         }
 
         // Check if player is stunned or disoriented
-        if (player.hasEffect(NichirinEffectRegistry.STUNNED.get()) ||
-                player.hasEffect(NichirinEffectRegistry.DISORIENTED.get())) {
+        if (player.hasEffect(NichirinEffectRegistry.stunned()) ||
+                player.hasEffect(NichirinEffectRegistry.disoriented())) {
 
             // Different messages for different effects
-            if (player.hasEffect(NichirinEffectRegistry.DISORIENTED.get())) {
+            if (player.hasEffect(NichirinEffectRegistry.disoriented())) {
                 player.displayClientMessage(
                         Component.literal("You are too disoriented to use movement abilities!").withStyle(style -> style.withColor(0x9932CC)),
                         true

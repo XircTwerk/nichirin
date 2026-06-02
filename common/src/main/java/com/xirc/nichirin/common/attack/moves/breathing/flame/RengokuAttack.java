@@ -110,7 +110,7 @@ public class RengokuAttack extends FlameBreathingAttackBase {
         try {
             for (LivingEntity target : targets) {
                 hitTarget(target);
-                target.setSecondsOnFire(3);
+                target.igniteForSeconds(3);
             }
         } finally {
             damage = originalDamage;
@@ -345,7 +345,7 @@ public class RengokuAttack extends FlameBreathingAttackBase {
         target.push(knockbackDir.x * knockback, 1.0, knockbackDir.z * knockback);
 
         // Set on fire for much longer
-        target.setSecondsOnFire(8); // Longer fire for ultimate
+        target.igniteForSeconds(8); // Longer fire for ultimate
 
         // Massive particle explosion per target
         createFlameExplosion(target.position().add(0, 1, 0), 3.0f);

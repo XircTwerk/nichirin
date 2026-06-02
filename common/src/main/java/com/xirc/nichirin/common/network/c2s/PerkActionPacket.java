@@ -3,6 +3,7 @@ package com.xirc.nichirin.common.network.c2s;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.system.perks.*;
 import com.xirc.nichirin.common.network.s2c.PerkSyncPacket;
+import com.xirc.nichirin.common.util.NetworkBufferUtils;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
@@ -115,7 +116,7 @@ public class PerkActionPacket {
         try {
             FriendlyByteBuf syncBuf = new FriendlyByteBuf(Unpooled.buffer());
             new PerkSyncPacket(data).toBytes(syncBuf);
-            NetworkManager.sendToPlayer(player, NichirinPacketRegistry.PERK_SYNC_ID, syncBuf);
+            NetworkManager.sendToPlayer(player, NichirinPacketRegistry.PERK_SYNC_ID, NetworkBufferUtils.server(syncBuf, player));
         } catch (Exception e) {
             // ignore send errors
         }

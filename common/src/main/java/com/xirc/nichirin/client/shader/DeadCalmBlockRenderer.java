@@ -157,7 +157,6 @@ public class DeadCalmBlockRenderer {
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
 
         Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder buffer = tesselator.getBuilder();
 
         poseStack.pushPose();
 
@@ -166,13 +165,13 @@ public class DeadCalmBlockRenderer {
 
         Matrix4f matrix = poseStack.last().pose();
 
-        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+        BufferBuilder buffer = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
 
         for (BlockPos pos : affectedBlocks) {
             renderBlockOverlay(buffer, matrix, pos);
         }
 
-        tesselator.end();
+        BufferUploader.drawWithShader(buffer.buildOrThrow());
 
         poseStack.popPose();
 
@@ -201,10 +200,10 @@ public class DeadCalmBlockRenderer {
 
         // Top face - slightly above block for visibility
         float topY = y + 1.005f;
-        buffer.vertex(matrix, x, topY, z).color(r, g, b, alpha).endVertex();
-        buffer.vertex(matrix, x, topY, z + 1).color(r, g, b, alpha).endVertex();
-        buffer.vertex(matrix, x + 1, topY, z + 1).color(r, g, b, alpha).endVertex();
-        buffer.vertex(matrix, x + 1, topY, z).color(r, g, b, alpha).endVertex();
+        buffer.addVertex(matrix, x, topY, z).setColor(r, g, b, alpha);
+        buffer.addVertex(matrix, x, topY, z + 1).setColor(r, g, b, alpha);
+        buffer.addVertex(matrix, x + 1, topY, z + 1).setColor(r, g, b, alpha);
+        buffer.addVertex(matrix, x + 1, topY, z).setColor(r, g, b, alpha);
 
         // Side faces with slightly less contrast
         float sideAlpha = alpha * 0.9f;
@@ -213,27 +212,27 @@ public class DeadCalmBlockRenderer {
         float sideB = b * 0.95f;
 
         // North face
-        buffer.vertex(matrix, x, y, z).color(sideR, sideG, sideB, sideAlpha).endVertex();
-        buffer.vertex(matrix, x, y + 1, z).color(sideR, sideG, sideB, sideAlpha).endVertex();
-        buffer.vertex(matrix, x + 1, y + 1, z).color(sideR, sideG, sideB, sideAlpha).endVertex();
-        buffer.vertex(matrix, x + 1, y, z).color(sideR, sideG, sideB, sideAlpha).endVertex();
+        buffer.addVertex(matrix, x, y, z).setColor(sideR, sideG, sideB, sideAlpha);
+        buffer.addVertex(matrix, x, y + 1, z).setColor(sideR, sideG, sideB, sideAlpha);
+        buffer.addVertex(matrix, x + 1, y + 1, z).setColor(sideR, sideG, sideB, sideAlpha);
+        buffer.addVertex(matrix, x + 1, y, z).setColor(sideR, sideG, sideB, sideAlpha);
 
         // South face
-        buffer.vertex(matrix, x + 1, y, z + 1).color(sideR, sideG, sideB, sideAlpha).endVertex();
-        buffer.vertex(matrix, x + 1, y + 1, z + 1).color(sideR, sideG, sideB, sideAlpha).endVertex();
-        buffer.vertex(matrix, x, y + 1, z + 1).color(sideR, sideG, sideB, sideAlpha).endVertex();
-        buffer.vertex(matrix, x, y, z + 1).color(sideR, sideG, sideB, sideAlpha).endVertex();
+        buffer.addVertex(matrix, x + 1, y, z + 1).setColor(sideR, sideG, sideB, sideAlpha);
+        buffer.addVertex(matrix, x + 1, y + 1, z + 1).setColor(sideR, sideG, sideB, sideAlpha);
+        buffer.addVertex(matrix, x, y + 1, z + 1).setColor(sideR, sideG, sideB, sideAlpha);
+        buffer.addVertex(matrix, x, y, z + 1).setColor(sideR, sideG, sideB, sideAlpha);
 
         // East face
-        buffer.vertex(matrix, x + 1, y, z).color(sideR, sideG, sideB, sideAlpha).endVertex();
-        buffer.vertex(matrix, x + 1, y + 1, z).color(sideR, sideG, sideB, sideAlpha).endVertex();
-        buffer.vertex(matrix, x + 1, y + 1, z + 1).color(sideR, sideG, sideB, sideAlpha).endVertex();
-        buffer.vertex(matrix, x + 1, y, z + 1).color(sideR, sideG, sideB, sideAlpha).endVertex();
+        buffer.addVertex(matrix, x + 1, y, z).setColor(sideR, sideG, sideB, sideAlpha);
+        buffer.addVertex(matrix, x + 1, y + 1, z).setColor(sideR, sideG, sideB, sideAlpha);
+        buffer.addVertex(matrix, x + 1, y + 1, z + 1).setColor(sideR, sideG, sideB, sideAlpha);
+        buffer.addVertex(matrix, x + 1, y, z + 1).setColor(sideR, sideG, sideB, sideAlpha);
 
         // West face
-        buffer.vertex(matrix, x, y, z + 1).color(sideR, sideG, sideB, sideAlpha).endVertex();
-        buffer.vertex(matrix, x, y + 1, z + 1).color(sideR, sideG, sideB, sideAlpha).endVertex();
-        buffer.vertex(matrix, x, y + 1, z).color(sideR, sideG, sideB, sideAlpha).endVertex();
-        buffer.vertex(matrix, x, y, z).color(sideR, sideG, sideB, sideAlpha).endVertex();
+        buffer.addVertex(matrix, x, y, z + 1).setColor(sideR, sideG, sideB, sideAlpha);
+        buffer.addVertex(matrix, x, y + 1, z + 1).setColor(sideR, sideG, sideB, sideAlpha);
+        buffer.addVertex(matrix, x, y + 1, z).setColor(sideR, sideG, sideB, sideAlpha);
+        buffer.addVertex(matrix, x, y, z).setColor(sideR, sideG, sideB, sideAlpha);
     }
 }

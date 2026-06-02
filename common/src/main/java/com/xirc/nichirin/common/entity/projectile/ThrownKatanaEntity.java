@@ -3,6 +3,7 @@ package com.xirc.nichirin.common.entity.projectile;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerEntity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
 import net.minecraft.network.protocol.Packet;
@@ -115,9 +116,9 @@ public class ThrownKatanaEntity extends Entity {
     }
 
     @Override
-    public void defineSynchedData() {
-        entityData.define(STUCK, false);
-        entityData.define(THROWN_ITEM, ItemStack.EMPTY);
+    public void defineSynchedData(SynchedEntityData.Builder builder) {
+        builder.define(STUCK, false);
+        builder.define(THROWN_ITEM, ItemStack.EMPTY);
     }
 
     @Override
@@ -207,7 +208,7 @@ public class ThrownKatanaEntity extends Entity {
                 if (hitStun > 0) {
                     target.invulnerableTime = hitStun;
                     target.addEffect(new MobEffectInstance(
-                            NichirinEffectRegistry.STUNNED.get(), hitStun, 1, false, false, true));
+                            NichirinEffectRegistry.stunned(), hitStun, 1, false, false, true));
                 }
                 Vec3 direction = getDeltaMovement().normalize();
                 target.push(direction.x * 0.3, 0.1, direction.z * 0.3);
@@ -226,7 +227,7 @@ public class ThrownKatanaEntity extends Entity {
         damage = tag.getFloat("Damage");
         hitStun = tag.getInt("HitStun");
         if (tag.contains("ThrownItem")) {
-            setThrownItem(ItemStack.of(tag.getCompound("ThrownItem")));
+            setThrownItem(ItemStack.parseOptional(registryAccess(), tag.getCompound("ThrownItem")));
         }
     }
 
@@ -238,12 +239,12 @@ public class ThrownKatanaEntity extends Entity {
         tag.putInt("HitStun", hitStun);
         ItemStack item = getThrownItem();
         if (!item.isEmpty()) {
-            tag.put("ThrownItem", item.save(new CompoundTag()));
+            tag.put("ThrownItem", item.save(registryAccess(), new CompoundTag()));
         }
     }
 
     @Override
-    public Packet<ClientGamePacketListener> getAddEntityPacket() {
-        return new ClientboundAddEntityPacket(this);
+    public Packet<ClientGamePacketListener> getAddEntityPacket(ServerEntity entity) {
+        return new ClientboundAddEntityPacket(this, entity);
     }
 }

@@ -10,7 +10,7 @@ public class ItemPropertiesHelperImpl {
     public static void registerBentoBoxProperty() {
         ItemProperties.register(
                 NichirinItemRegistry.BENTO_BOX.get(),
-                new ResourceLocation("nichirin", "filled"),
+                ResourceLocation.fromNamespaceAndPath("nichirin", "filled"),
                 (stack, level, entity, seed) -> {
                     if (!(stack.getItem() instanceof BentoBoxItem)) {
                         return 0.0f;

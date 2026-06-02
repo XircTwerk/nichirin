@@ -40,6 +40,24 @@
 					}
 				}
 			}
+		},
+		"crouching": {
+			"loop": true,
+			"animation_length": 1,
+			"bones": {
+				"Lowerpartsfront": {
+					"rotation": {
+						"0": { "vector": [-32.5, 0, 0] },
+						"1": { "vector": [-32.5, 0, 0] }
+					}
+				},
+				"Lowerpartsback": {
+					"rotation": {
+						"0": { "vector": [32.5, 0, 0] },
+						"1": { "vector": [32.5, 0, 0] }
+					}
+				}
+			}
 		}
 	},
 	"azurelib_format_version": 2

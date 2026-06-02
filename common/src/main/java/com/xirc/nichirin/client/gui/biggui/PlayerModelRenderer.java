@@ -99,7 +99,7 @@ public class PlayerModelRenderer {
                                                 Quaternionf pose, Quaternionf cameraOrientation, LivingEntity entity) {
         guiGraphics.pose().pushPose();
         guiGraphics.pose().translate((double)x, (double)y + 55, 50.0); // Moved down 5 pixels from +50 to +55
-        guiGraphics.pose().mulPoseMatrix(new Matrix4f().scaling(scale, scale, -scale));
+        guiGraphics.pose().mulPose(new Matrix4f().scaling(scale, scale, -scale));
         guiGraphics.pose().mulPose(pose);
 
         Lighting.setupForEntityInInventory();

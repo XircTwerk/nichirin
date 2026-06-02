@@ -1,6 +1,6 @@
 package com.xirc.nichirin.common.worldgen.trees.wysteria;
 
-import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.xirc.nichirin.registry.NichirinFoliagePlacerTypes;
 import net.minecraft.core.BlockPos;
@@ -12,7 +12,7 @@ import net.minecraft.world.level.levelgen.feature.foliageplacers.FoliagePlacer;
 import net.minecraft.world.level.levelgen.feature.foliageplacers.FoliagePlacerType;
 
 public class WysteriaLargeFoliagePlacer extends FoliagePlacer {
-    public static final Codec<WysteriaLargeFoliagePlacer> CODEC = RecordCodecBuilder.create((instance) ->
+    public static final MapCodec<WysteriaLargeFoliagePlacer> CODEC = RecordCodecBuilder.mapCodec((instance) ->
             foliagePlacerParts(instance).apply(instance, WysteriaLargeFoliagePlacer::new));
 
     public WysteriaLargeFoliagePlacer(IntProvider radius, IntProvider offset) {

@@ -24,7 +24,7 @@ public class ClientEventHandler {
             }
 
             // Render cooldown HUD
-            CooldownHUD.render(graphics, partialTicks);
+            CooldownHUD.render(graphics, partialTicks.getGameTimeDeltaPartialTick(true));
 
             // Note: Blood bar is now rendered via mixin - no manual rendering needed
         });

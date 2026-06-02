@@ -148,9 +148,7 @@ public class AttackHitboxRenderer {
     private static void renderBoxFaces(final AABB box, final PoseStack matrices, final Vec3 camPos, final int color) {
 
         final Tesselator tesselator = Tesselator.getInstance();
-        final BufferBuilder buffer = tesselator.getBuilder();
-
-        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+        BufferBuilder buffer = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
 
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
         RenderSystem.enableBlend();
@@ -168,42 +166,42 @@ public class AttackHitboxRenderer {
         final Matrix4f matrix = matrices.last().pose();
 
         // Top face (Y+)
-        buffer.vertex(matrix, minX, maxY, minZ).color(color).endVertex();
-        buffer.vertex(matrix, minX, maxY, maxZ).color(color).endVertex();
-        buffer.vertex(matrix, maxX, maxY, maxZ).color(color).endVertex();
-        buffer.vertex(matrix, maxX, maxY, minZ).color(color).endVertex();
+        buffer.addVertex(matrix, minX, maxY, minZ).setColor(color);
+        buffer.addVertex(matrix, minX, maxY, maxZ).setColor(color);
+        buffer.addVertex(matrix, maxX, maxY, maxZ).setColor(color);
+        buffer.addVertex(matrix, maxX, maxY, minZ).setColor(color);
 
         // Bottom face (Y-)
-        buffer.vertex(matrix, minX, minY, minZ).color(color).endVertex();
-        buffer.vertex(matrix, maxX, minY, minZ).color(color).endVertex();
-        buffer.vertex(matrix, maxX, minY, maxZ).color(color).endVertex();
-        buffer.vertex(matrix, minX, minY, maxZ).color(color).endVertex();
+        buffer.addVertex(matrix, minX, minY, minZ).setColor(color);
+        buffer.addVertex(matrix, maxX, minY, minZ).setColor(color);
+        buffer.addVertex(matrix, maxX, minY, maxZ).setColor(color);
+        buffer.addVertex(matrix, minX, minY, maxZ).setColor(color);
 
         // North face (Z-)
-        buffer.vertex(matrix, minX, minY, minZ).color(color).endVertex();
-        buffer.vertex(matrix, minX, maxY, minZ).color(color).endVertex();
-        buffer.vertex(matrix, maxX, maxY, minZ).color(color).endVertex();
-        buffer.vertex(matrix, maxX, minY, minZ).color(color).endVertex();
+        buffer.addVertex(matrix, minX, minY, minZ).setColor(color);
+        buffer.addVertex(matrix, minX, maxY, minZ).setColor(color);
+        buffer.addVertex(matrix, maxX, maxY, minZ).setColor(color);
+        buffer.addVertex(matrix, maxX, minY, minZ).setColor(color);
 
         // East face (X+)
-        buffer.vertex(matrix, maxX, minY, minZ).color(color).endVertex();
-        buffer.vertex(matrix, maxX, maxY, minZ).color(color).endVertex();
-        buffer.vertex(matrix, maxX, maxY, maxZ).color(color).endVertex();
-        buffer.vertex(matrix, maxX, minY, maxZ).color(color).endVertex();
+        buffer.addVertex(matrix, maxX, minY, minZ).setColor(color);
+        buffer.addVertex(matrix, maxX, maxY, minZ).setColor(color);
+        buffer.addVertex(matrix, maxX, maxY, maxZ).setColor(color);
+        buffer.addVertex(matrix, maxX, minY, maxZ).setColor(color);
 
         // South face (Z+)
-        buffer.vertex(matrix, minX, minY, maxZ).color(color).endVertex();
-        buffer.vertex(matrix, maxX, minY, maxZ).color(color).endVertex();
-        buffer.vertex(matrix, maxX, maxY, maxZ).color(color).endVertex();
-        buffer.vertex(matrix, minX, maxY, maxZ).color(color).endVertex();
+        buffer.addVertex(matrix, minX, minY, maxZ).setColor(color);
+        buffer.addVertex(matrix, maxX, minY, maxZ).setColor(color);
+        buffer.addVertex(matrix, maxX, maxY, maxZ).setColor(color);
+        buffer.addVertex(matrix, minX, maxY, maxZ).setColor(color);
 
         // West face (X-)
-        buffer.vertex(matrix, minX, minY, minZ).color(color).endVertex();
-        buffer.vertex(matrix, minX, minY, maxZ).color(color).endVertex();
-        buffer.vertex(matrix, minX, maxY, maxZ).color(color).endVertex();
-        buffer.vertex(matrix, minX, maxY, minZ).color(color).endVertex();
+        buffer.addVertex(matrix, minX, minY, minZ).setColor(color);
+        buffer.addVertex(matrix, minX, minY, maxZ).setColor(color);
+        buffer.addVertex(matrix, minX, maxY, maxZ).setColor(color);
+        buffer.addVertex(matrix, minX, maxY, minZ).setColor(color);
 
-        tesselator.end();
+        BufferUploader.drawWithShader(buffer.buildOrThrow());
 
         RenderSystem.disableBlend();
         RenderSystem.depthMask(true);

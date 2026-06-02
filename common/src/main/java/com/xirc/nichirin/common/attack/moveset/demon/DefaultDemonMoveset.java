@@ -200,7 +200,7 @@ public class DefaultDemonMoveset extends AbstractMoveset {
     @Override
     public boolean handleLeftClick(LivingEntity entity) {
         if (entity.level().isClientSide) return false;
-        if (entity.hasEffect(NichirinEffectRegistry.STUNNED.get())) return true;
+        if (entity.hasEffect(NichirinEffectRegistry.stunned())) return true;
         if (!canUseMove(entity, -3)) {
             if (entity instanceof Player player) showCooldownMessage(player, -3, GUT_PUNCH_CONFIG.getDisplayName());
             return true;
@@ -219,7 +219,7 @@ public class DefaultDemonMoveset extends AbstractMoveset {
     @Override
     public boolean handleRightClick(LivingEntity entity, boolean isCrouching) {
         if (entity.level().isClientSide) return false;
-        if (entity.hasEffect(NichirinEffectRegistry.STUNNED.get())) return true;
+        if (entity.hasEffect(NichirinEffectRegistry.stunned())) return true;
         return isCrouching ? handleCrouchRightClick(entity) : handleSlashCombo(entity);
     }
 
@@ -387,9 +387,9 @@ public class DefaultDemonMoveset extends AbstractMoveset {
         };
 
         if ("default_move".equals(moveId)) {
-            return new ResourceLocation("nichirin", "textures/icons/default_move.png");
+            return ResourceLocation.fromNamespaceAndPath("nichirin", "textures/icons/default_move.png");
         }
-        return new ResourceLocation("nichirin", "textures/icons/default_demon/" + moveId + ".png");
+        return ResourceLocation.fromNamespaceAndPath("nichirin", "textures/icons/default_demon/" + moveId + ".png");
     }
 
     private void setMoveCooldown(LivingEntity entity, int moveIndex, int cooldownTicks) {
@@ -418,7 +418,7 @@ public class DefaultDemonMoveset extends AbstractMoveset {
         }
 
         // Don't execute or consume cooldown if stunned
-        if (entity.hasEffect(NichirinEffectRegistry.STUNNED.get())) return;
+        if (entity.hasEffect(NichirinEffectRegistry.stunned())) return;
 
         CURRENT_MOVESET.set(this);
         try {

@@ -21,6 +21,7 @@ public class UrokodakiCapeRenderer extends NichirinArmorRenderer {
         matchArmBone(currentBaseModel.rightArm, getBone("leftArm"), false);
         matchArmBone(currentBaseModel.leftArm,  getBone("rightArm"), true);
         scaleArmBones(getBone("leftArm"), getBone("rightArm"));
+        matchKimonoBone(getBone("Cape"));
     }
 
     @Override

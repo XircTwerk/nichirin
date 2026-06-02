@@ -4,6 +4,7 @@ import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.system.StanceManager;
 import com.xirc.nichirin.common.util.InputHandler;
+import com.xirc.nichirin.common.util.NetworkBufferUtils;
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
 import com.xirc.nichirin.common.attack.moveset.DefaultKatanaMoveset;
@@ -52,7 +53,7 @@ public class KatanaBlock {
     private static int   earlyReleaseStunTicks() { return bcfg().earlyReleaseStunTicks; }
     private static float backstabAngle()         { return (float) bcfg().backstabAngle; }
 
-    private static final ResourceLocation COOLDOWN_PACKET_ID = new ResourceLocation("nichirin", "cooldown_display");
+    private static final ResourceLocation COOLDOWN_PACKET_ID = ResourceLocation.fromNamespaceAndPath("nichirin", "cooldown_display");
 
     public enum BlockingStance {
         NONE,
@@ -218,7 +219,7 @@ public class KatanaBlock {
                 }
             }
 
-            if (!entity.hasEffect(NichirinEffectRegistry.BLOCKING.get())) {
+            if (!entity.hasEffect(NichirinEffectRegistry.blocking())) {
                 applyBlockingEffect(entity);
             }
         } else {
@@ -262,7 +263,7 @@ public class KatanaBlock {
     private static boolean canStartBlocking(LivingEntity entity, BlockingState state) {
         if (state.stance != BlockingStance.NONE) return false;
 
-        if (entity.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
+        if (entity.hasEffect(NichirinEffectRegistry.stunned())) {
             if (entity instanceof Player player) {
                 player.displayClientMessage(
                         Component.literal("Cannot block while stunned!")
@@ -300,7 +301,7 @@ public class KatanaBlock {
 
     private static void applyEarlyReleasePunishment(Player player) {
         MobEffectInstance stunEffect = new MobEffectInstance(
-                NichirinEffectRegistry.STUNNED.get(),
+                NichirinEffectRegistry.stunned(),
                 earlyReleaseStunTicks(), 0, false, false, true);
         player.addEffect(stunEffect);
 
@@ -344,8 +345,8 @@ public class KatanaBlock {
                     true);
         }
 
-        if (defender.hasEffect(NichirinEffectRegistry.STUNNED.get())) {
-            defender.removeEffect(NichirinEffectRegistry.STUNNED.get());
+        if (defender.hasEffect(NichirinEffectRegistry.stunned())) {
+            defender.removeEffect(NichirinEffectRegistry.stunned());
         }
 
         // Defender parry animation
@@ -378,7 +379,7 @@ public class KatanaBlock {
             }
 
             attacker.addEffect(new MobEffectInstance(
-                    NichirinEffectRegistry.STUNNED.get(),
+                    NichirinEffectRegistry.stunned(),
                     20, 1, false, false, true));
 
             if (attacker instanceof Player player) {
@@ -403,7 +404,7 @@ public class KatanaBlock {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             buf.writeUtf(moveName);
             buf.writeInt(cooldownTicks);
-            NetworkManager.sendToPlayer(player, COOLDOWN_PACKET_ID, buf);
+            NetworkManager.sendToPlayer(player, COOLDOWN_PACKET_ID, NetworkBufferUtils.server(buf, player));
         } catch (Exception ignored) {
         }
     }
@@ -415,7 +416,7 @@ public class KatanaBlock {
             float stanceCost = glassStance ? Float.MAX_VALUE : 10.0f;
             if (!StanceManager.consume(player, stanceCost)) {
                 MobEffectInstance stunEffect = new MobEffectInstance(
-                        NichirinEffectRegistry.STUNNED.get(),
+                        NichirinEffectRegistry.stunned(),
                         60, 0, false, true, true);
                 player.addEffect(stunEffect);
                 stopBlocking(player);
@@ -450,7 +451,7 @@ public class KatanaBlock {
 
     private static void applyBlockingEffect(LivingEntity entity) {
         MobEffectInstance blockingEffect = new MobEffectInstance(
-                NichirinEffectRegistry.BLOCKING.get(),
+                NichirinEffectRegistry.blocking(),
                 Integer.MAX_VALUE, 0, false, false, true);
         entity.addEffect(blockingEffect);
 
@@ -461,7 +462,7 @@ public class KatanaBlock {
     }
 
     private static void removeBlockingEffect(LivingEntity entity) {
-        entity.removeEffect(NichirinEffectRegistry.BLOCKING.get());
+        entity.removeEffect(NichirinEffectRegistry.blocking());
         entity.removeEffect(MobEffects.DAMAGE_RESISTANCE);
     }
 

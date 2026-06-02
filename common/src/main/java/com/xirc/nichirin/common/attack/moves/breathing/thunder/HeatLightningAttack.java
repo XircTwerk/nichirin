@@ -131,7 +131,7 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
                             40, 0.8, 0.8, 0.8, 0.3);
                 }
 
-                target.setSecondsOnFire(3);
+                target.igniteForSeconds(3);
             }
         }
     }

@@ -6,6 +6,7 @@ import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
 import com.xirc.nichirin.common.attack.component.AbstractDemonAttack;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.util.ComboTracker;
+import com.xirc.nichirin.common.util.NetworkBufferUtils;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinMovesetRegistry;
 import dev.architectury.networking.NetworkManager;
@@ -30,11 +31,11 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MoveExecutor {
 
     private static final ConcurrentHashMap<UUID, List<Object>> activeAttacks = new ConcurrentHashMap<>();
-    private static final ResourceLocation COOLDOWN_PACKET_ID = new ResourceLocation("nichirin", "cooldown_display");
+    private static final ResourceLocation COOLDOWN_PACKET_ID = ResourceLocation.fromNamespaceAndPath("nichirin", "cooldown_display");
     private static boolean hitboxDebuggingEnabled = false;
 
     public static void executeAttack(LivingEntity entity, Object attack, String movesetId, String moveId) {
-        if (entity.hasEffect(NichirinEffectRegistry.STUNNED.get())) return;
+        if (entity.hasEffect(NichirinEffectRegistry.stunned())) return;
 
         if (attack instanceof AbstractBreathingAttack<?, ?> breathingAttack) {
             handleAttack(entity, breathingAttack, movesetId, moveId);
@@ -133,7 +134,7 @@ public class MoveExecutor {
     }
 
     public static void executeAttackWithVisuals(LivingEntity entity, Object attack, String movesetId, String moveId) {
-        if (entity.hasEffect(NichirinEffectRegistry.STUNNED.get())) return;
+        if (entity.hasEffect(NichirinEffectRegistry.stunned())) return;
         if (entity.level().isClientSide) AttackHitboxRenderer.clearAll();
         executeAttack(entity, attack, movesetId, moveId);
     }
@@ -159,7 +160,7 @@ public class MoveExecutor {
     private static void applyMoveStun(LivingEntity entity, AbstractMoveset.MoveConfiguration config) {
         int totalStunTicks = config.getWindupOrDefault(0) + config.getDurationOrDefault(0);
         if (totalStunTicks > 0) {
-            entity.addEffect(new MobEffectInstance(NichirinEffectRegistry.STUNNED.get(),
+            entity.addEffect(new MobEffectInstance(NichirinEffectRegistry.stunned(),
                     totalStunTicks, 0, false, false, false));
         }
     }
@@ -167,7 +168,7 @@ public class MoveExecutor {
     private static void applyPreConfiguredMoveStun(LivingEntity entity, AbstractBreathingAttack<?, ?> attack) {
         int windupTicks = getWindupFromAttack(attack);
         if (windupTicks > 0) {
-            entity.addEffect(new MobEffectInstance(NichirinEffectRegistry.STUNNED.get(),
+            entity.addEffect(new MobEffectInstance(NichirinEffectRegistry.stunned(),
                     windupTicks, 0, false, false, false));
         }
     }
@@ -175,7 +176,7 @@ public class MoveExecutor {
     private static void applyPreConfiguredDemonMoveStun(LivingEntity entity, AbstractDemonAttack<?, ?> attack) {
         int windupTicks = getWindupFromAttack(attack);
         if (windupTicks > 0) {
-            entity.addEffect(new MobEffectInstance(NichirinEffectRegistry.STUNNED.get(),
+            entity.addEffect(new MobEffectInstance(NichirinEffectRegistry.stunned(),
                     windupTicks, 0, false, false, false));
         }
     }
@@ -205,7 +206,7 @@ public class MoveExecutor {
     }
 
     public static void executeAttackWithInfo(LivingEntity entity, Object attack, String displayName, int cooldown) {
-        if (entity.hasEffect(NichirinEffectRegistry.STUNNED.get())) return;
+        if (entity.hasEffect(NichirinEffectRegistry.stunned())) return;
         executeAttackInternal(entity, attack, displayName, cooldown);
     }
 
@@ -282,7 +283,7 @@ public class MoveExecutor {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             buf.writeUtf(displayName);
             buf.writeInt(cooldown);
-            NetworkManager.sendToPlayer(player, COOLDOWN_PACKET_ID, buf);
+            NetworkManager.sendToPlayer(player, COOLDOWN_PACKET_ID, NetworkBufferUtils.server(buf, player));
         } catch (Exception ignored) {}
     }
 

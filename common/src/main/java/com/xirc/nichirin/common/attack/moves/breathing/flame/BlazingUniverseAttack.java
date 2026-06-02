@@ -220,7 +220,7 @@ public class BlazingUniverseAttack extends FlameBreathingAttackBase {
                 );
 
                 // Extended fire duration for explosion hits
-                target.setSecondsOnFire(getFireDuration() + 8);
+                target.igniteForSeconds(getFireDuration() + 8);
             }
         }
 

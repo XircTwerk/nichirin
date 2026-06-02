@@ -5,6 +5,7 @@ import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import com.xirc.nichirin.registry.NichirinEffectRegistry;
 
 /**
  * Burning status effect for Flame Breathing attacks
@@ -17,31 +18,32 @@ public class BurningStatusEffect extends MobEffect {
     }
 
     @Override
-    public void applyEffectTick(LivingEntity entity, int amplifier) {
+    public boolean applyEffectTick(LivingEntity entity, int amplifier) {
         // Skip creative mode players
         if (entity instanceof Player player && player.isCreative()) {
-            return;
+            return false;
         }
 
         // Skip fire immune entities
         if (entity.fireImmune()) {
-            return;
+            return false;
         }
 
         // Get the effect instance to check remaining duration
-        MobEffectInstance effectInstance = entity.getEffect(this);
+        MobEffectInstance effectInstance = entity.getEffect(NichirinEffectRegistry.burning());
         if (effectInstance != null && effectInstance.getDuration() <= 1) {
-            entity.setSecondsOnFire(0);
+            entity.clearFire();
         } else {
             // Keep the fire visual but deal damage directly at 1/3 rate
             // (ticks every 60 ticks = once per 3 seconds, dealing 1 damage each time)
             entity.setRemainingFireTicks(2);
             entity.hurt(entity.damageSources().onFire(), 0.5f);
         }
+        return true;
     }
 
     @Override
-    public boolean isDurationEffectTick(int duration, int amplifier) {
+    public boolean shouldApplyEffectTickThisTick(int duration, int amplifier) {
         return duration % 60 == 0 || duration == 1;
     }
 

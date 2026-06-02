@@ -2,6 +2,7 @@ package com.xirc.nichirin.common.system.perks;
 
 import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
+import net.minecraft.core.Holder;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -713,7 +714,7 @@ public final class PerkManager {
         }
     }
 
-    private static void removeShortAmplifiedEffect(ServerPlayer player, MobEffect effect, int minAmplifier) {
+    private static void removeShortAmplifiedEffect(ServerPlayer player, Holder<MobEffect> effect, int minAmplifier) {
         MobEffectInstance instance = player.getEffect(effect);
         if (instance != null && instance.getAmplifier() >= minAmplifier && instance.getDuration() <= 80) {
             player.removeEffect(effect);

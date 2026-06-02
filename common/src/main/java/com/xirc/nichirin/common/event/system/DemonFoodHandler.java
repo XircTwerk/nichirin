@@ -12,6 +12,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.component.DataComponents;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -53,7 +54,7 @@ public class DemonFoodHandler {
 
             ItemStack itemStack = player.getItemInHand(hand);
 
-            if (itemStack.isEdible()) {
+            if (itemStack.has(DataComponents.FOOD)) {
                 player.displayClientMessage(
                         Component.literal("Demons cannot consume regular food!")
                                 .withStyle(style -> style.withColor(0x8B0000)),

@@ -21,7 +21,7 @@ public class ComboClientHandler {
             // - No player
             // - Any screen is open (including pause menu)
             // - Debug screen is showing
-            if (mc.player == null || mc.screen != null || mc.options.renderDebug) {
+            if (mc.player == null || mc.screen != null || mc.getDebugOverlay().showDebugScreen()) {
                 return;
             }
 

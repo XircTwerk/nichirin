@@ -16,7 +16,7 @@ public class StaminaBarRenderer {
     public static void register() {
         // Register the render event
         ClientGuiEvent.RENDER_HUD.register((graphics, tickDelta) -> {
-            renderStaminaBar(graphics, tickDelta);
+            renderStaminaBar(graphics, tickDelta.getGameTimeDeltaPartialTick(true));
         });
     }
 

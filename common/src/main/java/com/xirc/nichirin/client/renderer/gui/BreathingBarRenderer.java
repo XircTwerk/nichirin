@@ -16,7 +16,7 @@ public class BreathingBarRenderer {
     public static void register() {
         // Register the render event
         ClientGuiEvent.RENDER_HUD.register((graphics, tickDelta) -> {
-            renderBreathingBar(graphics, tickDelta);
+            renderBreathingBar(graphics, tickDelta.getGameTimeDeltaPartialTick(true));
         });
     }
 

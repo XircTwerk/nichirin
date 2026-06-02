@@ -3,7 +3,7 @@ package com.xirc.nichirin.common.world;
 import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.registry.NichirinBlockRegistry;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.data.worldgen.BootstapContext;
+import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
@@ -18,15 +18,15 @@ import java.util.List;
 public class NichirinConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> SCARLET_CRIMSON_IRON_SAND = ResourceKey.create(
             Registries.CONFIGURED_FEATURE,
-            new ResourceLocation(BreathOfNichirin.MOD_ID, "scarlet_crimson_iron_sand")
+            ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "scarlet_crimson_iron_sand")
     );
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> SCARLET_ORE = ResourceKey.create(
             Registries.CONFIGURED_FEATURE,
-            new ResourceLocation(BreathOfNichirin.MOD_ID, "scarlet_ore")
+            ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "scarlet_ore")
     );
 
-    public static void bootstrap(BootstapContext<ConfiguredFeature<?, ?>> context) {
+    public static void bootstrap(BootstrapContext<ConfiguredFeature<?, ?>> context) {
         RuleTest sandReplaceable = new TagMatchTest(BlockTags.SAND);
         RuleTest stoneReplaceable = new TagMatchTest(BlockTags.STONE_ORE_REPLACEABLES);
 

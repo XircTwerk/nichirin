@@ -5,15 +5,15 @@ import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.client.renderer.entity.BaseAZNichirinEntityRenderer;
 import com.xirc.nichirin.client.renderer.entity.animator.TempleDemonAnimator;
 import com.xirc.nichirin.common.entity.npc.TempleDemonEntity;
-import mod.azure.azurelib.render.entity.AzEntityRendererConfig;
+import mod.azure.azurelib.common.render.entity.AzEntityRendererConfig;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 
 public class TempleDemonRenderer extends BaseAZNichirinEntityRenderer<TempleDemonEntity> {
 
-    private static final ResourceLocation GEO = new ResourceLocation(BreathOfNichirin.MOD_ID, "geo/temple_demon.geo.json");
-    private static final ResourceLocation TEX = new ResourceLocation(BreathOfNichirin.MOD_ID, "textures/entity/npc/temple_demon.png");
+    private static final ResourceLocation GEO = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "geo/temple_demon.geo.json");
+    private static final ResourceLocation TEX = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "textures/entity/npc/temple_demon.png");
 
     public TempleDemonRenderer(EntityRendererProvider.Context context) {
         super(

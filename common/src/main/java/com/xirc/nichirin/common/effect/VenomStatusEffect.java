@@ -5,12 +5,9 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.UUID;
 
 /**
  * Venom Status Effect - Stackable poison that bypasses immunity
@@ -20,7 +17,6 @@ import java.util.UUID;
  */
 public class VenomStatusEffect extends MobEffect {
 
-    private static final UUID MOVEMENT_MODIFIER_UUID = UUID.fromString("9107DE5E-9CE8-5030-941E-514C1F160892");
     private static final float BASE_DAMAGE = 1.0f;
     private static final float DAMAGE_MULTIPLIER_PER_TIER = 0.1f; // 10% more damage per tier
 
@@ -29,10 +25,10 @@ public class VenomStatusEffect extends MobEffect {
     }
 
     @Override
-    public void applyEffectTick(LivingEntity entity, int amplifier) {
+    public boolean applyEffectTick(LivingEntity entity, int amplifier) {
         // Skip creative players
         if (entity instanceof Player player && player.isCreative()) {
-            return;
+            return false;
         }
 
         // Calculate damage: Base damage * (1 + 10% per tier)
@@ -50,10 +46,12 @@ public class VenomStatusEffect extends MobEffect {
         if (entity.level() instanceof ServerLevel serverLevel) {
             createStackedVenomParticles(serverLevel, entity, amplifier + 1);
         }
+
+        return true;
     }
 
     @Override
-    public boolean isDurationEffectTick(int duration, int amplifier) {
+    public boolean shouldApplyEffectTickThisTick(int duration, int amplifier) {
         // Damage every second (20 ticks) regardless of stack level
         return duration % 30 == 0;
     }
@@ -85,11 +83,5 @@ public class VenomStatusEffect extends MobEffect {
             level.sendParticles(ParticleTypes.WITCH,
                     pos.x, pos.y, pos.z, stacks / 2, 0.3, 0.3, 0.3, 0.1);
         }
-    }
-
-    @Override
-    public double getAttributeModifierValue(int amplifier, AttributeModifier modifier) {
-        // ALWAYS return -0.33 (33% reduction) regardless of amplifier
-        return -0.33;
     }
 }

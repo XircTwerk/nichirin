@@ -41,7 +41,7 @@ public class BlockingEventHandler {
             KatanaBlock.cleanupPlayer(player);
         });
 
-        PlayerEvent.PLAYER_RESPAWN.register((newPlayer, conqueredEnd) -> {
+        PlayerEvent.PLAYER_RESPAWN.register((newPlayer, conqueredEnd, removalReason) -> {
             if (!conqueredEnd) {
                 StanceManager.restoreFull(newPlayer);
                 StanceManager.forceSyncToClient(newPlayer);
@@ -70,7 +70,7 @@ public class BlockingEventHandler {
 
                         if (attackingEntity != null && attackingEntity != player) {
                             attackingEntity.addEffect(new MobEffectInstance(
-                                    NichirinEffectRegistry.STUNNED.get(),
+                                    NichirinEffectRegistry.stunned(),
                                     30, 0, false, false, true));
                         }
 

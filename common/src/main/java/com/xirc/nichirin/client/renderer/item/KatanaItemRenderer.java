@@ -1,12 +1,14 @@
 package com.xirc.nichirin.client.renderer.item;
 
 import com.xirc.nichirin.BreathOfNichirin;
-import mod.azure.azurelib.model.AzBone;
-import mod.azure.azurelib.render.AzRendererPipelineContext;
-import mod.azure.azurelib.render.item.AzItemRenderer;
-import mod.azure.azurelib.render.item.AzItemRendererConfig;
-import mod.azure.azurelib.render.item.AzItemRendererPipeline;
-import mod.azure.azurelib.render.item.AzItemRendererPipelineContext;
+import com.xirc.nichirin.common.util.ItemStackData;
+import com.mojang.blaze3d.platform.Lighting;
+import mod.azure.azurelib.common.model.AzBone;
+import mod.azure.azurelib.common.render.AzRendererPipelineContext;
+import mod.azure.azurelib.common.render.item.AzItemRenderer;
+import mod.azure.azurelib.common.render.item.AzItemRendererConfig;
+import mod.azure.azurelib.common.render.item.AzItemRendererPipeline;
+import mod.azure.azurelib.common.render.item.AzItemRendererPipelineContext;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
@@ -31,6 +33,7 @@ public class KatanaItemRenderer extends AzItemRenderer {
             public void preRender(AzRendererPipelineContext<UUID, ItemStack> context, boolean isReRender) {
                 var itemContext = (AzItemRendererPipelineContext) context;
                 if (itemContext.getTransformType() == ItemDisplayContext.GUI) {
+                    Lighting.setupForEntityInInventory();
                     context.poseStack().translate(0, 0, 0.1);
                 }
                 super.preRender(context, isReRender);
@@ -46,15 +49,14 @@ public class KatanaItemRenderer extends AzItemRenderer {
         if (sheathBone.isEmpty()) return;
 
         ItemStack stack = context.animatable();
-        boolean sheathed = stack != null && stack.hasTag()
-                && stack.getTag().getBoolean("nichirin_sheathed_render");
+        boolean sheathed = stack != null && ItemStackData.get(stack).getBoolean("nichirin_sheathed_render");
         sheathBone.get().setHidden(!sheathed);
     }
 
     public static KatanaItemRenderer create(String geoName, String textureName) {
         return new KatanaItemRenderer(
-                new ResourceLocation(BreathOfNichirin.MOD_ID, "geo/" + geoName + ".geo.json"),
-                new ResourceLocation(BreathOfNichirin.MOD_ID, "textures/item/" + textureName + ".png")
+                ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "geo/" + geoName + ".geo.json"),
+                ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "textures/item/" + textureName + ".png")
         );
     }
 }

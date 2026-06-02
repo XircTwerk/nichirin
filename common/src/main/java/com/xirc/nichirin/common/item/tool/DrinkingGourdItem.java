@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.item.tool;
 
 import com.xirc.nichirin.common.util.StaminaManager;
+import com.xirc.nichirin.common.util.ItemStackData;
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -15,6 +16,7 @@ import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
+import net.minecraft.world.item.Item.TooltipContext;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
@@ -93,7 +95,7 @@ public class DrinkingGourdItem extends Item {
     }
 
     @Override
-    public int getUseDuration(ItemStack stack) {
+    public int getUseDuration(ItemStack stack, LivingEntity entity) {
         return DRINK_DURATION;
     }
 
@@ -114,17 +116,17 @@ public class DrinkingGourdItem extends Item {
 
     // Liquid management methods
     public static int getDrinks(ItemStack stack) {
-        if (!stack.hasTag()) {
+        if (!ItemStackData.has(stack, DRINKS_TAG)) {
             return 0;
         }
-        return stack.getTag().getInt(DRINKS_TAG);
+        return ItemStackData.get(stack).getInt(DRINKS_TAG);
     }
 
     public static LiquidType getLiquidType(ItemStack stack) {
-        if (!stack.hasTag() || !stack.getTag().contains(LIQUID_TYPE_TAG)) {
+        if (!ItemStackData.has(stack, LIQUID_TYPE_TAG)) {
             return LiquidType.EMPTY;
         }
-        String type = stack.getTag().getString(LIQUID_TYPE_TAG);
+        String type = ItemStackData.get(stack).getString(LIQUID_TYPE_TAG);
         try {
             return LiquidType.valueOf(type);
         } catch (IllegalArgumentException e) {
@@ -133,9 +135,10 @@ public class DrinkingGourdItem extends Item {
     }
 
     public static void setLiquid(ItemStack stack, LiquidType type, int amount) {
-        CompoundTag tag = stack.getOrCreateTag();
-        tag.putString(LIQUID_TYPE_TAG, type.name());
-        tag.putInt(DRINKS_TAG, Math.min(amount, MAX_DRINKS));
+        ItemStackData.update(stack, tag -> {
+            tag.putString(LIQUID_TYPE_TAG, type.name());
+            tag.putInt(DRINKS_TAG, Math.min(amount, MAX_DRINKS));
+        });
     }
 
     public static void addDrink(ItemStack stack, LiquidType type) {
@@ -150,9 +153,10 @@ public class DrinkingGourdItem extends Item {
 
         // If empty or same type, add one drink (up to max)
         if (currentDrinks < MAX_DRINKS) {
-            CompoundTag tag = stack.getOrCreateTag();
-            tag.putString(LIQUID_TYPE_TAG, type.name());
-            tag.putInt(DRINKS_TAG, currentDrinks + 1);
+            ItemStackData.update(stack, tag -> {
+                tag.putString(LIQUID_TYPE_TAG, type.name());
+                tag.putInt(DRINKS_TAG, currentDrinks + 1);
+            });
         }
     }
 
@@ -162,18 +166,20 @@ public class DrinkingGourdItem extends Item {
             drinks--;
             if (drinks == 0) {
                 // Clear liquid type when empty
-                CompoundTag tag = stack.getOrCreateTag();
-                tag.remove(LIQUID_TYPE_TAG);
-                tag.putInt(DRINKS_TAG, 0);
+                ItemStackData.update(stack, tag -> {
+                    tag.remove(LIQUID_TYPE_TAG);
+                    tag.putInt(DRINKS_TAG, 0);
+                });
             } else {
-                stack.getOrCreateTag().putInt(DRINKS_TAG, drinks);
+                int remainingDrinks = drinks;
+                ItemStackData.update(stack, tag -> tag.putInt(DRINKS_TAG, remainingDrinks));
             }
         }
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
-        super.appendHoverText(stack, level, tooltip, flag);
+    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+        super.appendHoverText(stack, context, tooltip, flag);
 
         int drinks = getDrinks(stack);
         LiquidType liquidType = getLiquidType(stack);

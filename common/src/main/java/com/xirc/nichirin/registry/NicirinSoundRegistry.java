@@ -34,7 +34,7 @@ public interface NicirinSoundRegistry {
 
     static RegistrySupplier<SoundEvent> registerSound(String name) {
         return SOUND_EVENTS.register(name, () -> SoundEvent.createVariableRangeEvent(
-                new ResourceLocation(BreathOfNichirin.MOD_ID, name)
+                ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, name)
         ));
     }
 
