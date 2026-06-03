@@ -80,8 +80,10 @@ public class ShiftingFlowSlashAttack extends MistBreathingAttackBase {
             dashTick++;
             lastDashPos = user.position();
             // Velocity-based dash (smooth, client-predicted) instead of per-tick teleport.
-            // Covers `range` blocks over `duration` ticks.
-            float speedPerTick = range / Math.max(duration, 1);
+            // Uses the same range*10/duration convention as the other Mist dashes (see
+            // LowCloudsDistantHazeAttack); without the x10 factor the player-side velocity
+            // friction left the dash far too short.
+            float speedPerTick = (range * 10f) / Math.max(duration, 1);
             user.setDeltaMovement(
                     dashDirection.x * speedPerTick,
                     dashDirection.y * speedPerTick,

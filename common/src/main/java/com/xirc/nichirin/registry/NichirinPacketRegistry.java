@@ -11,6 +11,7 @@ import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.network.c2s.*;
 import com.xirc.nichirin.common.network.s2c.*;
 import net.minecraft.world.phys.Vec3;
+import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
 import com.xirc.nichirin.common.network.util.MovesetSyncPacket;
 import com.xirc.nichirin.common.system.DemonComponent;
 import com.xirc.nichirin.common.system.blocking.KatanaBlock;
@@ -86,6 +87,9 @@ public interface NichirinPacketRegistry {
     ResourceLocation SHEATH_INPUT_ID               = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "sheath_input");
     ResourceLocation SHEATH_CONFIG_ID              = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "sheath_config");
     ResourceLocation SHEATH_SYNC_ID                = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "sheath_sync");
+    // Shared cooldown HUD channel — sent by CooldownDisplayPacket, MoveExecutor and KatanaBlock,
+    // received by CooldownDisplayPacket.registerClient() on the client.
+    ResourceLocation COOLDOWN_DISPLAY_ID           = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "cooldown_display");
 
     // Packet class mappings
     Map<Class<?>, ResourceLocation> PACKET_IDS = new HashMap<>();
@@ -120,11 +124,43 @@ public interface NichirinPacketRegistry {
     static void registerPackets() {
         try {
             registerC2SPackets();
+            // S2C channels follow Architectury's documented contract: register the RECEIVER on
+            // the client (which also registers the payload Type), and register just the payload
+            // TYPE on the server. The server needs the Type registered to be able to SEND —
+            // otherwise sendToPlayer builds a payload with a null CustomPacketPayload.Type and
+            // throws "type is null" on dedicated servers. We must NOT register the client
+            // receivers on the server: their bodies reference client-only classes.
             if (Platform.getEnvironment() == Env.CLIENT) {
                 registerS2CPacketsWithFallback();
+            } else {
+                registerS2CTypesForServer();
             }
         } catch (Exception e) {
             throw new RuntimeException("Packet registration failed", e);
+        }
+    }
+
+    /**
+     * Server-side: register the payload TYPE for every S2C channel the server sends, so that
+     * {@link NetworkManager#sendToPlayer} can build a valid payload. No receiver/handler is
+     * registered here (the server never receives S2C), which keeps client-only classes off the
+     * server. Keep this list in sync with the channels registered in
+     * {@link #registerS2CPacketsWithFallback()} plus {@code cooldown_display}.
+     */
+    static void registerS2CTypesForServer() {
+        ResourceLocation[] s2cIds = {
+                BREATHING_EFFECT_ID, SYNC_BREATH_ID, SYNC_STAMINA_ID, SYNC_STANCE_ID,
+                PLAYER_ANIMATION_ID, COMBO_COUNTER_ID, MOVESET_CONFIG_ID, SYNC_BREATHING_STYLE,
+                SYNC_PROGRESSION_ID, DEMON_SYNC_ID, HITBOX_PACKET_ID, TRIGGER_SHADER_ID,
+                PARRY_SPARK_ID, BLOOD_MOON_SYNC_ID, PERK_SYNC_ID, OPEN_TRAINER_DIALOGUE_ID,
+                MIST_CLONES_ID, SHEATH_SYNC_ID, OPEN_CONFIG_SCREEN_ID, COOLDOWN_DISPLAY_ID
+        };
+        for (ResourceLocation id : s2cIds) {
+            try {
+                NetworkManager.registerS2CPayloadType(id);
+            } catch (Throwable ignored) {
+                // Already registered or unsupported on this Architectury version; ignore.
+            }
         }
     }
 
@@ -269,6 +305,10 @@ public interface NichirinPacketRegistry {
 
     static void registerS2CPacketsWithFallback() {
         try {
+            // cooldown_display receiver (client only). The server registers the matching
+            // payload Type in registerS2CTypesForServer() so it can send this channel.
+            CooldownDisplayPacket.registerClient();
+
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, BREATHING_EFFECT_ID, (buf, context) -> {
                 BreathingEffectPacket packet = new BreathingEffectPacket(buf);
                 context.queue(() -> packet.handleClient());

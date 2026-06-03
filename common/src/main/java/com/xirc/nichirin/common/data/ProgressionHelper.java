@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.data;
 
 import com.xirc.nichirin.common.advancement.NichirinCriteriaTriggers;
+import com.xirc.nichirin.common.network.s2c.ProgressionSyncPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 
@@ -86,9 +87,12 @@ public class ProgressionHelper {
             }
         }
 
-        // Save the data after unlocking
-        if (player instanceof ServerPlayer) {
-            PlayerDataStorage.savePlayerData((ServerPlayer) player);
+        // Save the data after unlocking, then sync the unlock set to the client so the
+        // selection GUI reflects the newly unlocked moveset regardless of which path
+        // triggered the unlock (scroll, trainer, command, auto-unlock, etc.).
+        if (player instanceof ServerPlayer serverPlayer) {
+            PlayerDataStorage.savePlayerData(serverPlayer);
+            ProgressionSyncPacket.sendToPlayer(serverPlayer);
         }
     }
 

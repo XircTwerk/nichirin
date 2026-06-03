@@ -17,7 +17,6 @@ import com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer;
 import com.xirc.nichirin.client.util.ClientInputTracker;
 import com.xirc.nichirin.client.util.ItemPropertiesHelper;
 import com.xirc.nichirin.common.event.system.CooldownClearEventHandler;
-import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
 import com.xirc.nichirin.common.util.BlockingInputHandler;
 import com.xirc.nichirin.common.util.PlayerStats;
 import com.xirc.nichirin.registry.*;
@@ -139,7 +138,8 @@ public class BreathOfNichirinClient {
             AttackWheelHandler.register();
             SheathingKeyHandler.register();
             ClientDoubleJumpHandler.register();
-            CooldownDisplayPacket.registerClient();
+            // cooldown_display is now registered in NichirinPacketRegistry (both sides) so the
+            // server can send it; registering it again here would double-register the payload.
 
             // Register animations
             NichirinAnimations.init();
