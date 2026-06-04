@@ -26,8 +26,12 @@ public class BlurryStatusEffect extends MobEffect {
 
     @Override
     public boolean applyEffectTick(LivingEntity entity, int amplifier) {
-        if (entity.level().isClientSide) return false;
-        if (!(entity instanceof Mob mob)) return false;
+        if (entity.level().isClientSide) {
+            return true;
+        }
+        if (!(entity instanceof Mob mob)) {
+            return true;
+        }
 
         // Send the mob to a random position far from their actual target
         Vec3 pos = entity.position();

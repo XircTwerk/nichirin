@@ -30,6 +30,7 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
 
     private final Set<LivingEntity>  caughtEnemies  = new HashSet<>();
     private final List<LivingEntity> draggedEnemies = new ArrayList<>();
+    private final Set<LivingEntity>  hitThisHop     = new HashSet<>(); // reset each hop → one hit/hop
     private boolean wasInvulnerable = false;
     private final List<UUID> spawnedClones = new ArrayList<>();
 
@@ -41,6 +42,7 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
         lastDashPos      = null;
         caughtEnemies.clear();
         draggedEnemies.clear();
+        hitThisHop.clear();
         spawnedClones.clear();
 
         Vec3 look = user.getLookAngle();
@@ -87,6 +89,8 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
 
     /** Executes a single zigzag hop using velocity (smooth, client-predicted). */
     private void executeZigzagDash() {
+        hitThisHop.clear(); // new hop → every enemy can be struck once more
+
         double angle = (zigzagsExecuted % 2 == 0) ? ZIGZAG_ANGLE : -ZIGZAG_ANGLE;
         Vec3 dir = rotateDirection(baseDirection, angle);
 
@@ -130,7 +134,9 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
             if (draggedEnemy.isAlive()) {
                 Vec3 toDrag = userPos.subtract(draggedEnemy.position());
                 double dist = toDrag.length();
-                if (dist > 0.5) {
+                if (dist > 0.15) {
+                    // Strong pull (cap 3.5 b/t) with a tiny dead-zone so the enemy is reeled in
+                    // right against the player instead of trailing ~half a block behind.
                     draggedEnemy.setDeltaMovement(toDrag.normalize().scale(Math.min(dist, 3.5)));
                     draggedEnemy.hurtMarked = true;
                 } else {
@@ -158,9 +164,10 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
                 : getTargetsInCustomHitbox(userPos, hitboxSize * 1.5, hitboxSize, hitboxSize * 1.5);
 
         for (LivingEntity target : targets) {
+            if (!hitThisHop.add(target)) continue; // already struck this hop
             float originalDamage = damage;
             damage = damage * 0.45f;
-            hitTarget(target);
+            hitTargetNoImmunity(target); // bypass i-frames so each hop's hit actually lands
             damage = originalDamage;
 
             Vec3 lightKnockback = target.position().subtract(userPos).normalize().scale(knockback * 0.12f);
@@ -168,10 +175,10 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
         }
 
         for (LivingEntity draggedEnemy : draggedEnemies) {
-            if (draggedEnemy.isAlive()) {
+            if (draggedEnemy.isAlive() && hitThisHop.add(draggedEnemy)) {
                 float originalDamage = damage;
                 damage = damage * 0.45f;
-                hitTarget(draggedEnemy);
+                hitTargetNoImmunity(draggedEnemy);
                 damage = originalDamage;
             }
         }
@@ -268,6 +275,7 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
         lastDashPos      = null;
         caughtEnemies.clear();
         draggedEnemies.clear();
+        hitThisHop.clear();
         spawnedClones.clear();
     }
 }

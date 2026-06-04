@@ -8,10 +8,10 @@ import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 
-public class WysteriaLeavesBlock extends LeavesBlock {
+public class WisteriaLeavesBlock extends LeavesBlock {
 
-    public WysteriaLeavesBlock(BlockBehaviour.Properties properties) {
-        super(properties.lightLevel((state) -> 8)); // Static light level
+    public WisteriaLeavesBlock(BlockBehaviour.Properties properties) {
+        super(properties.lightLevel((state) -> 12));
     }
 
     @Override

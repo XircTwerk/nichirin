@@ -90,11 +90,13 @@ public class MistBreathingMoveset extends AbstractMoveset {
                 // Form 4: Shifting Flow Slash (INDEX 1 in wheel)
                 .withMove(new MoveBuilder("shifting_flow_slash", "Shifting Flow Slash")
                         .withAnimation("nichirin:mist_dash_slash", 12)
-                        .withTiming(96, 10, 8)
+                        // Dash tuned to match Sound Breathing's Rhythmic Step (crouch-M2):
+                        // dashSpeed 4 blocks/tick over a 14-tick window = the same smooth glide.
+                        .withTiming(96, 10, 14)
                         .withDamage(7.0f)
                         .withRange(18.0f)
                         .withKnockback(0.35f)
-                        .withDashSpeed(18.0f)
+                        .withDashSpeed(4.0f)
                         .withBreathCost(28.0f)
                         .withHitStun(25)
                         .withHitboxSize(2.5f)

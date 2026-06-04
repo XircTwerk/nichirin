@@ -2,9 +2,12 @@ package com.xirc.nichirin.common.attack.moves.breathing.mist;
 
 import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
 import com.xirc.nichirin.common.attack.component.IBreathingAttacker;
+import com.xirc.nichirin.common.network.s2c.TriggerShaderPacket;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
+import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -112,6 +115,15 @@ public abstract class MistBreathingAttackBase extends AbstractBreathingAttack<Mi
             .forEach(e -> e.addEffect(new MobEffectInstance(
                     NichirinEffectRegistry.blurry(),
                     durationTicks, 0, false, false, false)));
+
+        world.getEntitiesOfClass(ServerPlayer.class,
+                new AABB(pos.subtract(r, r, r), pos.add(r, r, r)),
+                e -> e.isAlive() && e != user)
+            .forEach(this::triggerMistBlur);
+
+        if (user instanceof ServerPlayer player) {
+            triggerMistBlur(player);
+        }
     }
 
     @Override
@@ -121,6 +133,12 @@ public abstract class MistBreathingAttackBase extends AbstractBreathingAttack<Mi
         createMistHitParticles(target.position());
         playMistHitSound(target.position());
         target.addEffect(new MobEffectInstance(NichirinEffectRegistry.blurry(), 60, 0, false, false, false));
+        if (target instanceof ServerPlayer player) {
+            triggerMistBlur(player);
+        }
+        if (user instanceof ServerPlayer player) {
+            triggerMistBlur(player);
+        }
     }
 
     @Override
@@ -130,6 +148,18 @@ public abstract class MistBreathingAttackBase extends AbstractBreathingAttack<Mi
         createMistHitParticles(target.position());
         playMistHitSound(target.position());
         target.addEffect(new MobEffectInstance(NichirinEffectRegistry.blurry(), 60, 0, false, false, false));
+        if (target instanceof ServerPlayer player) {
+            triggerMistBlur(player);
+        }
+        if (user instanceof ServerPlayer player) {
+            triggerMistBlur(player);
+        }
+    }
+
+    private void triggerMistBlur(ServerPlayer player) {
+        NichirinPacketRegistry.sendToPlayer(
+                new TriggerShaderPacket("com.xirc.nichirin.client.shader.MistBlurShaderEffect", true, 0.85f),
+                player);
     }
 
     protected void playMistSound() {

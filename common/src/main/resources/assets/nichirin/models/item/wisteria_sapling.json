@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "nichirin:item/wysteria_sapling"
+    "layer0": "nichirin:item/wisteria_sapling"
   }
 }

@@ -1,4 +1,4 @@
-package com.xirc.nichirin.common.worldgen.trees.wysteria;
+package com.xirc.nichirin.common.worldgen.trees.wisteria;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.Codec;
@@ -11,20 +11,20 @@ import net.minecraft.world.level.levelgen.feature.treedecorators.TreeDecorator;
 import net.minecraft.world.level.levelgen.feature.treedecorators.TreeDecoratorType;
 import net.minecraft.world.level.block.state.BlockState;
 
-public class WysteriaRootDecorator extends TreeDecorator {
-    public static final MapCodec<WysteriaRootDecorator> CODEC = RecordCodecBuilder.mapCodec((instance) ->
+public class WisteriaRootDecorator extends TreeDecorator {
+    public static final MapCodec<WisteriaRootDecorator> CODEC = RecordCodecBuilder.mapCodec((instance) ->
             instance.group(Codec.floatRange(0.0F, 1.0F).fieldOf("probability").forGetter(decorator -> decorator.probability))
-                    .apply(instance, WysteriaRootDecorator::new));
+                    .apply(instance, WisteriaRootDecorator::new));
 
     private final float probability;
 
-    public WysteriaRootDecorator(float probability) {
+    public WisteriaRootDecorator(float probability) {
         this.probability = probability;
     }
 
     @Override
     protected TreeDecoratorType<?> type() {
-        return NichirinTreeDecoratorTypes.WYSTERIA_ROOT_DECORATOR.get();
+        return NichirinTreeDecoratorTypes.WISTERIA_ROOT_DECORATOR.get();
     }
 
     @Override
@@ -37,7 +37,7 @@ public class WysteriaRootDecorator extends TreeDecorator {
         BlockPos trunkBase = context.roots().get(0);
 
         BlockState logState =
-                NichirinBlockRegistry.WYSTERIA_LOG.get().defaultBlockState();
+                NichirinBlockRegistry.WISTERIA_LOG.get().defaultBlockState();
 
         // Determine trunk type (check if there's a 2x2 base)
         boolean isThickTrunk = context.isAir(trunkBase.offset(1, 0, 0).above()) == false &&

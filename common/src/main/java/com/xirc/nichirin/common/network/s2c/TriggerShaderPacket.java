@@ -1,5 +1,7 @@
 package com.xirc.nichirin.common.network.s2c;
 
+import com.xirc.nichirin.client.handler.ImpactFrameOverlay;
+import com.xirc.nichirin.client.handler.MistBlurOverlay;
 import com.xirc.nichirin.client.shader.NichirinPostProcessor;
 import com.xirc.nichirin.client.shader.NichirinShaderManager;
 import net.minecraft.network.FriendlyByteBuf;
@@ -41,6 +43,23 @@ public class TriggerShaderPacket {
 
     public void handleClient() {
         try {
+            if ("com.xirc.nichirin.client.shader.MistBlurShaderEffect".equals(shaderEffectClass)) {
+                if (activate) {
+                    float strength = magnitude >= 0f ? magnitude : 1.0f;
+                    MistBlurOverlay.trigger(strength);
+                } else {
+                    MistBlurOverlay.setTargetIntensity(0.0f);
+                }
+                return;
+            }
+
+            if ("com.xirc.nichirin.client.shader.ImpactShakeShaderEffect".equals(shaderEffectClass)) {
+                if (activate) {
+                    ImpactFrameOverlay.trigger(magnitude >= 0f ? magnitude : 1.0f);
+                }
+                return;
+            }
+
             // Get the shader effect class
             @SuppressWarnings("unchecked")
             Class<? extends NichirinPostProcessor> clazz =

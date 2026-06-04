@@ -9,9 +9,9 @@ import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 public interface NichirinConfiguredFeatures {
 
     // Wisteria tree variants
-    ResourceKey<ConfiguredFeature<?, ?>> SMALL_WYSTERIA = createKey("small_wysteria");
-    ResourceKey<ConfiguredFeature<?, ?>> MEDIUM_WYSTERIA = createKey("medium_wysteria");
-    ResourceKey<ConfiguredFeature<?, ?>> LARGE_WYSTERIA = createKey("large_wysteria");
+    ResourceKey<ConfiguredFeature<?, ?>> SMALL_WISTERIA = createKey("small_wisteria");
+    ResourceKey<ConfiguredFeature<?, ?>> MEDIUM_WISTERIA = createKey("medium_wisteria");
+    ResourceKey<ConfiguredFeature<?, ?>> LARGE_WISTERIA = createKey("large_wisteria");
 
     // Helper method to create resource keys
     private static ResourceKey<ConfiguredFeature<?, ?>> createKey(String name) {

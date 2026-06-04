@@ -1,4 +1,4 @@
-package com.xirc.nichirin.common.worldgen.trees.wysteria;
+package com.xirc.nichirin.common.worldgen.trees.wisteria;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.Codec;
@@ -14,31 +14,31 @@ import net.minecraft.world.level.levelgen.feature.treedecorators.TreeDecoratorTy
 import net.minecraft.core.Direction.Plane;
 import net.minecraft.world.level.block.state.BlockState;
 
-public class WysteriaHangingLeavesDecorator extends TreeDecorator {
-    public static final MapCodec<WysteriaHangingLeavesDecorator> CODEC = RecordCodecBuilder.mapCodec((instance) ->
+public class WisteriaHangingLeavesDecorator extends TreeDecorator {
+    public static final MapCodec<WisteriaHangingLeavesDecorator> CODEC = RecordCodecBuilder.mapCodec((instance) ->
             instance.group(
                     Codec.intRange(1, 8).fieldOf("min_length").forGetter(decorator -> decorator.minLength),
                     Codec.intRange(2, 20).fieldOf("max_length").forGetter(decorator -> decorator.maxLength)
-            ).apply(instance, WysteriaHangingLeavesDecorator::new));
+            ).apply(instance, WisteriaHangingLeavesDecorator::new));
 
     private final int minLength;
     private final int maxLength;
 
-    public WysteriaHangingLeavesDecorator(int minLength, int maxLength) {
+    public WisteriaHangingLeavesDecorator(int minLength, int maxLength) {
         this.minLength = minLength;
         this.maxLength = maxLength;
     }
 
     @Override
     protected TreeDecoratorType<?> type() {
-        return NichirinTreeDecoratorTypes.WYSTERIA_HANGING_LEAVES_DECORATOR.get();
+        return NichirinTreeDecoratorTypes.WISTERIA_HANGING_LEAVES_DECORATOR.get();
     }
 
     @Override
     public void place(Context context) {
-        // Use the wysteria leaves block with persistent property
+        // Use the wisteria leaves block with persistent property
         BlockState leafState =
-                NichirinBlockRegistry.WYSTERIA_LEAVES.get()
+                NichirinBlockRegistry.WISTERIA_LEAVES.get()
                         .defaultBlockState()
                         .setValue(LeavesBlock.PERSISTENT, true); // Make hanging leaves persistent
 

@@ -76,18 +76,19 @@ public class ShiftingFlowSlashAttack extends MistBreathingAttackBase {
     }
 
     private void sustainDash() {
-        if (dashStartPos != null && dashSpeed != null && dashTick < duration) {
+        int dashDuration = dashSpeed != null && dashSpeed > 0
+                ? Math.round(range / dashSpeed * 20f)
+                : duration;
+        dashDuration = Math.max(1, Math.min(dashDuration, duration));
+
+        if (dashStartPos != null && dashTick < dashDuration) {
             dashTick++;
             lastDashPos = user.position();
-            // Velocity-based dash (smooth, client-predicted) instead of per-tick teleport.
-            // Uses the same range*10/duration convention as the other Mist dashes (see
-            // LowCloudsDistantHazeAttack); without the x10 factor the player-side velocity
-            // friction left the dash far too short.
-            float speedPerTick = (range * 10f) / Math.max(duration, 1);
+            float speed = dashSpeed != null ? dashSpeed : 4.0f;
             user.setDeltaMovement(
-                    dashDirection.x * speedPerTick,
-                    dashDirection.y * speedPerTick,
-                    dashDirection.z * speedPerTick);
+                    dashDirection.x * speed,
+                    dashDirection.y * speed,
+                    dashDirection.z * speed);
             user.hurtMarked = true;
             user.hasImpulse = true;
         }
@@ -113,8 +114,7 @@ public class ShiftingFlowSlashAttack extends MistBreathingAttackBase {
             if (!hitDuringDash.contains(target)) {
                 hitTarget(target);
                 hitDuringDash.add(target);
-                dashTick = duration; // stop dash on hit
-                user.setDeltaMovement(Vec3.ZERO); // cancel user movement on hit
+                // Charge straight through enemies like Rhythmic Step — don't cancel the dash.
 
                 world.playSound(null, target.getX(), target.getY(), target.getZ(),
                         SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.7f, 1.3f);

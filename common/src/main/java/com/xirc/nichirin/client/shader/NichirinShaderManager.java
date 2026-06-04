@@ -1,6 +1,11 @@
 package com.xirc.nichirin.client.shader;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Camera;
+import org.joml.Matrix4f;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,8 +25,11 @@ import java.util.List;
  *   - No custom mixin or freeze/snapshot needed.
  */
 public class NichirinShaderManager {
+    private static final Logger LOGGER = LoggerFactory.getLogger(NichirinShaderManager.class);
     private static final NichirinShaderManager INSTANCE = new NichirinShaderManager();
     private final List<NichirinPostProcessor> processors = new ArrayList<>();
+    private Camera frameCamera;
+    private Matrix4f frameFrustumMatrix = new Matrix4f();
 
     private NichirinShaderManager() {}
 
@@ -35,6 +43,19 @@ public class NichirinShaderManager {
         }
     }
 
+    public void setFrameContext(Camera camera, Matrix4f frustumMatrix) {
+        this.frameCamera = camera;
+        this.frameFrustumMatrix = new Matrix4f(frustumMatrix);
+    }
+
+    public Camera getFrameCamera() {
+        return frameCamera;
+    }
+
+    public Matrix4f getFrameFrustumMatrix() {
+        return new Matrix4f(frameFrustumMatrix);
+    }
+
     /**
      * Bind MC's main depth texture to all active processors.
      * Called at the start of processAll(), before any shader pass runs.
@@ -44,7 +65,22 @@ public class NichirinShaderManager {
      * Call this at the end of rendering (TAIL of LevelRenderer.renderLevel).
      */
     public void processAll(PoseStack viewModelStack) {
-        // Shaders temporarily disabled
+        for (NichirinPostProcessor processor : processors) {
+            if (!isEnabledScreenShader(processor)) {
+                continue;
+            }
+
+            try {
+                processor.process(viewModelStack);
+            } catch (RuntimeException exception) {
+                processor.setActive(false);
+                LOGGER.error("Disabled failing shader {}", processor.getClass().getSimpleName(), exception);
+            }
+        }
+    }
+
+    private boolean isEnabledScreenShader(NichirinPostProcessor processor) {
+        return false;
     }
 
     public void resize(int width, int height) {

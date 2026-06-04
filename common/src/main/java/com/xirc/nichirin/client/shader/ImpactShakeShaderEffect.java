@@ -3,6 +3,7 @@ package com.xirc.nichirin.client.shader;
 import com.mojang.blaze3d.shaders.Uniform;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.xirc.nichirin.BreathOfNichirin;
+import com.xirc.nichirin.client.handler.ImpactFrameOverlay;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 
@@ -42,11 +43,11 @@ public class ImpactShakeShaderEffect extends NichirinPostProcessor {
 
     // Shake internals
     /** Max shake offset in pixels at magnitude 1.0. */
-    private static final float MAX_SHAKE_PX    = 14f;
+    private static final float MAX_SHAKE_PX    = 24f;
     /** Decay rate for exponential shake envelope. Higher = faster decay. */
-    private static final float SHAKE_DECAY     = 11f;
+    private static final float SHAKE_DECAY     = 9f;
     /** Max chromatic split in UV units. */
-    private static final float MAX_CHROMA_SPLIT = 0.012f;
+    private static final float MAX_CHROMA_SPLIT = 0.022f;
 
     @Override
     public ResourceLocation getShaderEffectId() {
@@ -121,15 +122,14 @@ public class ImpactShakeShaderEffect extends NichirinPostProcessor {
      *                   0.5 = light M1 hit. Values above 2.0 not recommended.
      */
     public void trigger(float magnitude) {
+        ImpactFrameOverlay.trigger(magnitude);
         float remaining = isActive() ? Math.max(0f, DURATION - elapsedSeconds) : 0f;
-        // Anti-spam: skip retrigger if still playing more than half the duration
-        // AND the incoming hit is not significantly stronger.
         if (remaining > DURATION * 0.5f && magnitude < shakeMagnitude * 1.3f) {
             return;
         }
-        elapsedSeconds   = 0f;
-        intensity        = 0f;
-        shakeMagnitude   = Math.max(0f, magnitude);
+        elapsedSeconds = 0f;
+        intensity = 0f;
+        shakeMagnitude = Math.max(0f, magnitude);
         setActive(true);
     }
 

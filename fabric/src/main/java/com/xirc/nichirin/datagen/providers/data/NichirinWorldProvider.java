@@ -1,6 +1,6 @@
 package com.xirc.nichirin.datagen.providers.data;
 
-import com.xirc.nichirin.common.worldgen.trees.wysteria.WysteriaConfiguredFeatures;
+import com.xirc.nichirin.common.worldgen.trees.wisteria.WisteriaConfiguredFeatures;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricDynamicRegistryProvider;
 import net.minecraft.core.HolderLookup;
@@ -11,7 +11,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class NichirinWorldProvider extends FabricDynamicRegistryProvider {
     public static final RegistrySetBuilder BUILDER = new RegistrySetBuilder()
-            .add(Registries.CONFIGURED_FEATURE, WysteriaConfiguredFeatures::bootstrap);
+            .add(Registries.CONFIGURED_FEATURE, WisteriaConfiguredFeatures::bootstrap);
 
     public NichirinWorldProvider(FabricDataOutput output, CompletableFuture<HolderLookup.Provider> registriesFuture) {
         super(output, registriesFuture);

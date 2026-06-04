@@ -1,6 +1,7 @@
 package com.xirc.nichirin.client;
 
 import com.xirc.nichirin.client.animation.NichirinAnimations;
+import com.xirc.nichirin.client.light.WisteriaLightData;
 import com.xirc.nichirin.common.util.enums.BreathingStyle;
 import com.xirc.nichirin.client.config.NichirinClientConfig;
 import com.xirc.nichirin.client.handler.*;
@@ -21,6 +22,7 @@ import com.xirc.nichirin.common.util.BlockingInputHandler;
 import com.xirc.nichirin.common.util.PlayerStats;
 import com.xirc.nichirin.registry.*;
 import dev.architectury.event.events.client.ClientTickEvent;
+import dev.architectury.registry.client.rendering.ColorHandlerRegistry;
 import dev.architectury.registry.client.rendering.RenderTypeRegistry;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -34,6 +36,9 @@ import org.slf4j.LoggerFactory;
 public class BreathOfNichirinClient {
     private static final Logger LOGGER = LoggerFactory.getLogger(BreathOfNichirinClient.class);
     private static boolean initialized = false;
+    private static final int WISTERIA_DAY_LEAF_COLOR = 0xD9BEFF;
+    private static final int WISTERIA_NIGHT_LEAF_COLOR = 0x9F6FD8;
+    private static long lastWisteriaLeafRefreshTick = -100L;
 
     // Store shader effect for easy access
     private static DeadCalmShaderEffect deadCalmEffect;
@@ -45,7 +50,7 @@ public class BreathOfNichirinClient {
         try {
             // Register Dead Calm shader effect
             deadCalmEffect = new DeadCalmShaderEffect();
-            impactShakeShaderEffect = new ImpactShakeShaderEffect();
+            impactShakeShaderEffect = ImpactShakeShaderEffect.getInstance();
             flameAuraShader = new FlameBreathingAuraShader();
             waterAuraShader = new WaterBreathingAuraShader();
             NichirinShaderManager.getInstance().register(flameAuraShader);
@@ -67,6 +72,62 @@ public class BreathOfNichirinClient {
         } catch (Exception e) {
             LOGGER.error("Failed to register rendering hooks: {}", e.getMessage());
         }
+    }
+
+    private static void registerBlockColors() {
+        ColorHandlerRegistry.registerBlockColors((state, level, pos, tintIndex) -> getWisteriaLeafColor(),
+                NichirinBlockRegistry.WISTERIA_LEAVES);
+        ColorHandlerRegistry.registerItemColors((stack, tintIndex) -> WISTERIA_DAY_LEAF_COLOR,
+                NichirinBlockRegistry.WISTERIA_LEAVES_ITEM);
+    }
+
+    private static int getWisteriaLeafColor() {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.level == null) {
+            return WISTERIA_DAY_LEAF_COLOR;
+        }
+
+        float dayAmount = getDayAmount(minecraft.level.getTimeOfDay(0.0F));
+        return blendRgb(WISTERIA_NIGHT_LEAF_COLOR, WISTERIA_DAY_LEAF_COLOR, dayAmount);
+    }
+
+    private static float getDayAmount(float timeOfDay) {
+        float brightness = ((float) Math.cos(timeOfDay * Math.PI * 2.0F) + 1.0F) * 0.5F;
+        return brightness * brightness * (3.0F - 2.0F * brightness);
+    }
+
+    private static int blendRgb(int from, int to, float amount) {
+        int r = Math.round(channel(from, 16) + (channel(to, 16) - channel(from, 16)) * amount);
+        int g = Math.round(channel(from, 8) + (channel(to, 8) - channel(from, 8)) * amount);
+        int b = Math.round(channel(from, 0) + (channel(to, 0) - channel(from, 0)) * amount);
+        return (r << 16) | (g << 8) | b;
+    }
+
+    private static int channel(int color, int shift) {
+        return (color >> shift) & 0xFF;
+    }
+
+    private static void refreshWisteriaLeafColors(Minecraft minecraft) {
+        if (minecraft.level == null
+                || minecraft.player == null
+                || !WisteriaLightData.hasLights()) {
+            return;
+        }
+
+        long gameTime = minecraft.level.getGameTime();
+        if (gameTime - lastWisteriaLeafRefreshTick < 5L) {
+            return;
+        }
+
+        lastWisteriaLeafRefreshTick = gameTime;
+        var pos = minecraft.player.blockPosition();
+        minecraft.levelRenderer.setBlocksDirty(
+                pos.getX() - 24,
+                pos.getY() - 16,
+                pos.getZ() - 24,
+                pos.getX() + 24,
+                pos.getY() + 16,
+                pos.getZ() + 24);
     }
 
     public static void init() {
@@ -113,9 +174,11 @@ public class BreathOfNichirinClient {
 
             // Wire up the Blurry effect screen shader
             MistBlurShaderHandler.register();
+            ImpactFrameOverlay.register();
 
             // Register rendering hooks for shaders
             registerRenderingHooks();
+            registerBlockColors();
 
             // Register critical systems first
             BlockingInputHandler.register();
@@ -165,9 +228,9 @@ public class BreathOfNichirinClient {
             });
 
             RenderTypeRegistry.register(RenderType.cutout(),
-                    NichirinBlockRegistry.WYSTERIA_DOOR.get(),
-                    NichirinBlockRegistry.WYSTERIA_TRAPDOOR.get(),
-                    NichirinBlockRegistry.WYSTERIA_SAPLING.get());
+                    NichirinBlockRegistry.WISTERIA_DOOR.get(),
+                    NichirinBlockRegistry.WISTERIA_TRAPDOOR.get(),
+                    NichirinBlockRegistry.WISTERIA_SAPLING.get());
 
             initialized = true;
 
@@ -185,6 +248,10 @@ public class BreathOfNichirinClient {
                             deadCalmEffect.getBlockRenderer().tick();
                         }
                     }
+                    WisteriaLightData.tick(minecraft);
+                    ImpactFrameOverlay.tick();
+                    ImpactCameraShake.tick();
+                    refreshWisteriaLeafColors(minecraft);
 
                     if (minecraft.level.getGameTime() % 100 == 0) {
                         LocalPlayer player = minecraft.player;
@@ -218,7 +285,8 @@ public class BreathOfNichirinClient {
         }
 
         Minecraft minecraft = Minecraft.getInstance();
-        return minecraft != null &&
+        return
+                minecraft != null &&
                 minecraft.level != null &&
                 minecraft.player != null &&
                 !minecraft.player.isRemoved();

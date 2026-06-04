@@ -30,6 +30,7 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
     private static final double ORBIT_RADIUS = 3.0;
     private static final int    HIT_INTERVAL = 12;    // ticks between hits on same target
     private static final int    CLONE_INTERVAL = 6;
+    private static final int    MAX_CLONES   = 6;     // six clones orbit alongside the user
 
     private LivingEntity orbitTarget      = null;
     private double       orbitAngle       = 0.0;
@@ -88,8 +89,10 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
         // Center tracks the target's feet so we stay grounded
         Vec3 center = orbitTarget.position();
 
-        // Stagger clone spawning: one clone per 1–10 random ticks
-        if (tickCount >= nextCloneSpawnTick) {
+        // Stagger clone spawning, but only up to MAX_CLONES total — previously this spawned a
+        // new clone every CLONE_INTERVAL ticks for the whole (210-tick) duration, flooding the
+        // area with dozens of clones.
+        if (spawnedClones.size() < MAX_CLONES && tickCount >= nextCloneSpawnTick) {
             spawnNextClone(center);
             nextCloneSpawnTick = tickCount + CLONE_INTERVAL;
         }

@@ -1,4 +1,4 @@
-package com.xirc.nichirin.common.worldgen.trees.wysteria;
+package com.xirc.nichirin.common.worldgen.trees.wisteria;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -11,17 +11,17 @@ import net.minecraft.world.level.levelgen.feature.configurations.TreeConfigurati
 import net.minecraft.world.level.levelgen.feature.foliageplacers.FoliagePlacer;
 import net.minecraft.world.level.levelgen.feature.foliageplacers.FoliagePlacerType;
 
-public class WysteriaLargeFoliagePlacer extends FoliagePlacer {
-    public static final MapCodec<WysteriaLargeFoliagePlacer> CODEC = RecordCodecBuilder.mapCodec((instance) ->
-            foliagePlacerParts(instance).apply(instance, WysteriaLargeFoliagePlacer::new));
+public class WisteriaLargeFoliagePlacer extends FoliagePlacer {
+    public static final MapCodec<WisteriaLargeFoliagePlacer> CODEC = RecordCodecBuilder.mapCodec((instance) ->
+            foliagePlacerParts(instance).apply(instance, WisteriaLargeFoliagePlacer::new));
 
-    public WysteriaLargeFoliagePlacer(IntProvider radius, IntProvider offset) {
+    public WisteriaLargeFoliagePlacer(IntProvider radius, IntProvider offset) {
         super(radius, offset);
     }
 
     @Override
     protected FoliagePlacerType<?> type() {
-        return NichirinFoliagePlacerTypes.WYSTERIA_LARGE_FOLIAGE_PLACER.get();
+        return NichirinFoliagePlacerTypes.WISTERIA_LARGE_FOLIAGE_PLACER.get();
     }
 
     @Override

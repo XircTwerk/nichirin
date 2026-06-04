@@ -25,21 +25,21 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinBlockRegistry.SCARLET_CRIMSON_IRON_SAND_ITEM.get());
                         entries.accept(NichirinBlockRegistry.KATANA_HOLDER_BLOCK.get());
 
-                        entries.accept(NichirinBlockRegistry.WYSTERIA_LOG.get());
-                        entries.accept(NichirinBlockRegistry.STRIPPED_WYSTERIA_LOG.get());
-                        entries.accept(NichirinBlockRegistry.WYSTERIA_WOOD.get());
-                        entries.accept(NichirinBlockRegistry.STRIPPED_WYSTERIA_WOOD.get());
-                        entries.accept(NichirinBlockRegistry.WYSTERIA_PLANKS.get());
-                        entries.accept(NichirinBlockRegistry.WYSTERIA_LEAVES.get());
-                        entries.accept(NichirinBlockRegistry.WYSTERIA_STAIRS.get());
-                        entries.accept(NichirinBlockRegistry.WYSTERIA_SLAB.get());
-                        entries.accept(NichirinBlockRegistry.WYSTERIA_FENCE.get());
-                        entries.accept(NichirinBlockRegistry.WYSTERIA_FENCE_GATE.get());
-                        entries.accept(NichirinBlockRegistry.WYSTERIA_DOOR.get());
-                        entries.accept(NichirinBlockRegistry.WYSTERIA_TRAPDOOR.get());
-                        entries.accept(NichirinBlockRegistry.WYSTERIA_PRESSURE_PLATE.get());
-                        entries.accept(NichirinBlockRegistry.WYSTERIA_BUTTON.get());
-                        entries.accept(NichirinBlockRegistry.WYSTERIA_SAPLING_ITEM.get());
+                        entries.accept(NichirinBlockRegistry.WISTERIA_LOG.get());
+                        entries.accept(NichirinBlockRegistry.STRIPPED_WISTERIA_LOG.get());
+                        entries.accept(NichirinBlockRegistry.WISTERIA_WOOD.get());
+                        entries.accept(NichirinBlockRegistry.STRIPPED_WISTERIA_WOOD.get());
+                        entries.accept(NichirinBlockRegistry.WISTERIA_PLANKS.get());
+                        entries.accept(NichirinBlockRegistry.WISTERIA_LEAVES.get());
+                        entries.accept(NichirinBlockRegistry.WISTERIA_STAIRS.get());
+                        entries.accept(NichirinBlockRegistry.WISTERIA_SLAB.get());
+                        entries.accept(NichirinBlockRegistry.WISTERIA_FENCE.get());
+                        entries.accept(NichirinBlockRegistry.WISTERIA_FENCE_GATE.get());
+                        entries.accept(NichirinBlockRegistry.WISTERIA_DOOR.get());
+                        entries.accept(NichirinBlockRegistry.WISTERIA_TRAPDOOR.get());
+                        entries.accept(NichirinBlockRegistry.WISTERIA_PRESSURE_PLATE.get());
+                        entries.accept(NichirinBlockRegistry.WISTERIA_BUTTON.get());
+                        entries.accept(NichirinBlockRegistry.WISTERIA_SAPLING_ITEM.get());
 
                         entries.accept(NichirinBlockRegistry.TATAMI_BLOCK_ITEM.get());
                         entries.accept(NichirinBlockRegistry.INFINITY_GLASS1_ITEM.get());

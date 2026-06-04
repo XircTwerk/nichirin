@@ -22,7 +22,7 @@ public class NichirinModelProvider extends FabricModelProvider {
         generator.createTrivialCube(NichirinBlockRegistry.SCARLET_CRIMSON_IRON_SAND.get());
         generator.createTrivialCube(NichirinBlockRegistry.KATANA_HOLDER_BLOCK.get());
 
-        createWysteriaWoodSet(generator);
+        createWisteriaWoodSet(generator);
         createMiscellaneousBlocks(generator);
     }
 
@@ -31,34 +31,34 @@ public class NichirinModelProvider extends FabricModelProvider {
                 .logWithHorizontal(NichirinBlockRegistry.TATAMI_BLOCK.get());
     }
 
-    private void createWysteriaWoodSet(BlockModelGenerators generator) {
+    private void createWisteriaWoodSet(BlockModelGenerators generator) {
         // Use the wood provider system like vanilla does
-        generator.woodProvider(NichirinBlockRegistry.WYSTERIA_LOG.get())
-                .logWithHorizontal(NichirinBlockRegistry.WYSTERIA_LOG.get())
-                .wood(NichirinBlockRegistry.WYSTERIA_WOOD.get());
+        generator.woodProvider(NichirinBlockRegistry.WISTERIA_LOG.get())
+                .logWithHorizontal(NichirinBlockRegistry.WISTERIA_LOG.get())
+                .wood(NichirinBlockRegistry.WISTERIA_WOOD.get());
 
-        generator.woodProvider(NichirinBlockRegistry.STRIPPED_WYSTERIA_LOG.get())
-                .logWithHorizontal(NichirinBlockRegistry.STRIPPED_WYSTERIA_LOG.get())
-                .wood(NichirinBlockRegistry.STRIPPED_WYSTERIA_WOOD.get());
+        generator.woodProvider(NichirinBlockRegistry.STRIPPED_WISTERIA_LOG.get())
+                .logWithHorizontal(NichirinBlockRegistry.STRIPPED_WISTERIA_LOG.get())
+                .wood(NichirinBlockRegistry.STRIPPED_WISTERIA_WOOD.get());
 
         // Simple blocks
-        generator.createTrivialBlock(NichirinBlockRegistry.WYSTERIA_LEAVES.get(), TexturedModel.LEAVES);
+        generator.createTrivialBlock(NichirinBlockRegistry.WISTERIA_LEAVES.get(), TexturedModel.LEAVES);
         generator.createTrivialBlock(NichirinBlockRegistry.INFINITY_GLASS1.get(), TexturedModel.CUBE);
         generator.createTrivialBlock(NichirinBlockRegistry.INFINITY_GLASS2.get(), TexturedModel.CUBE);
 
         // Use BlockFamily system for consistent generation
-        generator.family(NichirinBlockRegistry.WYSTERIA_PLANKS.get())
-                .stairs(NichirinBlockRegistry.WYSTERIA_STAIRS.get())
-                .slab(NichirinBlockRegistry.WYSTERIA_SLAB.get())
-                .fence(NichirinBlockRegistry.WYSTERIA_FENCE.get())
-                .fenceGate(NichirinBlockRegistry.WYSTERIA_FENCE_GATE.get())
-                .pressurePlate(NichirinBlockRegistry.WYSTERIA_PRESSURE_PLATE.get())
-                .button(NichirinBlockRegistry.WYSTERIA_BUTTON.get());
+        generator.family(NichirinBlockRegistry.WISTERIA_PLANKS.get())
+                .stairs(NichirinBlockRegistry.WISTERIA_STAIRS.get())
+                .slab(NichirinBlockRegistry.WISTERIA_SLAB.get())
+                .fence(NichirinBlockRegistry.WISTERIA_FENCE.get())
+                .fenceGate(NichirinBlockRegistry.WISTERIA_FENCE_GATE.get())
+                .pressurePlate(NichirinBlockRegistry.WISTERIA_PRESSURE_PLATE.get())
+                .button(NichirinBlockRegistry.WISTERIA_BUTTON.get());
 
 
         // Door and trapdoor - these use their own textures
-        generator.createDoor(NichirinBlockRegistry.WYSTERIA_DOOR.get());
-        generator.createTrapdoor(NichirinBlockRegistry.WYSTERIA_TRAPDOOR.get());
+        generator.createDoor(NichirinBlockRegistry.WISTERIA_DOOR.get());
+        generator.createTrapdoor(NichirinBlockRegistry.WISTERIA_TRAPDOOR.get());
     }
 
     @Override
@@ -92,7 +92,7 @@ public class NichirinModelProvider extends FabricModelProvider {
         generator.generateFlatItem(NichirinItemRegistry.RICE.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.PERK_SCROLL.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.CURSED_SCROLL.get(), ModelTemplates.FLAT_ITEM);
-        generator.generateFlatItem(NichirinBlockRegistry.WYSTERIA_SAPLING_ITEM.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinBlockRegistry.WISTERIA_SAPLING_ITEM.get(), ModelTemplates.FLAT_ITEM);
 
         generator.generateFlatItem(NichirinItemRegistry.BOAR_SPAWN_EGG.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.TEMPLE_DEMON_SPAWN_EGG.get(), ModelTemplates.FLAT_ITEM);

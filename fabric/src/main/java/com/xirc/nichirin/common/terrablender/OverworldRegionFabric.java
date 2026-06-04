@@ -1,11 +1,13 @@
 package com.xirc.nichirin.common.terrablender;
 
 import com.mojang.datafixers.util.Pair;
+import com.xirc.nichirin.registry.NichirinBiomeRegistry;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Climate;
+import terrablender.api.ParameterUtils;
 import terrablender.api.Region;
 import terrablender.api.RegionType;
 
@@ -18,7 +20,26 @@ public class OverworldRegionFabric extends Region {
 
     @Override
     public void addBiomes(Registry<Biome> registry, Consumer<Pair<Climate.ParameterPoint, ResourceKey<Biome>>> mapper) {
-        // We're not adding custom biomes
-        // Ore generation is handled through the feature system
+        addBiome(
+                mapper,
+                ParameterUtils.Temperature.NEUTRAL,
+                ParameterUtils.Humidity.HUMID,
+                ParameterUtils.Continentalness.MID_INLAND,
+                ParameterUtils.Erosion.EROSION_4,
+                ParameterUtils.Weirdness.MID_SLICE_NORMAL_ASCENDING,
+                ParameterUtils.Depth.SURFACE,
+                0.0F,
+                NichirinBiomeRegistry.WISTERIA_GROVE);
+
+        addBiome(
+                mapper,
+                ParameterUtils.Temperature.WARM,
+                ParameterUtils.Humidity.WET,
+                ParameterUtils.Continentalness.NEAR_INLAND,
+                ParameterUtils.Erosion.EROSION_3,
+                ParameterUtils.Weirdness.MID_SLICE_VARIANT_ASCENDING,
+                ParameterUtils.Depth.SURFACE,
+                0.0F,
+                NichirinBiomeRegistry.WISTERIA_GROVE);
     }
 }

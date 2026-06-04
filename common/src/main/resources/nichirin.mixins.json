@@ -5,7 +5,9 @@
   "minVersion": "0.8",
   "client": [
     "client.DebugRendererMixin",
+    "client.ClientLevelMixin",
     "client.FogRendererMixin",
+    "client.GameRendererMixin",
     "client.GuiMixin",
     "client.KeyboardInputMixin",
     "client.LevelRendererMixin",
@@ -13,9 +15,11 @@
     "client.MinecraftUseItemMixin",
     "client.PlayerModelAccessor",
     "client.PlayerRendererMixin",
+    "client.ProgramMixin",
     "client.LivingEntityRendererMixin",
     "client.ItemInHandLayerMixin",
-    "client.RenderTargetDepthMixin"
+    "client.RenderTargetDepthMixin",
+    "client.ShaderInstanceMixin"
   ],
   "mixins": [
     "LivingEntityMixin",

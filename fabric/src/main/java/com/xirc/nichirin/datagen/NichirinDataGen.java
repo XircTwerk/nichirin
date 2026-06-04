@@ -1,6 +1,6 @@
 package com.xirc.nichirin.datagen;
 
-import com.xirc.nichirin.common.worldgen.trees.wysteria.WysteriaConfiguredFeatures;
+import com.xirc.nichirin.common.worldgen.trees.wisteria.WisteriaConfiguredFeatures;
 import com.xirc.nichirin.datagen.providers.assets.NichirinModelProvider;
 import com.xirc.nichirin.datagen.providers.data.*;
 import net.fabricmc.fabric.api.datagen.v1.DataGeneratorEntrypoint;
@@ -26,6 +26,6 @@ public final class NichirinDataGen implements DataGeneratorEntrypoint {
 
     @Override
     public void buildRegistry(RegistrySetBuilder registryBuilder) {
-        registryBuilder.add(Registries.CONFIGURED_FEATURE, WysteriaConfiguredFeatures::bootstrap);
+        registryBuilder.add(Registries.CONFIGURED_FEATURE, WisteriaConfiguredFeatures::bootstrap);
     }
 }

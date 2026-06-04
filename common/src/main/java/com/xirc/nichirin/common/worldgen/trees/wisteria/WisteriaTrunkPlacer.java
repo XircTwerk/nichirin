@@ -1,4 +1,4 @@
-package com.xirc.nichirin.common.worldgen.trees.wysteria;
+package com.xirc.nichirin.common.worldgen.trees.wisteria;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -20,22 +20,22 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import net.minecraft.world.level.block.state.BlockState;
 
-public class WysteriaTrunkPlacer extends TrunkPlacer {
-    public static final MapCodec<WysteriaTrunkPlacer> CODEC = RecordCodecBuilder.mapCodec((instance) ->
+public class WisteriaTrunkPlacer extends TrunkPlacer {
+    public static final MapCodec<WisteriaTrunkPlacer> CODEC = RecordCodecBuilder.mapCodec((instance) ->
             trunkPlacerParts(instance)
                     .and(IntProvider.codec(1, 8).fieldOf("branch_count").forGetter(placer -> placer.branchCount))
-                    .apply(instance, WysteriaTrunkPlacer::new));
+                    .apply(instance, WisteriaTrunkPlacer::new));
 
     private final IntProvider branchCount;
 
-    public WysteriaTrunkPlacer(int baseHeight, int heightRandA, int heightRandB, IntProvider branchCount) {
+    public WisteriaTrunkPlacer(int baseHeight, int heightRandA, int heightRandB, IntProvider branchCount) {
         super(baseHeight, heightRandA, heightRandB);
         this.branchCount = branchCount;
     }
 
     @Override
     protected TrunkPlacerType<?> type() {
-        return NichirinTrunkPlacerTypes.WYSTERIA_TRUNK_PLACER.get();
+        return NichirinTrunkPlacerTypes.WISTERIA_TRUNK_PLACER.get();
     }
 
     @Override

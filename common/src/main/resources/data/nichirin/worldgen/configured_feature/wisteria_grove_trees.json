@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:random_selector",
+  "config": {
+    "default": {
+      "feature": "nichirin:small_wisteria",
+      "placement": []
+    },
+    "features": [
+      {
+        "chance": 0.35,
+        "feature": {
+          "feature": "nichirin:medium_wisteria",
+          "placement": []
+        }
+      },
+      {
+        "chance": 0.18,
+        "feature": {
+          "feature": "nichirin:large_wisteria",
+          "placement": []
+        }
+      }
+    ]
+  }
+}

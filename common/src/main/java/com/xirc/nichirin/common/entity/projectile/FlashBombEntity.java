@@ -113,7 +113,6 @@ public class FlashBombEntity extends ThrowableItemProjectile {
     protected void onHit(HitResult result) {
         if (!this.level().isClientSide) {
             // Hit something (ground, wall, etc.) - explode immediately
-            System.out.println("Flash bomb hit something, exploding immediately");
             setExplosionCount(1);
             setExplosionDelay(0);
             // Stop all movement when it hits
@@ -144,7 +143,6 @@ public class FlashBombEntity extends ThrowableItemProjectile {
                 int currentTimeout = getTimeoutTimer();
                 if (currentTimeout <= 0) {
                     // Timeout reached - start explosion
-                    System.out.println("Flash bomb timeout reached, exploding");
                     setExplosionCount(1);
                     setExplosionDelay(0);
                 } else {
@@ -157,7 +155,6 @@ public class FlashBombEntity extends ThrowableItemProjectile {
                 int currentDelay = getExplosionDelay();
                 if (currentDelay <= 0) {
                     // Time for next explosion
-                    System.out.println("Creating explosion #" + getExplosionCount());
                     createFlashExplosion(this.position(), (ServerLevel) this.level(), getExplosionCount());
 
                     if (getExplosionCount() >= 3) {
@@ -180,7 +177,6 @@ public class FlashBombEntity extends ThrowableItemProjectile {
     public InteractionResult interact(Player player, InteractionHand hand) {
         if (!this.level().isClientSide && getExplosionCount() == 0) {
             // Player interacted - explode immediately
-            System.out.println("Player interacted with flash bomb, exploding immediately");
             setExplosionCount(1);
             setExplosionDelay(0);
 
@@ -202,7 +198,6 @@ public class FlashBombEntity extends ThrowableItemProjectile {
     public boolean hurt(DamageSource damageSource, float amount) {
         if (!this.level().isClientSide && getExplosionCount() == 0 && damageSource.getEntity() instanceof Player) {
             // Player hit the bomb - explode immediately
-            System.out.println("Player hit flash bomb, exploding immediately");
             setExplosionCount(1);
             setExplosionDelay(0);
 
@@ -225,7 +220,6 @@ public class FlashBombEntity extends ThrowableItemProjectile {
     }
 
     private void createFlashExplosion(Vec3 position, ServerLevel serverLevel, int explosionNumber) {
-        System.out.println("Creating flash explosion #" + explosionNumber + " at " + position);
         final double DAMAGE_RADIUS = 3.0; // 3 block radius for damage
 
         // Play explosion sound

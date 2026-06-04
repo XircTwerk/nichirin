@@ -46,29 +46,29 @@ public class NichirinLootTableProvider extends FabricBlockLootTableProvider {
         dropSelf(NichirinBlockRegistry.KATANA_HOLDER_BLOCK.get());
         dropSelf(NichirinBlockRegistry.BENTO_BOX_BLOCK.get());
 
-        // Wysteria wood set - all drop themselves
-        dropSelf(NichirinBlockRegistry.WYSTERIA_LOG.get());
-        dropSelf(NichirinBlockRegistry.STRIPPED_WYSTERIA_LOG.get());
-        dropSelf(NichirinBlockRegistry.WYSTERIA_WOOD.get());
-        dropSelf(NichirinBlockRegistry.STRIPPED_WYSTERIA_WOOD.get());
-        dropSelf(NichirinBlockRegistry.WYSTERIA_PLANKS.get());
-        dropSelf(NichirinBlockRegistry.WYSTERIA_STAIRS.get());
-        dropSelf(NichirinBlockRegistry.WYSTERIA_SLAB.get());
-        dropSelf(NichirinBlockRegistry.WYSTERIA_FENCE.get());
-        dropSelf(NichirinBlockRegistry.WYSTERIA_FENCE_GATE.get());
-        dropSelf(NichirinBlockRegistry.WYSTERIA_PRESSURE_PLATE.get());
-        dropSelf(NichirinBlockRegistry.WYSTERIA_BUTTON.get());
-        dropSelf(NichirinBlockRegistry.WYSTERIA_TRAPDOOR.get());
+        // Wisteria wood set - all drop themselves
+        dropSelf(NichirinBlockRegistry.WISTERIA_LOG.get());
+        dropSelf(NichirinBlockRegistry.STRIPPED_WISTERIA_LOG.get());
+        dropSelf(NichirinBlockRegistry.WISTERIA_WOOD.get());
+        dropSelf(NichirinBlockRegistry.STRIPPED_WISTERIA_WOOD.get());
+        dropSelf(NichirinBlockRegistry.WISTERIA_PLANKS.get());
+        dropSelf(NichirinBlockRegistry.WISTERIA_STAIRS.get());
+        dropSelf(NichirinBlockRegistry.WISTERIA_SLAB.get());
+        dropSelf(NichirinBlockRegistry.WISTERIA_FENCE.get());
+        dropSelf(NichirinBlockRegistry.WISTERIA_FENCE_GATE.get());
+        dropSelf(NichirinBlockRegistry.WISTERIA_PRESSURE_PLATE.get());
+        dropSelf(NichirinBlockRegistry.WISTERIA_BUTTON.get());
+        dropSelf(NichirinBlockRegistry.WISTERIA_TRAPDOOR.get());
 
         // Special cases
         // Leaves should drop themselves with silk touch, otherwise drop saplings/sticks (but we don't have saplings yet)
-        add(NichirinBlockRegistry.WYSTERIA_LEAVES.get(), createLeavesDrops(
-                NichirinBlockRegistry.WYSTERIA_LEAVES.get(),
-                NichirinBlockRegistry.WYSTERIA_LEAVES.get(), // Use leaves as placeholder for now
+        add(NichirinBlockRegistry.WISTERIA_LEAVES.get(), createLeavesDrops(
+                NichirinBlockRegistry.WISTERIA_LEAVES.get(),
+                NichirinBlockRegistry.WISTERIA_LEAVES.get(), // Use leaves as placeholder for now
                 NORMAL_LEAVES_SAPLING_CHANCES));
 
         // Door drops the item, not the block
-        add(NichirinBlockRegistry.WYSTERIA_DOOR.get(),
-                createDoorTable(NichirinBlockRegistry.WYSTERIA_DOOR.get()));
+        add(NichirinBlockRegistry.WISTERIA_DOOR.get(),
+                createDoorTable(NichirinBlockRegistry.WISTERIA_DOOR.get()));
     }
 }

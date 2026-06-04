@@ -1,0 +1,61 @@
+{
+  "type": "minecraft:tree",
+  "config": {
+    "decorators": [
+      {
+        "type": "nichirin:wisteria_root_decorator",
+        "probability": 0.6
+      },
+      {
+        "type": "nichirin:wisteria_hanging_leaves_decorator",
+        "min_length": 4,
+        "max_length": 8
+      }
+    ],
+    "dirt_provider": {
+      "type": "minecraft:simple_state_provider",
+      "state": {
+        "Name": "minecraft:dirt"
+      }
+    },
+    "foliage_placer": {
+      "type": "nichirin:wisteria_medium_foliage_placer",
+      "offset": 1,
+      "radius": 3
+    },
+    "foliage_provider": {
+      "type": "minecraft:simple_state_provider",
+      "state": {
+        "Name": "nichirin:wisteria_leaves"
+      }
+    },
+    "force_dirt": false,
+    "ignore_vines": true,
+    "minimum_size": {
+      "type": "minecraft:two_layers_feature_size",
+      "limit": 2,
+      "lower_size": 0,
+      "upper_size": 2
+    },
+    "trunk_placer": {
+      "type": "nichirin:wisteria_trunk_placer",
+      "base_height": 4,
+      "height_rand_a": 3,
+      "height_rand_b": 2,
+      "branch_count": {
+        "type": "minecraft:uniform",
+        "min_inclusive": 2,
+        "max_inclusive": 4
+      }
+    },
+    "trunk_provider": {
+      "type": "minecraft:simple_state_provider",
+      "state": {
+        "Name": "nichirin:wisteria_log",
+        "Properties": {
+          "axis": "y"
+        }
+      }
+    }
+  }
+}

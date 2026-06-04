@@ -5,6 +5,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
@@ -12,15 +13,14 @@ import java.util.List;
 // Form 2: 8 rapid slashes bypassing immunity frames. Right Click.
 public class EightLayeredMistAttack extends MistBreathingAttackBase {
 
-    private static final int SLASH_INTERVAL = 3; // ticks between each slash
+    private static final int SLASH_INTERVAL = 2; // ticks between each slash
+    private static final int TOTAL_SLASHES  = 8; // "Eight-Layered" — always eight hits
 
     private int slashesPerformed = 0;
-    private int totalSlashes;
 
     @Override
     protected void onStart() {
         slashesPerformed = 0;
-        totalSlashes = Math.max(1, duration / SLASH_INTERVAL);
         createMistParticles();
 
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
@@ -33,12 +33,14 @@ public class EightLayeredMistAttack extends MistBreathingAttackBase {
 
         int ticksSinceWindup = tickCount - windup;
 
-        if (ticksSinceWindup >= 0 && ticksSinceWindup % SLASH_INTERVAL == 0) {
-            int slashIndex = ticksSinceWindup / SLASH_INTERVAL;
-            if (slashIndex < totalSlashes) {
-                performSlash(slashIndex);
-                slashesPerformed++;
-            }
+        // Fire one slash every SLASH_INTERVAL ticks starting on the first active tick, until all
+        // eight have landed. (The old formula skipped index 0 and the final index, which is why
+        // only four ever connected.)
+        if (ticksSinceWindup >= 1
+                && (ticksSinceWindup - 1) % SLASH_INTERVAL == 0
+                && slashesPerformed < TOTAL_SLASHES) {
+            performSlash(slashesPerformed);
+            slashesPerformed++;
         }
     }
 
@@ -47,19 +49,22 @@ public class EightLayeredMistAttack extends MistBreathingAttackBase {
 
         createSlashParticles(isLeftSlash);
 
-        Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
-        Vec3 lookDir = user.getLookAngle();
-        Vec3 rightDir = lookDir.cross(new Vec3(0, 1, 0)).normalize();
-        Vec3 slashOffset = rightDir.scale(isLeftSlash ? -0.5 : 0.5);
-        Vec3 slashCenter = userPos.add(lookDir.scale(range * 0.8)).add(slashOffset);
-
-        List<LivingEntity> targets = getTargetsInCustomHitbox(slashCenter, hitboxSize, hitboxSize * 1.25, hitboxSize * 0.75);
+        // Spherical hit pattern centred on the user: every slash strikes all enemies within
+        // hitboxSize of the player (a true sphere, not a forward box), bypassing immunity frames
+        // so all eight slashes connect.
+        Vec3 center = user.position().add(0, user.getBbHeight() / 2, 0);
+        double r = hitboxSize;
+        double rSq = r * r;
+        AABB box = new AABB(center.subtract(r, r, r), center.add(r, r, r));
+        List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, box,
+                e -> e != user && e.isAlive()
+                        && e.position().add(0, e.getBbHeight() / 2, 0).distanceToSqr(center) <= rSq);
 
         for (LivingEntity target : targets) {
             hitTargetNoImmunity(target);
 
             // fake pressure — barely any displacement
-            Vec3 tinyKnockback = target.position().subtract(userPos).normalize().scale(knockback * 0.15f);
+            Vec3 tinyKnockback = target.position().subtract(center).normalize().scale(knockback * 0.15f);
             target.push(tinyKnockback.x, 0, tinyKnockback.z);
         }
 
@@ -71,20 +76,20 @@ public class EightLayeredMistAttack extends MistBreathingAttackBase {
     private void createSlashParticles(boolean isLeftSlash) {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
-        Vec3 userPos = user.position().add(0, user.getBbHeight() * 0.7, 0);
-        Vec3 lookDir = user.getLookAngle();
-
-        for (int i = -3; i <= 3; i++) {
-            double actualAngle = isLeftSlash ? Math.toRadians(i * 20) : Math.toRadians(-i * 20);
-            Vec3 slashDir = lookDir.yRot((float) actualAngle);
-            Vec3 particlePos = userPos.add(slashDir.scale(range * 0.85));
+        // Ring of mist around the user to sell the spherical, all-around slash.
+        Vec3 center = user.position().add(0, user.getBbHeight() * 0.5, 0);
+        int points = 10;
+        double phase = isLeftSlash ? 0.0 : Math.PI / points;
+        for (int i = 0; i < points; i++) {
+            double angle = (2 * Math.PI * i) / points + phase;
+            Vec3 p = center.add(Math.cos(angle) * hitboxSize, (i % 2 == 0 ? 0.2 : -0.2), Math.sin(angle) * hitboxSize);
 
             serverLevel.sendParticles(ParticleTypes.CLOUD,
-                    particlePos.x, particlePos.y, particlePos.z,
-                    2, 0.05, 0.05, 0.05, 0.02);
-            serverLevel.sendParticles(ParticleTypes.WHITE_ASH,
-                    particlePos.x, particlePos.y, particlePos.z,
-                    1, 0.02, 0.02, 0.02, 0.01);
+                    p.x, p.y, p.z, 1, 0.05, 0.05, 0.05, 0.02);
+            if (i % 2 == 0) {
+                serverLevel.sendParticles(ParticleTypes.WHITE_ASH,
+                        p.x, p.y, p.z, 1, 0.02, 0.02, 0.02, 0.01);
+            }
         }
     }
 

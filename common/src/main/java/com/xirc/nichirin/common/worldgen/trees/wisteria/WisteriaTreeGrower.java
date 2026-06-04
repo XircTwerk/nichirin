@@ -1,4 +1,4 @@
-package com.xirc.nichirin.common.worldgen.trees.wysteria;
+package com.xirc.nichirin.common.worldgen.trees.wisteria;
 
 import com.xirc.nichirin.registry.NichirinConfiguredFeatures;
 import net.minecraft.util.RandomSource;
@@ -10,13 +10,13 @@ import java.util.Optional;
  * Tree grower for Wisteria saplings
  * Randomly selects between small, medium, and large wisteria variants
  */
-public final class WysteriaTreeGrower {
+public final class WisteriaTreeGrower {
 
-    static final TreeGrower SMALL = create("small", NichirinConfiguredFeatures.SMALL_WYSTERIA);
-    private static final TreeGrower MEDIUM = create("medium", NichirinConfiguredFeatures.MEDIUM_WYSTERIA);
-    private static final TreeGrower LARGE = create("large", NichirinConfiguredFeatures.LARGE_WYSTERIA);
+    static final TreeGrower SMALL = create("small", NichirinConfiguredFeatures.SMALL_WISTERIA);
+    private static final TreeGrower MEDIUM = create("medium", NichirinConfiguredFeatures.MEDIUM_WISTERIA);
+    private static final TreeGrower LARGE = create("large", NichirinConfiguredFeatures.LARGE_WISTERIA);
 
-    private WysteriaTreeGrower() {}
+    private WisteriaTreeGrower() {}
 
     static TreeGrower select(RandomSource random) {
         // Weighted random selection for tree variants
@@ -35,6 +35,6 @@ public final class WysteriaTreeGrower {
     }
 
     private static TreeGrower create(String size, net.minecraft.resources.ResourceKey<net.minecraft.world.level.levelgen.feature.ConfiguredFeature<?, ?>> feature) {
-        return new TreeGrower("nichirin:wysteria_" + size, Optional.empty(), Optional.of(feature), Optional.empty());
+        return new TreeGrower("nichirin:wisteria_" + size, Optional.empty(), Optional.of(feature), Optional.empty());
     }
 }

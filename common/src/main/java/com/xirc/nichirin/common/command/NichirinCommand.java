@@ -14,9 +14,11 @@ import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.data.PlayerDataStorage;
 import com.xirc.nichirin.common.data.ProgressionHelper;
 import com.xirc.nichirin.common.network.s2c.ProgressionSyncPacket;
+import com.xirc.nichirin.common.network.s2c.TriggerShaderPacket;
 import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
 import com.xirc.nichirin.common.system.BloodMoonManager;
 import com.xirc.nichirin.common.system.DemonManager;
+import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinMovesetRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.commands.CommandSourceStack;
@@ -25,6 +27,7 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.effect.MobEffectInstance;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -83,6 +86,13 @@ public class NichirinCommand {
                         .then(Commands.argument("player", EntityArgument.player())
                                 .executes(ctx -> resetAllCooldowns(ctx, EntityArgument.getPlayer(ctx, "player")))))
 
+                .then(Commands.literal("debug")
+                        .requires(src -> src.hasPermission(2))
+                        .then(Commands.literal("blurry")
+                                .executes(ctx -> giveBlurry(ctx, ctx.getSource().getPlayerOrException()))
+                                .then(Commands.argument("player", EntityArgument.player())
+                                        .executes(ctx -> giveBlurry(ctx, EntityArgument.getPlayer(ctx, "player"))))))
+
                 // Breathing and Demon subtrees — same shape as the old /breathing and /demon roots.
                 .then(buildBreathingSubcommand())
                 .then(buildDemonSubcommand())
@@ -115,6 +125,24 @@ public class NichirinCommand {
                                 .executes(NichirinCommand::configResetAll))
                 )
         );
+
+        dispatcher.register(Commands.literal("blurry")
+                .requires(src -> src.hasPermission(2))
+                .executes(ctx -> giveBlurry(ctx, ctx.getSource().getPlayerOrException()))
+                .then(Commands.argument("player", EntityArgument.player())
+                        .executes(ctx -> giveBlurry(ctx, EntityArgument.getPlayer(ctx, "player")))));
+    }
+
+    private static int giveBlurry(CommandContext<CommandSourceStack> ctx, ServerPlayer player) {
+        boolean applied = player.addEffect(new MobEffectInstance(NichirinEffectRegistry.blurry(), 160, 0, false, true, true));
+        NichirinPacketRegistry.sendToPlayer(
+                new TriggerShaderPacket("com.xirc.nichirin.client.shader.MistBlurShaderEffect", true, 1.0f),
+                player);
+        ctx.getSource().sendSuccess(() -> Component.literal((applied ? "Applied" : "Refreshed")
+                        + " blurry debug effect to " + player.getName().getString()
+                        + " (effect id: nichirin:blurry)")
+                .withStyle(s -> s.withColor(COL_OK)), true);
+        return 1;
     }
 
     // ─── /nichirin breathing ───

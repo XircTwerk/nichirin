@@ -24,11 +24,36 @@ public class CloneSkinTracker {
             Collections.newSetFromMap(new WeakHashMap<>());
 
     public static PlayerSkin getSkinFor(PlayerCloneEntity clone) {
-        if (!skinCache.containsKey(clone)) {
-            load(clone);
+        PlayerSkin cached = skinCache.get(clone);
+        if (cached != null) return cached;
+
+        // Prefer the live in-world player's already-resolved skin. It's instant and correct, and
+        // we retry it every frame until available (e.g. the clone's master UUID/name may not have
+        // synced on the first render) so we never get stuck on the default Steve/Alex skin.
+        PlayerSkin live = livePlayerSkin(clone);
+        if (live != null) {
+            skinCache.put(clone, live);
+            return live;
         }
+
+        // Fallback for a master who isn't in render range: resolve the profile async (kicked once).
+        // Until it returns, show the UUID-derived default rather than caching it permanently.
+        loadAsync(clone);
         UUID uid = clone.getMasterUUID();
-        return skinCache.getOrDefault(clone, DefaultPlayerSkin.get(uid != null ? uid : new UUID(0, 0)));
+        return DefaultPlayerSkin.get(uid != null ? uid : new UUID(0, 0));
+    }
+
+    private static PlayerSkin livePlayerSkin(PlayerCloneEntity clone) {
+        UUID uid = clone.getMasterUUID();
+        if (uid == null) return null;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null) return null;
+        for (AbstractClientPlayer player : mc.level.players()) {
+            if (player.getUUID().equals(uid)) {
+                return player.getSkin();
+            }
+        }
+        return null;
     }
 
     public static boolean isSlimFor(PlayerCloneEntity clone) {
@@ -43,27 +68,17 @@ public class CloneSkinTracker {
         return clonePlayer;
     }
 
-    private static void load(PlayerCloneEntity clone) {
+    private static void loadAsync(PlayerCloneEntity clone) {
         GameProfile profile = clone.getGameProfile();
         if (profile == null) return;
-
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.level != null) {
-            for (AbstractClientPlayer player : mc.level.players()) {
-                if (player.getUUID().equals(profile.getId())) {
-                    skinCache.put(clone, player.getSkin());
-                    return;
-                }
-            }
-        }
 
         synchronized (loading) {
             if (loading.contains(clone)) return;
             loading.add(clone);
         }
 
-        mc.getSkinManager().getOrLoad(profile).thenAccept(skin -> {
-            skinCache.put(clone, skin);
+        Minecraft.getInstance().getSkinManager().getOrLoad(profile).thenAccept(skin -> {
+            if (skin != null) skinCache.put(clone, skin);
             synchronized (loading) {
                 loading.remove(clone);
             }

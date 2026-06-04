@@ -2,6 +2,7 @@ package com.xirc.nichirin.client.shader;
 
 import com.mojang.blaze3d.shaders.Uniform;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.xirc.nichirin.client.handler.MistBlurOverlay;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 
@@ -13,6 +14,7 @@ public class MistBlurShaderEffect extends NichirinPostProcessor {
 
     private float targetIntensity = 0f;
     private float smoothedIntensity = 0f;
+    private int pulseTicks = 0;
 
     // Exponential smooth rate (units: 1/second).
     // Half-life ≈ ln(2) / rate.  2.0 → ~0.35s half-life (full transition in ~1s).
@@ -29,19 +31,38 @@ public class MistBlurShaderEffect extends NichirinPostProcessor {
         this.targetIntensity = Math.max(0f, Math.min(1f, intensity));
     }
 
+    public void trigger() {
+        trigger(1.0f);
+    }
+
+    public void trigger(float strength) {
+        MistBlurOverlay.trigger(strength);
+        pulseTicks = 24;
+        targetIntensity = Math.max(targetIntensity, Math.max(0.35f, Math.min(1f, strength)));
+        setActive(true);
+    }
+
     @Override
     protected void beforeProcess(PoseStack viewModelStack) {
         if (effects == null) return;
 
+        float pulseIntensity = 0f;
+        if (pulseTicks > 0) {
+            pulseTicks--;
+            pulseIntensity = Math.min(1f, pulseTicks / 16.0f);
+        }
+
+        float effectiveTargetIntensity = Math.max(targetIntensity, pulseIntensity);
+
         // Framerate-independent exponential smoothing.
         // dt is in seconds; multiply by appropriate rate depending on direction.
         float dt = Minecraft.getInstance().getTimer().getRealtimeDeltaTicks() / 20.0f;
-        float rate = (targetIntensity > smoothedIntensity) ? FADE_IN_RATE : FADE_OUT_RATE;
-        smoothedIntensity += (targetIntensity - smoothedIntensity) * rate * dt;
+        float rate = (effectiveTargetIntensity > smoothedIntensity) ? FADE_IN_RATE : FADE_OUT_RATE;
+        smoothedIntensity += (effectiveTargetIntensity - smoothedIntensity) * rate * dt;
         smoothedIntensity = Math.max(0f, Math.min(1f, smoothedIntensity));
 
         // Deactivate cleanly once fully faded out
-        if (smoothedIntensity < 0.002f && targetIntensity == 0f) {
+        if (!hasVisibleIntensity()) {
             setActive(false);
             smoothedIntensity = 0f;
             return;
@@ -59,5 +80,9 @@ public class MistBlurShaderEffect extends NichirinPostProcessor {
 
     public float getSmoothedIntensity() {
         return smoothedIntensity;
+    }
+
+    public boolean hasVisibleIntensity() {
+        return smoothedIntensity >= 0.002f || targetIntensity > 0f || pulseTicks > 0;
     }
 }

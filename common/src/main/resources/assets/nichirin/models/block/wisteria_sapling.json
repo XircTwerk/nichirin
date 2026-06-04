@@ -1,6 +1,6 @@
 {
   "parent": "block/cross",
   "textures": {
-    "cross": "nichirin:block/wysteria_sapling"
+    "cross": "nichirin:block/wisteria_sapling"
   }
 }
