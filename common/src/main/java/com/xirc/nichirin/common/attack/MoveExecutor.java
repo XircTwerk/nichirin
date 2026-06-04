@@ -28,6 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Unified attack executor — handles both breathing and demon attacks for players and NPCs.
  */
+@SuppressWarnings({"deprecation", "removal"})
 public class MoveExecutor {
 
     private static final ConcurrentHashMap<UUID, List<Object>> activeAttacks = new ConcurrentHashMap<>();
@@ -152,38 +153,35 @@ public class MoveExecutor {
     }
 
     private static int getHitStunFromAttack(Object attack) {
-        try {
-            return (int) attack.getClass().getMethod("getHitStun").invoke(attack);
-        } catch (Exception e) { return 0; }
+        return getIntFromAttack(attack, "getHitStun");
     }
 
     private static void applyMoveStun(LivingEntity entity, AbstractMoveset.MoveConfiguration config) {
-        int totalStunTicks = config.getWindupOrDefault(0) + config.getDurationOrDefault(0);
-        if (totalStunTicks > 0) {
-            entity.addEffect(new MobEffectInstance(NichirinEffectRegistry.stunned(),
-                    totalStunTicks, 0, false, false, false));
-        }
+        applyStun(entity, config.getWindupOrDefault(0) + config.getDurationOrDefault(0));
     }
 
     private static void applyPreConfiguredMoveStun(LivingEntity entity, AbstractBreathingAttack<?, ?> attack) {
-        int windupTicks = getWindupFromAttack(attack);
-        if (windupTicks > 0) {
-            entity.addEffect(new MobEffectInstance(NichirinEffectRegistry.stunned(),
-                    windupTicks, 0, false, false, false));
-        }
+        applyStun(entity, getWindupFromAttack(attack));
     }
 
     private static void applyPreConfiguredDemonMoveStun(LivingEntity entity, AbstractDemonAttack<?, ?> attack) {
-        int windupTicks = getWindupFromAttack(attack);
-        if (windupTicks > 0) {
+        applyStun(entity, getWindupFromAttack(attack));
+    }
+
+    private static void applyStun(LivingEntity entity, int ticks) {
+        if (ticks > 0) {
             entity.addEffect(new MobEffectInstance(NichirinEffectRegistry.stunned(),
-                    windupTicks, 0, false, false, false));
+                    ticks, 0, false, false, false));
         }
     }
 
     private static int getWindupFromAttack(Object attack) {
+        return getIntFromAttack(attack, "getWindup");
+    }
+
+    private static int getIntFromAttack(Object attack, String methodName) {
         try {
-            return (int) attack.getClass().getMethod("getWindup").invoke(attack);
+            return (int) attack.getClass().getMethod(methodName).invoke(attack);
         } catch (Exception e) { return 0; }
     }
 
@@ -274,8 +272,7 @@ public class MoveExecutor {
     }
 
     private static int getCooldownForAttack(Object attack) {
-        try { return (int) attack.getClass().getMethod("getCooldown").invoke(attack); }
-        catch (Exception e) { return 0; }
+        return getIntFromAttack(attack, "getCooldown");
     }
 
     private static void sendCooldownToClient(ServerPlayer player, String displayName, int cooldown) {
@@ -344,10 +341,7 @@ public class MoveExecutor {
         var attacks = activeAttacks.remove(entity.getUUID());
         if (attacks != null) {
             for (Object attack : attacks) {
-                try {
-                    if (attack instanceof AbstractBreathingAttack<?, ?> b) { b.stop(); }
-                    else { try { attack.getClass().getMethod("stop").invoke(attack); } catch (Exception ignored) {} }
-                } catch (Exception ignored) {}
+                stopAttackObject(attack);
             }
         }
     }
@@ -393,21 +387,33 @@ public class MoveExecutor {
     public static boolean stopAttack(LivingEntity entity, Object attack) {
         var attacks = activeAttacks.get(entity.getUUID());
         if (attacks != null && attacks.contains(attack)) {
-            try {
-                if (attack instanceof AbstractBreathingAttack<?, ?> b) b.stop();
-                else { try { attack.getClass().getMethod("stop").invoke(attack); } catch (Exception ignored) {} }
+            if (stopAttackObject(attack)) {
                 attacks.remove(attack);
                 if (attacks.isEmpty()) activeAttacks.remove(entity.getUUID());
                 return true;
-            } catch (Exception e) {
-                attacks.remove(attack);
-                return false;
             }
+            attacks.remove(attack);
+            return false;
         }
         return false;
     }
 
     public static boolean stopAttack(Player player, Object attack) { return stopAttack((LivingEntity) player, attack); }
+
+    private static boolean stopAttackObject(Object attack) {
+        try {
+            if (attack instanceof AbstractBreathingAttack<?, ?> breathingAttack) {
+                breathingAttack.stop();
+            } else {
+                attack.getClass().getMethod("stop").invoke(attack);
+            }
+            return true;
+        } catch (NoSuchMethodException ignored) {
+            return true;
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
 
     public static int stopAttacksOfType(LivingEntity entity, Class<?> attackType) {
         var attacks = activeAttacks.get(entity.getUUID());

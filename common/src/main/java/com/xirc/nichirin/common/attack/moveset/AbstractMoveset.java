@@ -11,7 +11,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
@@ -35,39 +34,26 @@ import java.util.concurrent.TimeUnit;
  * Supports custom left-click attacks.
  */
 @Getter
-public abstract class  AbstractMoveset {
+public abstract class AbstractMoveset {
 
     private static final ResourceLocation SPEED_MODIFIER_ID =
             ResourceLocation.fromNamespaceAndPath("nichirin", "moveset_speed_modifier");
 
-    // Simple getters for AbstractMoveset fields (Lombok @Getter not working)
     private final String movesetId;
     private final String displayName;
     private final MovesetType movesetType;
-
-    // List of moves - flexible for any count
     protected final List<MoveConfiguration> moves = new ArrayList<>();
-
-    // Click moves
     protected final MoveConfiguration leftClickMove;
     protected final MoveConfiguration rightClickMove;
     protected final MoveConfiguration crouchRightClickMove;
-
-    // Static storage for captured configurations per moveset type
     private static final Map<String, MoveConfiguration> capturedLeftClickConfigs = new HashMap<>();
     private static final Map<String, MoveConfiguration> capturedRightClickConfigs = new HashMap<>();
     private static final Map<String, MoveConfiguration> capturedCrouchRightClickConfigs = new HashMap<>();
-
-    // Optional moveset-wide properties
     @Nullable
     protected final ResourceLocation idleAnimation;
-
-    // Modifiers
     protected final float speedMultiplier;
     protected final float fallDamageMultiplier;
     protected final float healthRegenMultiplier;
-
-    // Static tracking for followup queues per entity
     private static final ConcurrentHashMap<UUID, FollowupQueue> entityFollowupQueues = new ConcurrentHashMap<>();
 
     /**
@@ -139,10 +125,10 @@ public abstract class  AbstractMoveset {
 
             long duration;
             if (currentFollowupIndex == -1) {
-                duration = currentMove.getDurationOrDefault(0) * 50;
+                duration = currentMove.getDurationOrDefault(0) * 50L;
             } else {
                 FollowupConfiguration followup = currentMove.getFollowup(currentFollowupIndex);
-                duration = followup != null ? followup.getFollowupDurationOrDefault(0) * 50 : 0;
+                duration = followup != null ? followup.getFollowupDurationOrDefault(0) * 50L : 0;
             }
 
             return (currentTime - attackStartTime) < duration;
@@ -226,32 +212,10 @@ public abstract class  AbstractMoveset {
         if (leftClickMove != null && leftClickMove.startAction != null) {
             if (!hasResourcesForMove(entity, leftClickMove)) return true;
             if (shouldAutoStunClickMoves()) applyMoveStun(entity, leftClickMove);
-
-            // AUTOMATIC ANIMATION HANDLING - Player or NPC
-            if (leftClickMove.animationId != null) {
-                triggerAnimation(entity, leftClickMove.animationId.getPath());
-            }
-
-            // Executing a new move always breaks any pending followup chain from a different move.
-            resetFollowupQueueIfDifferent(entity, leftClickMove);
-
-            // Initialize followup queue
-            if (leftClickMove.hasFollowups()) {
-                FollowupQueue queue = new FollowupQueue();
-                queue.startAttack(leftClickMove);
-                entityFollowupQueues.put(entity.getUUID(), queue);
-
-                int duration = leftClickMove.getDurationOrDefault(0);
-                scheduleFollowupCheck(entity, duration);
-            }
-
-            // Execute the move action
-            leftClickMove.startAction.accept(entity);
-
+            executeMove(entity, leftClickMove);
             return true;
         }
-
-        return false; // No configured move, let subclass handle it
+        return false;
     }
 
     /**
@@ -259,7 +223,6 @@ public abstract class  AbstractMoveset {
      */
     public boolean handleRightClick(LivingEntity entity, boolean isCrouching) {
         if (entity.hasEffect(NichirinEffectRegistry.stunned())) {
-            // Check if we should queue a followup
             FollowupQueue queue = entityFollowupQueues.get(entity.getUUID());
             if (queue != null && queue.isAttackActive(System.currentTimeMillis()) && queue.canQueueNext()) {
                 queue.queueNext();
@@ -267,40 +230,17 @@ public abstract class  AbstractMoveset {
                 EntityResources.sendMessage(entity,
                         Component.literal("Followup queued!").withStyle(style -> style.withColor(0x55FF55)), true);
             }
-            return true; // Block the move by overriding
-        }
-
-        // NOT STUNNED - Try to execute configured move if available
-        MoveConfiguration config = isCrouching ? crouchRightClickMove : rightClickMove;
-
-        if (config != null && config.startAction != null) {
-            if (!hasResourcesForMove(entity, config)) return true;
-            if (shouldAutoStunClickMoves()) applyMoveStun(entity, config);
-
-            // AUTOMATIC ANIMATION HANDLING
-            if (config.animationId != null) {
-                triggerAnimation(entity, config.animationId.getPath());
-            }
-
-            // Executing a new move always breaks any pending followup chain from a different move.
-            resetFollowupQueueIfDifferent(entity, config);
-
-            // Initialize followup queue
-            if (config.hasFollowups()) {
-                FollowupQueue queue = new FollowupQueue();
-                queue.startAttack(config);
-                entityFollowupQueues.put(entity.getUUID(), queue);
-
-                int duration = config.getDurationOrDefault(0);
-                scheduleFollowupCheck(entity, duration);
-            }
-
-            // Execute the move action
-            config.startAction.accept(entity);
             return true;
         }
 
-        return false; // No configured move, let subclass handle it
+        MoveConfiguration config = isCrouching ? crouchRightClickMove : rightClickMove;
+        if (config != null && config.startAction != null) {
+            if (!hasResourcesForMove(entity, config)) return true;
+            if (shouldAutoStunClickMoves()) applyMoveStun(entity, config);
+            executeMove(entity, config);
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -312,7 +252,6 @@ public abstract class  AbstractMoveset {
             PlayerAnimationPacket packet = new PlayerAnimationPacket(serverPlayer.getId(), animationName);
             NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer, packet);
         } else if (entity instanceof MovesetCapableNPC npc) {
-            // NPC animation using Azure
             npc.triggerMovesetAnimation(animationName);
         }
     }
@@ -408,28 +347,29 @@ public abstract class  AbstractMoveset {
         MoveConfiguration config = getMove(moveIndex);
         if (config != null) {
             if (!hasResourcesForMove(entity, config)) return;
-            // AUTOMATIC ANIMATION HANDLING
-            if (config.animationId != null) {
-                triggerAnimation(entity, config.animationId.getPath());
-            }
-
-            // Executing a new move always breaks any pending followup chain from a different move.
-            resetFollowupQueueIfDifferent(entity, config);
-
-            // Initialize followup queue
-            if (config.hasFollowups()) {
-                FollowupQueue queue = new FollowupQueue();
-                queue.startAttack(config);
-                entityFollowupQueues.put(entity.getUUID(), queue);
-
-                int duration = config.getDurationOrDefault(0);
-                scheduleFollowupCheck(entity, duration);
-            }
-
-            if (config.startAction != null) {
-                config.startAction.accept(entity);
-            }
+            executeMove(entity, config);
         }
+    }
+
+    private void executeMove(LivingEntity entity, MoveConfiguration config) {
+        if (config.animationId != null) {
+            triggerAnimation(entity, config.animationId.getPath());
+        }
+        resetFollowupQueueIfDifferent(entity, config);
+        startFollowupQueue(entity, config);
+        if (config.startAction != null) {
+            config.startAction.accept(entity);
+        }
+    }
+
+    private void startFollowupQueue(LivingEntity entity, MoveConfiguration config) {
+        if (!config.hasFollowups()) {
+            return;
+        }
+        FollowupQueue queue = new FollowupQueue();
+        queue.startAttack(config);
+        entityFollowupQueues.put(entity.getUUID(), queue);
+        scheduleFollowupCheck(entity, config.getDurationOrDefault(0));
     }
 
     /**
@@ -483,7 +423,6 @@ public abstract class  AbstractMoveset {
     private void executeFollowup(LivingEntity entity, FollowupConfiguration followup, FollowupQueue queue) {
         queue.startFollowup(queue.getNextFollowupIndex());
 
-        // AUTOMATIC ANIMATION HANDLING FOR FOLLOWUPS
         if (followup.followupAnimationId != null) {
             triggerAnimation(entity, followup.followupAnimationId.getPath());
         }
@@ -518,9 +457,6 @@ public abstract class  AbstractMoveset {
         entityFollowupQueues.clear();
     }
 
-    /**
-     * Apply stun effect for a move configuration
-     */
     /**
      * Whether the default {@link #handleLeftClick}/{@link #handleRightClick} should auto-apply
      * the STUNNED effect for the move's windup+duration before running its action.
@@ -757,36 +693,7 @@ public abstract class  AbstractMoveset {
             this.followups = builder.followups != null ? new ArrayList<>(builder.followups) : new ArrayList<>();
         }
 
-        // Simple getters for all fields
-        public String getMoveId() { return moveId; }
-        public String getDisplayName() { return displayName; }
-        public String getDescription() { return description; }
-        public Consumer<LivingEntity> getStartAction() { return startAction; }
-        public ResourceLocation getAnimationId() { return animationId; }
-        public int getAnimationPriority() { return animationPriority; }
-
-        public Float getDamage() { return damage; }
-        public Float getRange() { return range; }
-        public Float getKnockback() { return knockback; }
-        public Integer getHitStun() { return hitStun; }
-        public Integer getArmor() { return armor; }
         public boolean hasHyperArmor() { return hyperArmor; }
-        public Float getHitboxSize() { return hitboxSize; }
-
-        public Integer getCooldown() { return cooldown; }
-        public Integer getWindup() { return windup; }
-        public Integer getDuration() { return duration; }
-        public Integer getActiveFrames() { return activeFrames; }
-        public Integer getRecovery() { return recovery; }
-
-        public Float getBreathCost() { return breathCost; }
-        public Float getStaminaCost() { return staminaCost; }
-
-        public Float getTeleportDistance() { return teleportDistance; }
-        public Float getDashSpeed() { return dashSpeed; }
-        public Integer getTeleportWindup() { return teleportWindup; }
-
-        public List<FollowupConfiguration> getFollowups() { return followups; }
 
         // Convenience methods
         public boolean hasDamage() { return damage != null; }
@@ -920,7 +827,7 @@ public abstract class  AbstractMoveset {
     }
 
     /**
-     * Builder for followup configurations - NOW uses Consumer<LivingEntity>
+     * Builder for followup configurations
      */
     public static class FollowupBuilder {
         private final String followupMoveId;
@@ -1016,7 +923,7 @@ public abstract class  AbstractMoveset {
     }
 
     /**
-     * Builder for individual moves - NOW uses Consumer<LivingEntity>
+     * Builder for individual moves
      */
     public static class MoveBuilder {
         private final String moveId;
@@ -1284,56 +1191,4 @@ public abstract class  AbstractMoveset {
         }
     }
 
-    // These provide Player-specific convenience methods that delegate to LivingEntity versions
-
-    /**
-     * Performs a move by index - PLAYER VERSION (wrapper)
-     */
-    public void performMove(Player player, int moveIndex) {
-        performMove((LivingEntity) player, moveIndex);
-    }
-
-    /**
-     * Override the left-click (M1) behavior - PLAYER VERSION (wrapper)
-     */
-    public boolean handleLeftClick(Player player) {
-        return handleLeftClick((LivingEntity) player);
-    }
-
-    /**
-     * Override the right-click (M2) behavior - PLAYER VERSION (wrapper)
-     */
-    public boolean handleRightClick(Player player, boolean isCrouching) {
-        return handleRightClick((LivingEntity) player, isCrouching);
-    }
-
-    /**
-     * Check if the player can perform moves - PLAYER VERSION (wrapper)
-     */
-    public boolean canPerformMoves(Player player) {
-        return canPerformMoves((LivingEntity) player);
-    }
-
-    /**
-     * Check if player has enough resources for a move - PLAYER VERSION (wrapper)
-     */
-    public boolean hasResourcesForMove(Player player, MoveConfiguration config) {
-        return hasResourcesForMove((LivingEntity) player, config);
-    }
-
-    /**
-     * Consume resources for a move - PLAYER VERSION (wrapper)
-     */
-    public boolean consumeResourcesForMove(Player player, MoveConfiguration config) {
-        return consumeResourcesForMove((LivingEntity) player, config);
-    }
-
-    /**
-     * Called after a move is performed - PLAYER VERSION
-     * Default implementation does nothing - override in subclasses like FlameBreathingMoveset
-     */
-    public void onMovePerformed(Player player, int moveIndex, boolean isCrouching) {
-        // Default: do nothing
-        // Subclasses can override for player-specific post-move effects
-    }
 }

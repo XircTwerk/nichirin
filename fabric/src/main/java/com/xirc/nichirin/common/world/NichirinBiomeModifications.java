@@ -17,9 +17,7 @@ public class NichirinBiomeModifications {
                 BiomeSelectors.tag(BiomeTags.IS_OVERWORLD),
                 MobCategory.MONSTER,
                 NichirinEntityRegistry.TEMPLE_DEMON.get(),
-                8,  // weight (zombie is 100 for reference — 8 is rare)
-                1,  // min group size
-                2   // max group size
+                8, 1, 2
         );
     }
 
