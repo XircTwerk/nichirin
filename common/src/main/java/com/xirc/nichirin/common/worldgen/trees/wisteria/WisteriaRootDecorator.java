@@ -1,21 +1,22 @@
 package com.xirc.nichirin.common.worldgen.trees.wisteria;
 
-import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.xirc.nichirin.registry.NichirinBlockRegistry;
 import com.xirc.nichirin.registry.NichirinTreeDecoratorTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Direction.Plane;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.feature.treedecorators.TreeDecorator;
 import net.minecraft.world.level.levelgen.feature.treedecorators.TreeDecoratorType;
-import net.minecraft.world.level.block.state.BlockState;
 
 public class WisteriaRootDecorator extends TreeDecorator {
     public static final MapCodec<WisteriaRootDecorator> CODEC = RecordCodecBuilder.mapCodec((instance) ->
             instance.group(Codec.floatRange(0.0F, 1.0F).fieldOf("probability").forGetter(decorator -> decorator.probability))
                     .apply(instance, WisteriaRootDecorator::new));
-
     private final float probability;
 
     public WisteriaRootDecorator(float probability) {
@@ -29,97 +30,46 @@ public class WisteriaRootDecorator extends TreeDecorator {
 
     @Override
     public void place(Context context) {
-        if (context.random().nextFloat() >= this.probability) {
+        if (context.random().nextFloat() >= this.probability || context.roots().isEmpty()) {
             return;
         }
-
-        if (context.roots().isEmpty()) return;
         BlockPos trunkBase = context.roots().get(0);
-
-        BlockState logState =
-                NichirinBlockRegistry.WISTERIA_LOG.get().defaultBlockState();
-
-        // Determine trunk type (check if there's a 2x2 base)
-        boolean isThickTrunk = context.isAir(trunkBase.offset(1, 0, 0).above()) == false &&
-                context.isAir(trunkBase.offset(0, 0, 1).above()) == false &&
-                context.isAir(trunkBase.offset(1, 0, 1).above()) == false;
-
-        // Create 4-6 roots that ALWAYS connect to the trunk base
-        int rootCount = 4 + context.random().nextInt(3); // 4-6 roots
-
+        BlockState logState = NichirinBlockRegistry.WISTERIA_LOG.get().defaultBlockState();
+        int rootCount = 5 + context.random().nextInt(4);
+        int offset = context.random().nextInt(4);
         for (int i = 0; i < rootCount; i++) {
-            Direction direction = Direction.from2DDataValue(i % 4);
-
-            // Find connection point on trunk base
-            BlockPos connectionPoint;
-            if (isThickTrunk) {
-                // Connect to appropriate edge of 2x2 base
-                switch (direction) {
-                    case NORTH -> connectionPoint = trunkBase.offset(0, 0, 0);
-                    case EAST -> connectionPoint = trunkBase.offset(1, 0, 0);
-                    case SOUTH -> connectionPoint = trunkBase.offset(1, 0, 1);
-                    case WEST -> connectionPoint = trunkBase.offset(0, 0, 1);
-                    default -> connectionPoint = trunkBase;
-                }
-            } else {
-                connectionPoint = trunkBase;
+            Direction direction = Direction.from2DDataValue((offset + i) % 4);
+            placeRoot(context, logState, trunkBase, direction, 3 + context.random().nextInt(5));
+            if (context.random().nextBoolean()) {
+                Direction side = context.random().nextBoolean() ? direction.getClockWise() : direction.getCounterClockWise();
+                placeRoot(context, logState, trunkBase.relative(direction), side, 1 + context.random().nextInt(3));
             }
+        }
+    }
 
-            // Create root extending from connection point
-            int rootLength = 3 + context.random().nextInt(5); // 3-7 blocks
-            BlockPos rootPos = connectionPoint;
-
-            // Place connecting root segment first (on surface next to trunk)
-            BlockPos firstRootPos = connectionPoint.relative(direction);
-            if (context.isAir(firstRootPos) && !context.isAir(firstRootPos.below())) {
-                context.setBlock(firstRootPos, logState);
-                rootPos = firstRootPos;
-
-                // Add thickness to connection area
-                if (context.random().nextBoolean()) {
-                    BlockPos thickPos = firstRootPos.above();
-                    if (context.isAir(thickPos)) {
-                        context.setBlock(thickPos, logState);
-                    }
-                }
+    private void placeRoot(Context context, BlockState logState, BlockPos start, Direction direction, int length) {
+        BlockPos pos = start;
+        RandomSource random = context.random();
+        for (int step = 1; step <= length; step++) {
+            pos = pos.relative(direction);
+            if (!canPlaceRoot(context, pos)) {
+                break;
             }
-
-            // Continue root outward, ensuring connection
-            for (int j = 1; j < rootLength; j++) {
-                BlockPos nextPos = rootPos.relative(direction);
-
-                if (context.isAir(nextPos) && !context.isAir(nextPos.below())) {
-                    context.setBlock(nextPos, logState);
-                    rootPos = nextPos;
-
-                    // Add thickness near base
-                    if (j < 3 && context.random().nextBoolean()) {
-                        Direction perpDir = context.random().nextBoolean() ? direction.getClockWise() : direction.getCounterClockWise();
-                        BlockPos widePos = nextPos.relative(perpDir);
-                        if (context.isAir(widePos) && !context.isAir(widePos.below())) {
-                            context.setBlock(widePos, logState);
-                        }
-                    }
-
-                    // Create connected branches
-                    if (j >= 2 && context.random().nextBoolean()) {
-                        Direction branchDir = context.random().nextBoolean() ? direction.getClockWise() : direction.getCounterClockWise();
-                        int branchLength = 1 + context.random().nextInt(3); // 1-3 blocks
-
-                        BlockPos branchPos = rootPos;
-                        for (int k = 1; k <= branchLength; k++) {
-                            branchPos = branchPos.relative(branchDir);
-                            if (context.isAir(branchPos) && !context.isAir(branchPos.below())) {
-                                context.setBlock(branchPos, logState);
-                            } else {
-                                break; // Stop if blocked
-                            }
-                        }
-                    }
-                } else {
-                    break; // Stop if can't place
+            context.setBlock(pos, logState);
+            if (step <= 2 && context.isAir(pos.above())) {
+                context.setBlock(pos.above(), logState);
+            }
+            if (step > 2 && random.nextInt(3) == 0) {
+                Direction side = Plane.HORIZONTAL.getRandomDirection(random);
+                BlockPos sidePos = pos.relative(side);
+                if (canPlaceRoot(context, sidePos)) {
+                    context.setBlock(sidePos, logState);
                 }
             }
         }
+    }
+
+    private boolean canPlaceRoot(Context context, BlockPos pos) {
+        return context.isAir(pos) && !context.isAir(pos.below());
     }
 }

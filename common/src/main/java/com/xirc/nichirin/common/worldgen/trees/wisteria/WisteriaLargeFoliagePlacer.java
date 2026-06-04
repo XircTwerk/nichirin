@@ -25,43 +25,33 @@ public class WisteriaLargeFoliagePlacer extends FoliagePlacer {
     }
 
     @Override
-    protected void createFoliage(LevelSimulatedReader level, FoliageSetter foliageSetter, RandomSource random,
-                                 TreeConfiguration config, int maxFreeTreeHeight, FoliageAttachment attachment,
-                                 int foliageHeight, int foliageRadius, int offset) {
+    protected void createFoliage(LevelSimulatedReader level, FoliageSetter foliageSetter, RandomSource random, TreeConfiguration config, int maxFreeTreeHeight, FoliageAttachment attachment, int foliageHeight, int foliageRadius, int offset) {
         BlockPos center = attachment.pos();
+        int stretchX = random.nextBoolean() ? 2 : 0;
+        int stretchZ = stretchX == 0 ? 2 : 0;
+        placeLayer(level, foliageSetter, random, config, center.below(2), foliageRadius, foliageRadius, 0.36F, true);
+        placeLayer(level, foliageSetter, random, config, center.below(), foliageRadius + 1 + stretchX, foliageRadius + stretchZ, 0.56F, true);
+        placeLayer(level, foliageSetter, random, config, center, foliageRadius + 2 + stretchX, foliageRadius + 1 + stretchZ, 0.64F, false);
+        placeLayer(level, foliageSetter, random, config, center.above(), foliageRadius + 1, foliageRadius, 0.48F, false);
+        placeLayer(level, foliageSetter, random, config, center.above(2), foliageRadius - 1, foliageRadius - 1, 0.3F, false);
+    }
 
-        // REDUCED: Create sparser, more natural canopy
-        for (int y = -1; y <= 2; y++) { // REDUCED: Height from 3 to 2
-            int radius = switch(y) {
-                case -1 -> 1;
-                case 0 -> 2;    // REDUCED: from 3 to 2
-                case 1 -> 3;    // REDUCED: from 4 to 3
-                case 2 -> 2;    // REDUCED: from 4 to 2
-                default -> 1;
-            };
-
-            // Create irregular, naturalistic shape with more gaps
-            for (int x = -radius; x <= radius; x++) {
-                for (int z = -radius; z <= radius; z++) {
-                    double distance = Math.sqrt(x * x + z * z);
-
-                    // REDUCED: More sparse with irregular edges and more randomness
-                    boolean shouldPlace = false;
-                    if (distance <= radius - 1) {
-                        shouldPlace = true; // Always place in core
-                    } else if (distance <= radius) {
-                        shouldPlace = random.nextInt(4) != 0; // 75% chance at edge
-                    }
-
-                    // Add more randomness to create natural gaps
-                    if (shouldPlace && distance > 0.5 && random.nextInt(5) == 0) {
-                        shouldPlace = false; // 20% chance to skip any leaf for natural gaps
-                    }
-
-                    if (shouldPlace) {
-                        BlockPos leafPos = center.offset(x, y, z);
-                        foliageSetter.set(leafPos, config.foliageProvider.getState(random, leafPos));
-                    }
+    private void placeLayer(LevelSimulatedReader level, FoliageSetter foliageSetter, RandomSource random, TreeConfiguration config, BlockPos center, int radiusX, int radiusZ, float fill, boolean underside) {
+        for (int x = -radiusX; x <= radiusX; x++) {
+            for (int z = -radiusZ; z <= radiusZ; z++) {
+                double shape = (x * x) / (double) (radiusX * radiusX) + (z * z) / (double) (radiusZ * radiusZ);
+                if (shape > 1.0D || random.nextFloat() > fill) {
+                    continue;
+                }
+                if (shape > 0.55D && random.nextInt(2) == 0) {
+                    continue;
+                }
+                if (underside && shape < 0.35D && random.nextInt(2) == 0) {
+                    continue;
+                }
+                BlockPos leafPos = center.offset(x, 0, z);
+                if (level.isStateAtPosition(leafPos, state -> state.canBeReplaced())) {
+                    foliageSetter.set(leafPos, config.foliageProvider.getState(random, leafPos));
                 }
             }
         }
@@ -69,7 +59,7 @@ public class WisteriaLargeFoliagePlacer extends FoliagePlacer {
 
     @Override
     public int foliageHeight(RandomSource random, int height, TreeConfiguration config) {
-        return 4; // REDUCED: from 5 to 4
+        return 5;
     }
 
     @Override

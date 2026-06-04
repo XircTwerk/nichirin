@@ -4,12 +4,12 @@
     "decorators": [
       {
         "type": "nichirin:wisteria_root_decorator",
-        "probability": 0.6
+        "probability": 0.75
       },
       {
         "type": "nichirin:wisteria_hanging_leaves_decorator",
         "min_length": 4,
-        "max_length": 8
+        "max_length": 10
       }
     ],
     "dirt_provider": {
@@ -33,19 +33,19 @@
     "ignore_vines": true,
     "minimum_size": {
       "type": "minecraft:two_layers_feature_size",
-      "limit": 2,
+      "limit": 3,
       "lower_size": 0,
-      "upper_size": 2
+      "upper_size": 3
     },
     "trunk_placer": {
       "type": "nichirin:wisteria_trunk_placer",
-      "base_height": 4,
+      "base_height": 7,
       "height_rand_a": 3,
       "height_rand_b": 2,
       "branch_count": {
         "type": "minecraft:uniform",
-        "min_inclusive": 2,
-        "max_inclusive": 4
+        "min_inclusive": 4,
+        "max_inclusive": 6
       }
     },
     "trunk_provider": {

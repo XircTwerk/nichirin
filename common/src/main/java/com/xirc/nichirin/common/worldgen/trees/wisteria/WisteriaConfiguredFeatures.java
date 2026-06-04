@@ -25,39 +25,39 @@ public class WisteriaConfiguredFeatures {
     private static TreeConfiguration.TreeConfigurationBuilder createSmallWisteria() {
         return new TreeConfiguration.TreeConfigurationBuilder(
                 BlockStateProvider.simple(NichirinBlockRegistry.WISTERIA_LOG.get()),
-                new WisteriaTrunkPlacer(3, 2, 1, UniformInt.of(1, 3)), // Short, can branch early
+                new WisteriaTrunkPlacer(5, 2, 1, UniformInt.of(2, 4)),
                 BlockStateProvider.simple(NichirinBlockRegistry.WISTERIA_LEAVES.get()),
                 new WisteriaSmallFoliagePlacer(ConstantInt.of(2), ConstantInt.of(0)),
-                new TwoLayersFeatureSize(1, 0, 1)
+                new TwoLayersFeatureSize(2, 0, 2)
         ).decorators(List.of(
-                new WisteriaRootDecorator(0.3f), // 30% chance for surface roots
-                new WisteriaHangingLeavesDecorator(2, 5) // Short hanging clusters
+                new WisteriaRootDecorator(0.45f),
+                new WisteriaHangingLeavesDecorator(2, 6)
         ));
     }
 
     private static TreeConfiguration.TreeConfigurationBuilder createMediumWisteria() {
         return new TreeConfiguration.TreeConfigurationBuilder(
                 BlockStateProvider.simple(NichirinBlockRegistry.WISTERIA_LOG.get()),
-                new WisteriaTrunkPlacer(4, 3, 2, UniformInt.of(2, 4)), // Medium height, more branches
+                new WisteriaTrunkPlacer(7, 3, 2, UniformInt.of(4, 6)),
                 BlockStateProvider.simple(NichirinBlockRegistry.WISTERIA_LEAVES.get()),
                 new WisteriaMediumFoliagePlacer(ConstantInt.of(3), ConstantInt.of(1)),
-                new TwoLayersFeatureSize(2, 0, 2)
+                new TwoLayersFeatureSize(3, 0, 3)
         ).decorators(List.of(
-                new WisteriaRootDecorator(0.6f), // 60% chance for surface roots
-                new WisteriaHangingLeavesDecorator(4, 8) // Medium hanging clusters
+                new WisteriaRootDecorator(0.75f),
+                new WisteriaHangingLeavesDecorator(4, 10)
         ));
     }
 
     private static TreeConfiguration.TreeConfigurationBuilder createLargeWisteria() {
         return new TreeConfiguration.TreeConfigurationBuilder(
                 BlockStateProvider.simple(NichirinBlockRegistry.WISTERIA_LOG.get()),
-                new WisteriaTrunkPlacer(6, 4, 3, UniformInt.of(3, 6)), // THIS is what creates branches
+                new WisteriaTrunkPlacer(10, 3, 2, UniformInt.of(6, 9)),
                 BlockStateProvider.simple(NichirinBlockRegistry.WISTERIA_LEAVES.get()),
                 new WisteriaLargeFoliagePlacer(ConstantInt.of(4), ConstantInt.of(2)),
-                new TwoLayersFeatureSize(3, 0, 3)
-        ).decorators(List.of(  // THIS adds the roots
-                new WisteriaRootDecorator(0.8f),
-                new WisteriaHangingLeavesDecorator(6, 12)
+                new TwoLayersFeatureSize(4, 0, 4)
+        ).decorators(List.of(
+                new WisteriaRootDecorator(0.9f),
+                new WisteriaHangingLeavesDecorator(6, 14)
         ));
     }
 

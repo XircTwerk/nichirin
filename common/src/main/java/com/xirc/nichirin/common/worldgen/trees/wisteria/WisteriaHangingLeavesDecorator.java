@@ -1,18 +1,21 @@
 package com.xirc.nichirin.common.worldgen.trees.wisteria;
 
-import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.xirc.nichirin.registry.NichirinBlockRegistry;
 import com.xirc.nichirin.registry.NichirinTreeDecoratorTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Direction.Plane;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.LeavesBlock;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.feature.treedecorators.TreeDecorator;
 import net.minecraft.world.level.levelgen.feature.treedecorators.TreeDecoratorType;
-import net.minecraft.core.Direction.Plane;
-import net.minecraft.world.level.block.state.BlockState;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class WisteriaHangingLeavesDecorator extends TreeDecorator {
     public static final MapCodec<WisteriaHangingLeavesDecorator> CODEC = RecordCodecBuilder.mapCodec((instance) ->
@@ -20,7 +23,6 @@ public class WisteriaHangingLeavesDecorator extends TreeDecorator {
                     Codec.intRange(1, 8).fieldOf("min_length").forGetter(decorator -> decorator.minLength),
                     Codec.intRange(2, 20).fieldOf("max_length").forGetter(decorator -> decorator.maxLength)
             ).apply(instance, WisteriaHangingLeavesDecorator::new));
-
     private final int minLength;
     private final int maxLength;
 
@@ -36,69 +38,80 @@ public class WisteriaHangingLeavesDecorator extends TreeDecorator {
 
     @Override
     public void place(Context context) {
-        // Use the wisteria leaves block with persistent property
-        BlockState leafState =
-                NichirinBlockRegistry.WISTERIA_LEAVES.get()
-                        .defaultBlockState()
-                        .setValue(LeavesBlock.PERSISTENT, true); // Make hanging leaves persistent
-
-        int clustersPlaced = 0;
-
-        // REDUCED: Only create hanging clusters from some leaf positions
+        BlockState leafState = NichirinBlockRegistry.WISTERIA_LEAVES.get().defaultBlockState().setValue(LeavesBlock.PERSISTENT, true);
+        Set<BlockPos> leaves = new HashSet<>(context.leaves());
+        int maxClusters = Math.max(6, leaves.size() / 8);
+        int clusters = 0;
         for (BlockPos leafPos : context.leaves()) {
-            if (context.random().nextInt(5) == 0) { // REDUCED: 20% chance instead of 50%
-                int hangLength = minLength + context.random().nextInt(maxLength - minLength + 1);
+            if (clusters >= maxClusters) {
+                break;
+            }
+            if (!isGoodAnchor(context, leaves, leafPos)) {
+                continue;
+            }
+            RandomSource random = context.random();
+            if (random.nextInt(isOuterEdge(leaves, leafPos) ? 3 : 6) != 0) {
+                continue;
+            }
+            int length = minLength + random.nextInt(maxLength - minLength + 1);
+            if (!isOuterEdge(leaves, leafPos)) {
+                length = Math.max(minLength, length - 2);
+            }
+            if (placeCurtain(context, leafState, leafPos, length)) {
+                clusters++;
+            }
+        }
+    }
 
-                // Create main hanging vine
-                boolean clusterPlaced = false;
-                for (int i = 1; i <= hangLength; i++) {
-                    BlockPos hangPos = leafPos.below(i);
+    private boolean isGoodAnchor(Context context, Set<BlockPos> leaves, BlockPos leafPos) {
+        if (!context.isAir(leafPos.below())) {
+            return false;
+        }
+        return isOuterEdge(leaves, leafPos) || !leaves.contains(leafPos.below(2));
+    }
 
-                    if (context.isAir(hangPos)) {
-                        context.setBlock(hangPos, leafState);
-                        clusterPlaced = true;
+    private boolean isOuterEdge(Set<BlockPos> leaves, BlockPos leafPos) {
+        int openSides = 0;
+        for (Direction direction : Plane.HORIZONTAL) {
+            if (!leaves.contains(leafPos.relative(direction))) {
+                openSides++;
+            }
+        }
+        return openSides >= 2;
+    }
 
-                        // REDUCED: Add width to create cluster effect less frequently
-                        if (i > 3 && context.random().nextInt(3) == 0) { // Only every 3rd level and 33% chance
-                            for (int x = -1; x <= 1; x++) {
-                                for (int z = -1; z <= 1; z++) {
-                                    if (x == 0 && z == 0) continue;
-                                    if (context.random().nextInt(6) == 0) { // REDUCED: 17% chance instead of 33%
-                                        BlockPos sidePos = hangPos.offset(x, 0, z);
-                                        if (context.isAir(sidePos)) {
-                                            context.setBlock(sidePos, leafState);
-                                        }
-                                    }
-                                }
-                            }
-                        }
+    private boolean placeCurtain(Context context, BlockState leafState, BlockPos anchor, int length) {
+        boolean placed = false;
+        RandomSource random = context.random();
+        Direction lean = Plane.HORIZONTAL.getRandomDirection(random);
+        for (int i = 1; i <= length; i++) {
+            BlockPos hangPos = anchor.below(i);
+            if (i > 3 && random.nextInt(4) == 0) {
+                hangPos = hangPos.relative(lean);
+            }
+            if (!context.isAir(hangPos)) {
+                break;
+            }
+            context.setBlock(hangPos, leafState);
+            placed = true;
+            if (i >= 3 && random.nextInt(4) == 0) {
+                placeSidePetals(context, leafState, hangPos, i);
+            }
+            if (i > minLength && random.nextInt(maxLength + 2) < i) {
+                break;
+            }
+        }
+        return placed;
+    }
 
-                        // REDUCED: Create fewer secondary hanging strands
-                        if (i > 4 && context.random().nextInt(6) == 0) { // REDUCED: 17% chance instead of 25%
-                            Direction randomDir = Plane.HORIZONTAL.getRandomDirection(context.random());
-                            int secondaryLength = 1 + context.random().nextInt(2); // Shorter secondary strands
-                            for (int j = 1; j <= secondaryLength; j++) {
-                                BlockPos secondaryPos = hangPos.relative(randomDir, j);
-                                if (context.isAir(secondaryPos)) {
-                                    context.setBlock(secondaryPos, leafState);
-                                } else {
-                                    break;
-                                }
-                            }
-                        }
-                    } else {
-                        break; // Stop if we hit something
-                    }
-
-                    // Increasing chance to break as the vine gets longer
-                    if (context.random().nextInt(12) < i) { // Slightly more likely to break early
-                        break;
-                    }
-                }
-
-                if (clusterPlaced) {
-                    clustersPlaced++;
-                }
+    private void placeSidePetals(Context context, BlockState leafState, BlockPos hangPos, int depth) {
+        RandomSource random = context.random();
+        int attempts = depth > 4 ? 2 : 1;
+        for (int i = 0; i < attempts; i++) {
+            Direction direction = Plane.HORIZONTAL.getRandomDirection(random);
+            BlockPos sidePos = hangPos.relative(direction);
+            if (context.isAir(sidePos)) {
+                context.setBlock(sidePos, leafState);
             }
         }
     }

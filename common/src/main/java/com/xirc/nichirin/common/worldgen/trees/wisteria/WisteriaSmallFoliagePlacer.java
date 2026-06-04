@@ -25,23 +25,26 @@ public class WisteriaSmallFoliagePlacer extends FoliagePlacer {
     }
 
     @Override
-    protected void createFoliage(LevelSimulatedReader level, FoliageSetter foliageSetter, RandomSource random,
-                                 TreeConfiguration config, int maxFreeTreeHeight, FoliageAttachment attachment,
-                                 int foliageHeight, int foliageRadius, int offset) {
+    protected void createFoliage(LevelSimulatedReader level, FoliageSetter foliageSetter, RandomSource random, TreeConfiguration config, int maxFreeTreeHeight, FoliageAttachment attachment, int foliageHeight, int foliageRadius, int offset) {
         BlockPos center = attachment.pos();
+        placeLayer(level, foliageSetter, random, config, center.below(), foliageRadius + 1, foliageRadius, 0.62F, 3);
+        placeLayer(level, foliageSetter, random, config, center, foliageRadius + 1, foliageRadius + 1, 0.72F, 4);
+        placeLayer(level, foliageSetter, random, config, center.above(), foliageRadius, foliageRadius, 0.52F, 3);
+    }
 
-        // Create small bushy canopy
-        for (int y = 0; y <= 1; y++) { // REDUCED: from 2 to 1
-            int radius = y == 0 ? 2 : 1; // Simple pattern
-
-            for (int x = -radius; x <= radius; x++) {
-                for (int z = -radius; z <= radius; z++) {
-                    double distance = Math.sqrt(x * x + z * z);
-
-                    if (distance <= radius && random.nextInt(4) != 0) { // 75% chance
-                        BlockPos leafPos = center.offset(x, y, z);
-                        foliageSetter.set(leafPos, config.foliageProvider.getState(random, leafPos));
-                    }
+    private void placeLayer(LevelSimulatedReader level, FoliageSetter foliageSetter, RandomSource random, TreeConfiguration config, BlockPos center, int radiusX, int radiusZ, float fill, int edgeSkip) {
+        for (int x = -radiusX; x <= radiusX; x++) {
+            for (int z = -radiusZ; z <= radiusZ; z++) {
+                double shape = (x * x) / (double) (radiusX * radiusX) + (z * z) / (double) (radiusZ * radiusZ);
+                if (shape > 1.0D || random.nextFloat() > fill) {
+                    continue;
+                }
+                if (shape > 0.72D && random.nextInt(edgeSkip) == 0) {
+                    continue;
+                }
+                BlockPos leafPos = center.offset(x, 0, z);
+                if (level.isStateAtPosition(leafPos, state -> state.canBeReplaced())) {
+                    foliageSetter.set(leafPos, config.foliageProvider.getState(random, leafPos));
                 }
             }
         }
@@ -49,7 +52,7 @@ public class WisteriaSmallFoliagePlacer extends FoliagePlacer {
 
     @Override
     public int foliageHeight(RandomSource random, int height, TreeConfiguration config) {
-        return 2;
+        return 3;
     }
 
     @Override
