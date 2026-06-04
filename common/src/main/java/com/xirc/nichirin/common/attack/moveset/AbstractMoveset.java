@@ -706,6 +706,8 @@ public abstract class  AbstractMoveset {
         public final Float range;
         public final Float knockback;
         public final Integer hitStun;
+        public final Integer armor;
+        public final boolean hyperArmor;
         public final Float hitboxSize;
 
         public final Integer cooldown;
@@ -735,6 +737,8 @@ public abstract class  AbstractMoveset {
             this.range = builder.range;
             this.knockback = builder.knockback;
             this.hitStun = builder.hitStun;
+            this.armor = builder.armor;
+            this.hyperArmor = builder.hyperArmor;
             this.hitboxSize = builder.hitboxSize;
 
             this.cooldown = builder.cooldown;
@@ -765,6 +769,8 @@ public abstract class  AbstractMoveset {
         public Float getRange() { return range; }
         public Float getKnockback() { return knockback; }
         public Integer getHitStun() { return hitStun; }
+        public Integer getArmor() { return armor; }
+        public boolean hasHyperArmor() { return hyperArmor; }
         public Float getHitboxSize() { return hitboxSize; }
 
         public Integer getCooldown() { return cooldown; }
@@ -787,6 +793,7 @@ public abstract class  AbstractMoveset {
         public boolean hasRange() { return range != null; }
         public boolean hasKnockback() { return knockback != null; }
         public boolean hasHitStun() { return hitStun != null; }
+        public boolean hasArmor() { return armor != null; }
         public boolean hasHitboxSize() { return hitboxSize != null; }
         public boolean hasCooldown() { return cooldown != null; }
         public boolean hasWindup() { return windup != null; }
@@ -804,6 +811,7 @@ public abstract class  AbstractMoveset {
         public float getRangeOrDefault(float defaultValue) { return range != null ? range : defaultValue; }
         public float getKnockbackOrDefault(float defaultValue) { return knockback != null ? knockback : defaultValue; }
         public int getHitStunOrDefault(int defaultValue) { return hitStun != null ? hitStun : defaultValue; }
+        public int getArmorOrDefault(int defaultValue) { return armor != null ? armor : defaultValue; }
         public float getHitboxSizeOrDefault(float defaultValue) { return hitboxSize != null ? hitboxSize : defaultValue; }
         public int getCooldownOrDefault(int defaultValue) { return cooldown != null ? cooldown : defaultValue; }
         public int getWindupOrDefault(int defaultValue) { return windup != null ? windup : defaultValue; }
@@ -1023,6 +1031,8 @@ public abstract class  AbstractMoveset {
         private Float range;
         private Float knockback;
         private Integer hitStun;
+        private Integer armor;
+        private boolean hyperArmor;
         private Float hitboxSize;
 
         private Integer cooldown;
@@ -1078,6 +1088,25 @@ public abstract class  AbstractMoveset {
 
         public MoveBuilder withHitStun(int hitStun) {
             this.hitStun = hitStun;
+            return this;
+        }
+
+        public MoveBuilder withArmor(int armor) {
+            if (hyperArmor) {
+                throw new IllegalStateException("Move " + moveId + " cannot use both armor and hyper armor");
+            }
+            if (armor < 1) {
+                throw new IllegalArgumentException("Move " + moveId + " armor must be at least 1 hit");
+            }
+            this.armor = armor;
+            return this;
+        }
+
+        public MoveBuilder withHyperArmor() {
+            if (armor != null) {
+                throw new IllegalStateException("Move " + moveId + " cannot use both armor and hyper armor");
+            }
+            this.hyperArmor = true;
             return this;
         }
 
@@ -1168,6 +1197,9 @@ public abstract class  AbstractMoveset {
         }
 
         public MoveConfiguration build() {
+            if (armor != null && hyperArmor) {
+                throw new IllegalStateException("Move " + moveId + " cannot use both armor and hyper armor");
+            }
             return new MoveConfiguration(this);
         }
     }

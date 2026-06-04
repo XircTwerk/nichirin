@@ -137,7 +137,6 @@ public class BreathOfNichirinEventHandler {
         if (server != null) {
             BloodMoonManager.onServerTick(server);
             MoveExecutor.tickAllAttacks(server);
-            AbstractDemonAttack.tickAllActiveAttacks(server);
             // Tempo Breaker's delayed-explosion timer lives outside any single attack instance —
             // tick it here so explosions still fire after the attack itself has finished.
             TempoBreakerAttack.processPendingExplosionsGlobal(server);

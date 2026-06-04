@@ -331,6 +331,12 @@ public class MoveExecutor {
     }
 
     private static void trackAttack(LivingEntity entity, Object attack) {
+        if (attack instanceof AbstractBreathingAttack<?, ?> && entity instanceof Player) {
+            return;
+        }
+        if (attack instanceof AbstractDemonAttack<?, ?>) {
+            return;
+        }
         activeAttacks.computeIfAbsent(entity.getUUID(), k -> new ArrayList<>()).add(attack);
     }
 

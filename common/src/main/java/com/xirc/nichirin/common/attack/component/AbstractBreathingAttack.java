@@ -49,6 +49,8 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     protected float knockback;
     protected float breathCost;
     protected int hitStun;
+    protected int armorHits;
+    protected boolean hyperArmor;
     protected float hitboxSize;
     protected int cooldown;
     protected int windup;
@@ -73,6 +75,8 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     private Set<UUID> hitEntities = new HashSet<>();
     @Setter
     private int hitCount = 0;
+    private int absorbedInterruptHits = 0;
+    private long lastArmorInterruptTick = Long.MIN_VALUE;
 
     // Configuration and breath consumption tracking
     private boolean configured = false;
@@ -91,6 +95,8 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         this.range = config.getRangeOrDefault(0f);
         this.knockback = config.getKnockbackOrDefault(0f);
         this.hitStun = config.getHitStunOrDefault(0);
+        this.armorHits = config.getArmorOrDefault(0);
+        this.hyperArmor = config.hasHyperArmor();
         this.hitboxSize = config.getHitboxSizeOrDefault(0f);
 
         this.cooldown = config.getCooldownOrDefault(0);
@@ -116,6 +122,8 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         this.user = player;
         this.world = world;
         this.tickCount = 0;
+        this.absorbedInterruptHits = 0;
+        this.lastArmorInterruptTick = Long.MIN_VALUE;
         this.breathConsumed = false;
         this.hitEntities.clear();
         this.hitCount = 0;
@@ -177,6 +185,8 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         this.user = entity;
         this.world = world;
         this.tickCount = 0;
+        this.absorbedInterruptHits = 0;
+        this.lastArmorInterruptTick = Long.MIN_VALUE;
         this.breathConsumed = false;
         this.hitEntities.clear();
         this.hitCount = 0;
@@ -217,13 +227,16 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
 
         tickCount++;
 
-        if (isExternallyStunned()) {
+        boolean externallyStunned = isExternallyStunned();
+        boolean interruptedThisTick = AttackInterruptTracker.wasInterruptedThisTick(user);
+
+        if (shouldStopForInterrupt(externallyStunned, false, false)) {
             stop(true);
             return;
         }
 
         // Cancel attack if the user was hit during windup by an interrupting damage type.
-        if (tickCount <= windup && windup > 0 && AttackInterruptTracker.wasInterruptedThisTick(user)) {
+        if (tickCount <= windup && windup > 0 && shouldStopForInterrupt(false, interruptedThisTick, true)) {
             stop(true);
             return;
         }
@@ -819,6 +832,35 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     private boolean isExternallyStunned() {
         MobEffectInstance stun = user.getEffect(NichirinEffectRegistry.stunned());
         return stun != null && stun.getAmplifier() > 0;
+    }
+
+    private boolean shouldStopForInterrupt(boolean externallyStunned, boolean interruptedThisTick, boolean windupOnly) {
+        if (!externallyStunned && !interruptedThisTick) {
+            return false;
+        }
+        if (windupOnly && !interruptedThisTick) {
+            return false;
+        }
+        if (hyperArmor) {
+            if (externallyStunned) {
+                user.removeEffect(NichirinEffectRegistry.stunned());
+            }
+            return false;
+        }
+        if (armorHits > 0) {
+            long currentTick = user.level().getGameTime();
+            if (lastArmorInterruptTick != currentTick) {
+                absorbedInterruptHits++;
+                lastArmorInterruptTick = currentTick;
+            }
+            if (absorbedInterruptHits <= armorHits) {
+                if (externallyStunned) {
+                    user.removeEffect(NichirinEffectRegistry.stunned());
+                }
+                return false;
+            }
+        }
+        return true;
     }
 
     // Helper methods to check if movement properties are configured
