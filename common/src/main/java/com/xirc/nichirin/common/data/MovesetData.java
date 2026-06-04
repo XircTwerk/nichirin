@@ -20,10 +20,16 @@ public class MovesetData {
     private AbstractMoveset currentDemonMoveset;
 
     @Nullable
+    private AbstractMoveset currentFightingMoveset;
+
+    @Nullable
     private String breathingMovesetId;
 
     @Nullable
     private String demonMovesetId;
+
+    @Nullable
+    private String fightingMovesetId;
 
     // Keep track of the player for modifiers and statistics
     @Nullable
@@ -35,8 +41,10 @@ public class MovesetData {
     public MovesetData() {
         this.currentBreathingMoveset = null;
         this.currentDemonMoveset = null;
+        this.currentFightingMoveset = null;
         this.breathingMovesetId = null;
         this.demonMovesetId = null;
+        this.fightingMovesetId = null;
         this.player = null;
     }
 
@@ -125,6 +133,14 @@ public class MovesetData {
     }
 
     /**
+     * Sets the current neutral fighting style moveset.
+     */
+    public void setFightingMoveset(@Nullable AbstractMoveset moveset) {
+        this.currentFightingMoveset = moveset;
+        this.fightingMovesetId = moveset != null ? moveset.getMovesetId() : null;
+    }
+
+    /**
      * Gets the current breathing moveset
      */
     @Nullable
@@ -173,6 +189,21 @@ public class MovesetData {
     }
 
     /**
+     * Gets the current neutral fighting style moveset.
+     */
+    @Nullable
+    public AbstractMoveset getFightingMoveset() {
+        if (currentFightingMoveset == null && fightingMovesetId != null) {
+            try {
+                currentFightingMoveset = NichirinMovesetRegistry.getMoveset(fightingMovesetId);
+            } catch (Exception e) {
+                this.fightingMovesetId = null;
+            }
+        }
+        return currentFightingMoveset;
+    }
+
+    /**
      * Gets the primary moveset (breathing takes precedence, then demon)
      * This maintains backwards compatibility with old code
      */
@@ -181,6 +212,10 @@ public class MovesetData {
         AbstractMoveset breathing = getBreathingMoveset();
         if (breathing != null) {
             return breathing;
+        }
+        AbstractMoveset fighting = getFightingMoveset();
+        if (fighting != null) {
+            return fighting;
         }
         return getDemonMoveset();
     }
@@ -250,6 +285,15 @@ public class MovesetData {
     }
 
     /**
+     * Sets fighting style moveset by ID.
+     */
+    public void setFightingMovesetId(@Nullable String movesetId) {
+        this.fightingMovesetId = movesetId;
+        this.currentFightingMoveset = null;
+        getFightingMoveset();
+    }
+
+    /**
      * Sets moveset by ID (backwards compatibility - determines type automatically)
      */
     public void setMovesetId(@Nullable String movesetId) {
@@ -268,6 +312,8 @@ public class MovesetData {
                 setBreathingMovesetId(movesetId);
             } else if (moveset.isDemonMoveset()) {
                 setDemonMovesetId(movesetId);
+            } else if (moveset.isNeutralMoveset()) {
+                setFightingMovesetId(movesetId);
             } else {
             }
         } else {
@@ -291,6 +337,14 @@ public class MovesetData {
     }
 
     /**
+     * Gets fighting style moveset ID.
+     */
+    @Nullable
+    public String getFightingMovesetId() {
+        return fightingMovesetId;
+    }
+
+    /**
      * Gets primary moveset ID (backwards compatibility)
      */
     @Nullable
@@ -298,6 +352,8 @@ public class MovesetData {
         String result;
         if (breathingMovesetId != null) {
             result = breathingMovesetId;
+        } else if (fightingMovesetId != null) {
+            result = fightingMovesetId;
         } else {
             result = demonMovesetId;
         }
@@ -310,7 +366,7 @@ public class MovesetData {
      * Checks if player has any moveset
      */
     public boolean hasMoveset() {
-        boolean result = breathingMovesetId != null || demonMovesetId != null;
+        boolean result = breathingMovesetId != null || fightingMovesetId != null || demonMovesetId != null;
         // Only log when state changes or when explicitly requested
         return result;
     }
@@ -334,11 +390,19 @@ public class MovesetData {
     }
 
     /**
+     * Checks if player has a neutral fighting style.
+     */
+    public boolean hasFightingMoveset() {
+        return fightingMovesetId != null;
+    }
+
+    /**
      * Clears all movesets
      */
     public void clearMovesets() {
         setBreathingMovesetId(null);
         setDemonMovesetId(null);
+        setFightingMovesetId(null);
     }
 
     /**
@@ -353,6 +417,13 @@ public class MovesetData {
      */
     public void clearDemonMoveset() {
         setDemonMovesetId(null);
+    }
+
+    /**
+     * Clears only fighting style moveset.
+     */
+    public void clearFightingMoveset() {
+        setFightingMovesetId(null);
     }
 
     /**
@@ -392,10 +463,19 @@ public class MovesetData {
                 }
             }
 
+            if (this.currentFightingMoveset != null && this.player != null) {
+                var statistics = getStatistics();
+                if (statistics != null) {
+                    statistics.onMovesetUnequipped(this.currentFightingMoveset.getMovesetId());
+                }
+            }
+
             // Copy IDs
             this.breathingMovesetId = other.getBreathingMovesetId();
+            this.fightingMovesetId = other.getFightingMovesetId();
             this.demonMovesetId = other.getDemonMovesetId();
             this.currentBreathingMoveset = null; // Force reload
+            this.currentFightingMoveset = null; // Force reload
             this.currentDemonMoveset = null; // Force reload
 
         } finally {
@@ -404,6 +484,7 @@ public class MovesetData {
 
         // Load and apply new movesets
         getBreathingMoveset();
+        getFightingMoveset();
         getDemonMoveset();
     }
 
@@ -417,6 +498,9 @@ public class MovesetData {
         }
         if (demonMovesetId != null) {
             tag.putString("DemonMovesetId", demonMovesetId);
+        }
+        if (fightingMovesetId != null) {
+            tag.putString("FightingMovesetId", fightingMovesetId);
         }
 
         // Legacy compatibility - save primary moveset as "MovesetId"
@@ -443,6 +527,9 @@ public class MovesetData {
         if (tag.contains("DemonMovesetId")) {
             this.demonMovesetId = tag.getString("DemonMovesetId");
         }
+        if (tag.contains("FightingMovesetId")) {
+            this.fightingMovesetId = tag.getString("FightingMovesetId");
+        }
 
         // Backwards compatibility - convert old single moveset to appropriate type
         if (tag.contains("MovesetId") && !tag.contains("BreathingMovesetId") && !tag.contains("DemonMovesetId")) {
@@ -453,12 +540,15 @@ public class MovesetData {
                     this.breathingMovesetId = oldMovesetId;
                 } else if (moveset.isDemonMoveset()) {
                     this.demonMovesetId = oldMovesetId;
+                } else if (moveset.isNeutralMoveset()) {
+                    this.fightingMovesetId = oldMovesetId;
                 }
             }
         }
 
         // Clear instances to force reload
         this.currentBreathingMoveset = null;
+        this.currentFightingMoveset = null;
         this.currentDemonMoveset = null;
     }
 
@@ -499,6 +589,13 @@ public class MovesetData {
             var statistics = getStatistics();
             if (statistics != null) {
                 statistics.onMovesetUnequipped(this.currentDemonMoveset.getMovesetId());
+            }
+        }
+
+        if (this.currentFightingMoveset != null && this.player != null) {
+            var statistics = getStatistics();
+            if (statistics != null) {
+                statistics.onMovesetUnequipped(this.currentFightingMoveset.getMovesetId());
             }
         }
     }

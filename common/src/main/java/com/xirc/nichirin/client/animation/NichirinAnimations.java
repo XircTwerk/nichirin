@@ -79,7 +79,8 @@ public final class NichirinAnimations {
     }
 
     private static ResourceLocation findAnimation(String animationName) {
-        ResourceLocation direct = ResourceLocation.fromNamespaceAndPath("nichirin", animationName);
+        String safeName = animationName.replace(' ', '_').toLowerCase();
+        ResourceLocation direct = ResourceLocation.fromNamespaceAndPath("nichirin", safeName);
         if (PlayerAnimResources.hasAnimation(direct)) return direct;
 
         String[] prefixes = {
@@ -97,12 +98,12 @@ public final class NichirinAnimations {
 
         for (String prefix : prefixes) {
             ResourceLocation candidate =
-                    ResourceLocation.fromNamespaceAndPath("nichirin", prefix + animationName);
+                    ResourceLocation.fromNamespaceAndPath("nichirin", prefix + safeName);
             if (PlayerAnimResources.hasAnimation(candidate)) return candidate;
         }
 
         ResourceLocation slashed =
-                ResourceLocation.fromNamespaceAndPath("nichirin", animationName.replace("_", "/"));
+                ResourceLocation.fromNamespaceAndPath("nichirin", safeName.replace("_", "/"));
         if (PlayerAnimResources.hasAnimation(slashed)) return slashed;
 
         return null;

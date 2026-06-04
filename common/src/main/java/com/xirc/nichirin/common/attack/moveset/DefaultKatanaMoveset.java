@@ -264,13 +264,33 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
     }
 
     @Override
+    public MoveConfiguration getLeftClickConfiguration() {
+        return SLASH1_CONFIG;
+    }
+
+    @Override
+    public MoveConfiguration getRightClickConfiguration() {
+        return DOUBLE_SLASH_CONFIG;
+    }
+
+    @Override
+    public MoveConfiguration getCrouchRightClickConfiguration() {
+        return RISING_SLASH_CONFIG;
+    }
+
+    @Override
+    public String getLeftClickMoveName() {
+        return SLASH1_CONFIG.getDisplayName();
+    }
+
+    @Override
     public String getRightClickMoveName() {
-        return "Double Slash";
+        return DOUBLE_SLASH_CONFIG.getDisplayName();
     }
 
     @Override
     public String getCrouchRightClickMoveName() {
-        return "Rising Slash";
+        return RISING_SLASH_CONFIG.getDisplayName();
     }
 
     /**

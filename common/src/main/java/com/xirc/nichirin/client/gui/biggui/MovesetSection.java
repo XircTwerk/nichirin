@@ -18,6 +18,7 @@ public class MovesetSection extends AbstractGuiPage {
     public enum MovesetTab {
         BREATHING_STYLES("gui.nichirin.moveset.tab.breathing_styles"),
         DEMON_ARTS("gui.nichirin.moveset.tab.demon_arts"),
+        CQC("gui.nichirin.moveset.tab.cqc"),
         OBTAINMENT("gui.nichirin.moveset.tab.obtainment"),
         DATA("gui.nichirin.moveset.tab.data");
 
@@ -36,6 +37,7 @@ public class MovesetSection extends AbstractGuiPage {
 
     private final BreathingStylesSection breathingStylesSection = new BreathingStylesSection();
     private final DemonArtSection demonArtSection = new DemonArtSection();
+    private final CqcSection cqcSection = new CqcSection();
     private final MovesetDataSection dataSection = new MovesetDataSection();
     private final ObtainmentSection obtainmentSection = new ObtainmentSection();
     // SheathingSection removed — the sheathing GUI page exposed only default-static info
@@ -58,6 +60,8 @@ public class MovesetSection extends AbstractGuiPage {
             case BREATHING_STYLES -> breathingStylesSection.render(
                     graphics, player, contentWidth, bodyH, font, mouseX, bodyMouseY);
             case DEMON_ARTS -> demonArtSection.render(
+                    graphics, player, contentWidth, bodyH, font, mouseX, bodyMouseY);
+            case CQC -> cqcSection.render(
                     graphics, player, contentWidth, bodyH, font, mouseX, bodyMouseY);
             case OBTAINMENT -> obtainmentSection.render(
                     graphics, player, font, contentWidth, bodyH, mouseX, bodyMouseY);
@@ -121,6 +125,7 @@ public class MovesetSection extends AbstractGuiPage {
         return switch (currentTab) {
             case BREATHING_STYLES -> breathingStylesSection.handleClick(mouseX, bodyMouseY, player, contentWidth);
             case DEMON_ARTS -> demonArtSection.handleClick(mouseX, bodyMouseY, player, contentWidth);
+            case CQC -> cqcSection.handleClick(mouseX, bodyMouseY, player, contentWidth);
             case OBTAINMENT -> obtainmentSection.handleClick(mouseX, bodyMouseY, player);
             case DATA -> dataSection.handleClick(mouseX, bodyMouseY, player, contentWidth);
         };
@@ -148,6 +153,7 @@ public class MovesetSection extends AbstractGuiPage {
         return switch (currentTab) {
             case BREATHING_STYLES -> "Breathing Styles";
             case DEMON_ARTS -> "Demon Arts";
+            case CQC -> "CQC";
             case OBTAINMENT -> "Obtainment";
             case DATA -> "Move Data";
         };
