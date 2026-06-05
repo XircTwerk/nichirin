@@ -71,6 +71,9 @@ public interface NichirinItemRegistry {
     RegistrySupplier<Item> MIST_KATANA = register("mist_katana",
             () -> new SimpleKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
 
+    RegistrySupplier<Item> GIYU_KATANA = register("giyu_katana",
+            () -> new SimpleKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
+
     RegistrySupplier<Item> SCARLET_CRIMSON_IRON_GEM = register("scarlet_crimson_iron_gem", () -> new Item(settings()));
 
     RegistrySupplier<Item> SCARLET_GEM = register("scarlet_gem", () -> new Item(settings()));

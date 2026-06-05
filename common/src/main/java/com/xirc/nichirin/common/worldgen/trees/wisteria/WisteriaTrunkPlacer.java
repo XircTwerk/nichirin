@@ -4,9 +4,11 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.xirc.nichirin.registry.NichirinTrunkPlacerTypes;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.IntProvider;
 import net.minecraft.world.level.LevelSimulatedReader;
+import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.feature.configurations.TreeConfiguration;
 import net.minecraft.world.level.levelgen.feature.foliageplacers.FoliagePlacer;
@@ -64,7 +66,7 @@ public class WisteriaTrunkPlacer extends TrunkPlacer {
             }
             if (y > 2 && y < height - 2 && random.nextInt(6) == 0) {
                 int[] gnarl = DIRECTIONS[random.nextInt(DIRECTIONS.length)];
-                this.placeLog(level, blockSetter, random, trunkPos.offset(gnarl[0], 0, gnarl[1]), config);
+                this.placeDirectionalLog(level, blockSetter, random, trunkPos.offset(gnarl[0], 0, gnarl[1]), config, gnarl[0], gnarl[1]);
             }
         }
         BlockPos top = trunkCenters.get(trunkCenters.size() - 1);
@@ -116,7 +118,7 @@ public class WisteriaTrunkPlacer extends TrunkPlacer {
             BlockPos root = trunkPos;
             for (int step = 1; step <= length; step++) {
                 root = root.offset(direction[0], 0, direction[1]);
-                this.placeLog(level, blockSetter, random, root, config);
+                this.placeDirectionalLog(level, blockSetter, random, root, config, direction[0], direction[1]);
                 if (step == 1 && random.nextBoolean()) {
                     this.placeLog(level, blockSetter, random, root.above(), config);
                 }
@@ -145,13 +147,30 @@ public class WisteriaTrunkPlacer extends TrunkPlacer {
             if (step > 2 && step % 3 == 0) {
                 pos = rises ? pos.above() : pos.below();
             }
-            this.placeLog(level, blockSetter, random, pos, config);
+            this.placeDirectionalLog(level, blockSetter, random, pos, config, direction[0], direction[1]);
             if (step > 1 && random.nextInt(5) == 0) {
                 int[] side = turn(direction, random.nextBoolean());
-                this.placeLog(level, blockSetter, random, pos.offset(side[0], 0, side[1]), config);
+                this.placeDirectionalLog(level, blockSetter, random, pos.offset(side[0], 0, side[1]), config, side[0], side[1]);
             }
         }
         return pos;
+    }
+
+    /**
+     * Places a log oriented along a horizontal direction (like fancy oak's sideways branch logs),
+     * instead of the default vertical orientation. Diagonal steps use the dominant horizontal axis.
+     */
+    private void placeDirectionalLog(LevelSimulatedReader level, BiConsumer<BlockPos, BlockState> blockSetter, RandomSource random, BlockPos pos, TreeConfiguration config, int dx, int dz) {
+        Direction.Axis axis = axisFor(dx, dz);
+        this.placeLog(level, blockSetter, random, pos, config,
+                state -> state.trySetValue(RotatedPillarBlock.AXIS, axis));
+    }
+
+    private static Direction.Axis axisFor(int dx, int dz) {
+        if (dx == 0 && dz == 0) {
+            return Direction.Axis.Y;
+        }
+        return Math.abs(dx) >= Math.abs(dz) ? Direction.Axis.X : Direction.Axis.Z;
     }
 
     private int[] turn(int[] direction, boolean clockwise) {

@@ -12,6 +12,7 @@ public class KatanaRendererManager {
         registerKatana(NichirinItemRegistry.MIST_KATANA.get(), "muichiro_katana", "mist_katana");
         registerKatana(NichirinItemRegistry.FLAME_KATANA.get(), "flame_katana", "flame_katana");
         registerKatana(NichirinItemRegistry.INSECT_KATANA.get(), "insect_katana", "insect_katana");
+        registerKatana(NichirinItemRegistry.GIYU_KATANA.get(), "giyu_katana", "giyu_katana");
     }
 
     private static void registerKatana(Item item, String geoName, String textureName) {

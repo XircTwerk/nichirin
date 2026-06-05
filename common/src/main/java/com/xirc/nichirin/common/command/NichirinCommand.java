@@ -167,6 +167,9 @@ public class NichirinCommand {
 
                 .then(Commands.literal("set")
                         .then(Commands.argument("player", EntityArgument.player())
+                                .then(Commands.literal("random")
+                                        .executes(ctx -> setRandomBreathingStyle(ctx,
+                                                EntityArgument.getPlayer(ctx, "player"))))
                                 .then(Commands.argument("style", StringArgumentType.string())
                                         .suggests((ctx, b) -> suggestUnlockedBreathingStyles(ctx, b, EntityArgument.getPlayer(ctx, "player")))
                                         .executes(ctx -> setBreathingStyle(ctx,
@@ -236,6 +239,40 @@ public class NichirinCommand {
         PlayerDataProvider.updateAndSync(player, style);
         src.sendSuccess(() -> Component.literal("Set " + player.getName().getString() + "'s breathing style to " + formatStyleName(style)).withStyle(s -> s.withColor(COL_OK)), true);
         player.displayClientMessage(Component.literal("Your breathing style is now " + formatStyleName(style)).withStyle(s -> s.withColor(0x55FFFF)), false);
+        return 1;
+    }
+
+    /** Sets the player to a random one of their unlocked breathing styles (preferring a change). */
+    private static int setRandomBreathingStyle(CommandContext<CommandSourceStack> ctx, ServerPlayer player) {
+        CommandSourceStack src = ctx.getSource();
+        String playerName = player.getName().getString();
+
+        var progression = PlayerDataProvider.getData(player).getProgression();
+        String current = PlayerDataProvider.getData(player).getMovesetData().getMovesetId();
+
+        java.util.List<String> unlocked = new java.util.ArrayList<>();
+        for (String id : NichirinMovesetRegistry.getAllMovesetIds()) {
+            if (isBreathingStyle(id) && progression.isMovesetUnlocked(id)) {
+                unlocked.add(id);
+            }
+        }
+
+        if (unlocked.isEmpty()) {
+            src.sendFailure(Component.literal(playerName + " has no unlocked breathing styles").withStyle(s -> s.withColor(COL_ERR)));
+            return 0;
+        }
+
+        // Avoid re-picking the currently active style when there's another option.
+        java.util.List<String> pool = new java.util.ArrayList<>(unlocked);
+        if (pool.size() > 1 && current != null) {
+            pool.remove(current);
+        }
+
+        String chosen = pool.get(player.getRandom().nextInt(pool.size()));
+        String formatted = formatStyleName(chosen);
+        PlayerDataProvider.updateAndSync(player, chosen);
+        src.sendSuccess(() -> Component.literal("Set " + playerName + "'s breathing style to " + formatted + " (random)").withStyle(s -> s.withColor(COL_OK)), true);
+        player.displayClientMessage(Component.literal("Your breathing style is now " + formatted).withStyle(s -> s.withColor(0x55FFFF)), false);
         return 1;
     }
 

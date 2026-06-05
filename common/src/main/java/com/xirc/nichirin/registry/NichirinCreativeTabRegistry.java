@@ -70,6 +70,7 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinItemRegistry.SABITO_KATANA.get());
                         entries.accept(NichirinItemRegistry.UROKODAKI_KATANA.get());
                         entries.accept(NichirinItemRegistry.MIST_KATANA.get());
+                        entries.accept(NichirinItemRegistry.GIYU_KATANA.get());
                     })
                     .build();
         });
