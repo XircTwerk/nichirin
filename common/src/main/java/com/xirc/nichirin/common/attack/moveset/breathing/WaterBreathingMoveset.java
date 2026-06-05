@@ -84,7 +84,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 .withRange(4.0f)
                 .withKnockback(0.1f)
                 .withBreathCost(18.0f)
-                .withHitStun(12)
+                .withHitStun(18)
                 .withHitboxSize(3.5f)
                 .withDashSpeed(4.0f)
                 .withDescription("Lunging spinning slash through enemies.")
@@ -102,11 +102,11 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withAnimation("nichirin:flowing_dance", 12)
                         .withTiming(240, 15, 42)
                         .withDamage(2.25f) // Continuous damage
-                        .withRange(3.0f) // Close range continuous
+                        .withRange(0.5f) // Close range continuous
                         .withKnockback(0.05f) // Very light knockback
-                        .withBreathCost(25.0f)
+                        .withBreathCost(20.0f)
                         .withHitStun(6) // Very short for continuous hits
-                        .withHitboxSize(2.5f)
+                        .withHitboxSize(3.5f)
                         .withDescription("Continuous attack stance hitting nearby enemies for several seconds.")
                         .withAction(entity -> {
                             FlowingDanceAttack attack = new FlowingDanceAttack();
