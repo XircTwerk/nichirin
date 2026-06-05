@@ -3,6 +3,7 @@ package com.xirc.nichirin.registry;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.xirc.nichirin.client.gui.CooldownHUD;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
+import com.xirc.nichirin.common.attack.moveset.CqcMoveset;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.network.c2s.MovementInputPacket;
@@ -186,8 +187,11 @@ public interface NichirinKeybindRegistry {
                 isBreathingMove = true;
             }
         } else {
-            // Not holding katana - use demon moveset if available
-            if (MovesetHelper.hasDemonMoveset(client.player)) {
+            // Empty hand fighting styles take priority over demon arts.
+            if (mainHand.isEmpty() && MovesetHelper.hasFightingMoveset(client.player)) {
+                moveset = MovesetHelper.getFightingMoveset(client.player);
+                isBreathingMove = false;
+            } else if (MovesetHelper.hasDemonMoveset(client.player)) {
                 moveset = MovesetHelper.getDemonMoveset(client.player);
                 isBreathingMove = false;
             }
@@ -203,7 +207,15 @@ public interface NichirinKeybindRegistry {
         }
 
         // Check if move exists in the moveset
-        var moveConfig = moveset.getMove(moveIndex);
+        final AbstractMoveset selectedMoveset = moveset;
+        final AbstractMoveset.MoveConfiguration[] moveConfigHolder = new AbstractMoveset.MoveConfiguration[1];
+        Runnable resolveMove = () -> moveConfigHolder[0] = selectedMoveset.getMove(moveIndex);
+        if (selectedMoveset instanceof CqcMoveset) {
+            CqcMoveset.withPlayer(client.player, resolveMove);
+        } else {
+            resolveMove.run();
+        }
+        var moveConfig = moveConfigHolder[0];
         if (moveConfig == null) {
             return; // Move doesn't exist - hotkey does nothing silently
         }

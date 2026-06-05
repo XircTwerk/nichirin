@@ -6,6 +6,7 @@ import com.xirc.nichirin.common.util.EntityResources;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import lombok.Getter;
+import lombok.Setter;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
@@ -610,7 +611,7 @@ public abstract class AbstractMoveset {
             if (!EntityResources.hasBreath(entity, config.getBreathCostOrDefault(0f))) return false;
         }
         if (config.hasStaminaCost()) {
-            if (!EntityResources.hasStamina(entity, config.getStaminaCostOrDefault(0f))) return false;
+            return EntityResources.hasStamina(entity, config.getStaminaCostOrDefault(0f));
         }
 
         return true;
@@ -620,7 +621,7 @@ public abstract class AbstractMoveset {
         if (config == null) return false;
 
         if (config.hasBreathCost()) {
-            if (!EntityResources.consumeBreath(entity, config.getBreathCostOrDefault(0f))) return false;
+            return EntityResources.consumeBreath(entity, config.getBreathCostOrDefault(0f));
         }
 
         return true;
@@ -745,18 +746,18 @@ public abstract class AbstractMoveset {
 
         // Followup methods
         public boolean hasFollowups() {
-            return followups != null && !followups.isEmpty();
+            return !followups.isEmpty();
         }
 
         public FollowupConfiguration getFollowup(int index) {
-            if (followups != null && index >= 0 && index < followups.size()) {
+            if (index >= 0 && index < followups.size()) {
                 return followups.get(index);
             }
             return null;
         }
 
         public int getFollowupCount() {
-            return followups != null ? followups.size() : 0;
+            return followups.size();
         }
     }
 
@@ -1119,6 +1120,8 @@ public abstract class AbstractMoveset {
         private float speedMultiplier = 1.0f;
         private float fallDamageMultiplier = 1.0f;
         private float healthRegenMultiplier = 1.0f;
+        @Getter
+        @Setter
         private float staminaCostMultiplier = 1.0f;
 
         private MoveConfiguration leftClickMove;
@@ -1189,6 +1192,10 @@ public abstract class AbstractMoveset {
             this.moveConfigs.add(moveBuilder.build());
             return this;
         }
-    }
 
+        public MovesetBuilder withMove(MoveConfiguration config) {
+            this.moveConfigs.add(config);
+            return this;
+        }
+    }
 }

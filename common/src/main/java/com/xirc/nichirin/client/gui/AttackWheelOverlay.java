@@ -3,6 +3,7 @@ package com.xirc.nichirin.client.gui;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
+import com.xirc.nichirin.common.attack.moveset.CqcMoveset;
 import com.xirc.nichirin.common.attack.moveset.DefaultKatanaMoveset;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
@@ -113,8 +114,11 @@ public class AttackWheelOverlay {
                 movesetId = DefaultKatanaMoveset.INSTANCE.getMovesetId();
             }
         } else {
-            // Not holding katana - use demon moveset if available
-            if (MovesetHelper.hasDemonMoveset(player)) {
+            // Empty hand - fighting styles take priority over demon arts.
+            if (mainHand.isEmpty() && MovesetHelper.hasFightingMoveset(player)) {
+                moveset = MovesetHelper.getFightingMoveset(player);
+                movesetId = MovesetHelper.getFightingMovesetId(player);
+            } else if (MovesetHelper.hasDemonMoveset(player)) {
                 moveset = MovesetHelper.getDemonMoveset(player);
                 movesetId = MovesetHelper.getDemonMovesetId(player);
             }
@@ -124,13 +128,21 @@ public class AttackWheelOverlay {
             return;
         }
 
-        // Build segments in order
-        for (int i = 0; i < moveset.getMoveCount(); i++) {
-            AbstractMoveset.MoveConfiguration config = moveset.getMove(i);
-            if (config != null) {
-                MoveSegment segment = new MoveSegment(i, config);
-                segments.add(segment);
+        AbstractMoveset finalMoveset = moveset;
+        Runnable buildSegments = () -> {
+            for (int i = 0; i < finalMoveset.getMoveCount(); i++) {
+                AbstractMoveset.MoveConfiguration config = finalMoveset.getMove(i);
+                if (config != null) {
+                    MoveSegment segment = new MoveSegment(i, config);
+                    segments.add(segment);
+                }
             }
+        };
+
+        if (moveset instanceof CqcMoveset) {
+            CqcMoveset.withPlayer(player, buildSegments);
+        } else {
+            buildSegments.run();
         }
     }
 
@@ -356,7 +368,11 @@ public class AttackWheelOverlay {
                     movesetId = DefaultKatanaMoveset.INSTANCE.getMovesetId();
                 }
             } else {
-                movesetId = MovesetHelper.getDemonMovesetId(player);
+                if (mainHand.isEmpty() && MovesetHelper.hasFightingMoveset(player)) {
+                    movesetId = MovesetHelper.getFightingMovesetId(player);
+                } else {
+                    movesetId = MovesetHelper.getDemonMovesetId(player);
+                }
             }
 
             if (movesetId != null) {

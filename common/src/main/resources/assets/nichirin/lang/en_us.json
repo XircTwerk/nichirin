@@ -116,6 +116,7 @@
   "gui.nichirin.moveset.select_style": "Select a breathing style to view moves",
   "gui.nichirin.moveset.tab.breathing_styles": "Breathing Styles",
   "gui.nichirin.moveset.tab.demon_arts": "Demon Arts",
+  "gui.nichirin.moveset.tab.cqc": "CQC",
   "gui.nichirin.moveset.tab.obtainment": "Obtainment",
   "gui.nichirin.moveset.tab.data": "Data",
   "gui.nichirin.demon_arts.title": "DEMON ARTS",
@@ -130,6 +131,7 @@
   "gui.nichirin.moveset.data.coming_soon": "Detailed moveset data coming soon...",
   "gui.nichirin.moveset.data.no_moveset": "No moveset selected. Choose a breathing style or demon art to view data.",
   "gui.nichirin.moveset.data.planned_features": "Planned features:",
+  "fighting_style.cqc": "CQC",
 
   "item.nichirin.katana": "Katana",
   "item.nichirin.thunder_katana": "Thunder Katana",

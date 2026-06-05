@@ -54,7 +54,7 @@ public class ClientInputHandler {
                 return;
             }
 
-            if (canPerformKatanaAttacks(player, hand)) {
+            if (canPerformRightClickAttacks(player, hand)) {
                 sendRightClick(player);
             }
         });
@@ -84,7 +84,9 @@ public class ClientInputHandler {
     public static void sendDemonRightClickFallback() {
         Minecraft minecraft = Minecraft.getInstance();
         Player player = minecraft.player;
-        if (player == null || isInputBlocked() || !MovesetHelper.hasDemonMoveset(player)) return;
+        if (player == null || isInputBlocked()) return;
+        boolean hasEmptyHandStyle = player.getMainHandItem().isEmpty() && MovesetHelper.hasFightingMoveset(player);
+        if (!hasEmptyHandStyle && !MovesetHelper.hasDemonMoveset(player)) return;
 
         // Nichirin katanas own their right-click path already.
         if (player.getMainHandItem().getItem() instanceof SimpleKatana) return;
@@ -103,12 +105,16 @@ public class ClientInputHandler {
             return true; // Katana holders can use breathing abilities
         }
 
-        // Demon attacks are an empty-hand fallback. Any held item keeps vanilla behavior.
-        return item.isEmpty() && MovesetHelper.hasDemonMoveset(player);
+        // Empty-hand fighting styles take priority over demon arts.
+        return item.isEmpty() && (MovesetHelper.hasFightingMoveset(player) || MovesetHelper.hasDemonMoveset(player));
     }
 
-    private static boolean canPerformKatanaAttacks(Player player, InteractionHand hand) {
-        return player.getItemInHand(hand).getItem() instanceof SimpleKatana;
+    private static boolean canPerformRightClickAttacks(Player player, InteractionHand hand) {
+        ItemStack item = player.getItemInHand(hand);
+        if (item.getItem() instanceof SimpleKatana) {
+            return true;
+        }
+        return hand == InteractionHand.MAIN_HAND && item.isEmpty() && MovesetHelper.hasFightingMoveset(player);
     }
 
     private static boolean isInputBlocked() {

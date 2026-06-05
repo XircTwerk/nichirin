@@ -3,8 +3,12 @@ package com.xirc.nichirin.client.gui.biggui;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.xirc.nichirin.client.gui.MoveIcon;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
+import com.xirc.nichirin.common.attack.moveset.CqcMoveset;
+import com.xirc.nichirin.common.attack.moveset.DefaultKatanaMoveset;
 import com.xirc.nichirin.common.data.MovesetHelper;
+import com.xirc.nichirin.registry.NichirinKeybindRegistry;
 import com.xirc.nichirin.registry.NichirinMovesetRegistry;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
@@ -23,6 +27,8 @@ public class MovesetDataSection extends AbstractGuiPage {
     private static final int ICON_SIZE = 32;
     private static final int ICON_SPACING = 8;
     private static final int ICONS_PER_ROW = 6;
+    private static final int SLOT_STEP = ICON_SIZE + 18 + ICON_SPACING;
+    private static final int SECTION_SPACING = 26;
 
     public void render(GuiGraphics graphics, Player player, int contentWidth, int contentHeight, Font font, int mouseX, int mouseY) {
         int contentX = 20;
@@ -34,43 +40,58 @@ public class MovesetDataSection extends AbstractGuiPage {
         drawAccentTitle(graphics, font, title, centerX, contentY, COLOR_PALETTE.BREATH_CYAN.argb());
         contentY += 30;
 
-        // Get current moveset
-        String currentStyle = MovesetHelper.getMovesetId(player);
-        if (currentStyle == null) {
+        List<SelectedMoveset> selectedMovesets = getSelectedMovesets(player);
+        if (selectedMovesets.isEmpty()) {
             Component noMoveset = Component.translatable("gui.nichirin.moveset.data.no_moveset");
             drawPopPanel(graphics, contentX, contentY, Math.max(160, font.width(noMoveset) + 28), 32, COLOR_PALETTE.BREATH_CYAN.argb());
             graphics.drawString(font, noMoveset, contentX + 14, contentY + 12, COLOR_PALETTE.TEXT_DIM.rgb());
             return;
         }
 
-        // Get the moveset instance
-        AbstractMoveset moveset = NichirinMovesetRegistry.getMoveset(currentStyle);
-        if (moveset == null) {
-            Component invalidMoveset = Component.literal("Invalid moveset: " + currentStyle);
-            drawPopPanel(graphics, contentX, contentY, Math.max(174, font.width(invalidMoveset) + 28), 32, COLOR_PALETTE.DANGER.argb());
-            graphics.drawString(font, invalidMoveset, contentX + 14, contentY + 12, COLOR_PALETTE.DANGER.rgb());
-            return;
-        }
-
-        // Display moveset info
-        Component styleLabel = Component.translatable("gui.nichirin.moveset.data.current_moveset",
-                Component.translatable(getTranslationKey(currentStyle)));
-        graphics.fill(contentX - 5, contentY - 2, contentX - 3, contentY + font.lineHeight + 2, COLOR_PALETTE.BREATH_CYAN.argb());
-        graphics.drawString(font, styleLabel, contentX, contentY, COLOR_PALETTE.BREATH_CYAN.rgb());
-        contentY += 20;
-
         // Instructions
         Component instructions = Component.literal("Hover over move icons to see detailed information");
         graphics.drawString(font, instructions, contentX, contentY, COLOR_PALETTE.GRAY.rgb());
         contentY += 25;
 
-        // Calculate grid layout
-        int totalMoves = moveset.getMoveCount() + 2; // +2 for right click attacks
+        for (SelectedMoveset selected : selectedMovesets) {
+            AbstractMoveset moveset = resolveMoveset(selected.movesetId());
+            if (moveset == null) {
+                Component invalidMoveset = Component.literal("Invalid " + selected.label() + ": " + selected.movesetId());
+                drawPopPanel(graphics, contentX, contentY, Math.max(174, font.width(invalidMoveset) + 28), 32, COLOR_PALETTE.DANGER.argb());
+                graphics.drawString(font, invalidMoveset, contentX + 14, contentY + 12, COLOR_PALETTE.DANGER.rgb());
+                contentY += 42;
+                continue;
+            }
+
+            AbstractMoveset finalMoveset = moveset;
+            int sectionY = contentY;
+            int[] blockBottom = new int[1];
+            Runnable renderBlock = () -> blockBottom[0] = renderMovesetBlock(graphics, font, selected, finalMoveset,
+                    contentX, sectionY, centerX, mouseX, mouseY, contentWidth);
+            if (moveset instanceof CqcMoveset) {
+                CqcMoveset.withPlayer(player, renderBlock);
+            } else {
+                renderBlock.run();
+            }
+            contentY = blockBottom[0];
+            contentY += SECTION_SPACING;
+        }
+    }
+
+    private int renderMovesetBlock(GuiGraphics graphics, Font font, SelectedMoveset selected, AbstractMoveset moveset,
+                                   int contentX, int contentY, int centerX, int mouseX, int mouseY, int contentWidth) {
+        Component styleLabel = Component.literal(selected.label() + ": ")
+                .append(getMovesetDisplayName(selected.movesetId(), moveset));
+        graphics.fill(contentX - 5, contentY - 2, contentX - 3, contentY + font.lineHeight + 2, selected.accentColor());
+        graphics.drawString(font, styleLabel, contentX, contentY, selected.accentRgb());
+        contentY += 18;
+
         int gridStartX = centerX - ((ICONS_PER_ROW * (ICON_SIZE + ICON_SPACING) - ICON_SPACING) / 2);
         int gridStartY = contentY;
 
         // Track which icon is being hovered for tooltip
         int hoveredMoveIndex = -1;
+        boolean hoveredIsLeftClick = false;
         boolean hoveredIsRightClick = false;
         boolean hoveredIsCrouchRightClick = false;
 
@@ -79,12 +100,24 @@ public class MovesetDataSection extends AbstractGuiPage {
         int currentY = gridStartY;
         int iconsInCurrentRow = 0;
 
-        // Right click icon (first)
+        // Left click icon
+        if (isIconHovered(mouseX, mouseY, currentX, currentY)) {
+            hoveredIsLeftClick = true;
+        }
+        ResourceLocation leftClickIcon = MoveIcon.getIcon(selected.movesetId(), "left_click");
+        renderMoveIcon(graphics, currentX, currentY, leftClickIcon, COLOR_PALETTE.ACCENT.argb());
+        renderSlotCaption(graphics, font, currentX, currentY, "LMB", String.valueOf(moveset.getLeftClickMoveIndex()));
+
+        currentX += ICON_SIZE + ICON_SPACING;
+        iconsInCurrentRow++;
+
+        // Right click icon
         if (isIconHovered(mouseX, mouseY, currentX, currentY)) {
             hoveredIsRightClick = true;
         }
-        ResourceLocation rightClickIcon = MoveIcon.getIcon(currentStyle, "right_click");
+        ResourceLocation rightClickIcon = MoveIcon.getIcon(selected.movesetId(), "right_click");
         renderMoveIcon(graphics, currentX, currentY, rightClickIcon, COLOR_PALETTE.SLAYER_BLUE.argb());
+        renderSlotCaption(graphics, font, currentX, currentY, "RMB", String.valueOf(moveset.getRightClickMoveIndex(false)));
 
         currentX += ICON_SIZE + ICON_SPACING;
         iconsInCurrentRow++;
@@ -93,8 +126,9 @@ public class MovesetDataSection extends AbstractGuiPage {
         if (isIconHovered(mouseX, mouseY, currentX, currentY)) {
             hoveredIsCrouchRightClick = true;
         }
-        ResourceLocation crouchRightClickIcon = MoveIcon.getIcon(currentStyle, "crouch_right_click");
+        ResourceLocation crouchRightClickIcon = MoveIcon.getIcon(selected.movesetId(), "crouch_right_click");
         renderMoveIcon(graphics, currentX, currentY, crouchRightClickIcon, COLOR_PALETTE.GREEN.argb());
+        renderSlotCaption(graphics, font, currentX, currentY, "C+RMB", String.valueOf(moveset.getRightClickMoveIndex(true)));
 
         currentX += ICON_SIZE + ICON_SPACING;
         iconsInCurrentRow++;
@@ -107,7 +141,7 @@ public class MovesetDataSection extends AbstractGuiPage {
             // Check for new row
             if (iconsInCurrentRow >= ICONS_PER_ROW) {
                 currentX = gridStartX;
-                currentY += ICON_SIZE + ICON_SPACING;
+                currentY += SLOT_STEP;
                 iconsInCurrentRow = 0;
             }
 
@@ -116,15 +150,18 @@ public class MovesetDataSection extends AbstractGuiPage {
                 hoveredMoveIndex = i;
             }
 
-            ResourceLocation moveIcon = MoveIcon.getIcon(currentStyle, move.getMoveId());
+            ResourceLocation moveIcon = MoveIcon.getIcon(selected.movesetId(), move.getMoveId());
             renderMoveIcon(graphics, currentX, currentY, moveIcon, COLOR_PALETTE.BORDER_HI.argb());
+            renderSlotCaption(graphics, font, currentX, currentY, getMoveHotkeyLabel(i), String.valueOf(i));
 
             currentX += ICON_SIZE + ICON_SPACING;
             iconsInCurrentRow++;
         }
 
         // Render tooltip if hovering over an icon
-        if (hoveredIsRightClick) {
+        if (hoveredIsLeftClick) {
+            renderLeftClickTooltip(graphics, font, mouseX, mouseY, moveset, contentWidth);
+        } else if (hoveredIsRightClick) {
             renderRightClickTooltip(graphics, font, mouseX, mouseY, moveset, contentWidth);
         } else if (hoveredIsCrouchRightClick) {
             renderCrouchRightClickTooltip(graphics, font, mouseX, mouseY, moveset, contentWidth);
@@ -134,6 +171,48 @@ public class MovesetDataSection extends AbstractGuiPage {
                 renderMoveTooltip(graphics, font, mouseX, mouseY, move, hoveredMoveIndex, contentWidth);
             }
         }
+
+        int rows = Math.max(1, (int) Math.ceil((moveset.getMoveCount() + 3) / (double) ICONS_PER_ROW));
+        return gridStartY + rows * SLOT_STEP - ICON_SPACING;
+    }
+
+    private List<SelectedMoveset> getSelectedMovesets(Player player) {
+        List<SelectedMoveset> selected = new ArrayList<>();
+        String breathingId = MovesetHelper.getBreathingMovesetId(player);
+        if (breathingId != null) {
+            selected.add(new SelectedMoveset("Breathing Style", breathingId,
+                    COLOR_PALETTE.BREATH_CYAN.argb(), COLOR_PALETTE.BREATH_CYAN.rgb()));
+        } else {
+            selected.add(new SelectedMoveset("Default Katana", DefaultKatanaMoveset.INSTANCE.getMovesetId(),
+                    COLOR_PALETTE.SLAYER_BLUE.argb(), COLOR_PALETTE.SLAYER_BLUE.rgb()));
+        }
+
+        String fightingId = MovesetHelper.getFightingMovesetId(player);
+        if (fightingId != null) {
+            selected.add(new SelectedMoveset("Fighting Style", fightingId,
+                    COLOR_PALETTE.ACCENT.argb(), COLOR_PALETTE.ACCENT.rgb()));
+        }
+
+        String demonId = MovesetHelper.getDemonMovesetId(player);
+        if (demonId != null) {
+            selected.add(new SelectedMoveset("Demon Art", demonId,
+                    COLOR_PALETTE.DANGER.argb(), COLOR_PALETTE.DANGER.rgb()));
+        }
+        return selected;
+    }
+
+    private AbstractMoveset resolveMoveset(String movesetId) {
+        if (DefaultKatanaMoveset.INSTANCE.getMovesetId().equals(movesetId)) {
+            return DefaultKatanaMoveset.INSTANCE;
+        }
+        return NichirinMovesetRegistry.getMoveset(movesetId);
+    }
+
+    private Component getMovesetDisplayName(String movesetId, AbstractMoveset moveset) {
+        if (DefaultKatanaMoveset.INSTANCE.getMovesetId().equals(movesetId)) {
+            return Component.literal(moveset.getDisplayName());
+        }
+        return Component.translatable(getTranslationKey(movesetId));
     }
 
     /**
@@ -161,6 +240,42 @@ public class MovesetDataSection extends AbstractGuiPage {
         RenderSystem.disableBlend();
     }
 
+    private void renderSlotCaption(GuiGraphics graphics, Font font, int x, int y, String primary, String secondary) {
+        graphics.drawCenteredString(font, trimToWidth(font, primary, ICON_SIZE + 12),
+                x + ICON_SIZE / 2, y + ICON_SIZE + 3, COLOR_PALETTE.TEXT.rgb());
+        graphics.drawCenteredString(font, trimToWidth(font, secondary, ICON_SIZE + 18),
+                x + ICON_SIZE / 2, y + ICON_SIZE + 12, COLOR_PALETTE.TEXT_DIM.rgb());
+    }
+
+    /**
+     * Render tooltip for left click.
+     */
+    private void renderLeftClickTooltip(GuiGraphics graphics, Font font, int mouseX, int mouseY, AbstractMoveset moveset, int contentWidth) {
+        List<String> tooltipLines = new ArrayList<>();
+
+        String moveName = moveset.getLeftClickMoveName();
+        tooltipLines.add("Left Click - " + moveName);
+        tooltipLines.add("Input: Left Click");
+        tooltipLines.add("Index: " + moveset.getLeftClickMoveIndex());
+        tooltipLines.add("");
+
+        String description = moveset.getLeftClickDescription();
+        if (description != null && !description.isEmpty()) {
+            tooltipLines.add(description);
+            tooltipLines.add("");
+        }
+
+        AbstractMoveset.MoveConfiguration leftClickConfig = moveset.getLeftClickConfiguration();
+        if (leftClickConfig != null) {
+            addConfigTooltipLines(tooltipLines, leftClickConfig);
+        } else {
+            tooltipLines.add("Basic moveset ability");
+            tooltipLines.add("Stats vary by moveset");
+        }
+
+        renderTooltip(graphics, font, mouseX, mouseY, tooltipLines.toArray(new String[0]), contentWidth);
+    }
+
     /**
      * Render tooltip for right click - NOW PROPERLY DISPLAYS STATS
      */
@@ -169,6 +284,8 @@ public class MovesetDataSection extends AbstractGuiPage {
 
         String moveName = moveset.getRightClickMoveName();
         tooltipLines.add("Right Click - " + moveName);
+        tooltipLines.add("Input: Right Click");
+        tooltipLines.add("Index: " + moveset.getRightClickMoveIndex(false));
         tooltipLines.add("");
 
         // Add description if available
@@ -201,6 +318,8 @@ public class MovesetDataSection extends AbstractGuiPage {
 
         String moveName = moveset.getCrouchRightClickMoveName();
         tooltipLines.add("Crouch + Right Click - " + moveName);
+        tooltipLines.add("Input: Crouch + Right Click");
+        tooltipLines.add("Index: " + moveset.getRightClickMoveIndex(true));
         tooltipLines.add("");
 
         // Add description if available
@@ -234,6 +353,9 @@ public class MovesetDataSection extends AbstractGuiPage {
 
         // Move name and number
         tooltipLines.add("Move " + (moveIndex + 1) + ": " + move.getDisplayName());
+        tooltipLines.add("Input: Attack Wheel Slot " + (moveIndex + 1) + " / Move Hotkey " + (moveIndex + 1));
+        tooltipLines.add("Index: " + moveIndex);
+        tooltipLines.add("Keybind: " + getMoveHotkeyFullLabel(moveIndex));
         tooltipLines.add("");
 
         // Add description if available
@@ -342,17 +464,23 @@ public class MovesetDataSection extends AbstractGuiPage {
             tooltipY = mouseY + 20;
         }
 
-        // Draw tooltip background
-        graphics.fill(tooltipX - 1, tooltipY - 1, tooltipX + tooltipWidth + 1, tooltipY + tooltipHeight + 1, COLOR_PALETTE.BLACK.argb());
-        graphics.fill(tooltipX, tooltipY, tooltipX + tooltipWidth, tooltipY + tooltipHeight, COLOR_PALETTE.TOOLTIP_FILL.argb());
+        graphics.pose().pushPose();
+        graphics.pose().translate(0, 0, 400);
+        try {
+            // Draw tooltip background
+            graphics.fill(tooltipX - 1, tooltipY - 1, tooltipX + tooltipWidth + 1, tooltipY + tooltipHeight + 1, COLOR_PALETTE.BLACK.argb());
+            graphics.fill(tooltipX, tooltipY, tooltipX + tooltipWidth, tooltipY + tooltipHeight, COLOR_PALETTE.TOOLTIP_FILL.argb());
 
-        // Draw tooltip text
-        int textY = tooltipY + 3;
-        for (String line : lines) {
-            if (!line.isEmpty()) {
-                graphics.drawString(font, line, tooltipX + 4, textY, COLOR_PALETTE.WHITE.rgb());
+            // Draw tooltip text
+            int textY = tooltipY + 3;
+            for (String line : lines) {
+                if (!line.isEmpty()) {
+                    graphics.drawString(font, line, tooltipX + 4, textY, COLOR_PALETTE.WHITE.rgb());
+                }
+                textY += font.lineHeight;
             }
-            textY += font.lineHeight;
+        } finally {
+            graphics.pose().popPose();
         }
     }
 
@@ -360,15 +488,42 @@ public class MovesetDataSection extends AbstractGuiPage {
      * Get appropriate translation key for moveset
      */
     private String getTranslationKey(String movesetId) {
-        if (movesetId.contains("demon_art")) {
+        if (movesetId.equals("cqc")) {
+            return "fighting_style." + movesetId;
+        } else if (movesetId.equals("default_demon") || movesetId.contains("demon")) {
             return "demon_art." + movesetId;
         } else {
             return "breathing_style." + movesetId;
         }
     }
 
+    private String getMoveHotkeyLabel(int moveIndex) {
+        KeyMapping keyMapping = NichirinKeybindRegistry.getMoveHotkey(moveIndex);
+        if (keyMapping == null) return "Unbound";
+        String key = keyMapping.getTranslatedKeyMessage().getString();
+        if (key == null || key.isBlank()) return "Unbound";
+        if ("Not Bound".equalsIgnoreCase(key) || "Unknown".equalsIgnoreCase(key)) return "Unbound";
+        return key;
+    }
+
+    private String getMoveHotkeyFullLabel(int moveIndex) {
+        return "Move " + (moveIndex + 1) + " (" + getMoveHotkeyLabel(moveIndex) + ")";
+    }
+
+    private String trimToWidth(Font font, String text, int maxWidth) {
+        if (font.width(text) <= maxWidth) return text;
+        String ellipsis = "...";
+        int end = text.length();
+        while (end > 0 && font.width(text.substring(0, end) + ellipsis) > maxWidth) {
+            end--;
+        }
+        return end <= 0 ? ellipsis : text.substring(0, end) + ellipsis;
+    }
+
     public boolean handleClick(double mouseX, double mouseY, Player player, int contentWidth) {
         // No click handling needed for data section
         return false;
     }
+
+    private record SelectedMoveset(String label, String movesetId, int accentColor, int accentRgb) {}
 }

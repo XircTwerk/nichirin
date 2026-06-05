@@ -27,6 +27,14 @@ public class MovesetHelper {
     }
 
     /**
+     * Gets the current neutral fighting style moveset for a player.
+     */
+    @Nullable
+    public static AbstractMoveset getFightingMoveset(Player player) {
+        return PlayerDataProvider.getMovesetData(player).getFightingMoveset();
+    }
+
+    /**
      * Gets the primary moveset for a player (breathing takes precedence, then demon)
      * This maintains backwards compatibility with existing code
      */
@@ -57,6 +65,13 @@ public class MovesetHelper {
     }
 
     /**
+     * Checks if a player has a neutral fighting style selected.
+     */
+    public static boolean hasFightingMoveset(Player player) {
+        return PlayerDataProvider.getMovesetData(player).hasFightingMoveset();
+    }
+
+    /**
      * Gets the breathing moveset ID for a player
      */
     @Nullable
@@ -70,6 +85,14 @@ public class MovesetHelper {
     @Nullable
     public static String getDemonMovesetId(Player player) {
         return PlayerDataProvider.getMovesetData(player).getDemonMovesetId();
+    }
+
+    /**
+     * Gets the fighting style moveset ID for a player.
+     */
+    @Nullable
+    public static String getFightingMovesetId(Player player) {
+        return PlayerDataProvider.getMovesetData(player).getFightingMovesetId();
     }
 
     /**
@@ -92,6 +115,13 @@ public class MovesetHelper {
      */
     public static void setDemonMoveset(Player player, @Nullable String movesetId) {
         PlayerDataProvider.getMovesetData(player).setDemonMovesetId(movesetId);
+    }
+
+    /**
+     * Sets a neutral fighting style for a player.
+     */
+    public static void setFightingMoveset(Player player, @Nullable String movesetId) {
+        PlayerDataProvider.getMovesetData(player).setFightingMovesetId(movesetId);
     }
 
     /**
@@ -120,6 +150,13 @@ public class MovesetHelper {
      */
     public static void clearDemonMoveset(Player player) {
         PlayerDataProvider.getMovesetData(player).clearDemonMoveset();
+    }
+
+    /**
+     * Clears only the fighting style for a player.
+     */
+    public static void clearFightingMoveset(Player player) {
+        PlayerDataProvider.getMovesetData(player).clearFightingMoveset();
     }
 
     /**

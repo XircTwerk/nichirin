@@ -1,0 +1,67 @@
+{
+	"format_version": "1.21.110",
+	"minecraft:geometry": [
+		{
+			"description": {
+				"identifier": "geometry.insect_katana",
+				"texture_width": 32,
+				"texture_height": 32,
+				"visible_bounds_width": 2,
+				"visible_bounds_height": 3.5,
+				"visible_bounds_offset": [0, 1.25, 0]
+			},
+			"bones": [
+				{
+					"name": "Sword",
+					"pivot": [0, 0, 0]
+				},
+				{
+					"name": "Handle",
+					"parent": "Sword",
+					"pivot": [0, 0, 0],
+					"cubes": [
+						{"origin": [-0.5, 2, 1], "size": [1, 8, 2], "uv": [6, 5]},
+						{"origin": [-0.75, 8.3, 0.75], "size": [1.5, 1, 2.5], "inflate": -0.15, "uv": [16, 10]},
+						{"origin": [-0.75, 7.3, 0.75], "size": [1.5, 1, 2.5], "inflate": -0.15, "uv": [16, 10]},
+						{"origin": [-0.75, 6.3, 0.75], "size": [1.5, 1, 2.5], "inflate": -0.15, "uv": [16, 10]},
+						{"origin": [-0.75, 5.3, 0.75], "size": [1.5, 1, 2.5], "inflate": -0.15, "uv": [16, 10]},
+						{"origin": [-0.75, 4.3, 0.75], "size": [1.5, 1, 2.5], "inflate": -0.15, "uv": [16, 10]},
+						{"origin": [-0.75, 3.3, 0.75], "size": [1.5, 1, 2.5], "inflate": -0.15, "uv": [16, 10]}
+					]
+				},
+				{
+					"name": "Guard",
+					"parent": "Sword",
+					"pivot": [0, 0, 0],
+					"cubes": [
+						{"origin": [-1.5, 10, -1], "size": [3, 1, 3], "pivot": [0, 10.5, 2], "rotation": [0, 45, 0], "uv": [7, 1], "mirror": true},
+						{"origin": [-1.5, 10, 2], "size": [3, 1, 3], "pivot": [0, 10.5, 2], "rotation": [0, 45, 0], "uv": [7, 20], "mirror": true},
+						{"origin": [-3, 10.001, 0.5], "size": [3, 1, 3], "pivot": [0, 10.5, 2], "rotation": [0, 45, 0], "uv": [7, 15], "mirror": true},
+						{"origin": [0, 10.001, 0.5], "size": [3, 1, 3], "pivot": [0, 10.5, 2], "rotation": [0, 45, 0], "uv": [6, 24], "mirror": true},
+						{"origin": [-0.775, 9.5, 0.725], "size": [1.55, 2.05, 2.55], "uv": [12, 5]}
+					]
+				},
+				{
+					"name": "Blade",
+					"parent": "Sword",
+					"pivot": [0, 0, 0],
+					"cubes": [
+						{"origin": [-0.475, 28.69344, 0.5412], "size": [0.95, 2.6, 1], "inflate": 0.001, "pivot": [0.35, 27.69344, 1.5412], "rotation": [-22.5, 0, 0], "uv": [2, -1]},
+						{"origin": [-0.5, 28, 1], "size": [1, 1, 1], "uv": [1, 24]},
+						{"origin": [-0.5, 11, 1], "size": [1, 3, 1], "uv": [1, 20]},
+						{"origin": [-0.5, 11, 2], "size": [1, 18, 1], "uv": [1, 1]},
+						{"origin": [-0.5, 29, 2], "size": [1, 2.4, 1], "uv": [12, 11]}
+					]
+				},
+				{
+					"name": "Sheath",
+					"parent": "Blade",
+					"pivot": [0, 0, 0],
+					"cubes": [
+						{"origin": [-0.5, 11.4, 1], "size": [1, 20, 2], "inflate": 0.4, "uv": [23, 2]}
+					]
+				}
+			]
+		}
+	]
+}

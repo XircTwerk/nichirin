@@ -26,6 +26,11 @@ public class PlayerData {
     private final MovesetStatistics statistics = new MovesetStatistics();
 
     /**
+     * Player-owned CQC preset/loadout.
+     */
+    private final CqcPresetData cqcPresetData = new CqcPresetData();
+
+    /**
      * Gets perk system data (discovered, equipped, flaws, presets)
      */
     private final PerkData perkData = new PerkData();
@@ -41,6 +46,7 @@ public class PlayerData {
         this.movesetData.copyFrom(other.movesetData);
         this.progression.copyFrom(other.progression);
         this.statistics.copyFrom(other.statistics);
+        this.cqcPresetData.copyFrom(other.cqcPresetData);
         this.perkData.copyFrom(other.perkData);
     }
 
@@ -52,6 +58,7 @@ public class PlayerData {
         tag.put("MovesetData", movesetData.save());
         tag.put("Progression", progression.save());
         tag.put("Statistics", statistics.save());
+        tag.put("CqcPresetData", cqcPresetData.save());
         tag.put("PerkData", perkData.save());
         return tag;
     }
@@ -75,6 +82,9 @@ public class PlayerData {
         if (tag.contains("Statistics")) {
             statistics.load(tag.getCompound("Statistics"));
         }
+        if (tag.contains("CqcPresetData")) {
+            cqcPresetData.load(tag.getCompound("CqcPresetData"));
+        }
         if (tag.contains("PerkData")) {
             perkData.load(tag.getCompound("PerkData"));
         }
@@ -91,5 +101,9 @@ public class PlayerData {
 
     public MovesetData getMovesetData() {
         return movesetData;
+    }
+
+    public CqcPresetData getCqcPresetData() {
+        return cqcPresetData;
     }
 }

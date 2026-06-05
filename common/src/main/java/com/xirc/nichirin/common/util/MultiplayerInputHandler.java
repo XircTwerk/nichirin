@@ -122,7 +122,9 @@ public class MultiplayerInputHandler {
     }
 
     public static void sendDemonInput(InputType inputType, Player player) {
-        if (!player.level().isClientSide || !MovesetHelper.hasDemonMoveset(player)) return;
+        if (!player.level().isClientSide) return;
+        boolean canUseFightingStyle = player.getMainHandItem().isEmpty() && MovesetHelper.hasFightingMoveset(player);
+        if (!canUseFightingStyle && !MovesetHelper.hasDemonMoveset(player)) return;
 
         try {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());

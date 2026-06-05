@@ -3,6 +3,7 @@ package com.xirc.nichirin.client.handler;
 import com.xirc.nichirin.client.gui.AttackWheelOverlay;
 import com.xirc.nichirin.client.gui.CooldownHUD;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
+import com.xirc.nichirin.common.attack.moveset.CqcMoveset;
 import com.xirc.nichirin.common.attack.moveset.DefaultKatanaMoveset;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
@@ -46,6 +47,7 @@ public class AttackWheelHandler {
 
     // Track which moveset type the wheel is currently showing
     private static boolean currentWheelIsBreathing = false;
+    private static boolean currentWheelIsFighting = false;
     // True when showing default katana moves (no breathing style) — send MoveHotkeyPacket on execute
     private static boolean isDefaultKatanaWheel = false;
 
@@ -208,6 +210,8 @@ public class AttackWheelHandler {
 
         AbstractMoveset moveset = null;
         boolean isBreathingWheel = false;
+        boolean isFightingWheel = false;
+        isDefaultKatanaWheel = false;
 
         // Check held item
         ItemStack mainHand = mc.player.getMainHandItem();
@@ -226,9 +230,11 @@ public class AttackWheelHandler {
                 isDefaultKatanaWheel = true;
             }
         } else {
-            // Not holding katana - use demon moveset if available
-            boolean hasDemon = MovesetHelper.hasDemonMoveset(mc.player);
-            if (hasDemon) {
+            // Empty hand - fighting styles take priority over demon arts.
+            if (mainHand.isEmpty() && MovesetHelper.hasFightingMoveset(mc.player)) {
+                moveset = MovesetHelper.getFightingMoveset(mc.player);
+                isFightingWheel = true;
+            } else if (MovesetHelper.hasDemonMoveset(mc.player)) {
                 moveset = MovesetHelper.getDemonMoveset(mc.player);
                 isBreathingWheel = false;
             }
@@ -249,6 +255,7 @@ public class AttackWheelHandler {
             currentWheel.activate();
             wheelOpen = true;
             currentWheelIsBreathing = isBreathingWheel; // Track which type
+            currentWheelIsFighting = isFightingWheel;
 
             // Reset captured move state
             capturedSelectedMove = -1;
@@ -272,6 +279,7 @@ public class AttackWheelHandler {
         }
         wheelOpen = false;
         currentWheelIsBreathing = false; // Reset
+        currentWheelIsFighting = false;  // Reset
         isDefaultKatanaWheel = false;    // Reset
 
         // Reset captured move state
@@ -324,6 +332,8 @@ public class AttackWheelHandler {
 
         if (currentWheelIsBreathing) {
             moveset = MovesetHelper.getBreathingMoveset(mc.player);
+        } else if (currentWheelIsFighting) {
+            moveset = MovesetHelper.getFightingMoveset(mc.player);
         } else if (isDefaultKatanaWheel) {
             // Default katana — use the static display moveset for config lookup only
             moveset = DefaultKatanaMoveset.INSTANCE;
@@ -336,7 +346,16 @@ public class AttackWheelHandler {
             return;
         }
 
-        var moveConfig = moveset.getMove(selectedMove);
+        final AbstractMoveset selectedMoveset = moveset;
+        final AbstractMoveset.MoveConfiguration[] moveConfigHolder = new AbstractMoveset.MoveConfiguration[1];
+        Runnable resolveMove = () -> moveConfigHolder[0] = selectedMoveset.getMove(selectedMove);
+        if (selectedMoveset instanceof CqcMoveset) {
+            CqcMoveset.withPlayer(mc.player, resolveMove);
+        } else {
+            resolveMove.run();
+        }
+
+        var moveConfig = moveConfigHolder[0];
         if (moveConfig == null) {
             closeWheel();
             return;
@@ -356,8 +375,8 @@ public class AttackWheelHandler {
             return;
         }
 
-        // Only check resource costs for breathing arts (demon arts don't use breath/stamina)
-        if (currentWheelIsBreathing) {
+        // Breathing and fighting styles can spend stamina. Demon arts don't use this path.
+        if (currentWheelIsBreathing || currentWheelIsFighting) {
             if (moveConfig.hasStaminaCost() && !StaminaManager.hasStamina(mc.player, moveConfig.getStaminaCost())) {
                 mc.player.displayClientMessage(
                         Component.literal("Not enough stamina!")
@@ -368,7 +387,7 @@ public class AttackWheelHandler {
                 return;
             }
 
-            if (moveConfig.hasBreathCost() && !BreathingManager.hasBreath(mc.player, moveConfig.getBreathCost())) {
+            if (currentWheelIsBreathing && moveConfig.hasBreathCost() && !BreathingManager.hasBreath(mc.player, moveConfig.getBreathCost())) {
                 mc.player.displayClientMessage(
                         Component.literal("Not enough breath!")
                                 .withStyle(style -> style.withColor(0xFF5555)),
@@ -382,6 +401,8 @@ public class AttackWheelHandler {
         // Send move to server using appropriate packet type
         if (currentWheelIsBreathing) {
             MultiplayerInputHandler.sendBreathingMove(selectedMove, mc.player);
+        } else if (currentWheelIsFighting) {
+            MultiplayerInputHandler.sendDemonMove(selectedMove, mc.player);
         } else if (isDefaultKatanaWheel) {
             // Default katana wheel — server handles via SimpleKatana.performWheelMove
             NichirinPacketRegistry.sendToServer(new MoveHotkeyPacket(selectedMove));

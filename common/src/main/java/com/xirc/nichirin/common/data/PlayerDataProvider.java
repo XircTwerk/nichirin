@@ -233,15 +233,20 @@ public class PlayerDataProvider {
             PlayerData data = getData(player);
 
             String breathingId = data.getMovesetData().getBreathingMovesetId();
+            String fightingId = data.getMovesetData().getFightingMovesetId();
             String demonId = data.getMovesetData().getDemonMovesetId();
 
             NichirinPacketRegistry.sendToPlayer(player, (String) null);
             if (demonId != null) {
                 NichirinPacketRegistry.sendToPlayer(player, demonId);
             }
+            if (fightingId != null) {
+                NichirinPacketRegistry.sendToPlayer(player, fightingId);
+            }
             if (breathingId != null) {
                 NichirinPacketRegistry.sendToPlayer(player, breathingId);
             }
+            NichirinPacketRegistry.sendCqcPresetSync(player);
             boolean isDemon = demonId != null;
             int bloodPoints = isDemon ? DemonManager.getBloodPoints(player) : 0;
             int halfBloodPoints = isDemon ? DemonFoodHandler.getHalfBloodPoints(player) : 0;
@@ -266,6 +271,17 @@ public class PlayerDataProvider {
             savePlayerData(player);
             syncToClient(player);
 
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void clearFightingAndSync(ServerPlayer player) {
+        try {
+            PlayerData data = getData(player);
+            data.getMovesetData().clearFightingMoveset();
+            savePlayerData(player);
+            syncToClient(player);
         } catch (Exception e) {
             e.printStackTrace();
         }

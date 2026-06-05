@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.network.c2s;
 
 import com.xirc.nichirin.common.attack.MoveExecutor;
+import com.xirc.nichirin.common.attack.moveset.CqcMoveset;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.util.MultiplayerInputHandler;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
@@ -41,6 +42,19 @@ public class DemonMovePacket {
     public void handle(ServerPlayer player) {
         if (player.hasEffect(NichirinEffectRegistry.stunned())) {
             return;
+        }
+
+        if (player.getMainHandItem().isEmpty() && MovesetHelper.hasFightingMoveset(player)) {
+            var fightingMoveset = MovesetHelper.getFightingMoveset(player);
+            if (fightingMoveset != null && fightingMoveset.isNeutralMoveset()) {
+                if (moveIndex < 0 || moveIndex >= fightingMoveset.getMoveCount()) return;
+                if (fightingMoveset instanceof CqcMoveset) {
+                    CqcMoveset.withPlayer(player, () -> fightingMoveset.performMove(player, moveIndex));
+                } else {
+                    fightingMoveset.performMove(player, moveIndex);
+                }
+                return;
+            }
         }
 
         if (!MovesetHelper.hasDemonMoveset(player)) {
