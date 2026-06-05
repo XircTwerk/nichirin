@@ -37,39 +37,41 @@ public class ClientInputHandler {
 
     private static void registerClientInteractions() {
 
-        // Left click air
+        // Left click air. While the block button (RMB) is held, a left click performs the special
+        // move that used to be on right-click (crouch variant if sneaking) instead of the M1 attack.
         InteractionEvent.CLIENT_LEFT_CLICK_AIR.register((player, hand) -> {
+            if (!canPerformAttacks(player, hand)) {
+                return;
+            }
+            if (isBlockHeld(player)) {
+                sendBlockSpecial(player);
+                return;
+            }
             if (isInputBlocked()) {
                 return;
             }
-
-            if (canPerformAttacks(player, hand)) {
-                sendLeftClick(player);
-            }
+            sendLeftClick(player);
         });
 
-        // Right click air
+        // Right click air is now BLOCK (handled by the hold-poll in BlockingInputHandler), so it no
+        // longer fires a special. Intentionally a no-op.
         InteractionEvent.CLIENT_RIGHT_CLICK_AIR.register((player, hand) -> {
-            if (isInputBlocked()) {
-                return;
-            }
-
-            if (canPerformRightClickAttacks(player, hand)) {
-                sendRightClick(player);
-            }
         });
 
-        // Entity attack blocking (LEFT CLICK ON ENTITIES)
+        // Entity attack (LEFT CLICK ON ENTITIES) — same block+left-click special routing.
         PlayerEvent.ATTACK_ENTITY.register((player, level, entity, hand, hitResult) -> {
             if (!canPerformAttacks(player, hand)) {
                 return EventResult.pass();
             }
 
             if (level.isClientSide) {
+                if (isBlockHeld(player)) {
+                    sendBlockSpecial(player);
+                    return EventResult.interruptFalse();
+                }
                 if (isInputBlocked()) {
                     return EventResult.interruptFalse();
                 }
-
                 sendLeftClick(player);
             }
 
@@ -77,24 +79,39 @@ public class ClientInputHandler {
         });
     }
 
+    /** True when the player is holding the block button (RMB) and is able to block/attack. */
+    private static boolean isBlockHeld(Player player) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.options == null || !mc.options.keyUse.isDown()) return false;
+        if (player.getMainHandItem().getItem() instanceof SimpleKatana) return true;
+        if (player.getOffhandItem().getItem() instanceof SimpleKatana) return true;
+        return player.getMainHandItem().isEmpty()
+                && (MovesetHelper.hasFightingMoveset(player) || MovesetHelper.hasDemonMoveset(player));
+    }
+
+    /** Send the old right-click special (crouch variant if sneaking) — used for block + left-click. */
+    private static void sendBlockSpecial(Player player) {
+        boolean crouch = isCrouchInputDown(player);
+        try {
+            if (player.getMainHandItem().getItem() instanceof SimpleKatana katana) {
+                katana.displayClientRightClickFeedback(player, crouch);
+            }
+        } catch (Exception ignored) {
+        }
+        MultiplayerInputHandler.InputType inputType = crouch
+                ? MultiplayerInputHandler.InputType.RIGHT_CLICK_CROUCH
+                : MultiplayerInputHandler.InputType.RIGHT_CLICK;
+        MultiplayerInputHandler.sendInput(inputType, player);
+    }
+
     /**
      * Called after Minecraft has tried block, entity, and item use for both hands without
      * any vanilla or modded interaction claiming the right click.
      */
     public static void sendDemonRightClickFallback() {
-        Minecraft minecraft = Minecraft.getInstance();
-        Player player = minecraft.player;
-        if (player == null || isInputBlocked()) return;
-        boolean hasEmptyHandStyle = player.getMainHandItem().isEmpty() && MovesetHelper.hasFightingMoveset(player);
-        if (!hasEmptyHandStyle && !MovesetHelper.hasDemonMoveset(player)) return;
-
-        // Nichirin katanas own their right-click path already.
-        if (player.getMainHandItem().getItem() instanceof SimpleKatana) return;
-
-        MultiplayerInputHandler.InputType inputType = isCrouchInputDown(player)
-                ? MultiplayerInputHandler.InputType.RIGHT_CLICK_CROUCH
-                : MultiplayerInputHandler.InputType.RIGHT_CLICK;
-        MultiplayerInputHandler.sendDemonInput(inputType, player);
+        // Right-click is now the BLOCK button for katana, CQC and demon users alike. Their specials
+        // moved to block + left-click (see CLIENT_LEFT_CLICK_AIR), so this right-click fallback is
+        // intentionally disabled to avoid firing a special when the player means to guard.
     }
 
     private static boolean canPerformAttacks(Player player, InteractionHand hand) {

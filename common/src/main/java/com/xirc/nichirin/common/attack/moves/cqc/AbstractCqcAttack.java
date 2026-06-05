@@ -43,6 +43,7 @@ public abstract class AbstractCqcAttack {
     protected float knockback;
     protected float hitboxSize;
     protected int hitStun;
+    protected boolean slam;
     protected float dashDistance;
 
     private int tickCount;
@@ -79,6 +80,7 @@ public abstract class AbstractCqcAttack {
         this.knockback = config.getKnockbackOrDefault(this.knockback);
         this.hitboxSize = config.getHitboxSizeOrDefault(this.hitboxSize);
         this.hitStun = config.getHitStunOrDefault(this.hitStun);
+        this.slam = config.hasSlam();
         this.dashDistance = config.getDashSpeedOrDefault(this.dashDistance);
     }
 
@@ -152,7 +154,15 @@ public abstract class AbstractCqcAttack {
             boolean damaged = NichirinArmorDamage.hurt(target, source, damage);
             if (damaged) {
                 applyKnockback(user, target);
-                if (hitStun > 0) target.invulnerableTime = hitStun;
+                if (hitStun > 0) {
+                    target.invulnerableTime = hitStun;
+                    // Slam moves apply the Slammed effect for hitStun ticks (slam ticks == hit stun).
+                    if (slam) {
+                        target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                                com.xirc.nichirin.registry.NichirinEffectRegistry.slammed(),
+                                hitStun, 0, false, false, true));
+                    }
+                }
                 if (user instanceof Player player) {
                     ComboIntegration.handleSuccessfulHit(player, target, hitStun, damage);
                 }

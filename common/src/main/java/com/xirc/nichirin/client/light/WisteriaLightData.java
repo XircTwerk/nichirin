@@ -8,23 +8,40 @@ import net.minecraft.world.phys.Vec3;
 import org.lwjgl.opengl.GL20;
 
 import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public final class WisteriaLightData {
     public static final int MAX_LIGHTS = 24;
 
     private static final int SCAN_RADIUS = 32;
     private static final int VERTICAL_SCAN_RADIUS = 18;
-    private static final float LIGHT_RADIUS = 11.5F;
-    private static final float DAY_LIGHT_STRENGTH = 0.46F;
-    private static final float NIGHT_LIGHT_STRENGTH = 0.82F;
-    private static final int DAY_COLOR = 0xFFD0F2;
-    private static final int NIGHT_COLOR = 0xC276FF;
+    // How far each leaf's glow reaches and how strong it is (NOT the scan distance / how close you
+    // have to be to the tree — that's SCAN_RADIUS). Bigger radius + strength = the glow spreads
+    // further and reads brighter on nearby surfaces.
+    private static final float LIGHT_RADIUS = 17.0F;
+    private static final float DAY_LIGHT_STRENGTH = 0.75F;
+    private static final float NIGHT_LIGHT_STRENGTH = 1.2F;
+    // A touch more saturated than before so the pink actually reads against foliage.
+    private static final int DAY_COLOR = 0xFFB6EA;
+    private static final int NIGHT_COLOR = 0xC56DFF;
+
+    // Per-tick lerp speed each light's radius eases toward its target (full LIGHT_RADIUS when a
+    // leaf is present, 0 when it has left the scan). Low value = "super smooth" grow-in / fade-out
+    // instead of the old hard pop. Fade-out is a little slower than fade-in so the glow lingers.
+    private static final float FADE_IN_SPEED = 0.085F;
+    private static final float FADE_OUT_SPEED = 0.05F;
+    private static final float FADE_CULL_EPSILON = 0.05F;
 
     private static final float[] LIGHTS = new float[MAX_LIGHTS * 4];
     private static int lightCount;
     private static int scanCooldown;
+
+    // Persistent per-leaf light state, keyed by packed block position, so a leaf keeps its current
+    // (fading) radius across scans rather than snapping on/off.
+    private static final Map<Long, Light> TRACKED = new HashMap<>();
+
     private static float red = 1.0F;
     private static float green = 0.82F;
     private static float blue = 0.95F;
@@ -33,20 +50,39 @@ public final class WisteriaLightData {
     private WisteriaLightData() {
     }
 
+    private static final class Light {
+        final float x;
+        final float y;
+        final float z;
+        float currentRadius;
+        float targetRadius;
+
+        Light(float x, float y, float z) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
+    }
+
     public static void tick(Minecraft minecraft) {
         if (minecraft.level == null || minecraft.player == null) {
+            TRACKED.clear();
             lightCount = 0;
             return;
         }
 
         updateColor(minecraft.level);
 
-        if (scanCooldown-- > 0) {
-            return;
+        BlockPos center = minecraft.player.blockPosition();
+        if (scanCooldown-- <= 0) {
+            scanCooldown = 4;
+            scanForLights(minecraft.level, center);
         }
 
-        scanCooldown = 4;
-        scanForLights(minecraft.level, minecraft.player.blockPosition());
+        // Advance the fades every tick (not just on scans) so the transition is smooth at 20 TPS,
+        // then rebuild the flat upload array from the nearest tracked lights.
+        advanceFades();
+        rebuildUploadArray(center);
     }
 
     public static boolean hasLights() {
@@ -87,27 +123,64 @@ public final class WisteriaLightData {
     }
 
     private static void scanForLights(Level level, BlockPos center) {
-        List<BlockPos> found = new ArrayList<>();
         BlockPos min = center.offset(-SCAN_RADIUS, -VERTICAL_SCAN_RADIUS, -SCAN_RADIUS);
         BlockPos max = center.offset(SCAN_RADIUS, VERTICAL_SCAN_RADIUS, SCAN_RADIUS);
 
+        // Everything currently tracked is assumed gone until the scan re-confirms it; confirmed
+        // leaves get their target restored to full radius, the rest ease back to 0 and get culled.
+        for (Light light : TRACKED.values()) {
+            light.targetRadius = 0.0F;
+        }
+
         for (BlockPos pos : BlockPos.betweenClosed(min, max)) {
             if (level.getBlockState(pos).is(NichirinBlockRegistry.WISTERIA_LEAVES.get())) {
-                found.add(pos.immutable());
+                long key = pos.asLong();
+                Light light = TRACKED.get(key);
+                if (light == null) {
+                    light = new Light(pos.getX() + 0.5F, pos.getY() + 0.5F, pos.getZ() + 0.5F);
+                    TRACKED.put(key, light);
+                }
+                light.targetRadius = LIGHT_RADIUS;
             }
         }
+    }
 
-        found.sort(Comparator.comparingDouble(pos -> pos.distSqr(center)));
-        lightCount = Math.min(MAX_LIGHTS, found.size());
-
-        for (int i = 0; i < lightCount; i++) {
-            BlockPos pos = found.get(i);
-            int index = i * 4;
-            LIGHTS[index] = pos.getX() + 0.5F;
-            LIGHTS[index + 1] = pos.getY() + 0.5F;
-            LIGHTS[index + 2] = pos.getZ() + 0.5F;
-            LIGHTS[index + 3] = LIGHT_RADIUS;
+    private static void advanceFades() {
+        var iterator = TRACKED.values().iterator();
+        while (iterator.hasNext()) {
+            Light light = iterator.next();
+            float speed = light.targetRadius > light.currentRadius ? FADE_IN_SPEED : FADE_OUT_SPEED;
+            light.currentRadius += (light.targetRadius - light.currentRadius) * speed;
+            if (light.targetRadius <= 0.0F && light.currentRadius < FADE_CULL_EPSILON) {
+                iterator.remove();
+            }
         }
+    }
+
+    private static void rebuildUploadArray(BlockPos center) {
+        float cx = center.getX() + 0.5F;
+        float cy = center.getY() + 0.5F;
+        float cz = center.getZ() + 0.5F;
+
+        List<Light> sorted = new ArrayList<>(TRACKED.values());
+        sorted.sort((a, b) -> Float.compare(distSqr(a, cx, cy, cz), distSqr(b, cx, cy, cz)));
+
+        lightCount = Math.min(MAX_LIGHTS, sorted.size());
+        for (int i = 0; i < lightCount; i++) {
+            Light light = sorted.get(i);
+            int index = i * 4;
+            LIGHTS[index] = light.x;
+            LIGHTS[index + 1] = light.y;
+            LIGHTS[index + 2] = light.z;
+            LIGHTS[index + 3] = light.currentRadius;
+        }
+    }
+
+    private static float distSqr(Light light, float cx, float cy, float cz) {
+        float dx = light.x - cx;
+        float dy = light.y - cy;
+        float dz = light.z - cz;
+        return dx * dx + dy * dy + dz * dz;
     }
 
     private static void updateColor(Level level) {

@@ -30,7 +30,8 @@ public class FlameBreathingMoveset extends AbstractMoveset {
 
                 .withRightClickMove(new MoveBuilder("pommel_slash", "Pommel Slash")
                         .withAnimation("nichirin:pommel_slash", 8)
-                        .withTiming(0, 5, 6)
+                        // windup 5, then duration must span all 6 slashes (active ticks 0,3,6,9,12,15)
+                        .withTiming(0, 5, 18)
                         .withDamage(0.5f)
                         .withRange(2.5f)
                         .withKnockback(0f)
@@ -74,6 +75,8 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(20.0f)
                         .withHitStun(20)
                         .withHitboxSize(5f)
+                        .withSlam()
+                        .withArmor(3)
                         .withDescription("Upward arc slash that launches enemies into the air.")
                         .withAction(entity -> {
                             RisingScorchingSunAttack attack = new RisingScorchingSunAttack();

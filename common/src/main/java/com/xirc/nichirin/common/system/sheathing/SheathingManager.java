@@ -237,10 +237,15 @@ public class SheathingManager {
     public static boolean isSelectedKatanaSheathed(Player player) {
         PlayerSheathData data = get(player);
         SheathSlotData slot = getSelectedLinkedSlot(player, data);
-        return slot != null
-                && (slot.getState() == SheathState.SHEATHED
+        if (slot == null) return false;
+        // If a real katana actually occupies the selected hotbar slot, it's drawn and in-hand —
+        // it should render and attack normally even when this slot ALSO stores a separate sheathed
+        // sword (e.g. you sheathed one katana, then placed another in the freed hotbar slot). The
+        // "sheathed" state only applies when the hand is empty because the katana is stored away.
+        if (hasHotbarSword(player, slot)) return false;
+        return slot.getState() == SheathState.SHEATHED
                 || slot.getState() == SheathState.SHEATHING
-                || slot.getState() == SheathState.UNSHEATHING);
+                || slot.getState() == SheathState.UNSHEATHING;
     }
 
     public static void updateSlot(ServerPlayer player, SheathPosition position, boolean enabled, int hotbarSlot, int priority,

@@ -9,6 +9,7 @@
     "client.FogRendererMixin",
     "client.GameRendererMixin",
     "client.GuiMixin",
+    "client.HumanoidModelMixin",
     "client.KeyboardInputMixin",
     "client.LevelRendererMixin",
     "client.MouseHandlerMixin",

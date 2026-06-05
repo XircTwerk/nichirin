@@ -69,26 +69,30 @@ public class SimpleKatana extends Item {
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-        if (level.isClientSide) return InteractionResultHolder.pass(player.getItemInHand(hand));
-        if (!canPerformAttack(player)) return InteractionResultHolder.pass(player.getItemInHand(hand));
-        if (player.hasEffect(NichirinEffectRegistry.stunned()))
-            return InteractionResultHolder.pass(player.getItemInHand(hand));
-        if (player.hasEffect(NichirinEffectRegistry.blocking()))
-            return InteractionResultHolder.pass(player.getItemInHand(hand));
-        if (SheathingManager.isSelectedKatanaSheathed(player))
-            return InteractionResultHolder.pass(player.getItemInHand(hand));
+        // Right-click is the BLOCK button now (handled client-side in BlockingInputHandler). The
+        // right-click SPECIAL moved to block + left-click, which routes through performSpecial(...)
+        // via the katana input packet. The vanilla use() path must therefore do NOTHING, otherwise
+        // a plain right-click would also fire the special on top of starting a block.
+        return InteractionResultHolder.pass(player.getItemInHand(hand));
+    }
 
-        boolean isCrouching = player.isShiftKeyDown() || player.isCrouching();
+    /**
+     * SERVER ONLY: performs the right-click special move (the old right-click / crouch-right-click
+     * behaviour). Invoked only from the katana input packet when the player does block + left click.
+     */
+    public void performSpecial(Player player, boolean isCrouching) {
+        if (player.level().isClientSide) return;
+        if (!canPerformAttack(player)) return;
+        if (player.hasEffect(NichirinEffectRegistry.stunned())) return;
+        if (SheathingManager.isSelectedKatanaSheathed(player)) return;
 
         // If the breathing moveset claims the right-click (returns true) we're done.
         // Otherwise fall through to the default double-slash / rising-slash.
         AbstractMoveset moveset = MovesetHelper.getBreathingMoveset(player);
         if (moveset != null && moveset.handleRightClick(player, isCrouching)) {
-            return InteractionResultHolder.consume(getActiveHandItem(player));
+            return;
         }
-
         DefaultKatanaMoveset.INSTANCE.handleRightClick(player, isCrouching);
-        return InteractionResultHolder.consume(getActiveHandItem(player));
     }
 
     // Wheel moves (0 = Check, 1 = Overhead, 2 = Thrust)

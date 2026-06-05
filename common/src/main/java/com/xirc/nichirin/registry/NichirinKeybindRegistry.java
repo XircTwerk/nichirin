@@ -52,11 +52,7 @@ public interface NichirinKeybindRegistry {
             "key.categories.nichirin"
     );
 
-    KeyMapping BLOCK_KEY = new KeyMapping(
-            "key.nichirin.block",
-            GLFW.GLFW_KEY_V,
-            "key.categories.nichirin"
-    );
+    // Blocking moved to right-click (hold) — handled in BlockingInputHandler. No dedicated key.
 
     KeyMapping MOVEMENT_KEY = new KeyMapping(
             "key.nichirin.movement",
@@ -83,7 +79,6 @@ public interface NichirinKeybindRegistry {
         registrar.accept(ATTACK_WHEEL_KEY);
         registrar.accept(SHEATHE_KEY);
         registrar.accept(OPEN_GUI_KEY);
-        registrar.accept(BLOCK_KEY);
         registrar.accept(MOVEMENT_KEY);
 
         // Register move index hotkeys

@@ -17,6 +17,7 @@ public interface NichirinEffectRegistry {
     RegistrySupplier<MobEffect> SHOCKED = EFFECT_REGISTRY.register("shocked", ShockedStatusEffect::new);
     RegistrySupplier<MobEffect> BLOCKING = EFFECT_REGISTRY.register("blocking", BlockingStatusEffect::new);
     RegistrySupplier<MobEffect> STUNNED = EFFECT_REGISTRY.register("stunned", StunnedStatusEffect::new);
+    RegistrySupplier<MobEffect> SLAMMED = EFFECT_REGISTRY.register("slammed", SlammedStatusEffect::new);
     RegistrySupplier<MobEffect> BURNING = EFFECT_REGISTRY.register("burning", BurningStatusEffect::new);
     RegistrySupplier<MobEffect> VENOM = EFFECT_REGISTRY.register("venom", VenomStatusEffect::new);
     RegistrySupplier<MobEffect> DISORIENTED = EFFECT_REGISTRY.register("disoriented", DisorientedStatusEffect::new);
@@ -32,6 +33,10 @@ public interface NichirinEffectRegistry {
 
     static Holder<MobEffect> stunned() {
         return BuiltInRegistries.MOB_EFFECT.wrapAsHolder(STUNNED.get());
+    }
+
+    static Holder<MobEffect> slammed() {
+        return BuiltInRegistries.MOB_EFFECT.wrapAsHolder(SLAMMED.get());
     }
 
     static Holder<MobEffect> burning() {
