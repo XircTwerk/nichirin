@@ -22,12 +22,17 @@ public class GameRendererMixin implements NichirinBlurAccessor {
     @Inject(method = "bobHurt", at = @At("TAIL"))
     private void nichirin$impactCameraShakeAfterHurtBob(PoseStack poseStack, float partialTick, CallbackInfo ci) {
         ImpactCameraShake.apply(poseStack, partialTick);
-        SlammedWobble.apply(poseStack, partialTick);
+        // bobView (below) is the camera bob that actually applies when view-bobbing is ON, so only
+        // run the slammed wobble here when bobbing is OFF — otherwise it would apply twice.
+        if (!Minecraft.getInstance().options.bobView().get()) {
+            SlammedWobble.apply(poseStack, partialTick);
+        }
     }
 
     @Inject(method = "bobView", at = @At("TAIL"))
     private void nichirin$impactCameraShakeAfterViewBob(PoseStack poseStack, float partialTick, CallbackInfo ci) {
         ImpactCameraShake.apply(poseStack, partialTick);
+        SlammedWobble.apply(poseStack, partialTick);
     }
 
     @Override

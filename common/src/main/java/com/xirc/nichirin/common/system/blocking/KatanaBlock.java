@@ -70,11 +70,13 @@ public class KatanaBlock {
         int parryWindowTicks = 0;
         long blockCooldownUntil = 0;
         boolean wasBlockingLastTick = false;
+        boolean wasAttackingLastTick = false;
 
         void reset() {
             stance = BlockingStance.NONE;
             blockTicks = 0;
             parryWindowTicks = 0;
+            wasAttackingLastTick = false;
         }
 
         void setBlockCooldown(long currentTime) {
@@ -95,16 +97,27 @@ public class KatanaBlock {
 
         if (!canStartBlocking(entity, state)) return false;
 
-        // Parry is now a RELEASE-timed window (opened in stopBlocking), not a click-timed one, so we
-        // always start as a plain guard. Releasing at the right moment is what parries.
+        // Parry window opens at the START of the block (click-timed). CQC / parry-disabled guards
+        // start as a plain block instead.
         state.blockTicks = 0;
-        state.stance = BlockingStance.BLOCKING;
-        state.parryWindowTicks = 0;
-        if (entity instanceof Player player) {
-            player.displayClientMessage(
-                    Component.literal("⚔ Blocking")
-                            .withStyle(style -> style.withColor(0xAAAAAA)),
-                    true);
+        if (parryAllowed(entity)) {
+            state.stance = BlockingStance.PARRY_READY;
+            state.parryWindowTicks = NichirinModConfig.get().combat.parryWindowTicks;
+            if (entity instanceof Player player) {
+                player.displayClientMessage(
+                        Component.literal("⚔ Guard Up!")
+                                .withStyle(style -> style.withColor(0xFFAA00).withBold(true)),
+                        true);
+            }
+        } else {
+            state.stance = BlockingStance.BLOCKING;
+            state.parryWindowTicks = 0;
+            if (entity instanceof Player player) {
+                player.displayClientMessage(
+                        Component.literal("⚔ Blocking")
+                                .withStyle(style -> style.withColor(0xAAAAAA)),
+                        true);
+            }
         }
 
         applyBlockingEffect(entity);
@@ -134,26 +147,15 @@ public class KatanaBlock {
         BlockingState state = BLOCKING_STATES.get(entity.getUUID());
         if (state == null || state.stance == BlockingStance.NONE) return;
 
-        // Releasing an active guard opens the parry window: the guard drops immediately, but for a
-        // few ticks an incoming hit is parried instead of taken. Tick() closes the window. CQC and
-        // parry-disabled guards just end normally.
-        if (state.stance == BlockingStance.BLOCKING && parryAllowed(entity)) {
-            removeBlockingEffect(entity);
-            state.stance = BlockingStance.PARRY_READY;
-            state.parryWindowTicks = NichirinModConfig.get().combat.parryWindowTicks;
-            // Just lower the guard — the parry animation only plays if a hit is actually parried
-            // during the window (see handleSuccessfulParry).
-            if (entity instanceof ServerPlayer serverPlayer) {
-                NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer,
-                        new PlayerAnimationPacket(serverPlayer.getId(), ""));
-            } else if (entity instanceof com.xirc.nichirin.common.entity.npc.BaseBreathingTrainerEntity trainer) {
-                trainer.setAnimation("", 1.0f);
-            }
-            return;
-        }
-
         long currentTime = entity.level().getGameTime();
-        if (state.stance != BlockingStance.PARRY_SUCCESS) {
+        boolean wasInParryWindow = (state.stance == BlockingStance.PARRY_READY && state.parryWindowTicks > 0);
+
+        if (wasInParryWindow) {
+            if (entity instanceof Player player) {
+                applyEarlyReleasePunishment(player);
+            }
+            state.setBlockCooldown(currentTime);
+        } else if (state.stance != BlockingStance.PARRY_SUCCESS) {
             state.setBlockCooldown(currentTime);
         }
 
@@ -209,44 +211,45 @@ public class KatanaBlock {
         BlockingState state = BLOCKING_STATES.get(entity.getUUID());
         if (state == null) return;
 
-        if (state.stance == BlockingStance.BLOCKING) {
-            // Actively guarding: count how long it's been held (drives guard-loss scaling) and keep
-            // the resistance effect applied.
+        boolean currentlyBlocking = (state.stance == BlockingStance.BLOCKING ||
+                state.stance == BlockingStance.PARRY_READY);
+
+        if (currentlyBlocking) {
+            // Count how long the guard's been held (drives guard-loss scaling).
             state.blockTicks++;
+
+            // Click-timed parry window decays into a plain block once it expires.
+            if (state.stance == BlockingStance.PARRY_READY) {
+                state.parryWindowTicks--;
+                if (state.parryWindowTicks <= 0) {
+                    state.stance = BlockingStance.BLOCKING;
+                }
+            }
+
             if (!entity.hasEffect(NichirinEffectRegistry.blocking())) {
                 applyBlockingEffect(entity);
             }
-        } else if (state.stance == BlockingStance.PARRY_READY) {
-            // Post-release parry window: guard is already down (no resistance). Count it down; when it
-            // closes without parrying anything, finalize the release with the normal block cooldown.
-            state.parryWindowTicks--;
-            if (state.parryWindowTicks <= 0) {
-                state.setBlockCooldown(entity.level().getGameTime());
-                removeBlockingEffect(entity);
+
+            // A block + left-click special replaces the held block animation while it plays. When it
+            // finishes and the guard is still up, resume the block hold animation for everyone.
+            boolean attacking = MoveExecutor.hasActiveAttacks(entity);
+            if (state.wasAttackingLastTick && !attacking) {
                 if (entity instanceof ServerPlayer serverPlayer) {
                     NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer,
-                            new PlayerAnimationPacket(serverPlayer.getId(), ""));
+                            new PlayerAnimationPacket(serverPlayer.getId(), "sword.block"));
                 } else if (entity instanceof com.xirc.nichirin.common.entity.npc.BaseBreathingTrainerEntity trainer) {
-                    trainer.setAnimation("", 1.0f);
+                    trainer.setAnimation("sword.block", 1.0f);
                 }
-                state.reset();
             }
-        } else if (state.stance == BlockingStance.PARRY_SUCCESS) {
-            // A release-window parry resolved last tick (the damage event already read PARRY_SUCCESS).
-            // Clean up now — successful parry has no block cooldown (it's the reward).
-            removeBlockingEffect(entity);
-            if (entity instanceof ServerPlayer serverPlayer) {
-                NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer,
-                        new PlayerAnimationPacket(serverPlayer.getId(), ""));
-            } else if (entity instanceof com.xirc.nichirin.common.entity.npc.BaseBreathingTrainerEntity trainer) {
-                trainer.setAnimation("", 1.0f);
+            state.wasAttackingLastTick = attacking;
+        } else {
+            state.wasAttackingLastTick = false;
+            if (state.wasBlockingLastTick) {
+                removeBlockingEffect(entity);
             }
-            state.reset();
-        } else if (state.wasBlockingLastTick) {
-            removeBlockingEffect(entity);
         }
 
-        state.wasBlockingLastTick = (state.stance == BlockingStance.BLOCKING);
+        state.wasBlockingLastTick = currentlyBlocking;
     }
 
     // Keep old Player signature
