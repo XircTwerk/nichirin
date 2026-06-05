@@ -76,6 +76,7 @@ public final class BreathOfNichirin {
         StaminaEventHandler.register();
         BlockingEventHandler.register();
         DodgeEventHandler.register();
+        com.xirc.nichirin.common.event.system.HitAnimationHandler.register();
         DemonFoodHandler.register();
         DrinkingGourdInteractionHandler.register();
 

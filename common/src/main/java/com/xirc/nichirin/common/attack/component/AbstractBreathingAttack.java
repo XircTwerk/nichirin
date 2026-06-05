@@ -49,6 +49,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     protected float knockback;
     protected float breathCost;
     protected int hitStun;
+    protected boolean slam;
     protected int armorHits;
     protected boolean hyperArmor;
     protected float hitboxSize;
@@ -95,6 +96,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         this.range = config.getRangeOrDefault(0f);
         this.knockback = config.getKnockbackOrDefault(0f);
         this.hitStun = config.getHitStunOrDefault(0);
+        this.slam = config.hasSlam();
         this.armorHits = config.getArmorOrDefault(0);
         this.hyperArmor = config.hasHyperArmor();
         this.hitboxSize = config.getHitboxSizeOrDefault(0f);
@@ -317,20 +319,20 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
             ComboIntegration.handleSuccessfulHit(player, target, hitStun, damage);
         }
 
-        // Apply hit stun if configured
+        // Apply hit stun if configured. Slam moves apply the Slammed effect (80% slow + swim pose +
+        // wobble) for the same duration instead of the normal Stun lock.
         if (hitStun > 0) {
             target.invulnerableTime = hitStun;
 
-            // Apply actual stun effect
-            MobEffectInstance stunInstance = new MobEffectInstance(
-                    NichirinEffectRegistry.stunned(),
-                    hitStun, // Duration in ticks
-                    2, // Amplifier
+            MobEffectInstance controlEffect = new MobEffectInstance(
+                    slam ? NichirinEffectRegistry.slammed() : NichirinEffectRegistry.stunned(),
+                    hitStun, // Duration in ticks (slam ticks == hit stun)
+                    slam ? 0 : 2, // Amplifier
                     false, // Ambient
                     false, // Show particles
                     true // Show icon
             );
-            target.addEffect(stunInstance);
+            target.addEffect(controlEffect);
         }
 
         // Apply knockback if configured

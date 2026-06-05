@@ -38,6 +38,14 @@ public class NichirinTagProvider extends FabricTagProvider.BlockTagProvider {
         getOrCreateTagBuilder(BlockTags.MINEABLE_WITH_PICKAXE)
                 .add(NichirinBlockRegistry.SCARLET_ORE.get())
                 .add(NichirinBlockRegistry.KATANA_HOLDER_BLOCK.get());
+
+        // Fences must be in the fence tags or FenceBlock.connectsTo() won't link them to
+        // other fences (it only connects to fence gates and solid blocks without this).
+        // #minecraft:fences includes #minecraft:wooden_fences, so adding here covers both.
+        getOrCreateTagBuilder(BlockTags.WOODEN_FENCES)
+                .add(NichirinBlockRegistry.WISTERIA_FENCE.get());
+        getOrCreateTagBuilder(BlockTags.FENCE_GATES)
+                .add(NichirinBlockRegistry.WISTERIA_FENCE_GATE.get());
     }
 
     // Add ItemTagProvider as nested class for item tags

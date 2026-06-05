@@ -3,6 +3,7 @@ package com.xirc.nichirin.mixin.client;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.xirc.nichirin.client.handler.ImpactCameraShake;
+import com.xirc.nichirin.client.handler.SlammedWobble;
 import com.xirc.nichirin.mixin_logic.NichirinBlurAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
@@ -21,6 +22,7 @@ public class GameRendererMixin implements NichirinBlurAccessor {
     @Inject(method = "bobHurt", at = @At("TAIL"))
     private void nichirin$impactCameraShakeAfterHurtBob(PoseStack poseStack, float partialTick, CallbackInfo ci) {
         ImpactCameraShake.apply(poseStack, partialTick);
+        SlammedWobble.apply(poseStack, partialTick);
     }
 
     @Inject(method = "bobView", at = @At("TAIL"))

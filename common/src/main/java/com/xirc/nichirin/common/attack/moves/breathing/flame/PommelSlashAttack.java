@@ -18,6 +18,7 @@ import java.util.Set;
 public class PommelSlashAttack extends FlameBreathingAttackBase {
 
     private static final int SLASH_INTERVAL = 3;
+    private static final int SLASH_COUNT = 6;
 
     private int totalSlashes;
     private int slashesPerformed = 0;
@@ -28,7 +29,7 @@ public class PommelSlashAttack extends FlameBreathingAttackBase {
 
     @Override
     protected void onStart() {
-        totalSlashes = Math.max(1, duration / SLASH_INTERVAL);
+        totalSlashes = SLASH_COUNT;
         slashesPerformed = 0;
         hitEntities.clear();
 
@@ -44,17 +45,15 @@ public class PommelSlashAttack extends FlameBreathingAttackBase {
     protected void perform() {
         if (world.isClientSide) return;
 
-        // Perform slashes at regular intervals after windup
-        int ticksSinceWindup = tickCount - windup;
+        // perform() is first called the tick AFTER windup ends, so activeTick == 0 on that first
+        // active tick. Fire one slash every SLASH_INTERVAL active ticks until all SLASH_COUNT are
+        // done. Using slashesPerformed as the index keeps the slashes sequential (0..5).
+        int activeTick = tickCount - windup - 1;
+        if (activeTick < 0) return;
 
-        // Check if it's time for a slash (every SLASH_INTERVAL ticks)
-        if (ticksSinceWindup >= 0 && ticksSinceWindup % SLASH_INTERVAL == 0) {
-            int slashIndex = ticksSinceWindup / SLASH_INTERVAL;
-
-            if (slashIndex < totalSlashes) {
-                performSlash(slashIndex);
-                slashesPerformed++;
-            }
+        if (activeTick % SLASH_INTERVAL == 0 && slashesPerformed < totalSlashes) {
+            performSlash(slashesPerformed);
+            slashesPerformed++;
         }
     }
 

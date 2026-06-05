@@ -645,6 +645,7 @@ public abstract class AbstractMoveset {
         public final Integer hitStun;
         public final Integer armor;
         public final boolean hyperArmor;
+        public final boolean slam;
         public final Float hitboxSize;
 
         public final Integer cooldown;
@@ -676,6 +677,7 @@ public abstract class AbstractMoveset {
             this.hitStun = builder.hitStun;
             this.armor = builder.armor;
             this.hyperArmor = builder.hyperArmor;
+            this.slam = builder.slam;
             this.hitboxSize = builder.hitboxSize;
 
             this.cooldown = builder.cooldown;
@@ -695,6 +697,9 @@ public abstract class AbstractMoveset {
         }
 
         public boolean hasHyperArmor() { return hyperArmor; }
+
+        /** When true, this move applies the Slammed effect (for hitStun ticks) instead of Stunned. */
+        public boolean hasSlam() { return slam; }
 
         // Convenience methods
         public boolean hasDamage() { return damage != null; }
@@ -941,6 +946,7 @@ public abstract class AbstractMoveset {
         private Integer hitStun;
         private Integer armor;
         private boolean hyperArmor;
+        private boolean slam;
         private Float hitboxSize;
 
         private Integer cooldown;
@@ -1015,6 +1021,15 @@ public abstract class AbstractMoveset {
                 throw new IllegalStateException("Move " + moveId + " cannot use both armor and hyper armor");
             }
             this.hyperArmor = true;
+            return this;
+        }
+
+        /**
+         * Marks this move as a slam: on hit it applies the Slammed effect (80% slow + swim pose +
+         * screen wobble) instead of Stunned, for a duration equal to the move's hitStun ticks.
+         */
+        public MoveBuilder withSlam() {
+            this.slam = true;
             return this;
         }
 

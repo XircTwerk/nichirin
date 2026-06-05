@@ -45,10 +45,10 @@ public class BlockingInputHandler {
     }
 
     private static void handleBlockingInput(Player player) {
-        // Check if player has a katana equipped
-        ItemStack mainHand = player.getMainHandItem();
-        if (!(mainHand.getItem() instanceof SimpleKatana)) {
-            // If not holding katana but was blocking, stop blocking
+        // Block-capable = holding a katana in either hand, or empty main hand with a CQC/demon
+        // moveset. (Offhand katana counts so you can guard while the main hand is busy.)
+        if (!canBlock(player)) {
+            // No longer able to block but was blocking — stop.
             if (isCurrentlyBlocking) {
                 sendBlockStop();
                 isCurrentlyBlocking = false;
@@ -57,7 +57,9 @@ public class BlockingInputHandler {
             return;
         }
 
-        boolean blockKeyPressed = NichirinKeybindRegistry.BLOCK_KEY.isDown();
+        // Right mouse (Use Item) is now the block button.
+        boolean blockKeyPressed = Minecraft.getInstance().options.keyUse.isDown()
+                && Minecraft.getInstance().screen == null;
         boolean serverAcceptedBlock = player.hasEffect(NichirinEffectRegistry.blocking());
 
         // Handle key press
@@ -79,6 +81,14 @@ public class BlockingInputHandler {
         } else if (serverAcceptedBlock) {
             blockRetryTicks = 0;
         }
+    }
+
+    private static boolean canBlock(Player player) {
+        if (player.getMainHandItem().getItem() instanceof SimpleKatana) return true;
+        if (player.getOffhandItem().getItem() instanceof SimpleKatana) return true;
+        return player.getMainHandItem().isEmpty()
+                && (com.xirc.nichirin.common.data.MovesetHelper.hasFightingMoveset(player)
+                || com.xirc.nichirin.common.data.MovesetHelper.hasDemonMoveset(player));
     }
 
     private static void sendBlockStart() {

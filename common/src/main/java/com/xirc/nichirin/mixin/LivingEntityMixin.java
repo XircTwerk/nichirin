@@ -5,9 +5,11 @@ import com.xirc.nichirin.common.util.NichirinArmorDamage;
 import com.xirc.nichirin.common.util.ComboTracker;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.common.effect.ShockedStatusEffect;
+import com.xirc.nichirin.common.effect.SlammedStatusEffect;
 import com.xirc.nichirin.common.effect.StunnedStatusEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.damagesource.DamageSource;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -45,9 +47,25 @@ public abstract class LivingEntityMixin {
             }
         }
 
+        if (effect.getEffect().value() == NichirinEffectRegistry.slammed().value()) {
+            SlammedStatusEffect.removeMovementModifier(entity);
+        }
+
         if (!entity.level().isClientSide
                 && effect.getEffect().value() == NichirinEffectRegistry.shocked().value()) {
             ShockedStatusEffect.spawnRemovalParticles(entity);
+        }
+    }
+
+    // Force the slammed swim/crawl pose. Vanilla's pose/swimming update runs earlier in tick() and
+    // clears it out of water, so we re-assert at TAIL; the swim animation keys off Pose.SWIMMING
+    // (isVisuallySwimming), not just the swimming flag.
+    @Inject(method = "tick", at = @At("TAIL"))
+    private void nichirin$forceSlammedSwimPose(CallbackInfo ci) {
+        LivingEntity entity = (LivingEntity) (Object) this;
+        if (entity.hasEffect(NichirinEffectRegistry.slammed())) {
+            entity.setSwimming(true);
+            entity.setPose(Pose.SWIMMING);
         }
     }
 }

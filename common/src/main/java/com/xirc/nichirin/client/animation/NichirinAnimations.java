@@ -73,9 +73,20 @@ public final class NichirinAnimations {
 
         if ("sword.block".equals(animationName)) {
             controller.triggerAnimation(PlayerRawAnimationBuilder.begin().thenPlayAndHold(animation).build());
+        } else if (isHitAnimation(animationName)) {
+            // Re-trigger from the start on every hit so rapid hits keep restarting the flinch
+            // instead of being ignored while one is mid-play.
+            controller.stopTriggeredAnimation();
+            controller.triggerAnimation(animation);
         } else {
             controller.triggerAnimation(animation);
         }
+    }
+
+    private static boolean isHitAnimation(String animationName) {
+        return "small_hit".equals(animationName)
+                || "medium_hit".equals(animationName)
+                || "large_hit".equals(animationName);
     }
 
     private static ResourceLocation findAnimation(String animationName) {

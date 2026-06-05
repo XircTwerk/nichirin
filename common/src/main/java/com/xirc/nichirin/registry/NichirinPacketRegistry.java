@@ -208,7 +208,10 @@ public interface NichirinPacketRegistry {
             MultiplayerInputHandler.InputType inputType = buf.readEnum(MultiplayerInputHandler.InputType.class);
             if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
                 context.queue(() -> {
-                    if (shouldBlockInputsServer(serverPlayer)) {
+                    // The right-click special is block + left-click, so it must fire while guarding.
+                    boolean isBlockSpecial = inputType == MultiplayerInputHandler.InputType.RIGHT_CLICK
+                            || inputType == MultiplayerInputHandler.InputType.RIGHT_CLICK_CROUCH;
+                    if (shouldBlockInputsServer(serverPlayer, !isBlockSpecial)) {
                         return;
                     }
                     executeKatanaInput(serverPlayer, inputType);
@@ -222,7 +225,9 @@ public interface NichirinPacketRegistry {
                 context.queue(() -> {
                     try {
                         MultiplayerInputHandler.InputType inputType = MultiplayerInputHandler.InputType.valueOf(inputTypeName);
-                        if (shouldBlockInputsServer(serverPlayer)) {
+                        boolean isBlockSpecial = inputType == MultiplayerInputHandler.InputType.RIGHT_CLICK
+                                || inputType == MultiplayerInputHandler.InputType.RIGHT_CLICK_CROUCH;
+                        if (shouldBlockInputsServer(serverPlayer, !isBlockSpecial)) {
                             return;
                         }
                         handleDemonInput(serverPlayer, inputType);
@@ -519,13 +524,23 @@ public interface NichirinPacketRegistry {
     }
 
     static boolean shouldBlockInputsServer(Player player) {
+        return shouldBlockInputsServer(player, true);
+    }
+
+    /**
+     * @param respectBlocking when false, the active block (guard) does NOT count as a reason to
+     *                        suppress the input — used for the block + left-click special, which by
+     *                        definition fires while guarding. Stun and the post-move input lock
+     *                        still apply.
+     */
+    static boolean shouldBlockInputsServer(Player player, boolean respectBlocking) {
         if (player.level().isClientSide) return false;
 
         if (player.hasEffect(NichirinEffectRegistry.stunned())) {
             return true;
         }
 
-        if (player.hasEffect(NichirinEffectRegistry.blocking())) {
+        if (respectBlocking && player.hasEffect(NichirinEffectRegistry.blocking())) {
             return true;
         }
 
@@ -544,13 +559,8 @@ public interface NichirinPacketRegistry {
 
         switch (inputType) {
             case LEFT_CLICK -> katana.performAttack(player);
-            case RIGHT_CLICK -> katana.use(player.level(), player, InteractionHand.MAIN_HAND);
-            case RIGHT_CLICK_CROUCH -> {
-                boolean wasCrouching = player.isShiftKeyDown();
-                player.setShiftKeyDown(true);
-                katana.use(player.level(), player, InteractionHand.MAIN_HAND);
-                player.setShiftKeyDown(wasCrouching);
-            }
+            case RIGHT_CLICK -> katana.performSpecial(player, false);
+            case RIGHT_CLICK_CROUCH -> katana.performSpecial(player, true);
         }
 
         MultiplayerInputHandler.PlayerInputState state = getOrCreatePlayerState(player);

@@ -34,7 +34,7 @@ public class CqcMoveset extends AbstractMoveset {
             .withDamage(4.25f)
             .withRange(1.15f)
             .withKnockback(0.08f)
-            .withHitStun(18)
+            .withHitStun(9)
             .withHitboxSize(1.9f)
             .withStaminaCost(4.0f)
             .build();
