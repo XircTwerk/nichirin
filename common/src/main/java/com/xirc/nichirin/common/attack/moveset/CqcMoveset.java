@@ -2,9 +2,11 @@ package com.xirc.nichirin.common.attack.moveset;
 
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.cqc.*;
+import com.xirc.nichirin.common.attack.moves.demon.basic.*;
 import com.xirc.nichirin.common.data.CqcMoveCatalog;
 import com.xirc.nichirin.common.data.CqcPresetData;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
+import com.xirc.nichirin.common.system.DemonManager;
 import com.xirc.nichirin.common.util.StaminaManager;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.LivingEntity;
@@ -26,6 +28,7 @@ public class CqcMoveset extends AbstractMoveset {
     public static final String ID = "cqc";
     private static final CqcPresetData DEFAULT_PRESET = new CqcPresetData();
     private static final Map<UUID, Map<String, Long>> COOLDOWNS = new ConcurrentHashMap<>();
+    private static final Map<UUID, SlashComboState> SLASH_STATES = new ConcurrentHashMap<>();
 
     public static final MoveConfiguration JAB = new MoveBuilder("jab", "Jab")
             .withAnimation("nichirin:jab", 6)
@@ -258,7 +261,120 @@ public class CqcMoveset extends AbstractMoveset {
             .withStaminaCost(5.0f)
             .build();
 
+    public static final MoveConfiguration DEMON_GUT_PUNCH = new MoveBuilder("demon_gut_punch", "Gut Punch")
+            .withAnimation("nichirin:demon_gut_punch", 6)
+            .withDescription("Powerful close-range punch that stuns enemies.")
+            .withTiming(15, 1, 7)
+            .withDamage(6.0f)
+            .withRange(2.0f)
+            .withKnockback(0.1f)
+            .withHitStun(15)
+            .withHitboxSize(2.8f)
+            .build();
+
+    public static final MoveConfiguration DEMON_SLASH = new MoveBuilder("demon_slash", "Slash")
+            .withAnimation("nichirin:demon_slash", 6)
+            .withDescription("Basic claw slash, press again for the finisher.")
+            .withTiming(0, 0, 14)
+            .withDamage(4.0f)
+            .withRange(3.0f)
+            .withKnockback(0f)
+            .withHitStun(10)
+            .withHitboxSize(2.0f)
+            .build();
+
+    private static final MoveConfiguration DEMON_SLASH_2 = new MoveBuilder("demon_slash_2", "Slash Finisher")
+            .withAnimation("nichirin:demon_slash_2", 6)
+            .withDescription("Finishing claw slash after the initial slash.")
+            .withTiming(5, 0, 18)
+            .withDamage(6.0f)
+            .withRange(3.0f)
+            .withKnockback(0.5f)
+            .withHitStun(5)
+            .withHitboxSize(2.2f)
+            .build();
+
+    public static final MoveConfiguration HIGH_JUMP = new MoveBuilder("high_jump", "High Jump")
+            .withAnimation("nichirin:demon_high_jump", 8)
+            .withDescription("Launch upward and lift nearby enemies.")
+            .withTiming(220, 0, 4)
+            .build();
+
+    public static final MoveConfiguration DEMON_STOMP = new MoveBuilder("demon_stomp", "Stomp")
+            .withAnimation("nichirin:demon_stomp", 6)
+            .withDescription("Airborne stomp that slams enemies down.")
+            .withTiming(60, 0, 11)
+            .withDamage(10.0f)
+            .withRange(4.0f)
+            .withKnockback(0.8f)
+            .withHitStun(30)
+            .withHitboxSize(3.0f)
+            .build();
+
+    public static final MoveConfiguration DEMON_KICK = new MoveBuilder("demon_kick", "Kick")
+            .withAnimation("nichirin:demon_kick", 8)
+            .withDescription("Powerful front kick with high knockback.")
+            .withTiming(60, 5, 11)
+            .withDamage(6.0f)
+            .withRange(2.5f)
+            .withKnockback(1f)
+            .withHitStun(25)
+            .withHitboxSize(2.0f)
+            .build();
+
+    public static final MoveConfiguration DASHING_STRIKE = new MoveBuilder("dashing_strike", "Dashing Strike")
+            .withAnimation("nichirin:demon_dash_strike", 10)
+            .withDescription("Dash forward and deliver a devastating punch.")
+            .withTiming(140, 8, 14)
+            .withDamage(12.0f)
+            .withDashSpeed(6.0f)
+            .withRange(5.5f)
+            .withKnockback(0.2f)
+            .withHitStun(20)
+            .withHitboxSize(2)
+            .build();
+
+    public static final MoveConfiguration DEMON_BITE = new MoveBuilder("demon_bite", "Bite")
+            .withAnimation("nichirin:demon_bite", 9)
+            .withDescription("Bite attack that steals blood.")
+            .withTiming(100, 5, 11)
+            .withDamage(8.0f)
+            .withRange(2.0f)
+            .withKnockback(0.1f)
+            .withHitStun(20)
+            .withHitboxSize(2.0f)
+            .build();
+
+    public static final MoveConfiguration DEMON_GRAB = new MoveBuilder("demon_grab", "Throw")
+            .withAnimation("nichirin:demon_grab", 5)
+            .withDescription("Grab and instantly throw the target forward.")
+            .withTiming(80, 3, 8)
+            .build();
+
     private static final Map<String, MoveConfiguration> CONFIGS = buildConfigMap();
+
+    private static class SlashComboState {
+        int currentStage = 0;
+        long slash1GameTick = -1;
+        static final long MIN_FOLLOWUP_TICKS = 8;
+        static final long MAX_FOLLOWUP_TICKS = 40;
+
+        boolean isReadyForSlash2(long currentTick) {
+            if (slash1GameTick < 0) return false;
+            long elapsed = currentTick - slash1GameTick;
+            return elapsed >= MIN_FOLLOWUP_TICKS && elapsed <= MAX_FOLLOWUP_TICKS;
+        }
+
+        void recordSlash1(long currentTick) {
+            slash1GameTick = currentTick;
+            currentStage = 1;
+        }
+
+        void reset() {
+            currentStage = 0;
+            slash1GameTick = -1;
+        }
+    }
 
     public CqcMoveset() {
         super(ID, "CQC", MovesetType.NEUTRAL, buildMoveset());
@@ -341,6 +457,15 @@ public class CqcMoveset extends AbstractMoveset {
         if (entity.level().isClientSide()) return;
         if (entity.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.stunned())) return;
         if (MoveExecutor.hasActiveAttacks(entity)) return;
+        CqcMoveCatalog.Definition definition = CqcMoveCatalog.get(config.getMoveId());
+        if (definition == null) return;
+        if (definition.demonOnly() && !canUseDemonOnlyMove(entity)) {
+            if (entity instanceof Player player) {
+                player.displayClientMessage(Component.literal("Can only be used by demons.")
+                        .withStyle(style -> style.withColor(0xFF5555)), true);
+            }
+            return;
+        }
         if (isOnCooldown(entity, config)) {
             if (entity instanceof Player player) {
                 int remaining = getRemainingCooldown(entity, config);
@@ -352,14 +477,99 @@ public class CqcMoveset extends AbstractMoveset {
             player.displayClientMessage(Component.literal("Not enough stamina!"), true);
             return;
         }
-        CqcMoveCatalog.Definition definition = CqcMoveCatalog.get(config.getMoveId());
-        if (definition == null) return;
+        if (executeDemonPhysical(entity, config, definition)) return;
         triggerAnimation(entity, definition.animationName());
         AbstractCqcAttack attack = createAttack(config.getMoveId());
         if (attack == null) return;
         attack.configure(config);
         MoveExecutor.executeAttackWithInfo(entity, attack, config.getDisplayName(), config.getCooldownOrDefault(0));
         setCooldown(entity, config);
+    }
+
+    private boolean executeDemonPhysical(LivingEntity entity, MoveConfiguration config, CqcMoveCatalog.Definition definition) {
+        String moveId = CqcMoveCatalog.normalize(config.getMoveId());
+        if (!isDemonPhysicalMove(moveId)) return false;
+        if ("demon_slash".equals(moveId)) {
+            executeSlashCombo(entity);
+            return true;
+        }
+
+        triggerAnimation(entity, definition.animationName());
+        Object attack = createDemonAttack(moveId);
+        if (attack == null) return true;
+        if (attack instanceof com.xirc.nichirin.common.attack.component.AbstractDemonAttack<?, ?> demonAttack) {
+            demonAttack.configure(config);
+            if (canUseDemonOnlyMove(entity)) {
+                demonAttack.applyStatMultiplier(AbstractCqcAttack.DEMON_CQC_STAT_MULTIPLIER);
+            }
+        }
+        MoveExecutor.executeAttackWithInfo(entity, attack, config.getDisplayName(), config.getCooldownOrDefault(0));
+        setCooldown(entity, config);
+        return true;
+    }
+
+    private void executeSlashCombo(LivingEntity entity) {
+        UUID entityUUID = entity.getUUID();
+        long currentTick = entity.level().getGameTime();
+        SlashComboState comboState = SLASH_STATES.computeIfAbsent(entityUUID, k -> new SlashComboState());
+
+        if (comboState.currentStage == 1) {
+            if (comboState.isReadyForSlash2(currentTick)) {
+                executeSlashStage(entity, 1, comboState, currentTick);
+                return;
+            } else if (currentTick - comboState.slash1GameTick <= SlashComboState.MAX_FOLLOWUP_TICKS) {
+                return;
+            }
+            comboState.reset();
+        }
+
+        executeSlashStage(entity, 0, comboState, currentTick);
+    }
+
+    private void executeSlashStage(LivingEntity entity, int stage, SlashComboState comboState, long currentTick) {
+        MoveConfiguration slashConfig = stage == 0 ? DEMON_SLASH : DEMON_SLASH_2;
+        String animationName = stage == 0 ? "demon_slash" : "demon_slash_2";
+
+        triggerAnimation(entity, animationName);
+        DemonSlashAttack slashAttack = new DemonSlashAttack();
+        slashAttack.setSlashStage(stage + 1);
+        slashAttack.configure(slashConfig);
+        if (canUseDemonOnlyMove(entity)) {
+            slashAttack.applyStatMultiplier(AbstractCqcAttack.DEMON_CQC_STAT_MULTIPLIER);
+        }
+        MoveExecutor.executeAttackWithInfo(entity, slashAttack, slashConfig.getDisplayName(), slashConfig.getCooldownOrDefault(0));
+
+        if (stage == 0) {
+            comboState.recordSlash1(currentTick);
+        } else {
+            comboState.reset();
+            setCooldown(entity, DEMON_SLASH);
+        }
+    }
+
+    private boolean isDemonPhysicalMove(String moveId) {
+        return switch (moveId) {
+            case "demon_gut_punch", "demon_slash", "high_jump", "demon_stomp", "demon_kick",
+                    "dashing_strike", "demon_bite", "demon_grab" -> true;
+            default -> false;
+        };
+    }
+
+    private boolean canUseDemonOnlyMove(LivingEntity entity) {
+        return entity instanceof Player player && DemonManager.isDemon(player);
+    }
+
+    private Object createDemonAttack(String moveId) {
+        return switch (moveId) {
+            case "demon_gut_punch" -> new DemonGutPunchAttack();
+            case "high_jump" -> new DemonHighJumpAttack();
+            case "demon_stomp" -> new DemonStompAttack();
+            case "demon_kick" -> new DemonKickAttack();
+            case "dashing_strike" -> new DemonDashStrikeAttack();
+            case "demon_bite" -> new DemonBiteAttack();
+            case "demon_grab" -> new DemonGrabAttack();
+            default -> null;
+        };
     }
 
     private AbstractCqcAttack createAttack(String moveId) {
@@ -437,6 +647,14 @@ public class CqcMoveset extends AbstractMoveset {
         register(configs, SUPERMAN_PUNCH);
         register(configs, DOUBLE_PALM);
         register(configs, BACKHAND_SLAP);
+        register(configs, DEMON_GUT_PUNCH);
+        register(configs, DEMON_SLASH);
+        register(configs, HIGH_JUMP);
+        register(configs, DEMON_STOMP);
+        register(configs, DEMON_KICK);
+        register(configs, DASHING_STRIKE);
+        register(configs, DEMON_BITE);
+        register(configs, DEMON_GRAB);
         return Collections.unmodifiableMap(configs);
     }
 
@@ -482,6 +700,7 @@ public class CqcMoveset extends AbstractMoveset {
 
     public static void resetCooldowns(Player player) {
         COOLDOWNS.remove(player.getUUID());
+        SLASH_STATES.remove(player.getUUID());
     }
 
     private CqcPresetData currentPreset() {

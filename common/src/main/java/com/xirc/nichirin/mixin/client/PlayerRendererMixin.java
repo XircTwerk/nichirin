@@ -27,7 +27,10 @@ public abstract class PlayerRendererMixin extends LivingEntityRenderer<AbstractC
     @Inject(method = "setModelProperties", at = @At("TAIL"))
     private void nichirin$hideRightLegForJigoroBoots(AbstractClientPlayer player, CallbackInfo ci) {
         if (player.getItemBySlot(EquipmentSlot.FEET).is(NichirinItemRegistry.JIGORO_BOOTS.get())) {
+            // Hide BOTH the base right leg and its separate outer/jacket layer (rightPants) — the peg
+            // leg replaces it, and the outer layer otherwise renders on top of the peg.
             this.getModel().rightLeg.visible = false;
+            this.getModel().rightPants.visible = false;
         }
     }
 }

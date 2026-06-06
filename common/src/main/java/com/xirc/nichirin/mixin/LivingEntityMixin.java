@@ -63,7 +63,10 @@ public abstract class LivingEntityMixin {
     @Inject(method = "tick", at = @At("TAIL"))
     private void nichirin$forceSlammedSwimPose(CallbackInfo ci) {
         LivingEntity entity = (LivingEntity) (Object) this;
-        if (entity.hasEffect(NichirinEffectRegistry.slammed())) {
+        // Only players get the forced swim/crawl pose. Forcing Pose.SWIMMING on mobs shrinks their
+        // hitbox and renders them prone at foot level, which makes them clip down into the ground.
+        if (entity instanceof net.minecraft.world.entity.player.Player
+                && entity.hasEffect(NichirinEffectRegistry.slammed())) {
             entity.setSwimming(true);
             entity.setPose(Pose.SWIMMING);
         }

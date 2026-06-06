@@ -65,6 +65,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
     protected Float teleportDistance;
     protected Float dashSpeed;
     protected Integer teleportWindup;
+    protected float statMultiplier = 1.0f;
 
     // Runtime state shared by player and NPC attacks.
     @Setter
@@ -119,6 +120,24 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
         this.teleportWindup = config.getTeleportWindup();
 
         this.configured = true;
+    }
+
+    /**
+     * Scales non-timing, non-stun combat stats for CQC-owned demon physical attacks.
+     */
+    public void applyStatMultiplier(float multiplier) {
+        if (multiplier == 1.0f) return;
+        this.statMultiplier *= multiplier;
+        this.damage *= multiplier;
+        this.range *= multiplier;
+        this.knockback *= multiplier;
+        this.hitboxSize *= multiplier;
+        if (this.teleportDistance != null) {
+            this.teleportDistance *= multiplier;
+        }
+        if (this.dashSpeed != null) {
+            this.dashSpeed *= multiplier;
+        }
     }
 
     /**

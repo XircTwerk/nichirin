@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.event.system;
 
 import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
+import com.xirc.nichirin.common.system.blocking.HandToHandBlock;
 import com.xirc.nichirin.common.system.blocking.KatanaBlock;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
@@ -25,7 +26,7 @@ public final class HitAnimationHandler {
             if (!(entity instanceof ServerPlayer player)) return EventResult.pass();
             if (amount <= 0.0f) return EventResult.pass();
             // The guard pose owns the visual while blocking — don't stomp it with a flinch.
-            if (KatanaBlock.isBlocking(player)) return EventResult.pass();
+            if (KatanaBlock.isBlocking(player) || HandToHandBlock.isBlocking(player)) return EventResult.pass();
 
             NichirinPacketRegistry.broadcastPlayerAnimation(player,
                     new PlayerAnimationPacket(player.getId(), pickTier(player, amount)));

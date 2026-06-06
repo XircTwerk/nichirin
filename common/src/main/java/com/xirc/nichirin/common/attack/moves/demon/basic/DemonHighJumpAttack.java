@@ -63,12 +63,12 @@ public class DemonHighJumpAttack extends AbstractDemonAttack<DemonHighJumpAttack
         // Find all entities within 3 block radius to launch with the user
         Vec3 userPos = user.position();
         List<LivingEntity> nearbyEntities = world.getEntitiesOfClass(LivingEntity.class,
-                user.getBoundingBox().inflate(3.0), // 3 block radius
+                user.getBoundingBox().inflate(3.0 * statMultiplier), // 3 block radius
                 entity -> entity != user && entity.isAlive() && !entity.isSpectator()
         );
 
         // Apply strong upward momentum for jump
-        double jumpStrength = 1.5;
+        double jumpStrength = 1.5 * statMultiplier;
 
         // Launch the user
         Vec3 currentVelocity = user.getDeltaMovement();

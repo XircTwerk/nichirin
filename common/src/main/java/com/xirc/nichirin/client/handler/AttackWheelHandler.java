@@ -244,6 +244,9 @@ public class AttackWheelHandler {
         if (moveset == null) {
             return;
         }
+        if (!hasOpenableWheelMoves(moveset, mc.player)) {
+            return;
+        }
 
         // Don't open if screen is open
         if (mc.screen != null) {
@@ -266,6 +269,31 @@ public class AttackWheelHandler {
 
             wasAttackDown = false;
         }
+    }
+
+    private static boolean hasOpenableWheelMoves(AbstractMoveset moveset, net.minecraft.world.entity.player.Player player) {
+        if (isDefaultKatanaWheel) {
+            return true;
+        }
+
+        final boolean[] hasMove = {false};
+        Runnable checkMoves = () -> {
+            int count = moveset.getMoveCount();
+            for (int i = 0; i < count; i++) {
+                if (moveset.getMove(i) != null) {
+                    hasMove[0] = true;
+                    return;
+                }
+            }
+        };
+
+        if (moveset instanceof CqcMoveset) {
+            CqcMoveset.withPlayer(player, checkMoves);
+        } else {
+            checkMoves.run();
+        }
+
+        return hasMove[0];
     }
 
     /**

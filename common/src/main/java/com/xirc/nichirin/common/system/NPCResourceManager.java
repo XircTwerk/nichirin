@@ -33,6 +33,10 @@ public class NPCResourceManager {
         if (entity.level().isClientSide) return;
 
         if (npc.getMoveset() != null && npc.getMoveset().isDemonMoveset()) {
+            if (npc.getBloodPoints() <= 0) {
+                entity.hurt(entity.damageSources().magic(), Float.MAX_VALUE);
+                return;
+            }
             tickBloodRegen(npc, entity);
         }
         if (npc.getMoveset() != null) {

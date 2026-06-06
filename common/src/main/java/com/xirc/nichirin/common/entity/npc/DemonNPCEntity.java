@@ -3,6 +3,7 @@ package com.xirc.nichirin.common.entity.npc;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.entity.MovesetCapableNPC;
 import com.xirc.nichirin.common.system.NPCResourceManager;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -13,6 +14,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.levelgen.Heightmap;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -133,6 +135,33 @@ public abstract class DemonNPCEntity extends Monster implements MovesetCapableNP
         moveset.performMove(this, moveIndex);
     }
 
+    public boolean canUseRightClickMove(boolean crouching) {
+        if (moveset == null) return false;
+        AbstractMoveset.MoveConfiguration cfg = crouching
+                ? moveset.getCrouchRightClickConfiguration()
+                : moveset.getRightClickConfiguration();
+        if (cfg == null) return false;
+        int cooldownKey = crouching ? -2 : -1;
+        if (isOnCooldown(cooldownKey)) return false;
+        if (cfg.hasBreathCost() && getBreathGauge() < cfg.getBreathCostOrDefault(0f)) return false;
+        return true;
+    }
+
+    public void performRightClickMove(boolean crouching) {
+        if (!canUseRightClickMove(crouching)) return;
+        AbstractMoveset.MoveConfiguration cfg = crouching
+                ? moveset.getCrouchRightClickConfiguration()
+                : moveset.getRightClickConfiguration();
+        if (cfg == null) return;
+        if (cfg.hasBreathCost()) NPCResourceManager.consumeBreath(this, cfg.getBreathCostOrDefault(0f));
+        int cooldown = cfg.getCooldownOrDefault(0);
+        if (cooldown <= 0) {
+            cooldown = cfg.getWindupOrDefault(5) + cfg.getDurationOrDefault(10) + cfg.getRecoveryOrDefault(10);
+        }
+        setCooldown(crouching ? -2 : -1, cooldown);
+        moveset.handleRightClick(this, crouching);
+    }
+
     @Override
     public void triggerMovesetAnimation(String animationName) {
         setAnimation(animationName, 1.0f);
@@ -204,7 +233,40 @@ public abstract class DemonNPCEntity extends Monster implements MovesetCapableNP
         if (!level().isClientSide) NPCResourceManager.tickNPC(this);
     }
 
-    protected void tickDemonSystems() {}
+    protected void tickDemonSystems() {
+        tickSunlightWeakness();
+    }
+    protected boolean isInLethalSunlight() {
+        Level level = level();
+        return level.isDay()
+                && !level.isRaining()
+                && !level.isThundering()
+                && level.canSeeSky(blockPosition());
+    }
+
+    protected void tickSunlightWeakness() {
+        if (!isInLethalSunlight()) return;
+        seekNearbyShade();
+        igniteForSeconds(4);
+        hurt(damageSources().onFire(), getMaxHealth() * 0.04f);
+    }
+
+    private void seekNearbyShade() {
+        if (tickCount % 10 != 0 || getNavigation().isInProgress()) return;
+        Level level = level();
+        for (int i = 0; i < 12; i++) {
+            int dx = getRandom().nextIntBetweenInclusive(-16, 16);
+            int dz = getRandom().nextIntBetweenInclusive(-16, 16);
+            BlockPos surface = level.getHeightmapPos(
+                    Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                    blockPosition().offset(dx, 0, dz));
+            if (!level.canSeeSky(surface)) {
+                getNavigation().moveTo(surface.getX() + 0.5D, surface.getY(), surface.getZ() + 0.5D, 1.35D);
+                return;
+            }
+        }
+    }
+
     protected void handleAnimationTick() {}
     protected void onAnimationComplete(String animationName) {}
 

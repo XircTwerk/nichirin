@@ -28,10 +28,20 @@ public class CqcSection extends AbstractGuiPage {
     private static final int MOVE_H = 28;
     private static final int ICON_SIZE = 20;
     private static final int GAP = 8;
+    private static final int DEMON_BORDER = 0xFFFF3333;
+    private static final int STANCE_W = 116;
+    private static final int STANCE_H = 22;
+    private static final String[] STANCE_NAMES = {
+            "High Guard",
+            "Orthodox",
+            "Cross Guard",
+            "Shoulder Roll"
+    };
 
     private CqcPresetData.Slot selectedSlot = CqcPresetData.Slot.WHEEL;
     private int selectedWheelIndex = 0;
     private long lastClickTime;
+    private String draggingMoveId;
 
     public void render(GuiGraphics graphics, Player player, int contentWidth, int contentHeight,
                        Font font, int mouseX, int mouseY) {
@@ -49,9 +59,17 @@ public class CqcSection extends AbstractGuiPage {
                 equipped ? COLOR_PALETTE.GREEN.rgb() : COLOR_PALETTE.ACCENT_LIGHT.rgb(),
                 true);
         drawButton(graphics, font, equipButton, mouseX, mouseY);
-        y += 34;
+        y += 32;
 
         CqcPresetData preset = PlayerDataProvider.getData(player).getCqcPresetData();
+        graphics.drawString(font, "Blocking Stance", 24, y + 6, COLOR_PALETTE.TEXT.rgb());
+        int stanceX = 140;
+        for (int i = 0; i < STANCE_NAMES.length; i++) {
+            renderStanceButton(graphics, font, stanceX + i * (STANCE_W + 6), y, i, preset.getStanceIndex(), mouseX, mouseY);
+        }
+        y += 36;
+
+        CqcMoveCatalog.Definition hoveredDefinition = null;
         int leftX = 24;
         int rightX = leftX + SLOT_W + 34;
         int sectionY = y;
@@ -61,17 +79,21 @@ public class CqcSection extends AbstractGuiPage {
 
         renderSlot(graphics, font, leftX, sectionY, "Left Click", preset.getLeftClickMove(),
                 CqcPresetData.Slot.LEFT_CLICK, -1, mouseX, mouseY);
+        hoveredDefinition = hoveredDefinition(hoveredDefinition, leftX, sectionY, SLOT_W, SLOT_H, preset.getLeftClickMove(), mouseX, mouseY);
         sectionY += SLOT_H + GAP;
         renderSlot(graphics, font, leftX, sectionY, "Right Click", preset.getRightClickMove(),
                 CqcPresetData.Slot.RIGHT_CLICK, -1, mouseX, mouseY);
+        hoveredDefinition = hoveredDefinition(hoveredDefinition, leftX, sectionY, SLOT_W, SLOT_H, preset.getRightClickMove(), mouseX, mouseY);
         sectionY += SLOT_H + GAP;
         renderSlot(graphics, font, leftX, sectionY, "Crouch Right", preset.getCrouchRightClickMove(),
                 CqcPresetData.Slot.CROUCH_RIGHT_CLICK, -1, mouseX, mouseY);
+        hoveredDefinition = hoveredDefinition(hoveredDefinition, leftX, sectionY, SLOT_W, SLOT_H, preset.getCrouchRightClickMove(), mouseX, mouseY);
         sectionY += SLOT_H + GAP + 8;
 
         for (int i = 0; i < CqcPresetData.WHEEL_SLOT_COUNT; i++) {
             renderSlot(graphics, font, leftX, sectionY, "Move " + (i + 1), preset.getWheelMove(i),
                     CqcPresetData.Slot.WHEEL, i, mouseX, mouseY);
+            hoveredDefinition = hoveredDefinition(hoveredDefinition, leftX, sectionY, SLOT_W, SLOT_H, preset.getWheelMove(i), mouseX, mouseY);
             sectionY += SLOT_H + GAP;
         }
 
@@ -83,11 +105,20 @@ public class CqcSection extends AbstractGuiPage {
         for (CqcMoveCatalog.Definition definition : CqcMoveCatalog.all()) {
             renderCatalogMove(graphics, font, moveX + col * (MOVE_W + GAP), moveY,
                     definition, mouseX, mouseY);
+            int currentX = moveX + col * (MOVE_W + GAP);
+            if (mouseX >= currentX && mouseX <= currentX + MOVE_W && mouseY >= moveY && mouseY <= moveY + MOVE_H) {
+                hoveredDefinition = definition;
+            }
             col++;
             if (col >= maxCols) {
                 col = 0;
                 moveY += MOVE_H + GAP;
             }
+        }
+
+        renderBottomTooltip(graphics, font, hoveredDefinition, contentWidth, contentHeight);
+        if (draggingMoveId != null) {
+            renderMoveIcon(graphics, draggingMoveId, mouseX - ICON_SIZE / 2, mouseY - ICON_SIZE / 2, ICON_SIZE);
         }
     }
 
@@ -116,6 +147,18 @@ public class CqcSection extends AbstractGuiPage {
                 hovered ? COLOR_PALETTE.ACCENT_LIGHT.rgb() : COLOR_PALETTE.TEXT.rgb());
     }
 
+    private void renderStanceButton(GuiGraphics graphics, Font font, int x, int y, int stanceIndex,
+                                    int selectedStance, int mouseX, int mouseY) {
+        boolean selected = stanceIndex == selectedStance;
+        boolean hovered = mouseX >= x && mouseX <= x + STANCE_W && mouseY >= y && mouseY <= y + STANCE_H;
+        int border = selected ? COLOR_PALETTE.ACCENT.argb() : hovered ? COLOR_PALETTE.BORDER_HI.argb() : COLOR_PALETTE.BORDER.argb();
+        int bg = selected ? COLOR_PALETTE.PILL_BG.argb() : hovered ? COLOR_PALETTE.PANEL_HOVER.argb() : COLOR_PALETTE.PANEL_MID.argb();
+        drawBorderedRect(graphics, x, y, STANCE_W, STANCE_H, border, bg);
+        String label = fitText(font, STANCE_NAMES[stanceIndex], STANCE_W - 12);
+        graphics.drawString(font, label, x + (STANCE_W - font.width(label)) / 2, y + 7,
+                selected ? COLOR_PALETTE.ACCENT_LIGHT.rgb() : COLOR_PALETTE.TEXT.rgb());
+    }
+
     private void renderMoveIcon(GuiGraphics graphics, String moveId, int x, int y, int size) {
         ResourceLocation icon = MoveIcon.getIcon("cqc", moveId);
         RenderSystem.enableBlend();
@@ -123,6 +166,36 @@ public class CqcSection extends AbstractGuiPage {
         RenderSystem.setShaderTexture(0, icon);
         graphics.blit(icon, x, y, 0, 0, size, size, size, size);
         RenderSystem.disableBlend();
+        CqcMoveCatalog.Definition definition = CqcMoveCatalog.get(moveId);
+        if (definition != null && definition.demonOnly()) {
+            graphics.fill(x - 1, y - 1, x + size + 1, y, DEMON_BORDER);
+            graphics.fill(x - 1, y + size, x + size + 1, y + size + 1, DEMON_BORDER);
+            graphics.fill(x - 1, y - 1, x, y + size + 1, DEMON_BORDER);
+            graphics.fill(x + size, y - 1, x + size + 1, y + size + 1, DEMON_BORDER);
+        }
+    }
+
+    private CqcMoveCatalog.Definition hoveredDefinition(CqcMoveCatalog.Definition current, int x, int y, int w, int h,
+                                                        String moveId, int mouseX, int mouseY) {
+        if (current != null) return current;
+        if (mouseX < x || mouseX > x + w || mouseY < y || mouseY > y + h) return null;
+        return CqcMoveCatalog.get(moveId);
+    }
+
+    private void renderBottomTooltip(GuiGraphics graphics, Font font, CqcMoveCatalog.Definition definition,
+                                     int contentWidth, int contentHeight) {
+        if (definition == null) return;
+        int x = 24;
+        int y = Math.max(8, contentHeight - 54);
+        int w = contentWidth - 48;
+        int h = 42;
+        drawBorderedRect(graphics, x, y, w, h, COLOR_PALETTE.BORDER_HI.argb(), COLOR_PALETTE.PANEL_MID.argb());
+        renderMoveIcon(graphics, definition.id(), x + 8, y + 11, ICON_SIZE);
+        graphics.drawString(font, definition.displayName(), x + 36, y + 8, COLOR_PALETTE.TEXT.rgb());
+        graphics.drawString(font, fitText(font, definition.description(), w - 48), x + 36, y + 20, COLOR_PALETTE.TEXT_DIM.rgb());
+        if (definition.demonOnly()) {
+            graphics.drawString(font, "Can only be used by demons", x + 36, y + 31, DEMON_BORDER);
+        }
     }
 
     private String fitText(Font font, String text, int maxWidth) {
@@ -148,9 +221,21 @@ public class CqcSection extends AbstractGuiPage {
             return true;
         }
 
+        int stanceRowY = y + 32;
+        int stanceX = 140;
+        for (int i = 0; i < STANCE_NAMES.length; i++) {
+            int x = stanceX + i * (STANCE_W + 6);
+            if (mouseX >= x && mouseX <= x + STANCE_W && mouseY >= stanceRowY && mouseY <= stanceRowY + STANCE_H) {
+                NichirinPacketRegistry.requestCqcStanceUpdate(i);
+                playClick();
+                lastClickTime = now;
+                return true;
+            }
+        }
+
         int leftX = 24;
         int rightX = leftX + SLOT_W + 34;
-        int sectionY = TOP_MARGIN + 8 + 28 + 34 + 16;
+        int sectionY = layoutY();
 
         if (selectSlot(mouseX, mouseY, leftX, sectionY, CqcPresetData.Slot.LEFT_CLICK, -1)) return clicked(now);
         sectionY += SLOT_H + GAP;
@@ -163,14 +248,13 @@ public class CqcSection extends AbstractGuiPage {
             sectionY += SLOT_H + GAP;
         }
 
-        int moveY = TOP_MARGIN + 8 + 28 + 34 + 16;
+        int moveY = layoutY();
         int col = 0;
         int maxCols = Math.max(1, (contentWidth - rightX - 24) / (MOVE_W + GAP));
         for (CqcMoveCatalog.Definition definition : CqcMoveCatalog.all()) {
             int x = rightX + col * (MOVE_W + GAP);
             if (mouseX >= x && mouseX <= x + MOVE_W && mouseY >= moveY && mouseY <= moveY + MOVE_H) {
-                NichirinPacketRegistry.requestCqcPresetUpdate(selectedSlot, selectedWheelIndex, definition.id());
-                playClick();
+                draggingMoveId = definition.id();
                 lastClickTime = now;
                 return true;
             }
@@ -182,6 +266,28 @@ public class CqcSection extends AbstractGuiPage {
         }
 
         return false;
+    }
+
+    public boolean handleRelease(double mouseX, double mouseY, Player player, int contentWidth) {
+        if (draggingMoveId == null) return false;
+        TargetSlot target = slotAt(mouseX, mouseY);
+        CqcPresetData.Slot slot = target != null ? target.slot : selectedSlot;
+        int wheelIndex = target != null ? target.wheelIndex : selectedWheelIndex;
+        if (!CqcPresetData.canAssign(player, draggingMoveId)) {
+            player.displayClientMessage(Component.literal("Can only be used by demons.")
+                    .withStyle(style -> style.withColor(DEMON_BORDER)), true);
+            draggingMoveId = null;
+            playClick();
+            return true;
+        }
+        NichirinPacketRegistry.requestCqcPresetUpdate(slot, wheelIndex, draggingMoveId);
+        if (target != null) {
+            selectedSlot = target.slot;
+            selectedWheelIndex = target.wheelIndex;
+        }
+        draggingMoveId = null;
+        playClick();
+        return true;
     }
 
     private boolean selectSlot(double mouseX, double mouseY, int x, int y, CqcPresetData.Slot slot, int wheelIndex) {
@@ -196,6 +302,32 @@ public class CqcSection extends AbstractGuiPage {
         lastClickTime = now;
         return true;
     }
+
+    private TargetSlot slotAt(double mouseX, double mouseY) {
+        int leftX = 24;
+        int sectionY = layoutY();
+        if (inside(mouseX, mouseY, leftX, sectionY, SLOT_W, SLOT_H)) return new TargetSlot(CqcPresetData.Slot.LEFT_CLICK, -1);
+        sectionY += SLOT_H + GAP;
+        if (inside(mouseX, mouseY, leftX, sectionY, SLOT_W, SLOT_H)) return new TargetSlot(CqcPresetData.Slot.RIGHT_CLICK, -1);
+        sectionY += SLOT_H + GAP;
+        if (inside(mouseX, mouseY, leftX, sectionY, SLOT_W, SLOT_H)) return new TargetSlot(CqcPresetData.Slot.CROUCH_RIGHT_CLICK, -1);
+        sectionY += SLOT_H + GAP + 8;
+        for (int i = 0; i < CqcPresetData.WHEEL_SLOT_COUNT; i++) {
+            if (inside(mouseX, mouseY, leftX, sectionY, SLOT_W, SLOT_H)) return new TargetSlot(CqcPresetData.Slot.WHEEL, i);
+            sectionY += SLOT_H + GAP;
+        }
+        return null;
+    }
+
+    private boolean inside(double mouseX, double mouseY, int x, int y, int w, int h) {
+        return mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h;
+    }
+
+    private int layoutY() {
+        return TOP_MARGIN + 8 + 28 + 32 + 36 + 16;
+    }
+
+    private record TargetSlot(CqcPresetData.Slot slot, int wheelIndex) {}
 
     private static void playClick() {
         Minecraft.getInstance().getSoundManager().play(

@@ -37,6 +37,7 @@ public class TempleDemonRenderer extends BaseAZNichirinEntityRenderer<TempleDemo
         }
 
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
+        DemonBloodBarRenderer.render(entity, poseStack, bufferSource, packedLight);
 
         poseStack.popPose();
     }

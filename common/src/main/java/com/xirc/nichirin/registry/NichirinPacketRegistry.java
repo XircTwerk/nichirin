@@ -14,6 +14,7 @@ import net.minecraft.world.phys.Vec3;
 import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
 import com.xirc.nichirin.common.network.util.MovesetSyncPacket;
 import com.xirc.nichirin.common.system.DemonComponent;
+import com.xirc.nichirin.common.system.blocking.HandToHandBlock;
 import com.xirc.nichirin.common.system.blocking.KatanaBlock;
 import com.xirc.nichirin.common.util.MultiplayerInputHandler;
 import dev.architectury.networking.NetworkManager;
@@ -88,6 +89,7 @@ public interface NichirinPacketRegistry {
     ResourceLocation SHEATH_CONFIG_ID              = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "sheath_config");
     ResourceLocation SHEATH_SYNC_ID                = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "sheath_sync");
     ResourceLocation CQC_PRESET_UPDATE_ID          = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "cqc_preset_update");
+    ResourceLocation CQC_STANCE_UPDATE_ID          = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "cqc_stance_update");
     ResourceLocation CQC_PRESET_SYNC_ID            = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "cqc_preset_sync");
     // Shared cooldown HUD channel — sent by CooldownDisplayPacket, MoveExecutor and KatanaBlock,
     // received by CooldownDisplayPacket.registerClient() on the client.
@@ -240,19 +242,30 @@ public interface NichirinPacketRegistry {
 
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, BLOCK_START_ID, (buf, context) -> {
             if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
-                context.queue(() -> KatanaBlock.startBlocking(serverPlayer));
+                context.queue(() -> {
+                    if (!KatanaBlock.startBlocking(serverPlayer)) {
+                        HandToHandBlock.startBlocking(serverPlayer);
+                    }
+                });
             }
         });
 
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, BLOCK_STOP_ID, (buf, context) -> {
             if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
-                context.queue(() -> KatanaBlock.stopBlocking(serverPlayer));
+                context.queue(() -> {
+                    KatanaBlock.stopBlocking(serverPlayer);
+                    HandToHandBlock.stopBlocking(serverPlayer);
+                });
             }
         });
 
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, PARRY_ID, (buf, context) -> {
             if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
-                context.queue(() -> KatanaBlock.attemptParry(serverPlayer));
+                context.queue(() -> {
+                    if (!KatanaBlock.attemptParry(serverPlayer)) {
+                        HandToHandBlock.attemptParry(serverPlayer);
+                    }
+                });
             }
         });
 
@@ -315,6 +328,13 @@ public interface NichirinPacketRegistry {
             String moveId = buf.readUtf();
             if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
                 context.queue(() -> handleCqcPresetUpdate(serverPlayer, slotName, wheelIndex, moveId));
+            }
+        });
+
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, CQC_STANCE_UPDATE_ID, (buf, context) -> {
+            int stanceIndex = buf.readInt();
+            if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
+                context.queue(() -> handleCqcStanceUpdate(serverPlayer, stanceIndex));
             }
         });
     }
@@ -481,6 +501,7 @@ public interface NichirinPacketRegistry {
                 for (int i = 0; i < CqcPresetData.WHEEL_SLOT_COUNT; i++) {
                     wheelMoves[i] = buf.readUtf();
                 }
+                int stanceIndex = buf.readInt();
                 context.queue(() -> {
                     Player player = context.getPlayer();
                     if (player == null) return;
@@ -491,6 +512,7 @@ public interface NichirinPacketRegistry {
                     for (int i = 0; i < CqcPresetData.WHEEL_SLOT_COUNT; i++) {
                         preset.setSlot(CqcPresetData.Slot.WHEEL, i, wheelMoves[i]);
                     }
+                    preset.setStanceIndex(stanceIndex);
                 });
             });
 
@@ -600,7 +622,11 @@ public interface NichirinPacketRegistry {
             return;
         }
 
-        if (player.hasEffect(NichirinEffectRegistry.blocking())) {
+        // The demon right-click special is performed via block + left-click, so it must fire while
+        // guarding. Only suppress the demon LEFT_CLICK (M1) while blocking, not the block-special.
+        boolean isDemonBlockSpecial = inputType == MultiplayerInputHandler.InputType.RIGHT_CLICK
+                || inputType == MultiplayerInputHandler.InputType.RIGHT_CLICK_CROUCH;
+        if (!isDemonBlockSpecial && player.hasEffect(NichirinEffectRegistry.blocking())) {
             return;
         }
 
@@ -781,12 +807,19 @@ public interface NichirinPacketRegistry {
 
     static void handleCqcPresetUpdate(ServerPlayer player, String slotName, int wheelIndex, String moveId) {
         CqcPresetData.Slot slot = CqcPresetData.Slot.fromWireName(slotName);
-        boolean changed = PlayerDataProvider.getData(player).getCqcPresetData().setSlot(slot, wheelIndex, moveId);
+        boolean changed = PlayerDataProvider.getData(player).getCqcPresetData().setSlotForPlayer(player, slot, wheelIndex, moveId);
         if (!changed) {
             player.displayClientMessage(Component.literal("Invalid CQC move selection.")
                     .withStyle(style -> style.withColor(0xFF5555)), true);
             return;
         }
+        PlayerDataStorage.savePlayerData(player);
+        sendCqcPresetSync(player);
+    }
+
+    static void handleCqcStanceUpdate(ServerPlayer player, int stanceIndex) {
+        boolean changed = PlayerDataProvider.getData(player).getCqcPresetData().setStanceIndex(stanceIndex);
+        if (!changed) return;
         PlayerDataStorage.savePlayerData(player);
         sendCqcPresetSync(player);
     }
@@ -801,6 +834,7 @@ public interface NichirinPacketRegistry {
             for (String moveId : preset.getWheelMovesCopy()) {
                 buf.writeUtf(moveId);
             }
+            buf.writeInt(preset.getStanceIndex());
             NetworkManager.sendToPlayer(player, CQC_PRESET_SYNC_ID, server(buf, player));
         } catch (Exception e) {
             // Handle error
@@ -814,6 +848,16 @@ public interface NichirinPacketRegistry {
             buf.writeInt(wheelIndex);
             buf.writeUtf(moveId);
             NetworkManager.sendToServer(CQC_PRESET_UPDATE_ID, client(buf));
+        } catch (Exception e) {
+            // Handle error
+        }
+    }
+
+    static void requestCqcStanceUpdate(int stanceIndex) {
+        try {
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+            buf.writeInt(stanceIndex);
+            NetworkManager.sendToServer(CQC_STANCE_UPDATE_ID, client(buf));
         } catch (Exception e) {
             // Handle error
         }

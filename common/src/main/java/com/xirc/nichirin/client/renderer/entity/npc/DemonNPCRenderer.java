@@ -40,6 +40,7 @@ public class DemonNPCRenderer extends BaseAZNichirinEntityRenderer<DemonNPCEntit
         }
 
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
+        DemonBloodBarRenderer.render(entity, poseStack, bufferSource, packedLight);
 
         poseStack.popPose();
     }

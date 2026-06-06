@@ -32,6 +32,14 @@ public final class CqcMoveCatalog {
         add("superman_punch", "Superman Punch", 0.60f, 4.5f, 2.05f, 0.55f, 9, 44, "Leaping punch with reach.");
         add("double_palm", "Double Palm", 0.46f, 3.75f, 1.45f, 0.8f, 8, 32, "Two-handed shove.");
         add("backhand_slap", "Backhand Slap", 0.52f, 2.75f, 1.4f, 0.35f, 9, 24, "Fast backhand counter.");
+        add("demon_gut_punch", "Gut Punch", 0.75f, 6.0f, 2.0f, 0.1f, 15, 15, "Powerful close-range punch that stuns enemies.");
+        add("demon_slash", "Slash", "demon_slash", 0.7f, 4.0f, 3.0f, 0f, 10, 0, 0f, true, "Two-step claw slash combo.");
+        add("high_jump", "High Jump", "demon_high_jump", 0.4f, 0f, 0f, 0f, 0, 220, 0f, true, "Launch upward and lift nearby enemies.");
+        add("demon_stomp", "Stomp", 0.55f, 10.0f, 4.0f, 0.8f, 30, 60, "Airborne stomp that slams enemies down.");
+        add("demon_kick", "Kick", 0.55f, 6.0f, 2.5f, 1.0f, 25, 60, "Powerful front kick with high knockback.");
+        add("dashing_strike", "Dashing Strike", "demon_dash_strike", 0.7f, 12.0f, 5.5f, 0.2f, 20, 140, 6.0f, "Dash forward and deliver a devastating punch.");
+        add("demon_bite", "Bite", 0.55f, 8.0f, 2.0f, 0.1f, 20, 100, 0f, true, "Bite attack that steals blood.");
+        add("demon_grab", "Throw", 0.4f, 0f, 0f, 0f, 0, 80, "Grab and instantly throw the target forward.");
     }
 
     private CqcMoveCatalog() {}
@@ -56,30 +64,44 @@ public final class CqcMoveCatalog {
 
     private static void add(String id, String displayName, float animationLengthSeconds,
                             float damage, float range, float knockback, int hitStun, int cooldown, String description) {
-        add(id, displayName, id, animationLengthSeconds, damage, range, knockback, hitStun, cooldown, 0f, description);
+        add(id, displayName, id, animationLengthSeconds, damage, range, knockback, hitStun, cooldown, 0f, false, description);
     }
 
     private static void add(String id, String displayName, String animationName, float animationLengthSeconds,
                             float damage, float range, float knockback, int hitStun, int cooldown, String description) {
-        add(id, displayName, animationName, animationLengthSeconds, damage, range, knockback, hitStun, cooldown, 0f, description);
+        add(id, displayName, animationName, animationLengthSeconds, damage, range, knockback, hitStun, cooldown, 0f, false, description);
     }
 
     private static void add(String id, String displayName, float animationLengthSeconds,
                             float damage, float range, float knockback, int hitStun, int cooldown,
                             float dashDistance, String description) {
-        add(id, displayName, id, animationLengthSeconds, damage, range, knockback, hitStun, cooldown, dashDistance, description);
+        add(id, displayName, id, animationLengthSeconds, damage, range, knockback, hitStun, cooldown, dashDistance, false, description);
     }
 
     private static void add(String id, String displayName, String animationName, float animationLengthSeconds,
                             float damage, float range, float knockback, int hitStun, int cooldown,
                             float dashDistance, String description) {
+        add(id, displayName, animationName, animationLengthSeconds, damage, range, knockback, hitStun, cooldown,
+                dashDistance, false, description);
+    }
+
+    private static void add(String id, String displayName, float animationLengthSeconds,
+                            float damage, float range, float knockback, int hitStun, int cooldown,
+                            float dashDistance, boolean demonOnly, String description) {
+        add(id, displayName, id, animationLengthSeconds, damage, range, knockback, hitStun, cooldown,
+                dashDistance, demonOnly, description);
+    }
+
+    private static void add(String id, String displayName, String animationName, float animationLengthSeconds,
+                            float damage, float range, float knockback, int hitStun, int cooldown,
+                            float dashDistance, boolean demonOnly, String description) {
         String normalized = normalize(id);
         MOVES.put(normalized, new Definition(normalized, displayName, animationName,
                 Math.max(1, (int) Math.ceil(animationLengthSeconds * 20.0f)),
-                damage, range, knockback, hitStun, cooldown, dashDistance, description));
+                damage, range, knockback, hitStun, cooldown, dashDistance, demonOnly, description));
     }
 
     public record Definition(String id, String displayName, String animationName, int durationTicks,
                              float damage, float range, float knockback, int hitStun, int cooldown,
-                             float dashDistance, String description) {}
+                             float dashDistance, boolean demonOnly, String description) {}
 }

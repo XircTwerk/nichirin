@@ -66,7 +66,7 @@ public class DemonStompAttack extends AbstractDemonAttack<DemonStompAttack, IDem
             if (target.isAlive()) {
                 // Apply strong downward velocity
                 Vec3 currentVelocity = target.getDeltaMovement();
-                target.setDeltaMovement(currentVelocity.x, -1.5, currentVelocity.z); // Strong downward force
+                target.setDeltaMovement(currentVelocity.x, -1.5 * statMultiplier, currentVelocity.z); // Strong downward force
                 target.hasImpulse = true;
                 target.hurtMarked = true;
 
@@ -93,7 +93,7 @@ public class DemonStompAttack extends AbstractDemonAttack<DemonStompAttack, IDem
         createStompImpact(userPos.add(0, -1, 0));
 
         // Force player to ground with downward velocity
-        user.setDeltaMovement(user.getDeltaMovement().x, -2.0, user.getDeltaMovement().z);
+        user.setDeltaMovement(user.getDeltaMovement().x, -2.0 * statMultiplier, user.getDeltaMovement().z);
 
         // Main impact sounds
         world.playSound(null, userPos.x, userPos.y, userPos.z,
