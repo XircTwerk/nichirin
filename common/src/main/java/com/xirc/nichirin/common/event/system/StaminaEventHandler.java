@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.event.system;
 
 import com.xirc.nichirin.common.system.StanceManager;
+import com.xirc.nichirin.common.system.blocking.HandToHandBlock;
 import com.xirc.nichirin.common.system.blocking.KatanaBlock;
 import com.xirc.nichirin.common.util.StaminaManager;
 import com.xirc.nichirin.common.system.abilities.PlayerDoubleJump;
@@ -19,6 +20,7 @@ public class StaminaEventHandler {
 
                 StanceManager.tick(player);
                 KatanaBlock.tick(player);
+                HandToHandBlock.tick(player);
             }
         });
 

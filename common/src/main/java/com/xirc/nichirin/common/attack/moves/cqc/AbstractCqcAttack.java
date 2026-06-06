@@ -2,6 +2,8 @@ package com.xirc.nichirin.common.attack.moves.cqc;
 
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.data.CqcMoveCatalog;
+import com.xirc.nichirin.common.entity.npc.DemonNPCEntity;
+import com.xirc.nichirin.common.system.DemonManager;
 import com.xirc.nichirin.common.util.ComboIntegration;
 import com.xirc.nichirin.common.util.NichirinArmorDamage;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
@@ -33,6 +35,8 @@ import java.util.Set;
  * per move so unique effects can be added later by overriding the hook methods.</p>
  */
 public abstract class AbstractCqcAttack {
+
+    public static final float DEMON_CQC_STAT_MULTIPLIER = 1.25f;
 
     protected int startup;
     protected int active;
@@ -151,7 +155,8 @@ public abstract class AbstractCqcAttack {
 
         for (LivingEntity target : targets) {
             hitEntities.add(target);
-            boolean damaged = NichirinArmorDamage.hurt(target, source, damage);
+            float scaledDamage = scaleCqcStat(user, damage);
+            boolean damaged = NichirinArmorDamage.hurt(target, source, scaledDamage);
             if (damaged) {
                 applyKnockback(user, target);
                 if (hitStun > 0) {
@@ -164,7 +169,7 @@ public abstract class AbstractCqcAttack {
                     }
                 }
                 if (user instanceof Player player) {
-                    ComboIntegration.handleSuccessfulHit(player, target, hitStun, damage);
+                    ComboIntegration.handleSuccessfulHit(player, target, hitStun, scaledDamage);
                 }
             }
             onHitTarget(user, target, world);
@@ -173,17 +178,19 @@ public abstract class AbstractCqcAttack {
 
     protected AABB buildHitbox(LivingEntity user) {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
-        Vec3 center = userPos.add(user.getLookAngle().scale(range));
+        float scaledRange = scaleCqcStat(user, range);
+        float scaledHitboxSize = scaleCqcStat(user, hitboxSize);
+        Vec3 center = userPos.add(user.getLookAngle().scale(scaledRange));
         return new AABB(
-                center.x - hitboxSize, center.y - hitboxSize, center.z - hitboxSize,
-                center.x + hitboxSize, center.y + hitboxSize, center.z + hitboxSize
+                center.x - scaledHitboxSize, center.y - scaledHitboxSize, center.z - scaledHitboxSize,
+                center.x + scaledHitboxSize, center.y + scaledHitboxSize, center.z + scaledHitboxSize
         );
     }
 
     protected void applyKnockback(LivingEntity user, LivingEntity target) {
         if (knockback <= 0) return;
         Vec3 knockVec = target.position().subtract(user.position()).normalize();
-        target.knockback(knockback, -knockVec.x, -knockVec.z);
+        target.knockback(scaleCqcStat(user, knockback), -knockVec.x, -knockVec.z);
     }
 
     protected void applyDash(LivingEntity user) {
@@ -193,7 +200,7 @@ public abstract class AbstractCqcAttack {
         Vec3 horizontal = new Vec3(look.x, 0, look.z);
         if (horizontal.lengthSqr() <= 0.0001) return;
 
-        Vec3 dash = horizontal.normalize().scale(dashDistance / Math.max(1, active));
+        Vec3 dash = horizontal.normalize().scale(scaleCqcStat(user, dashDistance) / Math.max(1, active));
         user.setDeltaMovement(dash.x, Math.max(user.getDeltaMovement().y, 0.05), dash.z);
         user.hurtMarked = true;
         user.hasImpulse = true;
@@ -240,7 +247,7 @@ public abstract class AbstractCqcAttack {
                                 double spread, double speed) {
         if (!(world instanceof ServerLevel serverLevel)) return;
         Vec3 pos = user.position().add(0, user.getBbHeight() * 0.45, 0)
-                .add(user.getLookAngle().scale(Math.max(0.4f, range * 0.55f)));
+                .add(user.getLookAngle().scale(Math.max(0.4f, scaleCqcStat(user, range) * 0.55f)));
         serverLevel.sendParticles(particle, pos.x, pos.y, pos.z, count, spread, spread * 0.35, spread, speed);
     }
 
@@ -259,9 +266,9 @@ public abstract class AbstractCqcAttack {
         Vec3 direction = target.position().subtract(user.position());
         Vec3 horizontal = new Vec3(direction.x, 0, direction.z);
         if (horizontal.lengthSqr() > 0.0001) {
-            horizontal = horizontal.normalize().scale(away);
+            horizontal = horizontal.normalize().scale(scaleCqcStat(user, away));
         }
-        setTargetVelocity(target, horizontal.x, upward, horizontal.z);
+        setTargetVelocity(target, horizontal.x, scaleCqcStat(user, upward), horizontal.z);
     }
 
     protected void slamTarget(LivingEntity target, double downward) {
@@ -274,15 +281,15 @@ public abstract class AbstractCqcAttack {
         if (horizontal.lengthSqr() <= 0.0001) {
             horizontal = user.getLookAngle();
         }
-        horizontal = new Vec3(horizontal.x, 0, horizontal.z).normalize().scale(strength);
-        setTargetVelocity(target, horizontal.x, lift, horizontal.z);
+        horizontal = new Vec3(horizontal.x, 0, horizontal.z).normalize().scale(scaleCqcStat(user, strength));
+        setTargetVelocity(target, horizontal.x, scaleCqcStat(user, lift), horizontal.z);
     }
 
     protected void sidestepTarget(LivingEntity user, LivingEntity target, double strength) {
         Vec3 look = user.getLookAngle();
         Vec3 side = new Vec3(-look.z, 0, look.x);
         if (side.lengthSqr() <= 0.0001) return;
-        side = side.normalize().scale(strength);
+        side = side.normalize().scale(scaleCqcStat(user, strength));
         setTargetVelocity(target, side.x, Math.max(target.getDeltaMovement().y, 0.05), side.z);
     }
 
@@ -290,7 +297,7 @@ public abstract class AbstractCqcAttack {
         Vec3 towardUser = user.position().subtract(target.position());
         Vec3 horizontal = new Vec3(towardUser.x, 0, towardUser.z);
         if (horizontal.lengthSqr() <= 0.0001) return;
-        horizontal = horizontal.normalize().scale(strength);
+        horizontal = horizontal.normalize().scale(scaleCqcStat(user, strength));
         setTargetVelocity(target, horizontal.x, Math.max(target.getDeltaMovement().y, 0.03), horizontal.z);
     }
 
@@ -313,5 +320,20 @@ public abstract class AbstractCqcAttack {
         if (target instanceof ServerPlayer serverPlayer) {
             serverPlayer.connection.send(new ClientboundSetEntityMotionPacket(target));
         }
+    }
+
+    protected static float scaleCqcStat(LivingEntity user, float value) {
+        return isDemonUser(user) ? value * DEMON_CQC_STAT_MULTIPLIER : value;
+    }
+
+    protected static double scaleCqcStat(LivingEntity user, double value) {
+        return isDemonUser(user) ? value * DEMON_CQC_STAT_MULTIPLIER : value;
+    }
+
+    public static boolean isDemonUser(LivingEntity user) {
+        if (user instanceof Player player) {
+            return DemonManager.isDemon(player);
+        }
+        return user instanceof DemonNPCEntity;
     }
 }

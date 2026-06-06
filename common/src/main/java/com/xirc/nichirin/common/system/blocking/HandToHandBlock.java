@@ -8,6 +8,8 @@ import com.xirc.nichirin.common.util.NetworkBufferUtils;
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
 import com.xirc.nichirin.common.attack.moveset.DefaultKatanaMoveset;
+import com.xirc.nichirin.common.entity.MovesetCapableNPC;
+import com.xirc.nichirin.common.entity.npc.TempleDemonEntity;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
@@ -33,11 +35,10 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Katana blocking and parrying system.
- * Works for both players and NPCs (trainers, demons).
+ * Hand-to-hand blocking system for CQC and empty-handed demons.
  * Uses stance as the blocking resource for players; NPCs block freely but are time-limited by their AI.
  */
-public class KatanaBlock {
+public class HandToHandBlock {
 
     private static final Map<UUID, BlockingState> BLOCKING_STATES = new HashMap<>();
 
@@ -92,13 +93,14 @@ public class KatanaBlock {
 
     public static boolean startBlocking(LivingEntity entity) {
         if (entity.level().isClientSide) return false;
-        if (!isKatanaBlocker(entity)) return false;
+        if (!isHandToHandBlocker(entity)) return false;
 
         BlockingState state = getOrCreateState(entity);
 
         if (!canStartBlocking(entity, state)) return false;
 
-        // Parry window opens at the START of the block (click-timed).
+        // Parry window opens at the START of the block (click-timed). CQC / parry-disabled guards
+        // start as a plain block instead.
         state.blockTicks = 0;
         if (parryAllowed(entity)) {
             state.stance = BlockingStance.PARRY_READY;
@@ -131,9 +133,9 @@ public class KatanaBlock {
 
         if (entity instanceof ServerPlayer serverPlayer) {
             NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer,
-                    new PlayerAnimationPacket(serverPlayer.getId(), "sword.block"));
-        } else if (entity instanceof com.xirc.nichirin.common.entity.npc.BaseBreathingTrainerEntity trainer) {
-            trainer.setAnimation("sword.block", 1.0f);
+                    new PlayerAnimationPacket(serverPlayer.getId(), blockAnimation(entity)));
+        } else if (entity instanceof MovesetCapableNPC npc) {
+            npc.triggerMovesetAnimation(blockAnimation(entity));
         }
 
         return true;
@@ -165,8 +167,13 @@ public class KatanaBlock {
             NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer,
                     new PlayerAnimationPacket(serverPlayer.getId(), ""));
         } else if (!(entity instanceof Player) && state.stance != BlockingStance.PARRY_SUCCESS) {
-            if (entity instanceof com.xirc.nichirin.common.entity.npc.BaseBreathingTrainerEntity trainer) {
-                trainer.setAnimation("", 1.0f);
+            if (entity instanceof MovesetCapableNPC npc) {
+                npc.asLivingEntity().stopUsingItem();
+                if (entity instanceof com.xirc.nichirin.common.entity.npc.BaseBreathingTrainerEntity trainer) {
+                    trainer.setAnimation("", 1.0f);
+                } else if (entity instanceof com.xirc.nichirin.common.entity.npc.DemonNPCEntity demon) {
+                    demon.stopAnimation();
+                }
             }
         }
 
@@ -236,9 +243,9 @@ public class KatanaBlock {
             if (state.wasAttackingLastTick && !attacking) {
                 if (entity instanceof ServerPlayer serverPlayer) {
                     NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer,
-                            new PlayerAnimationPacket(serverPlayer.getId(), "sword.block"));
-                } else if (entity instanceof com.xirc.nichirin.common.entity.npc.BaseBreathingTrainerEntity trainer) {
-                    trainer.setAnimation("sword.block", 1.0f);
+                            new PlayerAnimationPacket(serverPlayer.getId(), blockAnimation(entity)));
+                } else if (entity instanceof MovesetCapableNPC npc) {
+                    npc.triggerMovesetAnimation(blockAnimation(entity));
                 }
             }
             state.wasAttackingLastTick = attacking;
@@ -281,22 +288,44 @@ public class KatanaBlock {
         return BLOCKING_STATES.computeIfAbsent(entity.getUUID(), k -> new BlockingState());
     }
 
-    private static boolean isKatanaBlocker(LivingEntity entity) {
-        if (!(entity instanceof Player player)) return true;
-        return player.getMainHandItem().getItem() instanceof SimpleKatana
+    private static boolean isHandToHandBlocker(LivingEntity entity) {
+        if (entity instanceof TempleDemonEntity) return true;
+        if (!(entity instanceof Player player)) return false;
+        boolean katana = player.getMainHandItem().getItem() instanceof SimpleKatana
                 || player.getOffhandItem().getItem() instanceof SimpleKatana;
+        if (katana) return false;
+        return player.getMainHandItem().isEmpty()
+                && (com.xirc.nichirin.common.data.MovesetHelper.hasFightingMoveset(player)
+                || com.xirc.nichirin.common.data.MovesetHelper.hasDemonMoveset(player));
     }
 
-    private static boolean isCqcBlocker(LivingEntity entity) {
-        if (!(entity instanceof Player player)) return false;
-        return false;
+    private static String blockAnimation(LivingEntity entity) {
+        if (entity instanceof TempleDemonEntity) return "cqc_stance_3";
+        if (!(entity instanceof Player player)) return "sword.block";
+        boolean katana = player.getMainHandItem().getItem() instanceof SimpleKatana
+                || player.getOffhandItem().getItem() instanceof SimpleKatana;
+        if (katana || !player.getMainHandItem().isEmpty()) return "sword.block";
+        boolean cqcOrDemon = com.xirc.nichirin.common.data.MovesetHelper.hasFightingMoveset(player)
+                || com.xirc.nichirin.common.data.MovesetHelper.hasDemonMoveset(player);
+        if (!cqcOrDemon) return "sword.block";
+        return PlayerDataProvider.getData(player).getCqcPresetData().getStanceAnimation();
     }
 
     private static int resistanceAmplifier(LivingEntity entity) {
-        return 2;
+        if (entity instanceof TempleDemonEntity) return 2;
+        if (entity instanceof Player player && com.xirc.nichirin.common.data.MovesetHelper.hasDemonMoveset(player)) {
+            return 2;
+        }
+        return 1;
     }
 
     private static boolean parryAllowed(LivingEntity entity) {
+        if (entity instanceof TempleDemonEntity) return NichirinModConfig.get().combat.enableParrySystem;
+        if (!(entity instanceof Player player)) return false;
+        if (com.xirc.nichirin.common.data.MovesetHelper.hasFightingMoveset(player)
+                && !com.xirc.nichirin.common.data.MovesetHelper.hasDemonMoveset(player)) {
+            return false;
+        }
         return NichirinModConfig.get().combat.enableParrySystem;
     }
 
@@ -405,8 +434,8 @@ public class KatanaBlock {
         if (defender instanceof ServerPlayer serverPlayer) {
             NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer,
                     new PlayerAnimationPacket(serverPlayer.getId(), "sword.parry"));
-        } else if (defender instanceof com.xirc.nichirin.common.entity.npc.BaseBreathingTrainerEntity trainer) {
-            trainer.setAnimation("sword.parry", 1.0f);
+        } else if (defender instanceof MovesetCapableNPC npc) {
+            npc.triggerMovesetAnimation("sword.parry");
         }
 
         // Interrupt + stun the attacker
@@ -484,9 +513,9 @@ public class KatanaBlock {
         // Clang feedback
         if (defender instanceof ServerPlayer serverPlayer) {
             NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer,
-                    new PlayerAnimationPacket(serverPlayer.getId(), "sword.block"));
-        } else if (defender instanceof com.xirc.nichirin.common.entity.npc.BaseBreathingTrainerEntity trainer) {
-            trainer.setAnimation("sword.block", 1.0f);
+                    new PlayerAnimationPacket(serverPlayer.getId(), blockAnimation(defender)));
+        } else if (defender instanceof MovesetCapableNPC npc) {
+            npc.triggerMovesetAnimation(blockAnimation(defender));
         }
         defender.level().playSound(null, defender.getX(), defender.getY(), defender.getZ(),
                 NicirinSoundRegistry.BLOCK_CLANG.get(), SoundSource.PLAYERS, 0.9f, 1.0f);
@@ -528,13 +557,13 @@ public class KatanaBlock {
             blockingTag.putInt("blockTicks", state.blockTicks);
             blockingTag.putInt("parryWindowTicks", state.parryWindowTicks);
             blockingTag.putLong("blockCooldownUntil", state.blockCooldownUntil);
-            tag.put("BlockingData", blockingTag);
+            tag.put("HandToHandBlockingData", blockingTag);
         }
     }
 
     public static void load(Player player, CompoundTag tag) {
-        if (tag.contains("BlockingData")) {
-            CompoundTag blockingTag = tag.getCompound("BlockingData");
+        if (tag.contains("HandToHandBlockingData")) {
+            CompoundTag blockingTag = tag.getCompound("HandToHandBlockingData");
             BlockingState state = getOrCreateState(player);
             try {
                 state.stance = BlockingStance.valueOf(blockingTag.getString("stance"));

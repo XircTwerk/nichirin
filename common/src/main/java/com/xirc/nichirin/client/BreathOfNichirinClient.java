@@ -175,6 +175,7 @@ public class BreathOfNichirinClient {
             // Wire up the Blurry effect screen shader
             MistBlurShaderHandler.register();
             ImpactFrameOverlay.register();
+            SunlightVignetteOverlay.register();
             com.xirc.nichirin.client.handler.SlammedWobble.register();
 
             // Register rendering hooks for shaders

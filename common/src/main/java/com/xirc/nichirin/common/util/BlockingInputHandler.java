@@ -81,7 +81,19 @@ public class BlockingInputHandler {
         } else if (serverAcceptedBlock) {
             blockRetryTicks = 0;
         }
+
+        // A block + left-click special replaces the held block animation while it plays. The server's
+        // hasActiveAttacks check doesn't cover self-ticking breathing/demon specials, so re-assert the
+        // block hold here on the local player when its animation controller goes idle while guarding.
+        boolean animPlaying = player instanceof net.minecraft.client.player.AbstractClientPlayer clientPlayer
+                && com.xirc.nichirin.client.animation.NichirinAnimations.isAnimationPlaying(clientPlayer);
+        if (serverAcceptedBlock && blockKeyPressed && wasAnimPlayingLastTick && !animPlaying) {
+            com.xirc.nichirin.client.animation.NichirinAnimations.playAnimation(player, blockAnimation(player));
+        }
+        wasAnimPlayingLastTick = animPlaying;
     }
+
+    private static boolean wasAnimPlayingLastTick = false;
 
     private static boolean canBlock(Player player) {
         if (player.getMainHandItem().getItem() instanceof SimpleKatana) return true;
@@ -89,6 +101,17 @@ public class BlockingInputHandler {
         return player.getMainHandItem().isEmpty()
                 && (com.xirc.nichirin.common.data.MovesetHelper.hasFightingMoveset(player)
                 || com.xirc.nichirin.common.data.MovesetHelper.hasDemonMoveset(player));
+    }
+
+    private static String blockAnimation(Player player) {
+        if (player.getMainHandItem().getItem() instanceof SimpleKatana) return "sword.block";
+        if (player.getOffhandItem().getItem() instanceof SimpleKatana) return "sword.block";
+        if (!player.getMainHandItem().isEmpty()) return "sword.block";
+        boolean cqcOrDemon = com.xirc.nichirin.common.data.MovesetHelper.hasFightingMoveset(player)
+                || com.xirc.nichirin.common.data.MovesetHelper.hasDemonMoveset(player);
+        if (!cqcOrDemon) return "sword.block";
+        return com.xirc.nichirin.common.data.PlayerDataProvider.getData(player)
+                .getCqcPresetData().getStanceAnimation();
     }
 
     private static void sendBlockStart() {

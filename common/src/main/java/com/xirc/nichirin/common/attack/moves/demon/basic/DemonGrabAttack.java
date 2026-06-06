@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.attack.moves.demon.basic;
 
+import com.xirc.nichirin.common.attack.moves.cqc.AbstractCqcAttack;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
@@ -26,13 +27,17 @@ public class DemonGrabAttack {
         if (demon.level().isClientSide()) return;
 
         Vec3 forward    = demon.getLookAngle();
+        float multiplier = AbstractCqcAttack.isDemonUser(demon) ? AbstractCqcAttack.DEMON_CQC_STAT_MULTIPLIER : 1.0f;
+        float grabRange = GRAB_RANGE * multiplier;
+        float grabHitbox = GRAB_HITBOX * multiplier;
+
         Vec3 grabCenter = demon.position()
-                .add(forward.scale(GRAB_RANGE))
+                .add(forward.scale(grabRange))
                 .add(0, demon.getBbHeight() * 0.4, 0);
 
         AABB hitbox = new AABB(
-                grabCenter.x - GRAB_HITBOX, grabCenter.y - GRAB_HITBOX, grabCenter.z - GRAB_HITBOX,
-                grabCenter.x + GRAB_HITBOX, grabCenter.y + GRAB_HITBOX, grabCenter.z + GRAB_HITBOX);
+                grabCenter.x - grabHitbox, grabCenter.y - grabHitbox, grabCenter.z - grabHitbox,
+                grabCenter.x + grabHitbox, grabCenter.y + grabHitbox, grabCenter.z + grabHitbox);
 
         // Show hitbox in F3+B debug view for 2 seconds
         NichirinPacketRegistry.sendHitboxToTracking(demon, hitbox, 2000L);
@@ -57,7 +62,7 @@ public class DemonGrabAttack {
         target.removeEffect(NichirinEffectRegistry.stunned());
 
         // Instant throw — launch forward-upward
-        target.setDeltaMovement(forward.x * 2.0, 1.5, forward.z * 2.0);
+        target.setDeltaMovement(forward.x * 2.0 * multiplier, 1.5 * multiplier, forward.z * 2.0 * multiplier);
         target.hurtMarked = true;
         target.hasImpulse = true;
 

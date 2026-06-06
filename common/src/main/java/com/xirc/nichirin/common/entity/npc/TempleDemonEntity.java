@@ -2,10 +2,12 @@ package com.xirc.nichirin.common.entity.npc;
 
 import com.xirc.nichirin.client.renderer.entity.dispatcher.TempleDemonDispatcher;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
-import com.xirc.nichirin.common.attack.moveset.demon.DefaultDemonMoveset;
+import com.xirc.nichirin.common.attack.moveset.demon.TempleDemonMoveset;
 import com.xirc.nichirin.common.system.GrabManager;
+import com.xirc.nichirin.common.system.blocking.HandToHandBlock;
 import mod.azure.azurelib.common.util.MoveAnalysis;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -44,7 +46,7 @@ public class TempleDemonEntity extends DemonNPCEntity {
         this.moveAnalysis = new MoveAnalysis(this);
 
         // Assign the demon moveset
-        this.setMoveset(new DefaultDemonMoveset());
+        this.setMoveset(new TempleDemonMoveset());
 
         // Configure Temple Demon properties (FULLY CUSTOMIZABLE)
         this.maxBloodPoints = 15; // More blood than default
@@ -76,7 +78,7 @@ public class TempleDemonEntity extends DemonNPCEntity {
         this.goalSelector.addGoal(5, new RandomLookAroundGoal(this));
 
         // HurtByTargetGoal with a kin filter: retaliate against anything that hits us, but
-        // don't ever turn on fellow demons (other DemonNPCs or demon players).
+        // don't turn on fellow demon NPCs.
         // alertSameType=false (the no-vararg HurtByTargetGoal default) prevents pack escalation.
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this) {
             @Override
@@ -89,23 +91,19 @@ public class TempleDemonEntity extends DemonNPCEntity {
                 return super.canContinueToUse();
             }
         });
-        // Auto-target players ONLY if they aren't demons themselves — fellow demons are neutral.
+        // Auto-target players. Demon players are still valid opponents for test fights.
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
-                entity -> !(entity instanceof Player p) || !com.xirc.nichirin.common.system.DemonManager.isDemon(p)));
+                entity -> entity instanceof Player p && !p.isCreative() && !p.isSpectator()));
         // Auto-target hostile mobs, excluding any kind of demon (TempleDemon or future demon entities).
         this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Monster.class, 10, true, false,
                 entity -> !isDemonKin(entity)));
     }
 
     /**
-     * Whether {@code entity} is a "demon" for the purposes of intra-kind neutrality:
-     * any DemonNPCEntity (TempleDemon and future demon variants) or any player with the
-     * demon moveset assigned.
+     * Whether {@code entity} is a demon NPC for the purposes of intra-kind neutrality.
      */
     private static boolean isDemonKin(net.minecraft.world.entity.Entity entity) {
-        if (entity instanceof DemonNPCEntity) return true;
-        if (entity instanceof Player p) return com.xirc.nichirin.common.system.DemonManager.isDemon(p);
-        return false;
+        return entity instanceof DemonNPCEntity;
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -126,9 +124,9 @@ public class TempleDemonEntity extends DemonNPCEntity {
             moveAnalysis.update();
             updateAnimations();
         } else {
-            DefaultDemonMoveset.tickEntity(this);
+            TempleDemonMoveset.tickEntity(this);
+            HandToHandBlock.tick(this);
             GrabManager.tick(this);
-            tickSunDamage();
         }
     }
 
@@ -145,6 +143,15 @@ public class TempleDemonEntity extends DemonNPCEntity {
 
     private void updateAnimations() {
         String serverAnim = getCurrentAnimation();
+
+        if (serverAnim.startsWith("cqc_stance_")) {
+            if (!serverAnim.equals(consumedAttackAnim) || wasAnimationReset()) {
+                dispatcher.playAnimation(serverAnim);
+                consumedAttackAnim = serverAnim;
+                lastWasWalking = false;
+            }
+            return;
+        }
 
         // Dispatch a new attack animation only if we haven't consumed it yet (or server reset it)
         if (!serverAnim.isEmpty() && (!serverAnim.equals(consumedAttackAnim) || wasAnimationReset())) {
@@ -186,6 +193,9 @@ public class TempleDemonEntity extends DemonNPCEntity {
 
     @Override
     protected void handleAnimationTick() {
+        if (HandToHandBlock.isBlocking(this)) {
+            return;
+        }
         if (serverAnimTicksRemaining > 0) {
             serverAnimTicksRemaining--;
             if (serverAnimTicksRemaining == 0) {
@@ -195,6 +205,15 @@ public class TempleDemonEntity extends DemonNPCEntity {
             // Safety: no countdown set (e.g. from old save data) — clear immediately
             stopAnimation();
         }
+    }
+
+    @Override
+    public boolean hurt(DamageSource source, float amount) {
+        if (source.getEntity() instanceof LivingEntity attacker
+                && HandToHandBlock.handleIncomingDamage(this, attacker, amount)) {
+            return false;
+        }
+        return super.hurt(source, amount);
     }
 
 
@@ -215,18 +234,15 @@ public class TempleDemonEntity extends DemonNPCEntity {
 
         @Override
         public boolean canUse() {
-            if (demon.getTarget() != null) return false;            // Only active during the day and when exposed to open sky
-            Level level = demon.level();
-            if (!level.isDay()) return false;
-            return level.canSeeSky(demon.blockPosition());
+            if (!demon.isInLethalSunlight()) return false;
+            demon.setTarget(null);
+            return true;
         }
 
         @Override
         public boolean canContinueToUse() {
             if (cooldown-- > 0) return true;
-            Level level = demon.level();
-            if (!level.isDay() || demon.getTarget() != null) return false;
-            return level.canSeeSky(demon.blockPosition());
+            return demon.isInLethalSunlight();
         }
 
         @Override
@@ -234,7 +250,7 @@ public class TempleDemonEntity extends DemonNPCEntity {
             cooldown = 100;
             shelterTarget = findShelter();
             if (shelterTarget != null) {
-                demon.getNavigation().moveTo(shelterTarget.x, shelterTarget.y, shelterTarget.z, 1.1);
+                demon.getNavigation().moveTo(shelterTarget.x, shelterTarget.y, shelterTarget.z, 1.35);
             }
         }
 
@@ -243,7 +259,7 @@ public class TempleDemonEntity extends DemonNPCEntity {
             if (shelterTarget == null || demon.getNavigation().isDone()) {
                 shelterTarget = findShelter();
                 if (shelterTarget != null) {
-                    demon.getNavigation().moveTo(shelterTarget.x, shelterTarget.y, shelterTarget.z, 1.1);
+                    demon.getNavigation().moveTo(shelterTarget.x, shelterTarget.y, shelterTarget.z, 1.35);
                 }
             }
         }
@@ -323,6 +339,7 @@ public class TempleDemonEntity extends DemonNPCEntity {
         private int stuckCheckTimer = 0;
         private double lastDistanceToTarget = 0;
         private int timesStuck = 0;
+        private int guardHeldTicks = 0;
 
         // Movement cooldown so the demon doesn't dash every tick
         private int dashCooldown = 0;
@@ -356,7 +373,7 @@ public class TempleDemonEntity extends DemonNPCEntity {
             if (stompDelay > 0) {
                 stompDelay--;
             } else if (pendingStomp && !demon.onGround() && demon.getTarget() != null) {
-                demon.getMoveset().handleRightClick(demon, true); // canStompAfterHighJump is set → stomp
+                demon.performRightClickMove(true); // canStompAfterHighJump is set -> stomp
                 pendingStomp  = false;
                 globalCooldown = 20;
             }
@@ -370,6 +387,29 @@ public class TempleDemonEntity extends DemonNPCEntity {
                 // Stunned demons can't act or move — no dashing or attacking.
                 if (demon.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.stunned())) {
                     demon.getNavigation().stop();
+                    return;
+                }
+
+                double distance = Math.sqrt(demon.distanceToSqr(target));
+                if (!HandToHandBlock.isBlocking(demon) && distance < 6.0) {
+                    boolean targetAttacking = target.swinging || target.attackAnim > 0
+                            || (target.hurtTime > 0 && target.hurtTime < 5)
+                            || com.xirc.nichirin.common.attack.MoveExecutor.hasActiveAttacks(target);
+                    if (!targetAttacking && globalCooldown > 0 && distance < 3.5) {
+                        targetAttacking = demon.getRandom().nextFloat() < 0.12f;
+                    }
+                    if (targetAttacking && demon.getRandom().nextFloat() < 0.45f) {
+                        HandToHandBlock.startBlocking(demon);
+                        guardHeldTicks = 0;
+                        return;
+                    }
+                }
+                if (HandToHandBlock.isBlocking(demon)) {
+                    guardHeldTicks++;
+                    if (guardHeldTicks > 18 + demon.getRandom().nextInt(22)) {
+                        HandToHandBlock.stopBlocking(demon);
+                        guardHeldTicks = 0;
+                    }
                     return;
                 }
 
@@ -517,7 +557,7 @@ public class TempleDemonEntity extends DemonNPCEntity {
         private boolean isAttackReady(int attack) {
             return switch (attack) {
                 case ATTACK_LEFT  -> cooldownLeft == 0;
-                case ATTACK_RIGHT -> cooldownRight == 0;
+                case ATTACK_RIGHT -> cooldownRight == 0 && demon.canUseRightClickMove(false);
                 case 0            -> cooldownMove0 == 0 && canWheelMove(0);
                 case 1            -> cooldownMove1 == 0 && canWheelMove(1);
                 case 2            -> cooldownMove2 == 0 && canWheelMove(2);
@@ -534,13 +574,13 @@ public class TempleDemonEntity extends DemonNPCEntity {
         }
 
         private void fireRightClick() {
-            demon.getMoveset().handleRightClick(demon, false);
+            demon.performRightClickMove(false);
             cooldownRight  = comboWindow > 0 ? 8 : 12;
             globalCooldown = comboWindow > 0 ? COMBO_GLOBAL_CD : 6;
         }
 
         private void fireHighJump() {
-            demon.getMoveset().handleRightClick(demon, true);
+            demon.performRightClickMove(true);
             cooldownHighJump = 200;
             globalCooldown   = 3;
             pendingStomp     = true;
@@ -591,7 +631,8 @@ public class TempleDemonEntity extends DemonNPCEntity {
             boolean targetAbove = tgt != null && tgt.getY() > demon.getY() + 2.0;
 
             // High jump only when target is significantly above us
-            if (targetAbove && cooldownHighJump == 0 && demon.onGround() && distance <= 6.0) {
+            if (targetAbove && cooldownHighJump == 0 && demon.onGround() && distance <= 6.0
+                    && demon.canUseRightClickMove(true)) {
                 return ATTACK_HIGH_JUMP;
             }
 

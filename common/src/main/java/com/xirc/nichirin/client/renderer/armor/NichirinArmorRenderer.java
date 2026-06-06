@@ -273,6 +273,18 @@ public class NichirinArmorRenderer extends AzArmorRenderer {
     }
 
     /**
+     * Scales a single bone (NOT its children). Child bones inherit the parent's scale through the
+     * bone matrix, so to grow a whole body part uniformly you scale only its root bone — scaling
+     * every descendant as well compounds (parent × child) and distorts the part.
+     */
+    protected void scaleBone(@Nullable AzBone bone, float scale) {
+        if (bone == null) return;
+        bone.setScaleX(scale);
+        bone.setScaleY(scale);
+        bone.setScaleZ(scale);
+    }
+
+    /**
      * Offsets a body-following bone (one set up by NichirinCapeArmorBoneProvider) by upOffset pixels
      * upward and backOffset pixels toward the back of the player.
      */

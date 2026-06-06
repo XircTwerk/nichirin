@@ -66,6 +66,12 @@ public class TempleDemonDispatcher {
             AzPlayBehaviors.PLAY_ONCE
     );
 
+    private static final AzCommand CROSS_GUARD_COMMAND = AzCommand.create(
+            "main_controller",
+            "cqc_stance_3",
+            AzPlayBehaviors.LOOP
+    );
+
     private final TempleDemonEntity demon;
 
     public TempleDemonDispatcher(TempleDemonEntity demon) {
@@ -112,6 +118,10 @@ public class TempleDemonDispatcher {
         STOMP_COMMAND.sendForEntity(demon);
     }
 
+    public void crossGuard() {
+        CROSS_GUARD_COMMAND.sendForEntity(demon);
+    }
+
     public void playAnimation(String animName) {
         switch (animName) {
             case "demon_gut_punch", "demon_punch" -> gutPunch();
@@ -122,6 +132,7 @@ public class TempleDemonDispatcher {
             case "demon_bite" -> bite();
             case "demon_high_jump" -> highJump();
             case "demon_stomp" -> stomp();
+            case "cqc_stance_3" -> crossGuard();
             default -> idle();
         }
     }

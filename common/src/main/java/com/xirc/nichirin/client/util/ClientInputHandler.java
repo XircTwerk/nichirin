@@ -80,7 +80,7 @@ public class ClientInputHandler {
     }
 
     /** True when the player is holding the block button (RMB) and is able to block/attack. */
-    private static boolean isBlockHeld(Player player) {
+    public static boolean isBlockHeld(Player player) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.options == null || !mc.options.keyUse.isDown()) return false;
         if (player.getMainHandItem().getItem() instanceof SimpleKatana) return true;

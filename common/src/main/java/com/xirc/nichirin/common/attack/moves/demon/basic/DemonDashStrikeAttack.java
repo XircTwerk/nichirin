@@ -27,8 +27,10 @@ public class DemonDashStrikeAttack extends AbstractDemonAttack<DemonDashStrikeAt
     private static final float PATH_HIT_DAMAGE_MULT = 0.35f;
     /** Multiplier for the finisher hitbox at the dash endpoint (this is the payoff). */
     private static final float FINISHER_DAMAGE_MULT = 2.0f;
-    /** How wide the finisher hitbox is relative to the configured range. */
-    private static final float FINISHER_RADIUS_MULT = 1.6f;
+    /** How wide the path hitbox is relative to the configured hitbox size. */
+    private static final float PATH_RADIUS_MULT = 0.65f;
+    /** How wide the finisher hitbox is relative to the configured hitbox size. */
+    private static final float FINISHER_RADIUS_MULT = 1.0f;
     /** How many ticks the dash sustains velocity before the finisher fires. */
     private static final int DASH_DURATION_TICKS = 12;
 
@@ -70,7 +72,7 @@ public class DemonDashStrikeAttack extends AbstractDemonAttack<DemonDashStrikeAt
 
         // Sustain dash velocity until the finisher fires, and clip enemies along the path each tick.
         if (dashExecuted && !punchExecuted && dashDirection != null) {
-            double dashStrength = 2.4;
+            double dashStrength = 2.4 * statMultiplier;
             Vec3 current = user.getDeltaMovement();
             user.setDeltaMovement(dashDirection.x * dashStrength, current.y, dashDirection.z * dashStrength);
             user.hurtMarked = true;
@@ -91,7 +93,8 @@ public class DemonDashStrikeAttack extends AbstractDemonAttack<DemonDashStrikeAt
     private void sweepPathHitbox() {
         if (user == null) return;
 
-        List<LivingEntity> targets = getTargetsInCircle((float) range, 2);
+        float pathRadius = Math.max(0.75f, hitboxSize * PATH_RADIUS_MULT);
+        List<LivingEntity> targets = getTargetsInCircle(pathRadius, 2);
         if (targets.isEmpty()) return;
 
         float originalDamage = damage;
@@ -120,7 +123,7 @@ public class DemonDashStrikeAttack extends AbstractDemonAttack<DemonDashStrikeAt
         if (user == null || dashDirection == null) return;
 
         // Apply strong forward momentum for dash
-        double dashStrength = 2.4; // Strong dash velocity
+        double dashStrength = 2.4 * statMultiplier; // Strong dash velocity
         Vec3 dashVelocity = dashDirection.scale(dashStrength);
 
         // Maintain some vertical component if jumping
@@ -151,8 +154,8 @@ public class DemonDashStrikeAttack extends AbstractDemonAttack<DemonDashStrikeAt
         // Bigger, more dramatic impact effect at the stopping point.
         createPunchImpact(userPos);
 
-        float finisherRange = (float) range * FINISHER_RADIUS_MULT;
-        List<LivingEntity> targets = getTargetsInCircle(finisherRange, 3);
+        float finisherRadius = Math.max(1.0f, hitboxSize * FINISHER_RADIUS_MULT);
+        List<LivingEntity> targets = getTargetsInCircle(finisherRadius, 3);
 
         float originalDamage = damage;
         damage = originalDamage * FINISHER_DAMAGE_MULT;

@@ -131,6 +131,14 @@ public class MovesetSection extends AbstractGuiPage {
         };
     }
 
+    public boolean handleRelease(double mouseX, double mouseY, Player player,
+                                 int contentWidth, int contentHeight) {
+        int bodyY = workspaceBodyY();
+        if (mouseY < bodyY || mouseY >= contentHeight - WORKSPACE_FOOTER_H) return false;
+        double bodyMouseY = mouseY - bodyY;
+        return currentTab == MovesetTab.CQC && cqcSection.handleRelease(mouseX, bodyMouseY, player, contentWidth);
+    }
+
     // Position helpers - derived from BreathingStylesSection layout constants
     /** X coordinate where the subtab row starts (centred in content area). */
     private int tabsStartX(int contentWidth) {

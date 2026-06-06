@@ -254,6 +254,26 @@ public class TheBigGui extends Screen {
         return super.mouseClicked(logMouseX, logMouseY, button);
     }
 
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        double logMouseX = mouseX / contentScale;
+        double logMouseY = mouseY / contentScale;
+        double contentMouseX = logMouseX - CONTENT_X;
+        double contentMouseY = logMouseY - CONTENT_Y;
+
+        int logW = Math.round(this.width  / contentScale);
+        int logH = Math.round(this.height / contentScale);
+        int contentRight  = logW - BUTTON_WIDTH - RIGHT_MARGIN - 10;
+        int clickContentW = contentRight - CONTENT_X;
+        int clickContentH = logH - BOTTOM_MARGIN - CONTENT_Y;
+
+        if (currentSection == GuiSection.MOVESET
+                && movesetSection.handleRelease(contentMouseX, contentMouseY, player, clickContentW, clickContentH)) {
+            return true;
+        }
+        return super.mouseReleased(logMouseX, logMouseY, button);
+    }
+
     @Getter
     private static class SectionButton extends Button {
         private final GuiSection section;

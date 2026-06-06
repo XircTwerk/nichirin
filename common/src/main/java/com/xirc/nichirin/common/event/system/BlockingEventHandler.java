@@ -2,6 +2,7 @@ package com.xirc.nichirin.common.event.system;
 
 import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.system.StanceManager;
+import com.xirc.nichirin.common.system.blocking.HandToHandBlock;
 import com.xirc.nichirin.common.system.blocking.KatanaBlock;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
@@ -24,6 +25,7 @@ public class BlockingEventHandler {
             if (!player.level().isClientSide) {
                 StanceManager.tick(player);
                 KatanaBlock.tick(player);
+                HandToHandBlock.tick(player);
             }
         });
 
@@ -39,6 +41,7 @@ public class BlockingEventHandler {
         PlayerEvent.PLAYER_QUIT.register(player -> {
             StanceManager.cleanupPlayer(player);
             KatanaBlock.cleanupPlayer(player);
+            HandToHandBlock.cleanupPlayer(player);
         });
 
         PlayerEvent.PLAYER_RESPAWN.register((newPlayer, conqueredEnd, removalReason) -> {
@@ -50,20 +53,22 @@ public class BlockingEventHandler {
 
         EntityEvent.LIVING_HURT.register((entity, damageSource, amount) -> {
             if (entity instanceof Player player && !player.level().isClientSide) {
-                if (KatanaBlock.isBlocking(player)) {
-                    Player playerAttacker = null;
+                if (KatanaBlock.isBlocking(player) || HandToHandBlock.isBlocking(player)) {
                     LivingEntity attackingEntity = null;
 
                     if (damageSource.getEntity() instanceof Player playerAtk) {
-                        playerAttacker = playerAtk;
                         attackingEntity = playerAtk;
                     } else if (damageSource.getEntity() instanceof LivingEntity livingAtk) {
                         attackingEntity = livingAtk;
                     }
 
-                    boolean handled = KatanaBlock.handleIncomingDamage(player, playerAttacker, amount);
+                    boolean handled = KatanaBlock.isBlocking(player)
+                            ? KatanaBlock.handleIncomingDamage(player, attackingEntity, amount)
+                            : HandToHandBlock.handleIncomingDamage(player, attackingEntity, amount);
 
-                    if (handled && KatanaBlock.getStance(player) == KatanaBlock.BlockingStance.PARRY_SUCCESS) {
+                    boolean parried = KatanaBlock.getStance(player) == KatanaBlock.BlockingStance.PARRY_SUCCESS
+                            || HandToHandBlock.getStance(player) == HandToHandBlock.BlockingStance.PARRY_SUCCESS;
+                    if (handled && parried) {
                         if (!NichirinModConfig.get().combat.enableParrySystem) {
                             return EventResult.pass();
                         }
