@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.event.system;
 
 import com.xirc.nichirin.common.data.MovesetHelper;
+import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.system.DemonManager;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.event.CompoundEventResult;
@@ -13,6 +14,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.Items;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -54,6 +56,18 @@ public class DemonFoodHandler {
 
             ItemStack itemStack = player.getItemInHand(hand);
 
+            if (isBloodFood(itemStack)) {
+                if (!canGainBlood(player)) {
+                    player.displayClientMessage(
+                            Component.literal("Blood is too full.")
+                                    .withStyle(style -> style.withColor(0x8B0000)),
+                            true
+                    );
+                    return CompoundEventResult.interruptFalse(itemStack);
+                }
+                return CompoundEventResult.pass();
+            }
+
             if (itemStack.has(DataComponents.FOOD)) {
                 player.displayClientMessage(
                         Component.literal("Demons cannot consume regular food!")
@@ -84,6 +98,49 @@ public class DemonFoodHandler {
         });
     }
 
+    public static boolean isBloodFood(ItemStack stack) {
+        return stack.is(Items.SPIDER_EYE)
+                || stack.is(Items.ROTTEN_FLESH)
+                || stack.is(Items.BEEF)
+                || stack.is(Items.CHICKEN)
+                || stack.is(Items.PORKCHOP)
+                || stack.is(Items.MUTTON)
+                || stack.is(Items.RABBIT)
+                || stack.is(Items.COD)
+                || stack.is(Items.SALMON);
+    }
+
+    public static boolean canGainBlood(Player player) {
+        int maxBlood = NichirinModConfig.get().demon.maxBloodPoints;
+        int currentBlood = DemonManager.getBloodPoints(player);
+        int currentHalfBlood = halfBloodPoints.getOrDefault(player.getUUID(), 0);
+        double actualBlood = currentBlood - currentHalfBlood * 0.5D;
+        return actualBlood <= maxBlood * 0.5D;
+    }
+
+    public static boolean addHalfBloodPoint(Player player) {
+        if (!canGainBlood(player)) {
+            return false;
+        }
+
+        int maxBlood = NichirinModConfig.get().demon.maxBloodPoints;
+        int currentBlood = DemonManager.getBloodPoints(player);
+        int currentHalfBlood = halfBloodPoints.getOrDefault(player.getUUID(), 0);
+
+        if (currentHalfBlood > 0) {
+            halfBloodPoints.put(player.getUUID(), 0);
+            syncHalfBloodToClient(player, 0);
+            return true;
+        }
+
+        DemonManager.setBloodPoints(player, Math.min(maxBlood, currentBlood + 1));
+        if (currentBlood + 1 <= maxBlood) {
+            halfBloodPoints.put(player.getUUID(), 1);
+            syncHalfBloodToClient(player, 1);
+        }
+        return true;
+    }
+
     /**
      * Tracks damage accumulation for blood loss calculation with multihit resistance
      * Every 10 damage (5 hearts) = 0.5 blood points lost, but multihits are reduced
@@ -111,20 +168,9 @@ public class DemonFoodHandler {
             long lastLossTime = lastBloodLossTimes.getOrDefault(playerUUID, 0L);
 
             if (currentTime - lastLossTime >= BLOOD_LOSS_INTERVAL_MS) {
-                int currentBlood = DemonManager.getBloodPoints(player);
-                int currentHalfBlood = halfBloodPoints.getOrDefault(playerUUID, 0);
-
-                if (currentBlood > 0 || currentHalfBlood > 0) {
-                    currentHalfBlood++;
-                    halfBloodPoints.put(playerUUID, currentHalfBlood);
-
-                    if (currentHalfBlood >= 2) {
-                        DemonManager.removeBloodPoints(player, 1);
-                        halfBloodPoints.put(playerUUID, 0);
-                        syncHalfBloodToClient(player, 0);
-                    } else {
-                        syncHalfBloodToClient(player, currentHalfBlood);
-                    }
+                if (DemonManager.getBloodPoints(player) > 0
+                        || halfBloodPoints.getOrDefault(playerUUID, 0) > 0) {
+                    loseHalfBloodPoint(player);
 
                     lastBloodLossTimes.put(playerUUID, currentTime);
                     accumulated -= DAMAGE_PER_HALF_BLOOD;
@@ -137,6 +183,21 @@ public class DemonFoodHandler {
         }
 
         accumulatedDamage.put(playerUUID, accumulated);
+    }
+
+    public static void loseHalfBloodPoint(Player player) {
+        UUID playerUUID = player.getUUID();
+        int currentBlood = DemonManager.getBloodPoints(player);
+        int currentHalfBlood = halfBloodPoints.getOrDefault(playerUUID, 0);
+
+        if (currentHalfBlood > 0) {
+            halfBloodPoints.put(playerUUID, 0);
+            DemonManager.setBloodPoints(player, currentBlood - 1);
+            return;
+        }
+
+        halfBloodPoints.put(playerUUID, 1);
+        syncHalfBloodToClient(player, 1);
     }
 
     /**

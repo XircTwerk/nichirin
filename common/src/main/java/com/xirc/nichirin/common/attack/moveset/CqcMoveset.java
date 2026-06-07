@@ -325,7 +325,7 @@ public class CqcMoveset extends AbstractMoveset {
     public static final MoveConfiguration DASHING_STRIKE = new MoveBuilder("dashing_strike", "Dashing Strike")
             .withAnimation("nichirin:demon_dash_strike", 10)
             .withDescription("Dash forward and deliver a devastating punch.")
-            .withTiming(140, 8, 14)
+            .withTiming(140, 8, 6)
             .withDamage(12.0f)
             .withDashSpeed(6.0f)
             .withRange(5.5f)
@@ -469,7 +469,8 @@ public class CqcMoveset extends AbstractMoveset {
         if (isOnCooldown(entity, config)) {
             if (entity instanceof Player player) {
                 int remaining = getRemainingCooldown(entity, config);
-                player.displayClientMessage(Component.literal("Move on cooldown! " + String.format("%.1f", remaining / 20.0f) + "s remaining"), true);
+                player.displayClientMessage(Component.literal("Move on cooldown! " + String.format("%.1f", remaining / 20.0f) + "s remaining")
+                        .withStyle(style -> style.withColor(0xFF5555)), true);
             }
             return;
         }
@@ -497,13 +498,25 @@ public class CqcMoveset extends AbstractMoveset {
         triggerAnimation(entity, definition.animationName());
         Object attack = createDemonAttack(moveId);
         if (attack == null) return true;
+        if (attack instanceof DemonGrabAttack grabAttack) {
+            grabAttack.execute(entity);
+            MoveExecutor.sendCooldownDisplay(entity instanceof Player player ? player : null, config.getDisplayName(), config.getCooldownOrDefault(0));
+            setCooldown(entity, config);
+            return true;
+        }
         if (attack instanceof com.xirc.nichirin.common.attack.component.AbstractDemonAttack<?, ?> demonAttack) {
             demonAttack.configure(config);
+            if (!definition.demonOnly()) {
+                demonAttack.allowNonDemonUser();
+            }
             if (canUseDemonOnlyMove(entity)) {
                 demonAttack.applyStatMultiplier(AbstractCqcAttack.DEMON_CQC_STAT_MULTIPLIER);
             }
         }
         MoveExecutor.executeAttackWithInfo(entity, attack, config.getDisplayName(), config.getCooldownOrDefault(0));
+        if ("dashing_strike".equals(moveId) && entity instanceof Player player) {
+            MoveExecutor.sendCooldownDisplay(player, config.getDisplayName(), config.getCooldownOrDefault(0));
+        }
         setCooldown(entity, config);
         return true;
     }

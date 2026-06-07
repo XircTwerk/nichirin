@@ -58,6 +58,7 @@ public class TempleDemonEntity extends DemonNPCEntity {
         this.canRegenBlood = true; // Can regenerate blood
         this.bloodRegenMultiplier = 1.5f; // 50% faster blood regen
         this.breathRegenMultiplier = 2.5f; // 150% faster breath regen
+        this.setBloodPoints(maxBloodPoints);
 
         // Blacklist certain moves (example: disable move index 1 - Dashing Strike for balance)
         // this.blacklistedMoves.add(1); // Uncomment to disable Dashing Strike
@@ -71,8 +72,8 @@ public class TempleDemonEntity extends DemonNPCEntity {
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
-        this.goalSelector.addGoal(1, new SmartDemonAttackGoal(this, 1.2, true));
-        this.goalSelector.addGoal(2, new DayShelterGoal(this));
+        this.goalSelector.addGoal(1, new DayShelterGoal(this));
+        this.goalSelector.addGoal(2, new SmartDemonAttackGoal(this, 1.2, true));
         this.goalSelector.addGoal(3, new LookAtPlayerGoal(this, Player.class, 32.0f));
         this.goalSelector.addGoal(4, new WaterAvoidingRandomStrollGoal(this, 1.0));
         this.goalSelector.addGoal(5, new RandomLookAroundGoal(this));
@@ -438,6 +439,7 @@ public class TempleDemonEntity extends DemonNPCEntity {
 
         @Override
         public boolean canUse() {
+            if (demon.isInLethalSunlight()) return false;
             LivingEntity target = demon.getTarget();
             return target != null && target.isAlive() && super.canUse();
         }
@@ -446,6 +448,10 @@ public class TempleDemonEntity extends DemonNPCEntity {
         public boolean canContinueToUse() {
             LivingEntity target = demon.getTarget();
             if (target == null || !target.isAlive()) {
+                resetStuck();
+                return false;
+            }
+            if (demon.isInLethalSunlight()) {
                 resetStuck();
                 return false;
             }

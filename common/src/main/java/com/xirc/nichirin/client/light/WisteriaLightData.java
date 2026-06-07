@@ -2,6 +2,7 @@ package com.xirc.nichirin.client.light;
 
 import com.xirc.nichirin.registry.NichirinBlockRegistry;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -87,6 +88,42 @@ public final class WisteriaLightData {
 
     public static boolean hasLights() {
         return lightCount > 0;
+    }
+
+    public static int applyEntityLight(Vec3 worldPos, int packedLight) {
+        if (lightCount <= 0) {
+            return packedLight;
+        }
+
+        float strongest = 0.0F;
+        for (int i = 0; i < lightCount; i++) {
+            int index = i * 4;
+            float radius = LIGHTS[index + 3];
+            if (radius <= 0.0F) {
+                continue;
+            }
+
+            double dx = LIGHTS[index] - worldPos.x;
+            double dy = LIGHTS[index + 1] - worldPos.y;
+            double dz = LIGHTS[index + 2] - worldPos.z;
+            float distance = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
+            float falloff = 1.0F - distance / radius;
+            if (falloff <= 0.0F) {
+                continue;
+            }
+
+            float smoothed = falloff * falloff * (3.0F - 2.0F * falloff);
+            strongest = Math.max(strongest, smoothed * strength);
+        }
+
+        if (strongest <= 0.02F) {
+            return packedLight;
+        }
+
+        int blockLight = (packedLight >> 4) & 0xF;
+        int skyLight = (packedLight >> 20) & 0xF;
+        int boostedBlockLight = Math.max(blockLight, Math.min(15, Math.round(strongest * 15.0F)));
+        return LightTexture.pack(boostedBlockLight, skyLight);
     }
 
     public static void uploadToShader(int programId) {

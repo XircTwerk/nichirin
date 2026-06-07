@@ -3,6 +3,7 @@ package com.xirc.nichirin.mixin.client;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.zigythebird.playeranimcore.api.firstPerson.FirstPersonMode;
 import com.xirc.nichirin.client.handler.BloodMoonClientState;
+import com.xirc.nichirin.client.light.WisteriaLightData;
 import com.xirc.nichirin.client.shader.DeadCalmShaderEffect;
 import com.xirc.nichirin.client.shader.NichirinShaderManager;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
@@ -17,12 +18,15 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArgs;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
 @Mixin(LevelRenderer.class)
 public class LevelRendererMixin {
@@ -137,5 +141,17 @@ public class LevelRendererMixin {
                 && living.hasEffect(NichirinEffectRegistry.blocking()))) {
             poseStack.translate(0.0D, -NICHIRIN_CROUCH_EYE_HEIGHT_DELTA, 0.0D);
         }
+    }
+
+    @ModifyArgs(
+            method = "renderEntity",
+            at = @At(value = "INVOKE",
+                    target = "Lnet/minecraft/client/renderer/entity/EntityRenderDispatcher;render(Lnet/minecraft/world/entity/Entity;DDDFFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V")
+    )
+    private void nichirin$applyWisteriaLightToEntities(Args args) {
+        Entity entity = args.get(0);
+        int packedLight = args.get(8);
+        double sampleY = entity.getY() + entity.getBbHeight() * 0.5D;
+        args.set(8, WisteriaLightData.applyEntityLight(new Vec3(entity.getX(), sampleY, entity.getZ()), packedLight));
     }
 }

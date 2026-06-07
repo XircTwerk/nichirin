@@ -203,7 +203,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         long remaining = (cooldownEnd - entity.level().getGameTime()) / 20;
                         EntityResources.sendMessage(entity,
                                 Component.literal(config.getDisplayName() + " on cooldown! " + remaining + "s remaining")
-                                        .withStyle(style -> style.withColor(0xFF6600)), true);
+                                        .withStyle(style -> style.withColor(0xFF5555)), true);
                     }
                 }
             }

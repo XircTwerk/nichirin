@@ -13,7 +13,7 @@ public abstract class ShaderInstanceMixin {
     @Inject(method = "apply", at = @At("TAIL"))
     private void nichirin$uploadWisteriaLightUniforms(CallbackInfo ci) {
         ShaderInstance shader = (ShaderInstance) (Object) this;
-        if (NichirinShaderInjection.isWisteriaChunkShader(shader.getName())) {
+        if (NichirinShaderInjection.isWisteriaLitShader(shader.getName())) {
             WisteriaLightData.uploadToShader(shader.getId());
         }
     }

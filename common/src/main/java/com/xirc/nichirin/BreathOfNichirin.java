@@ -5,6 +5,7 @@ import com.xirc.nichirin.common.config.NichirinServerConfig;
 import com.xirc.nichirin.common.config.NichirinServerConfigSerializer;
 import com.xirc.nichirin.common.advancement.NichirinCriteriaTriggers;
 import com.xirc.nichirin.common.event.item.DrinkingGourdInteractionHandler;
+import com.xirc.nichirin.common.event.item.WisteriaStrippingHandler;
 import com.xirc.nichirin.common.event.system.*;
 import com.xirc.nichirin.common.event.*;
 import com.xirc.nichirin.common.event.unlock.*;
@@ -79,6 +80,7 @@ public final class BreathOfNichirin {
         com.xirc.nichirin.common.event.system.HitAnimationHandler.register();
         DemonFoodHandler.register();
         DrinkingGourdInteractionHandler.register();
+        WisteriaStrippingHandler.register();
 
         // Data
         NichirinMovesetRegistry.init();

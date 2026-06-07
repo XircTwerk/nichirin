@@ -6,24 +6,33 @@ import com.xirc.nichirin.client.light.WisteriaLightData;
 import java.util.Set;
 
 public final class NichirinShaderInjection {
-    private static final Set<String> WISTERIA_CHUNK_SHADERS = Set.of(
+    private static final Set<String> WISTERIA_LIT_SHADERS = Set.of(
             "rendertype_solid",
             "rendertype_cutout",
-            "rendertype_cutout_mipped");
+            "rendertype_cutout_mipped",
+            "rendertype_entity_solid",
+            "rendertype_entity_cutout",
+            "rendertype_entity_cutout_no_cull",
+            "rendertype_entity_cutout_no_cull_z_offset",
+            "rendertype_entity_translucent",
+            "rendertype_entity_translucent_cull",
+            "rendertype_entity_smooth_cutout",
+            "rendertype_entity_decal",
+            "rendertype_entity_no_outline");
 
     private NichirinShaderInjection() {
     }
 
     public static String transform(Program.Type type, String shaderName, String source) {
-        if (type != Program.Type.VERTEX || !WISTERIA_CHUNK_SHADERS.contains(shaderName)) {
+        if (type != Program.Type.VERTEX || !WISTERIA_LIT_SHADERS.contains(shaderName)) {
             return source;
         }
 
         return injectWisteriaLighting(source);
     }
 
-    public static boolean isWisteriaChunkShader(String shaderName) {
-        return WISTERIA_CHUNK_SHADERS.contains(shaderName);
+    public static boolean isWisteriaLitShader(String shaderName) {
+        return WISTERIA_LIT_SHADERS.contains(shaderName);
     }
 
     private static String injectWisteriaLighting(String source) {

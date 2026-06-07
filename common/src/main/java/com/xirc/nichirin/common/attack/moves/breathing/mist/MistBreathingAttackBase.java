@@ -121,9 +121,6 @@ public abstract class MistBreathingAttackBase extends AbstractBreathingAttack<Mi
                 e -> e.isAlive() && e != user)
             .forEach(this::triggerMistBlur);
 
-        if (user instanceof ServerPlayer player) {
-            triggerMistBlur(player);
-        }
     }
 
     @Override
@@ -136,9 +133,6 @@ public abstract class MistBreathingAttackBase extends AbstractBreathingAttack<Mi
         if (target instanceof ServerPlayer player) {
             triggerMistBlur(player);
         }
-        if (user instanceof ServerPlayer player) {
-            triggerMistBlur(player);
-        }
     }
 
     @Override
@@ -149,9 +143,6 @@ public abstract class MistBreathingAttackBase extends AbstractBreathingAttack<Mi
         playMistHitSound(target.position());
         target.addEffect(new MobEffectInstance(NichirinEffectRegistry.blurry(), 60, 0, false, false, false));
         if (target instanceof ServerPlayer player) {
-            triggerMistBlur(player);
-        }
-        if (user instanceof ServerPlayer player) {
             triggerMistBlur(player);
         }
     }

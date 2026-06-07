@@ -80,7 +80,7 @@ public class DemonDashStrikeAttack extends AbstractDemonAttack<DemonDashStrikeAt
         }
 
         // Finisher fires once the dash duration is up.
-        if (dashExecuted && !punchExecuted && tickCount >= windup + DASH_DURATION_TICKS) {
+        if (dashExecuted && !punchExecuted && tickCount >= windup + dashDurationTicks()) {
             executeFinisher();
             punchExecuted = true;
         }
@@ -138,6 +138,10 @@ public class DemonDashStrikeAttack extends AbstractDemonAttack<DemonDashStrikeAt
         // Dash sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.2f, 0.8f);
+    }
+
+    private int dashDurationTicks() {
+        return Math.max(1, Math.min(DASH_DURATION_TICKS, duration));
     }
 
     /**

@@ -7,6 +7,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
@@ -46,6 +47,34 @@ public class NichirinTagProvider extends FabricTagProvider.BlockTagProvider {
                 .add(NichirinBlockRegistry.WISTERIA_FENCE.get());
         getOrCreateTagBuilder(BlockTags.FENCE_GATES)
                 .add(NichirinBlockRegistry.WISTERIA_FENCE_GATE.get());
+
+        getOrCreateTagBuilder(BlockTags.MINEABLE_WITH_AXE)
+                .add(NichirinBlockRegistry.WISTERIA_LOG.get())
+                .add(NichirinBlockRegistry.STRIPPED_WISTERIA_LOG.get())
+                .add(NichirinBlockRegistry.WISTERIA_WOOD.get())
+                .add(NichirinBlockRegistry.STRIPPED_WISTERIA_WOOD.get())
+                .add(NichirinBlockRegistry.WISTERIA_PLANKS.get())
+                .add(NichirinBlockRegistry.WISTERIA_STAIRS.get())
+                .add(NichirinBlockRegistry.WISTERIA_SLAB.get())
+                .add(NichirinBlockRegistry.WISTERIA_FENCE.get())
+                .add(NichirinBlockRegistry.WISTERIA_FENCE_GATE.get())
+                .add(NichirinBlockRegistry.WISTERIA_DOOR.get())
+                .add(NichirinBlockRegistry.WISTERIA_TRAPDOOR.get())
+                .add(NichirinBlockRegistry.WISTERIA_PRESSURE_PLATE.get())
+                .add(NichirinBlockRegistry.WISTERIA_BUTTON.get());
+
+        getOrCreateTagBuilder(BlockTags.LOGS)
+                .add(NichirinBlockRegistry.WISTERIA_LOG.get())
+                .add(NichirinBlockRegistry.STRIPPED_WISTERIA_LOG.get())
+                .add(NichirinBlockRegistry.WISTERIA_WOOD.get())
+                .add(NichirinBlockRegistry.STRIPPED_WISTERIA_WOOD.get());
+        getOrCreateTagBuilder(BlockTags.LOGS_THAT_BURN)
+                .add(NichirinBlockRegistry.WISTERIA_LOG.get())
+                .add(NichirinBlockRegistry.STRIPPED_WISTERIA_LOG.get())
+                .add(NichirinBlockRegistry.WISTERIA_WOOD.get())
+                .add(NichirinBlockRegistry.STRIPPED_WISTERIA_WOOD.get());
+        getOrCreateTagBuilder(BlockTags.PLANKS)
+                .add(NichirinBlockRegistry.WISTERIA_PLANKS.get());
     }
 
     // Add ItemTagProvider as nested class for item tags
@@ -65,6 +94,17 @@ public class NichirinTagProvider extends FabricTagProvider.BlockTagProvider {
             // .addTag(ItemTags.FISHES) // This would add all fish items
             // Add any modded food items here as needed
             ;
+
+            getOrCreateTagBuilder(ItemTags.LOGS)
+                    .add(NichirinBlockRegistry.WISTERIA_LOG_ITEM.get())
+                    .add(NichirinBlockRegistry.STRIPPED_WISTERIA_LOG_ITEM.get())
+                    .add(NichirinBlockRegistry.WISTERIA_WOOD_ITEM.get())
+                    .add(NichirinBlockRegistry.STRIPPED_WISTERIA_WOOD_ITEM.get());
+            getOrCreateTagBuilder(ItemTags.LOGS_THAT_BURN)
+                    .add(NichirinBlockRegistry.WISTERIA_LOG_ITEM.get())
+                    .add(NichirinBlockRegistry.STRIPPED_WISTERIA_LOG_ITEM.get())
+                    .add(NichirinBlockRegistry.WISTERIA_WOOD_ITEM.get())
+                    .add(NichirinBlockRegistry.STRIPPED_WISTERIA_WOOD_ITEM.get());
         }
     }
 }

@@ -66,6 +66,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
     protected Float dashSpeed;
     protected Integer teleportWindup;
     protected float statMultiplier = 1.0f;
+    protected boolean allowNonDemonUser = false;
 
     // Runtime state shared by player and NPC attacks.
     @Setter
@@ -138,6 +139,14 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
         if (this.dashSpeed != null) {
             this.dashSpeed *= multiplier;
         }
+    }
+
+    /**
+     * CQC owns a few physical attacks that reuse this old demon-attack implementation but are not
+     * demon-only. Demon arts should leave this disabled.
+     */
+    public void allowNonDemonUser() {
+        this.allowNonDemonUser = true;
     }
 
     /**
@@ -222,7 +231,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
 
         // For players, check if they're still a demon
         // For NPCs, just continue (they're always demons if they have demon moveset)
-        if (user instanceof Player player && !DemonManager.isDemon(player)) {
+        if (!allowNonDemonUser && user instanceof Player player && !DemonManager.isDemon(player)) {
             stop();
             return;
         }
