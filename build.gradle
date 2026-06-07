@@ -68,6 +68,8 @@ subprojects {
     tasks.withType(JavaCompile).configureEach {
         it.options.release = 21
         it.options.encoding = 'UTF-8'
+        it.options.warnings = false
+        it.options.compilerArgs.addAll(['-Xlint:-deprecation', '-Xlint:-removal'])
     }
 
     tasks.withType(org.gradle.jvm.tasks.Jar).configureEach {

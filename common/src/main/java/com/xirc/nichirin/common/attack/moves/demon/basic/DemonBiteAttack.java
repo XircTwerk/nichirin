@@ -2,7 +2,9 @@ package com.xirc.nichirin.common.attack.moves.demon.basic;
 
 import com.xirc.nichirin.common.attack.component.AbstractDemonAttack;
 import com.xirc.nichirin.common.attack.component.IDemonAttacker;
+import com.xirc.nichirin.common.entity.MovesetCapableNPC;
 import com.xirc.nichirin.common.system.DemonManager;
+import com.xirc.nichirin.common.system.NPCResourceManager;
 import com.xirc.nichirin.registry.NicirinSoundRegistry;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import net.minecraft.core.particles.ParticleTypes;
@@ -21,7 +23,7 @@ import java.util.List;
  * No knockback to keep enemies in bite range
  *
  * - Players: Steal blood via DemonManager
- * - NPCs: Just deal damage (they rely on natural regen, no blood stealing)
+ * - NPCs: Steal blood into their visible NPC blood pool
  */
 public class DemonBiteAttack extends AbstractDemonAttack<DemonBiteAttack, IDemonAttacker> {
 
@@ -74,11 +76,7 @@ public class DemonBiteAttack extends AbstractDemonAttack<DemonBiteAttack, IDemon
                 // Apply extended stun instead
                 applyExtendedStun(target);
 
-                // Blood steal - ONLY for Players
-                // NPCs don't need blood stealing, they just use their natural regen
-                if (user instanceof Player) {
-                    stealBlood((Player) user, target);
-                }
+                stealBlood(target);
 
                 // Bite impact sound
                 world.playSound(null, target.getX(), target.getY(), target.getZ(),
@@ -103,16 +101,14 @@ public class DemonBiteAttack extends AbstractDemonAttack<DemonBiteAttack, IDemon
         // The base hitStun from configuration handles the main stun duration
     }
 
-    /**
-     * Handle blood stealing for Player demons only
-     */
-    private void stealBlood(Player demonPlayer, LivingEntity target) {
-        // Check if target has blood (not undead, not construct, etc.)
-        if (targetHasBlood(target)) {
-            // Call DemonManager to handle blood stealing
-            DemonManager.onBiteHit(demonPlayer, target);
+    private void stealBlood(LivingEntity target) {
+        if (!targetHasBlood(target)) return;
 
-            }
+        if (user instanceof Player demonPlayer) {
+            DemonManager.onBiteHit(demonPlayer, target);
+        } else if (user instanceof MovesetCapableNPC npc) {
+            NPCResourceManager.addBloodPoints(npc, 2);
+        }
     }
 
     private boolean targetHasBlood(LivingEntity target) {

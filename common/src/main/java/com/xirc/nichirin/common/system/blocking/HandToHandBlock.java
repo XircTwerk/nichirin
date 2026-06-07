@@ -35,7 +35,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Hand-to-hand blocking system for CQC and empty-handed demons.
+ * Hand-to-hand blocking system for CQC users and demon NPCs.
  * Uses stance as the blocking resource for players; NPCs block freely but are time-limited by their AI.
  */
 public class HandToHandBlock {
@@ -295,8 +295,7 @@ public class HandToHandBlock {
                 || player.getOffhandItem().getItem() instanceof SimpleKatana;
         if (katana) return false;
         return player.getMainHandItem().isEmpty()
-                && (com.xirc.nichirin.common.data.MovesetHelper.hasFightingMoveset(player)
-                || com.xirc.nichirin.common.data.MovesetHelper.hasDemonMoveset(player));
+                && com.xirc.nichirin.common.data.MovesetHelper.hasFightingMoveset(player);
     }
 
     private static String blockAnimation(LivingEntity entity) {
@@ -305,9 +304,7 @@ public class HandToHandBlock {
         boolean katana = player.getMainHandItem().getItem() instanceof SimpleKatana
                 || player.getOffhandItem().getItem() instanceof SimpleKatana;
         if (katana || !player.getMainHandItem().isEmpty()) return "sword.block";
-        boolean cqcOrDemon = com.xirc.nichirin.common.data.MovesetHelper.hasFightingMoveset(player)
-                || com.xirc.nichirin.common.data.MovesetHelper.hasDemonMoveset(player);
-        if (!cqcOrDemon) return "sword.block";
+        if (!com.xirc.nichirin.common.data.MovesetHelper.hasFightingMoveset(player)) return "sword.block";
         return PlayerDataProvider.getData(player).getCqcPresetData().getStanceAnimation();
     }
 

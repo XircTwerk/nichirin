@@ -45,8 +45,8 @@ public class BlockingInputHandler {
     }
 
     private static void handleBlockingInput(Player player) {
-        // Block-capable = holding a katana in either hand, or empty main hand with a CQC/demon
-        // moveset. (Offhand katana counts so you can guard while the main hand is busy.)
+        // Block-capable = holding a katana in either hand, or empty main hand with CQC equipped.
+        // Offhand katana counts so you can guard while the main hand is busy.
         if (!canBlock(player)) {
             // No longer able to block but was blocking — stop.
             if (isCurrentlyBlocking) {
@@ -99,17 +99,14 @@ public class BlockingInputHandler {
         if (player.getMainHandItem().getItem() instanceof SimpleKatana) return true;
         if (player.getOffhandItem().getItem() instanceof SimpleKatana) return true;
         return player.getMainHandItem().isEmpty()
-                && (com.xirc.nichirin.common.data.MovesetHelper.hasFightingMoveset(player)
-                || com.xirc.nichirin.common.data.MovesetHelper.hasDemonMoveset(player));
+                && com.xirc.nichirin.common.data.MovesetHelper.hasFightingMoveset(player);
     }
 
     private static String blockAnimation(Player player) {
         if (player.getMainHandItem().getItem() instanceof SimpleKatana) return "sword.block";
         if (player.getOffhandItem().getItem() instanceof SimpleKatana) return "sword.block";
         if (!player.getMainHandItem().isEmpty()) return "sword.block";
-        boolean cqcOrDemon = com.xirc.nichirin.common.data.MovesetHelper.hasFightingMoveset(player)
-                || com.xirc.nichirin.common.data.MovesetHelper.hasDemonMoveset(player);
-        if (!cqcOrDemon) return "sword.block";
+        if (!com.xirc.nichirin.common.data.MovesetHelper.hasFightingMoveset(player)) return "sword.block";
         return com.xirc.nichirin.common.data.PlayerDataProvider.getData(player)
                 .getCqcPresetData().getStanceAnimation();
     }

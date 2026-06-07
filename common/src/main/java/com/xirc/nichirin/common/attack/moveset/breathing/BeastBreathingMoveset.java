@@ -275,7 +275,7 @@ public class BeastBreathingMoveset extends AbstractMoveset {
             long remaining = end != null ? (end - entity.level().getGameTime()) / 20 : 0;
             EntityResources.sendMessage(entity,
                     Component.literal("Explosive Rush on cooldown! " + remaining + "s remaining")
-                            .withStyle(s -> s.withColor(0xB0C4DE)), true);
+                            .withStyle(s -> s.withColor(0xFF5555)), true);
             return true;
         }
         CURRENT_MOVESET.set(this);
@@ -301,7 +301,7 @@ public class BeastBreathingMoveset extends AbstractMoveset {
                     if (cd != null) {
                         long remaining = (cd - entity.level().getGameTime()) / 20;
                         EntityResources.sendMessage(entity, Component.literal(config.getDisplayName() + " on cooldown! " + remaining + "s remaining")
-                                        .withStyle(s -> s.withColor(0xB0C4DE)), true);
+                                        .withStyle(s -> s.withColor(0xFF5555)), true);
                     }
                 }
             }

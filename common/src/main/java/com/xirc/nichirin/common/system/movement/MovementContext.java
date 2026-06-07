@@ -96,7 +96,7 @@ public class MovementContext {
         // Check cooldown
         if (isOnCooldown(player)) {
             player.displayClientMessage(
-                    Component.literal("Movement on cooldown!").withStyle(style -> style.withColor(0xFFAA00)),
+                    Component.literal("Movement on cooldown!").withStyle(style -> style.withColor(0xFF5555)),
                     true
             );
             return;

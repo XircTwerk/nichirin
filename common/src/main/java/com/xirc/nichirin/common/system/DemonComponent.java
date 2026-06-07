@@ -13,6 +13,7 @@ public class DemonComponent {
 
     private static int clientBloodPoints = 10;
     private static int clientHalfBloodPoints = 0;
+    private static boolean clientDemon = false;
 
     /**
      * Gets blood points for display (client-side)
@@ -26,6 +27,13 @@ public class DemonComponent {
      */
     public static int getClientHalfBloodPoints() {
         return clientHalfBloodPoints;
+    }
+
+    /**
+     * Gets demon state from the latest server sync (client-side)
+     */
+    public static boolean isClientDemon() {
+        return clientDemon;
     }
 
     /**
@@ -46,6 +54,7 @@ public class DemonComponent {
      * Updates both blood values from server sync (client-side)
      */
     public static void updateBloodFromSync(int bloodPoints, int halfBloodPoints, boolean isDemon) {
+        clientDemon = isDemon;
         if (isDemon) {
             setClientBloodPoints(bloodPoints);
             setClientHalfBloodPoints(halfBloodPoints);

@@ -34,6 +34,8 @@ public abstract class DemonNPCEntity extends Monster implements MovesetCapableNP
             SynchedEntityData.defineId(DemonNPCEntity.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<Float>   RENDER_SCALE      =
             SynchedEntityData.defineId(DemonNPCEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Integer> BLOOD_POINTS      =
+            SynchedEntityData.defineId(DemonNPCEntity.class, EntityDataSerializers.INT);
 
     protected AbstractMoveset moveset;
 
@@ -52,6 +54,7 @@ public abstract class DemonNPCEntity extends Monster implements MovesetCapableNP
     protected final Set<Integer> blacklistedMoves = new HashSet<>();
 
     private static final Map<UUID, Map<Integer, Long>> npcCooldowns = new HashMap<>();
+    private float lastBloodSyncedHealth = -1.0F;
 
     public DemonNPCEntity(EntityType<? extends Monster> entityType, Level level) {
         super(entityType, level);
@@ -65,6 +68,7 @@ public abstract class DemonNPCEntity extends Monster implements MovesetCapableNP
         builder.define(ANIMATION_RESET, false);
         builder.define(DEMON_TYPE, getDefaultDemonType());
         builder.define(RENDER_SCALE, 1.0f);
+        builder.define(BLOOD_POINTS, maxBloodPoints);
     }
 
     protected abstract String getDefaultDemonType();
@@ -168,8 +172,14 @@ public abstract class DemonNPCEntity extends Monster implements MovesetCapableNP
     }
 
 
-    @Override public int   getBloodPoints()                       { return NPCResourceManager.getBloodPoints(getUUID(), maxBloodPoints); }
-    @Override public void  setBloodPoints(int v)                  { NPCResourceManager.setBloodPoints(getUUID(), v, maxBloodPoints); }
+    @Override public int   getBloodPoints()                       { return entityData.get(BLOOD_POINTS); }
+    @Override public void  setBloodPoints(int v)                  {
+        int clamped = Math.max(0, Math.min(v, maxBloodPoints));
+        entityData.set(BLOOD_POINTS, clamped);
+        if (!level().isClientSide) {
+            NPCResourceManager.setBloodPoints(getUUID(), clamped, maxBloodPoints);
+        }
+    }
     @Override public int   getMaxBloodPoints()                    { return maxBloodPoints; }
     @Override public boolean canRegenBlood()                      { return canRegenBlood; }
     @Override public float getBloodRegenMultiplier()              { return bloodRegenMultiplier; }
@@ -221,6 +231,7 @@ public abstract class DemonNPCEntity extends Monster implements MovesetCapableNP
 
         entityData.set(ANIMATION_RESET, false);
         tickMovesetSystems();
+        syncBloodToHealth();
         tickDemonSystems();
 
         if (!getCurrentAnimation().isEmpty()) handleAnimationTick();
@@ -246,9 +257,31 @@ public abstract class DemonNPCEntity extends Monster implements MovesetCapableNP
 
     protected void tickSunlightWeakness() {
         if (!isInLethalSunlight()) return;
+        setTarget(null);
         seekNearbyShade();
         igniteForSeconds(4);
-        hurt(damageSources().onFire(), getMaxHealth() * 0.04f);
+        invulnerableTime = 0;
+        hurt(damageSources().onFire(), getMaxHealth() / 120.0f);
+        syncBloodToHealth();
+    }
+
+    private void syncBloodToHealth() {
+        if (getMaxHealth() <= 0.0F) return;
+        float health = getHealth();
+        if (health <= 0.0F) {
+            setBloodPoints(0);
+            lastBloodSyncedHealth = 0.0F;
+            return;
+        }
+        if (lastBloodSyncedHealth < 0.0F) {
+            lastBloodSyncedHealth = health;
+            return;
+        }
+        if (health < lastBloodSyncedHealth - 0.01F) {
+            int blood = Math.max(1, (int) Math.ceil((health / getMaxHealth()) * maxBloodPoints));
+            setBloodPoints(Math.min(getBloodPoints(), blood));
+        }
+        lastBloodSyncedHealth = health;
     }
 
     private void seekNearbyShade() {
@@ -269,6 +302,15 @@ public abstract class DemonNPCEntity extends Monster implements MovesetCapableNP
 
     protected void handleAnimationTick() {}
     protected void onAnimationComplete(String animationName) {}
+
+    @Override
+    public boolean hurt(net.minecraft.world.damagesource.DamageSource source, float amount) {
+        boolean damaged = super.hurt(source, amount);
+        if (damaged && !level().isClientSide) {
+            syncBloodToHealth();
+        }
+        return damaged;
+    }
 
 
     @Override
@@ -313,12 +355,12 @@ public abstract class DemonNPCEntity extends Monster implements MovesetCapableNP
         if (tag.contains("animation_speed"))          entityData.set(ANIMATION_SPEED, tag.getFloat("animation_speed"));
         if (tag.contains("demon_type"))               entityData.set(DEMON_TYPE, tag.getString("demon_type"));
         if (tag.contains("render_scale"))             entityData.set(RENDER_SCALE, tag.getFloat("render_scale"));
-        if (tag.contains("blood_points"))             setBloodPoints(tag.getInt("blood_points"));
-        if (tag.contains("breath_gauge"))             setBreathGauge(tag.getFloat("breath_gauge"));
-        if (tag.contains("stamina"))                  setStamina(tag.getFloat("stamina"));
         if (tag.contains("max_blood_points"))         maxBloodPoints = tag.getInt("max_blood_points");
         if (tag.contains("max_breath_gauge"))         maxBreathGauge = tag.getFloat("max_breath_gauge");
         if (tag.contains("max_stamina"))              maxStamina = tag.getFloat("max_stamina");
+        if (tag.contains("blood_points"))             setBloodPoints(tag.getInt("blood_points"));
+        if (tag.contains("breath_gauge"))             setBreathGauge(tag.getFloat("breath_gauge"));
+        if (tag.contains("stamina"))                  setStamina(tag.getFloat("stamina"));
         if (tag.contains("aggression"))               aggression = tag.getFloat("aggression");
         if (tag.contains("damage_multiplier"))        damageMultiplier = tag.getFloat("damage_multiplier");
         if (tag.contains("attack_speed_multiplier"))  attackSpeedMultiplier = tag.getFloat("attack_speed_multiplier");

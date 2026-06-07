@@ -25,10 +25,12 @@ public class DemonManager {
     static final Map<UUID, Integer> playerBloodPoints = new HashMap<>();
     private static final Map<UUID, Long> lastRegenTick = new HashMap<>();
     private static final Map<UUID, Long> lastBloodDrainTick = new HashMap<>();
+    private static final Map<UUID, Long> lastSunBloodLossTick = new HashMap<>();
 
     private static final Set<UUID> loadingPlayers = new HashSet<>();
 
     private static final int REGEN_INTERVAL = 15;
+    private static final int SUN_BLOOD_LOSS_INTERVAL = 20;
     private static final int SUN_FIRE_DURATION = 40;
 
     /**
@@ -134,7 +136,20 @@ public class DemonManager {
         if (level.isDay() && !level.isRaining() && !level.isThundering()
                 && level.canSeeSky(player.blockPosition())) {
             player.igniteForSeconds(SUN_FIRE_DURATION / 20);
+            drainBloodFromSunlight(player);
         }
+    }
+
+    private static void drainBloodFromSunlight(Player player) {
+        long currentTime = player.level().getGameTime();
+        UUID playerUUID = player.getUUID();
+        Long lastLoss = lastSunBloodLossTick.get(playerUUID);
+        if (lastLoss != null && currentTime - lastLoss < SUN_BLOOD_LOSS_INTERVAL) {
+            return;
+        }
+
+        DemonFoodHandler.loseHalfBloodPoint(player);
+        lastSunBloodLossTick.put(playerUUID, currentTime);
     }
 
     private static void handleFireDamage(Player player) {
@@ -269,6 +284,7 @@ public class DemonManager {
         playerBloodPoints.remove(playerUUID);
         lastRegenTick.remove(playerUUID);
         lastBloodDrainTick.remove(playerUUID);
+        lastSunBloodLossTick.remove(playerUUID);
         loadingPlayers.remove(playerUUID);
     }
 
@@ -276,6 +292,7 @@ public class DemonManager {
         playerBloodPoints.clear();
         lastRegenTick.clear();
         lastBloodDrainTick.clear();
+        lastSunBloodLossTick.clear();
         loadingPlayers.clear();
     }
 }
