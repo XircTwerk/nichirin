@@ -141,6 +141,11 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
         }
     }
 
+    public void applyDamageMultiplier(float multiplier) {
+        if (multiplier == 1.0f) return;
+        this.damage *= multiplier;
+    }
+
     /**
      * CQC owns a few physical attacks that reuse this old demon-attack implementation but are not
      * demon-only. Demon arts should leave this disabled.

@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
+import net.minecraft.server.level.ServerPlayer;
 
 // Form 4: Low-stance windup into a long dash. Slashes through the path and finishes with a wide sweep.
 public class ShiftingFlowSlashAttack extends MistBreathingAttackBase {
@@ -84,13 +86,16 @@ public class ShiftingFlowSlashAttack extends MistBreathingAttackBase {
         if (dashStartPos != null && dashTick < dashDuration) {
             dashTick++;
             lastDashPos = user.position();
-            float speed = dashSpeed != null ? dashSpeed : 4.0f;
-            user.setDeltaMovement(
-                    dashDirection.x * speed,
-                    dashDirection.y * speed,
-                    dashDirection.z * speed);
-            user.hurtMarked = true;
-            user.hasImpulse = true;
+        float speed = dashSpeed != null ? dashSpeed : 4.0f;
+        user.setDeltaMovement(
+                dashDirection.x * speed,
+                dashDirection.y * speed,
+                dashDirection.z * speed);
+        user.hurtMarked = true;
+        user.hasImpulse = true;
+        if (user instanceof ServerPlayer serverPlayer) {
+            serverPlayer.connection.send(new ClientboundSetEntityMotionPacket(user));
+        }
         }
         if (world instanceof ServerLevel serverLevel) {
             Vec3 pos = user.position();

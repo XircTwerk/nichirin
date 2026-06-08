@@ -43,6 +43,8 @@ public class NichirinModelProvider extends FabricModelProvider {
 
         // Simple blocks
         generator.createTrivialBlock(NichirinBlockRegistry.WISTERIA_LEAVES.get(), TexturedModel.LEAVES);
+        generator.createTrivialBlock(NichirinBlockRegistry.WISTERIA_GLOW_LICHEN.get(), TexturedModel.CUBE);
+        generator.createTrivialBlock(NichirinBlockRegistry.WISTERIA_GLOW_BERRIES.get(), TexturedModel.CUBE);
         generator.createTrivialBlock(NichirinBlockRegistry.INFINITY_GLASS1.get(), TexturedModel.CUBE);
         generator.createTrivialBlock(NichirinBlockRegistry.INFINITY_GLASS2.get(), TexturedModel.CUBE);
 

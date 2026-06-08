@@ -31,6 +31,8 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinBlockRegistry.STRIPPED_WISTERIA_WOOD.get());
                         entries.accept(NichirinBlockRegistry.WISTERIA_PLANKS.get());
                         entries.accept(NichirinBlockRegistry.WISTERIA_LEAVES.get());
+                        entries.accept(NichirinBlockRegistry.WISTERIA_GLOW_LICHEN.get());
+                        entries.accept(NichirinBlockRegistry.WISTERIA_GLOW_BERRIES.get());
                         entries.accept(NichirinBlockRegistry.WISTERIA_STAIRS.get());
                         entries.accept(NichirinBlockRegistry.WISTERIA_SLAB.get());
                         entries.accept(NichirinBlockRegistry.WISTERIA_FENCE.get());

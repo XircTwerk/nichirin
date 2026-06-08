@@ -129,6 +129,11 @@ public abstract class AbstractCqcAttack {
         return cooldown;
     }
 
+    public void applyDamageMultiplier(float multiplier) {
+        if (multiplier == 1.0f) return;
+        damage *= multiplier;
+    }
+
     public void stop() {
         activeState = false;
         hitEntities.clear();

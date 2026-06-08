@@ -52,7 +52,19 @@ public interface NichirinBlockRegistry {
             () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_PLANKS).mapColor(MapColor.COLOR_PURPLE)));
 
     RegistrySupplier<Block> WISTERIA_LEAVES = BLOCKS.register("wisteria_leaves",
-            () -> new WisteriaLeavesBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_LEAVES).mapColor(MapColor.COLOR_PURPLE)));
+            () -> new WisteriaLeavesBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_LEAVES)
+                    .mapColor(MapColor.COLOR_PURPLE)
+                    .lightLevel(state -> 8)));
+
+    RegistrySupplier<Block> WISTERIA_GLOW_LICHEN = BLOCKS.register("wisteria_glow_lichen",
+            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.SHROOMLIGHT)
+                    .mapColor(MapColor.COLOR_PURPLE)
+                    .lightLevel(state -> 10)));
+
+    RegistrySupplier<Block> WISTERIA_GLOW_BERRIES = BLOCKS.register("wisteria_glow_berries",
+            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.SHROOMLIGHT)
+                    .mapColor(MapColor.COLOR_PURPLE)
+                    .lightLevel(state -> 12)));
 
     RegistrySupplier<Block> WISTERIA_STAIRS = BLOCKS.register("wisteria_stairs",
             () -> new StairBlock(WISTERIA_PLANKS.get().defaultBlockState(),
@@ -133,6 +145,12 @@ public interface NichirinBlockRegistry {
 
     RegistrySupplier<Item> WISTERIA_LEAVES_ITEM = ITEMS.register("wisteria_leaves",
             () -> new BlockItem(WISTERIA_LEAVES.get(), new Item.Properties()));
+
+    RegistrySupplier<Item> WISTERIA_GLOW_LICHEN_ITEM = ITEMS.register("wisteria_glow_lichen",
+            () -> new BlockItem(WISTERIA_GLOW_LICHEN.get(), new Item.Properties()));
+
+    RegistrySupplier<Item> WISTERIA_GLOW_BERRIES_ITEM = ITEMS.register("wisteria_glow_berries",
+            () -> new BlockItem(WISTERIA_GLOW_BERRIES.get(), new Item.Properties()));
 
     RegistrySupplier<Item> WISTERIA_STAIRS_ITEM = ITEMS.register("wisteria_stairs",
             () -> new BlockItem(WISTERIA_STAIRS.get(), new Item.Properties()));

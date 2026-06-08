@@ -17,6 +17,7 @@ import com.xirc.nichirin.registry.NicirinSoundRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
+import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -199,7 +200,7 @@ public class HandToHandBlock {
         }
 
         if (state.stance == BlockingStance.BLOCKING) {
-            return handleSuccessfulBlock(defender, state, damage);
+            return handleSuccessfulBlock(defender, attacker, state, damage);
         }
 
         return false;
@@ -310,8 +311,18 @@ public class HandToHandBlock {
 
     private static int resistanceAmplifier(LivingEntity entity) {
         if (entity instanceof TempleDemonEntity) return 2;
-        if (entity instanceof Player player && com.xirc.nichirin.common.data.MovesetHelper.hasDemonMoveset(player)) {
-            return 2;
+        if (entity instanceof Player player) {
+            int base = com.xirc.nichirin.common.data.MovesetHelper.hasDemonMoveset(player) ? 2 : 1;
+            if (isCqcPlayer(player)) {
+                return switch (cqcStanceIndex(player)) {
+                    case 0 -> Math.max(0, base - 1);
+                    case 3 -> base + 1;
+                    default -> base;
+                };
+            }
+            if (com.xirc.nichirin.common.data.MovesetHelper.hasDemonMoveset(player)) {
+                return 2;
+            }
         }
         return 1;
     }
@@ -319,9 +330,8 @@ public class HandToHandBlock {
     private static boolean parryAllowed(LivingEntity entity) {
         if (entity instanceof TempleDemonEntity) return NichirinModConfig.get().combat.enableParrySystem;
         if (!(entity instanceof Player player)) return false;
-        if (com.xirc.nichirin.common.data.MovesetHelper.hasFightingMoveset(player)
-                && !com.xirc.nichirin.common.data.MovesetHelper.hasDemonMoveset(player)) {
-            return false;
+        if (isCqcPlayer(player)) {
+            return cqcStanceIndex(player) == 0 && NichirinModConfig.get().combat.enableParrySystem;
         }
         return NichirinModConfig.get().combat.enableParrySystem;
     }
@@ -335,7 +345,7 @@ public class HandToHandBlock {
         // Slower = more planted: standing still ~0.5x, walking ~0.9x, sprinting ~1.0x.
         float speed = (float) defender.getDeltaMovement().horizontalDistance();
         float speedFactor = Math.min(1.0f, 0.5f + speed * 4.0f);
-        return BASE_GUARD_LOSS * heldFactor * speedFactor;
+        return BASE_GUARD_LOSS * heldFactor * speedFactor * cqcGuardLossMultiplier(defender);
     }
 
     private static boolean canStartBlocking(LivingEntity entity, BlockingState state) {
@@ -487,7 +497,7 @@ public class HandToHandBlock {
         }
     }
 
-    private static boolean handleSuccessfulBlock(LivingEntity defender, BlockingState state, float damage) {
+    private static boolean handleSuccessfulBlock(LivingEntity defender, LivingEntity attacker, BlockingState state, float damage) {
         // Stance cost only for players
         if (defender instanceof Player player) {
             boolean glassStance = PlayerDataProvider.getData(player).getPerkData().hasFlaw("glass_stance");
@@ -524,7 +534,41 @@ public class HandToHandBlock {
                     true);
         }
 
+        applyShoulderRollKnockback(defender, attacker);
         return true;
+    }
+
+    private static boolean isCqcPlayer(Player player) {
+        return player.getMainHandItem().isEmpty()
+                && com.xirc.nichirin.common.data.MovesetHelper.hasFightingMoveset(player);
+    }
+
+    private static int cqcStanceIndex(Player player) {
+        return PlayerDataProvider.getData(player).getCqcPresetData().getStanceIndex();
+    }
+
+    private static float cqcGuardLossMultiplier(LivingEntity defender) {
+        if (!(defender instanceof Player player) || !isCqcPlayer(player)) return 1.0f;
+        return switch (cqcStanceIndex(player)) {
+            case 2 -> 0.67f;
+            case 3 -> 0.5f;
+            default -> 1.0f;
+        };
+    }
+
+    private static void applyShoulderRollKnockback(LivingEntity defender, LivingEntity attacker) {
+        if (!(defender instanceof Player player) || !isCqcPlayer(player) || cqcStanceIndex(player) != 3) return;
+        if (attacker == null) return;
+        Vec3 direction = defender.position().subtract(attacker.position());
+        Vec3 horizontal = new Vec3(direction.x, 0, direction.z);
+        if (horizontal.lengthSqr() <= 0.0001) return;
+        Vec3 knockback = horizontal.normalize().scale(0.45);
+        defender.push(knockback.x, 0.08, knockback.z);
+        defender.hurtMarked = true;
+        defender.hasImpulse = true;
+        if (defender instanceof ServerPlayer serverPlayer) {
+            serverPlayer.connection.send(new ClientboundSetEntityMotionPacket(defender));
+        }
     }
 
     private static void applyBlockingEffect(LivingEntity entity) {

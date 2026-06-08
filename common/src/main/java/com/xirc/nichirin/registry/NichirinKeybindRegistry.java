@@ -52,6 +52,12 @@ public interface NichirinKeybindRegistry {
             "key.categories.nichirin"
     );
 
+    KeyMapping CQC_KEY = new KeyMapping(
+            "key.nichirin.cqc",
+            GLFW.GLFW_KEY_BACKSLASH,
+            "key.categories.nichirin"
+    );
+
     // Blocking moved to right-click (hold) — handled in BlockingInputHandler. No dedicated key.
 
     KeyMapping MOVEMENT_KEY = new KeyMapping(
@@ -79,6 +85,7 @@ public interface NichirinKeybindRegistry {
         registrar.accept(ATTACK_WHEEL_KEY);
         registrar.accept(SHEATHE_KEY);
         registrar.accept(OPEN_GUI_KEY);
+        registrar.accept(CQC_KEY);
         registrar.accept(MOVEMENT_KEY);
 
         // Register move index hotkeys
@@ -127,6 +134,10 @@ public interface NichirinKeybindRegistry {
             handleMovementKeyPress();
         }
 
+        while (CQC_KEY.consumeClick()) {
+            handleCqcKeyPress();
+        }
+
         // Check move hotkeys
         for (Map.Entry<Integer, KeyMapping> entry : MOVE_HOTKEYS.entrySet()) {
             int moveIndex = entry.getKey();
@@ -148,6 +159,12 @@ public interface NichirinKeybindRegistry {
         // Send movement input packet to server
         MovementInputPacket packet = new MovementInputPacket();
         NichirinPacketRegistry.sendToServer(packet);
+    }
+
+    private static void handleCqcKeyPress() {
+        Minecraft client = Minecraft.getInstance();
+        if (client.player == null) return;
+        NichirinPacketRegistry.requestMovesetChange("cqc");
     }
 
     /**

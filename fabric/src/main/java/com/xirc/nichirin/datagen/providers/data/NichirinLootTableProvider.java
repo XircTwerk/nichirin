@@ -59,12 +59,14 @@ public class NichirinLootTableProvider extends FabricBlockLootTableProvider {
         dropSelf(NichirinBlockRegistry.WISTERIA_PRESSURE_PLATE.get());
         dropSelf(NichirinBlockRegistry.WISTERIA_BUTTON.get());
         dropSelf(NichirinBlockRegistry.WISTERIA_TRAPDOOR.get());
+        dropSelf(NichirinBlockRegistry.WISTERIA_GLOW_LICHEN.get());
+        dropSelf(NichirinBlockRegistry.WISTERIA_GLOW_BERRIES.get());
 
         // Special cases
-        // Leaves should drop themselves with silk touch, otherwise drop saplings/sticks (but we don't have saplings yet)
+        // Leaves drop themselves with silk touch, otherwise use vanilla-style sapling chances.
         add(NichirinBlockRegistry.WISTERIA_LEAVES.get(), createLeavesDrops(
                 NichirinBlockRegistry.WISTERIA_LEAVES.get(),
-                NichirinBlockRegistry.WISTERIA_LEAVES.get(), // Use leaves as placeholder for now
+                NichirinBlockRegistry.WISTERIA_SAPLING.get(),
                 NORMAL_LEAVES_SAPLING_CHANCES));
 
         // Door drops the item, not the block

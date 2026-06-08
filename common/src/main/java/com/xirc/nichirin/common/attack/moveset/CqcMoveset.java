@@ -8,6 +8,7 @@ import com.xirc.nichirin.common.data.CqcPresetData;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.system.DemonManager;
 import com.xirc.nichirin.common.util.StaminaManager;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -17,7 +18,9 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Customizable close-quarters-combat moveset. The registered moveset is a template;
@@ -29,6 +32,7 @@ public class CqcMoveset extends AbstractMoveset {
     private static final CqcPresetData DEFAULT_PRESET = new CqcPresetData();
     private static final Map<UUID, Map<String, Long>> COOLDOWNS = new ConcurrentHashMap<>();
     private static final Map<UUID, SlashComboState> SLASH_STATES = new ConcurrentHashMap<>();
+    private static final Map<UUID, CqcFollowupState> FOLLOWUP_STATES = new ConcurrentHashMap<>();
 
     public static final MoveConfiguration JAB = new MoveBuilder("jab", "Jab")
             .withAnimation("nichirin:jab", 6)
@@ -376,6 +380,17 @@ public class CqcMoveset extends AbstractMoveset {
         }
     }
 
+    private static class CqcFollowupState {
+        final String baseMoveId;
+        final String followupMoveId;
+        boolean queued;
+
+        CqcFollowupState(String baseMoveId, String followupMoveId) {
+            this.baseMoveId = baseMoveId;
+            this.followupMoveId = followupMoveId;
+        }
+    }
+
     public CqcMoveset() {
         super(ID, "CQC", MovesetType.NEUTRAL, buildMoveset());
     }
@@ -413,21 +428,22 @@ public class CqcMoveset extends AbstractMoveset {
     @Override
     public boolean handleLeftClick(LivingEntity entity) {
         if (!canUseCqc(entity)) return false;
-        executeConfigured(entity, getLeftClickConfiguration());
+        executeConfigured(entity, getLeftClickConfiguration(), CqcInputSlot.LEFT_CLICK);
         return true;
     }
 
     @Override
     public boolean handleRightClick(LivingEntity entity, boolean isCrouching) {
         if (!canUseCqc(entity)) return false;
-        executeConfigured(entity, isCrouching ? getCrouchRightClickConfiguration() : getRightClickConfiguration());
+        executeConfigured(entity, isCrouching ? getCrouchRightClickConfiguration() : getRightClickConfiguration(),
+                isCrouching ? CqcInputSlot.CROUCH_RIGHT_CLICK : CqcInputSlot.RIGHT_CLICK);
         return true;
     }
 
     @Override
     public void performMove(LivingEntity entity, int moveIndex) {
         if (!canUseCqc(entity)) return;
-        executeConfigured(entity, getMove(moveIndex));
+        executeConfigured(entity, getMove(moveIndex), CqcInputSlot.WHEEL);
     }
 
     @Override
@@ -452,9 +468,10 @@ public class CqcMoveset extends AbstractMoveset {
         return entity instanceof Player player && player.getMainHandItem().isEmpty();
     }
 
-    private void executeConfigured(LivingEntity entity, MoveConfiguration config) {
-        if (config == null) return;
+    private void executeConfigured(LivingEntity entity, MoveConfiguration config, CqcInputSlot inputSlot) {
         if (entity.level().isClientSide()) return;
+        if (queueFollowup(entity)) return;
+        if (config == null) return;
         if (entity.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.stunned())) return;
         if (MoveExecutor.hasActiveAttacks(entity)) return;
         CqcMoveCatalog.Definition definition = CqcMoveCatalog.get(config.getMoveId());
@@ -478,20 +495,28 @@ public class CqcMoveset extends AbstractMoveset {
             player.displayClientMessage(Component.literal("Not enough stamina!"), true);
             return;
         }
-        if (executeDemonPhysical(entity, config, definition)) return;
+        if (executeDemonPhysical(entity, config, definition, inputSlot)) {
+            startFollowupWindow(entity, config);
+            return;
+        }
         triggerAnimation(entity, definition.animationName());
         AbstractCqcAttack attack = createAttack(config.getMoveId());
         if (attack == null) return;
         attack.configure(config);
+        if (usesOrthodoxDamageBonus(entity, inputSlot)) {
+            attack.applyDamageMultiplier(1.2f);
+        }
         MoveExecutor.executeAttackWithInfo(entity, attack, config.getDisplayName(), config.getCooldownOrDefault(0));
         setCooldown(entity, config);
+        startFollowupWindow(entity, config);
     }
 
-    private boolean executeDemonPhysical(LivingEntity entity, MoveConfiguration config, CqcMoveCatalog.Definition definition) {
+    private boolean executeDemonPhysical(LivingEntity entity, MoveConfiguration config, CqcMoveCatalog.Definition definition,
+                                         CqcInputSlot inputSlot) {
         String moveId = CqcMoveCatalog.normalize(config.getMoveId());
         if (!isDemonPhysicalMove(moveId)) return false;
         if ("demon_slash".equals(moveId)) {
-            executeSlashCombo(entity);
+            executeSlashCombo(entity, usesOrthodoxDamageBonus(entity, inputSlot));
             return true;
         }
 
@@ -512,6 +537,9 @@ public class CqcMoveset extends AbstractMoveset {
             if (canUseDemonOnlyMove(entity)) {
                 demonAttack.applyStatMultiplier(AbstractCqcAttack.DEMON_CQC_STAT_MULTIPLIER);
             }
+            if (usesOrthodoxDamageBonus(entity, inputSlot)) {
+                demonAttack.applyDamageMultiplier(1.2f);
+            }
         }
         MoveExecutor.executeAttackWithInfo(entity, attack, config.getDisplayName(), config.getCooldownOrDefault(0));
         if ("dashing_strike".equals(moveId) && entity instanceof Player player) {
@@ -521,14 +549,77 @@ public class CqcMoveset extends AbstractMoveset {
         return true;
     }
 
-    private void executeSlashCombo(LivingEntity entity) {
+    private boolean queueFollowup(LivingEntity entity) {
+        CqcFollowupState state = FOLLOWUP_STATES.get(entity.getUUID());
+        if (state == null || state.queued) return false;
+        state.queued = true;
+        if (entity instanceof Player player) {
+            player.displayClientMessage(Component.literal("Followup queued!")
+                    .withStyle(style -> style.withColor(0x55FF55)), true);
+        }
+        return true;
+    }
+
+    private void startFollowupWindow(LivingEntity entity, MoveConfiguration config) {
+        if (!(entity instanceof Player player)) return;
+        String baseMoveId = CqcMoveCatalog.normalize(config.getMoveId());
+        if (!CqcPresetData.canHaveFollowup(baseMoveId)) return;
+        String followupMoveId = PlayerDataProvider.getData(player).getCqcPresetData().getFollowupMove(baseMoveId);
+        if (CqcMoveCatalog.normalize(followupMoveId).isEmpty()) return;
+        MoveConfiguration followupConfig = configurationFor(followupMoveId);
+        if (followupConfig == null) return;
+
+        CqcFollowupState state = new CqcFollowupState(baseMoveId, CqcMoveCatalog.normalize(followupMoveId));
+        FOLLOWUP_STATES.put(entity.getUUID(), state);
+        int delayTicks = Math.max(1, config.getWindupOrDefault(0) + config.getDurationOrDefault(0));
+        MinecraftServer server = entity.getServer();
+        CompletableFuture.delayedExecutor(delayTicks * 50L, TimeUnit.MILLISECONDS).execute(() -> {
+            if (server != null) {
+                server.execute(() -> executeQueuedFollowup(entity, state));
+            } else {
+                executeQueuedFollowup(entity, state);
+            }
+        });
+    }
+
+    private void executeQueuedFollowup(LivingEntity entity, CqcFollowupState state) {
+        CqcFollowupState current = FOLLOWUP_STATES.get(entity.getUUID());
+        if (current != state) return;
+        FOLLOWUP_STATES.remove(entity.getUUID());
+        if (!state.queued || !entity.isAlive()) return;
+        MoveConfiguration followupConfig = configurationFor(state.followupMoveId);
+        if (followupConfig == null) return;
+        executeFollowupConfigured(entity, followupConfig);
+    }
+
+    private void executeFollowupConfigured(LivingEntity entity, MoveConfiguration config) {
+        if (entity.level().isClientSide()) return;
+        if (entity.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.stunned())) {
+            entity.removeEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.stunned());
+        }
+        if (MoveExecutor.hasActiveAttacks(entity)) return;
+        CqcMoveCatalog.Definition definition = CqcMoveCatalog.get(config.getMoveId());
+        if (definition == null) return;
+        if (definition.demonOnly() && !canUseDemonOnlyMove(entity)) return;
+        if (isOnCooldown(entity, config)) return;
+        if (entity instanceof Player player && config.hasStaminaCost() && !StaminaManager.consume(player, config.getStaminaCostOrDefault(0f))) return;
+        if (executeDemonPhysical(entity, config, definition, CqcInputSlot.FOLLOWUP)) return;
+        triggerAnimation(entity, definition.animationName());
+        AbstractCqcAttack attack = createAttack(config.getMoveId());
+        if (attack == null) return;
+        attack.configure(config);
+        MoveExecutor.executeAttackWithInfo(entity, attack, config.getDisplayName(), config.getCooldownOrDefault(0));
+        setCooldown(entity, config);
+    }
+
+    private void executeSlashCombo(LivingEntity entity, boolean damageBonus) {
         UUID entityUUID = entity.getUUID();
         long currentTick = entity.level().getGameTime();
         SlashComboState comboState = SLASH_STATES.computeIfAbsent(entityUUID, k -> new SlashComboState());
 
         if (comboState.currentStage == 1) {
             if (comboState.isReadyForSlash2(currentTick)) {
-                executeSlashStage(entity, 1, comboState, currentTick);
+                executeSlashStage(entity, 1, comboState, currentTick, damageBonus);
                 return;
             } else if (currentTick - comboState.slash1GameTick <= SlashComboState.MAX_FOLLOWUP_TICKS) {
                 return;
@@ -536,10 +627,10 @@ public class CqcMoveset extends AbstractMoveset {
             comboState.reset();
         }
 
-        executeSlashStage(entity, 0, comboState, currentTick);
+        executeSlashStage(entity, 0, comboState, currentTick, damageBonus);
     }
 
-    private void executeSlashStage(LivingEntity entity, int stage, SlashComboState comboState, long currentTick) {
+    private void executeSlashStage(LivingEntity entity, int stage, SlashComboState comboState, long currentTick, boolean damageBonus) {
         MoveConfiguration slashConfig = stage == 0 ? DEMON_SLASH : DEMON_SLASH_2;
         String animationName = stage == 0 ? "demon_slash" : "demon_slash_2";
 
@@ -549,6 +640,9 @@ public class CqcMoveset extends AbstractMoveset {
         slashAttack.configure(slashConfig);
         if (canUseDemonOnlyMove(entity)) {
             slashAttack.applyStatMultiplier(AbstractCqcAttack.DEMON_CQC_STAT_MULTIPLIER);
+        }
+        if (damageBonus) {
+            slashAttack.applyDamageMultiplier(1.2f);
         }
         MoveExecutor.executeAttackWithInfo(entity, slashAttack, slashConfig.getDisplayName(), slashConfig.getCooldownOrDefault(0));
 
@@ -568,8 +662,21 @@ public class CqcMoveset extends AbstractMoveset {
         };
     }
 
+    public static boolean isDemonOnlyMove(String moveId) {
+        return switch (CqcMoveCatalog.normalize(moveId)) {
+            case "demon_slash", "high_jump", "demon_bite" -> true;
+            default -> false;
+        };
+    }
+
     private boolean canUseDemonOnlyMove(LivingEntity entity) {
         return entity instanceof Player player && DemonManager.isDemon(player);
+    }
+
+    private boolean usesOrthodoxDamageBonus(LivingEntity entity, CqcInputSlot inputSlot) {
+        if (!(entity instanceof Player player)) return false;
+        if (inputSlot != CqcInputSlot.LEFT_CLICK && inputSlot != CqcInputSlot.RIGHT_CLICK) return false;
+        return PlayerDataProvider.getData(player).getCqcPresetData().getStanceIndex() == 1;
     }
 
     private Object createDemonAttack(String moveId) {
@@ -619,12 +726,17 @@ public class CqcMoveset extends AbstractMoveset {
         return config.getWindupOrDefault(0) + config.getDurationOrDefault(0);
     }
 
-    private static MoveConfiguration configurationFor(String moveId) {
+    public static MoveConfiguration configurationFor(String moveId) {
         return CONFIGS.get(CqcMoveCatalog.normalize(moveId));
     }
 
     public static Map<String, MoveConfiguration> configurations() {
         return CONFIGS;
+    }
+
+    public static String animationNameFor(MoveConfiguration config) {
+        if (config == null || config.getAnimationId() == null) return "";
+        return config.getAnimationId().getPath();
     }
 
     private static MovesetBuilder buildMoveset() {
@@ -714,6 +826,7 @@ public class CqcMoveset extends AbstractMoveset {
     public static void resetCooldowns(Player player) {
         COOLDOWNS.remove(player.getUUID());
         SLASH_STATES.remove(player.getUUID());
+        FOLLOWUP_STATES.remove(player.getUUID());
     }
 
     private CqcPresetData currentPreset() {
@@ -733,5 +846,13 @@ public class CqcMoveset extends AbstractMoveset {
 
     private static final class CurrentPlayerHolder {
         private static final ThreadLocal<Player> PLAYER = new ThreadLocal<>();
+    }
+
+    private enum CqcInputSlot {
+        LEFT_CLICK,
+        RIGHT_CLICK,
+        CROUCH_RIGHT_CLICK,
+        WHEEL,
+        FOLLOWUP
     }
 }

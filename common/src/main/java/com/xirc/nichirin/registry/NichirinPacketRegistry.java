@@ -2,6 +2,7 @@ package com.xirc.nichirin.registry;
 
 import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.client.data.ClientProgressionCache;
+import com.xirc.nichirin.client.gui.trainer.TrainerDialogueClientHandler;
 import com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer;
 import com.xirc.nichirin.client.renderer.effects.ParrySparkHandler;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
@@ -90,6 +91,8 @@ public interface NichirinPacketRegistry {
     ResourceLocation SHEATH_SYNC_ID                = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "sheath_sync");
     ResourceLocation CQC_PRESET_UPDATE_ID          = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "cqc_preset_update");
     ResourceLocation CQC_STANCE_UPDATE_ID          = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "cqc_stance_update");
+    ResourceLocation CQC_ACTIVE_PRESET_UPDATE_ID   = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "cqc_active_preset_update");
+    ResourceLocation CQC_FOLLOWUP_UPDATE_ID        = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "cqc_followup_update");
     ResourceLocation CQC_PRESET_SYNC_ID            = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "cqc_preset_sync");
     // Shared cooldown HUD channel — sent by CooldownDisplayPacket, MoveExecutor and KatanaBlock,
     // received by CooldownDisplayPacket.registerClient() on the client.
@@ -337,6 +340,21 @@ public interface NichirinPacketRegistry {
                 context.queue(() -> handleCqcStanceUpdate(serverPlayer, stanceIndex));
             }
         });
+
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, CQC_ACTIVE_PRESET_UPDATE_ID, (buf, context) -> {
+            int presetIndex = buf.readInt();
+            if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
+                context.queue(() -> handleCqcActivePresetUpdate(serverPlayer, presetIndex));
+            }
+        });
+
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, CQC_FOLLOWUP_UPDATE_ID, (buf, context) -> {
+            String baseMoveId = buf.readUtf();
+            String followupMoveId = buf.readUtf();
+            if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
+                context.queue(() -> handleCqcFollowupUpdate(serverPlayer, baseMoveId, followupMoveId));
+            }
+        });
     }
 
     static void registerS2CPacketsWithFallback() {
@@ -480,7 +498,7 @@ public interface NichirinPacketRegistry {
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, OPEN_TRAINER_DIALOGUE_ID, (buf, context) -> {
                 OpenTrainerDialoguePacket packet =
                         new OpenTrainerDialoguePacket(buf);
-                context.queue(() -> packet.handleClient());
+                context.queue(() -> TrainerDialogueClientHandler.open(packet));
             });
 
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, MIST_CLONES_ID, (buf, context) -> {
@@ -494,25 +512,33 @@ public interface NichirinPacketRegistry {
             });
 
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, CQC_PRESET_SYNC_ID, (buf, context) -> {
-                String left = buf.readUtf();
-                String right = buf.readUtf();
-                String crouchRight = buf.readUtf();
-                String[] wheelMoves = new String[CqcPresetData.WHEEL_SLOT_COUNT];
-                for (int i = 0; i < CqcPresetData.WHEEL_SLOT_COUNT; i++) {
-                    wheelMoves[i] = buf.readUtf();
+                int activePresetIndex = buf.readInt();
+                CqcPresetData.Preset[] syncedPresets = new CqcPresetData.Preset[CqcPresetData.PRESET_COUNT];
+                for (int presetIndex = 0; presetIndex < CqcPresetData.PRESET_COUNT; presetIndex++) {
+                    String left = buf.readUtf();
+                    String right = buf.readUtf();
+                    String crouchRight = buf.readUtf();
+                    String[] wheelMoves = new String[CqcPresetData.WHEEL_SLOT_COUNT];
+                    for (int i = 0; i < CqcPresetData.WHEEL_SLOT_COUNT; i++) {
+                        wheelMoves[i] = buf.readUtf();
+                    }
+                    int stanceIndex = buf.readInt();
+                    syncedPresets[presetIndex] = new CqcPresetData.Preset("Preset " + (presetIndex + 1),
+                            left, right, crouchRight, stanceIndex,
+                            wheelMoves[0], wheelMoves[1], wheelMoves[2], wheelMoves[3], wheelMoves[4]);
+                    int followupCount = buf.readInt();
+                    for (int i = 0; i < followupCount; i++) {
+                        syncedPresets[presetIndex].setFollowupMove(buf.readUtf(), buf.readUtf());
+                    }
                 }
-                int stanceIndex = buf.readInt();
                 context.queue(() -> {
                     Player player = context.getPlayer();
                     if (player == null) return;
                     CqcPresetData preset = PlayerDataProvider.getData(player).getCqcPresetData();
-                    preset.setSlot(CqcPresetData.Slot.LEFT_CLICK, -1, left);
-                    preset.setSlot(CqcPresetData.Slot.RIGHT_CLICK, -1, right);
-                    preset.setSlot(CqcPresetData.Slot.CROUCH_RIGHT_CLICK, -1, crouchRight);
-                    for (int i = 0; i < CqcPresetData.WHEEL_SLOT_COUNT; i++) {
-                        preset.setSlot(CqcPresetData.Slot.WHEEL, i, wheelMoves[i]);
+                    for (int i = 0; i < CqcPresetData.PRESET_COUNT; i++) {
+                        preset.setPresetFromNetwork(i, syncedPresets[i]);
                     }
-                    preset.setStanceIndex(stanceIndex);
+                    preset.setActivePresetIndex(activePresetIndex);
                 });
             });
 
@@ -824,17 +850,45 @@ public interface NichirinPacketRegistry {
         sendCqcPresetSync(player);
     }
 
+    static void handleCqcActivePresetUpdate(ServerPlayer player, int presetIndex) {
+        boolean changed = PlayerDataProvider.getData(player).getCqcPresetData().setActivePresetIndex(presetIndex);
+        if (!changed) return;
+        PlayerDataStorage.savePlayerData(player);
+        sendCqcPresetSync(player);
+    }
+
+    static void handleCqcFollowupUpdate(ServerPlayer player, String baseMoveId, String followupMoveId) {
+        boolean changed = PlayerDataProvider.getData(player).getCqcPresetData().setFollowupForPlayer(player, baseMoveId, followupMoveId);
+        if (!changed) {
+            player.displayClientMessage(Component.literal("Invalid CQC followup selection.")
+                    .withStyle(style -> style.withColor(0xFF5555)), true);
+            return;
+        }
+        PlayerDataStorage.savePlayerData(player);
+        sendCqcPresetSync(player);
+    }
+
     static void sendCqcPresetSync(ServerPlayer player) {
         try {
             CqcPresetData preset = PlayerDataProvider.getData(player).getCqcPresetData();
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-            buf.writeUtf(preset.getLeftClickMove());
-            buf.writeUtf(preset.getRightClickMove());
-            buf.writeUtf(preset.getCrouchRightClickMove());
-            for (String moveId : preset.getWheelMovesCopy()) {
-                buf.writeUtf(moveId);
+            buf.writeInt(preset.getActivePresetIndex());
+            for (int presetIndex = 0; presetIndex < CqcPresetData.PRESET_COUNT; presetIndex++) {
+                CqcPresetData.Preset presetData = preset.getPresetCopy(presetIndex);
+                buf.writeUtf(presetData.leftClickMove());
+                buf.writeUtf(presetData.rightClickMove());
+                buf.writeUtf(presetData.crouchRightClickMove());
+                for (String moveId : presetData.wheelMovesCopy()) {
+                    buf.writeUtf(moveId);
+                }
+                buf.writeInt(presetData.stanceIndex());
+                Map<String, String> followups = presetData.followupsCopy();
+                buf.writeInt(followups.size());
+                for (Map.Entry<String, String> entry : followups.entrySet()) {
+                    buf.writeUtf(entry.getKey());
+                    buf.writeUtf(entry.getValue());
+                }
             }
-            buf.writeInt(preset.getStanceIndex());
             NetworkManager.sendToPlayer(player, CQC_PRESET_SYNC_ID, server(buf, player));
         } catch (Exception e) {
             // Handle error
@@ -858,6 +912,27 @@ public interface NichirinPacketRegistry {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             buf.writeInt(stanceIndex);
             NetworkManager.sendToServer(CQC_STANCE_UPDATE_ID, client(buf));
+        } catch (Exception e) {
+            // Handle error
+        }
+    }
+
+    static void requestCqcActivePresetUpdate(int presetIndex) {
+        try {
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+            buf.writeInt(presetIndex);
+            NetworkManager.sendToServer(CQC_ACTIVE_PRESET_UPDATE_ID, client(buf));
+        } catch (Exception e) {
+            // Handle error
+        }
+    }
+
+    static void requestCqcFollowupUpdate(String baseMoveId, String followupMoveId) {
+        try {
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+            buf.writeUtf(baseMoveId);
+            buf.writeUtf(followupMoveId);
+            NetworkManager.sendToServer(CQC_FOLLOWUP_UPDATE_ID, client(buf));
         } catch (Exception e) {
             // Handle error
         }

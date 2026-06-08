@@ -36,8 +36,8 @@ import org.slf4j.LoggerFactory;
 public class BreathOfNichirinClient {
     private static final Logger LOGGER = LoggerFactory.getLogger(BreathOfNichirinClient.class);
     private static boolean initialized = false;
-    private static final int WISTERIA_DAY_LEAF_COLOR = 0xD9BEFF;
-    private static final int WISTERIA_NIGHT_LEAF_COLOR = 0x9F6FD8;
+    private static final int WISTERIA_DAY_LEAF_COLOR = 0xC8A2FF;
+    private static final int WISTERIA_NIGHT_LEAF_COLOR = 0x7E3DCC;
     private static long lastWisteriaLeafRefreshTick = -100L;
 
     // Store shader effect for easy access
