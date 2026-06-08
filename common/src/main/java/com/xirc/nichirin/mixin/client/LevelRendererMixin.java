@@ -117,15 +117,21 @@ public class LevelRendererMixin {
         NichirinShaderManager.getInstance().setFrameContext(camera, frustumMatrix);
         NichirinShaderManager.getInstance().processAll(new PoseStack());
 
-        // Aura system: render mandelbulb-style icy shells around any entity with auras attached.
-        // Uses a fresh PoseStack rooted at the camera (translate-relative is handled inside).
+        // Aura system: render 2D camera-billboarded pixelated disc at any entity with auras.
         try {
+            float partial = deltaTracker.getGameTimeDeltaPartialTick(true);
             PoseStack auraStack = new PoseStack();
             auraStack.mulPose(frustumMatrix);
-            com.xirc.nichirin.client.aura.AuraRenderer.renderAll(
-                    auraStack, camera, deltaTracker.getGameTimeDeltaPartialTick(true), projectionMatrix);
+            com.xirc.nichirin.client.aura.AuraPixelize2DRenderer.renderAll(
+                    auraStack, camera, partial);
+
+            // Outline system: render flat-colour silhouettes around any outlined entities.
+            PoseStack outlineStack = new PoseStack();
+            outlineStack.mulPose(frustumMatrix);
+            com.xirc.nichirin.client.outline.OutlineRenderer.renderAll(
+                    outlineStack, camera, partial);
         } catch (Exception ignored) {
-            // Never let aura rendering crash the level render.
+            // Never let aura/outline rendering crash the level render.
         }
     }
 

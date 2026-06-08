@@ -92,7 +92,8 @@ public class NichirinCommand {
                                 .executes(ctx -> giveBlurry(ctx, ctx.getSource().getPlayerOrException()))
                                 .then(Commands.argument("player", EntityArgument.player())
                                         .executes(ctx -> giveBlurry(ctx, EntityArgument.getPlayer(ctx, "player")))))
-                        .then(com.xirc.nichirin.common.command.AuraCommand.build()))
+                        .then(com.xirc.nichirin.common.command.AuraCommand.build())
+                        .then(com.xirc.nichirin.common.command.OutlineCommand.build()))
 
                 // Breathing and Demon subtrees — same shape as the old /breathing and /demon roots.
                 .then(buildBreathingSubcommand())

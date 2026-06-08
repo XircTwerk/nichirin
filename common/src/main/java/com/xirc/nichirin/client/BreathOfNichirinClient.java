@@ -163,8 +163,10 @@ public class BreathOfNichirinClient {
             // Register post-processing shaders
             registerShaders();
 
-            // Wire up the new entity-attached aura system (Mandelbulb-style icy shell renderer).
+            // Wire up the entity-attached aura system (2D pixelated billboard renderer).
             com.xirc.nichirin.client.aura.AuraNetworkHandler.register();
+            // Wire up the entity-attached outline system (configurable colour + see-through).
+            com.xirc.nichirin.client.outline.OutlineNetworkHandler.register();
 
             // Wire up the Blurry effect screen shader
             MistBlurShaderHandler.register();
@@ -249,6 +251,7 @@ public class BreathOfNichirinClient {
                     ImpactCameraShake.tick();
                     refreshWisteriaLeafColors(minecraft);
                     com.xirc.nichirin.client.aura.EntityAuraTracker.tick();
+                    com.xirc.nichirin.client.outline.OutlineTracker.tick();
 
                     if (minecraft.level.getGameTime() % 100 == 0) {
                         LocalPlayer player = minecraft.player;

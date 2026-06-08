@@ -12,9 +12,10 @@ public final class AuraDebugState {
     }
 
     public static String summary() {
+        // Dormant — kept for the dormant 3D-mesh aura code. AuraConfig was slimmed down so
+        // the pixelize/blockSize/posterize fields are no longer present here.
         return String.format(
-                "overlay=%s color=(%.2f,%.2f,%.2f,%.2f) pixelize=%s blockSize=%.1f posterize=%d",
-                overlayEnabled, debugR, debugG, debugB, debugA,
-                AuraConfig.pixelizationEnabled, AuraConfig.pixelBlockSize, AuraConfig.posterizationLevels);
+                "overlay=%s color=(%.2f,%.2f,%.2f,%.2f)",
+                overlayEnabled, debugR, debugG, debugB, debugA);
     }
 }

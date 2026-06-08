@@ -22,3 +22,18 @@ accessible field net/minecraft/world/entity/LivingEntity oAttackAnim F
 accessible field net/minecraft/world/entity/LivingEntity attackAnim F
 accessible field net/minecraft/world/entity/LivingEntity swingTime I
 accessible field net/minecraft/world/entity/LivingEntity deathTime I
+
+# Aura custom render type — needs RenderStateShard constants to build a no-depth-write
+# translucent type so the disc never masks the entity's re-render depth test.
+accessible field net/minecraft/client/renderer/RenderStateShard TRANSLUCENT_TRANSPARENCY Lnet/minecraft/client/renderer/RenderStateShard$TransparencyStateShard;
+accessible field net/minecraft/client/renderer/RenderStateShard RENDERTYPE_ENTITY_TRANSLUCENT_SHADER Lnet/minecraft/client/renderer/RenderStateShard$ShaderStateShard;
+accessible field net/minecraft/client/renderer/RenderStateShard COLOR_WRITE Lnet/minecraft/client/renderer/RenderStateShard$WriteMaskStateShard;
+accessible field net/minecraft/client/renderer/RenderStateShard LEQUAL_DEPTH_TEST Lnet/minecraft/client/renderer/RenderStateShard$DepthTestStateShard;
+accessible field net/minecraft/client/renderer/RenderStateShard NO_DEPTH_TEST Lnet/minecraft/client/renderer/RenderStateShard$DepthTestStateShard;
+accessible field net/minecraft/client/renderer/RenderStateShard GREATER_DEPTH_TEST Lnet/minecraft/client/renderer/RenderStateShard$DepthTestStateShard;
+accessible field net/minecraft/client/renderer/RenderStateShard CULL Lnet/minecraft/client/renderer/RenderStateShard$CullStateShard;
+accessible field net/minecraft/client/renderer/RenderStateShard NO_CULL Lnet/minecraft/client/renderer/RenderStateShard$CullStateShard;
+accessible field net/minecraft/client/renderer/RenderStateShard NO_OVERLAY Lnet/minecraft/client/renderer/RenderStateShard$OverlayStateShard;
+accessible field net/minecraft/client/renderer/RenderStateShard LIGHTMAP Lnet/minecraft/client/renderer/RenderStateShard$LightmapStateShard;
+accessible field net/minecraft/client/renderer/RenderStateShard NO_LIGHTMAP Lnet/minecraft/client/renderer/RenderStateShard$LightmapStateShard;
+accessible class net/minecraft/client/renderer/RenderStateShard$TextureStateShard
