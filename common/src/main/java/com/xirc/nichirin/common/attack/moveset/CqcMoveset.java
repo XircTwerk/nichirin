@@ -29,7 +29,6 @@ import java.util.concurrent.TimeUnit;
 public class CqcMoveset extends AbstractMoveset {
 
     public static final String ID = "cqc";
-    private static final CqcPresetData DEFAULT_PRESET = new CqcPresetData();
     private static final Map<UUID, Map<String, Long>> COOLDOWNS = new ConcurrentHashMap<>();
     private static final Map<UUID, SlashComboState> SLASH_STATES = new ConcurrentHashMap<>();
     private static final Map<UUID, CqcFollowupState> FOLLOWUP_STATES = new ConcurrentHashMap<>();
@@ -403,26 +402,26 @@ public class CqcMoveset extends AbstractMoveset {
     @Override
     public MoveConfiguration getMove(int index) {
         CqcPresetData preset = currentPreset();
-        String moveId = preset != null ? preset.getWheelMove(index) : DEFAULT_PRESET.getWheelMove(index);
+        String moveId = preset != null ? preset.getWheelMove(index) : defaultPreset().getWheelMove(index);
         return configurationFor(moveId);
     }
 
     @Override
     public MoveConfiguration getLeftClickConfiguration() {
         CqcPresetData preset = currentPreset();
-        return configurationFor(preset != null ? preset.getLeftClickMove() : DEFAULT_PRESET.getLeftClickMove());
+        return configurationFor(preset != null ? preset.getLeftClickMove() : defaultPreset().getLeftClickMove());
     }
 
     @Override
     public MoveConfiguration getRightClickConfiguration() {
         CqcPresetData preset = currentPreset();
-        return configurationFor(preset != null ? preset.getRightClickMove() : DEFAULT_PRESET.getRightClickMove());
+        return configurationFor(preset != null ? preset.getRightClickMove() : defaultPreset().getRightClickMove());
     }
 
     @Override
     public MoveConfiguration getCrouchRightClickConfiguration() {
         CqcPresetData preset = currentPreset();
-        return configurationFor(preset != null ? preset.getCrouchRightClickMove() : DEFAULT_PRESET.getCrouchRightClickMove());
+        return configurationFor(preset != null ? preset.getCrouchRightClickMove() : defaultPreset().getCrouchRightClickMove());
     }
 
     @Override
@@ -739,6 +738,10 @@ public class CqcMoveset extends AbstractMoveset {
         return config.getAnimationId().getPath();
     }
 
+    private static CqcPresetData defaultPreset() {
+        return DefaultPresetHolder.INSTANCE;
+    }
+
     private static MovesetBuilder buildMoveset() {
         MovesetBuilder builder = new MovesetBuilder()
                 .withLeftClickMove(JAB)
@@ -846,6 +849,10 @@ public class CqcMoveset extends AbstractMoveset {
 
     private static final class CurrentPlayerHolder {
         private static final ThreadLocal<Player> PLAYER = new ThreadLocal<>();
+    }
+
+    private static final class DefaultPresetHolder {
+        private static final CqcPresetData INSTANCE = new CqcPresetData();
     }
 
     private enum CqcInputSlot {
