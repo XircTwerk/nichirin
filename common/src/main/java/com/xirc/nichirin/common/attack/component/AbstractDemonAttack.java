@@ -404,13 +404,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
 
             // Apply actual stun effect
             MobEffectInstance stunInstance = new MobEffectInstance(
-                    NichirinEffectRegistry.stunned(),
-                    hitStun, // Duration in ticks
-                    2, // Amplifier
-                    false, // Ambient
-                    false, // Show particles
-                    true // Show icon
-            );
+                    NichirinEffectRegistry.stunned(), hitStun, 2, false, false, true);
             target.addEffect(stunInstance);
         }
 

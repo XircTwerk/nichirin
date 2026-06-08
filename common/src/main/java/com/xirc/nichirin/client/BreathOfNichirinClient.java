@@ -43,18 +43,12 @@ public class BreathOfNichirinClient {
     // Store shader effect for easy access
     private static DeadCalmShaderEffect deadCalmEffect;
     private static ImpactShakeShaderEffect impactShakeShaderEffect;
-    private static FlameBreathingAuraShader flameAuraShader;
-    private static WaterBreathingAuraShader waterAuraShader;
 
     private static void registerShaders() {
         try {
             // Register Dead Calm shader effect
             deadCalmEffect = new DeadCalmShaderEffect();
             impactShakeShaderEffect = ImpactShakeShaderEffect.getInstance();
-            flameAuraShader = new FlameBreathingAuraShader();
-            waterAuraShader = new WaterBreathingAuraShader();
-            NichirinShaderManager.getInstance().register(flameAuraShader);
-            NichirinShaderManager.getInstance().register(waterAuraShader);
             NichirinShaderManager.getInstance().register(deadCalmEffect);
             NichirinShaderManager.getInstance().register(impactShakeShaderEffect);
 
@@ -169,8 +163,8 @@ public class BreathOfNichirinClient {
             // Register post-processing shaders
             registerShaders();
 
-            // Wire up the tick-driven intensity for breathing aura shaders
-            BreathingAuraShaderHandler.register();
+            // Wire up the new entity-attached aura system (Mandelbulb-style icy shell renderer).
+            com.xirc.nichirin.client.aura.AuraNetworkHandler.register();
 
             // Wire up the Blurry effect screen shader
             MistBlurShaderHandler.register();
@@ -254,6 +248,7 @@ public class BreathOfNichirinClient {
                     ImpactFrameOverlay.tick();
                     ImpactCameraShake.tick();
                     refreshWisteriaLeafColors(minecraft);
+                    com.xirc.nichirin.client.aura.EntityAuraTracker.tick();
 
                     if (minecraft.level.getGameTime() % 100 == 0) {
                         LocalPlayer player = minecraft.player;

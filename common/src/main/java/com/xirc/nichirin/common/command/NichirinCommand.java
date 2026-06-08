@@ -91,7 +91,8 @@ public class NichirinCommand {
                         .then(Commands.literal("blurry")
                                 .executes(ctx -> giveBlurry(ctx, ctx.getSource().getPlayerOrException()))
                                 .then(Commands.argument("player", EntityArgument.player())
-                                        .executes(ctx -> giveBlurry(ctx, EntityArgument.getPlayer(ctx, "player"))))))
+                                        .executes(ctx -> giveBlurry(ctx, EntityArgument.getPlayer(ctx, "player")))))
+                        .then(com.xirc.nichirin.common.command.AuraCommand.build()))
 
                 // Breathing and Demon subtrees — same shape as the old /breathing and /demon roots.
                 .then(buildBreathingSubcommand())
@@ -126,11 +127,6 @@ public class NichirinCommand {
                 )
         );
 
-        dispatcher.register(Commands.literal("blurry")
-                .requires(src -> src.hasPermission(2))
-                .executes(ctx -> giveBlurry(ctx, ctx.getSource().getPlayerOrException()))
-                .then(Commands.argument("player", EntityArgument.player())
-                        .executes(ctx -> giveBlurry(ctx, EntityArgument.getPlayer(ctx, "player")))));
     }
 
     private static int giveBlurry(CommandContext<CommandSourceStack> ctx, ServerPlayer player) {

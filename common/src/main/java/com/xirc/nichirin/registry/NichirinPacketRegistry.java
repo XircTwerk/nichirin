@@ -97,6 +97,10 @@ public interface NichirinPacketRegistry {
     // Shared cooldown HUD channel — sent by CooldownDisplayPacket, MoveExecutor and KatanaBlock,
     // received by CooldownDisplayPacket.registerClient() on the client.
     ResourceLocation COOLDOWN_DISPLAY_ID           = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "cooldown_display");
+    ResourceLocation AURA_ADD_ID                   = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "aura_add");
+    ResourceLocation AURA_REMOVE_ID                = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "aura_remove");
+    ResourceLocation AURA_CLEAR_ID                 = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "aura_clear");
+    ResourceLocation AURA_CLIENT_CTRL_ID           = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "aura_client_ctrl");
 
     // Packet class mappings
     Map<Class<?>, ResourceLocation> PACKET_IDS = new HashMap<>();
@@ -160,7 +164,8 @@ public interface NichirinPacketRegistry {
                 PLAYER_ANIMATION_ID, COMBO_COUNTER_ID, MOVESET_CONFIG_ID, SYNC_BREATHING_STYLE,
                 SYNC_PROGRESSION_ID, DEMON_SYNC_ID, HITBOX_PACKET_ID, TRIGGER_SHADER_ID,
                 PARRY_SPARK_ID, BLOOD_MOON_SYNC_ID, PERK_SYNC_ID, OPEN_TRAINER_DIALOGUE_ID,
-                MIST_CLONES_ID, SHEATH_SYNC_ID, OPEN_CONFIG_SCREEN_ID, CQC_PRESET_SYNC_ID, COOLDOWN_DISPLAY_ID
+                MIST_CLONES_ID, SHEATH_SYNC_ID, OPEN_CONFIG_SCREEN_ID, CQC_PRESET_SYNC_ID, COOLDOWN_DISPLAY_ID,
+                AURA_ADD_ID, AURA_REMOVE_ID, AURA_CLEAR_ID, AURA_CLIENT_CTRL_ID
         };
         for (ResourceLocation id : s2cIds) {
             try {

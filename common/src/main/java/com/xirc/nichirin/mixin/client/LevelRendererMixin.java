@@ -116,6 +116,17 @@ public class LevelRendererMixin {
     ) {
         NichirinShaderManager.getInstance().setFrameContext(camera, frustumMatrix);
         NichirinShaderManager.getInstance().processAll(new PoseStack());
+
+        // Aura system: render mandelbulb-style icy shells around any entity with auras attached.
+        // Uses a fresh PoseStack rooted at the camera (translate-relative is handled inside).
+        try {
+            PoseStack auraStack = new PoseStack();
+            auraStack.mulPose(frustumMatrix);
+            com.xirc.nichirin.client.aura.AuraRenderer.renderAll(
+                    auraStack, camera, deltaTracker.getGameTimeDeltaPartialTick(true), projectionMatrix);
+        } catch (Exception ignored) {
+            // Never let aura rendering crash the level render.
+        }
     }
 
     @Inject(
