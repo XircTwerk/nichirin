@@ -5,6 +5,7 @@ import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.attack.moveset.demon.TempleDemonMoveset;
 import com.xirc.nichirin.common.system.GrabManager;
 import com.xirc.nichirin.common.system.blocking.HandToHandBlock;
+import com.xirc.nichirin.common.util.NichirinDamageSources;
 import mod.azure.azurelib.common.util.MoveAnalysis;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.damagesource.DamageSource;
@@ -137,7 +138,7 @@ public class TempleDemonEntity extends DemonNPCEntity {
         if (!level.canSeeSky(this.blockPosition())) return;
         // Exposed to direct sunlight — take heavy damage every 4 ticks (5 HP/s)
         if ((level.getGameTime() % 4) == 0) {
-            this.hurt(this.damageSources().onFire(), 1.0f);
+            this.hurt(NichirinDamageSources.sunlight(this), 1.0f);
         }
         this.igniteForSeconds(4);
     }

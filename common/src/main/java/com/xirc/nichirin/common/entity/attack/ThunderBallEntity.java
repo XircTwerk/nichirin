@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.entity.attack;
 
+import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NicirinSoundRegistry;
 import net.minecraft.core.particles.ParticleTypes;
@@ -127,18 +128,9 @@ public class ThunderBallEntity extends Entity {
         for (LivingEntity entity : nearbyEntities) {
             // Only damage each entity once every 20 ticks (1 second) to prevent spam
             if (!damagedEntities.contains(entity) || this.tickCount % 20 == 0) {
-                // Create damage source
-                DamageSource damageSource;
-                if (this.owner instanceof net.minecraft.world.entity.player.Player p) {
-                    damageSource = this.level().damageSources().playerAttack(p);
-                } else if (this.owner instanceof LivingEntity le) {
-                    damageSource = this.level().damageSources().mobAttack(le);
-                } else {
-                    damageSource = this.level().damageSources().generic();
-                }
-
-                // Apply damage
-                entity.hurt(damageSource, damage);
+                entity.hurt(this.owner instanceof LivingEntity le
+                        ? NichirinDamageSources.breathing(le)
+                        : this.level().damageSources().generic(), damage);
 
                 // Apply shocked effect
                 entity.addEffect(new MobEffectInstance(

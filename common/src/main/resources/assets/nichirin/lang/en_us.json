@@ -47,6 +47,7 @@
   "breathing_style.serpent_breathing": "Serpent Breathing",
   "breathing_style.moon_breathing": "Moon Breathing",
   "breathing_style.sun_breathing": "Sun Breathing",
+  "breathing_style.breathing": "Breathing",
 
   "demon_art.default_demon": "Demon",
 
@@ -296,8 +297,8 @@
 
   "death.attack.nichirin_blade": "%1$s was cut down by %2$s",
   "death.attack.nichirin_blade.player": "%1$s was cut down by %2$s",
-  "death.attack.nichirin_breathing": "%1$s was finished by %2$s's %3$s Breathing technique",
-  "death.attack.nichirin_breathing.player": "%1$s was finished by %2$s's %3$s Breathing technique",
+  "death.attack.nichirin_breathing": "%1$s was finished by %2$s's %3$s",
+  "death.attack.nichirin_breathing.player": "%1$s was finished by %2$s's %3$s",
   "death.attack.nichirin_breathing_keepup": "%1$s couldn't keep up with %2$s's %3$s",
   "death.attack.nichirin_breathing_keepup.player": "%1$s couldn't keep up with %2$s's %3$s",
   "death.attack.nichirin_breathing_overwhelmed": "%1$s was overwhelmed by %2$s's %3$s",
@@ -308,6 +309,8 @@
   "death.attack.nichirin_blood_loss": "%1$s ran out of blood",
   "death.attack.nichirin_wisteria": "%1$s withered under wisteria poison",
   "death.attack.nichirin_thrown_katana": "%1$s was skewered by a thrown katana",
+  "death.attack.nichirin_explosion": "%1$s was caught in a nichirin explosion",
+  "death.attack.nichirin_explosion.item": "%1$s was caught in %2$s's nichirin explosion using %3$s",
   "death.attack.nichirin_boar": "%1$s was trampled by a boar",
   "death.attack.nichirin_temple_demon": "%1$s was eaten by a Temple Demon",
   "death.attack.nichirin_trainer": "%1$s failed their training a little too hard",

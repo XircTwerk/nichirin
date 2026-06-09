@@ -11,7 +11,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -308,7 +307,7 @@ public class TeleportUtil {
                 if (options.pathDamageCallback != null) {
                     options.pathDamageCallback.accept(target);
                 } else {
-                    target.hurt(attacker.damageSources().playerAttack((Player)attacker), options.pathDamage);
+                    target.hurt(NichirinDamageSources.breathing(attacker), options.pathDamage);
                 }
             }
         }

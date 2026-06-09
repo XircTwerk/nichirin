@@ -1,11 +1,13 @@
 package com.xirc.nichirin.common.attack.component;
 
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset.MoveConfiguration;
+import com.xirc.nichirin.common.entity.npc.TempleDemonEntity;
 import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
 import com.xirc.nichirin.common.util.ComboIntegration;
 import com.xirc.nichirin.common.util.HitboxData;
 import com.xirc.nichirin.common.util.AttackInterruptTracker;
 import com.xirc.nichirin.common.util.NichirinArmorDamage;
+import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
@@ -323,12 +325,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
         }
 
         // Apply damage using configured values
-        DamageSource source;
-        if (user instanceof Player player) {
-            source = user.damageSources().playerAttack(player);
-        } else {
-            source = user.damageSources().mobAttack(user);
-        }
+        DamageSource source = damageSourceFor(user);
         boolean damaged = NichirinArmorDamage.hurt(target, source, damage);
 
         if (damaged) {
@@ -380,12 +377,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
         target.hurtTime = 0;
 
         // Apply damage
-        DamageSource source;
-        if (user instanceof Player player) {
-            source = user.damageSources().playerAttack(player);
-        } else {
-            source = user.damageSources().mobAttack(user);
-        }
+        DamageSource source = damageSourceFor(user);
         boolean damaged = NichirinArmorDamage.hurt(target, source, damage);
 
         if (damaged) {
@@ -472,6 +464,12 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
                 }
             }
         }
+    }
+
+    private DamageSource damageSourceFor(LivingEntity attacker) {
+        if (allowNonDemonUser) return NichirinDamageSources.cqc(attacker);
+        if (attacker instanceof TempleDemonEntity) return NichirinDamageSources.templeDemon(attacker);
+        return NichirinDamageSources.demon(attacker);
     }
 
     /**

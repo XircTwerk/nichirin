@@ -9,6 +9,7 @@ import com.xirc.nichirin.common.util.ComboIntegration;
 import com.xirc.nichirin.common.util.HitboxData;
 import com.xirc.nichirin.common.util.AttackInterruptTracker;
 import com.xirc.nichirin.common.util.NichirinArmorDamage;
+import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import lombok.Getter;
@@ -309,9 +310,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         }
 
         // Apply damage using configured values
-        DamageSource source = user instanceof Player p
-                ? user.damageSources().playerAttack(p)
-                : user.damageSources().mobAttack(user);
+        DamageSource source = NichirinDamageSources.breathing(user);
         boolean damaged = NichirinArmorDamage.hurt(target, source, damage);
 
         if (damaged && user instanceof Player player) {
@@ -367,9 +366,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         target.hurtTime = 0;
 
         // Apply damage
-        DamageSource source = user instanceof Player p
-                ? user.damageSources().playerAttack(p)
-                : user.damageSources().mobAttack(user);
+        DamageSource source = NichirinDamageSources.breathing(user);
         boolean damaged = NichirinArmorDamage.hurt(target, source, damage);
 
         if (damaged && user instanceof Player player) {

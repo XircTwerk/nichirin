@@ -3,6 +3,7 @@ package com.xirc.nichirin.common.system;
 import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.event.system.DemonFoodHandler;
+import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.server.level.ServerPlayer;
@@ -157,7 +158,7 @@ public class DemonManager {
         if (player.getRemainingFireTicks() > 0 && player.getRemainingFireTicks() % 20 == 0) {
             // Sunlight chews through 20% of max health every second — keep demon players honest.
             float damage = player.getMaxHealth() * 0.40f;
-            player.hurt(player.damageSources().magic(), damage);
+            player.hurt(NichirinDamageSources.sunlight(player), damage);
         }
     }
 

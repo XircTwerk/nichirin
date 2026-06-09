@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.attack.component;
 
 import com.xirc.nichirin.client.animation.NichirinAnimations;
+import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.common.util.StaminaManager;
 import lombok.Getter;
 import lombok.Setter;
@@ -354,9 +355,7 @@ public abstract class AbstractSimpleAttack<T extends AbstractSimpleAttack<T, A>,
      */
     protected void hitTarget(LivingEntity user, LivingEntity target) {
         // Deal damage
-        DamageSource source = user instanceof Player p
-                ? user.damageSources().playerAttack(p)
-                : user.damageSources().mobAttack(user);
+        DamageSource source = NichirinDamageSources.blade(user);
         target.hurt(source, damage);
 
         // Apply knockback

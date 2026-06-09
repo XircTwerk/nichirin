@@ -3,6 +3,7 @@ package com.xirc.nichirin.common.attack.moves;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.util.ComboIntegration;
 import com.xirc.nichirin.common.util.NichirinArmorDamage;
+import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
@@ -155,9 +156,7 @@ public abstract class AbstractKatanaAttack {
         if (targets.isEmpty()) return;
 
         hasHit = true;
-        DamageSource damageSource = user instanceof Player p
-                ? user.damageSources().playerAttack(p)
-                : user.damageSources().mobAttack(user);
+        DamageSource damageSource = NichirinDamageSources.blade(user);
 
         for (LivingEntity target : targets) {
             if (hitEntities.contains(target)) continue;

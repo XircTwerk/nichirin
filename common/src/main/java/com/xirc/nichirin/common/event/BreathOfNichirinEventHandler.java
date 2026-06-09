@@ -20,6 +20,7 @@ import com.xirc.nichirin.common.system.KillRewardManager;
 import com.xirc.nichirin.common.system.movement.MovementContext;
 import com.xirc.nichirin.common.system.sheathing.SheathingManager;
 import com.xirc.nichirin.common.util.InputHandler;
+import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinItemRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.event.events.common.LifecycleEvent;
@@ -150,7 +151,7 @@ public class BreathOfNichirinEventHandler {
 
                     if (bloodPoints <= 0 && player.isAlive()) {
                         AbstractDemonAttack.clearSelfTickingAttacks(player);
-                        player.hurt(player.damageSources().magic(), Float.MAX_VALUE);
+                        player.hurt(NichirinDamageSources.bloodLoss(player), Float.MAX_VALUE);
                     }
 
                     // Maintain infinite night vision while a demon

@@ -3,9 +3,11 @@ package com.xirc.nichirin.common.attack.moves.cqc;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.data.CqcMoveCatalog;
 import com.xirc.nichirin.common.entity.npc.DemonNPCEntity;
+import com.xirc.nichirin.common.entity.npc.TempleDemonEntity;
 import com.xirc.nichirin.common.system.DemonManager;
 import com.xirc.nichirin.common.util.ComboIntegration;
 import com.xirc.nichirin.common.util.NichirinArmorDamage;
+import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
@@ -154,9 +156,9 @@ public abstract class AbstractCqcAttack {
                 entity -> entity != user && entity.isAlive() && !hitEntities.contains(entity));
         if (targets.isEmpty()) return;
 
-        DamageSource source = user instanceof Player player
-                ? user.damageSources().playerAttack(player)
-                : user.damageSources().mobAttack(user);
+        DamageSource source = user instanceof TempleDemonEntity
+                ? NichirinDamageSources.templeDemon(user)
+                : NichirinDamageSources.cqc(user);
 
         for (LivingEntity target : targets) {
             hitEntities.add(target);
