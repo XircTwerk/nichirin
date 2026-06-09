@@ -26,8 +26,14 @@ void main() {
     // their scale is applied per-vertex via the normal rather than uniformly around
     // the entity origin.
     vec3 displaced = Position + normalize(Normal) * OutlineWidth;
-    gl_Position = ProjMat * ModelViewMat * vec4(displaced, 1.0);
-    vertexDistance = fog_distance(ModelViewMat, displaced, FogShape);
+    vec4 viewPosition = ModelViewMat * vec4(displaced, 1.0);
+    gl_Position = ProjMat * viewPosition;
+    // Push outline slightly back in NDC depth so it can never z-fight with the original
+    // model where the displaced surface lands within float precision of the original.
+    // gl_Position is in clip space; NDC.z = gl_Position.z / gl_Position.w, so multiplying
+    // the bias by w gives a constant NDC-space offset of ~0.0008 (back of the model).
+    gl_Position.z += gl_Position.w * 0.0008;
+    vertexDistance = fog_distance(viewPosition.xyz, FogShape);
     vertexColor = Color;
     texCoord0 = UV0;
 }

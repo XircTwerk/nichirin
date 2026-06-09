@@ -6,6 +6,7 @@
   "client": [
     "client.DebugRendererMixin",
     "client.ClientLevelMixin",
+    "client.EntityOutlineMixin",
     "client.FogRendererMixin",
     "client.GameRendererMixin",
     "client.GuiMixin",

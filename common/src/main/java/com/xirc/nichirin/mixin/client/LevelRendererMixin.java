@@ -125,11 +125,11 @@ public class LevelRendererMixin {
             com.xirc.nichirin.client.aura.AuraPixelize2DRenderer.renderAll(
                     auraStack, camera, partial);
 
-            // Outline system: render flat-colour silhouettes around any outlined entities.
-            PoseStack outlineStack = new PoseStack();
-            outlineStack.mulPose(frustumMatrix);
-            com.xirc.nichirin.client.outline.OutlineRenderer.renderAll(
-                    outlineStack, camera, partial);
+            // Outline system: now routes through MC's built-in outline framebuffer + edge-
+            // detection post-shader via EntityOutlineMixin (isCurrentlyGlowing + getTeamColor).
+            // The custom-shader OutlineRenderer is kept in the codebase but no longer driven
+            // from here — switching to MC's outline gives a clean 1-pixel cel-shader edge
+            // with no z-fighting (screen-space rather than depth-tested geometry).
         } catch (Exception ignored) {
             // Never let aura/outline rendering crash the level render.
         }

@@ -1,4 +1,4 @@
-package com.xirc.nichirin.mixin.client;
+package com.xirc.nichirin.neoforge.mixin.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.zigythebird.playeranimcore.api.firstPerson.FirstPersonMode;
@@ -15,21 +15,20 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/**
- * Cancels armor rendering on invisible entities so MobEffects.INVISIBILITY
- * truly hides all visuals (vanilla only fades the body model; layers always render).
- */
 @Mixin(HumanoidArmorLayer.class)
-public class LivingEntityRendererMixin<T extends LivingEntity, M extends HumanoidModel<T>, A extends HumanoidModel<T>> {
+public class LivingEntityRendererNeoForgeMixin<T extends LivingEntity, M extends HumanoidModel<T>, A extends HumanoidModel<T>> {
 
-    @Inject(method = "renderArmorPiece", at = @At("HEAD"), cancellable = true, require = 0)
-    private void nichirin$skipArmorWhenInvisible(PoseStack poseStack, MultiBufferSource buffer,
-                                                  T entity, EquipmentSlot slot, int packedLight,
-                                                  A model, CallbackInfo ci) {
-        nichirin$skipArmor(entity, ci);
-    }
-
-    private void nichirin$skipArmor(T entity, CallbackInfo ci) {
+    @Inject(
+            method = "renderArmorPiece(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/entity/EquipmentSlot;ILnet/minecraft/client/model/HumanoidModel;FFFFFF)V",
+            at = @At("HEAD"),
+            cancellable = true,
+            require = 0
+    )
+    private void nichirin$skipNeoForgeArmorWhenInvisible(PoseStack poseStack, MultiBufferSource buffer,
+                                                         T entity, EquipmentSlot slot, int packedLight,
+                                                         A model, float limbSwing, float limbSwingAmount,
+                                                         float partialTick, float ageInTicks,
+                                                         float netHeadYaw, float headPitch, CallbackInfo ci) {
         if (entity.isInvisible()) {
             ci.cancel();
             return;
