@@ -66,6 +66,11 @@ public interface NichirinBlockRegistry {
                     .mapColor(MapColor.COLOR_PURPLE)
                     .lightLevel(state -> 12)));
 
+    RegistrySupplier<Block> WISTERIA_LANTERN = BLOCKS.register("wisteria_lantern",
+            () -> new LanternBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.LANTERN)
+                    .mapColor(MapColor.COLOR_PURPLE)
+                    .lightLevel(state -> 15)));
+
     RegistrySupplier<Block> WISTERIA_STAIRS = BLOCKS.register("wisteria_stairs",
             () -> new StairBlock(WISTERIA_PLANKS.get().defaultBlockState(),
                     BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_STAIRS).mapColor(MapColor.COLOR_PURPLE)));
@@ -151,6 +156,9 @@ public interface NichirinBlockRegistry {
 
     RegistrySupplier<Item> WISTERIA_GLOW_BERRIES_ITEM = ITEMS.register("wisteria_glow_berries",
             () -> new BlockItem(WISTERIA_GLOW_BERRIES.get(), new Item.Properties()));
+
+    RegistrySupplier<Item> WISTERIA_LANTERN_ITEM = ITEMS.register("wisteria_lantern",
+            () -> new BlockItem(WISTERIA_LANTERN.get(), new Item.Properties()));
 
     RegistrySupplier<Item> WISTERIA_STAIRS_ITEM = ITEMS.register("wisteria_stairs",
             () -> new BlockItem(WISTERIA_STAIRS.get(), new Item.Properties()));

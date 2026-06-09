@@ -13,6 +13,7 @@ import com.xirc.nichirin.common.entity.npc.DemonNPCEntity;
 import com.xirc.nichirin.common.item.DemonBloodVialItem;
 import com.xirc.nichirin.common.event.item.RiceInteractionHandler;
 import com.xirc.nichirin.common.event.system.DemonFoodHandler;
+import com.xirc.nichirin.common.event.system.WisteriaGraceHandler;
 import com.xirc.nichirin.common.system.BloodMoonManager;
 import com.xirc.nichirin.common.system.DemonManager;
 import com.xirc.nichirin.common.system.KillRewardManager;
@@ -53,6 +54,7 @@ public class BreathOfNichirinEventHandler {
         registerDemonEvents();
         registerKillRewards();
         RiceInteractionHandler.register();
+        WisteriaGraceHandler.register();
         registerLootInjection();
     }
 

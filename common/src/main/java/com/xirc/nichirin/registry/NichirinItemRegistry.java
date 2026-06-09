@@ -18,6 +18,8 @@ import com.xirc.nichirin.common.item.tool.DrinkingGourdItem;
 import com.xirc.nichirin.common.item.scroll.PerkScrollItem;
 import com.xirc.nichirin.common.item.scroll.CursedScrollItem;
 import com.xirc.nichirin.common.item.DemonBloodVialItem;
+import com.xirc.nichirin.common.item.WisteriaArrowItem;
+import com.xirc.nichirin.common.item.WisteriaTeaItem;
 import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
@@ -105,6 +107,19 @@ public interface NichirinItemRegistry {
                             .nutrition(6)                     // restores 1 hunger point
                             .saturationModifier(1.5F)
                             .build())));
+
+    RegistrySupplier<Item> WISTERIA_FLOWER = register("wisteria_flower",
+            () -> new Item(settings()));
+
+    RegistrySupplier<Item> WISTERIA_EXTRACT = register("wisteria_extract",
+            () -> new Item(settings().stacksTo(16)));
+
+    RegistrySupplier<Item> WISTERIA_TEA = register("wisteria_tea",
+            () -> new WisteriaTeaItem(settings().stacksTo(16)));
+
+    RegistrySupplier<Item> WISTERIA_ARROW = register("wisteria_arrow",
+            () -> new WisteriaArrowItem(settings()));
+
     RegistrySupplier<Item> RICE = register("rice",
             () -> new RiceItem(settings().stacksTo(64)));
 

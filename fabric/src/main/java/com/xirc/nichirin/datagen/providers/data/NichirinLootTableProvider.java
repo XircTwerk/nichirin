@@ -61,6 +61,7 @@ public class NichirinLootTableProvider extends FabricBlockLootTableProvider {
         dropSelf(NichirinBlockRegistry.WISTERIA_TRAPDOOR.get());
         dropSelf(NichirinBlockRegistry.WISTERIA_GLOW_LICHEN.get());
         dropSelf(NichirinBlockRegistry.WISTERIA_GLOW_BERRIES.get());
+        dropSelf(NichirinBlockRegistry.WISTERIA_LANTERN.get());
 
         // Special cases
         // Leaves drop themselves with silk touch, otherwise use vanilla-style sapling chances.
