@@ -1,6 +1,7 @@
 package com.xirc.nichirin.mixin.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.xirc.nichirin.client.afterimage.AfterimageRenderState;
 import com.zigythebird.playeranimcore.api.firstPerson.FirstPersonMode;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.CameraType;
@@ -30,7 +31,7 @@ public class LivingEntityRendererMixin<T extends LivingEntity, M extends Humanoi
     }
 
     private void nichirin$skipArmor(T entity, CallbackInfo ci) {
-        if (entity.isInvisible()) {
+        if (entity.isInvisible() || AfterimageRenderState.isRendering()) {
             ci.cancel();
             return;
         }

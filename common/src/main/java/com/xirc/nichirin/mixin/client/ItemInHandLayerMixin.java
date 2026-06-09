@@ -1,6 +1,7 @@
 package com.xirc.nichirin.mixin.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.xirc.nichirin.client.afterimage.AfterimageRenderState;
 import com.xirc.nichirin.common.system.sheathing.SheathingManager;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -22,7 +23,7 @@ public class ItemInHandLayerMixin<T extends LivingEntity, M extends EntityModel<
                                                       float partialTick, float ageInTicks,
                                                       float netHeadYaw, float headPitch,
                                                       CallbackInfo ci) {
-        if (entity.isInvisible()) {
+        if (entity.isInvisible() || AfterimageRenderState.isRendering()) {
             ci.cancel();
             return;
         }

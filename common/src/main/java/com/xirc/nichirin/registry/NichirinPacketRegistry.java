@@ -103,6 +103,7 @@ public interface NichirinPacketRegistry {
     ResourceLocation OUTLINE_ADD_ID                = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "outline_add");
     ResourceLocation OUTLINE_REMOVE_ID             = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "outline_remove");
     ResourceLocation OUTLINE_CLEAR_ID              = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "outline_clear");
+    ResourceLocation AFTERIMAGE_ID                 = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "afterimage");
 
     // Packet class mappings
     Map<Class<?>, ResourceLocation> PACKET_IDS = new HashMap<>();
@@ -127,6 +128,7 @@ public interface NichirinPacketRegistry {
         PACKET_IDS.put(DemonSyncPacket.class, DEMON_SYNC_ID);
         PACKET_IDS.put(TriggerShaderPacket.class, TRIGGER_SHADER_ID);
         PACKET_IDS.put(MistClonesPacket.class, MIST_CLONES_ID);
+        PACKET_IDS.put(AfterimagePacket.class, AFTERIMAGE_ID);
         PACKET_IDS.put(SheathInputPacket.class, SHEATH_INPUT_ID);
         PACKET_IDS.put(SheathConfigPacket.class, SHEATH_CONFIG_ID);
         PACKET_IDS.put(SheathSyncPacket.class, SHEATH_SYNC_ID);
@@ -168,7 +170,7 @@ public interface NichirinPacketRegistry {
                 PARRY_SPARK_ID, BLOOD_MOON_SYNC_ID, PERK_SYNC_ID, OPEN_TRAINER_DIALOGUE_ID,
                 MIST_CLONES_ID, SHEATH_SYNC_ID, OPEN_CONFIG_SCREEN_ID, CQC_PRESET_SYNC_ID, COOLDOWN_DISPLAY_ID,
                 AURA_ADD_ID, AURA_REMOVE_ID, AURA_CLEAR_ID,
-                OUTLINE_ADD_ID, OUTLINE_REMOVE_ID, OUTLINE_CLEAR_ID
+                OUTLINE_ADD_ID, OUTLINE_REMOVE_ID, OUTLINE_CLEAR_ID, AFTERIMAGE_ID
         };
         for (ResourceLocation id : s2cIds) {
             try {
@@ -512,6 +514,11 @@ public interface NichirinPacketRegistry {
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, MIST_CLONES_ID, (buf, context) -> {
                 MistClonesPacket packet = new MistClonesPacket(buf);
                 context.queue(() -> packet.handleClient());
+            });
+
+            NetworkManager.registerReceiver(NetworkManager.Side.S2C, AFTERIMAGE_ID, (buf, context) -> {
+                AfterimagePacket packet = new AfterimagePacket(buf);
+                context.queue(packet::handleClient);
             });
 
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, SHEATH_SYNC_ID, (buf, context) -> {
@@ -1089,6 +1096,8 @@ public interface NichirinPacketRegistry {
             p.toBytes(buf);
         } else if (packet instanceof MistClonesPacket p) {
             p.toBytes(buf);
+        } else if (packet instanceof AfterimagePacket p) {
+            p.toBytes(buf);
         } else if (packet instanceof SheathInputPacket p) {
             p.toBytes(buf);
         } else if (packet instanceof SheathConfigPacket p) {
@@ -1116,6 +1125,23 @@ public interface NichirinPacketRegistry {
             buf.release();
         } catch (Exception e) {
             // ignore
+        }
+    }
+
+    static void sendAfterimageTrail(LivingEntity entity, Vec3 from, Vec3 to, int lifetimeTicks, int copies, float alpha) {
+        if (entity.level().isClientSide) return;
+        if (!(entity.level() instanceof ServerLevel serverLevel)) return;
+        try {
+            ResourceLocation id = PACKET_IDS.get(AfterimagePacket.class);
+            if (id == null) return;
+
+            FriendlyByteBuf buf = encodePacket(new AfterimagePacket(entity.getId(), from, to, lifetimeTicks, copies, alpha));
+            serverLevel.getServer().getPlayerList().getPlayers().stream()
+                    .filter(p -> p.level() == entity.level()
+                            && p.distanceToSqr(entity) <= 256.0 * 256.0)
+                    .forEach(p -> NetworkManager.sendToPlayer(p, id, serverCopy(buf, p)));
+            buf.release();
+        } catch (Exception ignored) {
         }
     }
 

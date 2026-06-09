@@ -124,6 +124,10 @@ public class LevelRendererMixin {
             auraStack.mulPose(frustumMatrix);
             com.xirc.nichirin.client.aura.AuraPixelize2DRenderer.renderAll(
                     auraStack, camera, partial);
+            com.xirc.nichirin.client.afterimage.AfterimageRenderer.render(
+                    auraStack, camera, partial);
+            com.xirc.nichirin.client.renderer.effects.MistCloneRenderer.render(
+                    auraStack, camera, partial);
 
             // Outline system: now routes through MC's built-in outline framebuffer + edge-
             // detection post-shader via EntityOutlineMixin (isCurrentlyGlowing + getTeamColor).

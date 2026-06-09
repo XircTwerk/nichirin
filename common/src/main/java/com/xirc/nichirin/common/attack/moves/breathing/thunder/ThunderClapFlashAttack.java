@@ -4,6 +4,7 @@ import com.xirc.nichirin.common.util.TeleportUtil;
 import com.xirc.nichirin.common.effect.ShockedStatusEffect;
 import com.xirc.nichirin.registry.NicirinSoundRegistry;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
+import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -59,6 +60,7 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
 
     private void executeTeleportDash() {
         float dashDistance = teleportDistance != null ? teleportDistance : range;
+        Vec3 from = user.position();
 
         TeleportUtil.TeleportOptions options = new TeleportUtil.TeleportOptions()
                 .withParticles(NichirinParticleRegistry.THUNDER.get(), NichirinParticleRegistry.THUNDER.get())
@@ -91,6 +93,7 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
         options.soundPitch = 2.0f;
 
         TeleportUtil.teleportInDirection(user, dashDistance, options);
+        NichirinPacketRegistry.sendAfterimageTrail(user, from, user.position(), 14, 7, 0.58f);
     }
 
     @Override
