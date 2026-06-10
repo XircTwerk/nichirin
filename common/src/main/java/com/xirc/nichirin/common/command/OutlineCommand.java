@@ -43,7 +43,7 @@ public final class OutlineCommand {
                                                                         FloatArgumentType.getFloat(ctx, "b"),
                                                                         FloatArgumentType.getFloat(ctx, "a"),
                                                                         1.05f, false))
-                                                                .then(Commands.argument("thickness", FloatArgumentType.floatArg(1.0f, 1.5f))
+                                                                .then(Commands.argument("thickness", FloatArgumentType.floatArg(1.0f, 5.0f))
                                                                         .executes(ctx -> add(ctx,
                                                                                 EntityArgument.getEntity(ctx, "target"),
                                                                                 FloatArgumentType.getFloat(ctx, "r"),

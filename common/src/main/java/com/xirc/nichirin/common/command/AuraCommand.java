@@ -48,7 +48,7 @@ public final class AuraCommand {
                                                                         FloatArgumentType.getFloat(ctx, "b"),
                                                                         FloatArgumentType.getFloat(ctx, "a"),
                                                                         1.5f, 2.2f, AuraAudience.ALL))
-                                                                .then(Commands.argument("radius", FloatArgumentType.floatArg(0.1f, 16))
+                                                                .then(Commands.argument("radius", FloatArgumentType.floatArg(0.1f, 48))
                                                                         .executes(ctx -> add(ctx,
                                                                                 EntityArgument.getEntity(ctx, "target"),
                                                                                 FloatArgumentType.getFloat(ctx, "r"),
@@ -57,7 +57,7 @@ public final class AuraCommand {
                                                                                 FloatArgumentType.getFloat(ctx, "a"),
                                                                                 FloatArgumentType.getFloat(ctx, "radius"),
                                                                                 2.2f, AuraAudience.ALL))
-                                                                        .then(Commands.argument("jitter", FloatArgumentType.floatArg(0f, 10f))
+                                                                        .then(Commands.argument("jitter", FloatArgumentType.floatArg(0f, 50f))
                                                                                 .executes(ctx -> add(ctx,
                                                                                         EntityArgument.getEntity(ctx, "target"),
                                                                                         FloatArgumentType.getFloat(ctx, "r"),

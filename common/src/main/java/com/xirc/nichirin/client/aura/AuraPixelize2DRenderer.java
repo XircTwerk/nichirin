@@ -113,17 +113,31 @@ public final class AuraPixelize2DRenderer {
         float t = ((nowMs - inst.startTimeMs()) / 1000.0f) * AuraConfig.animationSpeed;
         float pulse = (float) (Math.sin(t * inst.pulseSpeed() * Math.PI * 2.0) * 0.5 + 0.5);
 
-        // Disc is bbox-aware so a tall slim entity gets a tall slim 2D bulb.
-        float radiusH = inst.radius() * bbWidth  * 0.85f * (1.0f + AuraConfig.pulseAmplitude * pulse);
-        float radiusV = inst.radius() * bbHeight * 0.55f * (1.0f + AuraConfig.pulseAmplitude * pulse);
+        // radius is a multiplier of the entity bbox: radius=1 → disc matches the model size
+        // (half-bb each axis means the full disc spans the entire bbox); radius=2 → 2× model size.
+        float radiusH = inst.radius() * bbWidth  * 0.5f * (1.0f + AuraConfig.pulseAmplitude * pulse);
+        float radiusV = inst.radius() * bbHeight * 0.5f * (1.0f + AuraConfig.pulseAmplitude * pulse);
 
         // jitter (per-instance) scales how much the silhouette morphs over time.
         float jitter = inst.jitterAmount();
-        float lobeLow  = AuraConfig.lobeCountLow  + (float) Math.sin(t * 0.37) * 1.5f * jitter;
-        float lobeHigh = AuraConfig.lobeCountHigh + (float) Math.cos(t * 0.29) * 1.8f * jitter;
+        // Cap the dynamic delta on lobe counts so very high jitter doesn't push lobe frequency
+        // past the grid's resolving power (which aliases back into a smooth/circular look).
+        float lobeDelta = Math.min(jitter, 3.5f);
+        float lobeLow  = AuraConfig.lobeCountLow  + (float) Math.sin(t * 0.37) * 1.5f * lobeDelta;
+        float lobeHigh = AuraConfig.lobeCountHigh + (float) Math.cos(t * 0.29) * 1.8f * lobeDelta;
+        // Linear (not quadratic) in jitter so cranking jitter doesn't blow the edge wave past the
+        // distFromCentre range and degenerate the silhouette into a fully-filled circle.
         float waveStrength = inst.distortionStrength()
-                * (AuraConfig.waveBase + pulse * AuraConfig.waveAnimAmplitude * jitter);
+                * (AuraConfig.waveBase + pulse * AuraConfig.waveAnimAmplitude) * jitter;
         float rotation = t * inst.rotationSpeed();
+        // Low-frequency macro warp — at high jitter this gives the disc a few big lumps. Below the
+        // threshold the silhouette stays the smooth ring you see at default jitter (~2.2).
+        float macroLobes = 3.0f + (float) Math.sin(t * 0.21) * 1.0f;
+        float macroAmplitude = Math.min(0.45f, Math.max(0f, jitter - 3.0f) * 0.04f);
+        // Radial breath frequency — waves ripple OUTWARD from the centre so the silhouette feels
+        // like a churning aura rather than a rotating wheel.
+        float radialFreq = 6.0f + (float) Math.sin(t * 0.17) * 2.0f;
+        float radialAmplitude = 0.05f + jitter * 0.005f;
 
         int gridN = Math.max(2, AuraConfig.pixelize2dGridSize);
         // Exact tile size — cells touch their neighbours without overlapping (no alpha bands).
@@ -136,23 +150,44 @@ public final class AuraPixelize2DRenderer {
         float baseA = inst.a() * AuraConfig.opacityMultiplier;
 
         int packedLight = LightTexture.FULL_BRIGHT;
-        float cosR = (float) Math.cos(rotation);
-        float sinR = (float) Math.sin(rotation);
+        // No rigid rotation — that's what was making it look like a spinning wheel. The angular
+        // motion now comes from the +t/-t phase shifts inside the wave terms (counter-flowing).
+        // `rotation` is still folded in as a slow phase drift on one of the waves so the per-
+        // instance rotationSpeed knob isn't dead.
+        float rotPhase = rotation * 0.4f;
 
         for (int i = 0; i < gridN; i++) {
             for (int j = 0; j < gridN; j++) {
                 float u = ((i + 0.5f) / gridN) * 2.0f - 1.0f;
                 float v = ((j + 0.5f) / gridN) * 2.0f - 1.0f;
 
-                float ur = u * cosR - v * sinR;
-                float vr = u * sinR + v * cosR;
-                float angle = (float) Math.atan2(vr, ur);
-                float distFromCentre = (float) Math.sqrt(ur * ur + vr * vr);
+                float angle = (float) Math.atan2(v, u);
+                float distFromCentre = (float) Math.sqrt(u * u + v * v);
 
+                // Two counter-flowing angular waves so the silhouette CHURNS rather than rotates as
+                // a rigid wheel. The two layers slide past each other and produce a roiling look.
                 float lobeWave =
-                          (float) Math.sin(angle * lobeLow  + t * 1.3f) * 0.5f
-                        + (float) Math.cos(angle * lobeHigh + t * 0.9f) * 0.35f;
-                float edge = 0.95f + waveStrength * 0.18f * lobeWave;
+                          (float) Math.sin(angle * lobeLow  + t * 1.3f + rotPhase) * 0.45f
+                        + (float) Math.cos(angle * lobeHigh - t * 1.1f) * 0.35f
+                        // Radial ripple: waves moving outward from the centre.
+                        + (float) Math.sin(distFromCentre * radialFreq - t * 2.2f) * radialAmplitude;
+                // tanh-saturate the wave so the swing matches the old look at default jitter (~2.2)
+                // but can't run away at extreme jitter. Asymmetric scale: small upward bumps, larger
+                // downward notches — so the silhouette stays at-most a clean circle (never a square)
+                // while still reading as lumpy/distorted at high jitter.
+                float waveTerm = (float) Math.tanh(waveStrength * lobeWave * 0.33f);
+                float waveContribution = waveTerm >= 0
+                        ? waveTerm * 0.12f      // bumps stay small — never push past the unit circle
+                        : waveTerm * 0.5f;      // notches can bite deep for visible lumps
+                float macroWarp = macroAmplitude * (float) Math.sin(angle * macroLobes + t * 0.5f);
+                float macroContribution = macroWarp >= 0
+                        ? macroWarp * 0.25f     // gentle outward lump cap
+                        : macroWarp;            // full inward bite
+                float edge = 0.97f + waveContribution + macroContribution;
+                // Hard cap at 1.0 → silhouette is bounded by the unit circle and can never fill the
+                // grid corners (which is what was making it look like a square at high jitter).
+                if (edge < 0.35f) edge = 0.35f;
+                if (edge > 1.0f) edge = 1.0f;
 
                 if (distFromCentre > edge) continue;
 
