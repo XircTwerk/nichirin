@@ -39,14 +39,15 @@ public final class MovesetAuraTicker {
 
     private static void update(ServerPlayer player) {
         MovesetData data = PlayerDataProvider.getMovesetData(player);
-        // Priority: BDA (demon moveset) > breathing > none. CQC is intentionally not represented —
-        // its "fighting" slot doesn't trigger an aura.
-        String movesetId = data.hasDemonMoveset() ? data.getDemonMovesetId()
-                : data.hasBreathingMoveset() ? data.getBreathingMovesetId()
+        // Priority: breathing > BDA (demon moveset) > none. CQC is intentionally not represented —
+        // its "fighting" slot doesn't trigger an aura. Breathing wins when both are set so the
+        // visible aura matches the style the player thinks they're using.
+        String movesetId = data.hasBreathingMoveset() ? data.getBreathingMovesetId()
+                : data.hasDemonMoveset() ? data.getDemonMovesetId()
                 : null;
 
         // Destructive Death has its own dynamic-state ticker. Don't double-publish.
-        if (MovesetAuraPalette.SKIP_IDS.contains(movesetId)) {
+        if (movesetId != null && MovesetAuraPalette.SKIP_IDS.contains(movesetId)) {
             removeIfPresent(player);
             return;
         }

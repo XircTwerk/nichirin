@@ -144,10 +144,13 @@ public final class AuraPixelize2DRenderer {
         float cellHalfH = radiusH / gridN;
         float cellHalfV = radiusV / gridN;
 
-        float baseR = inst.r() * AuraConfig.brightness;
-        float baseG = inst.g() * AuraConfig.brightness;
-        float baseB = inst.b() * AuraConfig.brightness;
-        float baseA = inst.a() * AuraConfig.opacityMultiplier;
+        // Clamp after the brightness multiply: any channel pushed past 1.0 would otherwise wrap
+        // around in the byte cast inside setColor (1.15*255 = 293 → &0xFF → 37) and come out
+        // near-black, which read as "inverted" colours (red→green, purple→orange).
+        float baseR = Math.min(1.0f, inst.r() * AuraConfig.brightness);
+        float baseG = Math.min(1.0f, inst.g() * AuraConfig.brightness);
+        float baseB = Math.min(1.0f, inst.b() * AuraConfig.brightness);
+        float baseA = Math.min(1.0f, inst.a() * AuraConfig.opacityMultiplier);
 
         int packedLight = LightTexture.FULL_BRIGHT;
         // No rigid rotation — that's what was making it look like a spinning wheel. The angular

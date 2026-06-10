@@ -2,6 +2,7 @@ package com.xirc.nichirin.common.command;
 
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.FloatArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.xirc.nichirin.common.aura.AuraAudience;
@@ -18,7 +19,7 @@ import java.util.UUID;
 /**
  * /nichirin debug outline ... — admin commands for the entity outline system.
  *
- *   add <entity> [r g b a] [thickness] [seeThroughWalls]   — attach an outline
+ *   add <entity> [r g b] [thickness] [seeThroughWalls]   — attach an outline (r/g/b as 0-255)
  *   remove <entity>                                         — remove all outlines from entity
  */
 public final class OutlineCommand {
@@ -32,34 +33,30 @@ public final class OutlineCommand {
                 .then(Commands.literal("add")
                         .then(Commands.argument("target", EntityArgument.entity())
                                 .executes(ctx -> addDefault(ctx, EntityArgument.getEntity(ctx, "target")))
-                                .then(Commands.argument("r", FloatArgumentType.floatArg(0, 1))
-                                        .then(Commands.argument("g", FloatArgumentType.floatArg(0, 1))
-                                                .then(Commands.argument("b", FloatArgumentType.floatArg(0, 1))
-                                                        .then(Commands.argument("a", FloatArgumentType.floatArg(0, 1))
+                                .then(Commands.argument("r", IntegerArgumentType.integer(0, 255))
+                                        .then(Commands.argument("g", IntegerArgumentType.integer(0, 255))
+                                                .then(Commands.argument("b", IntegerArgumentType.integer(0, 255))
+                                                        .executes(ctx -> add(ctx,
+                                                                EntityArgument.getEntity(ctx, "target"),
+                                                                IntegerArgumentType.getInteger(ctx, "r") / 255f,
+                                                                IntegerArgumentType.getInteger(ctx, "g") / 255f,
+                                                                IntegerArgumentType.getInteger(ctx, "b") / 255f,
+                                                                1.0f, 1.05f, false))
+                                                        .then(Commands.argument("thickness", FloatArgumentType.floatArg(1.0f, 5.0f))
                                                                 .executes(ctx -> add(ctx,
                                                                         EntityArgument.getEntity(ctx, "target"),
-                                                                        FloatArgumentType.getFloat(ctx, "r"),
-                                                                        FloatArgumentType.getFloat(ctx, "g"),
-                                                                        FloatArgumentType.getFloat(ctx, "b"),
-                                                                        FloatArgumentType.getFloat(ctx, "a"),
-                                                                        1.05f, false))
-                                                                .then(Commands.argument("thickness", FloatArgumentType.floatArg(1.0f, 5.0f))
+                                                                        IntegerArgumentType.getInteger(ctx, "r") / 255f,
+                                                                        IntegerArgumentType.getInteger(ctx, "g") / 255f,
+                                                                        IntegerArgumentType.getInteger(ctx, "b") / 255f,
+                                                                        1.0f, FloatArgumentType.getFloat(ctx, "thickness"), false))
+                                                                .then(Commands.argument("seeThroughWalls", BoolArgumentType.bool())
                                                                         .executes(ctx -> add(ctx,
                                                                                 EntityArgument.getEntity(ctx, "target"),
-                                                                                FloatArgumentType.getFloat(ctx, "r"),
-                                                                                FloatArgumentType.getFloat(ctx, "g"),
-                                                                                FloatArgumentType.getFloat(ctx, "b"),
-                                                                                FloatArgumentType.getFloat(ctx, "a"),
-                                                                                FloatArgumentType.getFloat(ctx, "thickness"), false))
-                                                                        .then(Commands.argument("seeThroughWalls", BoolArgumentType.bool())
-                                                                                .executes(ctx -> add(ctx,
-                                                                                        EntityArgument.getEntity(ctx, "target"),
-                                                                                        FloatArgumentType.getFloat(ctx, "r"),
-                                                                                        FloatArgumentType.getFloat(ctx, "g"),
-                                                                                        FloatArgumentType.getFloat(ctx, "b"),
-                                                                                        FloatArgumentType.getFloat(ctx, "a"),
-                                                                                        FloatArgumentType.getFloat(ctx, "thickness"),
-                                                                                        BoolArgumentType.getBool(ctx, "seeThroughWalls")))))))))))
+                                                                                IntegerArgumentType.getInteger(ctx, "r") / 255f,
+                                                                                IntegerArgumentType.getInteger(ctx, "g") / 255f,
+                                                                                IntegerArgumentType.getInteger(ctx, "b") / 255f,
+                                                                                1.0f, FloatArgumentType.getFloat(ctx, "thickness"),
+                                                                                BoolArgumentType.getBool(ctx, "seeThroughWalls"))))))))))
 
                 .then(Commands.literal("remove")
                         .then(Commands.argument("target", EntityArgument.entity())

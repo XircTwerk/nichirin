@@ -128,10 +128,11 @@ public final class AuraRenderer {
         }
 
         Matrix4f mat = poseStack.last().pose();
-        float r = inst.r() * AuraConfig.brightness;
-        float g = inst.g() * AuraConfig.brightness;
-        float b = inst.b() * AuraConfig.brightness;
-        float baseA = inst.a() * AuraConfig.opacityMultiplier;
+        // Clamp after brightness — channels > 1.0 wrap around in setColor's byte cast.
+        float r = Math.min(1.0f, inst.r() * AuraConfig.brightness);
+        float g = Math.min(1.0f, inst.g() * AuraConfig.brightness);
+        float b = Math.min(1.0f, inst.b() * AuraConfig.brightness);
+        float baseA = Math.min(1.0f, inst.a() * AuraConfig.opacityMultiplier);
         int packedLight = LightTexture.FULL_BRIGHT;
 
         for (int ring = 0; ring < rings - 1; ring++) {
