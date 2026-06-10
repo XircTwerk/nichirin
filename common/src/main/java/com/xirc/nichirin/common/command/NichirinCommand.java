@@ -143,8 +143,6 @@ public class NichirinCommand {
         return 1;
     }
 
-    // ─── /nichirin breathing ───
-
     private static com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> buildBreathingSubcommand() {
         return Commands.literal("breathing")
                 .requires(src -> src.hasPermission(2))
@@ -273,8 +271,6 @@ public class NichirinCommand {
         player.displayClientMessage(Component.literal("Your breathing style is now " + formatted).withStyle(s -> s.withColor(0x55FFFF)), false);
         return 1;
     }
-
-    // ─── /nichirin demon ───
 
     private static com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> buildDemonSubcommand() {
         return Commands.literal("demon")
@@ -446,8 +442,6 @@ public class NichirinCommand {
         return 1;
     }
 
-    // ─── /nichirin cooldown — unified ───
-
     private static int resetAllCooldowns(CommandContext<CommandSourceStack> ctx, ServerPlayer player) {
         CommandSourceStack src = ctx.getSource();
         String playerName = player.getName().getString();
@@ -463,8 +457,6 @@ public class NichirinCommand {
         player.displayClientMessage(Component.literal("All your cooldowns have been reset!").withStyle(s -> s.withColor(0x55FFFF)), false);
         return 1;
     }
-
-    // ─── /nichirin admin / config ───
 
     private static int unlockAll(CommandContext<CommandSourceStack> ctx, ServerPlayer player) {
         CommandSourceStack src = ctx.getSource();
@@ -623,8 +615,6 @@ public class NichirinCommand {
         return 1;
     }
 
-    // ─── Suggestions ───
-
     private static CompletableFuture<Suggestions> suggestBreathingStyles(
             CommandContext<CommandSourceStack> ctx, SuggestionsBuilder builder) {
         String input = builder.getRemaining().toLowerCase();
@@ -688,8 +678,6 @@ public class NichirinCommand {
         } catch (Exception ignored) {}
         return builder.buildFuture();
     }
-
-    // ─── Helpers ───
 
     private static boolean isBreathingStyle(String movesetId) {
         return movesetId != null && movesetId.contains("breathing");

@@ -218,7 +218,6 @@ public class ShockwaveEntity extends Entity {
         return NetworkManager.createAddEntityPacket(this, serverEntity);
     }
 
-    // ===== Builder =====
     public static final class Builder {
         private LivingEntity owner;
         private Vec3 origin;

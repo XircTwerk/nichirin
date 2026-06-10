@@ -85,8 +85,6 @@ public final class AuraManager {
         ENTITY_AURAS.clear();
     }
 
-    // ─── packet sending ───
-
     private static void sendAdd(Entity host, AuraInstance instance, AuraAudience audience) {
         if (!(host.level() instanceof ServerLevel level)) return;
         FriendlyByteBuf buf = encodeAdd(host, instance);

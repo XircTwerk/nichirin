@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.attack.moves.demon.destructive;
 
+import com.xirc.nichirin.common.attack.moves.cqc.AbstractCqcAttack;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.entity.attack.ShockwaveEntity;
 import com.xirc.nichirin.registry.NichirinEntityRegistry;
@@ -9,7 +10,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Hook called by {@link com.xirc.nichirin.common.attack.moves.cqc.AbstractCqcAttack} on every
+ * Hook called by {@link AbstractCqcAttack} on every
  * successful CQC hit. When the attacker has Destructive Death equipped as their BDA and the
  * Shockwave Toggle is on, spawn a small forward shockwave from the impact point. Overdrive flips
  * the tint to red.

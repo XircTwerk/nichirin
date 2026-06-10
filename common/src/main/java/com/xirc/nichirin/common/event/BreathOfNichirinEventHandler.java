@@ -5,6 +5,7 @@ import com.xirc.nichirin.common.attack.component.AbstractDemonAttack;
 import com.xirc.nichirin.common.attack.moves.breathing.sound.TempoBreakerAttack;
 import com.xirc.nichirin.common.attack.moveset.DefaultKatanaMoveset;
 import com.xirc.nichirin.common.attack.moves.demon.destructive.DestructiveDeathPlayerAura;
+import com.xirc.nichirin.common.system.aura.MovesetAuraTicker;
 import com.xirc.nichirin.common.attack.moveset.demon.DefaultDemonMoveset;
 import com.xirc.nichirin.common.attack.moveset.demon.DestructiveDeathMoveset;
 import com.xirc.nichirin.common.config.NichirinModConfig;
@@ -143,6 +144,7 @@ public class BreathOfNichirinEventHandler {
             BloodMoonManager.onServerTick(server);
             MoveExecutor.tickAllAttacks(server);
             DestructiveDeathPlayerAura.tick(server);
+            MovesetAuraTicker.tick(server);
             // Tempo Breaker's delayed-explosion timer lives outside any single attack instance —
             // tick it here so explosions still fire after the attack itself has finished.
             TempoBreakerAttack.processPendingExplosionsGlobal(server);
@@ -219,6 +221,7 @@ public class BreathOfNichirinEventHandler {
             SheathingManager.cleanupPlayer(player);
             DefaultKatanaMoveset.cleanupPlayer(player);
             DestructiveDeathMoveset.cleanupPlayer(player);
+            MovesetAuraTicker.clear(player.getUUID());
             DemonBloodVialItem.clearPending(player.getUUID());
         } catch (Exception e) {
             e.printStackTrace();

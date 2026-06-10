@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.attack.moves.demon.destructive;
 
+import com.xirc.nichirin.common.attack.moveset.demon.DestructiveDeathMoveset;
 import com.xirc.nichirin.common.aura.AuraAudience;
 import com.xirc.nichirin.common.aura.AuraInstance;
 import com.xirc.nichirin.common.aura.AuraManager;

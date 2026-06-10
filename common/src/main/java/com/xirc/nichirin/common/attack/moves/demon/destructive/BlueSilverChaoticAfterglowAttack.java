@@ -30,16 +30,19 @@ import java.util.UUID;
  */
 public class BlueSilverChaoticAfterglowAttack extends DestructiveDeathAttackBase {
 
-    private static final int CLONE_COUNT = 12;
+    // Heavy-handed visual budget — each afterimage trail dispatches the player's full renderer per
+    // copy, so total renders = CLONE_COUNT × AFTERIMAGE_COPIES per frame for the trail's lifetime.
+    // Earlier 12 × 5 = 60 player renders per frame was enough to freeze the client in 3rd person.
+    private static final int CLONE_COUNT = 6;
     private static final float CLONE_RING_RADIUS = 6.0f;
-    private static final float CLONE_DAMAGE = 8.0f;
+    private static final float CLONE_DAMAGE = 10.0f;       // bumped to keep total damage similar
     private static final float CLONE_SPEED = 3.2f;
     private static final int CLONE_LIFE_TICKS = 18;
     private static final float CLONE_HITBOX = 1.0f;
     private static final int CLONE_PIERCES = 6;
     private static final int CLONE_HIT_STUN = 14;
     private static final int AFTERIMAGE_LIFETIME_TICKS = 14;
-    private static final int AFTERIMAGE_COPIES = 5;
+    private static final int AFTERIMAGE_COPIES = 3;
     private static final float AFTERIMAGE_ALPHA = 0.7f;
 
     private boolean hasExecuted = false;
@@ -59,6 +62,12 @@ public class BlueSilverChaoticAfterglowAttack extends DestructiveDeathAttackBase
         if (!DestructiveDeathState.isCompassActive(sp.getUUID(), now)) {
             sp.displayClientMessage(
                     Component.literal("Compass Needle must be active!")
+                            .withStyle(s -> s.withColor(0xFF5555)), true);
+            return;
+        }
+        if (!DestructiveDeathState.isOverdriveEnabled(sp.getUUID())) {
+            sp.displayClientMessage(
+                    Component.literal("Overdrive must be active!")
                             .withStyle(s -> s.withColor(0xFF5555)), true);
             return;
         }

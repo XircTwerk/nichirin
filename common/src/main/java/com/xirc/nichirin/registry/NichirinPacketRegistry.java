@@ -717,16 +717,16 @@ public interface NichirinPacketRegistry {
                     && requestedMoveset.isNeutralMoveset()
                     && movesetId.equals(PlayerDataProvider.getMovesetData(player).getFightingMovesetId())) {
                 PlayerDataProvider.clearFightingAndSync(player);
-                player.sendSystemMessage(Component.literal("\u00A77Unequipped " + formatStyleName(movesetId) + "."));
+                player.displayClientMessage(
+                        Component.literal("\u00A77Unequipped " + formatStyleName(movesetId) + "."), true);
                 return;
             }
 
             boolean unlockedByDefault = requestedMoveset != null && requestedMoveset.isNeutralMoveset();
             if (movesetId != null && !unlockedByDefault && !ProgressionHelper.isStyleUnlocked(player, movesetId)) {
                 String requirement = ProgressionHelper.getUnlockRequirement(movesetId);
-                player.sendSystemMessage(Component.literal(
-                        "§cYou haven't unlocked this breathing style! §fRequirement: §e" + requirement
-                ));
+                player.displayClientMessage(Component.literal(
+                        "§cYou haven't unlocked this breathing style! §fRequirement: §e" + requirement), true);
                 return;
             }
 
@@ -734,13 +734,11 @@ public interface NichirinPacketRegistry {
 
             if (movesetId != null) {
                 String styleName = formatStyleName(movesetId);
-                player.sendSystemMessage(Component.literal(
-                        "§aSwitched to " + styleName + "."
-                ));
+                player.displayClientMessage(
+                        Component.literal("§aSwitched to " + styleName + "."), true);
             } else {
-                player.sendSystemMessage(Component.literal(
-                        "§7Cleared breathing style."
-                ));
+                player.displayClientMessage(
+                        Component.literal("§7Cleared breathing style."), true);
             }
         } catch (Exception e) {
             // Log error but don't crash

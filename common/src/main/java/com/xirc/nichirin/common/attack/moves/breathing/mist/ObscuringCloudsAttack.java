@@ -41,8 +41,6 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
     private final Map<UUID, Integer> lastHitTicks  = new HashMap<>();
     private final List<UUID>         spawnedClones = new ArrayList<>();
 
-    // -------------------------------------------------------------------------
-
     @Override
     protected void onStart() {
         // Rice Spirit pattern: find target first, bail if none
@@ -170,8 +168,6 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
         }
         spawnedClones.clear();
     }
-
-    // -------------------------------------------------------------------------
 
     private void spawnNextClone(Vec3 center) {
         if (!(world instanceof ServerLevel serverLevel)) return;
