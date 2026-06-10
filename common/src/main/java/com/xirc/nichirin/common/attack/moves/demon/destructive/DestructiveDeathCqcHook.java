@@ -33,7 +33,7 @@ public final class DestructiveDeathCqcHook {
                 .origin(origin)
                 .direction(direction)
                 .damage(2.0f)            // chip damage on top of the CQC strike itself
-                .speed(0.65f)
+                .speed(1.8f)
                 .lifeTicks(18)
                 .hitboxRadius(0.95f)
                 .pierces(0)

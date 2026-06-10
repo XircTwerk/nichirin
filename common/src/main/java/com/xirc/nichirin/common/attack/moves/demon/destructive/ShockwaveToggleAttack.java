@@ -8,7 +8,6 @@ import net.minecraft.sounds.SoundSource;
 /**
  * Destructive Death wheel slot — toggles the "M1/CQC attacks spawn shockwaves" flag. Fires
  * instantly (no windup/active/recovery work) and feeds the new state back to the client HUD via
- * {@link DestructiveDeathStateSyncPacket}.
  */
 public class ShockwaveToggleAttack extends DestructiveDeathAttackBase {
 

@@ -2,8 +2,8 @@ package com.xirc.nichirin.common.attack.moveset;
 
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.cqc.*;
+import com.xirc.nichirin.common.attack.moves.cqc.destructive.*;
 import com.xirc.nichirin.common.attack.moves.demon.basic.*;
-import com.xirc.nichirin.common.attack.moves.demon.destructive.SnapPunchAttack;
 import com.xirc.nichirin.common.data.CqcMoveCatalog;
 import com.xirc.nichirin.common.data.CqcPresetData;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
@@ -263,6 +263,93 @@ public class CqcMoveset extends AbstractMoveset {
             .withHitStun(10)
             .withHitboxSize(1.3f)
             .withStaminaCost(5.0f)
+            .build();
+
+    public static final MoveConfiguration ANNIHILATION_TYPE = new MoveBuilder("annihilation_type", "Annihilation Type")
+            .withAnimation("nichirin:annihilation_type", 6)
+            .withDescription("Crouched-stance forward palm dash. Twin circular shockwaves on swing start.")
+            .withTiming(34, 4, 12)
+            .withDamage(7.0f)
+            .withRange(2.4f)
+            .withKnockback(1.2f)
+            .withHitStun(18)
+            .withHitboxSize(1.4f)
+            .withStaminaCost(12.0f)
+            .withDashSpeed(2.0f)
+            .build();
+
+    public static final MoveConfiguration CROWN_SPLITTER = new MoveBuilder("crown_splitter", "Crown Splitter")
+            .withAnimation("nichirin:crown", 6)
+            .withDescription("Rising reverse axe-kick. High burst damage with a vertical shockwave on connect.")
+            .withTiming(22, 2, 8)
+            .withDamage(6.0f)
+            .withRange(1.9f)
+            .withKnockback(0.55f)
+            .withHitStun(16)
+            .withHitboxSize(1.2f)
+            .withStaminaCost(8.0f)
+            .build();
+
+    public static final MoveConfiguration EXPLOSIVE_FLURRY = new MoveBuilder("explosive_flurry", "Explosive Flurry")
+            .withAnimation("nichirin:explosive_flurry", 6)
+            .withDescription("Flurry of fast straight kicks. Each kick lays a piercing shockwave forward.")
+            .withTiming(20, 3, 10)
+            .withDamage(3.0f)
+            .withRange(2.1f)
+            .withKnockback(0.85f)
+            .withHitStun(8)
+            .withHitboxSize(1.1f)
+            .withStaminaCost(9.0f)
+            .build();
+
+    public static final MoveConfiguration FLYING_PLANET = new MoveBuilder("flying_planet_thousand_wheels", "Flying Planet Thousand Wheels")
+            .withAnimation("nichirin:flying_planet_thousand_wheels", 6)
+            .withDescription("Upward kick that lifts both you and the target. Sets up aerial follow-ups.")
+            .withTiming(28, 2, 9)
+            .withDamage(5.0f)
+            .withRange(2.2f)
+            .withKnockback(0.2f)
+            .withHitStun(12)
+            .withHitboxSize(1.2f)
+            .withStaminaCost(8.0f)
+            .build();
+
+    public static final MoveConfiguration EIGHT_LAYERED_DEMON_CORE = new MoveBuilder("eight_layered_demon_core", "Eight-Layered Demon Core")
+            .withAnimation("nichirin:eight_layered_demon_core", 6)
+            .withDescription("Eight stacked punches firing overlapping shockwave rings forward — one per punch.")
+            // Active window is long enough to stagger 8 distinct shockwaves at 3-tick intervals.
+            .withTiming(20, 24, 12)
+            .withDamage(3.0f)
+            .withRange(2.4f)
+            .withKnockback(0.4f)
+            .withHitStun(8)
+            .withHitboxSize(1.3f)
+            .withStaminaCost(14.0f)
+            .build();
+
+    public static final MoveConfiguration DONUT = new MoveBuilder("donut", "Donut")
+            .withAnimation("nichirin:annihilation_type", 6)
+            .withDescription("25s windup. Hyper-armoured ring-shaped AoE around you. 1.5s stun on hit.")
+            .withTiming(500, 8, 14)
+            .withDamage(12.0f)
+            .withRange(5.0f)
+            .withKnockback(0.55f)
+            .withHitStun(30)
+            .withHyperArmor()
+            .withHitboxSize(5.0f)
+            .withStaminaCost(20.0f)
+            .build();
+
+    public static final MoveConfiguration TEN_THOUSAND_LEAVES = new MoveBuilder("ten_thousand_leaves_flashing_willow", "Ten Thousand Leaves Flashing Willow")
+            .withAnimation("nichirin:ten_thousand_leaves_flashing_willow", 6)
+            .withDescription("Crushing downward punch that fans a ring of shockwaves outward on impact.")
+            .withTiming(36, 4, 12)
+            .withDamage(7.5f)
+            .withRange(2.0f)
+            .withKnockback(0.3f)
+            .withHitStun(20)
+            .withHitboxSize(1.6f)
+            .withStaminaCost(15.0f)
             .build();
 
     public static final MoveConfiguration BACKHAND_SLAP = new MoveBuilder("backhand_slap", "Backhand Slap")
@@ -687,7 +774,9 @@ public class CqcMoveset extends AbstractMoveset {
      */
     public static boolean isDestructiveDeathMove(String moveId) {
         return switch (CqcMoveCatalog.normalize(moveId)) {
-            case "snap_punch" -> true;
+            case "snap_punch", "annihilation_type", "crown_splitter", "explosive_flurry",
+                 "flying_planet_thousand_wheels", "eight_layered_demon_core",
+                 "ten_thousand_leaves_flashing_willow", "donut" -> true;
             default -> false;
         };
     }
@@ -736,7 +825,14 @@ public class CqcMoveset extends AbstractMoveset {
             case "superman_punch" -> new CqcSupermanPunchAttack();
             case "double_palm" -> new CqcDoublePalmAttack();
             case "backhand_slap" -> new CqcBackhandSlapAttack();
-            case "snap_punch" -> new SnapPunchAttack();
+            case "snap_punch" -> new CqcSnapPunchAttack();
+            case "annihilation_type" -> new CqcAnnihilationTypeAttack();
+            case "crown_splitter" -> new CqcCrownSplitterAttack();
+            case "explosive_flurry" -> new CqcExplosiveFlurryAttack();
+            case "flying_planet_thousand_wheels" -> new CqcFlyingPlanetThousandWheelsAttack();
+            case "eight_layered_demon_core" -> new CqcEightLayeredDemonCoreAttack();
+            case "ten_thousand_leaves_flashing_willow" -> new CqcTenThousandLeavesFlashingWillowAttack();
+            case "donut" -> new CqcDonutAttack();
             default -> null;
         };
     }
@@ -801,6 +897,13 @@ public class CqcMoveset extends AbstractMoveset {
         register(configs, DOUBLE_PALM);
         register(configs, BACKHAND_SLAP);
         register(configs, SNAP_PUNCH);
+        register(configs, ANNIHILATION_TYPE);
+        register(configs, CROWN_SPLITTER);
+        register(configs, EXPLOSIVE_FLURRY);
+        register(configs, FLYING_PLANET);
+        register(configs, EIGHT_LAYERED_DEMON_CORE);
+        register(configs, TEN_THOUSAND_LEAVES);
+        register(configs, DONUT);
         register(configs, DEMON_GUT_PUNCH);
         register(configs, DEMON_SLASH);
         register(configs, HIGH_JUMP);

@@ -1,9 +1,11 @@
 package com.xirc.nichirin.common.attack.moves.demon.destructive;
 
+import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.entity.attack.ShockwaveEntity;
 import com.xirc.nichirin.registry.NichirinEntityRegistry;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
@@ -24,14 +26,28 @@ import java.util.UUID;
  */
 public interface IDestructiveDeathCQC {
 
+    /**
+     * Destructive Death must be the equipped BDA AND the Shockwave Toggle must be on. If the user
+     * doesn't have DD equipped, shockwaves never fire regardless of the toggle — prevents the
+     * persistent toggle state from carrying over to non-DD players.
+     */
     default boolean isShockwaveEnabled(LivingEntity user) {
-        if (!(user instanceof ServerPlayer sp)) return false;
+        if (!hasDestructiveDeathEquipped(user)) return false;
+        ServerPlayer sp = (ServerPlayer) user;
         return DestructiveDeathState.isShockwaveEnabled(sp.getUUID());
     }
 
     default boolean isOverdriveActive(LivingEntity user) {
-        if (!(user instanceof ServerPlayer sp)) return false;
+        if (!hasDestructiveDeathEquipped(user)) return false;
+        ServerPlayer sp = (ServerPlayer) user;
         return DestructiveDeathState.isOverdriveEnabled(sp.getUUID());
+    }
+
+    /** True when the user actually has Destructive Death equipped as their BDA. */
+    default boolean hasDestructiveDeathEquipped(LivingEntity user) {
+        if (!(user instanceof ServerPlayer sp)) return false;
+        return user instanceof Player p
+                && "destructive_death".equals(MovesetHelper.getDemonMovesetId(p));
     }
 
     default boolean compassBuffsTarget(LivingEntity user, LivingEntity target) {

@@ -30,60 +30,17 @@ public class DestructiveDeathMoveset extends AbstractMoveset {
     }
 
     private static MovesetBuilder createBuilder() {
+        // BDA only owns the wheel — basic strikes are handled by CQC. M1/M2/CrM2 are not used:
+        // RMB is the block button in this codebase, so right-click never reaches a BDA action.
         return new MovesetBuilder()
                 .withIdleAnimation("nichirin:demon_idle")
                 .withSpeedMultiplier(1.10f)
-
-                .withLeftClickMove(new MoveBuilder("snap_punch", "Snap Punch")
-                        .withAnimation("nichirin:snap_punch", 10)
-                        .withTiming(0, 1, 7)
-                        .withDamage(4.5f)
-                        .withRange(2.2f)
-                        .withKnockback(0.25f)
-                        .withHitStun(10)
-                        .withHitboxSize(1.5f)
-                        .withDescription("Quick forward strike. Sends a short-range shockwave when the toggle is on.")
-                        .withAction(entity -> {
-                            // SnapPunchAttack is a CQC move (extends AbstractCqcAttack); the BDA's
-                            // M1 just re-runs it directly. MoveExecutor uses reflection to find a
-                            // matching start(...) overload.
-                            SnapPunchAttack attack = new SnapPunchAttack();
-                            attack.configure(captureLeftClickConfigFor("destructive_death"));
-                            MoveExecutor.executeAttack(entity, attack, "destructive_death", "snap_punch");
-                        })
-                )
-
-                .withRightClickMove(new MoveBuilder("compass_needle", "Compass Needle")
-                        .withAnimation("nichirin:compass_needle", 6)
-                        .withTiming(0, 1, 130)
-                        .withDamage(0f)
-                        .withRange(20f)
-                        .withDescription("Manifests the compass. Tracks nearby entities for 6 seconds and amplifies damage on them.")
-                        .withAction(entity -> {
-                            CompassNeedleAttack attack = new CompassNeedleAttack();
-                            attack.configure(captureRightClickConfigFor("destructive_death"));
-                            MoveExecutor.executeAttack(entity, attack, "destructive_death", "compass_needle");
-                        })
-                )
-
-                .withCrouchRightClickMove(new MoveBuilder("compass_overdrive", "Compass Overdrive")
-                        .withAnimation("nichirin:compass_needle", 6)
-                        .withTiming(0, 1, 130)
-                        .withDamage(0f)
-                        .withRange(20f)
-                        .withDescription("Compass Needle + Speed I + Strength I + red shockwaves. Arrow points to the closest entity.")
-                        .withAction(entity -> {
-                            CompassOverdriveAttack attack = new CompassOverdriveAttack();
-                            attack.configure(captureCrouchRightClickConfigFor("destructive_death"));
-                            MoveExecutor.executeAttack(entity, attack, "destructive_death", "compass_overdrive");
-                        })
-                )
 
                 // Wheel 0 — Shockwave Toggle
                 .withMove(new MoveBuilder("shockwave_toggle", "Shockwave Toggle")
                         .withAnimation("nichirin:snap_punch", 4)
                         .withTiming(0, 1, 3)
-                        .withDescription("Toggle: future Snap Punches (and enhanced CQC attacks) spawn forward shockwaves.")
+                        .withDescription("Toggle: future CQC attacks spawn forward shockwaves.")
                         .withAction(entity -> {
                             ShockwaveToggleAttack attack = new ShockwaveToggleAttack();
                             attack.configure(captureWheelMoveFor("destructive_death", 0));
@@ -91,19 +48,36 @@ public class DestructiveDeathMoveset extends AbstractMoveset {
                         })
                 )
 
-                // Wheel 1 — Overdrive Toggle
+                // Wheel 1 — Compass Needle (crouch while activating to enter Compass Overdrive)
+                .withMove(new MoveBuilder("compass_needle", "Compass Needle")
+                        .withAnimation("nichirin:compass_needle", 6)
+                        .withTiming(0, 1, 4)
+                        .withRange(20f)
+                        .withDescription("Tracks nearby entities for 6 seconds and amplifies damage on them. Crouch while activating to enter Compass Overdrive (Speed I + Strength I + red shockwaves).")
+                        .withAction(entity -> {
+                            boolean crouching = entity instanceof Player p && p.isCrouching();
+                            CompassNeedleAttack attack = crouching
+                                    ? new CompassOverdriveAttack()
+                                    : new CompassNeedleAttack();
+                            attack.configure(captureWheelMoveFor("destructive_death", 1));
+                            MoveExecutor.executeAttack(entity, attack, "destructive_death",
+                                    crouching ? "compass_overdrive" : "compass_needle");
+                        })
+                )
+
+                // Wheel 2 — Overdrive Toggle
                 .withMove(new MoveBuilder("overdrive_toggle", "Overdrive")
                         .withAnimation("nichirin:snap_punch", 4)
                         .withTiming(0, 1, 3)
                         .withDescription("Toggle: Strength I + Speed I, and all shockwaves render red and hit harder.")
                         .withAction(entity -> {
                             OverdriveToggleAttack attack = new OverdriveToggleAttack();
-                            attack.configure(captureWheelMoveFor("destructive_death", 1));
+                            attack.configure(captureWheelMoveFor("destructive_death", 2));
                             MoveExecutor.executeAttack(entity, attack, "destructive_death", "overdrive_toggle");
                         })
                 )
 
-                // Wheel 2 — Blue Silver Chaotic Afterglow (ultimate)
+                // Wheel 3 — Blue Silver Chaotic Afterglow (ultimate)
                 .withMove(new MoveBuilder("blue_silver_chaotic_afterglow", "Blue Silver Chaotic Afterglow")
                         .withAnimation("nichirin:annihilation_type", 12)
                         .withTiming(0, 1, 12)
@@ -113,7 +87,7 @@ public class DestructiveDeathMoveset extends AbstractMoveset {
                         .withDescription("Spawns 12 omni-directional shockwaves. Requires Compass Needle to be active.")
                         .withAction(entity -> {
                             BlueSilverChaoticAfterglowAttack attack = new BlueSilverChaoticAfterglowAttack();
-                            attack.configure(captureWheelMoveFor("destructive_death", 2));
+                            attack.configure(captureWheelMoveFor("destructive_death", 3));
                             MoveExecutor.executeAttack(entity, attack, "destructive_death", "blue_silver_chaotic_afterglow");
                         })
                 );
@@ -121,22 +95,7 @@ public class DestructiveDeathMoveset extends AbstractMoveset {
 
     @Override
     public int getMoveCount() {
-        return 3; // wheel slots 0..2
-    }
-
-    @Override
-    public boolean handleLeftClick(LivingEntity entity) {
-        return super.handleLeftClick(entity);
-    }
-
-    @Override
-    public boolean handleRightClick(LivingEntity entity, boolean isCrouching) {
-        return super.handleRightClick(entity, isCrouching);
-    }
-
-    @Override
-    public void performMove(LivingEntity entity, int moveIndex) {
-        super.performMove(entity, moveIndex);
+        return 4; // wheel slots 0..3
     }
 
     @Override
@@ -145,11 +104,11 @@ public class DestructiveDeathMoveset extends AbstractMoveset {
     }
 
     @Override
-    public String getLeftClickMoveName() { return "Snap Punch"; }
+    public String getLeftClickMoveName() { return "None"; }
     @Override
-    public String getRightClickMoveName() { return "Compass Needle"; }
+    public String getRightClickMoveName() { return "None"; }
     @Override
-    public String getCrouchRightClickMoveName() { return "Compass Overdrive"; }
+    public String getCrouchRightClickMoveName() { return "None"; }
 
     @Override
     public void onMovePerformed(LivingEntity entity, int moveIndex, boolean isCrouching) {
@@ -158,21 +117,10 @@ public class DestructiveDeathMoveset extends AbstractMoveset {
     public static void cleanupPlayer(Player player) {
         DestructiveDeathState.cleanup(player.getUUID());
         CompassNeedleTracker.clear(player.getUUID());
+        DestructiveDeathPlayerAura.clear(player.getUUID());
     }
 
-    /** Lazy capture helpers — pulls the per-slot {@link MoveConfiguration} for this moveset. */
-    private static MoveConfiguration captureLeftClickConfigFor(String id) {
-        AbstractMoveset m = NichirinMovesetRegistry.getMoveset(id);
-        return m != null ? m.getLeftClickConfiguration() : null;
-    }
-    private static MoveConfiguration captureRightClickConfigFor(String id) {
-        AbstractMoveset m = NichirinMovesetRegistry.getMoveset(id);
-        return m != null ? m.getRightClickConfiguration() : null;
-    }
-    private static MoveConfiguration captureCrouchRightClickConfigFor(String id) {
-        AbstractMoveset m = NichirinMovesetRegistry.getMoveset(id);
-        return m != null ? m.getCrouchRightClickConfiguration() : null;
-    }
+    /** Lazy capture helper — pulls the per-slot {@link MoveConfiguration} for this moveset. */
     private static MoveConfiguration captureWheelMoveFor(String id, int index) {
         AbstractMoveset m = NichirinMovesetRegistry.getMoveset(id);
         return m != null ? m.getMove(index) : null;

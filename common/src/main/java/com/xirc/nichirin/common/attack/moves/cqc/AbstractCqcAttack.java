@@ -51,6 +51,7 @@ public abstract class AbstractCqcAttack {
     protected float hitboxSize;
     protected int hitStun;
     protected boolean slam;
+    protected boolean hyperArmor;
     protected float dashDistance;
 
     private int tickCount;
@@ -88,6 +89,7 @@ public abstract class AbstractCqcAttack {
         this.hitboxSize = config.getHitboxSizeOrDefault(this.hitboxSize);
         this.hitStun = config.getHitStunOrDefault(this.hitStun);
         this.slam = config.hasSlam();
+        this.hyperArmor = config.hasHyperArmor();
         this.dashDistance = config.getDashSpeedOrDefault(this.dashDistance);
     }
 
@@ -104,7 +106,9 @@ public abstract class AbstractCqcAttack {
         if (!activeState || user.level().isClientSide()) return;
 
         tickCount++;
-        if (tickCount <= startup && user.hurtTime > 0 && startup > 0) {
+        // Hyper armor: take the hit without dropping the attack. Without the flag, any windup hit
+        // cancels the swing (vanilla CQC behaviour).
+        if (!hyperArmor && tickCount <= startup && user.hurtTime > 0 && startup > 0) {
             end(user);
             return;
         }
@@ -154,7 +158,8 @@ public abstract class AbstractCqcAttack {
         }
 
         List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
-                entity -> entity != user && entity.isAlive() && !hitEntities.contains(entity));
+                entity -> entity != user && entity.isAlive() && !hitEntities.contains(entity)
+                        && acceptTarget(user, entity));
         if (targets.isEmpty()) return;
 
         DamageSource source = user instanceof TempleDemonEntity
@@ -222,6 +227,14 @@ public abstract class AbstractCqcAttack {
     }
 
     protected void onStart(LivingEntity user, Level world) {}
+
+    /**
+     * Subclass hook for shape-aware hit filtering (e.g. ring-band on Donut). Returns true to keep
+     * the candidate, false to skip it without marking them as hit. Default accepts everything.
+     */
+    protected boolean acceptTarget(LivingEntity user, LivingEntity candidate) {
+        return true;
+    }
 
     protected void onActiveStart(LivingEntity user, Level world) {}
 

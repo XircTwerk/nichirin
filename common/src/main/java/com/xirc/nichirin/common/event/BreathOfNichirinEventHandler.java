@@ -4,6 +4,7 @@ import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.component.AbstractDemonAttack;
 import com.xirc.nichirin.common.attack.moves.breathing.sound.TempoBreakerAttack;
 import com.xirc.nichirin.common.attack.moveset.DefaultKatanaMoveset;
+import com.xirc.nichirin.common.attack.moves.demon.destructive.DestructiveDeathPlayerAura;
 import com.xirc.nichirin.common.attack.moveset.demon.DefaultDemonMoveset;
 import com.xirc.nichirin.common.attack.moveset.demon.DestructiveDeathMoveset;
 import com.xirc.nichirin.common.config.NichirinModConfig;
@@ -141,6 +142,7 @@ public class BreathOfNichirinEventHandler {
         if (server != null) {
             BloodMoonManager.onServerTick(server);
             MoveExecutor.tickAllAttacks(server);
+            DestructiveDeathPlayerAura.tick(server);
             // Tempo Breaker's delayed-explosion timer lives outside any single attack instance —
             // tick it here so explosions still fire after the attack itself has finished.
             TempoBreakerAttack.processPendingExplosionsGlobal(server);

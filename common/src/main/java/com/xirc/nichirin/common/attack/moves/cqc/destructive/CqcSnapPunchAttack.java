@@ -1,6 +1,7 @@
-package com.xirc.nichirin.common.attack.moves.demon.destructive;
+package com.xirc.nichirin.common.attack.moves.cqc.destructive;
 
 import com.xirc.nichirin.common.attack.moves.cqc.AbstractCqcAttack;
+import com.xirc.nichirin.common.attack.moves.demon.destructive.IDestructiveDeathCQC;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -18,9 +19,9 @@ import net.minecraft.world.phys.Vec3;
  * subclass goes further by also spawning a bigger forward shockwave on swing start when the toggle
  * is on (so even a whiff fires one).</p>
  */
-public class SnapPunchAttack extends AbstractCqcAttack implements IDestructiveDeathCQC {
+public class CqcSnapPunchAttack extends AbstractCqcAttack implements IDestructiveDeathCQC {
 
-    public SnapPunchAttack() {
+    public CqcSnapPunchAttack() {
         super("snap_punch");
     }
 
@@ -32,7 +33,7 @@ public class SnapPunchAttack extends AbstractCqcAttack implements IDestructiveDe
         // Snap Punch's signature: when DD's Shockwave toggle is on, the punch ALSO launches a small
         // forward shockwave on the start of the active frame — fires even on a whiff.
         if (isShockwaveEnabled(user)) {
-            spawnForwardShockwave(user, world, damage * 0.65f, 0.7f, 22, 1.0f, 0);
+            spawnForwardShockwave(user, world, damage * 0.65f, 1.9f, 22, 1.0f, 0);
         }
     }
 
