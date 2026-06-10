@@ -34,7 +34,8 @@ public final class AfterimageRenderer {
             return;
         }
 
-        ENTRIES.removeIf(entry -> entry.entityId == entityId);
+        // No per-entity dedupe: a single entity can have multiple in-flight trails (e.g. multi-bounce
+        // Thunderclap segments). Lifetime fade caps how many ever coexist.
         ENTRIES.add(new Entry(
                 entityId,
                 from,

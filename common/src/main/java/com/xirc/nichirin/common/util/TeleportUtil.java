@@ -170,7 +170,6 @@ public class TeleportUtil {
         Vec3 lookVec = entity.getLookAngle();
         Vec3 targetPos = startPos.add(lookVec.scale(distance));
 
-        // MODIFIED: More lenient block collision check - only stop if we'd hit a major obstacle
         Vec3 finalPos = checkForMajorObstacles(level, startPos, lookVec, distance, entity);
 
         return teleport(entity, finalPos, options);

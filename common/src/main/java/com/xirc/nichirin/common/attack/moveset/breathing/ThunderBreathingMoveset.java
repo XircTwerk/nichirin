@@ -26,47 +26,48 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
     }
 
     private static MovesetBuilder createBuilder() {
-        // Both right-click and crouch right-click run the same Thunder Clap Flash attack — only
-        // the dash direction differs (setTurnBackwards).
+        // Right-click: hold-to-charge Thunderclap & Flash (multi-bounce dash, fold-scaled).
+        // Crouch right-click: Godspeed (straight 100-block dash).
         return new MovesetBuilder()
                 .withIdleAnimation("nichirin:thunder_idle")
                 .withSpeedMultiplier(1.5f)
 
                 .withRightClickMove(new MoveBuilder("thunderclap_flash", "Thunderclap and Flash")
-                        .withAnimation("nichirin:thunderclap_flash", 10)
-                        .withTiming(0, 1, 11)
-                        .withDamage(7.0f)
+                        .withAnimation("nichirin:thunderclap_charge", 10)
+                        // Long duration window so the framework keeps the attack alive while charging
+                        // and dashing. Breath is drained manually inside the attack per fold.
+                        .withTiming(0, 0, 800)
+                        .withDamage(6.0f)
                         .withTeleportDistance(12.0f)
                         .withKnockback(0.2f)
-                        .withBreathCost(12.0f)
+                        .withBreathCost(0.0f)
                         .withHitStun(14)
                         .withHitboxSize(2.0f)
-                        .withDescription("Teleport dash forward, hitting anything in the way.")
+                        .withDescription("Hold to charge folds (8 breath each, max scales with breath); release for a multi-bounce dash.")
                         .withAction(entity -> {
                             ThunderClapFlashAttack attack = new ThunderClapFlashAttack();
-                            attack.setTurnBackwards(false);
                             ThunderBreathingMoveset moveset = getCurrentMoveset();
                             if (moveset != null) attack.configure(moveset.getRightClickConfiguration());
                             MoveExecutor.executeAttack(entity, attack, "thunder_breathing", "thunderclap_flash");
                         })
                 )
 
-                .withCrouchRightClickMove(new MoveBuilder("thunderclap_flash_backwards", "Thunderclap and Flash (Backwards)")
+                .withCrouchRightClickMove(new MoveBuilder("godspeed", "Godspeed")
                         .withAnimation("nichirin:thunderclap_flash", 10)
-                        .withTiming(0, 1, 11)
-                        .withDamage(7.0f)
-                        .withTeleportDistance(12.0f)
-                        .withKnockback(0.2f)
-                        .withBreathCost(12.0f)
-                        .withHitStun(14)
+                        // windup=0, duration=22 ticks → the dash runs for ~20 ticks plus a small tail.
+                        .withTiming(0, 0, 22)
+                        .withDamage(10.0f)
+                        .withTeleportDistance(100.0f)
+                        .withKnockback(0.3f)
+                        .withBreathCost(40.0f)
+                        .withHitStun(18)
                         .withHitboxSize(2.0f)
-                        .withDescription("Teleport dash backward, hitting anything in the way.")
+                        .withDescription("Straight 100-block hyper dash that shreds everything in its path.")
                         .withAction(entity -> {
-                            ThunderClapFlashAttack attack = new ThunderClapFlashAttack();
-                            attack.setTurnBackwards(true);
+                            GodspeedAttack attack = new GodspeedAttack();
                             ThunderBreathingMoveset moveset = getCurrentMoveset();
                             if (moveset != null) attack.configure(moveset.getCrouchRightClickConfiguration());
-                            MoveExecutor.executeAttack(entity, attack, "thunder_breathing", "thunderclap_flash");
+                            MoveExecutor.executeAttack(entity, attack, "thunder_breathing", "godspeed");
                         })
                 )
 
@@ -317,7 +318,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
 
     @Override
     public String getCrouchRightClickMoveName() {
-        return "Thunderclap and Flash (Backwards)";
+        return "Godspeed";
     }
 
     @Override

@@ -5,6 +5,7 @@ import com.xirc.nichirin.client.data.ClientProgressionCache;
 import com.xirc.nichirin.client.gui.trainer.TrainerDialogueClientHandler;
 import com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer;
 import com.xirc.nichirin.client.renderer.effects.ParrySparkHandler;
+import com.xirc.nichirin.common.attack.moves.breathing.thunder.ThunderclapChargeManager;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.data.*;
@@ -104,6 +105,7 @@ public interface NichirinPacketRegistry {
     ResourceLocation OUTLINE_REMOVE_ID             = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "outline_remove");
     ResourceLocation OUTLINE_CLEAR_ID              = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "outline_clear");
     ResourceLocation AFTERIMAGE_ID                 = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "afterimage");
+    ResourceLocation THUNDERCLAP_RELEASE_ID        = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "thunderclap_release");
 
     // Packet class mappings
     Map<Class<?>, ResourceLocation> PACKET_IDS = new HashMap<>();
@@ -363,6 +365,12 @@ public interface NichirinPacketRegistry {
             String followupMoveId = buf.readUtf();
             if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
                 context.queue(() -> handleCqcFollowupUpdate(serverPlayer, baseMoveId, followupMoveId));
+            }
+        });
+
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, THUNDERCLAP_RELEASE_ID, (buf, context) -> {
+            if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
+                context.queue(() -> ThunderclapChargeManager.releaseCharge(serverPlayer));
             }
         });
     }
