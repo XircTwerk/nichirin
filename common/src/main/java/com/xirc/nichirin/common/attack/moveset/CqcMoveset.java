@@ -3,6 +3,7 @@ package com.xirc.nichirin.common.attack.moveset;
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.cqc.*;
 import com.xirc.nichirin.common.attack.moves.demon.basic.*;
+import com.xirc.nichirin.common.attack.moves.demon.destructive.SnapPunchAttack;
 import com.xirc.nichirin.common.data.CqcMoveCatalog;
 import com.xirc.nichirin.common.data.CqcPresetData;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
@@ -250,6 +251,18 @@ public class CqcMoveset extends AbstractMoveset {
             .withHitStun(14)
             .withHitboxSize(1.15f)
             .withStaminaCost(8.0f)
+            .build();
+
+    public static final MoveConfiguration SNAP_PUNCH = new MoveBuilder("snap_punch", "Snap Punch")
+            .withAnimation("nichirin:snap_punch", 6)
+            .withDescription("Quick forward strike. Spawns a short-range shockwave when Destructive Death's toggle is on.")
+            .withTiming(14, 1, 6)
+            .withDamage(4.5f)
+            .withRange(2.0f)
+            .withKnockback(0.25f)
+            .withHitStun(10)
+            .withHitboxSize(1.3f)
+            .withStaminaCost(5.0f)
             .build();
 
     public static final MoveConfiguration BACKHAND_SLAP = new MoveBuilder("backhand_slap", "Backhand Slap")
@@ -668,6 +681,17 @@ public class CqcMoveset extends AbstractMoveset {
         };
     }
 
+    /**
+     * True when the CQC move belongs to the Destructive Death set — these get the light-blue
+     * border in the CQC GUI and extra enhancement when the user has Destructive Death equipped.
+     */
+    public static boolean isDestructiveDeathMove(String moveId) {
+        return switch (CqcMoveCatalog.normalize(moveId)) {
+            case "snap_punch" -> true;
+            default -> false;
+        };
+    }
+
     private boolean canUseDemonOnlyMove(LivingEntity entity) {
         return entity instanceof Player player && DemonManager.isDemon(player);
     }
@@ -712,6 +736,7 @@ public class CqcMoveset extends AbstractMoveset {
             case "superman_punch" -> new CqcSupermanPunchAttack();
             case "double_palm" -> new CqcDoublePalmAttack();
             case "backhand_slap" -> new CqcBackhandSlapAttack();
+            case "snap_punch" -> new SnapPunchAttack();
             default -> null;
         };
     }
@@ -775,6 +800,7 @@ public class CqcMoveset extends AbstractMoveset {
         register(configs, SUPERMAN_PUNCH);
         register(configs, DOUBLE_PALM);
         register(configs, BACKHAND_SLAP);
+        register(configs, SNAP_PUNCH);
         register(configs, DEMON_GUT_PUNCH);
         register(configs, DEMON_SLASH);
         register(configs, HIGH_JUMP);

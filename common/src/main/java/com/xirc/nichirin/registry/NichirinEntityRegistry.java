@@ -5,6 +5,7 @@ import com.xirc.nichirin.common.entity.animal.BoarEntity;
 import com.xirc.nichirin.common.entity.projectile.FlashBombEntity;
 import com.xirc.nichirin.common.entity.projectile.SmokeBombEntity;
 import com.xirc.nichirin.common.entity.projectile.ThrownKatanaEntity;
+import com.xirc.nichirin.common.entity.attack.ShockwaveEntity;
 import com.xirc.nichirin.common.entity.attack.ThunderBallEntity;
 import com.xirc.nichirin.common.entity.effect.PlayerCloneEntity;
 import com.xirc.nichirin.common.entity.npc.TempleDemonEntity;
@@ -84,6 +85,14 @@ public interface NichirinEntityRegistry {
                     .clientTrackingRange(64)
                     .updateInterval(1)
                     .build(BreathOfNichirin.id("player_clone").toString()));
+
+    RegistrySupplier<EntityType<ShockwaveEntity>> SHOCKWAVE =
+            ENTITY_TYPES.register("shockwave", () -> EntityType.Builder.<ShockwaveEntity>of(
+                            ShockwaveEntity::new, MobCategory.MISC)
+                    .sized(0.6f, 0.6f)
+                    .clientTrackingRange(64)
+                    .updateInterval(1)
+                    .build(BreathOfNichirin.id("shockwave").toString()));
 
     RegistrySupplier<EntityType<ThunderBreathingTrainerEntity>> THUNDER_BREATHING_TRAINER =
             ENTITY_TYPES.register("thunder_breathing_trainer", () -> EntityType.Builder.<ThunderBreathingTrainerEntity>of(

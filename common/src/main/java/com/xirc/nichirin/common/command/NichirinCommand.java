@@ -7,6 +7,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.xirc.nichirin.common.attack.moveset.demon.DefaultDemonMoveset;
+import com.xirc.nichirin.common.attack.moveset.demon.DestructiveDeathMoveset;
 import com.xirc.nichirin.common.config.NichirinConfig;
 import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.data.MovesetHelper;
@@ -362,6 +363,9 @@ public class NichirinCommand {
         try {
             DefaultDemonMoveset.cleanupPlayer(player);
         } catch (Exception ignored) {}
+        try {
+            DestructiveDeathMoveset.cleanupPlayer(player);
+        } catch (Exception ignored) {}
 
         if (MovesetHelper.hasDemonMoveset(player)) {
             src.sendFailure(Component.literal("Failed to remove demon status from " + playerName + " (sync issue)").withStyle(s -> s.withColor(COL_ERR)));
@@ -693,7 +697,9 @@ public class NichirinCommand {
 
     private static boolean isDemonArt(String movesetId) {
         if (movesetId == null) return false;
-        return movesetId.equals("default_demon") || movesetId.contains("demon");
+        return movesetId.equals("default_demon")
+                || movesetId.equals("destructive_death")
+                || movesetId.contains("demon");
     }
 
     private static String formatStyleName(String styleId) {

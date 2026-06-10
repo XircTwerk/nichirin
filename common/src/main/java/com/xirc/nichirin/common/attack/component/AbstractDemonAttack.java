@@ -101,6 +101,11 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
         if (configured) {
             return; // Prevent double-configuration
         }
+        if (config == null) {
+            // Mark as configured to keep the framework happy; values stay at their field defaults.
+            this.configured = true;
+            return;
+        }
         this.damage = config.getDamageOrDefault(0f);
         this.range = config.getRangeOrDefault(0f);
         this.knockback = config.getKnockbackOrDefault(0f);

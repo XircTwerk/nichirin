@@ -5,6 +5,7 @@ import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.attack.moveset.CqcMoveset;
 import com.xirc.nichirin.common.attack.moveset.breathing.*;
 import com.xirc.nichirin.common.attack.moveset.demon.DefaultDemonMoveset;
+import com.xirc.nichirin.common.attack.moveset.demon.DestructiveDeathMoveset;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
@@ -133,6 +134,7 @@ public interface NichirinMovesetRegistry {
         registerMoveset("beast_breathing", BeastBreathingMoveset::new);
         registerMoveset("mist_breathing", MistBreathingMoveset::new);
         registerMoveset("default_demon", DefaultDemonMoveset::new);
+        registerMoveset("destructive_death", DestructiveDeathMoveset::new);
         registerMoveset(CqcMoveset.ID, CqcMoveset::new);
 
     }

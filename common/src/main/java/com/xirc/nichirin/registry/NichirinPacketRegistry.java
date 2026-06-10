@@ -106,6 +106,7 @@ public interface NichirinPacketRegistry {
     ResourceLocation OUTLINE_CLEAR_ID              = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "outline_clear");
     ResourceLocation AFTERIMAGE_ID                 = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "afterimage");
     ResourceLocation THUNDERCLAP_RELEASE_ID        = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "thunderclap_release");
+    ResourceLocation DESTRUCTIVE_DEATH_STATE_ID    = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "destructive_death_state");
 
     // Packet class mappings
     Map<Class<?>, ResourceLocation> PACKET_IDS = new HashMap<>();
@@ -134,6 +135,7 @@ public interface NichirinPacketRegistry {
         PACKET_IDS.put(SheathInputPacket.class, SHEATH_INPUT_ID);
         PACKET_IDS.put(SheathConfigPacket.class, SHEATH_CONFIG_ID);
         PACKET_IDS.put(SheathSyncPacket.class, SHEATH_SYNC_ID);
+        PACKET_IDS.put(DestructiveDeathStateSyncPacket.class, DESTRUCTIVE_DEATH_STATE_ID);
 
         registerPackets();
     }
@@ -172,7 +174,8 @@ public interface NichirinPacketRegistry {
                 PARRY_SPARK_ID, BLOOD_MOON_SYNC_ID, PERK_SYNC_ID, OPEN_TRAINER_DIALOGUE_ID,
                 MIST_CLONES_ID, SHEATH_SYNC_ID, OPEN_CONFIG_SCREEN_ID, CQC_PRESET_SYNC_ID, COOLDOWN_DISPLAY_ID,
                 AURA_ADD_ID, AURA_REMOVE_ID, AURA_CLEAR_ID,
-                OUTLINE_ADD_ID, OUTLINE_REMOVE_ID, OUTLINE_CLEAR_ID, AFTERIMAGE_ID
+                OUTLINE_ADD_ID, OUTLINE_REMOVE_ID, OUTLINE_CLEAR_ID, AFTERIMAGE_ID,
+                DESTRUCTIVE_DEATH_STATE_ID
         };
         for (ResourceLocation id : s2cIds) {
             try {
@@ -526,6 +529,11 @@ public interface NichirinPacketRegistry {
 
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, AFTERIMAGE_ID, (buf, context) -> {
                 AfterimagePacket packet = new AfterimagePacket(buf);
+                context.queue(packet::handleClient);
+            });
+
+            NetworkManager.registerReceiver(NetworkManager.Side.S2C, DESTRUCTIVE_DEATH_STATE_ID, (buf, context) -> {
+                DestructiveDeathStateSyncPacket packet = new DestructiveDeathStateSyncPacket(buf);
                 context.queue(packet::handleClient);
             });
 
@@ -1109,6 +1117,8 @@ public interface NichirinPacketRegistry {
         } else if (packet instanceof SheathInputPacket p) {
             p.toBytes(buf);
         } else if (packet instanceof SheathConfigPacket p) {
+            p.toBytes(buf);
+        } else if (packet instanceof DestructiveDeathStateSyncPacket p) {
             p.toBytes(buf);
         }
 

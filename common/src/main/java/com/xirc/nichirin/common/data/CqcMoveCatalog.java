@@ -49,11 +49,13 @@ public final class CqcMoveCatalog {
                 config.getCooldownOrDefault(0),
                 config.getDashSpeedOrDefault(0f),
                 CqcMoveset.isDemonOnlyMove(id),
+                CqcMoveset.isDestructiveDeathMove(id),
                 config.getDescription()
         );
     }
 
     public record Definition(String id, String displayName, String animationName, int durationTicks,
                              float damage, float range, float knockback, int hitStun, int cooldown,
-                             float dashDistance, boolean demonOnly, String description) {}
+                             float dashDistance, boolean demonOnly, boolean destructiveDeath,
+                             String description) {}
 }

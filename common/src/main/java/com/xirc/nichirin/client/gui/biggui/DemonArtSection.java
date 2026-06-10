@@ -50,7 +50,7 @@ public class DemonArtSection extends AbstractGuiPage {
 
         // Show demon arts (if any additional ones exist beyond default)
         String[] additionalDemonArts = {
-                // Future demon arts would go here
+                "destructive_death"
         };
 
         // Calculate layout
@@ -252,7 +252,7 @@ public class DemonArtSection extends AbstractGuiPage {
 
         // Additional demon arts (future ones beyond default)
         String[] additionalDemonArts = {
-                // Future demon arts would go here
+                "destructive_death"
         };
 
         // Base Y matches render(): TOP_MARGIN+10 (30) + title (30) + instructions (20) + grid offset (10)

@@ -5,6 +5,7 @@ import com.xirc.nichirin.common.attack.component.AbstractDemonAttack;
 import com.xirc.nichirin.common.attack.moves.breathing.sound.TempoBreakerAttack;
 import com.xirc.nichirin.common.attack.moveset.DefaultKatanaMoveset;
 import com.xirc.nichirin.common.attack.moveset.demon.DefaultDemonMoveset;
+import com.xirc.nichirin.common.attack.moveset.demon.DestructiveDeathMoveset;
 import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
@@ -195,6 +196,7 @@ public class BreathOfNichirinEventHandler {
                 if (serverPlayer.server != null) PlayerDataProvider.forceSync(serverPlayer.server);
                 NichirinPacketRegistry.sendDemonSync(serverPlayer, 0, 0, false);
                 try { DefaultDemonMoveset.cleanupPlayer(serverPlayer); } catch (Exception ignored) {}
+                try { DestructiveDeathMoveset.cleanupPlayer(serverPlayer); } catch (Exception ignored) {}
                 serverPlayer.displayClientMessage(
                         net.minecraft.network.chat.Component.translatable("nichirin.message.demon_lost_on_death")
                                 .withStyle(net.minecraft.ChatFormatting.AQUA),
@@ -214,6 +216,7 @@ public class BreathOfNichirinEventHandler {
             MovementContext.cleanupPlayer(player);
             SheathingManager.cleanupPlayer(player);
             DefaultKatanaMoveset.cleanupPlayer(player);
+            DestructiveDeathMoveset.cleanupPlayer(player);
             DemonBloodVialItem.clearPending(player.getUUID());
         } catch (Exception e) {
             e.printStackTrace();

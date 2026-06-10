@@ -29,6 +29,7 @@ public class CqcSection extends AbstractGuiPage {
     private static final int ICON_SIZE = 20;
     private static final int GAP = 8;
     private static final int DEMON_BORDER = 0xFFFF3333;
+    private static final int DESTRUCTIVE_DEATH_BORDER = 0xFF44AAFF;
     private static final int PRESET_W = 88;
     private static final int PRESET_H = 22;
     private static final int STANCE_W = 116;
@@ -212,6 +213,11 @@ public class CqcSection extends AbstractGuiPage {
             graphics.fill(x - 1, y + size, x + size + 1, y + size + 1, DEMON_BORDER);
             graphics.fill(x - 1, y - 1, x, y + size + 1, DEMON_BORDER);
             graphics.fill(x + size, y - 1, x + size + 1, y + size + 1, DEMON_BORDER);
+        } else if (definition != null && definition.destructiveDeath()) {
+            graphics.fill(x - 1, y - 1, x + size + 1, y, DESTRUCTIVE_DEATH_BORDER);
+            graphics.fill(x - 1, y + size, x + size + 1, y + size + 1, DESTRUCTIVE_DEATH_BORDER);
+            graphics.fill(x - 1, y - 1, x, y + size + 1, DESTRUCTIVE_DEATH_BORDER);
+            graphics.fill(x + size, y - 1, x + size + 1, y + size + 1, DESTRUCTIVE_DEATH_BORDER);
         }
     }
 

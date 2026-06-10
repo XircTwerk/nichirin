@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.attack.moves.cqc;
 
+import com.xirc.nichirin.common.attack.moves.demon.destructive.DestructiveDeathCqcHook;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.data.CqcMoveCatalog;
 import com.xirc.nichirin.common.entity.npc.DemonNPCEntity;
@@ -180,6 +181,7 @@ public abstract class AbstractCqcAttack {
                 }
             }
             onHitTarget(user, target, world);
+            DestructiveDeathCqcHook.onCqcHit(user, target, world);
         }
     }
 

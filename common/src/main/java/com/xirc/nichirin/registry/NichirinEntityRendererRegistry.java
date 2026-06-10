@@ -3,6 +3,7 @@ package com.xirc.nichirin.registry;
 import com.xirc.nichirin.client.renderer.block.KatanaHolderBlockRenderer;
 import com.xirc.nichirin.client.renderer.entity.effect.PlayerCloneRenderer;
 import com.xirc.nichirin.client.renderer.entity.animal.BoarEntityRenderer;
+import com.xirc.nichirin.client.renderer.entity.attack.ShockwaveEntityRenderer;
 import com.xirc.nichirin.client.renderer.entity.attack.ThunderBallRenderer;
 import com.xirc.nichirin.client.renderer.entity.npc.TempleDemonRenderer;
 import com.xirc.nichirin.client.renderer.entity.npc.ThunderBreathingTrainerRenderer;
@@ -41,6 +42,7 @@ public interface NichirinEntityRendererRegistry {
 
     RendererData<?>[] entries = {
             new RendererData<>(NichirinEntityRegistry.THUNDER_BALL, ThunderBallRenderer::new),
+            new RendererData<>(NichirinEntityRegistry.SHOCKWAVE, ShockwaveEntityRenderer::new),
             new RendererData<>(NichirinEntityRegistry.FLASH_BOMB, FlashBombRenderer::new),
             new RendererData<>(NichirinEntityRegistry.SMOKE_BOMB, SmokeBombRenderer::new),
             new RendererData<>(NichirinEntityRegistry.BOAR, BoarEntityRenderer::new),
