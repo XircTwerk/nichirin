@@ -55,6 +55,11 @@ public class GodspeedAttack extends ThunderBreathingAttackBase {
         remainingDistance = total;
         distancePerTick = total / DASH_TICKS;
         dragStart.clear();
+    }
+
+    @Override
+    protected void onActiveStart() {
+        if (world.isClientSide) return;
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 NicirinSoundRegistry.THUNDERCLAP_FLASH.get(), SoundSource.PLAYERS, 1.0f, 1.5f);
     }

@@ -36,7 +36,10 @@ public class WaterfallBasinAttack extends WaterBreathingAttackBase {
         waterfallStarted = false;
         hitEntities.clear();
         waterfallTicks = 0;
+    }
 
+    @Override
+    protected void onActiveStart() {
         // BIG ASS waterfall startup sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.WATER_AMBIENT, SoundSource.PLAYERS, 1.5f, 0.5f);

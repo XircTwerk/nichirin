@@ -34,7 +34,10 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
         entitiesInField.clear();
         recentlyTriggered.clear();
         calmTicks = 0;
+    }
 
+    @Override
+    protected void onActiveStart() {
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.WATER_AMBIENT, SoundSource.PLAYERS, 0.6f, 0.5f);
 

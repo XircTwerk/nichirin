@@ -46,6 +46,10 @@ public class RiceSpiritAttack extends ThunderBreathingAttackBase {
         }
 
 
+    }
+
+    @Override
+    protected void onActiveStart() {
         // Thunder sound on start
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, 0.3f, 2.0f);

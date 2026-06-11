@@ -21,6 +21,10 @@ public class DistantThunderAttack extends ThunderBreathingAttackBase {
 
     @Override
     protected void onStart() {
+    }
+
+    @Override
+    protected void onActiveStart() {
         // Ominous thunder sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, 1.0f, 0.5f);

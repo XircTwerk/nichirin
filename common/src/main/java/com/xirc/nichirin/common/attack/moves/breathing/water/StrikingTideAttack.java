@@ -33,7 +33,10 @@ public class StrikingTideAttack extends WaterBreathingAttackBase {
         hitEntities.clear();
         tideTicks = 0;
         slashCount = 0;
+    }
 
+    @Override
+    protected void onActiveStart() {
         // Striking tide startup sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.WATER_AMBIENT, SoundSource.PLAYERS, 1.0f, 0.7f);

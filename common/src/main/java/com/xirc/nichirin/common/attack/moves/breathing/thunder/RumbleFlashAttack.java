@@ -31,7 +31,10 @@ public class RumbleFlashAttack extends ThunderBreathingAttackBase {
     protected void onStart() {
         struckTargets.clear();
         pendingStrikes.clear();
+    }
 
+    @Override
+    protected void onActiveStart() {
         // Charge-up sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, 0.8f, 0.5f);

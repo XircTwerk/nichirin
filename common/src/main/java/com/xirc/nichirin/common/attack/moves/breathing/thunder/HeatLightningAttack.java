@@ -36,7 +36,10 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
     protected void onStart() {
         slashHitTargets.clear();
         lightningStruck = false;
+    }
 
+    @Override
+    protected void onActiveStart() {
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0f, 0.7f);
     }

@@ -53,7 +53,10 @@ public class WhirlpoolAttack extends WaterBreathingAttackBase {
         spinningingEntities.clear();
         whirlpoolTicks = 0;
         whirlpoolCenter = null;
+    }
 
+    @Override
+    protected void onActiveStart() {
         // Whirlpool startup sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.WATER_AMBIENT, SoundSource.PLAYERS, 1.0f, 0.6f);

@@ -44,7 +44,10 @@ public class WaterSurfaceSlashAttack extends WaterBreathingAttackBase {
         slashExecuted = false;
         comboTimer = 0;
         isComboActive = true;
+    }
 
+    @Override
+    protected void onActiveStart() {
         // Quick water slash sound
         playWaterSlashSound();
 

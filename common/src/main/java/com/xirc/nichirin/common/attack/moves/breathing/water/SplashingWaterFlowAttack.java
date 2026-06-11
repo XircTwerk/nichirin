@@ -55,7 +55,10 @@ public class SplashingWaterFlowAttack extends WaterBreathingAttackBase {
         // Store invulnerability state
         wasInvulnerable = user.isInvulnerable();
         user.setInvulnerable(true);
+    }
 
+    @Override
+    protected void onActiveStart() {
         // Splashing water flow startup sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_SPLASH, SoundSource.PLAYERS, 1.0f, 1.3f);

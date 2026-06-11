@@ -38,7 +38,10 @@ public class DropRippleThrustAttack extends WaterBreathingAttackBase {
         shieldActive = false;
         hitEntities.clear();
         rippleTicks = 0;
+    }
 
+    @Override
+    protected void onActiveStart() {
         // Drop ripple thrust startup sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.TRIDENT_THROW, SoundSource.PLAYERS, 0.8f, 1.2f);
