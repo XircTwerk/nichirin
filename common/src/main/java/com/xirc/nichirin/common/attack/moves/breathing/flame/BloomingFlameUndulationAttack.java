@@ -41,7 +41,10 @@ public class BloomingFlameUndulationAttack extends FlameBreathingAttackBase {
         hitEntities.clear();
         invulnerabilityApplied = false;
         spinTicks = 0; // Reset local counter
+    }
 
+    @Override
+    protected void onActiveStart() {
         // Defensive stance sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.SHIELD_BLOCK, SoundSource.PLAYERS, 0.8f, 1.2f);

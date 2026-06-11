@@ -62,7 +62,10 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
 
         dashDirection = user.getLookAngle().normalize();
         startPosition = user.position();
+    }
 
+    @Override
+    protected void onActiveStart() {
         // Initial chain spinning sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.CHAIN_STEP, SoundSource.PLAYERS, 1.0f, 1.5f);

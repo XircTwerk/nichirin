@@ -24,8 +24,9 @@ public class CqcPresetData {
                     "throat_chop", "low_kick", "knee", "elbow_strike", "spinning_backfist"),
             new Preset("Demon", "demon_gut_punch", "demon_slash", "high_jump", 0,
                     "demon_stomp", "demon_kick", "dashing_strike", "demon_bite", "demon_grab"),
-            new Preset("Custom 2", "", "", "", 0,
-                    "", "", "", "", "")
+            new Preset("Destructive Death", "snap_punch", "annihilation_type", "crown_splitter", 0,
+                    "explosive_flurry", "flying_planet_thousand_wheels", "eight_layered_demon_core",
+                    "ten_thousand_leaves_flashing_willow", "donut")
     };
     private int activePresetIndex = 0;
 

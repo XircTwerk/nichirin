@@ -38,7 +38,7 @@ public final class DestructiveDeathCqcHook {
                 .lifeTicks(18)
                 .hitboxRadius(0.95f)
                 .pierces(0)
-                .red(DestructiveDeathState.isOverdriveEnabled(sp.getUUID()))
+                .red(DestructiveDeathState.isOverdriveEnabled(sp.getUUID(), world.getGameTime()))
                 .spawn(NichirinEntityRegistry.SHOCKWAVE.get(), world);
     }
 }

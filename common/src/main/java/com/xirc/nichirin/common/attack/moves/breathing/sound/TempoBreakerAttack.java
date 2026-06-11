@@ -43,6 +43,10 @@ public class TempoBreakerAttack extends SoundBreathingAttackBase {
     @Override
     protected void onStart() {
         hasExecuted = false;
+    }
+
+    @Override
+    protected void onActiveStart() {
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.WARDEN_SONIC_CHARGE, SoundSource.PLAYERS, 0.8f, 1.3f);
         createSoundParticles();

@@ -104,6 +104,9 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
         target.hurtMarked = true;
         target.hasImpulse = true;
 
+        if (world instanceof ServerLevel serverLevel) {
+            serverLevel.getChunkSource().broadcast(target, new ClientboundSetEntityMotionPacket(target));
+        }
         if (target instanceof ServerPlayer serverPlayer) {
             serverPlayer.connection.send(new ClientboundSetEntityMotionPacket(target));
         }

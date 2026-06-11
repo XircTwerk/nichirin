@@ -75,6 +75,9 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
     private int segmentTickProgress = 0;
     private Vec3 segmentStart = Vec3.ZERO;
     private Vec3 segmentEnd = Vec3.ZERO;
+    // Target locked in at segment plan time so beginSegment can guarantee a hit on it even when the
+    // sweep AABB misses (target launched out of the swept volume between plan and hit).
+    private LivingEntity plannedTarget = null;
 
     /** Called by ThunderclapChargeManager when the client signals RMB/LMB release. */
     public void signalRelease() {
@@ -95,6 +98,7 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
         segmentTickProgress = 0;
         segmentStart = Vec3.ZERO;
         segmentEnd = Vec3.ZERO;
+        plannedTarget = null;
 
         if (world.isClientSide || !(user instanceof Player player)) return;
 
@@ -110,7 +114,13 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
             return;
         }
 
-        // Charge animation is triggered by the moveset's withAnimation hook in executeMove().
+        // Re-broadcast the charge animation at a speed that stretches it to fill the full charge
+        // window so the loop doesn't reset early for players with high max breath.
+        if (player instanceof ServerPlayer sp) {
+            float chargeSpeed = (float) CHARGE_DURATION_TICKS / (maxFold * (float) FOLD_INTERVAL_TICKS);
+            broadcastAnimation(sp, "thunderclap_charge", chargeSpeed);
+        }
+
         ThunderclapChargeManager.register(player.getUUID(), this);
         showFoldStatus(player);
     }
@@ -175,8 +185,9 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
     }
 
     private void tickCharge(Player player) {
-        // No hyper-armor while winding up: any interrupting damage this tick cancels the charge.
-        if (AttackInterruptTracker.wasInterruptedThisTick(user)) {
+        // No hyper-armor: interrupting damage cancels the charge. Check both the interrupt tracker
+        // (same-tick hits) and hurtTime > 0 (catches hits that fired after this tick's check).
+        if (AttackInterruptTracker.wasInterruptedThisTick(user) || user.hurtTime > 0) {
             cancelChargeFromHit(player);
             return;
         }
@@ -217,6 +228,7 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
             breathSpent += cost;
             fold++;
             showFoldStatus(player);
+            spawnFoldParticles(player, fold);
         }
 
         // Auto-release once we hit the max fold the player's breath can sustain.
@@ -382,6 +394,12 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
         playFoldSound(player);
         telegraphSegmentImpact(segmentEnd);
         damageEntitiesAlongSegment(player, segmentStart, segmentEnd);
+        // Guarantee the locked-in target eats the hit even when the swept AABB missed (happens after
+        // the first launch: the target is mid-air and can drift out of the sweep volume between
+        // plan and hit).
+        if (plannedTarget != null && plannedTarget.isAlive()) {
+            applyFoldHit(player, plannedTarget);
+        }
     }
 
     /** Picks a fresh waypoint at segment-start time so we chase enemies as they're flung up. */
@@ -395,6 +413,7 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
         } else {
             target = pickRandomNearby(origin, segmentDistance, player);
         }
+        plannedTarget = target;
         Vec3 unclipped;
         if (target != null) {
             unclipped = overshootPastEntity(origin, target);
@@ -435,40 +454,67 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
     }
 
     private void damageEntitiesAlongSegment(Player player, Vec3 from, Vec3 to) {
-        float perHitDamage = BASE_HIT_DAMAGE * (1.0f + (fold - 1) * DAMAGE_PER_FOLD_SCALAR);
         AABB sweep = new AABB(from, to).inflate(SWEEP_RADIUS);
+        // Visual hitbox parity with the standard breathing-attack hit path.
+        NichirinPacketRegistry.sendHitboxToTracking(player, sweep, 2500L);
         List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, sweep,
                 e -> e != player && e.isAlive());
         for (LivingEntity target : targets) {
-            this.damage = perHitDamage;
-            hitTargetNoImmunity(target);
-            target.addEffect(new MobEffectInstance(MobEffects.LEVITATION, 12, 1, false, false, true));
-            target.setDeltaMovement(
-                    target.getDeltaMovement().x * 0.1,
-                    0.55,
-                    target.getDeltaMovement().z * 0.1
-            );
-            target.hurtMarked = true;
-            target.hasImpulse = true;
-            ShockedStatusEffect.markRecentLaunch(target);
+            // Skip the planned target here so beginSegment's guaranteed hit doesn't double up.
+            if (target == plannedTarget) continue;
+            applyFoldHit(player, target);
+        }
+    }
 
-            if (world instanceof ServerLevel serverLevel) {
-                serverLevel.getChunkSource().broadcast(target, new ClientboundSetEntityMotionPacket(target));
-            }
-            if (target instanceof ServerPlayer sp) {
-                sp.connection.send(new ClientboundSetEntityMotionPacket(target));
-            }
+    /** Single source of truth for what a fold-hit does: damage + launch + shocked tag. */
+    private void applyFoldHit(Player player, LivingEntity target) {
+        float perHitDamage = BASE_HIT_DAMAGE * (1.0f + (fold - 1) * DAMAGE_PER_FOLD_SCALAR);
+        this.damage = perHitDamage;
+        hitTargetNoImmunity(target);
+        target.addEffect(new MobEffectInstance(MobEffects.LEVITATION, 12, 1, false, false, true));
+        target.setDeltaMovement(
+                target.getDeltaMovement().x * 0.1,
+                0.55,
+                target.getDeltaMovement().z * 0.1
+        );
+        target.hurtMarked = true;
+        target.hasImpulse = true;
+        ShockedStatusEffect.markRecentLaunch(target);
+
+        if (world instanceof ServerLevel serverLevel) {
+            serverLevel.getChunkSource().broadcast(target, new ClientboundSetEntityMotionPacket(target));
+        }
+        if (target instanceof ServerPlayer sp) {
+            sp.connection.send(new ClientboundSetEntityMotionPacket(target));
+        }
+    }
+
+    /** Spawns {@code fold * 3} thunder particles in a ring around the player on fold gain. */
+    private void spawnFoldParticles(Player player, int newFold) {
+        if (!(world instanceof ServerLevel serverLevel)) return;
+        int count = newFold * 3;
+        double radius = 1.0 + newFold * 0.2;
+        for (int i = 0; i < count; i++) {
+            double angle = (2 * Math.PI * i) / count;
+            double px = player.getX() + radius * Math.cos(angle);
+            double pz = player.getZ() + radius * Math.sin(angle);
+            serverLevel.sendParticles(NichirinParticleRegistry.THUNDER.get(),
+                    px, player.getY() + 1.0, pz, 2, 0.1, 0.2, 0.1, 0.03);
         }
     }
 
     private void broadcastAnimation(Player player, String animationName) {
         if (!(player instanceof ServerPlayer serverPlayer)) return;
-        broadcastAnimation(serverPlayer, animationName);
+        broadcastAnimation(serverPlayer, animationName, 1.0f);
     }
 
     private void broadcastAnimation(ServerPlayer serverPlayer, String animationName) {
+        broadcastAnimation(serverPlayer, animationName, 1.0f);
+    }
+
+    private void broadcastAnimation(ServerPlayer serverPlayer, String animationName, float speed) {
         NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer,
-                new PlayerAnimationPacket(serverPlayer.getId(), animationName));
+                new PlayerAnimationPacket(serverPlayer.getId(), animationName, speed));
     }
 
     @Override

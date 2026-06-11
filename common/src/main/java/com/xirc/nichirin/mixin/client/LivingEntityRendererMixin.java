@@ -39,6 +39,7 @@ public class LivingEntityRendererMixin<T extends LivingEntity, M extends Humanoi
         Minecraft minecraft = Minecraft.getInstance();
         if (entity == minecraft.player
                 && entity instanceof AbstractClientPlayer
+                && minecraft.screen == null
                 && (FirstPersonMode.isFirstPersonPass()
                 || minecraft.options.getCameraType() == CameraType.FIRST_PERSON)) {
             ci.cancel();

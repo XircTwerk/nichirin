@@ -31,7 +31,10 @@ public class RisingScorchingSunAttack extends FlameBreathingAttackBase {
     protected void onStart() {
         hasExecuted = false;
         wheelTickCount = 0;
+    }
 
+    @Override
+    protected void onActiveStart() {
         // Rising flame sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 1.0f, 1.5f);

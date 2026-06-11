@@ -30,6 +30,8 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -246,7 +248,7 @@ public class NichirinCommand {
         var progression = PlayerDataProvider.getData(player).getProgression();
         String current = PlayerDataProvider.getData(player).getMovesetData().getMovesetId();
 
-        java.util.List<String> unlocked = new java.util.ArrayList<>();
+        List<String> unlocked = new ArrayList<>();
         for (String id : NichirinMovesetRegistry.getAllMovesetIds()) {
             if (isBreathingStyle(id) && progression.isMovesetUnlocked(id)) {
                 unlocked.add(id);
@@ -259,7 +261,7 @@ public class NichirinCommand {
         }
 
         // Avoid re-picking the currently active style when there's another option.
-        java.util.List<String> pool = new java.util.ArrayList<>(unlocked);
+        List<String> pool = new ArrayList<>(unlocked);
         if (pool.size() > 1 && current != null) {
             pool.remove(current);
         }
@@ -445,6 +447,8 @@ public class NichirinCommand {
     private static int resetAllCooldowns(CommandContext<CommandSourceStack> ctx, ServerPlayer player) {
         CommandSourceStack src = ctx.getSource();
         String playerName = player.getName().getString();
+
+        com.xirc.nichirin.common.attack.moveset.CqcMoveset.resetCooldowns(player);
 
         int cleared = 0;
         for (NichirinMovesetRegistry.MoveInfo moveInfo : NichirinMovesetRegistry.getAllMoves().values()) {

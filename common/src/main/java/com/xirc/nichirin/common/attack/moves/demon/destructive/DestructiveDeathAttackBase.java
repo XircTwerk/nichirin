@@ -27,7 +27,7 @@ public abstract class DestructiveDeathAttackBase extends AbstractDemonAttack<Des
     /** True if Overdrive buff is on for this user — used to flip shockwave tint red. */
     protected boolean isOverdriveActive() {
         if (!(user instanceof ServerPlayer sp)) return false;
-        return DestructiveDeathState.isOverdriveEnabled(sp.getUUID());
+        return DestructiveDeathState.isOverdriveEnabled(sp.getUUID(), world.getGameTime());
     }
 
     /** Spawns a single shockwave forward from the user. Tint follows Overdrive. */

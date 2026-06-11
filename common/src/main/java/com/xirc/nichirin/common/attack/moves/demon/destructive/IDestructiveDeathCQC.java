@@ -40,7 +40,7 @@ public interface IDestructiveDeathCQC {
     default boolean isOverdriveActive(LivingEntity user) {
         if (!hasDestructiveDeathEquipped(user)) return false;
         ServerPlayer sp = (ServerPlayer) user;
-        return DestructiveDeathState.isOverdriveEnabled(sp.getUUID());
+        return DestructiveDeathState.isOverdriveEnabled(sp.getUUID(), sp.level().getGameTime());
     }
 
     /** True when the user actually has Destructive Death equipped as their BDA. */

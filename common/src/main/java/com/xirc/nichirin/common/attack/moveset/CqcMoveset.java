@@ -317,8 +317,8 @@ public class CqcMoveset extends AbstractMoveset {
     public static final MoveConfiguration EIGHT_LAYERED_DEMON_CORE = new MoveBuilder("eight_layered_demon_core", "Eight-Layered Demon Core")
             .withAnimation("nichirin:eight_layered_demon_core", 6)
             .withDescription("Eight stacked punches firing overlapping shockwave rings forward — one per punch.")
-            // Active window is long enough to stagger 8 distinct shockwaves at 3-tick intervals.
-            .withTiming(20, 24, 12)
+            // 8 punches × 3-tick interval = 21 active ticks needed; 24 gives a small buffer.
+            .withTiming(20, 6, 24)
             .withDamage(3.0f)
             .withRange(2.4f)
             .withKnockback(0.4f)
@@ -329,6 +329,19 @@ public class CqcMoveset extends AbstractMoveset {
 
     public static final MoveConfiguration DONUT = new MoveBuilder("donut", "Donut")
             .withAnimation("nichirin:annihilation_type", 6)
+            .withDescription("Close-range arm-thrust. Single target, massive damage, impalement slow.")
+            .withTiming(80, 10, 8)
+            .withDamage(18.0f)
+            .withRange(1.5f)
+            .withKnockback(0.1f)
+            .withHitStun(40)
+            .withHyperArmor()
+            .withHitboxSize(1.2f)
+            .withStaminaCost(18.0f)
+            .build();
+
+    public static final MoveConfiguration TEN_THOUSAND_LEAVES = new MoveBuilder("ten_thousand_leaves_flashing_willow", "Ten Thousand Leaves Flashing Willow")
+            .withAnimation("nichirin:ten_thousand_leaves_flashing_willow", 6)
             .withDescription("25s windup. Hyper-armoured ring-shaped AoE around you. 1.5s stun on hit.")
             .withTiming(500, 8, 14)
             .withDamage(12.0f)
@@ -338,18 +351,6 @@ public class CqcMoveset extends AbstractMoveset {
             .withHyperArmor()
             .withHitboxSize(5.0f)
             .withStaminaCost(20.0f)
-            .build();
-
-    public static final MoveConfiguration TEN_THOUSAND_LEAVES = new MoveBuilder("ten_thousand_leaves_flashing_willow", "Ten Thousand Leaves Flashing Willow")
-            .withAnimation("nichirin:ten_thousand_leaves_flashing_willow", 6)
-            .withDescription("Crushing downward punch that fans a ring of shockwaves outward on impact.")
-            .withTiming(36, 4, 12)
-            .withDamage(7.5f)
-            .withRange(2.0f)
-            .withKnockback(0.3f)
-            .withHitStun(20)
-            .withHitboxSize(1.6f)
-            .withStaminaCost(15.0f)
             .build();
 
     public static final MoveConfiguration BACKHAND_SLAP = new MoveBuilder("backhand_slap", "Backhand Slap")

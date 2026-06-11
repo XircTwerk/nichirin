@@ -31,23 +31,15 @@ public class OverdriveToggleAttack extends DestructiveDeathAttackBase {
         hasExecuted = true;
         if (!(user instanceof ServerPlayer sp)) return;
 
-        boolean next = !DestructiveDeathState.isOverdriveEnabled(sp.getUUID());
-        DestructiveDeathState.setOverdrive(sp, next);
-
-        if (next) {
-            sp.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, BUFF_DURATION_TICKS, 0, false, false, true));
-            sp.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, BUFF_DURATION_TICKS, 0, false, false, true));
-        } else {
-            sp.removeEffect(MobEffects.MOVEMENT_SPEED);
-            sp.removeEffect(MobEffects.DAMAGE_BOOST);
-        }
+        DestructiveDeathState.activateOverdrive(sp, BUFF_DURATION_TICKS);
+        sp.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, BUFF_DURATION_TICKS, 0, false, false, true));
+        sp.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, BUFF_DURATION_TICKS, 0, false, false, true));
 
         sp.displayClientMessage(
-                Component.literal("Overdrive: " + (next ? "ON" : "OFF"))
-                        .withStyle(s -> s.withColor(next ? 0xFF4444 : 0xAAAAAA)), true);
+                Component.literal("Overdrive: ON (30s)")
+                        .withStyle(s -> s.withColor(0xFF4444)), true);
         world.playSound(null, sp.getX(), sp.getY(), sp.getZ(),
-                next ? SoundEvents.BEACON_POWER_SELECT : SoundEvents.BEACON_DEACTIVATE,
-                SoundSource.PLAYERS, 0.7f, next ? 1.2f : 0.8f);
+                SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 0.7f, 1.2f);
     }
 
     @Override

@@ -6,6 +6,10 @@ import com.xirc.nichirin.common.aura.AuraManager;
 import com.xirc.nichirin.common.util.ComboIntegration;
 import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
+import com.xirc.nichirin.registry.NichirinParticleRegistry;
+import com.xirc.nichirin.registry.NicirinSoundRegistry;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -175,11 +179,25 @@ public class ShockwaveEntity extends Entity {
 
     private void destroyShockwave() {
         impactBurst();
+        spawnImpactEffect();
         if (auraId != null) {
             AuraManager.removeAura(this, auraId);
             auraId = null;
         }
         this.discard();
+    }
+
+    private void spawnImpactEffect() {
+        if (!(level() instanceof ServerLevel serverLevel)) return;
+        double x = getX(), y = getY() + 0.5, z = getZ();
+        var spark = NichirinParticleRegistry.SLASH_IMPACT_SPARK.get();
+        var flash = red ? NichirinParticleRegistry.FLASH1.get() : NichirinParticleRegistry.BLUE_FLASH1.get();
+        var ring  = red ? NichirinParticleRegistry.SHOCKWAVE.get() : NichirinParticleRegistry.BLUE_SHOCKWAVE.get();
+        serverLevel.sendParticles(spark, x, y, z, 14, 0.6, 0.6, 0.6, 0.2);
+        serverLevel.sendParticles(flash, x, y, z, 3, 0.3, 0.3, 0.3, 0.0);
+        serverLevel.sendParticles(ring,  x, y, z, 5, 0.5, 0.1, 0.5, 0.05);
+        serverLevel.playSound(null, x, y, z,
+                NicirinSoundRegistry.PARRY_CLASH.get(), SoundSource.PLAYERS, 0.9f, 0.5f);
     }
 
     private LivingEntity ownerEntity() {

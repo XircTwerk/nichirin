@@ -65,7 +65,7 @@ public class BlueSilverChaoticAfterglowAttack extends DestructiveDeathAttackBase
                             .withStyle(s -> s.withColor(0xFF5555)), true);
             return;
         }
-        if (!DestructiveDeathState.isOverdriveEnabled(sp.getUUID())) {
+        if (!DestructiveDeathState.isOverdriveEnabled(sp.getUUID(), now)) {
             sp.displayClientMessage(
                     Component.literal("Overdrive must be active!")
                             .withStyle(s -> s.withColor(0xFF5555)), true);

@@ -17,6 +17,10 @@ public class QuickStingAttack extends InsectBreathingAttackBase {
     @Override
     protected void onStart() {
         stingExecuted = false;
+    }
+
+    @Override
+    protected void onActiveStart() {
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.BEE_STING, SoundSource.PLAYERS, 0.8f, 1.8f);
         createQuickStingAura();

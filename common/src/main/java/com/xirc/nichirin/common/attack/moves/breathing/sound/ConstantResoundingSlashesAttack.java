@@ -45,10 +45,6 @@ public class ConstantResoundingSlashesAttack extends SoundBreathingAttackBase {
         hitThisCycle.clear();
         spinCycle = 0;
 
-        // Initial spinning sound
-        world.playSound(null, user.getX(), user.getY(), user.getZ(),
-                SoundEvents.ELYTRA_FLYING, SoundSource.PLAYERS, 1.0f, 2.0f);
-
         // Slow down user movement
         if (user != null) {
             user.addEffect(new MobEffectInstance(
@@ -59,11 +55,16 @@ public class ConstantResoundingSlashesAttack extends SoundBreathingAttackBase {
                     false
             ));
         }
+    }
+
+    @Override
+    protected void onActiveStart() {
+        // Initial spinning sound
+        world.playSound(null, user.getX(), user.getY(), user.getZ(),
+                SoundEvents.ELYTRA_FLYING, SoundSource.PLAYERS, 1.0f, 2.0f);
 
         // Create initial particle ring - only show SOUND particles during move duration
-        if (tickCount < windup + duration) {
-            createSoundParticles();
-        }
+        createSoundParticles();
     }
 
     @Override

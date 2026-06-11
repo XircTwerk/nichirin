@@ -66,6 +66,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     // Runtime state
     protected boolean isActive = false;
     protected int tickCount = 0;
+    private boolean activeStartFired = false;
     protected LivingEntity user;
     protected Level world;
 
@@ -125,6 +126,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         this.user = player;
         this.world = world;
         this.tickCount = 0;
+        this.activeStartFired = false;
         this.absorbedInterruptHits = 0;
         this.lastArmorInterruptTick = Long.MIN_VALUE;
         this.breathConsumed = false;
@@ -188,6 +190,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         this.user = entity;
         this.world = world;
         this.tickCount = 0;
+        this.activeStartFired = false;
         this.absorbedInterruptHits = 0;
         this.lastArmorInterruptTick = Long.MIN_VALUE;
         this.breathConsumed = false;
@@ -246,6 +249,14 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
 
         // Check if we're past windup phase
         if (tickCount > windup) {
+            if (!activeStartFired) {
+                activeStartFired = true;
+                try {
+                    onActiveStart();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             try {
                 perform();
             } catch (Exception e) {
@@ -770,11 +781,16 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
     // Abstract methods that must be implemented by subclasses
 
     /**
-     * Called when attack starts (after breath consumption)
-     * Implement visual/audio startup effects here
-     * If you call stop() in this method, breath will be refunded
+     * Called when attack starts (after breath consumption). Use this for state initialization.
+     * If you call stop() in this method, breath will be refunded.
      */
     protected abstract void onStart();
+
+    /**
+     * Called once at the moment the windup completes and the active phase begins.
+     * Put sounds and activation effects here so they play after the windup, not on input.
+     */
+    protected void onActiveStart() {}
 
     /**
      * Called every tick during the attack (after windup period)
@@ -935,6 +951,23 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         for (UUID uuid : toClean) {
             selfTickingAttacks.remove(uuid);
         }
+    }
+
+    /**
+     * Cancels all active attacks for a player (e.g. triggered by right-click cancel).
+     * Returns true if at least one attack was stopped.
+     */
+    public static boolean cancelActiveAttack(Player player) {
+        var attacks = selfTickingAttacks.get(player.getUUID());
+        if (attacks == null || attacks.isEmpty()) return false;
+        boolean cancelled = false;
+        for (var attack : new ArrayList<>(attacks)) {
+            if (attack.isActive()) {
+                attack.stop();
+                cancelled = true;
+            }
+        }
+        return cancelled;
     }
 
     /**

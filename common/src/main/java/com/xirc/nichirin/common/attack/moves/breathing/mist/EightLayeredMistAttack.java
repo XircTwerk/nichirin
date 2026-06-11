@@ -21,6 +21,10 @@ public class EightLayeredMistAttack extends MistBreathingAttackBase {
     @Override
     protected void onStart() {
         slashesPerformed = 0;
+    }
+
+    @Override
+    protected void onActiveStart() {
         createMistParticles();
 
         world.playSound(null, user.getX(), user.getY(), user.getZ(),

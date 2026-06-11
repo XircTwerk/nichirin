@@ -61,10 +61,11 @@ public class RiceSpiritAttack extends ThunderBreathingAttackBase {
             return;
         }
 
-        // Execute slashes with 0.2 second intervals (4 ticks)
+        // Execute slashes every 2 ticks (0.1s). Tuned when breathing attacks were accidentally
+        // double-ticked (pre MoveExecutor dedup) — halved from 4 to keep the original real-time feel.
         slashTimer++;
 
-        if (slashTimer % 4 == 0 && slashCount < 5) {
+        if (slashTimer % 2 == 0 && slashCount < 5) {
             performSlash();
             slashCount++;
 

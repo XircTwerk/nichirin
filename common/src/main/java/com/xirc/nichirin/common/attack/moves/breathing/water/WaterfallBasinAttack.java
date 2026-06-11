@@ -111,7 +111,7 @@ public class WaterfallBasinAttack extends WaterBreathingAttackBase {
         createContinuousWaterfallEffect();
 
         // BIG ASS MULTIHIT - hit enemies constantly
-        if (waterfallTicks % 4 == 0) { // Hit every 4 ticks (5 hits per second)
+        if (waterfallTicks % 2 == 0) { // Hit every 2 ticks (halved from 4 after the double-tick dedup)
             // Hit all enemies in the BIG ASS waterfall area
             List<LivingEntity> waterfallTargets = getTargetsInCustomHitbox(
                     userPos.add(lookDir.scale(range * 0.6)),

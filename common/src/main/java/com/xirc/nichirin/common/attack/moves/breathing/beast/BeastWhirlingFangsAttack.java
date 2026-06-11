@@ -20,6 +20,10 @@ public class BeastWhirlingFangsAttack extends BeastBreathingAttackBase {
     @Override
     protected void onStart() {
         spinAngle = 0;
+    }
+
+    @Override
+    protected void onActiveStart() {
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.2f, 1.8f);
     }

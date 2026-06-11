@@ -22,9 +22,9 @@ import java.util.UUID;
  */
 public final class DestructiveDeathPlayerAura {
 
-    // Floor radius is 1.25 — even with no compass active, the aura is always at least this big.
-    private static final float RADIUS_IDLE = 1.25f;
-    private static final float RADIUS_COMPASS = 1.9f;
+    // Floor radius matches the breathing-aura default so DD doesn't look smaller than other styles.
+    private static final float RADIUS_IDLE = 2.0f;
+    private static final float RADIUS_COMPASS = 2.8f;
     private static final float JITTER = 2.4f;
     // Max alpha for a bright, vivid presence — the aura system applies its own falloff per pixel
     // so this is the rim opacity, not a flat overlay.
@@ -52,8 +52,14 @@ public final class DestructiveDeathPlayerAura {
             return;
         }
 
-        boolean overdrive = DestructiveDeathState.isOverdriveEnabled(id);
-        boolean compass = DestructiveDeathState.isCompassActive(id, player.level().getGameTime());
+        long gameTime = player.level().getGameTime();
+        // Auto-expire overdrive once the timer runs out and sync the new state to the client.
+        DestructiveDeathState.State ddState = DestructiveDeathState.get(id);
+        if (ddState.overdriveEnabled && gameTime >= ddState.overdriveExpiryTick) {
+            DestructiveDeathState.setOverdrive(player, false);
+        }
+        boolean overdrive = DestructiveDeathState.isOverdriveEnabled(id, gameTime);
+        boolean compass = DestructiveDeathState.isCompassActive(id, gameTime);
 
         CachedAuraState desired = new CachedAuraState(overdrive, compass);
         CachedAuraState cached = CACHE.get(id);

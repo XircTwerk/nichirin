@@ -26,7 +26,10 @@ public class ScatteringMistSplashAttack extends MistBreathingAttackBase {
         hitEnemies.clear();
         invulnerabilityApplied = false;
         spinTicks = 0;
+    }
 
+    @Override
+    protected void onActiveStart() {
         createMistParticles();
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.SHIELD_BLOCK, SoundSource.PLAYERS, 0.9f, 1.3f);

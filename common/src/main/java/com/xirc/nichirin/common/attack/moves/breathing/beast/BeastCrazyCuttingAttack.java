@@ -21,7 +21,10 @@ public class BeastCrazyCuttingAttack extends BeastBreathingAttackBase {
         levitationApplied = false;
         user.addEffect(new MobEffectInstance(MobEffects.LEVITATION, windup + duration + 5, 1, false, false, false));
         levitationApplied = true;
+    }
 
+    @Override
+    protected void onActiveStart() {
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.2f, 0.7f);
     }

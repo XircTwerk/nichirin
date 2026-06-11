@@ -42,7 +42,10 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
         Vec3 look = user.getLookAngle();
         baseDirection = new Vec3(look.x, 0, look.z).normalize();
         wasInvulnerable = user.isInvulnerable();
+    }
 
+    @Override
+    protected void onActiveStart() {
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.SPIDER_AMBIENT, SoundSource.PLAYERS, 1.0f, 0.8f);
         createCentipedeCoilEffect();

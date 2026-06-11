@@ -32,7 +32,10 @@ public class BeastExplosiveRushAttack extends BeastBreathingAttackBase {
         dashDirection = angledDashDirection();
         wasInvulnerable = user.isInvulnerable();
         user.setInvulnerable(true);
+    }
 
+    @Override
+    protected void onActiveStart() {
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PHANTOM_FLAP, SoundSource.PLAYERS, 1.5f, 2.0f);
 

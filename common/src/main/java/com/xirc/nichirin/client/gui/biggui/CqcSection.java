@@ -6,6 +6,8 @@ import com.xirc.nichirin.common.data.CqcMoveCatalog;
 import com.xirc.nichirin.common.data.CqcPresetData;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
+import com.xirc.nichirin.common.data.ProgressionHelper;
+import com.xirc.nichirin.common.system.DemonManager;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -15,6 +17,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.player.Player;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * CQC customization tab. All moves are unlocked by default; the server validates assignments.
@@ -67,15 +72,21 @@ public class CqcSection extends AbstractGuiPage {
         CqcPresetData preset = PlayerDataProvider.getData(player).getCqcPresetData();
         graphics.drawString(font, "Preset", 24, y + 7, COLOR_PALETTE.TEXT.rgb());
         int presetX = 78;
-        for (int i = 0; i < CqcPresetData.PRESET_COUNT; i++) {
+        // Left presets: Balanced, Striker, Guarded (indices 0-2)
+        for (int i = 0; i < 3; i++) {
             renderPresetButton(graphics, font, presetX + i * (PRESET_W + 6), y, i,
                     preset.getActivePresetIndex(), preset.getPresetName(i), mouseX, mouseY);
         }
-        // Destructive Death preset chip — only visible when DD is the equipped BDA. Clicking it
-        // overwrites the active preset slots with the DD layout.
-        if (isDestructiveDeathEquipped(player)) {
-            int ddX = presetX + CqcPresetData.PRESET_COUNT * (PRESET_W + 6) + 12;
-            renderDestructiveDeathPresetButton(graphics, font, ddX, y, mouseX, mouseY);
+        // Right presets: Demon (3) and Destructive Death (4), gated by unlock/demon status
+        List<Integer> rightPresets = new ArrayList<>();
+        if (DemonManager.isDemon(player)) rightPresets.add(3);
+        if (ProgressionHelper.isMovesetUnlocked(player, "destructive_death")) rightPresets.add(4);
+        int rightBase = contentWidth - 24;
+        for (int ri = 0; ri < rightPresets.size(); ri++) {
+            int pi = rightPresets.get(ri);
+            int x = rightBase - PRESET_W - (rightPresets.size() - 1 - ri) * (PRESET_W + 6);
+            renderPresetButton(graphics, font, x, y, pi,
+                    preset.getActivePresetIndex(), preset.getPresetName(pi), mouseX, mouseY);
         }
         y += 32;
 
@@ -275,7 +286,8 @@ public class CqcSection extends AbstractGuiPage {
 
         int presetRowY = y + 32;
         int presetX = 78;
-        for (int i = 0; i < CqcPresetData.PRESET_COUNT; i++) {
+        // Left presets 0-2
+        for (int i = 0; i < 3; i++) {
             int x = presetX + i * (PRESET_W + 6);
             if (mouseX >= x && mouseX <= x + PRESET_W && mouseY >= presetRowY && mouseY <= presetRowY + PRESET_H) {
                 NichirinPacketRegistry.requestCqcActivePresetUpdate(i);
@@ -284,17 +296,21 @@ public class CqcSection extends AbstractGuiPage {
                 return true;
             }
         }
-        if (isDestructiveDeathEquipped(player)) {
-            int ddX = presetX + CqcPresetData.PRESET_COUNT * (PRESET_W + 6) + 12;
-            if (mouseX >= ddX && mouseX <= ddX + PRESET_W
-                    && mouseY >= presetRowY && mouseY <= presetRowY + PRESET_H) {
-                applyDestructiveDeathLayout();
+        // Right presets: Demon (3) and Destructive Death (4), gated by unlock/demon status
+        List<Integer> rightPresets = new ArrayList<>();
+        if (DemonManager.isDemon(player)) rightPresets.add(3);
+        if (ProgressionHelper.isMovesetUnlocked(player, "destructive_death")) rightPresets.add(4);
+        int rightBase = contentWidth - 24;
+        for (int ri = 0; ri < rightPresets.size(); ri++) {
+            int pi = rightPresets.get(ri);
+            int x = rightBase - PRESET_W - (rightPresets.size() - 1 - ri) * (PRESET_W + 6);
+            if (mouseX >= x && mouseX <= x + PRESET_W && mouseY >= presetRowY && mouseY <= presetRowY + PRESET_H) {
+                NichirinPacketRegistry.requestCqcActivePresetUpdate(pi);
                 playClick();
                 lastClickTime = now;
                 return true;
             }
         }
-
         int stanceRowY = y + 64;
         int stanceX = 140;
         for (int i = 0; i < STANCE_NAMES.length; i++) {
@@ -440,34 +456,4 @@ public class CqcSection extends AbstractGuiPage {
                 SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK.value(), 1.0f));
     }
 
-    private static boolean isDestructiveDeathEquipped(Player player) {
-        return "destructive_death".equals(MovesetHelper.getDemonMovesetId(player));
-    }
-
-    /**
-     * Asks the server to overwrite the active preset's slots with the full DD CQC roster (7 moves
-     * across 7 occupied slots; wheel slot 4 is intentionally cleared since the preset uses ALL
-     * Destructive Death attacks and only Destructive Death attacks — no duplicates).
-     */
-    private static void applyDestructiveDeathLayout() {
-        NichirinPacketRegistry.requestCqcPresetUpdate(CqcPresetData.Slot.LEFT_CLICK, 0, "snap_punch");
-        NichirinPacketRegistry.requestCqcPresetUpdate(CqcPresetData.Slot.RIGHT_CLICK, 0, "annihilation_type");
-        NichirinPacketRegistry.requestCqcPresetUpdate(CqcPresetData.Slot.CROUCH_RIGHT_CLICK, 0, "crown_splitter");
-        NichirinPacketRegistry.requestCqcPresetUpdate(CqcPresetData.Slot.WHEEL, 0, "explosive_flurry");
-        NichirinPacketRegistry.requestCqcPresetUpdate(CqcPresetData.Slot.WHEEL, 1, "flying_planet_thousand_wheels");
-        NichirinPacketRegistry.requestCqcPresetUpdate(CqcPresetData.Slot.WHEEL, 2, "eight_layered_demon_core");
-        NichirinPacketRegistry.requestCqcPresetUpdate(CqcPresetData.Slot.WHEEL, 3, "ten_thousand_leaves_flashing_willow");
-        NichirinPacketRegistry.requestCqcPresetUpdate(CqcPresetData.Slot.WHEEL, 4, "");
-    }
-
-    private void renderDestructiveDeathPresetButton(GuiGraphics graphics, Font font,
-                                                    int x, int y, int mouseX, int mouseY) {
-        boolean hovered = mouseX >= x && mouseX <= x + PRESET_W && mouseY >= y && mouseY <= y + PRESET_H;
-        int border = DESTRUCTIVE_DEATH_BORDER;
-        int bg = hovered ? COLOR_PALETTE.PANEL_HOVER.argb() : COLOR_PALETTE.PANEL_MID.argb();
-        drawBorderedRect(graphics, x, y, PRESET_W, PRESET_H, border, bg);
-        String label = fitText(font, "Destructive Death", PRESET_W - 12);
-        graphics.drawString(font, label, x + (PRESET_W - font.width(label)) / 2, y + 7,
-                hovered ? COLOR_PALETTE.ACCENT_LIGHT.rgb() : COLOR_PALETTE.TEXT.rgb());
-    }
 }

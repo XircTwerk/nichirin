@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.attack.moves.cqc;
 
 import com.xirc.nichirin.common.attack.moves.demon.destructive.DestructiveDeathCqcHook;
+import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.data.CqcMoveCatalog;
 import com.xirc.nichirin.common.entity.npc.DemonNPCEntity;
@@ -176,8 +177,8 @@ public abstract class AbstractCqcAttack {
                     target.invulnerableTime = hitStun;
                     // Slam moves apply the Slammed effect for hitStun ticks (slam ticks == hit stun).
                     if (slam) {
-                        target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-                                com.xirc.nichirin.registry.NichirinEffectRegistry.slammed(),
+                        target.addEffect(new MobEffectInstance(
+                                NichirinEffectRegistry.slammed(),
                                 hitStun, 0, false, false, true));
                     }
                 }

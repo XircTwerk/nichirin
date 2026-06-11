@@ -28,7 +28,9 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
 import java.util.UUID;
+import java.util.WeakHashMap;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.properties.PropertyMap;
@@ -53,7 +55,7 @@ public class NichirinArmorRenderer extends AzArmorRenderer {
     // Per-entity last-known animation state. The renderer instance is shared across every wearer,
     // so a single field would let one entity's movement corrupt another's animation state.
     // null = not yet seen this entity (forces an initial dispatch so idle starts at rest).
-    private final java.util.Map<java.util.UUID, MovementAnimation> lastAnimationByEntity = new java.util.WeakHashMap<>();
+    private final Map<UUID, MovementAnimation> lastAnimationByEntity = new WeakHashMap<>();
 
     private enum MovementAnimation {
         IDLE,

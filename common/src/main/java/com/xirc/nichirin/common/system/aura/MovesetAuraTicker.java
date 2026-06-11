@@ -5,8 +5,14 @@ import com.xirc.nichirin.common.aura.AuraInstance;
 import com.xirc.nichirin.common.aura.AuraManager;
 import com.xirc.nichirin.common.data.MovesetData;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
+import com.xirc.nichirin.common.item.katana.BeastKatana;
+import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.common.item.katana.SoundKatana;
+import com.xirc.nichirin.common.outline.OutlineInstance;
+import com.xirc.nichirin.common.outline.OutlineManager;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.Item;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -42,7 +48,8 @@ public final class MovesetAuraTicker {
         // Priority: breathing > BDA (demon moveset) > none. CQC is intentionally not represented —
         // its "fighting" slot doesn't trigger an aura. Breathing wins when both are set so the
         // visible aura matches the style the player thinks they're using.
-        String movesetId = data.hasBreathingMoveset() ? data.getBreathingMovesetId()
+        boolean isBreathing = data.hasBreathingMoveset();
+        String movesetId = isBreathing ? data.getBreathingMovesetId()
                 : data.hasDemonMoveset() ? data.getDemonMovesetId()
                 : null;
 
@@ -58,8 +65,20 @@ public final class MovesetAuraTicker {
             return;
         }
 
+        // Breathing auras (and their paired outline) only appear when the player holds a katana.
+        if (isBreathing && !isHoldingKatana(player)) {
+            removeIfPresent(player);
+            return;
+        }
+
+        // Demon auras hide when the player is holding a katana (breathing style takes visual priority).
+        if (!isBreathing && isHoldingKatana(player)) {
+            removeIfPresent(player);
+            return;
+        }
+
         CachedAuraState cached = CACHE.get(player.getUUID());
-        if (cached != null && cached.movesetId.equals(movesetId)) return; // no change
+        if (cached != null && cached.movesetId().equals(movesetId)) return; // no change
 
         removeIfPresent(player);
 
@@ -70,13 +89,36 @@ public final class MovesetAuraTicker {
                 .build();
         AuraManager.addAura(player, aura, AuraAudience.ALL);
 
-        CACHE.put(player.getUUID(), new CachedAuraState(movesetId, aura.id()));
+        OutlineInstance outline = null;
+        if (isBreathing) {
+            outline = OutlineInstance.builder()
+                    .color(palette.r(), palette.g(), palette.b(), 0.8f)
+                    .thickness(1.04f)
+                    .seeThroughWalls(false)
+                    .lifetimeTicks(-1)
+                    .build();
+            OutlineManager.addOutline(player, outline, AuraAudience.ALL);
+        }
+
+        CACHE.put(player.getUUID(), new CachedAuraState(movesetId, aura.id(),
+                outline != null ? outline.id() : null));
+    }
+
+    private static boolean isHoldingKatana(ServerPlayer player) {
+        Item main = player.getMainHandItem().getItem();
+        Item off = player.getOffhandItem().getItem();
+        return main instanceof SimpleKatana || main instanceof SoundKatana || main instanceof BeastKatana
+                || off instanceof SimpleKatana || off instanceof SoundKatana || off instanceof BeastKatana;
     }
 
     private static void removeIfPresent(ServerPlayer player) {
         CachedAuraState cached = CACHE.remove(player.getUUID());
-        if (cached != null && cached.auraId != null) {
-            AuraManager.removeAura(player, cached.auraId);
+        if (cached == null) return;
+        if (cached.auraId() != null) {
+            AuraManager.removeAura(player, cached.auraId());
+        }
+        if (cached.outlineId() != null) {
+            OutlineManager.removeOutline(player, cached.outlineId());
         }
     }
 
@@ -84,5 +126,5 @@ public final class MovesetAuraTicker {
         CACHE.remove(playerId);
     }
 
-    private record CachedAuraState(String movesetId, UUID auraId) {}
+    private record CachedAuraState(String movesetId, UUID auraId, UUID outlineId) {}
 }

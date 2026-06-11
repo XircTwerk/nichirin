@@ -20,6 +20,10 @@ public class BeastDevourAttack extends BeastBreathingAttackBase {
     protected void onStart() {
         slash1Done = false;
         slash2Done = false;
+    }
+
+    @Override
+    protected void onActiveStart() {
         playSlashSound();
     }
 

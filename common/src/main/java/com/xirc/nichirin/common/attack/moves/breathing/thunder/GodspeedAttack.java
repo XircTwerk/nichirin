@@ -12,34 +12,40 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import java.util.UUID;
 
 /**
- * Godspeed — Thunder Breathing crouch-right-click. High-speed dash in the look direction over
- * {@link #DASH_TICKS} ticks, covering up to {@link #DEFAULT_DASH_DISTANCE} blocks (or the configured
- * teleport distance). Damages every entity the swept path crosses; raycast-clipped against terrain.
+ * Godspeed — Thunder Breathing crouch-right-click.
+ *
+ * <p>10-tick windup (handled by the base class), then a 7-tick 300-block velocity dash in the
+ * look direction. Any entity swept during the dash is "dragged" — it receives the same per-tick
+ * velocity as the player so it travels alongside them, and is hit for {@code damage} every
+ * {@link #HIT_INTERVAL_TICKS} ticks for the remainder of the active window.</p>
  */
 public class GodspeedAttack extends ThunderBreathingAttackBase {
 
-    private static final float DEFAULT_DASH_DISTANCE = 100.0f;
-    private static final int DASH_TICKS = 20;
+    private static final float DEFAULT_DASH_DISTANCE = 300.0f;
+    private static final int DASH_TICKS = 7;
+    private static final int HIT_INTERVAL_TICKS = 5;
     private static final float AFTERIMAGE_ALPHA = 0.7f;
     private static final int AFTERIMAGE_LIFETIME_TICKS = 18;
     private static final int AFTERIMAGE_COPIES = 10;
     private static final float HIT_RADIUS = 1.6f;
+    // Radius used to find dragged entities on subsequent ticks (they may drift slightly).
+    private static final double DRAG_SEARCH_RADIUS = 60.0;
 
     private Vec3 dashDirection = Vec3.ZERO;
     private float remainingDistance = 0f;
     private float distancePerTick = 0f;
-    private final Set<UUID> hitDuringDash = new HashSet<>();
+    // Maps dragged entity UUID → tickCount at which drag started (for hit-interval math).
+    private final Map<UUID, Integer> dragStart = new HashMap<>();
 
     @Override
     protected void onStart() {
@@ -48,7 +54,7 @@ public class GodspeedAttack extends ThunderBreathingAttackBase {
         float total = teleportDistance != null ? teleportDistance : DEFAULT_DASH_DISTANCE;
         remainingDistance = total;
         distancePerTick = total / DASH_TICKS;
-        hitDuringDash.clear();
+        dragStart.clear();
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 NicirinSoundRegistry.THUNDERCLAP_FLASH.get(), SoundSource.PLAYERS, 1.0f, 1.5f);
     }
@@ -56,27 +62,79 @@ public class GodspeedAttack extends ThunderBreathingAttackBase {
     @Override
     protected void perform() {
         if (world.isClientSide) return;
-        if (remainingDistance <= 0f) return;
 
-        Vec3 from = user.position();
-        float step = Math.min(distancePerTick, remainingDistance);
-        Vec3 desired = from.add(dashDirection.scale(step));
-        Vec3 clipped = clipForward(from, desired);
+        Vec3 perTickVelocity = Vec3.ZERO;
 
-        damageAlongSweep(from, clipped);
-        teleportPlayer(user, clipped);
-        NichirinPacketRegistry.sendAfterimageTrail(user, from, clipped,
-                AFTERIMAGE_LIFETIME_TICKS, AFTERIMAGE_COPIES, AFTERIMAGE_ALPHA);
+        if (remainingDistance > 0f) {
+            Vec3 from = user.position();
+            float step = Math.min(distancePerTick, remainingDistance);
+            Vec3 desired = from.add(dashDirection.scale(step));
+            Vec3 clipped = clipForward(from, desired);
 
-        spawnTrailParticles(from, clipped);
+            sweepIntoDrag(from, clipped);
+            perTickVelocity = clipped.subtract(from);
+            teleportPlayer(user, clipped);
+            NichirinPacketRegistry.sendAfterimageTrail(user, from, clipped,
+                    AFTERIMAGE_LIFETIME_TICKS, AFTERIMAGE_COPIES, AFTERIMAGE_ALPHA);
+            spawnTrailParticles(from, clipped);
 
-        float traveled = (float) clipped.distanceTo(from);
-        remainingDistance -= traveled;
-
-        // Hit a wall — finish the dash early.
-        if (traveled < step - 0.05f) {
-            remainingDistance = 0f;
+            float traveled = (float) clipped.distanceTo(from);
+            remainingDistance -= traveled;
+            if (traveled < step - 0.05f) {
+                remainingDistance = 0f;
+            }
         }
+
+        applyDragAndHit(perTickVelocity);
+    }
+
+    /** Adds any entity inside the swept volume to the drag set (first contact only). */
+    private void sweepIntoDrag(Vec3 from, Vec3 to) {
+        AABB sweep = new AABB(from, to).inflate(HIT_RADIUS);
+        List<LivingEntity> entities = world.getEntitiesOfClass(LivingEntity.class, sweep,
+                e -> e != user && e.isAlive() && !dragStart.containsKey(e.getUUID()));
+        for (LivingEntity e : entities) {
+            dragStart.put(e.getUUID(), tickCount);
+        }
+    }
+
+    /**
+     * Applies drag velocity (during the dash) and delivers periodic hits to all dragged entities.
+     */
+    private void applyDragAndHit(Vec3 dashVelocity) {
+        if (dragStart.isEmpty()) return;
+
+        AABB searchBox = new AABB(user.position(), user.position()).inflate(DRAG_SEARCH_RADIUS);
+        List<LivingEntity> nearby = world.getEntitiesOfClass(LivingEntity.class, searchBox,
+                e -> dragStart.containsKey(e.getUUID()) && e.isAlive());
+
+        for (LivingEntity target : nearby) {
+            int startTick = dragStart.get(target.getUUID());
+            int elapsed = tickCount - startTick;
+
+            // Drag: pull the entity along with the dash.
+            if (!dashVelocity.equals(Vec3.ZERO)) {
+                target.setDeltaMovement(dashVelocity);
+                target.hurtMarked = true;
+                target.hasImpulse = true;
+                if (world instanceof ServerLevel sl) {
+                    sl.getChunkSource().broadcast(target, new ClientboundSetEntityMotionPacket(target));
+                }
+                if (target instanceof ServerPlayer sp) {
+                    sp.connection.send(new ClientboundSetEntityMotionPacket(target));
+                }
+            }
+
+            // Hit every HIT_INTERVAL_TICKS ticks (elapsed 0, 5, 10, …).
+            if (elapsed % HIT_INTERVAL_TICKS == 0) {
+                hitTargetNoImmunity(target);
+                target.addEffect(new MobEffectInstance(MobEffects.LEVITATION, hitStun, 1, false, false, true));
+                ShockedStatusEffect.markRecentLaunch(target);
+            }
+        }
+
+        // Prune dead or out-of-range entries so the map doesn't grow unbounded.
+        dragStart.keySet().removeIf(uuid -> nearby.stream().noneMatch(e -> e.getUUID().equals(uuid)));
     }
 
     private Vec3 clipForward(Vec3 from, Vec3 to) {
@@ -98,41 +156,13 @@ public class GodspeedAttack extends ThunderBreathingAttackBase {
         return lastSafe;
     }
 
-    private void damageAlongSweep(Vec3 from, Vec3 to) {
-        AABB sweep = new AABB(from, to).inflate(HIT_RADIUS);
-        List<LivingEntity> entities = world.getEntitiesOfClass(LivingEntity.class, sweep,
-                e -> e != user && e.isAlive() && !hitDuringDash.contains(e.getUUID()));
-        for (LivingEntity target : entities) {
-            hitDuringDash.add(target.getUUID());
-            hitTargetNoImmunity(target);
-            target.addEffect(new MobEffectInstance(MobEffects.LEVITATION, 14, 1, false, false, true));
-            target.setDeltaMovement(
-                    target.getDeltaMovement().x * 0.1,
-                    0.55,
-                    target.getDeltaMovement().z * 0.1
-            );
-            target.hurtMarked = true;
-            target.hasImpulse = true;
-            ShockedStatusEffect.markRecentLaunch(target);
-
-            if (world instanceof ServerLevel serverLevel) {
-                serverLevel.getChunkSource().broadcast(target, new ClientboundSetEntityMotionPacket(target));
-            }
-            if (target instanceof ServerPlayer sp) {
-                sp.connection.send(new ClientboundSetEntityMotionPacket(target));
-            }
-        }
-    }
-
     private void teleportPlayer(LivingEntity entity, Vec3 to) {
+        Vec3 delta = to.subtract(entity.position());
+        entity.setDeltaMovement(delta);
+        entity.hurtMarked = true;
+        entity.hasImpulse = true;
         if (entity instanceof ServerPlayer sp) {
-            sp.teleportTo(to.x, to.y, to.z);
-            sp.connection.teleport(to.x, to.y, to.z, entity.getYRot(), entity.getXRot());
-            entity.setDeltaMovement(Vec3.ZERO);
             sp.connection.send(new ClientboundSetEntityMotionPacket(entity));
-        } else {
-            entity.teleportTo(to.x, to.y, to.z);
-            entity.setDeltaMovement(Vec3.ZERO);
         }
         entity.fallDistance = 0;
     }

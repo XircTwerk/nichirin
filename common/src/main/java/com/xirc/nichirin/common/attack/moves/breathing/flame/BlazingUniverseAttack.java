@@ -35,7 +35,10 @@ public class BlazingUniverseAttack extends FlameBreathingAttackBase {
         hasExecuted = false;
         explosionTriggered = false;
         hitEntities.clear();
+    }
 
+    @Override
+    protected void onActiveStart() {
         // Heavy windup sound - sword being raised
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 1.0f, 0.5f);

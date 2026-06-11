@@ -37,14 +37,17 @@ public class RengokuAttack extends FlameBreathingAttackBase {
         refreshDashDirection();
         dashStartPos = null;
 
-        // Epic windup effects
-        world.playSound(null, user.getX(), user.getY(), user.getZ(),
-                SoundEvents.ENDER_DRAGON_GROWL, SoundSource.PLAYERS, 2.0f, 0.3f);
-
         // Give user invulnerability and effects during windup
         user.setInvulnerable(true);
         user.addEffect(new MobEffectInstance(MobEffects.GLOWING, 200, 0, false, false));
         user.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 400, 0, false, false));
+    }
+
+    @Override
+    protected void onActiveStart() {
+        // Epic windup effects
+        world.playSound(null, user.getX(), user.getY(), user.getZ(),
+                SoundEvents.ENDER_DRAGON_GROWL, SoundSource.PLAYERS, 2.0f, 0.3f);
 
         // Create charging flame aura
         createChargeUpEffect();

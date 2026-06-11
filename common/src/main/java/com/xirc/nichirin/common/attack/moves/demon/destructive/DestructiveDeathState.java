@@ -30,8 +30,9 @@ public final class DestructiveDeathState {
         return get(playerId).shockwaveEnabled;
     }
 
-    public static boolean isOverdriveEnabled(UUID playerId) {
-        return get(playerId).overdriveEnabled;
+    public static boolean isOverdriveEnabled(UUID playerId, long worldTime) {
+        State s = get(playerId);
+        return s.overdriveEnabled && worldTime < s.overdriveExpiryTick;
     }
 
     public static boolean isCompassActive(UUID playerId, long worldTime) {
@@ -46,6 +47,13 @@ public final class DestructiveDeathState {
 
     public static void setShockwave(ServerPlayer player, boolean enabled) {
         get(player.getUUID()).shockwaveEnabled = enabled;
+        DestructiveDeathStateSyncPacket.send(player);
+    }
+
+    public static void activateOverdrive(ServerPlayer player, int durationTicks) {
+        State s = get(player.getUUID());
+        s.overdriveEnabled = true;
+        s.overdriveExpiryTick = player.level().getGameTime() + durationTicks;
         DestructiveDeathStateSyncPacket.send(player);
     }
 
@@ -72,6 +80,7 @@ public final class DestructiveDeathState {
     public static final class State {
         public boolean shockwaveEnabled = false;
         public boolean overdriveEnabled = false;
+        public long overdriveExpiryTick = 0L;
         public boolean compassActive = false;
         public boolean compassOverdrive = false;
         public long compassExpiryTick = 0L;

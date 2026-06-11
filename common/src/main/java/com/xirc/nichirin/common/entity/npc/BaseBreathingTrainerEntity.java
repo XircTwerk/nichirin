@@ -42,7 +42,9 @@ import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
+import com.xirc.nichirin.common.entity.ai.SmartTrainerAttackGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -145,7 +147,7 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
     @Override
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
-        goalSelector.addGoal(1, new com.xirc.nichirin.common.entity.ai.SmartTrainerAttackGoal(this, 1.2, true));
+        goalSelector.addGoal(1, new SmartTrainerAttackGoal(this, 1.2, true));
         goalSelector.addGoal(2, new LookAtPlayerGoal(this, Player.class, 16.0f));
         goalSelector.addGoal(3, new WaterAvoidingRandomStrollGoal(this, 0.6));
         goalSelector.addGoal(4, new RandomLookAroundGoal(this));
@@ -156,7 +158,7 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
                 return (mode == TrainerMode.DUELING || mode == TrainerMode.SELF_DEFENSE) && super.canUse();
             }
         });
-        targetSelector.addGoal(2, new net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal<>(
+        targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(
                 this, TempleDemonEntity.class, true) {
             @Override
             public boolean canUse() {
@@ -488,6 +490,8 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
         if (mode == TrainerMode.DUELING) {
             // Clamp so trainer can't be killed — duel ends at duelWinHpThreshold()
             float safe = Math.min(amount, Math.max(0, getHealth() - duelWinHpThreshold()));
+            // Zero out vanilla i-frames so rapid hits all register during a duel.
+            this.invulnerableTime = 0;
             boolean hit = safe > 0 && super.hurt(source, safe);
             // End duel whenever health is at threshold, even if this specific hit was
             // blocked by hurtTime immunity (safe=0 or super.hurt returned false).

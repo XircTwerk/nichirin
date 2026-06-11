@@ -54,15 +54,15 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
 
                 .withCrouchRightClickMove(new MoveBuilder("godspeed", "Godspeed")
                         .withAnimation("nichirin:thunderclap_flash", 10)
-                        // windup=0, duration=22 ticks → the dash runs for ~20 ticks plus a small tail.
-                        .withTiming(0, 0, 22)
-                        .withDamage(10.0f)
-                        .withTeleportDistance(100.0f)
+                        // windup=10, duration=25 ticks → 10-tick wind-up then drag-dash active window.
+                        .withTiming(0, 10, 25)
+                        .withDamage(2.0f)
+                        .withTeleportDistance(300.0f)
                         .withKnockback(0.3f)
                         .withBreathCost(40.0f)
-                        .withHitStun(18)
+                        .withHitStun(10)
                         .withHitboxSize(2.0f)
-                        .withDescription("Straight 100-block hyper dash that shreds everything in its path.")
+                        .withDescription("3x-longer hyper dash. Drags enemies and hits every 5 ticks for 2 damage each.")
                         .withAction(entity -> {
                             GodspeedAttack attack = new GodspeedAttack();
                             ThunderBreathingMoveset moveset = getCurrentMoveset();
@@ -130,7 +130,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 // Fifth Form: Heat Lightning - Anti-air combo (INDEX 3 in wheel)
                 .withMove(new MoveBuilder("heat_lightning", "Heat Lightning")
                         .withAnimation("nichirin:heat_lightning", 9)
-                        .withTiming(180, 10, 14)
+                        .withTiming(180, 10, 40)
                         .withDamage(4.0f)
                         .withRange(2.5f)
                         .withKnockback(0.1f)
