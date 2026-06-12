@@ -22,7 +22,8 @@
     "client.LivingEntityRendererMixin",
     "client.ItemInHandLayerMixin",
     "client.RenderTargetDepthMixin",
-    "client.ShaderInstanceMixin"
+    "client.ShaderInstanceMixin",
+    "client.SoundEngineMixin"
   ],
   "mixins": [
     "DemonBloodFoodMixin",

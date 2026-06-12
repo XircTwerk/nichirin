@@ -135,7 +135,9 @@ public class ShockwaveEntity extends Entity {
         DamageSource source = ownerEntity != null
                 ? NichirinDamageSources.demon(ownerEntity)
                 : level().damageSources().generic();
+        float healthBefore = target.getHealth() + target.getAbsorptionAmount();
         target.hurt(source, damage);
+        float actualDamage = Math.max(0.0f, healthBefore - (target.getHealth() + target.getAbsorptionAmount()));
 
         if (knockback > 0) {
             if (noHorizontalPush) {
@@ -158,7 +160,7 @@ public class ShockwaveEntity extends Entity {
         }
 
         if (ownerEntity instanceof Player ownerPlayer) {
-            ComboIntegration.handleSuccessfulHit(ownerPlayer, target, hitStun, damage);
+            ComboIntegration.handleSuccessfulHit(ownerPlayer, target, hitStun, actualDamage);
         }
     }
 

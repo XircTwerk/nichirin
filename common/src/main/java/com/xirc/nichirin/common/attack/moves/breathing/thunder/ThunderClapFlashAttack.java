@@ -359,17 +359,12 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
         // Velocity-based per-tick movement (matches Rhythmic Step's feel — smoother than teleport).
         Vec3 fullDelta = segmentEnd.subtract(segmentStart);
         Vec3 perTickVelocity = fullDelta.scale(1.0 / SEGMENT_DASH_TICKS);
-        Vec3 previousPos = player.position();
         player.setDeltaMovement(perTickVelocity);
         player.hurtMarked = true;
         player.hasImpulse = true;
         if (player instanceof ServerPlayer sp) {
             sp.connection.send(new ClientboundSetEntityMotionPacket(player));
         }
-
-        NichirinPacketRegistry.sendAfterimageTrail(player, previousPos,
-                previousPos.add(perTickVelocity),
-                AFTERIMAGE_LIFETIME_TICKS, AFTERIMAGE_COPIES, AFTERIMAGE_ALPHA);
 
         if (segmentTickProgress >= SEGMENT_DASH_TICKS) {
             segmentTickProgress = 0;
@@ -390,6 +385,10 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
     private void beginSegment(Player player) {
         segmentStart = player.position();
         segmentEnd = planNextWaypoint(player);
+        // One trail packet per segment (not per tick) — covers the same path with a fraction of
+        // the entries, which keeps multiplayer observers from re-rendering dozens of ghosts.
+        NichirinPacketRegistry.sendAfterimageTrail(player, segmentStart, segmentEnd,
+                AFTERIMAGE_LIFETIME_TICKS, AFTERIMAGE_COPIES, AFTERIMAGE_ALPHA);
         faceTarget(player, segmentEnd);
         playFoldSound(player);
         telegraphSegmentImpact(segmentEnd);

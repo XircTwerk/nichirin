@@ -14,6 +14,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -46,12 +47,10 @@ public final class AuraPixelize2DRenderer {
         if (mc.level == null) return;
         if (EntityAuraTracker.all().isEmpty()) return;
 
-        // Vertical billboard frame: right rotates around world-Y to face the camera
-        // horizontally; up is locked to world-up. Head pitch (looking up/down) does NOT
-        // tilt the aura.
-        float camYawRad = (float) Math.toRadians(camera.getYRot());
-        Vector3f right = new Vector3f((float) Math.cos(camYawRad), 0f, (float) Math.sin(camYawRad));
-        Vector3f up    = new Vector3f(0f, 1f, 0f);
+        // Vertical disc frame: the plane follows the HOST's body yaw (not the observer's
+        // camera), so the aura turns with the entity as it looks around. Up is locked to
+        // world-up — pitch never tilts the disc.
+        Vector3f up = new Vector3f(0f, 1f, 0f);
 
         boolean firstPerson = mc.options != null
                 && mc.options.getCameraType() == CameraType.FIRST_PERSON;
@@ -81,6 +80,13 @@ public final class AuraPixelize2DRenderer {
             double ex = host.xo + (host.getX() - host.xo) * partialTick;
             double ey = host.yo + (host.getY() - host.yo) * partialTick + host.getBbHeight() * 0.5;
             double ez = host.zo + (host.getZ() - host.zo) * partialTick;
+
+            // Disc plane spans the host's shoulders: derived from its interpolated body yaw.
+            float hostYawDeg = host instanceof LivingEntity living
+                    ? living.yBodyRotO + (living.yBodyRot - living.yBodyRotO) * partialTick
+                    : host.getYRot();
+            float hostYawRad = (float) Math.toRadians(hostYawDeg);
+            Vector3f right = new Vector3f((float) Math.cos(hostYawRad), 0f, (float) Math.sin(hostYawRad));
 
             poseStack.pushPose();
             poseStack.translate(ex - camPos.x, ey - camPos.y, ez - camPos.z);

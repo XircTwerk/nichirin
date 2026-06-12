@@ -2,6 +2,7 @@ package com.xirc.nichirin.client.shader;
 
 import com.mojang.blaze3d.shaders.Program;
 import com.xirc.nichirin.client.light.WisteriaLightData;
+import dev.architectury.platform.Platform;
 
 import java.util.Set;
 
@@ -20,10 +21,29 @@ public final class NichirinShaderInjection {
             "rendertype_entity_decal",
             "rendertype_entity_no_outline");
 
+    // Sodium replaces the terrain pipeline (our injected uniforms never run for chunks) and
+    // Iris/Oculus patch the vanilla core shaders (our string-replace targets disappear or the
+    // patched source breaks). Disable the GLSL injection entirely when any of them is present —
+    // wisteria leaves keep their tint, they just stop casting the dynamic ground glow.
+    private static Boolean injectionEnabled;
+
     private NichirinShaderInjection() {
     }
 
+    public static boolean injectionEnabled() {
+        if (injectionEnabled == null) {
+            injectionEnabled = !(Platform.isModLoaded("sodium")
+                    || Platform.isModLoaded("embeddium")
+                    || Platform.isModLoaded("iris")
+                    || Platform.isModLoaded("oculus"));
+        }
+        return injectionEnabled;
+    }
+
     public static String transform(Program.Type type, String shaderName, String source) {
+        if (!injectionEnabled()) {
+            return source;
+        }
         if (type != Program.Type.VERTEX || !WISTERIA_LIT_SHADERS.contains(shaderName)) {
             return source;
         }
@@ -32,7 +52,7 @@ public final class NichirinShaderInjection {
     }
 
     public static boolean isWisteriaLitShader(String shaderName) {
-        return WISTERIA_LIT_SHADERS.contains(shaderName);
+        return injectionEnabled() && WISTERIA_LIT_SHADERS.contains(shaderName);
     }
 
     private static String injectWisteriaLighting(String source) {

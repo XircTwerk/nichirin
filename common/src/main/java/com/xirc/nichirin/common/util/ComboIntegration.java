@@ -2,6 +2,8 @@ package com.xirc.nichirin.common.util;
 
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.data.MovesetHelper;
+import com.xirc.nichirin.registry.NichirinEffectRegistry;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 
@@ -25,14 +27,22 @@ public class ComboIntegration {
             return; // Server-side only
         }
 
+        // Prefer the measured post-armor damage from this tick's hurt() call so the combo bar
+        // reflects what the victim actually lost, not the attack's raw damage stat.
+        float realDamage = NichirinArmorDamage.actualDamageOr(victim, damage);
+
         // Check for existing stun BEFORE applying new stun
         boolean wasAlreadyStunned = ComboTracker.canContinueCombo(victim);
 
         // Apply new stun effect
         ComboTracker.applyStun(victim, hitStunTicks);
 
+        // Report the stun that actually landed (immune/already-stunned targets may differ).
+        MobEffectInstance applied = victim.getEffect(NichirinEffectRegistry.stunned());
+        int realStun = applied != null ? applied.getDuration() : 0;
+
         // Handle combo tracking with the previous stun status
-        ComboTracker.handleHit(attacker, victim, hitStunTicks, damage, wasAlreadyStunned);
+        ComboTracker.handleHit(attacker, victim, realStun, realDamage, wasAlreadyStunned);
     }
 
     /**

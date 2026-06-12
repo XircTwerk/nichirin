@@ -72,10 +72,12 @@ public class CqcSection extends AbstractGuiPage {
         CqcPresetData preset = PlayerDataProvider.getData(player).getCqcPresetData();
         graphics.drawString(font, "Preset", 24, y + 7, COLOR_PALETTE.TEXT.rgb());
         int presetX = 78;
-        // Left presets: Balanced, Striker, Guarded (indices 0-2)
-        for (int i = 0; i < 3; i++) {
-            renderPresetButton(graphics, font, presetX + i * (PRESET_W + 6), y, i,
-                    preset.getActivePresetIndex(), preset.getPresetName(i), mouseX, mouseY);
+        // Left presets: Balanced, Striker, Guarded, Custom 1, Custom 2 (indices 0-2, 5-6)
+        int[] leftPresets = {0, 1, 2, 5, 6};
+        for (int li = 0; li < leftPresets.length; li++) {
+            int pi = leftPresets[li];
+            renderPresetButton(graphics, font, presetX + li * (PRESET_W + 6), y, pi,
+                    preset.getActivePresetIndex(), preset.getPresetName(pi), mouseX, mouseY);
         }
         // Right presets: Demon (3) and Destructive Death (4), gated by unlock/demon status
         List<Integer> rightPresets = new ArrayList<>();
@@ -95,6 +97,10 @@ public class CqcSection extends AbstractGuiPage {
         for (int i = 0; i < STANCE_NAMES.length; i++) {
             renderStanceButton(graphics, font, stanceX + i * (STANCE_W + 6), y, i, preset.getStanceIndex(), mouseX, mouseY);
         }
+        // Reset Preset: restores the active preset's built-in default loadout.
+        GuiButton resetButton = new GuiButton(rightBase - PRESET_W, y, PRESET_W, PRESET_H,
+                "Reset Preset", COLOR_PALETTE.RED.argb(), COLOR_PALETTE.RED.rgb(), true);
+        drawButton(graphics, font, resetButton, mouseX, mouseY);
         y += 36;
 
         CqcMoveCatalog.Definition hoveredDefinition = null;
@@ -286,11 +292,12 @@ public class CqcSection extends AbstractGuiPage {
 
         int presetRowY = y + 32;
         int presetX = 78;
-        // Left presets 0-2
-        for (int i = 0; i < 3; i++) {
-            int x = presetX + i * (PRESET_W + 6);
+        // Left presets: 0-2 plus Custom 1/2 (5-6)
+        int[] leftPresets = {0, 1, 2, 5, 6};
+        for (int li = 0; li < leftPresets.length; li++) {
+            int x = presetX + li * (PRESET_W + 6);
             if (mouseX >= x && mouseX <= x + PRESET_W && mouseY >= presetRowY && mouseY <= presetRowY + PRESET_H) {
-                NichirinPacketRegistry.requestCqcActivePresetUpdate(i);
+                NichirinPacketRegistry.requestCqcActivePresetUpdate(leftPresets[li]);
                 playClick();
                 lastClickTime = now;
                 return true;
@@ -312,6 +319,14 @@ public class CqcSection extends AbstractGuiPage {
             }
         }
         int stanceRowY = y + 64;
+        // Reset Preset button (right-aligned on the stance row)
+        int resetX = rightBase - PRESET_W;
+        if (mouseX >= resetX && mouseX <= resetX + PRESET_W && mouseY >= stanceRowY && mouseY <= stanceRowY + PRESET_H) {
+            NichirinPacketRegistry.requestCqcPresetReset();
+            playClick();
+            lastClickTime = now;
+            return true;
+        }
         int stanceX = 140;
         for (int i = 0; i < STANCE_NAMES.length; i++) {
             int x = stanceX + i * (STANCE_W + 6);

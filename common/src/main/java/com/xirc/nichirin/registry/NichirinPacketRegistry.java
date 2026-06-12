@@ -93,6 +93,7 @@ public interface NichirinPacketRegistry {
     ResourceLocation CQC_PRESET_UPDATE_ID          = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "cqc_preset_update");
     ResourceLocation CQC_STANCE_UPDATE_ID          = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "cqc_stance_update");
     ResourceLocation CQC_ACTIVE_PRESET_UPDATE_ID   = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "cqc_active_preset_update");
+    ResourceLocation CQC_PRESET_RESET_ID           = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "cqc_preset_reset");
     ResourceLocation CQC_FOLLOWUP_UPDATE_ID        = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "cqc_followup_update");
     ResourceLocation CQC_PRESET_SYNC_ID            = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "cqc_preset_sync");
     // Shared cooldown HUD channel — sent by CooldownDisplayPacket, MoveExecutor and KatanaBlock,
@@ -360,6 +361,12 @@ public interface NichirinPacketRegistry {
             int presetIndex = buf.readInt();
             if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
                 context.queue(() -> handleCqcActivePresetUpdate(serverPlayer, presetIndex));
+            }
+        });
+
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, CQC_PRESET_RESET_ID, (buf, context) -> {
+            if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
+                context.queue(() -> handleCqcPresetReset(serverPlayer));
             }
         });
 
@@ -886,6 +893,12 @@ public interface NichirinPacketRegistry {
         sendCqcPresetSync(player);
     }
 
+    static void handleCqcPresetReset(ServerPlayer player) {
+        PlayerDataProvider.getData(player).getCqcPresetData().resetActivePreset();
+        PlayerDataStorage.savePlayerData(player);
+        sendCqcPresetSync(player);
+    }
+
     static void handleCqcFollowupUpdate(ServerPlayer player, String baseMoveId, String followupMoveId) {
         boolean changed = PlayerDataProvider.getData(player).getCqcPresetData().setFollowupForPlayer(player, baseMoveId, followupMoveId);
         if (!changed) {
@@ -951,6 +964,15 @@ public interface NichirinPacketRegistry {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             buf.writeInt(presetIndex);
             NetworkManager.sendToServer(CQC_ACTIVE_PRESET_UPDATE_ID, client(buf));
+        } catch (Exception e) {
+            // Handle error
+        }
+    }
+
+    static void requestCqcPresetReset() {
+        try {
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+            NetworkManager.sendToServer(CQC_PRESET_RESET_ID, client(buf));
         } catch (Exception e) {
             // Handle error
         }

@@ -13,22 +13,35 @@ import java.util.Map;
 public class CqcPresetData {
 
     public static final int WHEEL_SLOT_COUNT = 5;
-    public static final int PRESET_COUNT = 5;
+    public static final int PRESET_COUNT = 7;
 
-    private final Preset[] presets = {
-            new Preset("Balanced", "jab", "cross", "low_kick", 0,
-                    "uppercut", "elbow_strike", "throat_chop", "spinning_backfist", "axe_kick"),
-            new Preset("Striker", "jab", "overhand_right", "roundhouse_fast", 1,
-                    "cross", "lefthook", "superman_punch", "headkick", "spinning_heel_kick"),
-            new Preset("Guarded", "eye_poke", "double_palm", "backhand_slap", 2,
-                    "throat_chop", "low_kick", "knee", "elbow_strike", "spinning_backfist"),
-            new Preset("Demon", "demon_gut_punch", "demon_slash", "high_jump", 0,
-                    "demon_stomp", "demon_kick", "dashing_strike", "demon_bite", "demon_grab"),
-            new Preset("Destructive Death", "snap_punch", "annihilation_type", "crown_splitter", 0,
-                    "explosive_flurry", "flying_planet_thousand_wheels", "eight_layered_demon_core",
-                    "ten_thousand_leaves_flashing_willow", "donut")
-    };
+    private final Preset[] presets = createDefaultPresets();
     private int activePresetIndex = 0;
+
+    /** Built-in defaults — also used by {@link #resetActivePreset()} to restore a preset. */
+    private static Preset[] createDefaultPresets() {
+        return new Preset[] {
+                new Preset("Balanced", "jab", "cross", "low_kick", 0,
+                        "uppercut", "elbow_strike", "throat_chop", "spinning_backfist", "axe_kick"),
+                new Preset("Striker", "jab", "overhand_right", "roundhouse_fast", 1,
+                        "cross", "lefthook", "superman_punch", "headkick", "spinning_heel_kick"),
+                new Preset("Guarded", "eye_poke", "double_palm", "backhand_slap", 2,
+                        "throat_chop", "low_kick", "knee", "elbow_strike", "spinning_backfist"),
+                new Preset("Demon", "demon_gut_punch", "demon_slash", "high_jump", 0,
+                        "demon_stomp", "demon_kick", "dashing_strike", "demon_bite", "demon_grab"),
+                new Preset("Destructive Death", "snap_punch", "annihilation_type", "crown_splitter", 0,
+                        "explosive_flurry", "flying_planet_thousand_wheels", "eight_layered_demon_core",
+                        "ten_thousand_leaves_flashing_willow", "donut"),
+                new Preset("Custom 1", "", "", "", 0, "", "", "", "", ""),
+                new Preset("Custom 2", "", "", "", 0, "", "", "", "", "")
+        };
+    }
+
+    /** Restores the active preset to its built-in default slots, stance, and followups. */
+    public void resetActivePreset() {
+        Preset[] defaults = createDefaultPresets();
+        activePreset().copyFrom(defaults[Math.max(0, Math.min(PRESET_COUNT - 1, activePresetIndex))]);
+    }
 
     public String getLeftClickMove() {
         return activePreset().leftClickMove;
