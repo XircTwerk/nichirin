@@ -71,6 +71,8 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                         .withTiming(160, 50, 14)
                         .withDamage(20.0f)
                         .withRange(13.5f)
+                        .withArmor(3)
+                        .withSlam()
                         .withKnockback(0.3f)
                         .withBreathCost(25.0f)
                         .withHitStun(20)
