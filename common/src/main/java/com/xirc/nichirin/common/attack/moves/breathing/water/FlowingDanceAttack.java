@@ -36,7 +36,10 @@ public class FlowingDanceAttack extends WaterBreathingAttackBase {
         empowered = false;
         hitEntities.clear();
         danceTicks = 0;
+    }
 
+    @Override
+    protected void onActiveStart() {
         // Flowing dance startup sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.ENCHANTMENT_TABLE_USE, SoundSource.PLAYERS, 0.8f, 1.2f);

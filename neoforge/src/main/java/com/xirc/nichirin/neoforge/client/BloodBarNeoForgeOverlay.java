@@ -36,6 +36,7 @@ public final class BloodBarNeoForgeOverlay {
         if (!event.getName().equals(VanillaGuiLayers.FOOD_LEVEL)) return;
 
         Minecraft mc = Minecraft.getInstance();
+        if (mc.options.hideGui) return;
         Player player = mc.player;
         if (player == null) return;
         if (player.isCreative() || player.isSpectator()) return;

@@ -31,7 +31,10 @@ public class LunarDispersingMistAttack extends MistBreathingAttackBase {
         slashCount = 0;
         Vec3 look = user.getLookAngle();
         dashDirection = new Vec3(look.x, 0, look.z).normalize();
+    }
 
+    @Override
+    protected void onActiveStart() {
         createMistParticles();
 
         world.playSound(null, user.getX(), user.getY(), user.getZ(),

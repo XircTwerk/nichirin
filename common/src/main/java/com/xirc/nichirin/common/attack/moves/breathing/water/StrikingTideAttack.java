@@ -33,7 +33,10 @@ public class StrikingTideAttack extends WaterBreathingAttackBase {
         hitEntities.clear();
         tideTicks = 0;
         slashCount = 0;
+    }
 
+    @Override
+    protected void onActiveStart() {
         // Striking tide startup sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.WATER_AMBIENT, SoundSource.PLAYERS, 1.0f, 0.7f);
@@ -111,8 +114,8 @@ public class StrikingTideAttack extends WaterBreathingAttackBase {
     }
 
     private void performOmnidirectionalSlashes() {
-        // Perform slashes every 10 ticks (0.5 seconds)
-        if (tideTicks % 10 == 0 && slashCount < TOTAL_SLASHES) {
+        // Perform slashes every 5 ticks (halved from 10 after the double-tick dedup)
+        if (tideTicks % 5 == 0 && slashCount < TOTAL_SLASHES) {
             executeOmnidirectionalSlash();
             slashCount++;
         }
@@ -122,8 +125,9 @@ public class StrikingTideAttack extends WaterBreathingAttackBase {
             createSwirlingWaterEffect();
         }
 
-        // Hit all enemies in 360° range continuously but with spacing
-        if (tideTicks % 6 == 0) {
+        // Hit all enemies in 360° range continuously but with spacing (halved from 6 after the
+        // double-tick dedup)
+        if (tideTicks % 3 == 0) {
             List<LivingEntity> targets = getTargetsInCustomHitbox(
                     user.position().add(0, user.getBbHeight() / 2, 0),
                     range * 2, // Full diameter

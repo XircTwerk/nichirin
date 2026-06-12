@@ -54,7 +54,7 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
             dashStarted = true;
         }
 
-        if (dashStarted && !secondDashExecuted && tickCount == windup + 21) {
+        if (dashStarted && !secondDashExecuted && tickCount == windup + 7) {
             // Capture aim direction right before the dash — not at onStart — so the player can steer the leap
             dashDirection = user.getLookAngle().normalize();
             executeForwardDash();
@@ -62,7 +62,7 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
             lastDashPos = user.position().add(0, user.getBbHeight() / 2, 0);
         }
 
-        if (secondDashExecuted && tickCount > windup + 21 && tickCount <= windup + 35) {
+        if (secondDashExecuted && tickCount > windup + 7 && tickCount <= windup + 21) {
             Vec3 currentDashPos = user.position().add(0, user.getBbHeight() / 2, 0);
             List<LivingEntity> dashTargets = lastDashPos != null
                     ? getTargetsAlongPath(lastDashPos, currentDashPos, 1.0f)

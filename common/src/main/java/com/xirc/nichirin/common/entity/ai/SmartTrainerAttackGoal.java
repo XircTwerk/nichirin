@@ -13,7 +13,9 @@ import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Unified, aggressive combat AI for every breathing trainer.
@@ -289,7 +291,7 @@ public class SmartTrainerAttackGoal extends MeleeAttackGoal {
 
         List<Integer> order = new ArrayList<>(count);
         for (int i = 0; i < count; i++) order.add(i);
-        java.util.Collections.shuffle(order, new java.util.Random(trainer.getRandom().nextLong()));
+        Collections.shuffle(order, new Random(trainer.getRandom().nextLong()));
 
         // First pass: skip the move we just used so combos vary.
         for (int idx : order) {

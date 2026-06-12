@@ -72,11 +72,10 @@ public class TheBigGui extends Screen {
         super.init();
 
         // Compute contentScale FIRST so button positions use logical coordinates.
+        // this.width is already physW / guiScale, so dividing by guiScale here cancels it out
+        // and the effective scale tracks raw window resolution.
         var window = Minecraft.getInstance().getWindow();
-        int physW = window.getWidth();
-        int refScale = Math.max(1, physW / 960);
-        double actualScale = window.getGuiScale();
-        contentScale = (float) (refScale / actualScale);
+        contentScale = (float) (window.getWidth() / 1250.0 / window.getGuiScale());
 
         int logW = Math.round(this.width / contentScale);
 

@@ -31,15 +31,18 @@ public class HonoikazuchiNoKamiAttack extends ThunderBreathingAttackBase {
         hasExecuted = false;
         hitEntities.clear();
 
-        // Epic charge-up effects
-        world.playSound(null, user.getX(), user.getY(), user.getZ(),
-                SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, 2.0f, 0.5f);
-
         // Give user invulnerability during entire windup
         user.setInvulnerable(true);
 
         // Add glowing effect
         user.addEffect(new MobEffectInstance(MobEffects.GLOWING, 100, 0, false, false));
+    }
+
+    @Override
+    protected void onActiveStart() {
+        // Epic charge-up effects
+        world.playSound(null, user.getX(), user.getY(), user.getZ(),
+                SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, 2.0f, 0.5f);
     }
 
     @Override

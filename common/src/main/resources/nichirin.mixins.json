@@ -6,6 +6,8 @@
   "client": [
     "client.DebugRendererMixin",
     "client.ClientLevelMixin",
+    "client.EntityOutlineMixin",
+    "client.EntityRendererAfterimageMixin",
     "client.FogRendererMixin",
     "client.GameRendererMixin",
     "client.GuiMixin",
@@ -20,7 +22,8 @@
     "client.LivingEntityRendererMixin",
     "client.ItemInHandLayerMixin",
     "client.RenderTargetDepthMixin",
-    "client.ShaderInstanceMixin"
+    "client.ShaderInstanceMixin",
+    "client.SoundEngineMixin"
   ],
   "mixins": [
     "DemonBloodFoodMixin",

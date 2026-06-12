@@ -53,7 +53,10 @@ public class WhirlpoolAttack extends WaterBreathingAttackBase {
         spinningingEntities.clear();
         whirlpoolTicks = 0;
         whirlpoolCenter = null;
+    }
 
+    @Override
+    protected void onActiveStart() {
         // Whirlpool startup sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.WATER_AMBIENT, SoundSource.PLAYERS, 1.0f, 0.6f);
@@ -191,8 +194,8 @@ public class WhirlpoolAttack extends WaterBreathingAttackBase {
             entity.hurtMarked = true;
             entity.hasImpulse = true;
 
-            // Hit spinning entities periodically
-            if (data.spinTicks % 10 == 0) {
+            // Hit spinning entities periodically (halved from 10 after the double-tick dedup)
+            if (data.spinTicks % 5 == 0) {
                 hitTargetNoImmunity(entity);
 
                 // Create spinning hit effect

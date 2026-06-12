@@ -32,7 +32,10 @@ public class RoarAttack extends SoundBreathingAttackBase {
     protected void onStart() {
         hasExecuted = false;
         swordsRaised = false;
+    }
 
+    @Override
+    protected void onActiveStart() {
         // Initial sword raising sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 1.0f, 0.8f);

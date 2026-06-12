@@ -48,6 +48,10 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
         hitEntities.clear();
 
         dashDirection = angledDashDirection();
+    }
+
+    @Override
+    protected void onActiveStart() {
         // Rhythmic step preparation sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.WARDEN_SONIC_CHARGE, SoundSource.PLAYERS, 0.8f, 2.0f);

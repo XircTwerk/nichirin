@@ -2,6 +2,7 @@ package com.xirc.nichirin.common.attack.moves;
 
 import com.xirc.nichirin.common.util.ComboIntegration;
 import com.xirc.nichirin.common.util.NichirinArmorDamage;
+import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import net.minecraft.core.particles.ParticleTypes;
@@ -70,9 +71,7 @@ public class KatanaRisingSlashAttack extends AbstractKatanaAttack {
         if (targets.isEmpty()) return;
 
         hasHit = true;
-        DamageSource damageSource = user instanceof Player p
-                ? user.damageSources().playerAttack(p)
-                : user.damageSources().mobAttack(user);
+        DamageSource damageSource = NichirinDamageSources.blade(user);
 
         for (LivingEntity target : targets) {
             // Damage first

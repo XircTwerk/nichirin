@@ -5,6 +5,7 @@ import com.zigythebird.playeranim.animation.PlayerAnimationController;
 import com.zigythebird.playeranim.animation.PlayerRawAnimationBuilder;
 import com.zigythebird.playeranim.api.PlayerAnimationAccess;
 import com.zigythebird.playeranim.api.PlayerAnimationFactory;
+import com.zigythebird.playeranimcore.animation.layered.modifier.SpeedModifier;
 import com.zigythebird.playeranimcore.api.firstPerson.FirstPersonConfiguration;
 import com.zigythebird.playeranimcore.api.firstPerson.FirstPersonMode;
 import com.zigythebird.playeranimcore.easing.EasingType;
@@ -48,12 +49,20 @@ public final class NichirinAnimations {
     }
 
     public static void playAnimation(Player player, String animationName) {
+        playAnimation(player, animationName, 1.0f);
+    }
+
+    public static void playAnimation(Player player, String animationName, float speed) {
         if (!(player instanceof AbstractClientPlayer clientPlayer)) return;
 
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null) return;
 
         if (animationName == null || animationName.isEmpty()) {
+            PlayerAnimationController ctrl = getController(clientPlayer);
+            if (ctrl != null) {
+                setControllerSpeed(ctrl, 1.0f);
+            }
             stopAnimation(clientPlayer);
             return;
         }
@@ -71,6 +80,8 @@ public final class NichirinAnimations {
             return;
         }
 
+        setControllerSpeed(controller, speed);
+
         if ("sword.block".equals(animationName)) {
             controller.triggerAnimation(PlayerRawAnimationBuilder.begin().thenPlayAndHold(animation).build());
         } else if (isHitAnimation(animationName)) {
@@ -80,6 +91,19 @@ public final class NichirinAnimations {
             controller.triggerAnimation(animation);
         } else {
             controller.triggerAnimation(animation);
+        }
+    }
+
+    /** Updates the controller's SpeedModifier in-place, or adds one if none exists. */
+    private static void setControllerSpeed(PlayerAnimationController controller, float speed) {
+        for (var mod : controller.getModifiers()) {
+            if (mod instanceof SpeedModifier sm) {
+                sm.speed = speed;
+                return;
+            }
+        }
+        if (speed != 1.0f) {
+            controller.addModifierLast(new SpeedModifier(speed));
         }
     }
 

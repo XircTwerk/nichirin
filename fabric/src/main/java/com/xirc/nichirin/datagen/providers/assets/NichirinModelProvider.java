@@ -43,6 +43,9 @@ public class NichirinModelProvider extends FabricModelProvider {
 
         // Simple blocks
         generator.createTrivialBlock(NichirinBlockRegistry.WISTERIA_LEAVES.get(), TexturedModel.LEAVES);
+        generator.createTrivialBlock(NichirinBlockRegistry.WISTERIA_GLOW_LICHEN.get(), TexturedModel.CUBE);
+        generator.createTrivialBlock(NichirinBlockRegistry.WISTERIA_GLOW_BERRIES.get(), TexturedModel.CUBE);
+        generator.createTrivialBlock(NichirinBlockRegistry.WISTERIA_LANTERN.get(), TexturedModel.CUBE);
         generator.createTrivialBlock(NichirinBlockRegistry.INFINITY_GLASS1.get(), TexturedModel.CUBE);
         generator.createTrivialBlock(NichirinBlockRegistry.INFINITY_GLASS2.get(), TexturedModel.CUBE);
 
@@ -67,6 +70,10 @@ public class NichirinModelProvider extends FabricModelProvider {
         generator.generateFlatItem(NichirinItemRegistry.SCARLET_GEM.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.ONIGIRI.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.SAKURAMOCHI.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.WISTERIA_FLOWER.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.WISTERIA_EXTRACT.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.WISTERIA_TEA.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.WISTERIA_ARROW.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.MOCHI.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.BLACK_MOCHI.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.BLUE_MOCHI.get(), ModelTemplates.FLAT_ITEM);

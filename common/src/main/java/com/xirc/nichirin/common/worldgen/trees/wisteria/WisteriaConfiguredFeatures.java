@@ -25,7 +25,7 @@ public class WisteriaConfiguredFeatures {
     private static TreeConfiguration.TreeConfigurationBuilder createSmallWisteria() {
         return new TreeConfiguration.TreeConfigurationBuilder(
                 BlockStateProvider.simple(NichirinBlockRegistry.WISTERIA_LOG.get()),
-                new WisteriaTrunkPlacer(5, 2, 1, UniformInt.of(2, 4)),
+                new WisteriaTrunkPlacer(5, 2, 1, UniformInt.of(2, 3)),
                 BlockStateProvider.simple(NichirinBlockRegistry.WISTERIA_LEAVES.get()),
                 new WisteriaSmallFoliagePlacer(ConstantInt.of(2), ConstantInt.of(0)),
                 new TwoLayersFeatureSize(2, 0, 2)
@@ -38,7 +38,7 @@ public class WisteriaConfiguredFeatures {
     private static TreeConfiguration.TreeConfigurationBuilder createMediumWisteria() {
         return new TreeConfiguration.TreeConfigurationBuilder(
                 BlockStateProvider.simple(NichirinBlockRegistry.WISTERIA_LOG.get()),
-                new WisteriaTrunkPlacer(7, 3, 2, UniformInt.of(4, 6)),
+                new WisteriaTrunkPlacer(7, 3, 2, UniformInt.of(3, 5)),
                 BlockStateProvider.simple(NichirinBlockRegistry.WISTERIA_LEAVES.get()),
                 new WisteriaMediumFoliagePlacer(ConstantInt.of(3), ConstantInt.of(1)),
                 new TwoLayersFeatureSize(3, 0, 3)
@@ -51,7 +51,7 @@ public class WisteriaConfiguredFeatures {
     private static TreeConfiguration.TreeConfigurationBuilder createLargeWisteria() {
         return new TreeConfiguration.TreeConfigurationBuilder(
                 BlockStateProvider.simple(NichirinBlockRegistry.WISTERIA_LOG.get()),
-                new WisteriaTrunkPlacer(10, 3, 2, UniformInt.of(6, 9)),
+                new WisteriaTrunkPlacer(10, 3, 2, UniformInt.of(5, 7)),
                 BlockStateProvider.simple(NichirinBlockRegistry.WISTERIA_LEAVES.get()),
                 new WisteriaLargeFoliagePlacer(ConstantInt.of(4), ConstantInt.of(2)),
                 new TwoLayersFeatureSize(4, 0, 4)

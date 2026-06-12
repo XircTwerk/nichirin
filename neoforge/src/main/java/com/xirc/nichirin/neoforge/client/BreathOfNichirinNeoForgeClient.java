@@ -1,6 +1,8 @@
 package com.xirc.nichirin.neoforge.client;
 
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.xirc.nichirin.client.BreathOfNichirinClient;
+import com.xirc.nichirin.client.outline.OutlineShaderHolder;
 import com.xirc.nichirin.client.particle.*;
 import com.xirc.nichirin.client.renderer.block.KatanaHolderBlockRenderer;
 import com.xirc.nichirin.client.renderer.entity.animal.BoarEntityRenderer;
@@ -18,8 +20,10 @@ import com.xirc.nichirin.registry.NichirinEntityRegistry;
 import com.xirc.nichirin.registry.NichirinKeybindRegistry;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import me.shedaniel.autoconfig.AutoConfig;
+import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.client.renderer.entity.EntityRenderers;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModLoadingContext;
@@ -27,7 +31,10 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
+import net.neoforged.neoforge.client.event.RegisterShadersEvent;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
+
+import java.io.IOException;
 
 @EventBusSubscriber(modid = "nichirin", bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class BreathOfNichirinNeoForgeClient {
@@ -45,6 +52,18 @@ public class BreathOfNichirinNeoForgeClient {
         event.registerSpriteSet(NichirinParticleRegistry.BLOOD_SPLAT.get(), BloodSplatParticleProvider::new);
         event.registerSpriteSet(NichirinParticleRegistry.BREATHING_AURA_WISP.get(), BreathingAuraWispParticleProvider::new);
         event.registerSpriteSet(NichirinParticleRegistry.SLASH_IMPACT_SPARK.get(), SlashImpactSparkParticleProvider::new);
+    }
+
+    @SubscribeEvent
+    public static void onRegisterShaders(RegisterShadersEvent event) throws IOException {
+        // Cel-shader outline: displaces each vertex along its surface normal so body parts
+        // expand outward together (rather than drifting apart from a uniform pose-stack scale).
+        event.registerShader(
+                new ShaderInstance(
+                        event.getResourceProvider(),
+                        ResourceLocation.fromNamespaceAndPath("nichirin", "outline_cel"),
+                        DefaultVertexFormat.NEW_ENTITY),
+                OutlineShaderHolder::setShader);
     }
 
     @SubscribeEvent

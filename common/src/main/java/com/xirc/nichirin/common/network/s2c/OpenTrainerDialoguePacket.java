@@ -1,11 +1,9 @@
 package com.xirc.nichirin.common.network.s2c;
 
-import com.xirc.nichirin.client.gui.trainer.TrainerDialogueScreen;
 import com.xirc.nichirin.common.entity.npc.TrainerType;
 import net.minecraft.network.FriendlyByteBuf;
 
 import java.util.UUID;
-import net.minecraft.client.Minecraft;
 
 /**
  * S2C — tells the client to open the trainer dialogue screen.
@@ -51,12 +49,5 @@ public class OpenTrainerDialoguePacket {
         buf.writeEnum(trainerType);
         buf.writeEnum(state);
         buf.writeBoolean(hasBeatenTrainer);
-    }
-
-    public void handleClient() {
-        Minecraft mc = Minecraft.getInstance();
-        mc.execute(() -> mc.setScreen(
-                new TrainerDialogueScreen(
-                        trainerUUID, trainerType, state, hasBeatenTrainer)));
     }
 }

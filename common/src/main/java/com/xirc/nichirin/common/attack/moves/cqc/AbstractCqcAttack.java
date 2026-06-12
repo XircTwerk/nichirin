@@ -1,11 +1,15 @@
 package com.xirc.nichirin.common.attack.moves.cqc;
 
+import com.xirc.nichirin.common.attack.moves.demon.destructive.DestructiveDeathCqcHook;
+import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.data.CqcMoveCatalog;
 import com.xirc.nichirin.common.entity.npc.DemonNPCEntity;
+import com.xirc.nichirin.common.entity.npc.TempleDemonEntity;
 import com.xirc.nichirin.common.system.DemonManager;
 import com.xirc.nichirin.common.util.ComboIntegration;
 import com.xirc.nichirin.common.util.NichirinArmorDamage;
+import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
@@ -48,6 +52,7 @@ public abstract class AbstractCqcAttack {
     protected float hitboxSize;
     protected int hitStun;
     protected boolean slam;
+    protected boolean hyperArmor;
     protected float dashDistance;
 
     private int tickCount;
@@ -85,6 +90,7 @@ public abstract class AbstractCqcAttack {
         this.hitboxSize = config.getHitboxSizeOrDefault(this.hitboxSize);
         this.hitStun = config.getHitStunOrDefault(this.hitStun);
         this.slam = config.hasSlam();
+        this.hyperArmor = config.hasHyperArmor();
         this.dashDistance = config.getDashSpeedOrDefault(this.dashDistance);
     }
 
@@ -101,7 +107,9 @@ public abstract class AbstractCqcAttack {
         if (!activeState || user.level().isClientSide()) return;
 
         tickCount++;
-        if (tickCount <= startup && user.hurtTime > 0 && startup > 0) {
+        // Hyper armor: take the hit without dropping the attack. Without the flag, any windup hit
+        // cancels the swing (vanilla CQC behaviour).
+        if (!hyperArmor && tickCount <= startup && user.hurtTime > 0 && startup > 0) {
             end(user);
             return;
         }
@@ -129,6 +137,11 @@ public abstract class AbstractCqcAttack {
         return cooldown;
     }
 
+    public void applyDamageMultiplier(float multiplier) {
+        if (multiplier == 1.0f) return;
+        damage *= multiplier;
+    }
+
     public void stop() {
         activeState = false;
         hitEntities.clear();
@@ -146,12 +159,13 @@ public abstract class AbstractCqcAttack {
         }
 
         List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
-                entity -> entity != user && entity.isAlive() && !hitEntities.contains(entity));
+                entity -> entity != user && entity.isAlive() && !hitEntities.contains(entity)
+                        && acceptTarget(user, entity));
         if (targets.isEmpty()) return;
 
-        DamageSource source = user instanceof Player player
-                ? user.damageSources().playerAttack(player)
-                : user.damageSources().mobAttack(user);
+        DamageSource source = user instanceof TempleDemonEntity
+                ? NichirinDamageSources.templeDemon(user)
+                : NichirinDamageSources.cqc(user);
 
         for (LivingEntity target : targets) {
             hitEntities.add(target);
@@ -163,8 +177,8 @@ public abstract class AbstractCqcAttack {
                     target.invulnerableTime = hitStun;
                     // Slam moves apply the Slammed effect for hitStun ticks (slam ticks == hit stun).
                     if (slam) {
-                        target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-                                com.xirc.nichirin.registry.NichirinEffectRegistry.slammed(),
+                        target.addEffect(new MobEffectInstance(
+                                NichirinEffectRegistry.slammed(),
                                 hitStun, 0, false, false, true));
                     }
                 }
@@ -173,6 +187,7 @@ public abstract class AbstractCqcAttack {
                 }
             }
             onHitTarget(user, target, world);
+            DestructiveDeathCqcHook.onCqcHit(user, target, world);
         }
     }
 
@@ -213,6 +228,14 @@ public abstract class AbstractCqcAttack {
     }
 
     protected void onStart(LivingEntity user, Level world) {}
+
+    /**
+     * Subclass hook for shape-aware hit filtering (e.g. ring-band on Donut). Returns true to keep
+     * the candidate, false to skip it without marking them as hit. Default accepts everything.
+     */
+    protected boolean acceptTarget(LivingEntity user, LivingEntity candidate) {
+        return true;
+    }
 
     protected void onActiveStart(LivingEntity user, Level world) {}
 

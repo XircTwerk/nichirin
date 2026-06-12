@@ -22,6 +22,7 @@ public interface NichirinEffectRegistry {
     RegistrySupplier<MobEffect> VENOM = EFFECT_REGISTRY.register("venom", VenomStatusEffect::new);
     RegistrySupplier<MobEffect> DISORIENTED = EFFECT_REGISTRY.register("disoriented", DisorientedStatusEffect::new);
     RegistrySupplier<MobEffect> BLURRY = EFFECT_REGISTRY.register("blurry", BlurryStatusEffect::new);
+    RegistrySupplier<MobEffect> WISTERIAS_GRACE = EFFECT_REGISTRY.register("wisterias_grace", WisteriasGraceStatusEffect::new);
 
     static Holder<MobEffect> shocked() {
         return BuiltInRegistries.MOB_EFFECT.wrapAsHolder(SHOCKED.get());
@@ -53,6 +54,10 @@ public interface NichirinEffectRegistry {
 
     static Holder<MobEffect> blurry() {
         return BuiltInRegistries.MOB_EFFECT.wrapAsHolder(BLURRY.get());
+    }
+
+    static Holder<MobEffect> wisteriasGrace() {
+        return BuiltInRegistries.MOB_EFFECT.wrapAsHolder(WISTERIAS_GRACE.get());
     }
 
     static void init() {

@@ -7,6 +7,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.xirc.nichirin.common.attack.moveset.demon.DefaultDemonMoveset;
+import com.xirc.nichirin.common.attack.moveset.demon.DestructiveDeathMoveset;
 import com.xirc.nichirin.common.config.NichirinConfig;
 import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.data.MovesetHelper;
@@ -29,6 +30,8 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -91,7 +94,9 @@ public class NichirinCommand {
                         .then(Commands.literal("blurry")
                                 .executes(ctx -> giveBlurry(ctx, ctx.getSource().getPlayerOrException()))
                                 .then(Commands.argument("player", EntityArgument.player())
-                                        .executes(ctx -> giveBlurry(ctx, EntityArgument.getPlayer(ctx, "player"))))))
+                                        .executes(ctx -> giveBlurry(ctx, EntityArgument.getPlayer(ctx, "player")))))
+                        .then(com.xirc.nichirin.common.command.AuraCommand.build())
+                        .then(com.xirc.nichirin.common.command.OutlineCommand.build()))
 
                 // Breathing and Demon subtrees — same shape as the old /breathing and /demon roots.
                 .then(buildBreathingSubcommand())
@@ -126,11 +131,6 @@ public class NichirinCommand {
                 )
         );
 
-        dispatcher.register(Commands.literal("blurry")
-                .requires(src -> src.hasPermission(2))
-                .executes(ctx -> giveBlurry(ctx, ctx.getSource().getPlayerOrException()))
-                .then(Commands.argument("player", EntityArgument.player())
-                        .executes(ctx -> giveBlurry(ctx, EntityArgument.getPlayer(ctx, "player")))));
     }
 
     private static int giveBlurry(CommandContext<CommandSourceStack> ctx, ServerPlayer player) {
@@ -144,8 +144,6 @@ public class NichirinCommand {
                 .withStyle(s -> s.withColor(COL_OK)), true);
         return 1;
     }
-
-    // ─── /nichirin breathing ───
 
     private static com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> buildBreathingSubcommand() {
         return Commands.literal("breathing")
@@ -250,7 +248,7 @@ public class NichirinCommand {
         var progression = PlayerDataProvider.getData(player).getProgression();
         String current = PlayerDataProvider.getData(player).getMovesetData().getMovesetId();
 
-        java.util.List<String> unlocked = new java.util.ArrayList<>();
+        List<String> unlocked = new ArrayList<>();
         for (String id : NichirinMovesetRegistry.getAllMovesetIds()) {
             if (isBreathingStyle(id) && progression.isMovesetUnlocked(id)) {
                 unlocked.add(id);
@@ -263,7 +261,7 @@ public class NichirinCommand {
         }
 
         // Avoid re-picking the currently active style when there's another option.
-        java.util.List<String> pool = new java.util.ArrayList<>(unlocked);
+        List<String> pool = new ArrayList<>(unlocked);
         if (pool.size() > 1 && current != null) {
             pool.remove(current);
         }
@@ -275,8 +273,6 @@ public class NichirinCommand {
         player.displayClientMessage(Component.literal("Your breathing style is now " + formatted).withStyle(s -> s.withColor(0x55FFFF)), false);
         return 1;
     }
-
-    // ─── /nichirin demon ───
 
     private static com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> buildDemonSubcommand() {
         return Commands.literal("demon")
@@ -365,6 +361,9 @@ public class NichirinCommand {
         try {
             DefaultDemonMoveset.cleanupPlayer(player);
         } catch (Exception ignored) {}
+        try {
+            DestructiveDeathMoveset.cleanupPlayer(player);
+        } catch (Exception ignored) {}
 
         if (MovesetHelper.hasDemonMoveset(player)) {
             src.sendFailure(Component.literal("Failed to remove demon status from " + playerName + " (sync issue)").withStyle(s -> s.withColor(COL_ERR)));
@@ -445,11 +444,11 @@ public class NichirinCommand {
         return 1;
     }
 
-    // ─── /nichirin cooldown — unified ───
-
     private static int resetAllCooldowns(CommandContext<CommandSourceStack> ctx, ServerPlayer player) {
         CommandSourceStack src = ctx.getSource();
         String playerName = player.getName().getString();
+
+        com.xirc.nichirin.common.attack.moveset.CqcMoveset.resetCooldowns(player);
 
         int cleared = 0;
         for (NichirinMovesetRegistry.MoveInfo moveInfo : NichirinMovesetRegistry.getAllMoves().values()) {
@@ -462,8 +461,6 @@ public class NichirinCommand {
         player.displayClientMessage(Component.literal("All your cooldowns have been reset!").withStyle(s -> s.withColor(0x55FFFF)), false);
         return 1;
     }
-
-    // ─── /nichirin admin / config ───
 
     private static int unlockAll(CommandContext<CommandSourceStack> ctx, ServerPlayer player) {
         CommandSourceStack src = ctx.getSource();
@@ -622,8 +619,6 @@ public class NichirinCommand {
         return 1;
     }
 
-    // ─── Suggestions ───
-
     private static CompletableFuture<Suggestions> suggestBreathingStyles(
             CommandContext<CommandSourceStack> ctx, SuggestionsBuilder builder) {
         String input = builder.getRemaining().toLowerCase();
@@ -688,15 +683,15 @@ public class NichirinCommand {
         return builder.buildFuture();
     }
 
-    // ─── Helpers ───
-
     private static boolean isBreathingStyle(String movesetId) {
         return movesetId != null && movesetId.contains("breathing");
     }
 
     private static boolean isDemonArt(String movesetId) {
         if (movesetId == null) return false;
-        return movesetId.equals("default_demon") || movesetId.contains("demon");
+        return movesetId.equals("default_demon")
+                || movesetId.equals("destructive_death")
+                || movesetId.contains("demon");
     }
 
     private static String formatStyleName(String styleId) {

@@ -1,13 +1,13 @@
 package com.xirc.nichirin.common.attack.moves.breathing.sound;
 
 import com.xirc.nichirin.common.util.NichirinArmorDamage;
+import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
@@ -62,7 +62,10 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
 
         dashDirection = user.getLookAngle().normalize();
         startPosition = user.position();
+    }
 
+    @Override
+    protected void onActiveStart() {
         // Initial chain spinning sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.CHAIN_STEP, SoundSource.PLAYERS, 1.0f, 1.5f);
@@ -197,9 +200,7 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
         }
 
         // Apply damage directly using DamageSource
-        NichirinArmorDamage.hurt(target, user instanceof Player p
-                ? user.damageSources().playerAttack(p)
-                : user.damageSources().mobAttack(user), damage);
+        NichirinArmorDamage.hurt(target, NichirinDamageSources.breathing(user), damage);
 
         // Apply knockback manually
         Vec3 knockbackDirection = target.position().subtract(user.position()).normalize();
@@ -305,9 +306,7 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
         }
 
         // Apply full damage for finale
-        NichirinArmorDamage.hurt(target, user instanceof Player p
-                ? user.damageSources().playerAttack(p)
-                : user.damageSources().mobAttack(user), damage);
+        NichirinArmorDamage.hurt(target, NichirinDamageSources.breathing(user), damage);
 
         // Apply status effects if configured
         applyDisorientedEffect(target);

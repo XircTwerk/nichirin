@@ -23,6 +23,10 @@ public class BeastSpatialAwarenessAttack extends BeastBreathingAttackBase {
     @Override
     protected void onStart() {
         activated = false;
+    }
+
+    @Override
+    protected void onActiveStart() {
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1.0f, 1.5f);
     }

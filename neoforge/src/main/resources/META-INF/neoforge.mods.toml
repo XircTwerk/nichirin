@@ -2,6 +2,12 @@ modLoader = "javafml"
 loaderVersion = "[4,)"
 license = "All Rights Reserved"
 
+[[mixins]]
+config = "nichirin.mixins.json"
+
+[[mixins]]
+config = "nichirin.neoforge.mixins.json"
+
 [[mods]]
 modId = "nichirin"
 version = "${version}"

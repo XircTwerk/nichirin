@@ -18,6 +18,7 @@ import com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer;
 import com.xirc.nichirin.client.util.ClientInputTracker;
 import com.xirc.nichirin.client.util.ItemPropertiesHelper;
 import com.xirc.nichirin.common.event.system.CooldownClearEventHandler;
+import com.xirc.nichirin.client.util.ThunderclapChargeInputHandler;
 import com.xirc.nichirin.common.util.BlockingInputHandler;
 import com.xirc.nichirin.common.util.PlayerStats;
 import com.xirc.nichirin.registry.*;
@@ -36,25 +37,19 @@ import org.slf4j.LoggerFactory;
 public class BreathOfNichirinClient {
     private static final Logger LOGGER = LoggerFactory.getLogger(BreathOfNichirinClient.class);
     private static boolean initialized = false;
-    private static final int WISTERIA_DAY_LEAF_COLOR = 0xD9BEFF;
-    private static final int WISTERIA_NIGHT_LEAF_COLOR = 0x9F6FD8;
+    private static final int WISTERIA_DAY_LEAF_COLOR = 0xC8A2FF;
+    private static final int WISTERIA_NIGHT_LEAF_COLOR = 0x7E3DCC;
     private static long lastWisteriaLeafRefreshTick = -100L;
 
     // Store shader effect for easy access
     private static DeadCalmShaderEffect deadCalmEffect;
     private static ImpactShakeShaderEffect impactShakeShaderEffect;
-    private static FlameBreathingAuraShader flameAuraShader;
-    private static WaterBreathingAuraShader waterAuraShader;
 
     private static void registerShaders() {
         try {
             // Register Dead Calm shader effect
             deadCalmEffect = new DeadCalmShaderEffect();
             impactShakeShaderEffect = ImpactShakeShaderEffect.getInstance();
-            flameAuraShader = new FlameBreathingAuraShader();
-            waterAuraShader = new WaterBreathingAuraShader();
-            NichirinShaderManager.getInstance().register(flameAuraShader);
-            NichirinShaderManager.getInstance().register(waterAuraShader);
             NichirinShaderManager.getInstance().register(deadCalmEffect);
             NichirinShaderManager.getInstance().register(impactShakeShaderEffect);
 
@@ -169,8 +164,10 @@ public class BreathOfNichirinClient {
             // Register post-processing shaders
             registerShaders();
 
-            // Wire up the tick-driven intensity for breathing aura shaders
-            BreathingAuraShaderHandler.register();
+            // Wire up the entity-attached aura system (2D pixelated billboard renderer).
+            com.xirc.nichirin.client.aura.AuraNetworkHandler.register();
+            // Wire up the entity-attached outline system (configurable colour + see-through).
+            com.xirc.nichirin.client.outline.OutlineNetworkHandler.register();
 
             // Wire up the Blurry effect screen shader
             MistBlurShaderHandler.register();
@@ -184,6 +181,7 @@ public class BreathOfNichirinClient {
 
             // Register critical systems first
             BlockingInputHandler.register();
+            ThunderclapChargeInputHandler.register();
             BreathingAuraWispHandler.register();
             PlayerStats.initialize();
             ItemPropertiesHelper.registerBentoBoxProperty();
@@ -254,6 +252,8 @@ public class BreathOfNichirinClient {
                     ImpactFrameOverlay.tick();
                     ImpactCameraShake.tick();
                     refreshWisteriaLeafColors(minecraft);
+                    com.xirc.nichirin.client.aura.EntityAuraTracker.tick();
+                    com.xirc.nichirin.client.outline.OutlineTracker.tick();
 
                     if (minecraft.level.getGameTime() % 100 == 0) {
                         LocalPlayer player = minecraft.player;

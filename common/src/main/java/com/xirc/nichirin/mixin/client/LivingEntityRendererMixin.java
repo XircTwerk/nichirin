@@ -1,9 +1,10 @@
 package com.xirc.nichirin.mixin.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.xirc.nichirin.client.animation.NichirinAnimations;
+import com.xirc.nichirin.client.afterimage.AfterimageRenderState;
 import com.zigythebird.playeranimcore.api.firstPerson.FirstPersonMode;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.CameraType;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -22,20 +23,25 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(HumanoidArmorLayer.class)
 public class LivingEntityRendererMixin<T extends LivingEntity, M extends HumanoidModel<T>, A extends HumanoidModel<T>> {
 
-    @Inject(method = "renderArmorPiece", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "renderArmorPiece", at = @At("HEAD"), cancellable = true, require = 0)
     private void nichirin$skipArmorWhenInvisible(PoseStack poseStack, MultiBufferSource buffer,
                                                   T entity, EquipmentSlot slot, int packedLight,
                                                   A model, CallbackInfo ci) {
-        if (entity.isInvisible()) {
+        nichirin$skipArmor(entity, ci);
+    }
+
+    private void nichirin$skipArmor(T entity, CallbackInfo ci) {
+        if (entity.isInvisible() || AfterimageRenderState.isRendering()) {
             ci.cancel();
             return;
         }
 
         Minecraft minecraft = Minecraft.getInstance();
         if (entity == minecraft.player
-                && entity instanceof AbstractClientPlayer player
-                && NichirinAnimations.isAnimationPlaying(player)
-                && FirstPersonMode.isFirstPersonPass()) {
+                && entity instanceof AbstractClientPlayer
+                && minecraft.screen == null
+                && (FirstPersonMode.isFirstPersonPass()
+                || minecraft.options.getCameraType() == CameraType.FIRST_PERSON)) {
             ci.cancel();
         }
     }

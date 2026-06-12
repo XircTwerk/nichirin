@@ -31,6 +31,9 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinBlockRegistry.STRIPPED_WISTERIA_WOOD.get());
                         entries.accept(NichirinBlockRegistry.WISTERIA_PLANKS.get());
                         entries.accept(NichirinBlockRegistry.WISTERIA_LEAVES.get());
+                        entries.accept(NichirinBlockRegistry.WISTERIA_GLOW_LICHEN.get());
+                        entries.accept(NichirinBlockRegistry.WISTERIA_GLOW_BERRIES.get());
+                        entries.accept(NichirinBlockRegistry.WISTERIA_LANTERN_ITEM.get());
                         entries.accept(NichirinBlockRegistry.WISTERIA_STAIRS.get());
                         entries.accept(NichirinBlockRegistry.WISTERIA_SLAB.get());
                         entries.accept(NichirinBlockRegistry.WISTERIA_FENCE.get());
@@ -50,6 +53,9 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinItemRegistry.SMOKE_BOMB.get());
                         entries.accept(NichirinItemRegistry.FLASH_BOMB.get());
                         entries.accept(NichirinItemRegistry.DEMON_BLOOD_VIAL.get());
+                        entries.accept(NichirinItemRegistry.WISTERIA_FLOWER.get());
+                        entries.accept(NichirinItemRegistry.WISTERIA_EXTRACT.get());
+                        entries.accept(NichirinItemRegistry.WISTERIA_ARROW.get());
                     })
                     .build();
         });
@@ -143,6 +149,7 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinItemRegistry.BENTO_BOX.get());
                         entries.accept(NichirinItemRegistry.ONIGIRI.get());
                         entries.accept(NichirinItemRegistry.SAKURAMOCHI.get());
+                        entries.accept(NichirinItemRegistry.WISTERIA_TEA.get());
                         entries.accept(NichirinItemRegistry.DRINKING_GOURD.get());
                         entries.accept(NichirinItemRegistry.MOCHI.get());
                         entries.accept(NichirinItemRegistry.RED_MOCHI.get());

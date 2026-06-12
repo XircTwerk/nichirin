@@ -48,7 +48,10 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
         lastDashPos = null;
         dashTick = 0;
         dashDistanceTravelled = 0.0f;
+    }
 
+    @Override
+    protected void onActiveStart() {
         // Tiger roar sound at start
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.RAVAGER_ROAR, SoundSource.PLAYERS, 1.0f, 1.5f);

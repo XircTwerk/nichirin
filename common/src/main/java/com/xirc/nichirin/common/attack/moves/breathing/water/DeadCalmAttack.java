@@ -34,7 +34,10 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
         entitiesInField.clear();
         recentlyTriggered.clear();
         calmTicks = 0;
+    }
 
+    @Override
+    protected void onActiveStart() {
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.WATER_AMBIENT, SoundSource.PLAYERS, 0.6f, 0.5f);
 
@@ -158,7 +161,9 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
         entitiesInField.clear();
         entitiesInField.addAll(currentEntities);
 
-        if (calmTicks % 10 == 0) {
+        // Re-arm slashes every 5 ticks. Tuned when breathing attacks were accidentally double-ticked
+        // (pre MoveExecutor dedup) — halved from 10 to keep the original real-time slash rate.
+        if (calmTicks % 5 == 0) {
             recentlyTriggered.clear();
         }
     }

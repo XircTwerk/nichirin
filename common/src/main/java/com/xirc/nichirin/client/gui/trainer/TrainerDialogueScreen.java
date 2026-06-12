@@ -25,7 +25,7 @@ import java.util.UUID;
 public class TrainerDialogueScreen extends Screen {
 
     // Colors — BigGui dark palette
-    private static final int COL_BG           = 0xE8101010;
+    private static final int COL_BG           = 0xFF101010;
     private static final int COL_BORDER       = 0xFF3A3A3A;
     private static final int COL_BORDER_INNER = 0xFF1E1E1E;
     private static final int COL_NAME         = 0xFFFFFFFF;
@@ -45,6 +45,7 @@ public class TrainerDialogueScreen extends Screen {
 
     // Layout
     private int dialogX, dialogY, dialogW, dialogH;
+    private final List<DialogueButton> dialogueButtons = new ArrayList<>();
 
     public TrainerDialogueScreen(UUID trainerUUID, TrainerType trainerType,
                                  OpenTrainerDialoguePacket.DialogueState state) {
@@ -68,6 +69,7 @@ public class TrainerDialogueScreen extends Screen {
         dialogX = (width  - dialogW) / 2;
         dialogY = (height - dialogH) / 2;
         clearWidgets();
+        dialogueButtons.clear();
         addOptionButtons();
     }
 
@@ -80,9 +82,11 @@ public class TrainerDialogueScreen extends Screen {
 
         for (int i = 0; i < options.size(); i++) {
             OptionButton opt = options.get(i);
-            addRenderableWidget(new DialogueButton(
+            DialogueButton button = new DialogueButton(
                     dialogX + 16, startY + i * (btnH + gap), btnW, btnH,
-                    opt.label, btn -> opt.action.run()));
+                    opt.label, btn -> opt.action.run());
+            dialogueButtons.add(button);
+            addRenderableWidget(button);
         }
     }
 
@@ -128,6 +132,10 @@ public class TrainerDialogueScreen extends Screen {
         g.fill(dialogX, dialogY, dialogX + dialogW / 2, dialogY + 2,
                 (accent & 0x00FFFFFF) | 0x55FFFFFF);
 
+        for (DialogueButton button : dialogueButtons) {
+            button.render(g, mx, my, pt);
+        }
+
         // NPC name
         int nx = dialogX + 16, ny = dialogY + 12;
         g.drawString(font, trainerType.npcName, nx + 1, ny + 1, COL_NAME_SHADOW, false);
@@ -154,8 +162,6 @@ public class TrainerDialogueScreen extends Screen {
                     + trainerType.prerequisiteItem.getDefaultInstance().getHoverName().getString();
             g.drawString(font, hint, dialogX + 16, textY + 2, 0xFFAAAA44, false);
         }
-
-        super.render(g, mx, my, pt);
     }
 
     private String[] getDialogueLines() {

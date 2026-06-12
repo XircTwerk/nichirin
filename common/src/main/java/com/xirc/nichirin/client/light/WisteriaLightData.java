@@ -17,7 +17,7 @@ public final class WisteriaLightData {
     public static final int MAX_LIGHTS = 24;
 
     private static final int SCAN_RADIUS = 32;
-    private static final int VERTICAL_SCAN_RADIUS = 18;
+    private static final int VERTICAL_SCAN_RADIUS = 48;
     // How far each leaf's glow reaches and how strong it is (NOT the scan distance / how close you
     // have to be to the tree — that's SCAN_RADIUS). Bigger radius + strength = the glow spreads
     // further and reads brighter on nearby surfaces.
@@ -25,8 +25,8 @@ public final class WisteriaLightData {
     private static final float DAY_LIGHT_STRENGTH = 0.75F;
     private static final float NIGHT_LIGHT_STRENGTH = 1.2F;
     // A touch more saturated than before so the pink actually reads against foliage.
-    private static final int DAY_COLOR = 0xFFB6EA;
-    private static final int NIGHT_COLOR = 0xC56DFF;
+    private static final int DAY_COLOR = 0xC8A2FF;
+    private static final int NIGHT_COLOR = 0x7E3DCC;
 
     // Per-tick lerp speed each light's radius eases toward its target (full LIGHT_RADIUS when a
     // leaf is present, 0 when it has left the scan). Low value = "super smooth" grow-in / fade-out

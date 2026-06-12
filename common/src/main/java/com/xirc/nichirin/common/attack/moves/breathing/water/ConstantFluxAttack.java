@@ -52,7 +52,10 @@ public class ConstantFluxAttack extends WaterBreathingAttackBase {
         draggedEntities.clear();
         comboTargets.clear();
         fluxTicks = 0;
+    }
 
+    @Override
+    protected void onActiveStart() {
         // Constant flux startup sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.WATER_AMBIENT, SoundSource.PLAYERS, 1.0f, 1.1f);

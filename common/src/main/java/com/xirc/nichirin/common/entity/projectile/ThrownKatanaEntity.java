@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.entity.projectile;
 
+import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -22,7 +23,6 @@ import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
@@ -196,12 +196,7 @@ public class ThrownKatanaEntity extends Entity {
                 e -> e != owner && e.isAlive() && !hitEntities.contains(e.getUUID()));
 
         for (LivingEntity target : targets) {
-            DamageSource source;
-            if (owner instanceof Player player) {
-                source = target.damageSources().playerAttack(player);
-            } else {
-                source = target.damageSources().generic();
-            }
+            DamageSource source = NichirinDamageSources.thrownKatana(target, this, owner);
 
             boolean hurt = target.hurt(source, damage);
             if (hurt) {

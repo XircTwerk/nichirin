@@ -14,6 +14,7 @@ import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
+import com.xirc.nichirin.common.entity.ai.SmartTrainerAttackGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.monster.Monster;
@@ -64,7 +65,7 @@ public class WaterBreathingTrainerEntity extends BaseBreathingTrainerEntity {
     @Override
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
-        goalSelector.addGoal(1, new com.xirc.nichirin.common.entity.ai.SmartTrainerAttackGoal(this, 1.2, true));
+        goalSelector.addGoal(1, new SmartTrainerAttackGoal(this, 1.2, true));
         goalSelector.addGoal(2, new LookAtPlayerGoal(this, Player.class, 16.0f));
         goalSelector.addGoal(3, new WaterAvoidingRandomStrollGoal(this, 0.7));
         goalSelector.addGoal(4, new RandomLookAroundGoal(this));

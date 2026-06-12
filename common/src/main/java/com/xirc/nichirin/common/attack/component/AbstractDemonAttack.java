@@ -1,11 +1,13 @@
 package com.xirc.nichirin.common.attack.component;
 
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset.MoveConfiguration;
+import com.xirc.nichirin.common.entity.npc.TempleDemonEntity;
 import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
 import com.xirc.nichirin.common.util.ComboIntegration;
 import com.xirc.nichirin.common.util.HitboxData;
 import com.xirc.nichirin.common.util.AttackInterruptTracker;
 import com.xirc.nichirin.common.util.NichirinArmorDamage;
+import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
@@ -99,6 +101,11 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
         if (configured) {
             return; // Prevent double-configuration
         }
+        if (config == null) {
+            // Mark as configured to keep the framework happy; values stay at their field defaults.
+            this.configured = true;
+            return;
+        }
         this.damage = config.getDamageOrDefault(0f);
         this.range = config.getRangeOrDefault(0f);
         this.knockback = config.getKnockbackOrDefault(0f);
@@ -139,6 +146,11 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
         if (this.dashSpeed != null) {
             this.dashSpeed *= multiplier;
         }
+    }
+
+    public void applyDamageMultiplier(float multiplier) {
+        if (multiplier == 1.0f) return;
+        this.damage *= multiplier;
     }
 
     /**
@@ -318,12 +330,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
         }
 
         // Apply damage using configured values
-        DamageSource source;
-        if (user instanceof Player player) {
-            source = user.damageSources().playerAttack(player);
-        } else {
-            source = user.damageSources().mobAttack(user);
-        }
+        DamageSource source = damageSourceFor(user);
         boolean damaged = NichirinArmorDamage.hurt(target, source, damage);
 
         if (damaged) {
@@ -375,12 +382,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
         target.hurtTime = 0;
 
         // Apply damage
-        DamageSource source;
-        if (user instanceof Player player) {
-            source = user.damageSources().playerAttack(player);
-        } else {
-            source = user.damageSources().mobAttack(user);
-        }
+        DamageSource source = damageSourceFor(user);
         boolean damaged = NichirinArmorDamage.hurt(target, source, damage);
 
         if (damaged) {
@@ -399,13 +401,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
 
             // Apply actual stun effect
             MobEffectInstance stunInstance = new MobEffectInstance(
-                    NichirinEffectRegistry.stunned(),
-                    hitStun, // Duration in ticks
-                    2, // Amplifier
-                    false, // Ambient
-                    false, // Show particles
-                    true // Show icon
-            );
+                    NichirinEffectRegistry.stunned(), hitStun, 2, false, false, true);
             target.addEffect(stunInstance);
         }
 
@@ -473,6 +469,12 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
                 }
             }
         }
+    }
+
+    private DamageSource damageSourceFor(LivingEntity attacker) {
+        if (allowNonDemonUser) return NichirinDamageSources.cqc(attacker);
+        if (attacker instanceof TempleDemonEntity) return NichirinDamageSources.templeDemon(attacker);
+        return NichirinDamageSources.demon(attacker);
     }
 
     /**

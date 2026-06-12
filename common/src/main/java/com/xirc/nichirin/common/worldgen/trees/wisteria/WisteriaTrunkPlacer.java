@@ -80,10 +80,10 @@ public class WisteriaTrunkPlacer extends TrunkPlacer {
             int branchLength = chooseBranchLength(random, height, i);
             BlockPos branchEnd = placeBranch(level, blockSetter, random, connection, config, direction, branchLength, i % 2 == 0);
             foliageAttachments.add(new FoliagePlacer.FoliageAttachment(branchEnd.above(random.nextBoolean() ? 0 : 1), 0, false));
-            if (branchLength >= 4) {
+            if (largeTree && branchLength >= 6 && random.nextInt(3) == 0) {
                 int[] sideDirection = turn(direction, random.nextBoolean());
                 BlockPos splitStart = branchEnd.offset(-direction[0], 0, -direction[1]);
-                BlockPos splitEnd = placeBranch(level, blockSetter, random, splitStart, config, sideDirection, 2 + random.nextInt(3), random.nextBoolean());
+                BlockPos splitEnd = placeBranch(level, blockSetter, random, splitStart, config, sideDirection, 2, true);
                 foliageAttachments.add(new FoliagePlacer.FoliageAttachment(splitEnd.above(), 0, false));
             }
         }
@@ -134,8 +134,8 @@ public class WisteriaTrunkPlacer extends TrunkPlacer {
     }
 
     private int chooseBranchLength(RandomSource random, int height, int index) {
-        int base = height >= 10 ? 5 : height >= 7 ? 4 : 3;
-        int variation = height >= 10 ? 4 : 3;
+        int base = height >= 10 ? 4 : height >= 7 ? 3 : 2;
+        int variation = height >= 10 ? 3 : 2;
         int length = base + random.nextInt(variation);
         return index % 3 == 0 ? length + 1 : length;
     }
@@ -145,10 +145,10 @@ public class WisteriaTrunkPlacer extends TrunkPlacer {
         for (int step = 1; step <= length; step++) {
             pos = pos.offset(direction[0], 0, direction[1]);
             if (step > 2 && step % 3 == 0) {
-                pos = rises ? pos.above() : pos.below();
+                pos = pos.above();
             }
             this.placeDirectionalLog(level, blockSetter, random, pos, config, direction[0], direction[1]);
-            if (step > 1 && random.nextInt(5) == 0) {
+            if (step > 2 && length >= 5 && random.nextInt(8) == 0) {
                 int[] side = turn(direction, random.nextBoolean());
                 this.placeDirectionalLog(level, blockSetter, random, pos.offset(side[0], 0, side[1]), config, side[0], side[1]);
             }

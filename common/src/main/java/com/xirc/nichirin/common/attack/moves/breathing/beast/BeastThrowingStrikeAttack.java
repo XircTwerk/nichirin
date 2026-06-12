@@ -24,6 +24,10 @@ public class BeastThrowingStrikeAttack extends BeastBreathingAttackBase {
     @Override
     protected void onStart() {
         thrown = false;
+    }
+
+    @Override
+    protected void onActiveStart() {
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.TRIDENT_THROW, SoundSource.PLAYERS, 1.0f, 1.2f);
     }

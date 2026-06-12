@@ -18,6 +18,10 @@ public class BeastBendySlashAttack extends BeastBreathingAttackBase {
     @Override
     protected void onStart() {
         slashDone = false;
+    }
+
+    @Override
+    protected void onActiveStart() {
         playHeavySlashSound();
     }
 

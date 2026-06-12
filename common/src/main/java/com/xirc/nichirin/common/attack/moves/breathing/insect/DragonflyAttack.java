@@ -25,7 +25,10 @@ public class DragonflyAttack extends InsectBreathingAttackBase {
         nextStabTick = 0;
         slashDirection = user.getLookAngle().normalize();
         user.setDeltaMovement(Vec3.ZERO);
+    }
 
+    @Override
+    protected void onActiveStart() {
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.DROWNED_AMBIENT, SoundSource.PLAYERS, 0.8f, 1.8f);
         createCompoundEyeEffect();

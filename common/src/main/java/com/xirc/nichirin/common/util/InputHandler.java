@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.util;
 
+import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
@@ -113,6 +114,11 @@ public class InputHandler {
 
     private static void handleServerRightClick(ServerPlayer player, boolean crouch) {
         if (isServerBlocked(player)) {
+            return;
+        }
+
+        // Right-click cancels any active breathing attack before starting a new one.
+        if (AbstractBreathingAttack.cancelActiveAttack(player)) {
             return;
         }
 

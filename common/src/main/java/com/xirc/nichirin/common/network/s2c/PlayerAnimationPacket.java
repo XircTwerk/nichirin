@@ -12,20 +12,28 @@ public class PlayerAnimationPacket {
 
     private final int playerId;
     private final String animationName;
+    private final float animSpeed;
 
     public PlayerAnimationPacket(int playerId, String animationName) {
+        this(playerId, animationName, 1.0f);
+    }
+
+    public PlayerAnimationPacket(int playerId, String animationName, float animSpeed) {
         this.playerId = playerId;
         this.animationName = animationName;
+        this.animSpeed = animSpeed;
     }
 
     public PlayerAnimationPacket(FriendlyByteBuf buf) {
         this.playerId = buf.readInt();
         this.animationName = buf.readUtf();
+        this.animSpeed = buf.readFloat();
     }
 
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeInt(playerId);
         buf.writeUtf(animationName);
+        buf.writeFloat(animSpeed);
     }
 
     @Environment(EnvType.CLIENT)
@@ -34,7 +42,7 @@ public class PlayerAnimationPacket {
         if (mc.level != null) {
             Entity entity = mc.level.getEntity(playerId);
             if (entity instanceof Player player) {
-                NichirinAnimations.playAnimation(player, animationName);
+                NichirinAnimations.playAnimation(player, animationName, animSpeed);
             }
         }
     }

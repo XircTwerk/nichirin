@@ -35,7 +35,10 @@ public class BeeStingAttack extends InsectBreathingAttackBase {
         trailEffectCounter = 0;
         lastDashPos = null;
         dashDirection = user.getLookAngle().normalize();
+    }
 
+    @Override
+    protected void onActiveStart() {
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.BEE_LOOP_AGGRESSIVE, SoundSource.PLAYERS, 0.8f, 1.5f);
         createBeeSwarmEffect();

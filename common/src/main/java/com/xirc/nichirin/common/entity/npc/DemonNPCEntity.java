@@ -3,6 +3,7 @@ package com.xirc.nichirin.common.entity.npc;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.entity.MovesetCapableNPC;
 import com.xirc.nichirin.common.system.NPCResourceManager;
+import com.xirc.nichirin.common.util.NichirinDamageSources;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -261,7 +262,7 @@ public abstract class DemonNPCEntity extends Monster implements MovesetCapableNP
         seekNearbyShade();
         igniteForSeconds(4);
         invulnerableTime = 0;
-        hurt(damageSources().onFire(), getMaxHealth() / 120.0f);
+        hurt(NichirinDamageSources.sunlight(this), getMaxHealth() / 120.0f);
         syncBloodToHealth();
     }
 

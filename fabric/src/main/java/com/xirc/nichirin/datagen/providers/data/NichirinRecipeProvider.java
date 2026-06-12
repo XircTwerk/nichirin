@@ -117,6 +117,38 @@ public class NichirinRecipeProvider extends FabricRecipeProvider {
                 .unlockedBy("has_paper", InventoryChangeTrigger.TriggerInstance.hasItems(Items.PAPER))
                 .save(exporter);
 
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, NichirinItemRegistry.WISTERIA_FLOWER.get(), 2)
+                .requires(NichirinBlockRegistry.WISTERIA_LEAVES_ITEM.get())
+                .unlockedBy("has_wisteria_leaves", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinBlockRegistry.WISTERIA_LEAVES_ITEM.get()))
+                .save(exporter);
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.BREWING, NichirinItemRegistry.WISTERIA_EXTRACT.get())
+                .requires(NichirinItemRegistry.WISTERIA_FLOWER.get())
+                .requires(Items.GLASS_BOTTLE)
+                .unlockedBy("has_wisteria_flower", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinItemRegistry.WISTERIA_FLOWER.get()))
+                .save(exporter);
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.BREWING, NichirinItemRegistry.WISTERIA_TEA.get())
+                .requires(NichirinItemRegistry.WISTERIA_EXTRACT.get())
+                .requires(Items.POTION)
+                .unlockedBy("has_wisteria_extract", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinItemRegistry.WISTERIA_EXTRACT.get()))
+                .save(exporter);
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.COMBAT, NichirinItemRegistry.WISTERIA_ARROW.get(), 4)
+                .requires(NichirinItemRegistry.WISTERIA_EXTRACT.get())
+                .requires(Items.ARROW, 4)
+                .unlockedBy("has_wisteria_extract", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinItemRegistry.WISTERIA_EXTRACT.get()))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, NichirinBlockRegistry.WISTERIA_LANTERN_ITEM.get())
+                .define('E', NichirinItemRegistry.WISTERIA_EXTRACT.get())
+                .define('L', Items.LANTERN)
+                .pattern(" E ")
+                .pattern("ELE")
+                .pattern(" E ")
+                .unlockedBy("has_wisteria_extract", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinItemRegistry.WISTERIA_EXTRACT.get()))
+                .save(exporter);
+
         ShapedRecipeBuilder.shaped(RecipeCategory.FOOD, NichirinBlockRegistry.BENTO_BOX_BLOCK.get())
                 .define('W', ItemTags.WOODEN_SLABS)
                 .pattern("WWW")

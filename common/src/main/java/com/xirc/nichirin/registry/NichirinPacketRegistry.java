@@ -2,8 +2,10 @@ package com.xirc.nichirin.registry;
 
 import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.client.data.ClientProgressionCache;
+import com.xirc.nichirin.client.gui.trainer.TrainerDialogueClientHandler;
 import com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer;
 import com.xirc.nichirin.client.renderer.effects.ParrySparkHandler;
+import com.xirc.nichirin.common.attack.moves.breathing.thunder.ThunderclapChargeManager;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.data.*;
@@ -90,10 +92,22 @@ public interface NichirinPacketRegistry {
     ResourceLocation SHEATH_SYNC_ID                = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "sheath_sync");
     ResourceLocation CQC_PRESET_UPDATE_ID          = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "cqc_preset_update");
     ResourceLocation CQC_STANCE_UPDATE_ID          = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "cqc_stance_update");
+    ResourceLocation CQC_ACTIVE_PRESET_UPDATE_ID   = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "cqc_active_preset_update");
+    ResourceLocation CQC_PRESET_RESET_ID           = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "cqc_preset_reset");
+    ResourceLocation CQC_FOLLOWUP_UPDATE_ID        = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "cqc_followup_update");
     ResourceLocation CQC_PRESET_SYNC_ID            = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "cqc_preset_sync");
     // Shared cooldown HUD channel — sent by CooldownDisplayPacket, MoveExecutor and KatanaBlock,
     // received by CooldownDisplayPacket.registerClient() on the client.
     ResourceLocation COOLDOWN_DISPLAY_ID           = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "cooldown_display");
+    ResourceLocation AURA_ADD_ID                   = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "aura_add");
+    ResourceLocation AURA_REMOVE_ID                = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "aura_remove");
+    ResourceLocation AURA_CLEAR_ID                 = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "aura_clear");
+    ResourceLocation OUTLINE_ADD_ID                = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "outline_add");
+    ResourceLocation OUTLINE_REMOVE_ID             = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "outline_remove");
+    ResourceLocation OUTLINE_CLEAR_ID              = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "outline_clear");
+    ResourceLocation AFTERIMAGE_ID                 = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "afterimage");
+    ResourceLocation THUNDERCLAP_RELEASE_ID        = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "thunderclap_release");
+    ResourceLocation DESTRUCTIVE_DEATH_STATE_ID    = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "destructive_death_state");
 
     // Packet class mappings
     Map<Class<?>, ResourceLocation> PACKET_IDS = new HashMap<>();
@@ -118,9 +132,11 @@ public interface NichirinPacketRegistry {
         PACKET_IDS.put(DemonSyncPacket.class, DEMON_SYNC_ID);
         PACKET_IDS.put(TriggerShaderPacket.class, TRIGGER_SHADER_ID);
         PACKET_IDS.put(MistClonesPacket.class, MIST_CLONES_ID);
+        PACKET_IDS.put(AfterimagePacket.class, AFTERIMAGE_ID);
         PACKET_IDS.put(SheathInputPacket.class, SHEATH_INPUT_ID);
         PACKET_IDS.put(SheathConfigPacket.class, SHEATH_CONFIG_ID);
         PACKET_IDS.put(SheathSyncPacket.class, SHEATH_SYNC_ID);
+        PACKET_IDS.put(DestructiveDeathStateSyncPacket.class, DESTRUCTIVE_DEATH_STATE_ID);
 
         registerPackets();
     }
@@ -157,7 +173,10 @@ public interface NichirinPacketRegistry {
                 PLAYER_ANIMATION_ID, COMBO_COUNTER_ID, MOVESET_CONFIG_ID, SYNC_BREATHING_STYLE,
                 SYNC_PROGRESSION_ID, DEMON_SYNC_ID, HITBOX_PACKET_ID, TRIGGER_SHADER_ID,
                 PARRY_SPARK_ID, BLOOD_MOON_SYNC_ID, PERK_SYNC_ID, OPEN_TRAINER_DIALOGUE_ID,
-                MIST_CLONES_ID, SHEATH_SYNC_ID, OPEN_CONFIG_SCREEN_ID, CQC_PRESET_SYNC_ID, COOLDOWN_DISPLAY_ID
+                MIST_CLONES_ID, SHEATH_SYNC_ID, OPEN_CONFIG_SCREEN_ID, CQC_PRESET_SYNC_ID, COOLDOWN_DISPLAY_ID,
+                AURA_ADD_ID, AURA_REMOVE_ID, AURA_CLEAR_ID,
+                OUTLINE_ADD_ID, OUTLINE_REMOVE_ID, OUTLINE_CLEAR_ID, AFTERIMAGE_ID,
+                DESTRUCTIVE_DEATH_STATE_ID
         };
         for (ResourceLocation id : s2cIds) {
             try {
@@ -337,6 +356,33 @@ public interface NichirinPacketRegistry {
                 context.queue(() -> handleCqcStanceUpdate(serverPlayer, stanceIndex));
             }
         });
+
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, CQC_ACTIVE_PRESET_UPDATE_ID, (buf, context) -> {
+            int presetIndex = buf.readInt();
+            if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
+                context.queue(() -> handleCqcActivePresetUpdate(serverPlayer, presetIndex));
+            }
+        });
+
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, CQC_PRESET_RESET_ID, (buf, context) -> {
+            if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
+                context.queue(() -> handleCqcPresetReset(serverPlayer));
+            }
+        });
+
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, CQC_FOLLOWUP_UPDATE_ID, (buf, context) -> {
+            String baseMoveId = buf.readUtf();
+            String followupMoveId = buf.readUtf();
+            if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
+                context.queue(() -> handleCqcFollowupUpdate(serverPlayer, baseMoveId, followupMoveId));
+            }
+        });
+
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, THUNDERCLAP_RELEASE_ID, (buf, context) -> {
+            if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
+                context.queue(() -> ThunderclapChargeManager.releaseCharge(serverPlayer));
+            }
+        });
     }
 
     static void registerS2CPacketsWithFallback() {
@@ -480,12 +526,22 @@ public interface NichirinPacketRegistry {
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, OPEN_TRAINER_DIALOGUE_ID, (buf, context) -> {
                 OpenTrainerDialoguePacket packet =
                         new OpenTrainerDialoguePacket(buf);
-                context.queue(() -> packet.handleClient());
+                context.queue(() -> TrainerDialogueClientHandler.open(packet));
             });
 
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, MIST_CLONES_ID, (buf, context) -> {
                 MistClonesPacket packet = new MistClonesPacket(buf);
                 context.queue(() -> packet.handleClient());
+            });
+
+            NetworkManager.registerReceiver(NetworkManager.Side.S2C, AFTERIMAGE_ID, (buf, context) -> {
+                AfterimagePacket packet = new AfterimagePacket(buf);
+                context.queue(packet::handleClient);
+            });
+
+            NetworkManager.registerReceiver(NetworkManager.Side.S2C, DESTRUCTIVE_DEATH_STATE_ID, (buf, context) -> {
+                DestructiveDeathStateSyncPacket packet = new DestructiveDeathStateSyncPacket(buf);
+                context.queue(packet::handleClient);
             });
 
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, SHEATH_SYNC_ID, (buf, context) -> {
@@ -494,25 +550,33 @@ public interface NichirinPacketRegistry {
             });
 
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, CQC_PRESET_SYNC_ID, (buf, context) -> {
-                String left = buf.readUtf();
-                String right = buf.readUtf();
-                String crouchRight = buf.readUtf();
-                String[] wheelMoves = new String[CqcPresetData.WHEEL_SLOT_COUNT];
-                for (int i = 0; i < CqcPresetData.WHEEL_SLOT_COUNT; i++) {
-                    wheelMoves[i] = buf.readUtf();
+                int activePresetIndex = buf.readInt();
+                CqcPresetData.Preset[] syncedPresets = new CqcPresetData.Preset[CqcPresetData.PRESET_COUNT];
+                for (int presetIndex = 0; presetIndex < CqcPresetData.PRESET_COUNT; presetIndex++) {
+                    String left = buf.readUtf();
+                    String right = buf.readUtf();
+                    String crouchRight = buf.readUtf();
+                    String[] wheelMoves = new String[CqcPresetData.WHEEL_SLOT_COUNT];
+                    for (int i = 0; i < CqcPresetData.WHEEL_SLOT_COUNT; i++) {
+                        wheelMoves[i] = buf.readUtf();
+                    }
+                    int stanceIndex = buf.readInt();
+                    syncedPresets[presetIndex] = new CqcPresetData.Preset("Preset " + (presetIndex + 1),
+                            left, right, crouchRight, stanceIndex,
+                            wheelMoves[0], wheelMoves[1], wheelMoves[2], wheelMoves[3], wheelMoves[4]);
+                    int followupCount = buf.readInt();
+                    for (int i = 0; i < followupCount; i++) {
+                        syncedPresets[presetIndex].setFollowupMove(buf.readUtf(), buf.readUtf());
+                    }
                 }
-                int stanceIndex = buf.readInt();
                 context.queue(() -> {
                     Player player = context.getPlayer();
                     if (player == null) return;
                     CqcPresetData preset = PlayerDataProvider.getData(player).getCqcPresetData();
-                    preset.setSlot(CqcPresetData.Slot.LEFT_CLICK, -1, left);
-                    preset.setSlot(CqcPresetData.Slot.RIGHT_CLICK, -1, right);
-                    preset.setSlot(CqcPresetData.Slot.CROUCH_RIGHT_CLICK, -1, crouchRight);
-                    for (int i = 0; i < CqcPresetData.WHEEL_SLOT_COUNT; i++) {
-                        preset.setSlot(CqcPresetData.Slot.WHEEL, i, wheelMoves[i]);
+                    for (int i = 0; i < CqcPresetData.PRESET_COUNT; i++) {
+                        preset.setPresetFromNetwork(i, syncedPresets[i]);
                     }
-                    preset.setStanceIndex(stanceIndex);
+                    preset.setActivePresetIndex(activePresetIndex);
                 });
             });
 
@@ -660,16 +724,16 @@ public interface NichirinPacketRegistry {
                     && requestedMoveset.isNeutralMoveset()
                     && movesetId.equals(PlayerDataProvider.getMovesetData(player).getFightingMovesetId())) {
                 PlayerDataProvider.clearFightingAndSync(player);
-                player.sendSystemMessage(Component.literal("\u00A77Unequipped " + formatStyleName(movesetId) + "."));
+                player.displayClientMessage(
+                        Component.literal("\u00A77Unequipped " + formatStyleName(movesetId) + "."), true);
                 return;
             }
 
             boolean unlockedByDefault = requestedMoveset != null && requestedMoveset.isNeutralMoveset();
             if (movesetId != null && !unlockedByDefault && !ProgressionHelper.isStyleUnlocked(player, movesetId)) {
                 String requirement = ProgressionHelper.getUnlockRequirement(movesetId);
-                player.sendSystemMessage(Component.literal(
-                        "§cYou haven't unlocked this breathing style! §fRequirement: §e" + requirement
-                ));
+                player.displayClientMessage(Component.literal(
+                        "§cYou haven't unlocked this breathing style! §fRequirement: §e" + requirement), true);
                 return;
             }
 
@@ -677,13 +741,11 @@ public interface NichirinPacketRegistry {
 
             if (movesetId != null) {
                 String styleName = formatStyleName(movesetId);
-                player.sendSystemMessage(Component.literal(
-                        "§aSwitched to " + styleName + "."
-                ));
+                player.displayClientMessage(
+                        Component.literal("§aSwitched to " + styleName + "."), true);
             } else {
-                player.sendSystemMessage(Component.literal(
-                        "§7Cleared breathing style."
-                ));
+                player.displayClientMessage(
+                        Component.literal("§7Cleared breathing style."), true);
             }
         } catch (Exception e) {
             // Log error but don't crash
@@ -824,17 +886,51 @@ public interface NichirinPacketRegistry {
         sendCqcPresetSync(player);
     }
 
+    static void handleCqcActivePresetUpdate(ServerPlayer player, int presetIndex) {
+        boolean changed = PlayerDataProvider.getData(player).getCqcPresetData().setActivePresetIndex(presetIndex);
+        if (!changed) return;
+        PlayerDataStorage.savePlayerData(player);
+        sendCqcPresetSync(player);
+    }
+
+    static void handleCqcPresetReset(ServerPlayer player) {
+        PlayerDataProvider.getData(player).getCqcPresetData().resetActivePreset();
+        PlayerDataStorage.savePlayerData(player);
+        sendCqcPresetSync(player);
+    }
+
+    static void handleCqcFollowupUpdate(ServerPlayer player, String baseMoveId, String followupMoveId) {
+        boolean changed = PlayerDataProvider.getData(player).getCqcPresetData().setFollowupForPlayer(player, baseMoveId, followupMoveId);
+        if (!changed) {
+            player.displayClientMessage(Component.literal("Invalid CQC followup selection.")
+                    .withStyle(style -> style.withColor(0xFF5555)), true);
+            return;
+        }
+        PlayerDataStorage.savePlayerData(player);
+        sendCqcPresetSync(player);
+    }
+
     static void sendCqcPresetSync(ServerPlayer player) {
         try {
             CqcPresetData preset = PlayerDataProvider.getData(player).getCqcPresetData();
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-            buf.writeUtf(preset.getLeftClickMove());
-            buf.writeUtf(preset.getRightClickMove());
-            buf.writeUtf(preset.getCrouchRightClickMove());
-            for (String moveId : preset.getWheelMovesCopy()) {
-                buf.writeUtf(moveId);
+            buf.writeInt(preset.getActivePresetIndex());
+            for (int presetIndex = 0; presetIndex < CqcPresetData.PRESET_COUNT; presetIndex++) {
+                CqcPresetData.Preset presetData = preset.getPresetCopy(presetIndex);
+                buf.writeUtf(presetData.leftClickMove());
+                buf.writeUtf(presetData.rightClickMove());
+                buf.writeUtf(presetData.crouchRightClickMove());
+                for (String moveId : presetData.wheelMovesCopy()) {
+                    buf.writeUtf(moveId);
+                }
+                buf.writeInt(presetData.stanceIndex());
+                Map<String, String> followups = presetData.followupsCopy();
+                buf.writeInt(followups.size());
+                for (Map.Entry<String, String> entry : followups.entrySet()) {
+                    buf.writeUtf(entry.getKey());
+                    buf.writeUtf(entry.getValue());
+                }
             }
-            buf.writeInt(preset.getStanceIndex());
             NetworkManager.sendToPlayer(player, CQC_PRESET_SYNC_ID, server(buf, player));
         } catch (Exception e) {
             // Handle error
@@ -858,6 +954,36 @@ public interface NichirinPacketRegistry {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             buf.writeInt(stanceIndex);
             NetworkManager.sendToServer(CQC_STANCE_UPDATE_ID, client(buf));
+        } catch (Exception e) {
+            // Handle error
+        }
+    }
+
+    static void requestCqcActivePresetUpdate(int presetIndex) {
+        try {
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+            buf.writeInt(presetIndex);
+            NetworkManager.sendToServer(CQC_ACTIVE_PRESET_UPDATE_ID, client(buf));
+        } catch (Exception e) {
+            // Handle error
+        }
+    }
+
+    static void requestCqcPresetReset() {
+        try {
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+            NetworkManager.sendToServer(CQC_PRESET_RESET_ID, client(buf));
+        } catch (Exception e) {
+            // Handle error
+        }
+    }
+
+    static void requestCqcFollowupUpdate(String baseMoveId, String followupMoveId) {
+        try {
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+            buf.writeUtf(baseMoveId);
+            buf.writeUtf(followupMoveId);
+            NetworkManager.sendToServer(CQC_FOLLOWUP_UPDATE_ID, client(buf));
         } catch (Exception e) {
             // Handle error
         }
@@ -1006,9 +1132,13 @@ public interface NichirinPacketRegistry {
             p.toBytes(buf);
         } else if (packet instanceof MistClonesPacket p) {
             p.toBytes(buf);
+        } else if (packet instanceof AfterimagePacket p) {
+            p.toBytes(buf);
         } else if (packet instanceof SheathInputPacket p) {
             p.toBytes(buf);
         } else if (packet instanceof SheathConfigPacket p) {
+            p.toBytes(buf);
+        } else if (packet instanceof DestructiveDeathStateSyncPacket p) {
             p.toBytes(buf);
         }
 
@@ -1033,6 +1163,23 @@ public interface NichirinPacketRegistry {
             buf.release();
         } catch (Exception e) {
             // ignore
+        }
+    }
+
+    static void sendAfterimageTrail(LivingEntity entity, Vec3 from, Vec3 to, int lifetimeTicks, int copies, float alpha) {
+        if (entity.level().isClientSide) return;
+        if (!(entity.level() instanceof ServerLevel serverLevel)) return;
+        try {
+            ResourceLocation id = PACKET_IDS.get(AfterimagePacket.class);
+            if (id == null) return;
+
+            FriendlyByteBuf buf = encodePacket(new AfterimagePacket(entity.getId(), from, to, lifetimeTicks, copies, alpha));
+            serverLevel.getServer().getPlayerList().getPlayers().stream()
+                    .filter(p -> p.level() == entity.level()
+                            && p.distanceToSqr(entity) <= 256.0 * 256.0)
+                    .forEach(p -> NetworkManager.sendToPlayer(p, id, serverCopy(buf, p)));
+            buf.release();
+        } catch (Exception ignored) {
         }
     }
 

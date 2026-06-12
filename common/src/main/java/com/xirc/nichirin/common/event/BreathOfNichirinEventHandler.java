@@ -4,7 +4,10 @@ import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.component.AbstractDemonAttack;
 import com.xirc.nichirin.common.attack.moves.breathing.sound.TempoBreakerAttack;
 import com.xirc.nichirin.common.attack.moveset.DefaultKatanaMoveset;
+import com.xirc.nichirin.common.attack.moves.demon.destructive.DestructiveDeathPlayerAura;
+import com.xirc.nichirin.common.system.aura.MovesetAuraTicker;
 import com.xirc.nichirin.common.attack.moveset.demon.DefaultDemonMoveset;
+import com.xirc.nichirin.common.attack.moveset.demon.DestructiveDeathMoveset;
 import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
@@ -13,12 +16,14 @@ import com.xirc.nichirin.common.entity.npc.DemonNPCEntity;
 import com.xirc.nichirin.common.item.DemonBloodVialItem;
 import com.xirc.nichirin.common.event.item.RiceInteractionHandler;
 import com.xirc.nichirin.common.event.system.DemonFoodHandler;
+import com.xirc.nichirin.common.event.system.WisteriaGraceHandler;
 import com.xirc.nichirin.common.system.BloodMoonManager;
 import com.xirc.nichirin.common.system.DemonManager;
 import com.xirc.nichirin.common.system.KillRewardManager;
 import com.xirc.nichirin.common.system.movement.MovementContext;
 import com.xirc.nichirin.common.system.sheathing.SheathingManager;
 import com.xirc.nichirin.common.util.InputHandler;
+import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinItemRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.event.events.common.LifecycleEvent;
@@ -53,6 +58,7 @@ public class BreathOfNichirinEventHandler {
         registerDemonEvents();
         registerKillRewards();
         RiceInteractionHandler.register();
+        WisteriaGraceHandler.register();
         registerLootInjection();
     }
 
@@ -137,6 +143,8 @@ public class BreathOfNichirinEventHandler {
         if (server != null) {
             BloodMoonManager.onServerTick(server);
             MoveExecutor.tickAllAttacks(server);
+            DestructiveDeathPlayerAura.tick(server);
+            MovesetAuraTicker.tick(server);
             // Tempo Breaker's delayed-explosion timer lives outside any single attack instance —
             // tick it here so explosions still fire after the attack itself has finished.
             TempoBreakerAttack.processPendingExplosionsGlobal(server);
@@ -148,7 +156,7 @@ public class BreathOfNichirinEventHandler {
 
                     if (bloodPoints <= 0 && player.isAlive()) {
                         AbstractDemonAttack.clearSelfTickingAttacks(player);
-                        player.hurt(player.damageSources().magic(), Float.MAX_VALUE);
+                        player.hurt(NichirinDamageSources.bloodLoss(player), Float.MAX_VALUE);
                     }
 
                     // Maintain infinite night vision while a demon
@@ -192,6 +200,7 @@ public class BreathOfNichirinEventHandler {
                 if (serverPlayer.server != null) PlayerDataProvider.forceSync(serverPlayer.server);
                 NichirinPacketRegistry.sendDemonSync(serverPlayer, 0, 0, false);
                 try { DefaultDemonMoveset.cleanupPlayer(serverPlayer); } catch (Exception ignored) {}
+                try { DestructiveDeathMoveset.cleanupPlayer(serverPlayer); } catch (Exception ignored) {}
                 serverPlayer.displayClientMessage(
                         net.minecraft.network.chat.Component.translatable("nichirin.message.demon_lost_on_death")
                                 .withStyle(net.minecraft.ChatFormatting.AQUA),
@@ -211,6 +220,8 @@ public class BreathOfNichirinEventHandler {
             MovementContext.cleanupPlayer(player);
             SheathingManager.cleanupPlayer(player);
             DefaultKatanaMoveset.cleanupPlayer(player);
+            DestructiveDeathMoveset.cleanupPlayer(player);
+            MovesetAuraTicker.clear(player.getUUID());
             DemonBloodVialItem.clearPending(player.getUUID());
         } catch (Exception e) {
             e.printStackTrace();

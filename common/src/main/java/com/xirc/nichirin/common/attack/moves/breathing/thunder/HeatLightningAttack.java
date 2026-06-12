@@ -36,7 +36,10 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
     protected void onStart() {
         slashHitTargets.clear();
         lightningStruck = false;
+    }
 
+    @Override
+    protected void onActiveStart() {
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0f, 0.7f);
     }
@@ -104,6 +107,9 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
         target.hurtMarked = true;
         target.hasImpulse = true;
 
+        if (world instanceof ServerLevel serverLevel) {
+            serverLevel.getChunkSource().broadcast(target, new ClientboundSetEntityMotionPacket(target));
+        }
         if (target instanceof ServerPlayer serverPlayer) {
             serverPlayer.connection.send(new ClientboundSetEntityMotionPacket(target));
         }

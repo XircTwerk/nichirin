@@ -44,7 +44,10 @@ public class ThunderSwarmAttack extends ThunderBreathingAttackBase {
         activeSlashes.clear();
         slashesLaunched = 0;
         launchTimer = 0;
+    }
 
+    @Override
+    protected void onActiveStart() {
         // Initial thunder sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, 0.8f, 1.2f);

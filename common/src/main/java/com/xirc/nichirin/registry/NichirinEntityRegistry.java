@@ -5,6 +5,7 @@ import com.xirc.nichirin.common.entity.animal.BoarEntity;
 import com.xirc.nichirin.common.entity.projectile.FlashBombEntity;
 import com.xirc.nichirin.common.entity.projectile.SmokeBombEntity;
 import com.xirc.nichirin.common.entity.projectile.ThrownKatanaEntity;
+import com.xirc.nichirin.common.entity.attack.ShockwaveEntity;
 import com.xirc.nichirin.common.entity.attack.ThunderBallEntity;
 import com.xirc.nichirin.common.entity.effect.PlayerCloneEntity;
 import com.xirc.nichirin.common.entity.npc.TempleDemonEntity;
@@ -27,7 +28,7 @@ public interface NichirinEntityRegistry {
                     .sized(1.0f, 1.0f)
                     .clientTrackingRange(64)
                     .updateInterval(1)
-                    .build(null));
+                    .build(BreathOfNichirin.id("thunder_ball").toString()));
 
     RegistrySupplier<EntityType<SmokeBombEntity>> SMOKE_BOMB =
             ENTITY_TYPES.register("smoke_bomb", () -> EntityType.Builder.<SmokeBombEntity>of(
@@ -35,7 +36,7 @@ public interface NichirinEntityRegistry {
                     .sized(0.25f, 0.25f)
                     .clientTrackingRange(64)
                     .updateInterval(1)
-                    .build(null));
+                    .build(BreathOfNichirin.id("smoke_bomb").toString()));
 
     RegistrySupplier<EntityType<FlashBombEntity>> FLASH_BOMB =
             ENTITY_TYPES.register("flash_bomb", () -> EntityType.Builder.<FlashBombEntity>of(
@@ -43,7 +44,7 @@ public interface NichirinEntityRegistry {
                     .sized(0.25f, 0.25f)
                     .clientTrackingRange(64)
                     .updateInterval(1)
-                    .build(null));
+                    .build(BreathOfNichirin.id("flash_bomb").toString()));
 
     RegistrySupplier<EntityType<BoarEntity>> BOAR =
             ENTITY_TYPES.register("boar", () -> EntityType.Builder.<BoarEntity>of(
@@ -51,7 +52,7 @@ public interface NichirinEntityRegistry {
                     .sized(1.4f, 0.9f)
                     .clientTrackingRange(10)
                     .updateInterval(3)
-                    .build(null));
+                    .build(BreathOfNichirin.id("boar").toString()));
 
     RegistrySupplier<EntityType<ThrownKatanaEntity>> THROWN_KATANA =
             ENTITY_TYPES.register("thrown_katana", () -> EntityType.Builder.<ThrownKatanaEntity>of(
@@ -59,7 +60,7 @@ public interface NichirinEntityRegistry {
                     .sized(0.5f, 0.5f)
                     .clientTrackingRange(64)
                     .updateInterval(1)
-                    .build(null));
+                    .build(BreathOfNichirin.id("thrown_katana").toString()));
 
     RegistrySupplier<EntityType<TempleDemonEntity>> TEMPLE_DEMON =
             ENTITY_TYPES.register("temple_demon", () -> EntityType.Builder.<TempleDemonEntity>of(
@@ -67,7 +68,7 @@ public interface NichirinEntityRegistry {
                     .sized(0.6f, 1.95f)
                     .clientTrackingRange(16)
                     .updateInterval(2)
-                    .build(null));
+                    .build(BreathOfNichirin.id("temple_demon").toString()));
 
     RegistrySupplier<EntityType<WaterBreathingTrainerEntity>> WATER_BREATHING_TRAINER =
             ENTITY_TYPES.register("water_breathing_trainer", () -> EntityType.Builder.<WaterBreathingTrainerEntity>of(
@@ -75,7 +76,7 @@ public interface NichirinEntityRegistry {
                     .sized(0.6f, 1.95f)
                     .clientTrackingRange(10)
                     .updateInterval(3)
-                    .build(null));
+                    .build(BreathOfNichirin.id("water_breathing_trainer").toString()));
 
     RegistrySupplier<EntityType<PlayerCloneEntity>> PLAYER_CLONE =
             ENTITY_TYPES.register("player_clone", () -> EntityType.Builder.<PlayerCloneEntity>of(
@@ -83,7 +84,15 @@ public interface NichirinEntityRegistry {
                     .sized(0.6f, 1.8f)
                     .clientTrackingRange(64)
                     .updateInterval(1)
-                    .build(null));
+                    .build(BreathOfNichirin.id("player_clone").toString()));
+
+    RegistrySupplier<EntityType<ShockwaveEntity>> SHOCKWAVE =
+            ENTITY_TYPES.register("shockwave", () -> EntityType.Builder.<ShockwaveEntity>of(
+                            ShockwaveEntity::new, MobCategory.MISC)
+                    .sized(0.6f, 0.6f)
+                    .clientTrackingRange(64)
+                    .updateInterval(1)
+                    .build(BreathOfNichirin.id("shockwave").toString()));
 
     RegistrySupplier<EntityType<ThunderBreathingTrainerEntity>> THUNDER_BREATHING_TRAINER =
             ENTITY_TYPES.register("thunder_breathing_trainer", () -> EntityType.Builder.<ThunderBreathingTrainerEntity>of(
@@ -91,7 +100,7 @@ public interface NichirinEntityRegistry {
                     .sized(0.6f, 1.6f)
                     .clientTrackingRange(10)
                     .updateInterval(3)
-                    .build(null));
+                    .build(BreathOfNichirin.id("thunder_breathing_trainer").toString()));
 
     static void registerAttributes() {
         EntityAttributeRegistry.register(BOAR, BoarEntity::createAttributes);
