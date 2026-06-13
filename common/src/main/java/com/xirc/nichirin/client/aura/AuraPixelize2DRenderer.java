@@ -19,6 +19,7 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -49,8 +50,11 @@ public final class AuraPixelize2DRenderer {
 
         // Vertical disc frame: the plane follows the HOST's body yaw (not the observer's
         // camera), so the aura turns with the entity as it looks around. Up is locked to
-        // world-up — pitch never tilts the disc.
+        // world-up — pitch never tilts the disc. Camera-facing instances (projectiles) use
+        // the observer's yaw instead so the disc always reads full-on.
         Vector3f up = new Vector3f(0f, 1f, 0f);
+        float camYawRad = (float) Math.toRadians(camera.getYRot());
+        Vector3f camRight = new Vector3f((float) Math.cos(camYawRad), 0f, (float) Math.sin(camYawRad));
 
         boolean firstPerson = mc.options != null
                 && mc.options.getCameraType() == CameraType.FIRST_PERSON;
@@ -68,8 +72,11 @@ public final class AuraPixelize2DRenderer {
 
         for (var entry : EntityAuraTracker.all().entrySet()) {
             UUID entityId = entry.getKey();
-            List<AuraInstance> instances = entry.getValue();
-            if (instances.isEmpty()) continue;
+            if (entry.getValue().isEmpty()) continue;
+            // Largest aura first so it draws behind smaller ones — layered auras (demon ring
+            // around a breathing core) stack correctly regardless of publish order.
+            List<AuraInstance> instances = new ArrayList<>(entry.getValue());
+            instances.sort((a, b) -> Float.compare(b.radius(), a.radius()));
 
             Entity host = findEntity(mc, entityId);
             if (host == null) continue;
@@ -86,16 +93,25 @@ public final class AuraPixelize2DRenderer {
                     ? living.yBodyRotO + (living.yBodyRot - living.yBodyRotO) * partialTick
                     : host.getYRot();
             float hostYawRad = (float) Math.toRadians(hostYawDeg);
-            Vector3f right = new Vector3f((float) Math.cos(hostYawRad), 0f, (float) Math.sin(hostYawRad));
+            Vector3f hostRight = new Vector3f((float) Math.cos(hostYawRad), 0f, (float) Math.sin(hostYawRad));
 
-            poseStack.pushPose();
-            poseStack.translate(ex - camPos.x, ey - camPos.y, ez - camPos.z);
+            // Coplanar discs z-fight; nudge each successive (smaller) aura toward the camera so
+            // the breathing core always renders cleanly on top of the demon ring behind it.
+            Vec3 toCam = camPos.subtract(ex, ey, ez).normalize();
 
-            for (AuraInstance instance : instances) {
+            for (int idx = 0; idx < instances.size(); idx++) {
+                AuraInstance instance = instances.get(idx);
+                Vector3f right = instance.cameraFacing() ? camRight : hostRight;
+                double bias = idx * 0.08;
+                poseStack.pushPose();
+                poseStack.translate(
+                        ex - camPos.x + toCam.x * bias,
+                        ey - camPos.y + toCam.y * bias,
+                        ez - camPos.z + toCam.z * bias);
                 renderInstance2D(vc, poseStack.last().pose(), instance, nowMs,
                         right, up, host.getBbWidth(), host.getBbHeight());
+                poseStack.popPose();
             }
-            poseStack.popPose();
         }
 
         RenderSystem.disableCull();
@@ -116,13 +132,18 @@ public final class AuraPixelize2DRenderer {
                                          AuraInstance inst, long nowMs,
                                          Vector3f right, Vector3f up,
                                          float bbWidth, float bbHeight) {
+        // Spawn/removal transition: ease alpha and size instead of popping (katana swaps etc.).
+        float fade = inst.fadeFactor(nowMs, EntityAuraTracker.FADE_MS);
+        if (fade <= 0.02f) return;
+
         float t = ((nowMs - inst.startTimeMs()) / 1000.0f) * AuraConfig.animationSpeed;
         float pulse = (float) (Math.sin(t * inst.pulseSpeed() * Math.PI * 2.0) * 0.5 + 0.5);
 
         // radius is a multiplier of the entity bbox: radius=1 → disc matches the model size
         // (half-bb each axis means the full disc spans the entire bbox); radius=2 → 2× model size.
-        float radiusH = inst.radius() * bbWidth  * 0.5f * (1.0f + AuraConfig.pulseAmplitude * pulse);
-        float radiusV = inst.radius() * bbHeight * 0.5f * (1.0f + AuraConfig.pulseAmplitude * pulse);
+        float fadeScale = 0.7f + 0.3f * fade;
+        float radiusH = inst.radius() * bbWidth  * 0.5f * (1.0f + AuraConfig.pulseAmplitude * pulse) * fadeScale;
+        float radiusV = inst.radius() * bbHeight * 0.5f * (1.0f + AuraConfig.pulseAmplitude * pulse) * fadeScale;
 
         // jitter (per-instance) scales how much the silhouette morphs over time.
         float jitter = inst.jitterAmount();
@@ -156,7 +177,7 @@ public final class AuraPixelize2DRenderer {
         float baseR = Math.min(1.0f, inst.r() * AuraConfig.brightness);
         float baseG = Math.min(1.0f, inst.g() * AuraConfig.brightness);
         float baseB = Math.min(1.0f, inst.b() * AuraConfig.brightness);
-        float baseA = Math.min(1.0f, inst.a() * AuraConfig.opacityMultiplier);
+        float baseA = Math.min(1.0f, inst.a() * AuraConfig.opacityMultiplier) * fade;
 
         int packedLight = LightTexture.FULL_BRIGHT;
         // No rigid rotation — that's what was making it look like a spinning wheel. The angular

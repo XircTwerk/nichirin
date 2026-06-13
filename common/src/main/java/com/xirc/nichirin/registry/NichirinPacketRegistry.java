@@ -87,6 +87,7 @@ public interface NichirinPacketRegistry {
     ResourceLocation OPEN_TRAINER_DIALOGUE_ID      = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "open_trainer_dialogue");
     ResourceLocation TRAINER_ACTION_ID             = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "trainer_action");
     ResourceLocation MIST_CLONES_ID                = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "mist_clones");
+    ResourceLocation CLONE_RING_ID                 = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "clone_ring");
     ResourceLocation SHEATH_INPUT_ID               = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "sheath_input");
     ResourceLocation SHEATH_CONFIG_ID              = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "sheath_config");
     ResourceLocation SHEATH_SYNC_ID                = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "sheath_sync");
@@ -132,6 +133,7 @@ public interface NichirinPacketRegistry {
         PACKET_IDS.put(DemonSyncPacket.class, DEMON_SYNC_ID);
         PACKET_IDS.put(TriggerShaderPacket.class, TRIGGER_SHADER_ID);
         PACKET_IDS.put(MistClonesPacket.class, MIST_CLONES_ID);
+        PACKET_IDS.put(CloneRingPacket.class, CLONE_RING_ID);
         PACKET_IDS.put(AfterimagePacket.class, AFTERIMAGE_ID);
         PACKET_IDS.put(SheathInputPacket.class, SHEATH_INPUT_ID);
         PACKET_IDS.put(SheathConfigPacket.class, SHEATH_CONFIG_ID);
@@ -173,7 +175,7 @@ public interface NichirinPacketRegistry {
                 PLAYER_ANIMATION_ID, COMBO_COUNTER_ID, MOVESET_CONFIG_ID, SYNC_BREATHING_STYLE,
                 SYNC_PROGRESSION_ID, DEMON_SYNC_ID, HITBOX_PACKET_ID, TRIGGER_SHADER_ID,
                 PARRY_SPARK_ID, BLOOD_MOON_SYNC_ID, PERK_SYNC_ID, OPEN_TRAINER_DIALOGUE_ID,
-                MIST_CLONES_ID, SHEATH_SYNC_ID, OPEN_CONFIG_SCREEN_ID, CQC_PRESET_SYNC_ID, COOLDOWN_DISPLAY_ID,
+                MIST_CLONES_ID, CLONE_RING_ID, SHEATH_SYNC_ID, OPEN_CONFIG_SCREEN_ID, CQC_PRESET_SYNC_ID, COOLDOWN_DISPLAY_ID,
                 AURA_ADD_ID, AURA_REMOVE_ID, AURA_CLEAR_ID,
                 OUTLINE_ADD_ID, OUTLINE_REMOVE_ID, OUTLINE_CLEAR_ID, AFTERIMAGE_ID,
                 DESTRUCTIVE_DEATH_STATE_ID
@@ -532,6 +534,11 @@ public interface NichirinPacketRegistry {
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, MIST_CLONES_ID, (buf, context) -> {
                 MistClonesPacket packet = new MistClonesPacket(buf);
                 context.queue(() -> packet.handleClient());
+            });
+
+            NetworkManager.registerReceiver(NetworkManager.Side.S2C, CLONE_RING_ID, (buf, context) -> {
+                CloneRingPacket packet = new CloneRingPacket(buf);
+                context.queue(packet::handleClient);
             });
 
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, AFTERIMAGE_ID, (buf, context) -> {
@@ -1132,6 +1139,8 @@ public interface NichirinPacketRegistry {
             p.toBytes(buf);
         } else if (packet instanceof MistClonesPacket p) {
             p.toBytes(buf);
+        } else if (packet instanceof CloneRingPacket p) {
+            p.toBytes(buf);
         } else if (packet instanceof AfterimagePacket p) {
             p.toBytes(buf);
         } else if (packet instanceof SheathInputPacket p) {
@@ -1163,6 +1172,20 @@ public interface NichirinPacketRegistry {
             buf.release();
         } catch (Exception e) {
             // ignore
+        }
+    }
+
+    static void sendCloneRing(LivingEntity caster, CloneRingPacket packet) {
+        if (caster.level().isClientSide) return;
+        if (!(caster.level() instanceof ServerLevel serverLevel)) return;
+        try {
+            FriendlyByteBuf buf = encodePacket(packet);
+            serverLevel.getServer().getPlayerList().getPlayers().stream()
+                    .filter(p -> p.level() == caster.level()
+                            && p.distanceToSqr(caster) <= 256.0 * 256.0)
+                    .forEach(p -> NetworkManager.sendToPlayer(p, CLONE_RING_ID, serverCopy(buf, p)));
+            buf.release();
+        } catch (Exception ignored) {
         }
     }
 

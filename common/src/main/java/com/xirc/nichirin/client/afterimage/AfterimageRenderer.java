@@ -23,6 +23,10 @@ public final class AfterimageRenderer {
     // Hard caps so a fold-heavy Thunderclap can't pile up enough ghosts to tank the frame rate.
     private static final int MAX_ENTRIES = 24;
     private static final double MAX_RENDER_DIST_SQR = 96.0 * 96.0;
+    // Absolute ceiling on full entity-model re-renders per frame, across all trails. Each ghost
+    // is a complete model dispatch; without a budget a long multi-trail chain can hard-freeze
+    // weaker machines (and shader pipelines) instead of just dropping frames.
+    private static final int MAX_COPIES_PER_FRAME = 48;
 
     private record Entry(int entityId, Vec3 from, Vec3 to, long spawnTick, int lifetimeTicks,
                          int copies, float alpha) {
@@ -71,10 +75,19 @@ public final class AfterimageRenderer {
         // Ghosts must not paint shadow blobs under every copy (visual noise + per-copy cost).
         // Shadows are unconditionally on during the level pass, so restoring to true is safe.
         minecraft.getEntityRenderDispatcher().setRenderShadow(false);
+        int copyBudget = MAX_COPIES_PER_FRAME;
         try {
             for (Entry entry : ENTRIES) {
+                if (copyBudget <= 0) {
+                    break;
+                }
                 Entity entity = minecraft.level.getEntity(entry.entityId);
                 if (!(entity instanceof LivingEntity living) || !living.isAlive() || living.isInvisible()) {
+                    continue;
+                }
+                // Re-dispatching the camera entity through the render pipeline mid-level-pass
+                // recurses into first-person animation hooks — skip self in first person.
+                if (entity == minecraft.player && minecraft.options.getCameraType().isFirstPerson()) {
                     continue;
                 }
                 // Trails far from the camera aren't visible at ghost alpha — skip the model renders.
@@ -90,10 +103,11 @@ public final class AfterimageRenderer {
 
                 float age = (now - entry.spawnTick + partialTick) / (float) entry.lifetimeTicks;
                 float lifetimeFade = Math.max(0.0F, 1.0F - age);
-                boolean firstPersonSelf = entity == minecraft.player
-                        && minecraft.options.getCameraType().isFirstPerson();
 
                 for (int i = entry.copies; i >= 1; i--) {
+                    if (copyBudget <= 0) {
+                        break;
+                    }
                     float pathT = i / (float) (entry.copies + 1);
                     Vec3 pos = entry.from.lerp(entry.to, pathT);
                     float copyFade = i / (float) entry.copies;
@@ -101,11 +115,7 @@ public final class AfterimageRenderer {
                     if (alpha <= 0.02F) {
                         continue;
                     }
-                    // In first person the caster still sees their own trail behind them — only the
-                    // copies right on top of the camera are skipped so they can't block the view.
-                    if (firstPersonSelf && pos.distanceToSqr(cameraPos) < 4.0) {
-                        continue;
-                    }
+                    copyBudget--;
 
                     int packedLight = LevelRenderer.getLightColor(minecraft.level, BlockPos.containing(pos));
 

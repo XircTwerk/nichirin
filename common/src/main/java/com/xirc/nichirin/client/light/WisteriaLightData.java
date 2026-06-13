@@ -1,5 +1,6 @@
 package com.xirc.nichirin.client.light;
 
+import com.xirc.nichirin.client.shader.NichirinShaderInjection;
 import com.xirc.nichirin.registry.NichirinBlockRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
@@ -66,7 +67,11 @@ public final class WisteriaLightData {
     }
 
     public static void tick(Minecraft minecraft) {
-        if (minecraft.level == null || minecraft.player == null) {
+        // Sodium/Iris replace or patch the shader pipeline our glow injects into — with the
+        // injection disabled there must be no half-applied lighting (entity-only boosts), so
+        // the whole dynamic-light system goes dormant. Leaf tint is independent and stays.
+        if (!NichirinShaderInjection.injectionEnabled()
+                || minecraft.level == null || minecraft.player == null) {
             TRACKED.clear();
             lightCount = 0;
             return;

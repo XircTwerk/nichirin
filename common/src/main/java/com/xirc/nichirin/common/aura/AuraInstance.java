@@ -11,6 +11,8 @@ import java.util.UUID;
  * `startTimeMs` is set on the client when the packet arrives and drives the animation phase.
  * `jitterAmount` controls how much the surface SHAPE morphs over time (renamed from
  * shapeMorphAmount, now per-aura instead of global).
+ * `cameraFacing == true` billboards the disc to the observer's camera instead of following the
+ * host's body yaw — used by projectiles (shockwaves) so the aura always reads as a full disc.
  */
 public final class AuraInstance {
     private final UUID id;
@@ -20,8 +22,10 @@ public final class AuraInstance {
     private final float distortionStrength;
     private final float rotationSpeed;
     private final float jitterAmount;
+    private final boolean cameraFacing;
     private final int lifetimeTicks;       // -1 = permanent
     private long startTimeMs;              // client-set on receive; not sent
+    private long removalTimeMs;            // client-set when a remove arrives; 0 = active
 
     public AuraInstance(UUID id,
                         float r, float g, float b, float a,
@@ -30,6 +34,7 @@ public final class AuraInstance {
                         float distortionStrength,
                         float rotationSpeed,
                         float jitterAmount,
+                        boolean cameraFacing,
                         int lifetimeTicks) {
         this.id = id;
         this.r = r; this.g = g; this.b = b; this.a = a;
@@ -38,6 +43,7 @@ public final class AuraInstance {
         this.distortionStrength = distortionStrength;
         this.rotationSpeed = rotationSpeed;
         this.jitterAmount = jitterAmount;
+        this.cameraFacing = cameraFacing;
         this.lifetimeTicks = lifetimeTicks;
     }
 
@@ -51,9 +57,34 @@ public final class AuraInstance {
     public float distortionStrength() { return distortionStrength; }
     public float rotationSpeed() { return rotationSpeed; }
     public float jitterAmount() { return jitterAmount; }
+    public boolean cameraFacing() { return cameraFacing; }
     public int lifetimeTicks() { return lifetimeTicks; }
     public long startTimeMs() { return startTimeMs; }
     public void setStartTimeMs(long t) { this.startTimeMs = t; }
+
+    /** Marks this aura for fade-out instead of vanishing instantly. Idempotent. */
+    public void markRemoved(long nowMs) {
+        if (removalTimeMs == 0) removalTimeMs = nowMs;
+    }
+
+    /**
+     * Eased 0..1 visibility factor combining the spawn fade-in and the removal fade-out, so
+     * auras never pop — they ease in when published and ease out when removed (e.g. when the
+     * player sheathes or draws a katana and the breathing/demon auras swap).
+     */
+    public float fadeFactor(long nowMs, long fadeMs) {
+        float in = Math.min(1f, (nowMs - startTimeMs) / (float) fadeMs);
+        float out = removalTimeMs > 0
+                ? 1f - Math.min(1f, (nowMs - removalTimeMs) / (float) fadeMs)
+                : 1f;
+        float f = Math.max(0f, in * out);
+        return f * f * (3f - 2f * f); // smoothstep ease
+    }
+
+    /** True once the fade-out finished and the instance can be purged. */
+    public boolean fadeComplete(long nowMs, long fadeMs) {
+        return removalTimeMs > 0 && nowMs - removalTimeMs >= fadeMs;
+    }
 
     public void write(FriendlyByteBuf buf) {
         buf.writeUUID(id);
@@ -63,6 +94,7 @@ public final class AuraInstance {
         buf.writeFloat(distortionStrength);
         buf.writeFloat(rotationSpeed);
         buf.writeFloat(jitterAmount);
+        buf.writeBoolean(cameraFacing);
         buf.writeVarInt(lifetimeTicks);
     }
 
@@ -74,8 +106,10 @@ public final class AuraInstance {
         float distortion = buf.readFloat();
         float rotation = buf.readFloat();
         float jitter = buf.readFloat();
+        boolean cameraFacing = buf.readBoolean();
         int lifetime = buf.readVarInt();
-        return new AuraInstance(id, r, g, b, a, radius, pulse, distortion, rotation, jitter, lifetime);
+        return new AuraInstance(id, r, g, b, a, radius, pulse, distortion, rotation, jitter,
+                cameraFacing, lifetime);
     }
 
     public static Builder builder() { return new Builder(); }
@@ -88,6 +122,7 @@ public final class AuraInstance {
         private float distortionStrength = 0.18f;
         private float rotationSpeed = 0.25f;
         private float jitterAmount = 2.2f;
+        private boolean cameraFacing = false;
         private int lifetimeTicks = -1;
 
         public Builder id(UUID id) { this.id = id; return this; }
@@ -99,10 +134,11 @@ public final class AuraInstance {
         public Builder distortion(float v) { this.distortionStrength = v; return this; }
         public Builder rotationSpeed(float v) { this.rotationSpeed = v; return this; }
         public Builder jitter(float v) { this.jitterAmount = v; return this; }
+        public Builder cameraFacing(boolean v) { this.cameraFacing = v; return this; }
         public Builder lifetimeTicks(int v) { this.lifetimeTicks = v; return this; }
         public AuraInstance build() {
             return new AuraInstance(id, r, g, b, a, radius, pulseSpeed, distortionStrength,
-                    rotationSpeed, jitterAmount, lifetimeTicks);
+                    rotationSpeed, jitterAmount, cameraFacing, lifetimeTicks);
         }
     }
 }

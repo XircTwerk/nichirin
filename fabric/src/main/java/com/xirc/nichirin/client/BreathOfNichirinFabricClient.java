@@ -1,17 +1,22 @@
 package com.xirc.nichirin.client;
 
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.xirc.nichirin.client.outline.OutlineShaderHolder;
 import com.xirc.nichirin.client.particle.*;
 import com.xirc.nichirin.client.util.fabric.ItemPropertiesHelperImpl;
 import com.xirc.nichirin.registry.NichirinKeybindRegistry;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.CoreShaderRegistrationCallback;
+import net.minecraft.resources.ResourceLocation;
 
 public class BreathOfNichirinFabricClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
         registerParticles();
+        registerOutlineShader();
 
         // Register item properties first (client-only)
         ItemPropertiesHelperImpl.registerBentoBoxProperty();
@@ -21,6 +26,14 @@ public class BreathOfNichirinFabricClient implements ClientModInitializer {
 
         // Initialize all client-side systems
         BreathOfNichirinClient.init();
+    }
+
+    /** Cel-outline core shader — NeoForge registers this via RegisterShadersEvent. */
+    private static void registerOutlineShader() {
+        CoreShaderRegistrationCallback.EVENT.register(context -> context.register(
+                ResourceLocation.fromNamespaceAndPath("nichirin", "outline_cel"),
+                DefaultVertexFormat.NEW_ENTITY,
+                OutlineShaderHolder::setShader));
     }
 
     private static void registerParticles() {

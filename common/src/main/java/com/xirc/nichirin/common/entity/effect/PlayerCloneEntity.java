@@ -17,6 +17,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -62,6 +63,11 @@ public class PlayerCloneEntity extends Monster {
     private int     passCount;      // how many times we've reached the far edge
     private boolean swungThisPass;  // gate so we only swing once per pass
 
+    // Sentinel state (Blue Silver Chaotic Afterglow): stands anchored in place and tracks a
+    // target with its whole body instead of swooping. Swings are triggered externally.
+    private boolean sentinel;
+    private int     watchTargetId = -1;
+
     private static final int MAX_LIFETIME = 600; // 30 seconds absolute safety cap
 
     public PlayerCloneEntity(EntityType<? extends PlayerCloneEntity> type, Level level) {
@@ -104,7 +110,7 @@ public class PlayerCloneEntity extends Monster {
                 if (sp.isModelPartShown(part)) partMask |= (byte) part.getMask();
             }
             clone.entityData.set(PART_MASK, partMask);
-            clone.setLeftHanded(sp.getMainArm() == net.minecraft.world.entity.HumanoidArm.LEFT);
+            clone.setLeftHanded(sp.getMainArm() == HumanoidArm.LEFT);
         }
 
         // Place at spawn position (SPAWN_DIST blocks from center along spawnAngle)
@@ -114,6 +120,44 @@ public class PlayerCloneEntity extends Monster {
         clone.setYRot(facingYaw(startX, startZ, center.x, center.z));
 
         return clone;
+    }
+
+    /**
+     * Sentinel factory: a clone that stands at {@code position} for {@code lifetime} ticks,
+     * continuously facing its watch target. Used by Blue Silver Chaotic Afterglow.
+     */
+    public static PlayerCloneEntity createSentinel(EntityType<PlayerCloneEntity> type, Level level,
+                                                   LivingEntity source, Vec3 position, int lifetime) {
+        PlayerCloneEntity clone = new PlayerCloneEntity(type, level);
+        clone.sentinel = true;
+        clone.orbitCenterX = position.x;
+        clone.orbitCenterY = position.y;
+        clone.orbitCenterZ = position.z;
+        clone.lifetimeTicks = lifetime;
+
+        clone.entityData.set(MASTER_UUID, Optional.of(source.getUUID()));
+        clone.entityData.set(MASTER_NAME, source.getScoreboardName());
+        if (source instanceof ServerPlayer sp) {
+            byte partMask = 0;
+            for (PlayerModelPart part : PlayerModelPart.values()) {
+                if (sp.isModelPartShown(part)) partMask |= (byte) part.getMask();
+            }
+            clone.entityData.set(PART_MASK, partMask);
+            clone.setLeftHanded(sp.getMainArm() == HumanoidArm.LEFT);
+        }
+
+        clone.setPos(position.x, position.y, position.z);
+        return clone;
+    }
+
+    /** Sentinel mode: which entity this clone keeps its eyes (and fists) on. */
+    public void setWatchTarget(LivingEntity target) {
+        this.watchTargetId = target != null ? target.getId() : -1;
+    }
+
+    /** Sentinel mode: visible punch, triggered by the owning attack each volley. */
+    public void triggerSwing() {
+        swing(InteractionHand.MAIN_HAND, true);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -147,6 +191,11 @@ public class PlayerCloneEntity extends Monster {
         if (lifetimeTicks <= 0) {
             spawnMistBurst();
             discard();
+            return;
+        }
+
+        if (sentinel) {
+            tickSentinel();
             return;
         }
 
@@ -213,6 +262,25 @@ public class PlayerCloneEntity extends Monster {
                     newX, orbitCenterY + 1.0, newZ,
                     3, 0.15, 0.2, 0.15, 0.01);
         }
+    }
+
+    /** Anchored in place, whole body tracking the watch target — head pitch included. */
+    private void tickSentinel() {
+        setPos(orbitCenterX, orbitCenterY, orbitCenterZ);
+
+        Entity target = watchTargetId >= 0 ? level().getEntity(watchTargetId) : null;
+        if (target == null || !target.isAlive()) return;
+
+        float yaw = facingYaw(getX(), getZ(), target.getX(), target.getZ());
+        setYRot(yaw);
+        yBodyRot = yaw;
+        yHeadRot = yaw;
+
+        double dx = target.getX() - getX();
+        double dz = target.getZ() - getZ();
+        double dy = (target.getY() + target.getBbHeight() * 0.5) - (getY() + getEyeHeight());
+        double horizontal = Math.sqrt(dx * dx + dz * dz);
+        setXRot((float) Math.toDegrees(-Math.atan2(dy, horizontal)));
     }
 
     private void spawnMistBurst() {

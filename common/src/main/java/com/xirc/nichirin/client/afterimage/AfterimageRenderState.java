@@ -14,7 +14,9 @@ public final class AfterimageRenderState {
         return rendering;
     }
 
-    static void setRendering(boolean value) {
+    // Public: CloneRingRenderer reuses this flag so its ghost dispatches get the same
+    // nameplate/armor suppression the afterimage mixins apply.
+    public static void setRendering(boolean value) {
         rendering = value;
     }
 }

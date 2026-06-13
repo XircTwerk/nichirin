@@ -42,6 +42,9 @@ public final class OutlineRenderer {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;
         if (OutlineTracker.all().isEmpty()) return;
+        // The edge pass needs the cel shader; without it (failed registration) draw nothing
+        // rather than dispatching geometry through a null shader.
+        if (OutlineShaderHolder.getShader() == null) return;
 
         Vec3 camPos = camera.getPosition();
         EntityRenderDispatcher dispatcher = mc.getEntityRenderDispatcher();
@@ -61,6 +64,11 @@ public final class OutlineRenderer {
             int packedLight = dispatcher.getPackedLightCoords(host, partialTick);
 
             for (OutlineInstance inst : instances) {
+                // See-through outlines go through MC's screen-space glow pipeline (see
+                // EntityOutlineMixin); this geometry pass only draws the depth-tested ones,
+                // where LEQUAL occludes the outline per-pixel behind world geometry.
+                if (inst.seeThroughWalls()) continue;
+
                 // Set the outline width for the cel-shader vertex displacement. Each instance
                 // gets its own flush so the width can vary per-instance.
                 // Convert from "thickness multiplier" (e.g. 1.03) to a world-space offset.
@@ -75,9 +83,6 @@ public final class OutlineRenderer {
 
                 // Flush this instance's draws immediately so the per-instance width applies.
                 buffers.endBatch(OutlineRenderTypes.edge(WHITE_TEX));
-                if (inst.seeThroughWalls()) {
-                    buffers.endBatch(OutlineRenderTypes.behindWallsFill(WHITE_TEX));
-                }
             }
         }
     }

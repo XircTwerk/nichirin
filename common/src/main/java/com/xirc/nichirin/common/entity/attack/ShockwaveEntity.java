@@ -60,7 +60,9 @@ public class ShockwaveEntity extends Entity {
     private int bouncesRemaining = 0;       // 0 = expires on first wall hit
     private boolean phaseWalls = false;     // true = ignore wall collisions entirely
     private boolean noHorizontalPush = false; // true = knockback applies as pure lift, no sideways
+    private boolean noVanillaKnockback = false; // true = cancel vanilla hurt() knockback entirely
     private boolean red = false;
+    private Boolean redImpact = null; // impact-burst colour override; null = follow the red flag
     private static final float IMPACT_HALF_EXTENT = 1.0f; // 2x2x2 impact hitbox at end of life
 
     private final Set<UUID> hitEntities = new HashSet<>();
@@ -136,7 +138,14 @@ public class ShockwaveEntity extends Entity {
                 ? NichirinDamageSources.demon(ownerEntity)
                 : level().damageSources().generic();
         float healthBefore = target.getHealth() + target.getAbsorptionAmount();
+        // Capture velocity so we can cancel the knockback vanilla hurt() applies away from the
+        // owner — our custom knockback below is the only displacement allowed.
+        Vec3 preHitMotion = target.getDeltaMovement();
         target.hurt(source, damage);
+        if (noVanillaKnockback) {
+            target.setDeltaMovement(preHitMotion);
+            target.hurtMarked = true;
+        }
         float actualDamage = Math.max(0.0f, healthBefore - (target.getHealth() + target.getAbsorptionAmount()));
 
         if (knockback > 0) {
@@ -192,9 +201,10 @@ public class ShockwaveEntity extends Entity {
     private void spawnImpactEffect() {
         if (!(level() instanceof ServerLevel serverLevel)) return;
         double x = getX(), y = getY() + 0.5, z = getZ();
+        boolean redBurst = redImpact != null ? redImpact : red;
         var spark = NichirinParticleRegistry.SLASH_IMPACT_SPARK.get();
-        var flash = red ? NichirinParticleRegistry.FLASH1.get() : NichirinParticleRegistry.BLUE_FLASH1.get();
-        var ring  = red ? NichirinParticleRegistry.SHOCKWAVE.get() : NichirinParticleRegistry.BLUE_SHOCKWAVE.get();
+        var flash = redBurst ? NichirinParticleRegistry.FLASH1.get() : NichirinParticleRegistry.BLUE_FLASH1.get();
+        var ring  = redBurst ? NichirinParticleRegistry.SHOCKWAVE.get() : NichirinParticleRegistry.BLUE_SHOCKWAVE.get();
         serverLevel.sendParticles(spark, x, y, z, 14, 0.6, 0.6, 0.6, 0.2);
         serverLevel.sendParticles(flash, x, y, z, 3, 0.3, 0.3, 0.3, 0.0);
         serverLevel.sendParticles(ring,  x, y, z, 5, 0.5, 0.1, 0.5, 0.05);
@@ -215,10 +225,15 @@ public class ShockwaveEntity extends Entity {
         // Pure blue / pure red. The aura system applies brightness ×1.15 and a whiten pass on the
         // inner pixels, both of which lift the green channel toward white. Keep green near zero so
         // the rim reads as clearly blue (not cyan/teal/green) at every distance.
+        // Radius is a bbox multiplier (bbox 0.6): 1.0 → ~0.3 blocks of world radius. Extreme
+        // jitter turns the disc into a roiling energy ball instead of a flat circle, and
+        // cameraFacing billboards it to each observer so the projectile reads full-on from
+        // every angle (entity auras normally follow the host's body yaw).
         AuraInstance aura = AuraInstance.builder()
                 .color(red ? 1.0f : 0.05f, red ? 0.05f : 0.10f, red ? 0.10f : 1.0f, 0.85f)
-                .radius(1.4f)
-                .jitter(2.2f)
+                .radius(1.0f)
+                .jitter(10.0f)
+                .cameraFacing(true)
                 .build();
         auraId = aura.id();
         AuraManager.addAura(this, aura, AuraAudience.ALL);
@@ -252,7 +267,9 @@ public class ShockwaveEntity extends Entity {
         private int bounces = 0;
         private boolean phaseWalls = false;
         private boolean noHorizontalPush = false;
+        private boolean noVanillaKnockback = false;
         private boolean red = false;
+        private Boolean redImpact = null;
 
         public Builder owner(LivingEntity o) { this.owner = o; return this; }
         public Builder origin(Vec3 v) { this.origin = v; return this; }
@@ -267,7 +284,11 @@ public class ShockwaveEntity extends Entity {
         public Builder bounces(int v) { this.bounces = v; return this; }
         public Builder phaseWalls(boolean v) { this.phaseWalls = v; return this; }
         public Builder noHorizontalPush(boolean v) { this.noHorizontalPush = v; return this; }
+        /** Cancels the knockback vanilla hurt() applies, so the target isn't displaced at all. */
+        public Builder noVanillaKnockback() { this.noVanillaKnockback = true; return this; }
         public Builder red(boolean v) { this.red = v; return this; }
+        /** Impact-burst colour independent of the travel tint (e.g. blue wave, red impact). */
+        public Builder redImpact(boolean v) { this.redImpact = v; return this; }
 
         public ShockwaveEntity spawn(EntityType<ShockwaveEntity> type, Level level) {
             if (owner == null || origin == null) {
@@ -285,7 +306,9 @@ public class ShockwaveEntity extends Entity {
             sw.bouncesRemaining = bounces;
             sw.phaseWalls = phaseWalls;
             sw.noHorizontalPush = noHorizontalPush;
+            sw.noVanillaKnockback = noVanillaKnockback;
             sw.red = red;
+            sw.redImpact = redImpact;
             sw.setPos(origin.x, origin.y, origin.z);
             sw.setDeltaMovement(direction.scale(speed));
             sw.entityData.set(RED_TINT, red);

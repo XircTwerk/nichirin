@@ -77,15 +77,19 @@ public class DestructiveDeathMoveset extends AbstractMoveset {
                         })
                 )
 
-                // Wheel 3 — Blue Silver Chaotic Afterglow (ultimate)
+                // Wheel 3 — Blue Silver Chaotic Afterglow (ultimate, 10s channel)
                 .withMove(new MoveBuilder("blue_silver_chaotic_afterglow", "Blue Silver Chaotic Afterglow")
-                        .withAnimation("nichirin:annihilation_type", 12)
-                        .withTiming(0, 1, 12)
+                        .withAnimation("nichirin:snap_punch", 12)
+                        // Duration must match BlueSilverChaoticAfterglowAttack.TOTAL_TICKS.
+                        .withTiming(600, 1, BlueSilverChaoticAfterglowAttack.TOTAL_TICKS)
                         .withDamage(9.0f)
                         .withRange(20f)
-                        .withHitStun(20)
-                        .withDescription("Spawns 12 omni-directional shockwaves. Requires Compass Needle to be active.")
+                        .withHitStun(40)
+                        .withHyperArmor()
+                        .withDescription("10s channel: twelve clones manifest around you and batter a Compass-tracked target with a storm of thin shockwaves, ending in a unison blow. Requires Compass Needle + Overdrive.")
                         .withAction(entity -> {
+                            // Gate BEFORE executing so a failed requirement doesn't burn the cooldown.
+                            if (!BlueSilverChaoticAfterglowAttack.canCast(entity)) return;
                             BlueSilverChaoticAfterglowAttack attack = new BlueSilverChaoticAfterglowAttack();
                             attack.configure(captureWheelMoveFor("destructive_death", 3));
                             MoveExecutor.executeAttack(entity, attack, "destructive_death", "blue_silver_chaotic_afterglow");
