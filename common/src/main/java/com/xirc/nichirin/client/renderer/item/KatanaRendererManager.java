@@ -13,6 +13,12 @@ public class KatanaRendererManager {
         registerKatana(NichirinItemRegistry.FLAME_KATANA.get(), "flame_katana", "flame_katana");
         registerKatana(NichirinItemRegistry.INSECT_KATANA.get(), "insect_katana", "insect_katana");
         registerKatana(NichirinItemRegistry.GIYU_KATANA.get(), "giyu_katana", "giyu_katana");
+        registerGun(NichirinItemRegistry.GENYA_DB.get(), "genya_db", "genya_db/genya_db");
+    }
+
+    private static void registerGun(Item item, String geoName, String textureName) {
+        AzItemRendererRegistry.register(item, () -> GunItemRenderer.create(geoName, textureName));
+        AzIdentityRegistry.register(item);
     }
 
     private static void registerKatana(Item item, String geoName, String textureName) {

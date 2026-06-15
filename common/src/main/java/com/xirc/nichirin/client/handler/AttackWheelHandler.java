@@ -5,8 +5,10 @@ import com.xirc.nichirin.client.gui.CooldownHUD;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.attack.moveset.CqcMoveset;
 import com.xirc.nichirin.common.attack.moveset.DefaultKatanaMoveset;
+import com.xirc.nichirin.common.attack.moveset.DefaultGunMoveset;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.common.item.gun.GenyaDB;
 import com.xirc.nichirin.common.network.c2s.MoveHotkeyPacket;
 import com.xirc.nichirin.common.util.BreathingManager;
 import com.xirc.nichirin.common.util.MultiplayerInputHandler;
@@ -50,6 +52,8 @@ public class AttackWheelHandler {
     private static boolean currentWheelIsFighting = false;
     // True when showing default katana moves (no breathing style) — send MoveHotkeyPacket on execute
     private static boolean isDefaultKatanaWheel = false;
+    // True when showing the gun (Genya DB) moves — also sends MoveHotkeyPacket on execute
+    private static boolean isDefaultGunWheel = false;
 
     public static void register() {
 
@@ -212,12 +216,18 @@ public class AttackWheelHandler {
         boolean isBreathingWheel = false;
         boolean isFightingWheel = false;
         isDefaultKatanaWheel = false;
+        isDefaultGunWheel = false;
 
         // Check held item
         ItemStack mainHand = mc.player.getMainHandItem();
         boolean holdingKatana = mainHand.getItem() instanceof SimpleKatana;
+        boolean holdingGun = mainHand.getItem() instanceof GenyaDB;
 
-        if (holdingKatana) {
+        if (holdingGun) {
+            // Gun has its own neutral moveset (Gun Bash / Grab).
+            moveset = DefaultGunMoveset.INSTANCE;
+            isDefaultGunWheel = true;
+        } else if (holdingKatana) {
             // Holding katana - use breathing moveset if available, otherwise default katana
             boolean hasBreathing = MovesetHelper.hasBreathingMoveset(mc.player);
             if (hasBreathing) {
@@ -309,6 +319,7 @@ public class AttackWheelHandler {
         currentWheelIsBreathing = false; // Reset
         currentWheelIsFighting = false;  // Reset
         isDefaultKatanaWheel = false;    // Reset
+        isDefaultGunWheel = false;       // Reset
 
         // Reset captured move state
         capturedSelectedMove = -1;
@@ -365,6 +376,9 @@ public class AttackWheelHandler {
         } else if (isDefaultKatanaWheel) {
             // Default katana — use the static display moveset for config lookup only
             moveset = DefaultKatanaMoveset.INSTANCE;
+        } else if (isDefaultGunWheel) {
+            // Gun — static display moveset for config lookup only
+            moveset = DefaultGunMoveset.INSTANCE;
         } else {
             moveset = MovesetHelper.getDemonMoveset(mc.player);
         }
@@ -433,6 +447,9 @@ public class AttackWheelHandler {
             MultiplayerInputHandler.sendDemonMove(selectedMove, mc.player);
         } else if (isDefaultKatanaWheel) {
             // Default katana wheel — server handles via SimpleKatana.performWheelMove
+            NichirinPacketRegistry.sendToServer(new MoveHotkeyPacket(selectedMove));
+        } else if (isDefaultGunWheel) {
+            // Gun wheel — server handles via GenyaDB.performWheelMove
             NichirinPacketRegistry.sendToServer(new MoveHotkeyPacket(selectedMove));
         } else {
             MultiplayerInputHandler.sendDemonMove(selectedMove, mc.player);

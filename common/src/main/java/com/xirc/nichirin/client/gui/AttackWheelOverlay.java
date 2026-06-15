@@ -5,8 +5,10 @@ import com.mojang.blaze3d.vertex.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.attack.moveset.CqcMoveset;
 import com.xirc.nichirin.common.attack.moveset.DefaultKatanaMoveset;
+import com.xirc.nichirin.common.attack.moveset.DefaultGunMoveset;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.common.item.gun.GenyaDB;
 import com.xirc.nichirin.registry.NichirinMovesetRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -103,8 +105,12 @@ public class AttackWheelOverlay {
         // Check held item
         ItemStack mainHand = player.getMainHandItem();
         boolean holdingKatana = mainHand.getItem() instanceof SimpleKatana;
+        boolean holdingGun = mainHand.getItem() instanceof GenyaDB;
 
-        if (holdingKatana) {
+        if (holdingGun) {
+            moveset = DefaultGunMoveset.INSTANCE;
+            movesetId = DefaultGunMoveset.INSTANCE.getMovesetId();
+        } else if (holdingKatana) {
             // Holding katana - use breathing moveset if available, otherwise default katana
             if (MovesetHelper.hasBreathingMoveset(player)) {
                 moveset = MovesetHelper.getBreathingMoveset(player);
@@ -359,9 +365,12 @@ public class AttackWheelOverlay {
             Player player = minecraft.player;
             ItemStack mainHand = player.getMainHandItem();
             boolean holdingKatana = mainHand.getItem() instanceof SimpleKatana;
+            boolean holdingGun = mainHand.getItem() instanceof GenyaDB;
 
             String movesetId = null;
-            if (holdingKatana) {
+            if (holdingGun) {
+                movesetId = DefaultGunMoveset.INSTANCE.getMovesetId();
+            } else if (holdingKatana) {
                 if (MovesetHelper.hasBreathingMoveset(player)) {
                     movesetId = MovesetHelper.getBreathingMovesetId(player);
                 } else {

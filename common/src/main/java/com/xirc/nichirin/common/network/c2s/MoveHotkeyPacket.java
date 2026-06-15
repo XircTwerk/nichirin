@@ -3,6 +3,7 @@ package com.xirc.nichirin.common.network.c2s;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.common.item.gun.GenyaDB;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 
 import dev.architectury.networking.NetworkManager;
@@ -41,6 +42,14 @@ public class MoveHotkeyPacket {
 
     private static void handleMoveHotkey(ServerPlayer player, int moveIndex) {
         ItemStack mainHand = player.getMainHandItem();
+
+        // Gun (Genya DB) — its two wheel moves (0 = Gun Bash, 1 = Grab) route here.
+        if (mainHand.getItem() instanceof GenyaDB gun) {
+            if (player.hasEffect(NichirinEffectRegistry.stunned())) return;
+            gun.performWheelMove(player, moveIndex);
+            return;
+        }
+
         if (!(mainHand.getItem() instanceof SimpleKatana)) return;
 
         if (player.hasEffect(NichirinEffectRegistry.blocking())) {

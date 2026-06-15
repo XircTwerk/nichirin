@@ -44,6 +44,21 @@
       "nichirin:katana/hit2"
     ]
   },
+  "genya_db_singleshot": {
+    "sounds": [
+      "nichirin:genya_db/genya_db_singleshot"
+    ]
+  },
+  "genya_db_doubleshot": {
+    "sounds": [
+      "nichirin:genya_db/genya_db_doubleshot"
+    ]
+  },
+  "genya_db_reload": {
+    "sounds": [
+      "nichirin:genya_db/genya_db_reload"
+    ]
+  },
   "thunderball": {
     "sounds": [
       "nichirin:entity/thunder_ball"

@@ -81,7 +81,7 @@ public class DestructiveDeathMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("blue_silver_chaotic_afterglow", "Blue Silver Chaotic Afterglow")
                         .withAnimation("nichirin:snap_punch", 12)
                         // Duration must match BlueSilverChaoticAfterglowAttack.TOTAL_TICKS.
-                        .withTiming(600, 1, BlueSilverChaoticAfterglowAttack.TOTAL_TICKS)
+                        .withTiming(800, 5, BlueSilverChaoticAfterglowAttack.TOTAL_TICKS)
                         .withDamage(9.0f)
                         .withRange(20f)
                         .withHitStun(40)

@@ -10,6 +10,7 @@ import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.data.*;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.common.item.gun.GenyaDB;
 import com.xirc.nichirin.common.network.c2s.*;
 import com.xirc.nichirin.common.network.s2c.*;
 import net.minecraft.world.phys.Vec3;
@@ -78,6 +79,7 @@ public interface NichirinPacketRegistry {
     ResourceLocation DEMON_INPUT_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "demon_input");
     ResourceLocation ATTACK_WHEEL_STATE_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "attack_wheel_state");
     ResourceLocation KATANA_INPUT_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "katana_input");
+    ResourceLocation GUN_INPUT_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "gun_input");
     ResourceLocation TRIGGER_SHADER_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "trigger_shader");
     ResourceLocation PARRY_SPARK_ID        = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "parry_spark");
     ResourceLocation OPEN_CONFIG_SCREEN_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "open_config_screen");
@@ -238,6 +240,20 @@ public interface NichirinPacketRegistry {
                         return;
                     }
                     executeKatanaInput(serverPlayer, inputType);
+                });
+            }
+        });
+
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, GUN_INPUT_ID, (buf, context) -> {
+            int barrels = buf.readInt();
+            if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
+                context.queue(() -> {
+                    if (shouldBlockInputsServer(serverPlayer)) {
+                        return;
+                    }
+                    if (serverPlayer.getMainHandItem().getItem() instanceof GenyaDB gun) {
+                        gun.performShoot(serverPlayer, barrels);
+                    }
                 });
             }
         });
