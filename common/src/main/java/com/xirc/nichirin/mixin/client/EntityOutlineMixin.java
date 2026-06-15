@@ -2,7 +2,9 @@ package com.xirc.nichirin.mixin.client;
 
 import com.xirc.nichirin.client.outline.OutlineTracker;
 import com.xirc.nichirin.common.outline.OutlineInstance;
+import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -28,10 +30,18 @@ import java.util.List;
 @Mixin(Entity.class)
 public abstract class EntityOutlineMixin {
 
+    // Within this distance the host's outlined silhouette fills the screen — don't force the glow.
+    private static final double OUTLINE_CAMERA_INSIDE_DIST_SQR = 2.0 * 2.0;
+
     @Inject(method = "isCurrentlyGlowing", at = @At("HEAD"), cancellable = true)
     private void nichirin$outlineForceGlow(CallbackInfoReturnable<Boolean> cir) {
         Entity self = (Entity) (Object) this;
         if (self.level() == null || !self.level().isClientSide) return;
+        // Don't force-glow a host the camera is essentially inside: MC's outline pipeline renders
+        // its silhouette filling the screen — your own body in first person, or another player
+        // standing on top of you.
+        Vec3 camPos = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
+        if (self.distanceToSqr(camPos.x, camPos.y, camPos.z) < OUTLINE_CAMERA_INSIDE_DIST_SQR) return;
         List<OutlineInstance> outlines = OutlineTracker.getOutlines(self.getUUID());
         if (outlines.isEmpty()) return;
         for (OutlineInstance inst : outlines) {

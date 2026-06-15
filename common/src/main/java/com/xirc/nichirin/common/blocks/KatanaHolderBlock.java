@@ -23,8 +23,6 @@ import net.minecraft.world.item.Item.TooltipContext;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
@@ -273,21 +271,13 @@ public class KatanaHolderBlock extends BaseEntityBlock {
         }
 
         private void syncToClient() {
-            if (!(level instanceof ServerLevel serverLevel)) return;
+            if (level == null || level.isClientSide) return;
             setChanged();
-            ClientboundBlockEntityDataPacket packet = getUpdatePacket();
-            if (packet == null) return;
-            double cx = worldPosition.getX() + 0.5;
-            double cy = worldPosition.getY() + 0.5;
-            double cz = worldPosition.getZ() + 0.5;
-            for (ServerPlayer player : serverLevel.players()) {
-                double dx = cx - player.getX();
-                double dy = cy - player.getY();
-                double dz = cz - player.getZ();
-                if (dx * dx + dy * dy + dz * dz < 4096.0) {
-                    player.connection.send(packet);
-                }
-            }
+            // Let vanilla push getUpdatePacket() to every player tracking this chunk — the old
+            // hand-rolled 64-block broadcast missed players who track the chunk from farther away
+            // (they'd only see the katana after re-triggering it).
+            BlockState state = getBlockState();
+            level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_CLIENTS);
         }
 
         @Override

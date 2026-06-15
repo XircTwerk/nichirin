@@ -104,10 +104,13 @@ public final class MovesetAuraTicker {
             AuraManager.addAura(player, aura, AuraAudience.ALL);
             breathingAuraId = aura.id();
 
+            // Route through MC's built-in outline post-shader (clean screen-space edge) rather
+            // than the custom cel geometry pass, which front-culls into a flat fill over the whole
+            // model on some setups. Tradeoff: the edge shows faintly through walls.
             OutlineInstance outline = OutlineInstance.builder()
                     .color(breathingPalette.r(), breathingPalette.g(), breathingPalette.b(), 0.8f)
                     .thickness(1.04f)
-                    .seeThroughWalls(false)
+                    .seeThroughWalls(true)
                     .lifetimeTicks(-1)
                     .build();
             OutlineManager.addOutline(player, outline, AuraAudience.ALL);

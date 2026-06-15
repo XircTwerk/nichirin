@@ -107,6 +107,15 @@ public final class DestructiveDeathPlayerAura {
         CACHE.remove(playerId);
     }
 
+    /**
+     * Properly remove the aura for an online player — broadcasts the removal packet so the disc
+     * actually disappears (e.g. on {@code /nichirin demon remove}). {@link #clear} only drops the
+     * cache, which would otherwise orphan the aura on clients.
+     */
+    public static void remove(ServerPlayer player) {
+        removeIfPresent(player);
+    }
+
     private static final class CachedAuraState {
         final boolean overdrive;
         final boolean compass;
