@@ -8,7 +8,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class NichirinArmorDamage {
-    public static final float ARMOR_DAMAGE_MULTIPLIER = 0.0625f;
+    public static final float ARMOR_DAMAGE_MULTIPLIER = 0.1f;
 
     private static final ThreadLocal<Boolean> REDUCE_ARMOR_DAMAGE =
             ThreadLocal.withInitial(() -> false);
@@ -54,6 +54,13 @@ public final class NichirinArmorDamage {
     }
 
     private static boolean shouldReduceArmorDamage(DamageSource source) {
-        return REDUCE_ARMOR_DAMAGE.get();
+        return REDUCE_ARMOR_DAMAGE.get() && isReducedMoveDamage(source);
+    }
+
+    private static boolean isReducedMoveDamage(DamageSource source) {
+        return source.is(NichirinDamageSources.BLADE)
+                || source.is(NichirinDamageSources.CQC)
+                || source.is(NichirinDamageSources.DEMON)
+                || source.is(NichirinDamageSources.TEMPLE_DEMON);
     }
 }
