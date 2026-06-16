@@ -2,9 +2,12 @@ package com.xirc.nichirin.common.attack;
 
 import com.xirc.nichirin.client.gui.CooldownHUD;
 import com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer;
+import com.xirc.nichirin.common.attack.component.AbstractAttack;
 import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
 import com.xirc.nichirin.common.attack.component.AbstractDemonAttack;
+import com.xirc.nichirin.common.attack.moves.AbstractKatanaAttack;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
+import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
 import com.xirc.nichirin.common.util.ComboTracker;
 import com.xirc.nichirin.common.util.NetworkBufferUtils;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
@@ -21,8 +24,11 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -34,6 +40,7 @@ public class MoveExecutor {
     private static final ConcurrentHashMap<UUID, List<Object>> activeAttacks = new ConcurrentHashMap<>();
     private static final ResourceLocation COOLDOWN_PACKET_ID = ResourceLocation.fromNamespaceAndPath("nichirin", "cooldown_display");
     private static boolean hitboxDebuggingEnabled = false;
+    private static final Set<Object> comboScaledAttacks = Collections.newSetFromMap(new WeakHashMap<>());
 
     public static void executeAttack(LivingEntity entity, Object attack, String movesetId, String moveId) {
         if (entity.hasEffect(NichirinEffectRegistry.stunned())) return;
@@ -110,17 +117,16 @@ public class MoveExecutor {
 
     private static void executeConfiguredAttack(LivingEntity entity, Object attack, String movesetId, String moveId) {
         NichirinMovesetRegistry.MoveInfo moveInfo = NichirinMovesetRegistry.getMove(movesetId, moveId);
+        AbstractMoveset moveset = NichirinMovesetRegistry.getMoveset(movesetId);
+        AbstractMoveset.MoveConfiguration config = moveset != null ? findMoveConfig(moveset, moveId) : null;
         String displayName;
         if (moveInfo != null) {
             displayName = moveInfo.displayName;
         } else {
-            // Fall back to looking up the name in the moveset (covers left-click / right-click moves)
-            AbstractMoveset moveset = NichirinMovesetRegistry.getMoveset(movesetId);
-            AbstractMoveset.MoveConfiguration config = moveset != null ? findMoveConfig(moveset, moveId) : null;
             displayName = config != null ? config.getDisplayName() : attack.getClass().getSimpleName();
         }
         int cooldown = getCooldownForAttack(attack);
-        executeAttackInternal(entity, attack, displayName, cooldown);
+        executeAttackInternal(entity, attack, displayName, cooldown, movesetId, config);
     }
 
     private static void handleGenericAttack(LivingEntity entity, Object attack, String movesetId, String moveId) {
@@ -131,7 +137,7 @@ public class MoveExecutor {
             displayName = config.getDisplayName();
         }
         int cooldown = getCooldownForAttack(attack);
-        executeAttackInternal(entity, attack, displayName, cooldown);
+        executeAttackInternal(entity, attack, displayName, cooldown, movesetId, config);
     }
 
     public static void executeAttackWithVisuals(LivingEntity entity, Object attack, String movesetId, String moveId) {
@@ -205,28 +211,67 @@ public class MoveExecutor {
 
     public static void executeAttackWithInfo(LivingEntity entity, Object attack, String displayName, int cooldown) {
         if (entity.hasEffect(NichirinEffectRegistry.stunned())) return;
-        executeAttackInternal(entity, attack, displayName, cooldown);
+        executeAttackInternal(entity, attack, displayName, cooldown, null, null);
     }
 
     public static void executeAttackWithInfo(Player player, Object attack, String displayName, int cooldown) {
         executeAttackWithInfo((LivingEntity) player, attack, displayName, cooldown);
     }
 
-    private static void executeAttackInternal(LivingEntity entity, Object attack, String displayName, int cooldown) {
+    public static void executeAttackWithInfo(LivingEntity entity, Object attack, String movesetId, AbstractMoveset.MoveConfiguration config) {
+        if (entity.hasEffect(NichirinEffectRegistry.stunned()) || config == null) return;
+        executeAttackInternal(entity, attack, config.getDisplayName(), config.getCooldownOrDefault(0), movesetId, config);
+    }
+
+    public static void executeAttackWithInfo(Player player, Object attack, String movesetId, AbstractMoveset.MoveConfiguration config) {
+        executeAttackWithInfo((LivingEntity) player, attack, movesetId, config);
+    }
+
+    private static void executeAttackInternal(LivingEntity entity, Object attack, String displayName, int cooldown,
+                                              String movesetId, AbstractMoveset.MoveConfiguration config) {
         if (!isAttackActive(attack)) {
+            applyComboAttackScaling(entity, attack, displayName);
             startAttack(entity, attack);
 
             if (isAttackActive(attack)) {
                 trackAttack(entity, attack);
                 if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer && cooldown > 0) {
-                    sendCooldownToClient(serverPlayer, displayName, cooldown);
+                    if (movesetId != null && config != null) {
+                        CooldownDisplayPacket.sendToClient(serverPlayer, movesetId, config);
+                    } else {
+                        sendCooldownToClient(serverPlayer, displayName, cooldown);
+                    }
                 }
             }
         }
     }
 
+    private static void applyComboAttackScaling(LivingEntity entity, Object attack, String displayName) {
+        if (!(entity instanceof Player player) || attack == null || comboScaledAttacks.contains(attack)) {
+            return;
+        }
+
+        ComboTracker.registerAttackStart(player, displayName);
+        float multiplier = ComboTracker.getAttackComboMultiplier(player);
+        if (multiplier == 1.0f) {
+            comboScaledAttacks.add(attack);
+            return;
+        }
+
+        if (attack instanceof AbstractAttack abstractAttack) {
+            abstractAttack.applyDamageAndStunMultiplier(multiplier);
+            comboScaledAttacks.add(attack);
+            return;
+        }
+
+        if (attack instanceof AbstractKatanaAttack katanaAttack) {
+            katanaAttack.applyDamageAndStunMultiplier(multiplier);
+            comboScaledAttacks.add(attack);
+        }
+    }
+
     private static boolean isAttackActive(Object attack) {
-        if (attack instanceof AbstractBreathingAttack<?, ?> breathingAttack) return breathingAttack.isActive();
+        if (attack instanceof AbstractAttack a) return a.isActive();
         try {
             return (boolean) attack.getClass().getMethod("isActive").invoke(attack);
         } catch (Exception e) { return false; }
@@ -288,6 +333,12 @@ public class MoveExecutor {
     public static void sendCooldownDisplay(Player player, String displayName, int cooldownTicks) {
         if (player instanceof ServerPlayer sp && cooldownTicks > 0) {
             sendCooldownToClient(sp, displayName, cooldownTicks);
+        }
+    }
+
+    public static void sendCooldownDisplay(Player player, String movesetId, AbstractMoveset.MoveConfiguration config) {
+        if (player instanceof ServerPlayer sp && config != null && config.getCooldownOrDefault(0) > 0) {
+            CooldownDisplayPacket.sendToClient(sp, movesetId, config);
         }
     }
 
@@ -402,8 +453,8 @@ public class MoveExecutor {
 
     private static boolean stopAttackObject(Object attack) {
         try {
-            if (attack instanceof AbstractBreathingAttack<?, ?> breathingAttack) {
-                breathingAttack.stop();
+            if (attack instanceof AbstractAttack a) {
+                a.stop();
             } else {
                 attack.getClass().getMethod("stop").invoke(attack);
             }
@@ -440,7 +491,6 @@ public class MoveExecutor {
     public static void tickAllAttacks(MinecraftServer server) {
         if (server == null) return;
         for (var player : server.getPlayerList().getPlayers()) tickAttacks(player);
-        AbstractBreathingAttack.tickAllActiveAttacks(server);
-        AbstractDemonAttack.tickAllActiveAttacks(server);
+        AbstractAttack.tickAllActiveAttacks(server);
     }
 }

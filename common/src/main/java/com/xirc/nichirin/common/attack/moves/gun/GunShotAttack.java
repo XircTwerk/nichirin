@@ -34,7 +34,8 @@ public class GunShotAttack extends AbstractKatanaAttack {
     public static final double BASELINE_DISTANCE    = 8.0;
     public static final double ZERO_DAMAGE_DISTANCE = 20.0;
     // Random angular spread applied to every pellet (max deviation per axis before re-normalizing).
-    private static final double SPREAD = 0.12;
+    private static final double SPREAD = 0.3;
+    private static final int PELLETS_PER_BARREL = 8;
     private static final String IMPACT_SHAKE_EFFECT = "com.xirc.nichirin.client.shader.ImpactShakeShaderEffect";
 
     private final int barrels;
@@ -77,8 +78,10 @@ public class GunShotAttack extends AbstractKatanaAttack {
 
         sendShootShake(player, barrels >= 2 ? 0.45f : 0.25f);
 
-        for (int i = 0; i < barrels; i++) {
-            fireRay(player, world);
+        float pelletDamage = damage / PELLETS_PER_BARREL;
+        int totalPellets = barrels * PELLETS_PER_BARREL;
+        for (int i = 0; i < totalPellets; i++) {
+            fireRay(player, world, pelletDamage);
         }
     }
 
@@ -95,7 +98,7 @@ public class GunShotAttack extends AbstractKatanaAttack {
     protected void performHitDetection(LivingEntity user, Level world) {
     }
 
-    private void fireRay(LivingEntity user, Level world) {
+    private void fireRay(LivingEntity user, Level world, float pelletDamage) {
         Vec3 eye = user.getEyePosition();
         RandomSource random = user.getRandom();
         Vec3 look = user.getViewVector(1.0f).add(
@@ -119,7 +122,7 @@ public class GunShotAttack extends AbstractKatanaAttack {
         Vec3 impact = end;
         if (entityHit != null && entityHit.getEntity() instanceof LivingEntity target) {
             impact = entityHit.getLocation();
-            float dmg = damage * damageMultiplier(eye.distanceTo(impact));
+            float dmg = pelletDamage * damageMultiplier(eye.distanceTo(impact));
             boolean damaged = dmg > 0 && NichirinArmorDamage.hurt(target, NichirinDamageSources.blade(user), dmg);
             target.invulnerableTime = 0;
             if (damaged && knockback > 0) {

@@ -16,9 +16,6 @@ public class CooldownDisplayPacket {
     private static final ResourceLocation DEFAULT_ICON = ResourceLocation.fromNamespaceAndPath("nichirin", "textures/icons/default_move.png");
     private static final int DEFAULT_COLOR = 0xFFDDDDDD;
 
-    /**
-     * Register the packet handler on client
-     */
     public static void registerClient() {
         NetworkManager.registerReceiver(NetworkManager.Side.S2C, PACKET_ID, (buf, context) -> {
             String moveName = buf.readUtf();
@@ -37,11 +34,12 @@ public class CooldownDisplayPacket {
         });
     }
 
-    /**
-     * Send cooldown display packet to client
-     */
     public static void sendToClient(ServerPlayer player, String moveName, int cooldownTicks) {
-        sendToClient(player, moveName, cooldownTicks, DEFAULT_ICON, DEFAULT_COLOR);
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+        buf.writeUtf(moveName);
+        buf.writeInt(cooldownTicks);
+
+        NetworkManager.sendToPlayer(player, PACKET_ID, NetworkBufferUtils.server(buf, player));
     }
 
     public static void sendToClient(ServerPlayer player, String moveName, int cooldownTicks,

@@ -1,10 +1,12 @@
 package com.xirc.nichirin.common.outline;
 
 import com.xirc.nichirin.common.aura.AuraAudience;
+import com.xirc.nichirin.common.util.NetworkBufferUtils;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -96,11 +98,11 @@ public final class OutlineManager {
         buf.release();
     }
 
-    private static net.minecraft.network.RegistryFriendlyByteBuf copyBuf(FriendlyByteBuf src, ServerPlayer recipient) {
-        return com.xirc.nichirin.common.util.NetworkBufferUtils.serverCopy(src, recipient);
+    private static RegistryFriendlyByteBuf copyBuf(FriendlyByteBuf src, ServerPlayer recipient) {
+        return NetworkBufferUtils.serverCopy(src, recipient);
     }
 
-    private static void safeSend(ServerPlayer p, ResourceLocation id, net.minecraft.network.RegistryFriendlyByteBuf buf) {
+    private static void safeSend(ServerPlayer p, ResourceLocation id, RegistryFriendlyByteBuf buf) {
         try { NetworkManager.sendToPlayer(p, id, buf); } catch (Exception ignored) {}
     }
 }

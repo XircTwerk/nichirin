@@ -1,7 +1,9 @@
 package com.xirc.nichirin.common.util;
 
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 
 import java.util.Map;
 import java.util.UUID;
@@ -27,6 +29,7 @@ public final class NichirinArmorDamage {
         boolean previous = REDUCE_ARMOR_DAMAGE.get();
         REDUCE_ARMOR_DAMAGE.set(true);
         try {
+            amount = applyParryPunishDamage(target, source, amount);
             float before = target.getHealth() + target.getAbsorptionAmount();
             boolean result = target.hurt(source, amount);
             float dealt = Math.max(0.0f, before - (target.getHealth() + target.getAbsorptionAmount()));
@@ -62,5 +65,13 @@ public final class NichirinArmorDamage {
                 || source.is(NichirinDamageSources.CQC)
                 || source.is(NichirinDamageSources.DEMON)
                 || source.is(NichirinDamageSources.TEMPLE_DEMON);
+    }
+
+    private static float applyParryPunishDamage(LivingEntity target, DamageSource source, float amount) {
+        Entity attacker = source.getEntity();
+        if (attacker instanceof Player && ComboTracker.isParryStunned(target)) {
+            return amount * 2.0f;
+        }
+        return amount;
     }
 }

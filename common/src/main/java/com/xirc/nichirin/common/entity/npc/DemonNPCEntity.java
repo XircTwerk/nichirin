@@ -9,6 +9,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -305,7 +306,7 @@ public abstract class DemonNPCEntity extends Monster implements MovesetCapableNP
     protected void onAnimationComplete(String animationName) {}
 
     @Override
-    public boolean hurt(net.minecraft.world.damagesource.DamageSource source, float amount) {
+    public boolean hurt(DamageSource source, float amount) {
         boolean damaged = super.hurt(source, amount);
         if (damaged && !level().isClientSide) {
             syncBloodToHealth();

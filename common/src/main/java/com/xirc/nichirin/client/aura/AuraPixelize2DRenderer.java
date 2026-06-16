@@ -12,9 +12,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -88,28 +88,22 @@ public final class AuraPixelize2DRenderer {
             double ey = host.yo + (host.getY() - host.yo) * partialTick + host.getBbHeight() * 0.5;
             double ez = host.zo + (host.getZ() - host.zo) * partialTick;
 
-            // Disc plane spans the host's shoulders: derived from its interpolated body yaw.
-            float hostYawDeg = host instanceof LivingEntity living
-                    ? living.yBodyRotO + (living.yBodyRot - living.yBodyRotO) * partialTick
-                    : host.getYRot();
-            float hostYawRad = (float) Math.toRadians(hostYawDeg);
-            Vector3f hostRight = new Vector3f((float) Math.cos(hostYawRad), 0f, (float) Math.sin(hostYawRad));
-
-            // Coplanar discs z-fight; nudge each successive (smaller) aura toward the camera so
-            // the breathing core always renders cleanly on top of the demon ring behind it.
             Vec3 toCam = camPos.subtract(ex, ey, ez).normalize();
+            double toCamHX = toCam.x, toCamHZ = toCam.z;
+            double toCamHLen = Math.sqrt(toCamHX * toCamHX + toCamHZ * toCamHZ);
+            if (toCamHLen > 1e-6) { toCamHX /= toCamHLen; toCamHZ /= toCamHLen; }
 
             for (int idx = 0; idx < instances.size(); idx++) {
                 AuraInstance instance = instances.get(idx);
-                Vector3f right = instance.cameraFacing() ? camRight : hostRight;
+                double backOffset = host.getBbWidth() * 0.5 + 0.15;
                 double bias = idx * 0.08;
                 poseStack.pushPose();
                 poseStack.translate(
-                        ex - camPos.x + toCam.x * bias,
-                        ey - camPos.y + toCam.y * bias,
-                        ez - camPos.z + toCam.z * bias);
+                        ex - camPos.x - toCamHX * backOffset + toCamHX * bias,
+                        ey - camPos.y,
+                        ez - camPos.z - toCamHZ * backOffset + toCamHZ * bias);
                 renderInstance2D(vc, poseStack.last().pose(), instance, nowMs,
-                        right, up, host.getBbWidth(), host.getBbHeight());
+                        camRight, up, host.getBbWidth(), host.getBbHeight());
                 poseStack.popPose();
             }
         }
@@ -267,7 +261,7 @@ public final class AuraPixelize2DRenderer {
         vc.addVertex(mat, x, y, z)
                 .setColor(r, g, b, a)
                 .setUv(0.5f, 0.5f)
-                .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
+                .setOverlay(OverlayTexture.NO_OVERLAY)
                 .setLight(packedLight)
                 .setNormal(0f, 1f, 0f);
     }

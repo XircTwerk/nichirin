@@ -4,10 +4,12 @@ import com.xirc.nichirin.common.aura.AuraAudience;
 import com.xirc.nichirin.common.aura.AuraInstance;
 import com.xirc.nichirin.common.aura.AuraManager;
 import com.xirc.nichirin.common.util.ComboIntegration;
+import com.xirc.nichirin.common.util.NichirinArmorDamage;
 import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import com.xirc.nichirin.registry.NicirinSoundRegistry;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.network.protocol.Packet;
@@ -137,16 +139,15 @@ public class ShockwaveEntity extends Entity {
         DamageSource source = ownerEntity != null
                 ? NichirinDamageSources.demon(ownerEntity)
                 : level().damageSources().generic();
-        float healthBefore = target.getHealth() + target.getAbsorptionAmount();
         // Capture velocity so we can cancel the knockback vanilla hurt() applies away from the
         // owner — our custom knockback below is the only displacement allowed.
         Vec3 preHitMotion = target.getDeltaMovement();
-        target.hurt(source, damage);
+        NichirinArmorDamage.hurt(target, source, damage);
         if (noVanillaKnockback) {
             target.setDeltaMovement(preHitMotion);
             target.hurtMarked = true;
         }
-        float actualDamage = Math.max(0.0f, healthBefore - (target.getHealth() + target.getAbsorptionAmount()));
+        float actualDamage = NichirinArmorDamage.actualDamageOr(target, damage);
 
         if (knockback > 0) {
             if (noHorizontalPush) {
@@ -214,7 +215,7 @@ public class ShockwaveEntity extends Entity {
 
     private LivingEntity ownerEntity() {
         if (ownerId == null || level().isClientSide) return null;
-        for (Entity e : ((net.minecraft.server.level.ServerLevel) level()).getAllEntities()) {
+        for (Entity e : ((ServerLevel) level()).getAllEntities()) {
             if (ownerId.equals(e.getUUID()) && e instanceof LivingEntity le) return le;
         }
         return null;
@@ -240,12 +241,12 @@ public class ShockwaveEntity extends Entity {
     }
 
     @Override
-    protected void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+    protected void readAdditionalSaveData(CompoundTag tag) {
         // Shockwaves are short-lived; nothing persisted.
     }
 
     @Override
-    protected void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+    protected void addAdditionalSaveData(CompoundTag tag) {
     }
 
     @Override

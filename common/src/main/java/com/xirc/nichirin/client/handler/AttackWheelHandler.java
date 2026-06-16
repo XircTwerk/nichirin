@@ -21,6 +21,7 @@ import dev.architectury.event.events.client.ClientTickEvent;
 import lombok.Getter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
 
@@ -281,7 +282,7 @@ public class AttackWheelHandler {
         }
     }
 
-    private static boolean hasOpenableWheelMoves(AbstractMoveset moveset, net.minecraft.world.entity.player.Player player) {
+    private static boolean hasOpenableWheelMoves(AbstractMoveset moveset, Player player) {
         if (isDefaultKatanaWheel) {
             return true;
         }

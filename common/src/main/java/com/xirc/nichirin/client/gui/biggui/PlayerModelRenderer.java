@@ -113,6 +113,9 @@ public class PlayerModelRenderer {
         entityRenderDispatcher.setRenderShadow(false);
         RenderSystem.runAsFancy(() -> entityRenderDispatcher.render(entity, 0.0, 0.0, 0.0, 0.0F, 1.0F,
                 guiGraphics.pose(), guiGraphics.bufferSource(), 15728880));
+        // AzureLib's armor pipeline may change the lighting state during render; restore before flush
+        // so the buffered armor geometry is drawn under the correct inventory lighting.
+        Lighting.setupForEntityInInventory();
         guiGraphics.flush();
         entityRenderDispatcher.setRenderShadow(true);
         guiGraphics.pose().popPose();

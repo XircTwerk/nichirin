@@ -4,6 +4,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
@@ -262,9 +263,9 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.PLAYERS, 1.0f, 1.1f);
 
-        if (world instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+        if (world instanceof ServerLevel serverLevel) {
             for (UUID id : spawnedClones) {
-                net.minecraft.world.entity.Entity e = serverLevel.getEntity(id);
+                Entity e = serverLevel.getEntity(id);
                 if (e != null) e.discard();
             }
         }

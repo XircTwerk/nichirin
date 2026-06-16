@@ -1,5 +1,7 @@
 package com.xirc.nichirin.common.system.movement;
 
+import com.xirc.nichirin.common.config.NichirinModConfig;
+import com.xirc.nichirin.common.config.NichirinModConfig.MovementConfig;
 import com.xirc.nichirin.common.entity.MovesetCapableNPC;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -19,8 +21,8 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 public final class EntityMovement {
 
     // Movement tuning is read from config (movement.* in nichirin-server.toml).
-    private static com.xirc.nichirin.common.config.NichirinModConfig.MovementConfig mcfg() {
-        return com.xirc.nichirin.common.config.NichirinModConfig.get().movement;
+    private static MovementConfig mcfg() {
+        return NichirinModConfig.get().movement;
     }
     private static double dashForce()       { return mcfg().dashForce; }
     private static double doubleJumpVel()    { return mcfg().doubleJumpVelocity; }

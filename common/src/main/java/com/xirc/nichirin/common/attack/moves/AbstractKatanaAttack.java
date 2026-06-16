@@ -244,6 +244,14 @@ public abstract class AbstractKatanaAttack {
     public int getTotalDuration() { return startup + active + recovery; }
     public int getCooldown()      { return cooldown; }
 
+    public void applyDamageAndStunMultiplier(float multiplier) {
+        if (multiplier == 1.0f) return;
+        this.damage *= multiplier;
+        if (this.hitStun > 0) {
+            this.hitStun = Math.max(1, Math.round(this.hitStun * multiplier));
+        }
+    }
+
 
     /**
      * Generic builder base.  Each concrete attack provides a thin subclass that

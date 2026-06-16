@@ -113,18 +113,18 @@ public class ClientInputHandler {
     /** Poll the attack key while holding the gun to distinguish a tapped vs held left-click. */
     private static void tickGunInput(Minecraft mc) {
         boolean holdingGun = mc.player.getMainHandItem().getItem() instanceof GenyaDB;
-        boolean keyDown = holdingGun && mc.screen == null
-                && mc.options.keyAttack.isDown() && !isInputBlocked();
+        boolean keyDown = holdingGun && mc.screen == null && mc.options.keyAttack.isDown();
 
         if (keyDown) {
             gunHeldTicks++;
             if (!gunFiredDouble && gunHeldTicks >= GUN_HOLD_THRESHOLD) {
-                sendGunShoot(2);
-                gunFiredDouble = true;
+                if (!isInputBlocked()) {
+                    sendGunShoot(2);
+                    gunFiredDouble = true;
+                }
             }
         } else {
-            // Released: a short press that never reached the hold threshold is a single shot.
-            if (gunWasDown && !gunFiredDouble && holdingGun) {
+            if (gunWasDown && !gunFiredDouble && holdingGun && !isInputBlocked()) {
                 sendGunShoot(1);
             }
             gunHeldTicks = 0;

@@ -59,11 +59,19 @@ public class DefaultGunMoveset extends AbstractMoveset {
     private static MovesetBuilder createBuilder() {
         return new MovesetBuilder()
                 .withLeftClickMove(new MoveBuilder("shoot", "Shoot")
-                        .withTiming(0, 0, 1).withRecovery(9)
-                        .withDamage(8.0f).withRange(30.0f).withKnockback(0.6f))
+                        .withTiming(0, 0, 1)
+                        .withRecovery(4)
+                        .withDamage(16.0f)
+                        .withRange(30.0f)
+                        .withKnockback(0.6f))
+
                 .withRightClickMove(new MoveBuilder("double_shot", "Double Shot")
-                        .withTiming(0, 0, 1).withRecovery(15)
-                        .withDamage(8.0f).withRange(30.0f).withKnockback(0.6f))
+                        .withTiming(0, 0, 1)
+                        .withRecovery(15)
+                        .withDamage(16.0f)
+                        .withRange(30.0f)
+                        .withKnockback(0.6f))
+
                 .withMove(new MoveBuilder("gun_bash", "Gun Bash")
                         .withTiming(60, 1, 4)
                         .withRecovery(6)
@@ -78,12 +86,13 @@ public class DefaultGunMoveset extends AbstractMoveset {
                             attack.configure(INSTANCE.getMove(0));
                             MoveExecutor.executeAttack(entity, attack, "default_gun", "gun_bash");
                         }))
+
                 .withMove(new MoveBuilder("grab", "Grab")
                         .withTiming(80, 1, 1)
                         .withRecovery(6)
                         .withRange(2.0f)
                         .withHitboxSize(1.5f)
-                        .withDescription("Grab the enemy in front of you; left/right-click to fire point-blank.")
+                        .withHitStun(40)                        .withDescription("Grab the enemy in front of you; left/right-click to fire point-blank.")
                         .withAction(entity -> {
                             GunGrabAttack attack = GunGrabAttack.createDefault();
                             attack.configure(INSTANCE.getMove(1));
@@ -191,8 +200,7 @@ public class DefaultGunMoveset extends AbstractMoveset {
     private void reload(Player player) {
         ItemStack stack = player.getMainHandItem();
         if (!(stack.getItem() instanceof GenyaDB)) return;
-        long now = player.level().getGameTime();
-        if (now < reloadUntil.getOrDefault(player.getUUID(), 0L)) return;
+        long now = player.level().getGameTime();        if (now < reloadUntil.getOrDefault(player.getUUID(), 0L)) return;
         if (GenyaDB.getAmmo(stack) >= GenyaDB.MAX_AMMO) {
             player.displayClientMessage(Component.literal("Already loaded").withStyle(s -> s.withColor(0xAAAAAA)), true);
             return;

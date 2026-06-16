@@ -7,6 +7,7 @@ import com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer;
 import com.xirc.nichirin.client.renderer.effects.ParrySparkHandler;
 import com.xirc.nichirin.common.attack.moves.breathing.thunder.ThunderclapChargeManager;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
+import com.xirc.nichirin.common.attack.moveset.CqcMoveset;
 import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.data.*;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
@@ -19,6 +20,7 @@ import com.xirc.nichirin.common.network.util.MovesetSyncPacket;
 import com.xirc.nichirin.common.system.DemonComponent;
 import com.xirc.nichirin.common.system.blocking.HandToHandBlock;
 import com.xirc.nichirin.common.system.blocking.KatanaBlock;
+import com.xirc.nichirin.common.system.sheathing.PlayerSheathData;
 import com.xirc.nichirin.common.util.MultiplayerInputHandler;
 import dev.architectury.networking.NetworkManager;
 import dev.architectury.platform.Platform;
@@ -681,8 +683,8 @@ public interface NichirinPacketRegistry {
         if (player.getMainHandItem().isEmpty() && MovesetHelper.hasFightingMoveset(player)) {
             AbstractMoveset fightingMoveset = MovesetHelper.getFightingMoveset(player);
             if (fightingMoveset != null && fightingMoveset.isNeutralMoveset()) {
-                if (fightingMoveset instanceof com.xirc.nichirin.common.attack.moveset.CqcMoveset) {
-                    com.xirc.nichirin.common.attack.moveset.CqcMoveset.withPlayer(player, () -> {
+                if (fightingMoveset instanceof CqcMoveset) {
+                    CqcMoveset.withPlayer(player, () -> {
                         switch (inputType) {
                             case LEFT_CLICK -> fightingMoveset.handleLeftClick(player);
                             case RIGHT_CLICK -> fightingMoveset.handleRightClick(player, false);
@@ -1222,7 +1224,7 @@ public interface NichirinPacketRegistry {
         }
     }
 
-    static void sendSheathSync(ServerPlayer player, com.xirc.nichirin.common.system.sheathing.PlayerSheathData data) {
+    static void sendSheathSync(ServerPlayer player, PlayerSheathData data) {
         SheathSyncPacket packet = new SheathSyncPacket(player, data);
         ResourceLocation id = PACKET_IDS.get(SheathSyncPacket.class);
         if (id == null) return;

@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.attack.moveset;
 
 import com.xirc.nichirin.common.attack.MoveExecutor;
+import com.xirc.nichirin.common.attack.component.AbstractDemonAttack;
 import com.xirc.nichirin.common.attack.moves.cqc.*;
 import com.xirc.nichirin.common.attack.moves.cqc.destructive.*;
 import com.xirc.nichirin.common.attack.moves.demon.basic.*;
@@ -9,6 +10,7 @@ import com.xirc.nichirin.common.data.CqcPresetData;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.system.DemonManager;
 import com.xirc.nichirin.common.util.StaminaManager;
+import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.LivingEntity;
@@ -572,7 +574,7 @@ public class CqcMoveset extends AbstractMoveset {
         if (entity.level().isClientSide()) return;
         if (queueFollowup(entity)) return;
         if (config == null) return;
-        if (entity.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.stunned())) return;
+        if (entity.hasEffect(NichirinEffectRegistry.stunned())) return;
         if (MoveExecutor.hasActiveAttacks(entity)) return;
         CqcMoveCatalog.Definition definition = CqcMoveCatalog.get(config.getMoveId());
         if (definition == null) return;
@@ -606,7 +608,7 @@ public class CqcMoveset extends AbstractMoveset {
         if (usesOrthodoxDamageBonus(entity, inputSlot)) {
             attack.applyDamageMultiplier(1.2f);
         }
-        MoveExecutor.executeAttackWithInfo(entity, attack, config.getDisplayName(), config.getCooldownOrDefault(0));
+        MoveExecutor.executeAttackWithInfo(entity, attack, ID, config);
         setCooldown(entity, config);
         startFollowupWindow(entity, config);
     }
@@ -625,11 +627,11 @@ public class CqcMoveset extends AbstractMoveset {
         if (attack == null) return true;
         if (attack instanceof DemonGrabAttack grabAttack) {
             grabAttack.execute(entity);
-            MoveExecutor.sendCooldownDisplay(entity instanceof Player player ? player : null, config.getDisplayName(), config.getCooldownOrDefault(0));
+            MoveExecutor.sendCooldownDisplay(entity instanceof Player player ? player : null, ID, config);
             setCooldown(entity, config);
             return true;
         }
-        if (attack instanceof com.xirc.nichirin.common.attack.component.AbstractDemonAttack<?, ?> demonAttack) {
+        if (attack instanceof AbstractDemonAttack<?, ?> demonAttack) {
             demonAttack.configure(config);
             if (!definition.demonOnly()) {
                 demonAttack.allowNonDemonUser();
@@ -641,9 +643,9 @@ public class CqcMoveset extends AbstractMoveset {
                 demonAttack.applyDamageMultiplier(1.2f);
             }
         }
-        MoveExecutor.executeAttackWithInfo(entity, attack, config.getDisplayName(), config.getCooldownOrDefault(0));
+        MoveExecutor.executeAttackWithInfo(entity, attack, ID, config);
         if ("dashing_strike".equals(moveId) && entity instanceof Player player) {
-            MoveExecutor.sendCooldownDisplay(player, config.getDisplayName(), config.getCooldownOrDefault(0));
+            MoveExecutor.sendCooldownDisplay(player, ID, config);
         }
         setCooldown(entity, config);
         return true;
@@ -694,8 +696,8 @@ public class CqcMoveset extends AbstractMoveset {
 
     private void executeFollowupConfigured(LivingEntity entity, MoveConfiguration config) {
         if (entity.level().isClientSide()) return;
-        if (entity.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.stunned())) {
-            entity.removeEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.stunned());
+        if (entity.hasEffect(NichirinEffectRegistry.stunned())) {
+            entity.removeEffect(NichirinEffectRegistry.stunned());
         }
         if (MoveExecutor.hasActiveAttacks(entity)) return;
         CqcMoveCatalog.Definition definition = CqcMoveCatalog.get(config.getMoveId());
@@ -708,7 +710,7 @@ public class CqcMoveset extends AbstractMoveset {
         AbstractCqcAttack attack = createAttack(config.getMoveId());
         if (attack == null) return;
         attack.configure(config);
-        MoveExecutor.executeAttackWithInfo(entity, attack, config.getDisplayName(), config.getCooldownOrDefault(0));
+        MoveExecutor.executeAttackWithInfo(entity, attack, ID, config);
         setCooldown(entity, config);
     }
 
@@ -744,7 +746,7 @@ public class CqcMoveset extends AbstractMoveset {
         if (damageBonus) {
             slashAttack.applyDamageMultiplier(1.2f);
         }
-        MoveExecutor.executeAttackWithInfo(entity, slashAttack, slashConfig.getDisplayName(), slashConfig.getCooldownOrDefault(0));
+        MoveExecutor.executeAttackWithInfo(entity, slashAttack, ID, slashConfig);
 
         if (stage == 0) {
             comboState.recordSlash1(currentTick);

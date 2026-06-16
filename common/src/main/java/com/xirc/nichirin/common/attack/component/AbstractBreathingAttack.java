@@ -1,19 +1,14 @@
 package com.xirc.nichirin.common.attack.component;
 
-import com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset.MoveConfiguration;
-import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
 import com.xirc.nichirin.common.network.s2c.TriggerShaderPacket;
 import com.xirc.nichirin.common.util.BreathingManager;
 import com.xirc.nichirin.common.util.ComboIntegration;
-import com.xirc.nichirin.common.util.HitboxData;
-import com.xirc.nichirin.common.util.AttackInterruptTracker;
 import com.xirc.nichirin.common.util.NichirinArmorDamage;
 import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import lombok.Getter;
-import lombok.Setter;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -23,122 +18,43 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-
 /**
  * Base class for all breathing technique attacks.
- * Uses moveset configuration at attack startup.
- * Enhanced with rotation-aware hitbox system for directional attacks.
+ * Extends AbstractAttack for shared fields, hitbox geometry, interrupt logic, and ticking.
+ * Adds breath cost management, a breathing-specific damage source, and impact-shake feedback.
  */
 @Getter
 @SuppressWarnings("rawtypes")
-public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack, A extends IBreathingAttacker> {
+public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack, A extends IBreathingAttacker>
+        extends AbstractAttack {
 
-    // Configuration from moveset - NO DEFAULT VALUES - MUST be configured
-    protected float damage;
-    protected float range;
-    protected float knockback;
     protected float breathCost;
-    protected int hitStun;
-    protected boolean slam;
-    protected int armorHits;
-    protected boolean hyperArmor;
-    protected float hitboxSize;
-    protected int cooldown;
-    protected int windup;
-    protected int duration;
-
-    // Movement properties (nullable - not all attacks use these)
-    protected Float teleportDistance;
-    protected Float dashSpeed;
-    protected Integer teleportWindup;
-
-    // Runtime state
-    protected boolean isActive = false;
-    protected int tickCount = 0;
-    private boolean activeStartFired = false;
-    protected LivingEntity user;
-    protected Level world;
-
-    // Self-ticking system - attacks register themselves for automatic ticking (Players only)
-    private static final ConcurrentHashMap<UUID, List<AbstractBreathingAttack<?, ?>>> selfTickingAttacks = new ConcurrentHashMap<>();
-
-    // Hit tracking
-    @Setter
-    private Set<UUID> hitEntities = new HashSet<>();
-    @Setter
-    private int hitCount = 0;
-    private int absorbedInterruptHits = 0;
-    private long lastArmorInterruptTick = Long.MIN_VALUE;
-
-    // Configuration and breath consumption tracking
-    private boolean configured = false;
     private boolean breathConsumed = false;
 
-    /**
-     * Configure this attack with values from the moveset
-     * This MUST be called by the moveset before starting the attack
-     */
+
     public void configure(MoveConfiguration config) {
-        if (configured) {
-            return; // Prevent double-configuration
-        }
-
-        this.damage = config.getDamageOrDefault(0f);
-        this.range = config.getRangeOrDefault(0f);
-        this.knockback = config.getKnockbackOrDefault(0f);
-        this.hitStun = config.getHitStunOrDefault(0);
-        this.slam = config.hasSlam();
-        this.armorHits = config.getArmorOrDefault(0);
-        this.hyperArmor = config.hasHyperArmor();
-        this.hitboxSize = config.getHitboxSizeOrDefault(0f);
-
-        this.cooldown = config.getCooldownOrDefault(0);
-        this.windup = config.getWindupOrDefault(0);
-        this.duration = config.getDurationOrDefault(0);
-
-        this.breathCost = config.getBreathCostOrDefault(0f);
-
-        this.teleportDistance = config.getTeleportDistance();
-        this.dashSpeed = config.getDashSpeed();
-        this.teleportWindup = config.getTeleportWindup();
-
-        this.configured = true;
+        if (configured) return;
+        configureCommon(config);
+        if (config != null) this.breathCost = config.getBreathCostOrDefault(0f);
     }
 
-    /**
-     * Start the attack for a Player (handles breath cost and client messages).
-     */
+
     public void start(Player player, Level world) {
-        if (!configured) return;
-        if (duration <= 0) return;
+        if (!configured || duration <= 0) return;
 
         this.user = player;
         this.world = world;
-        this.tickCount = 0;
-        this.activeStartFired = false;
-        this.absorbedInterruptHits = 0;
-        this.lastArmorInterruptTick = Long.MIN_VALUE;
-        this.breathConsumed = false;
-        this.hitEntities.clear();
-        this.hitCount = 0;
+        resetTickState();
+        breathConsumed = false;
 
         if (breathCost > 0 && !BreathingManager.hasBreath(player, breathCost)) {
             player.displayClientMessage(
                     Component.literal("Not enough breath!")
-                            .withStyle(style -> style.withColor(0xFF5555)),
-                    true
-            );
+                            .withStyle(s -> s.withColor(0xFF5555)), true);
             return;
         }
 
@@ -148,9 +64,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
             } else {
                 player.displayClientMessage(
                         Component.literal("Failed to consume breath!")
-                                .withStyle(style -> style.withColor(0xFF5555)),
-                        true
-                );
+                                .withStyle(s -> s.withColor(0xFF5555)), true);
                 return;
             }
         }
@@ -163,10 +77,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         } catch (Exception e) {
             e.printStackTrace();
             this.isActive = false;
-            if (breathConsumed) {
-                BreathingManager.restore(player, breathCost);
-                breathConsumed = false;
-            }
+            if (breathConsumed) { BreathingManager.restore(player, breathCost); breathConsumed = false; }
             return;
         }
 
@@ -176,27 +87,15 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         }
     }
 
-    /**
-     * Start the attack for any LivingEntity (NPC path — breath already consumed by caller).
-     */
+    /** NPC path; breath already consumed by caller. */
     public void start(LivingEntity entity, Level world) {
-        if (entity instanceof Player player) {
-            start(player, world);
-            return;
-        }
-        if (!configured) return;
-        if (duration <= 0) return;
+        if (entity instanceof Player player) { start(player, world); return; }
+        if (!configured || duration <= 0) return;
 
         this.user = entity;
         this.world = world;
-        this.tickCount = 0;
-        this.activeStartFired = false;
-        this.absorbedInterruptHits = 0;
-        this.lastArmorInterruptTick = Long.MIN_VALUE;
-        this.breathConsumed = false;
-        this.hitEntities.clear();
-        this.hitCount = 0;
-
+        resetTickState();
+        breathConsumed = false;
         this.isActive = true;
         registerForTicking();
 
@@ -208,847 +107,128 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         }
     }
 
-    /**
-     * Legacy start method for backward compatibility
-     */
-    public void start(Player player) {
-        start(player, player.level());
-    }
+    public void start(Player player) { start(player, player.level()); }
 
-    /**
-     * Start with attacker interface (legacy support)
-     */
     public void start(A attacker) {
         Player player = attacker.getPlayer();
         start(player, player.level());
     }
 
-    /**
-     * Tick the attack - called every game tick while active
-     */
-    public void tick() {
-        if (!isActive || user == null || world == null) {
-            return;
-        }
 
-        tickCount++;
+    /** Legacy bridge; delegates to the no-arg tick() in the base. */
+    public void tick(Player player) { tick(); }
 
-        boolean externallyStunned = isExternallyStunned();
-        boolean interruptedThisTick = AttackInterruptTracker.wasInterruptedThisTick(user);
 
-        if (shouldStopForInterrupt(externallyStunned, false, false)) {
-            stop(true);
-            return;
-        }
-
-        // Cancel attack if the user was hit during windup by an interrupting damage type.
-        if (tickCount <= windup && windup > 0 && shouldStopForInterrupt(false, interruptedThisTick, true)) {
-            stop(true);
-            return;
-        }
-
-        // Check if we're past windup phase
-        if (tickCount > windup) {
-            if (!activeStartFired) {
-                activeStartFired = true;
-                try {
-                    onActiveStart();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-            try {
-                perform();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        // Check if attack duration is complete
-        if (tickCount >= windup + duration) {
-            stop(false);
-        }
-    }
-
-    /**
-     * Legacy tick method for backward compatibility
-     */
-    public void tick(Player player) {
-        tick();
-    }
-
-    /**
-     * Stop the attack
-     */
-    public void stop() {
-        stop(true);
-    }
-
-    private void stop(boolean stopAnimation) {
-        if (isActive) {
-            isActive = false;
-
-            // Unregister from self-ticking
-            unregisterFromTicking();
-
-            try {
-                onStop();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            if (stopAnimation) {
-                stopPlayerAnimation();
-            }
-        }
-    }
-
-    private void stopPlayerAnimation() {
-        if (!world.isClientSide && user instanceof ServerPlayer serverPlayer) {
-            NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer, new PlayerAnimationPacket(serverPlayer.getId(), ""));
-        }
-    }
-
-    /**
-     * Apply damage and effects to a target with immunity frames
-     */
+    @Override
     protected void hitTarget(LivingEntity target) {
         if (world.isClientSide) return;
+        if (getHitEntities().contains(target.getUUID())) return;
 
-        // Check if already hit (for non-multi-hit attacks)
-        if (hitEntities.contains(target.getUUID())) {
-            return;
-        }
-
-        // Apply damage using configured values
         DamageSource source = NichirinDamageSources.breathing(user);
         boolean damaged = NichirinArmorDamage.hurt(target, source, damage);
 
         if (damaged && user instanceof Player player) {
-            // Add combo tracking for breathing attacks (players only)
             ComboIntegration.handleSuccessfulHit(player, target, hitStun, damage);
         }
 
-        // Apply hit stun if configured. Slam moves apply the Slammed effect (80% slow + swim pose +
-        // wobble) for the same duration instead of the normal Stun lock.
-        if (hitStun > 0) {
-            target.invulnerableTime = hitStun;
+        applyHitStun(target);
+        applyKnockback(target);
 
-            MobEffectInstance controlEffect = new MobEffectInstance(
-                    slam ? NichirinEffectRegistry.slammed() : NichirinEffectRegistry.stunned(),
-                    hitStun, // Duration in ticks (slam ticks == hit stun)
-                    slam ? 0 : 2, // Amplifier
-                    false, // Ambient
-                    false, // Show particles
-                    true // Show icon
-            );
-            target.addEffect(controlEffect);
-        }
+        getHitEntities().add(target.getUUID());
+        setHitCount(getHitCount() + 1);
 
-        // Apply knockback if configured
-        if (knockback > 0) {
-            Vec3 knockbackDir = target.position().subtract(user.position()).normalize();
-            target.push(knockbackDir.x * knockback, 0.1, knockbackDir.z * knockback);
-        }
-
-        // Track hit
-        hitEntities.add(target.getUUID());
-        hitCount++;
-
-        // Trigger impact shake on the attacking player's screen (server → client packet).
-        // Magnitude is derived from configured damage and hitStun so heavier hits feel stronger.
         if (damaged && user instanceof ServerPlayer sp) {
-            float mag = (damage / 20.0f + hitStun / 20.0f) * 0.5f;
-            mag = Math.max(0.2f, Math.min(2.0f, mag));
-            TriggerShaderPacket impactPacket = new TriggerShaderPacket(
-                    "com.xirc.nichirin.client.shader.ImpactShakeShaderEffect", true, mag);
-            NichirinPacketRegistry.sendToPlayer(impactPacket, sp);
+            float mag = Math.max(0.2f, Math.min(2.0f, (damage / 20.0f + hitStun / 20.0f) * 0.5f));
+            NichirinPacketRegistry.sendToPlayer(
+                    new TriggerShaderPacket("com.xirc.nichirin.client.shader.ImpactShakeShaderEffect", true, mag), sp);
         }
     }
 
-    /**
-     * Special hit method that removes immunity frames
-     */
+    @Override
     protected void hitTargetNoImmunity(LivingEntity target) {
         if (world.isClientSide) return;
-
-        // Reset invulnerability to allow immediate damage
         target.invulnerableTime = 0;
         target.hurtTime = 0;
 
-        // Apply damage
         DamageSource source = NichirinDamageSources.breathing(user);
         boolean damaged = NichirinArmorDamage.hurt(target, source, damage);
 
         if (damaged && user instanceof Player player) {
-            // Add combo tracking for breathing attacks (players only, no immunity version)
             ComboIntegration.handleSuccessfulHit(player, target, hitStun, damage);
         }
 
-        // Apply hit stun
+        // No-immunity variant always applies stunned (not slam)
         if (hitStun > 0) {
             target.invulnerableTime = hitStun;
-
-            // Apply actual stun effect
-            MobEffectInstance stunInstance = new MobEffectInstance(
-                    NichirinEffectRegistry.stunned(), hitStun, 2, false, false, true);
-            target.addEffect(stunInstance);
+            target.addEffect(new MobEffectInstance(
+                    NichirinEffectRegistry.stunned(),
+                    hitStun, 2, false, false, true));
         }
-
-        // Apply knockback
-        if (knockback > 0) {
-            Vec3 knockbackDir = target.position().subtract(user.position()).normalize();
-            target.push(knockbackDir.x * knockback, 0.1, knockbackDir.z * knockback);
-        }
-
-        // Track hit (allow multiple hits for no-immunity attacks)
-        hitCount++;
+        applyKnockback(target);
+        setHitCount(getHitCount() + 1);
     }
 
-    /**
-     * Get entities in a hitbox centered at the given position
-     * NOW WITH ROTATION SUPPORT: Hitboxes rotate based on player's look direction
-     */
-    protected List<LivingEntity> getTargetsInHitbox(Vec3 center) {
-        HitboxData hitboxData = new HitboxData(hitboxSize);
-        AABB hitbox = hitboxData.createAABBFromEntity(user);
 
-        // Override center position if different from player position
-        if (!center.equals(user.position().add(0, user.getBbHeight() / 2, 0))) {
-            Vec3 lookDirection = user.getLookAngle();
-            float yaw = (float) Math.toRadians(user.getYRot());
-            hitbox = hitboxData.createAABB(center, lookDirection, yaw);
-        }
-
-        // Add to visual debugger if on client
-        if (user.level().isClientSide) {
-            AttackHitboxRenderer.addHitbox(hitbox);
-        } else {
-            // Server side - send packet to client for visual debugging
-            if (user instanceof ServerPlayer serverPlayer) {
-                NichirinPacketRegistry.sendHitboxToClient(
-                        serverPlayer, hitbox, 2500L
-                );
-            }
-        }
-
-        List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
-                entity -> entity != user && entity.isAlive());
-
-        return targets;
+    @Override
+    protected void registerForTicking() {
+        if (user instanceof Player) super.registerForTicking();
     }
 
-    /**
-     * Get entities in a custom hitbox with specified shape and size
-     * NOW WITH ROTATION SUPPORT: Custom hitboxes also rotate with player direction
-     */
-    protected List<LivingEntity> getTargetsInCustomHitbox(Vec3 center, float size, HitboxData.HitboxShape shape) {
-        HitboxData hitboxData = new HitboxData(size, shape);
 
-        Vec3 lookDirection = user.getLookAngle();
-        float yaw = (float) Math.toRadians(user.getYRot());
-        AABB hitbox = hitboxData.createAABB(center, lookDirection, yaw);
-
-        // Add to visual debugger if on client
-        if (user.level().isClientSide) {
-            AttackHitboxRenderer.addHitbox(hitbox);
-        } else {
-            // Server side - send packet to client
-            if (user instanceof ServerPlayer serverPlayer) {
-                NichirinPacketRegistry.sendHitboxToClient(
-                        serverPlayer, hitbox, 2500L
-                );
-            }
-        }
-
-        List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
-                entity -> entity != user && entity.isAlive());
-
-        return targets;
-    }
-
-    /**
-     * Legacy method for backward compatibility - converts old parameters to new system
-     */
-    protected List<LivingEntity> getTargetsInCustomHitbox(Vec3 center, double width, double height, double depth) {
-        // Convert dimensions to our new system
-        float size = (float) Math.max(width, Math.max(height, depth));
-
-        return getTargetsInCustomHitbox(center, size, HitboxData.HitboxShape.CUBE);
-    }
-
-    /**
-     * Get entities in a line between two points
-     * NOW WITH ROTATION SUPPORT: Line hitboxes can be rotated based on the line direction
-     */
-    protected List<LivingEntity> getTargetsInLine(Vec3 start, Vec3 end, double thickness) {
-        // Calculate the distance and create multiple hitboxes along the line
-        double distance = start.distanceTo(end);
-        int hitboxCount = Math.max(1, (int) Math.ceil(distance / Math.max(thickness * 0.5, 0.1)));
-
-        Set<LivingEntity> allTargets = new HashSet<>();
-        Set<AABB> lineHitboxes = new HashSet<>();
-
-        // Calculate the direction of the line for rotation
-        Vec3 lineDirection = end.subtract(start).normalize();
-        float lineYaw = (float) Math.atan2(-lineDirection.x, lineDirection.z);
-
-        for (int i = 0; i <= hitboxCount; i++) {
-            double progress = hitboxCount > 0 ? (double) i / hitboxCount : 0;
-            Vec3 hitboxCenter = start.lerp(end, progress);
-
-            // Create a LONG shaped hitbox oriented along the line direction
-            HitboxData hitboxData = new HitboxData((float) thickness, HitboxData.HitboxShape.CUBE);
-            AABB hitbox = hitboxData.createAABB(hitboxCenter, lineDirection, lineYaw);
-            lineHitboxes.add(hitbox);
-
-            List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
-                    entity -> entity != user && entity.isAlive());
-            allTargets.addAll(targets);
-        }
-
-        // Add all hitboxes to visual debugger if on client
-        if (user.level().isClientSide) {
-            AttackHitboxRenderer.addHitboxes(lineHitboxes);
-        } else {
-            // Server side - send packets for each hitbox
-            if (user instanceof ServerPlayer serverPlayer) {
-                for (AABB hitbox : lineHitboxes) {
-                    NichirinPacketRegistry.sendHitboxToClient(
-                            serverPlayer, hitbox, 2500L
-                    );
-                }
-            }
-        }
-
-        return new ArrayList<>(allTargets);
-    }
-
-    /**
-     * Create a hitbox at the configured range from the player
-     * NOW WITH ROTATION SUPPORT: Range hitboxes are positioned and oriented correctly
-     */
-    protected List<LivingEntity> getTargetsAtRange() {
-        Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);
-        Vec3 lookDirection = user.getLookAngle();
-        Vec3 hitboxCenter = playerPos.add(lookDirection.scale(range));
-
-        HitboxData hitboxData = new HitboxData(hitboxSize);
-        AABB hitbox = hitboxData.createAABBFromEntity(user);
-
-        // Override center to be at range distance
-        float yaw = (float) Math.toRadians(user.getYRot());
-        hitbox = hitboxData.createAABB(hitboxCenter, lookDirection, yaw);
-
-        // Add to visual debugger if on client
-        if (user.level().isClientSide) {
-            AttackHitboxRenderer.addHitbox(hitbox);
-        } else {
-            // Server side - send packet to client
-            if (user instanceof ServerPlayer serverPlayer) {
-                NichirinPacketRegistry.sendHitboxToClient(
-                        serverPlayer, hitbox, 2500L
-                );
-            }
-        }
-
-        List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
-                entity -> entity != user && entity.isAlive());
-
-        return targets;
-    }
-
-    /**
-     * Create a hitbox at the configured range with custom shape
-     * NOW WITH ROTATION SUPPORT: Custom shaped hitboxes at range rotate properly
-     */
-    protected List<LivingEntity> getTargetsAtRange(HitboxData.HitboxShape shape) {
-        Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);
-        Vec3 lookDirection = user.getLookAngle();
-        Vec3 hitboxCenter = playerPos.add(lookDirection.scale(range));
-
-        return getTargetsInCustomHitbox(hitboxCenter, hitboxSize, shape);
-    }
-
-    /**
-     * Create multiple hitboxes from player to max range
-     * NOW WITH ROTATION SUPPORT: Range line follows player's look direction
-     */
-    protected List<LivingEntity> getTargetsInRangeLine(float spacing) {
-        Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);
-        Vec3 lookDirection = user.getLookAngle();
-        Vec3 endPos = playerPos.add(lookDirection.scale(range));
-
-        return getTargetsInLine(playerPos, endPos, spacing);
-    }
-
-    /**
-     * Create a cone of hitboxes at the configured range
-     * NOW WITH ROTATION SUPPORT: Cone properly rotates with player direction
-     */
-    protected List<LivingEntity> getTargetsInCone(float coneAngle, int hitboxCount) {
-        Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);
-        Vec3 lookDirection = user.getLookAngle();
-        float playerYaw = (float) Math.toRadians(user.getYRot());
-
-        Set<LivingEntity> allTargets = new HashSet<>();
-        Set<AABB> coneHitboxes = new HashSet<>();
-
-        float angleStep = coneAngle / (hitboxCount - 1);
-        float startAngle = -coneAngle / 2;
-
-        for (int i = 0; i < hitboxCount; i++) {
-            float angle = startAngle + (i * angleStep);
-
-            // Calculate the yaw for this hitbox (player yaw + cone offset)
-            float hitboxYaw = playerYaw + (float) Math.toRadians(angle);
-
-            // Calculate direction vector for this angle
-            Vec3 rotatedDirection = rotateVectorY(lookDirection, Math.toRadians(angle));
-            Vec3 hitboxCenter = playerPos.add(rotatedDirection.scale(range));
-
-            // Create hitbox with proper rotation
-            HitboxData hitboxData = new HitboxData(hitboxSize);
-            AABB hitbox = hitboxData.createAABB(hitboxCenter, rotatedDirection, hitboxYaw);
-            coneHitboxes.add(hitbox);
-
-            List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
-                    entity -> entity != user && entity.isAlive());
-            allTargets.addAll(targets);
-        }
-
-        // Add all hitboxes to visual debugger if on client
-        if (user.level().isClientSide) {
-            AttackHitboxRenderer.addHitboxes(coneHitboxes);
-        } else {
-            // Server side - send packets
-            if (user instanceof ServerPlayer serverPlayer) {
-                for (AABB hitbox : coneHitboxes) {
-                    NichirinPacketRegistry.sendHitboxToClient(
-                            serverPlayer, hitbox, 2500L
-                    );
-                }
-            }
-        }
-
-        return new ArrayList<>(allTargets);
-    }
-
-    /**
-     * Create a fan/sweep attack that covers an arc in front of the player.
-     */
-    protected List<LivingEntity> getTargetsInSweep(float sweepAngle, float sweepRange, int hitboxCount) {
-        Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);
-        Vec3 lookDirection = user.getLookAngle();
-        float playerYaw = (float) Math.toRadians(user.getYRot());
-
-        Set<LivingEntity> allTargets = new HashSet<>();
-        Set<AABB> sweepHitboxes = new HashSet<>();
-
-        float angleStep = sweepAngle / (hitboxCount - 1);
-        float startAngle = -sweepAngle / 2;
-
-        for (int i = 0; i < hitboxCount; i++) {
-            float angle = startAngle + (i * angleStep);
-            float hitboxYaw = playerYaw + (float) Math.toRadians(angle);
-
-            // Calculate position for this hitbox
-            Vec3 rotatedDirection = rotateVectorY(lookDirection, Math.toRadians(angle));
-            Vec3 hitboxCenter = playerPos.add(rotatedDirection.scale(sweepRange));
-
-            // Create WIDE hitbox for sweep attacks
-            HitboxData hitboxData = new HitboxData(hitboxSize, HitboxData.HitboxShape.CUBE);
-            AABB hitbox = hitboxData.createAABB(hitboxCenter, rotatedDirection, hitboxYaw);
-            sweepHitboxes.add(hitbox);
-
-            List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
-                    entity -> entity != user && entity.isAlive());
-            allTargets.addAll(targets);
-        }
-
-        // Add all hitboxes to visual debugger
-        if (user.level().isClientSide) {
-            AttackHitboxRenderer.addHitboxes(sweepHitboxes);
-        } else {
-            if (user instanceof ServerPlayer serverPlayer) {
-                for (AABB hitbox : sweepHitboxes) {
-                    NichirinPacketRegistry.sendHitboxToClient(
-                            serverPlayer, hitbox, 2500L
-                    );
-                }
-            }
-        }
-
-        return new ArrayList<>(allTargets);
-    }
-
-    /**
-     * Create a thrust attack with a long hitbox extending from the player.
-     */
-    protected List<LivingEntity> getTargetsInThrust() {
-        Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);
-        Vec3 lookDirection = user.getLookAngle();
-
-        // Position the thrust hitbox halfway between player and max range
-        Vec3 hitboxCenter = playerPos.add(lookDirection.scale(range / 2));
-
-        // Create a LONG hitbox with the range as the size
-        HitboxData hitboxData = new HitboxData(range, HitboxData.HitboxShape.CUBE);
-        AABB hitbox = hitboxData.createAABBFromEntity(user);
-
-        // Override center position
-        float yaw = (float) Math.toRadians(user.getYRot());
-        hitbox = hitboxData.createAABB(hitboxCenter, lookDirection, yaw);
-
-        // Add to visual debugger
-        if (user.level().isClientSide) {
-            AttackHitboxRenderer.addHitbox(hitbox);
-        } else {
-            if (user instanceof ServerPlayer serverPlayer) {
-                NichirinPacketRegistry.sendHitboxToClient(
-                        serverPlayer, hitbox, 2500L
-                );
-            }
-        }
-
-        List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
-                entity -> entity != user && entity.isAlive());
-
-        return targets;
-    }
-
-    /**
-     * Create a 360-degree circular attack around the player.
-     */
-    protected List<LivingEntity> getTargetsInCircle(float radius, int hitboxCount) {
-        Vec3 playerPos = user.position().add(0, user.getBbHeight() / 2, 0);
-
-        Set<LivingEntity> allTargets = new HashSet<>();
-        Set<AABB> circleHitboxes = new HashSet<>();
-
-        float angleStep = 360f / hitboxCount;
-
-        for (int i = 0; i < hitboxCount; i++) {
-            float angle = i * angleStep;
-            float angleRadians = (float) Math.toRadians(angle);
-
-            // Calculate position around the circle
-            double offsetX = radius * Math.cos(angleRadians);
-            double offsetZ = radius * Math.sin(angleRadians);
-            Vec3 hitboxCenter = playerPos.add(offsetX, 0, offsetZ);
-
-            // Calculate direction from player to hitbox for rotation
-            Vec3 direction = hitboxCenter.subtract(playerPos).normalize();
-
-            HitboxData hitboxData = new HitboxData(hitboxSize);
-            AABB hitbox = hitboxData.createAABB(hitboxCenter, direction, angleRadians);
-            circleHitboxes.add(hitbox);
-
-            List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
-                    entity -> entity != user && entity.isAlive());
-            allTargets.addAll(targets);
-        }
-
-        // Add all hitboxes to visual debugger
-        if (user.level().isClientSide) {
-            AttackHitboxRenderer.addHitboxes(circleHitboxes);
-        } else {
-            if (user instanceof ServerPlayer serverPlayer) {
-                for (AABB hitbox : circleHitboxes) {
-                    NichirinPacketRegistry.sendHitboxToClient(
-                            serverPlayer, hitbox, 2500L
-                    );
-                }
-            }
-        }
-
-        return new ArrayList<>(allTargets);
-    }
-
-    /**
-     * Utility method to rotate a vector around the Y axis
-     */
-    private Vec3 rotateVectorY(Vec3 vector, double angleRadians) {
-        double cos = Math.cos(angleRadians);
-        double sin = Math.sin(angleRadians);
-
-        double newX = vector.x * cos - vector.z * sin;
-        double newZ = vector.x * sin + vector.z * cos;
-
-        return new Vec3(newX, vector.y, newZ);
-    }
-
-    // Abstract methods that must be implemented by subclasses
-
-    /**
-     * Called when attack starts (after breath consumption). Use this for state initialization.
-     * If you call stop() in this method, breath will be refunded.
-     */
-    protected abstract void onStart();
-
-    /**
-     * Called once at the moment the windup completes and the active phase begins.
-     * Put sounds and activation effects here so they play after the windup, not on input.
-     */
-    protected void onActiveStart() {}
-
-    /**
-     * Called every tick during the attack (after windup period)
-     * Implement the main attack logic here
-     *
-     * Default implementation: Creates a single hitbox at range and processes targets
-     * Override this for custom attack patterns
-     */
-    protected void perform() {
-        // Default implementation for simple attacks
-        List<LivingEntity> targets = getTargetsAtRange();
-        for (LivingEntity target : targets) {
-            hitTarget(target);
-        }
-    }
-
-    /**
-     * Called when attack ends
-     * Implement cleanup logic here
-     */
-    protected void onStop() {
-        // Override if needed - default implementation does nothing
-    }
-
-    // Utility methods
-
-    /**
-     * Get total attack duration (windup + active duration)
-     */
-    public int getTotalDuration() {
-        return windup + duration;
-    }
-
-    /**
-     * Check if attack is in windup phase
-     */
-    public boolean isInWindup() {
-        return isActive && tickCount <= windup;
-    }
-
-    /**
-     * Check if attack is in active/perform phase
-     */
-    public boolean isInActivePhase() {
-        return isActive && tickCount > windup && tickCount < windup + duration;
-    }
-
-    private boolean isExternallyStunned() {
-        MobEffectInstance stun = user.getEffect(NichirinEffectRegistry.stunned());
-        return stun != null && stun.getAmplifier() > 0;
-    }
-
-    private boolean shouldStopForInterrupt(boolean externallyStunned, boolean interruptedThisTick, boolean windupOnly) {
-        if (!externallyStunned && !interruptedThisTick) {
-            return false;
-        }
-        if (windupOnly && !interruptedThisTick) {
-            return false;
-        }
-        if (hyperArmor) {
-            if (externallyStunned) {
-                user.removeEffect(NichirinEffectRegistry.stunned());
-            }
-            return false;
-        }
-        if (armorHits > 0) {
-            long currentTick = user.level().getGameTime();
-            if (lastArmorInterruptTick != currentTick) {
-                absorbedInterruptHits++;
-                lastArmorInterruptTick = currentTick;
-            }
-            if (absorbedInterruptHits <= armorHits) {
-                if (externallyStunned) {
-                    user.removeEffect(NichirinEffectRegistry.stunned());
-                }
-                return false;
-            }
-        }
-        return true;
-    }
-
-    // Helper methods to check if movement properties are configured
-    public boolean hasTeleport() { return teleportDistance != null && teleportDistance > 0; }
-    public boolean hasDash() { return dashSpeed != null && dashSpeed > 0; }
-    public boolean hasTeleportWindup() { return teleportWindup != null; }
-
-    /**
-     * Check if breath was consumed (for debugging)
-     */
-    public boolean wasBreathConsumed() {
-        return breathConsumed;
-    }
-
-    /**
-     * Register this attack for automatic ticking
-     */
-    private void registerForTicking() {
-        // Only Player attacks self-tick; NPC attacks are ticked via MoveExecutor.tickAttacks.
-        if (user instanceof Player) {
-            selfTickingAttacks.computeIfAbsent(user.getUUID(), k -> new ArrayList<>()).add(this);
-        }
-    }
-
-    /**
-     * Unregister this attack from automatic ticking
-     */
-    private void unregisterFromTicking() {
-        if (user instanceof Player) {
-            var attacks = selfTickingAttacks.get(user.getUUID());
-            if (attacks != null) {
-                attacks.remove(this);
-                if (attacks.isEmpty()) {
-                    selfTickingAttacks.remove(user.getUUID());
-                }
-            }
-        }
-    }
-
-    /**
-     * Tick all self-registered attacks
-     */
-    public static void tickAllActiveAttacks(MinecraftServer server) {
-        if (selfTickingAttacks.isEmpty()) {
-            return;
-        }
-
-        List<UUID> toClean = new ArrayList<>();
-
-        for (var entry : selfTickingAttacks.entrySet()) {
-            UUID uuid = entry.getKey();
-            var attacks = entry.getValue();
-
-            // Remove stale entries for UUIDs with no active attacks
-            if (attacks.isEmpty()) {
-                toClean.add(uuid);
-                continue;
-            }
-
-            List<AbstractBreathingAttack<?, ?>> toRemove = new ArrayList<>();
-
-            synchronized (attacks) {
-                for (var attack : new ArrayList<>(attacks)) {
-                    try {
-                        if (attack.isActive()) {
-                            attack.tick();
-                        } else {
-                            toRemove.add(attack);
-                        }
-                    } catch (Exception e) {
-                        toRemove.add(attack);
-                    }
-                }
-
-                attacks.removeAll(toRemove);
-            }
-        }
-
-        for (UUID uuid : toClean) {
-            selfTickingAttacks.remove(uuid);
-        }
-    }
-
-    /**
-     * Cancels all active attacks for a player (e.g. triggered by right-click cancel).
-     * Returns true if at least one attack was stopped.
-     */
-    public static boolean cancelActiveAttack(Player player) {
-        var attacks = selfTickingAttacks.get(player.getUUID());
-        if (attacks == null || attacks.isEmpty()) return false;
-        boolean cancelled = false;
-        for (var attack : new ArrayList<>(attacks)) {
-            if (attack.isActive()) {
-                attack.stop();
-                cancelled = true;
-            }
-        }
-        return cancelled;
-    }
-
-    /**
-     * Clear all self-ticking attacks for a player (on disconnect, death, etc.)
-     */
-    public static void clearSelfTickingAttacks(Player player) {
-        var attacks = selfTickingAttacks.remove(player.getUUID());
-        if (attacks != null) {
-            for (var attack : attacks) {
-                try {
-                    attack.stop();
-                } catch (Exception e) {
-                    // Ignore exceptions during cleanup
-                }
-            }
-        }
-    }
-
-    /**
-     * Moves an arbitrary living entity toward targetPos, stopping at the first block collision.
-     */
-    protected void moveEntitySafe(LivingEntity entity, Vec3 targetPos) {
-        Vec3 eyeHeight = new Vec3(0, entity.getBbHeight() / 2.0, 0);
-        Vec3 from = entity.position().add(eyeHeight);
-        Vec3 to   = targetPos.add(eyeHeight);
-
-        BlockHitResult hit = world.clip(
-                new ClipContext(
-                        from, to,
-                        ClipContext.Block.COLLIDER,
-                        ClipContext.Fluid.NONE,
-                        entity));
-
+    protected void teleportSafe(Vec3 targetPos) {
+        Vec3 eye = new Vec3(0, user.getBbHeight() / 2.0, 0);
+        Vec3 from = user.position().add(eye);
+        Vec3 to   = targetPos.add(eye);
+        BlockHitResult hit = world.clip(new ClipContext(from, to,
+                ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, user));
         Vec3 safePos;
         if (hit.getType() == HitResult.Type.BLOCK) {
             Vec3 dir = to.subtract(from);
             double len = dir.length();
-            Vec3 normalized = len > 0.001 ? dir.scale(1.0 / len) : Vec3.ZERO;
-            safePos = hit.getLocation().subtract(normalized.scale(0.15)).subtract(eyeHeight);
+            Vec3 norm = len > 0.001 ? dir.scale(1.0 / len) : Vec3.ZERO;
+            safePos = hit.getLocation().subtract(norm.scale(0.15)).subtract(eye);
         } else {
             safePos = targetPos;
         }
+        if (user instanceof ServerPlayer sp) sp.teleportTo(safePos.x, safePos.y, safePos.z);
+        else user.absMoveTo(safePos.x, safePos.y, safePos.z, user.getYRot(), user.getXRot());
+        user.setDeltaMovement(Vec3.ZERO);
+    }
 
+    protected void moveEntitySafe(LivingEntity entity, Vec3 targetPos) {
+        Vec3 eye = new Vec3(0, entity.getBbHeight() / 2.0, 0);
+        Vec3 from = entity.position().add(eye);
+        Vec3 to   = targetPos.add(eye);
+        BlockHitResult hit = world.clip(new ClipContext(from, to,
+                ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, entity));
+        Vec3 safePos;
+        if (hit.getType() == HitResult.Type.BLOCK) {
+            Vec3 dir = to.subtract(from);
+            double len = dir.length();
+            Vec3 norm = len > 0.001 ? dir.scale(1.0 / len) : Vec3.ZERO;
+            safePos = hit.getLocation().subtract(norm.scale(0.15)).subtract(eye);
+        } else {
+            safePos = targetPos;
+        }
         entity.absMoveTo(safePos.x, safePos.y, safePos.z, entity.getYRot(), entity.getXRot());
         entity.setDeltaMovement(Vec3.ZERO);
         entity.hurtMarked = true;
     }
 
-    /**
-     * Moves the user toward targetPos, stopping at the first block collision.
-     * Uses a block raycast from the user's center to the target center.
-     * Call instead of sp.teleportTo() for all dash/rush movement.
-     */
-    protected void teleportSafe(Vec3 targetPos) {
-        Vec3 eyeHeight = new Vec3(0, user.getBbHeight() / 2.0, 0);
-        Vec3 from = user.position().add(eyeHeight);
-        Vec3 to   = targetPos.add(eyeHeight);
 
-        BlockHitResult hit = world.clip(
-                new ClipContext(
-                        from, to,
-                        ClipContext.Block.COLLIDER,
-                        ClipContext.Fluid.NONE,
-                        user));
+    public boolean wasBreathConsumed() { return breathConsumed; }
 
-        Vec3 safePos;
-        if (hit.getType() == HitResult.Type.BLOCK) {
-            // Back off 0.1 blocks from the surface so the player doesn't clip in
-            Vec3 dir = to.subtract(from);
-            double len = dir.length();
-            Vec3 normalized = len > 0.001 ? dir.scale(1.0 / len) : Vec3.ZERO;
-            safePos = hit.getLocation().subtract(normalized.scale(0.15)).subtract(eyeHeight);
-        } else {
-            safePos = targetPos;
-        }
 
-        if (user instanceof ServerPlayer sp) {
-            sp.teleportTo(safePos.x, safePos.y, safePos.z);
-        } else {
-            user.absMoveTo(safePos.x, safePos.y, safePos.z, user.getYRot(), user.getXRot());
-        }
-        user.setDeltaMovement(Vec3.ZERO);
+    /** @deprecated Use {@link AbstractAttack#tickAllActiveAttacks(MinecraftServer)} */
+    public static void tickAllActiveAttacks(MinecraftServer server) {
+        AbstractAttack.tickAllActiveAttacks(server);
+    }
+
+    public static void clearSelfTickingAttacks(Player player) {
+        AbstractAttack.clearSelfTickingAttacks(player);
+    }
+
+    public static boolean cancelActiveAttack(Player player) {
+        return AbstractAttack.cancelActiveAttack(player);
     }
 }

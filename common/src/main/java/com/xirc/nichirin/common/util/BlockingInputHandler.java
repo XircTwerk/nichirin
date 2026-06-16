@@ -1,6 +1,9 @@
 package com.xirc.nichirin.common.util;
 
+import com.xirc.nichirin.client.animation.NichirinAnimations;
 import com.xirc.nichirin.client.handler.AttackWheelHandler;
+import com.xirc.nichirin.common.data.MovesetHelper;
+import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinKeybindRegistry;
@@ -10,6 +13,7 @@ import dev.architectury.platform.Platform;
 import dev.architectury.utils.Env;
 import io.netty.buffer.Unpooled;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
@@ -85,10 +89,10 @@ public class BlockingInputHandler {
         // A block + left-click special replaces the held block animation while it plays. The server's
         // hasActiveAttacks check doesn't cover self-ticking breathing/demon specials, so re-assert the
         // block hold here on the local player when its animation controller goes idle while guarding.
-        boolean animPlaying = player instanceof net.minecraft.client.player.AbstractClientPlayer clientPlayer
-                && com.xirc.nichirin.client.animation.NichirinAnimations.isAnimationPlaying(clientPlayer);
+        boolean animPlaying = player instanceof AbstractClientPlayer clientPlayer
+                && NichirinAnimations.isAnimationPlaying(clientPlayer);
         if (serverAcceptedBlock && blockKeyPressed && wasAnimPlayingLastTick && !animPlaying) {
-            com.xirc.nichirin.client.animation.NichirinAnimations.playAnimation(player, blockAnimation(player));
+            NichirinAnimations.playAnimation(player, blockAnimation(player));
         }
         wasAnimPlayingLastTick = animPlaying;
     }
@@ -99,15 +103,15 @@ public class BlockingInputHandler {
         if (player.getMainHandItem().getItem() instanceof SimpleKatana) return true;
         if (player.getOffhandItem().getItem() instanceof SimpleKatana) return true;
         return player.getMainHandItem().isEmpty()
-                && com.xirc.nichirin.common.data.MovesetHelper.hasFightingMoveset(player);
+                && MovesetHelper.hasFightingMoveset(player);
     }
 
     private static String blockAnimation(Player player) {
         if (player.getMainHandItem().getItem() instanceof SimpleKatana) return "sword.block";
         if (player.getOffhandItem().getItem() instanceof SimpleKatana) return "sword.block";
         if (!player.getMainHandItem().isEmpty()) return "sword.block";
-        if (!com.xirc.nichirin.common.data.MovesetHelper.hasFightingMoveset(player)) return "sword.block";
-        return com.xirc.nichirin.common.data.PlayerDataProvider.getData(player)
+        if (!MovesetHelper.hasFightingMoveset(player)) return "sword.block";
+        return PlayerDataProvider.getData(player)
                 .getCqcPresetData().getStanceAnimation();
     }
 

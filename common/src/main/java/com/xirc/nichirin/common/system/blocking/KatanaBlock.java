@@ -1,8 +1,11 @@
 package com.xirc.nichirin.common.system.blocking;
 
 import com.xirc.nichirin.common.config.NichirinModConfig;
+import com.xirc.nichirin.common.config.NichirinModConfig.BlockingConfig;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
+import com.xirc.nichirin.common.entity.npc.BaseBreathingTrainerEntity;
 import com.xirc.nichirin.common.system.StanceManager;
+import com.xirc.nichirin.common.util.ComboTracker;
 import com.xirc.nichirin.common.util.InputHandler;
 import com.xirc.nichirin.common.util.NetworkBufferUtils;
 import com.xirc.nichirin.common.attack.MoveExecutor;
@@ -45,8 +48,8 @@ public class KatanaBlock {
     private static final int PARRIED_ATTACK_COOLDOWN = 100;
 
     // Blocking tuning is read from config (blocking.* in nichirin-server.toml).
-    private static com.xirc.nichirin.common.config.NichirinModConfig.BlockingConfig bcfg() {
-        return com.xirc.nichirin.common.config.NichirinModConfig.get().blocking;
+    private static BlockingConfig bcfg() {
+        return NichirinModConfig.get().blocking;
     }
     private static float blockStanceDrain()      { return (float) bcfg().blockStanceDrain; }
     private static float parryStanceCost()       { return (float) bcfg().parryStanceCost; }
@@ -88,7 +91,6 @@ public class KatanaBlock {
         }
     }
 
-    // ── Start blocking ──────────────────────────────────────────────
 
     public static boolean startBlocking(LivingEntity entity) {
         if (entity.level().isClientSide) return false;
@@ -105,7 +107,7 @@ public class KatanaBlock {
             state.parryWindowTicks = NichirinModConfig.get().combat.parryWindowTicks;
             if (entity instanceof Player player) {
                 player.displayClientMessage(
-                        Component.literal("⚔ Guard Up!")
+                        Component.literal("Guard Up!")
                                 .withStyle(style -> style.withColor(0xFFAA00).withBold(true)),
                         true);
             }
@@ -114,7 +116,7 @@ public class KatanaBlock {
             state.parryWindowTicks = 0;
             if (entity instanceof Player player) {
                 player.displayClientMessage(
-                        Component.literal("⚔ Blocking")
+                        Component.literal("Blocking")
                                 .withStyle(style -> style.withColor(0xAAAAAA)),
                         true);
             }
@@ -132,14 +134,13 @@ public class KatanaBlock {
         if (entity instanceof ServerPlayer serverPlayer) {
             NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer,
                     new PlayerAnimationPacket(serverPlayer.getId(), "sword.block"));
-        } else if (entity instanceof com.xirc.nichirin.common.entity.npc.BaseBreathingTrainerEntity trainer) {
+        } else if (entity instanceof BaseBreathingTrainerEntity trainer) {
             trainer.setAnimation("sword.block", 1.0f);
         }
 
         return true;
     }
 
-    // ── Stop blocking ───────────────────────────────────────────────
 
     public static void stopBlocking(LivingEntity entity) {
         if (entity.level().isClientSide) return;
@@ -165,7 +166,7 @@ public class KatanaBlock {
             NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer,
                     new PlayerAnimationPacket(serverPlayer.getId(), ""));
         } else if (!(entity instanceof Player) && state.stance != BlockingStance.PARRY_SUCCESS) {
-            if (entity instanceof com.xirc.nichirin.common.entity.npc.BaseBreathingTrainerEntity trainer) {
+            if (entity instanceof BaseBreathingTrainerEntity trainer) {
                 trainer.setAnimation("", 1.0f);
             }
         }
@@ -173,7 +174,6 @@ public class KatanaBlock {
         state.reset();
     }
 
-    // ── Incoming damage ─────────────────────────────────────────────
 
     public static boolean handleIncomingDamage(LivingEntity defender, LivingEntity attacker, float damage) {
         if (defender.level().isClientSide) return false;
@@ -203,7 +203,6 @@ public class KatanaBlock {
         return handleIncomingDamage((LivingEntity) player, (LivingEntity) attacker, damage);
     }
 
-    // ── Tick ─────────────────────────────────────────────────────────
 
     public static void tick(LivingEntity entity) {
         if (entity.level().isClientSide) return;
@@ -237,7 +236,7 @@ public class KatanaBlock {
                 if (entity instanceof ServerPlayer serverPlayer) {
                     NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer,
                             new PlayerAnimationPacket(serverPlayer.getId(), "sword.block"));
-                } else if (entity instanceof com.xirc.nichirin.common.entity.npc.BaseBreathingTrainerEntity trainer) {
+                } else if (entity instanceof BaseBreathingTrainerEntity trainer) {
                     trainer.setAnimation("sword.block", 1.0f);
                 }
             }
@@ -255,7 +254,6 @@ public class KatanaBlock {
     // Keep old Player signature
     public static void tick(Player player) { tick((LivingEntity) player); }
 
-    // ── Queries ──────────────────────────────────────────────────────
 
     public static BlockingStance getStance(LivingEntity entity) {
         BlockingState state = BLOCKING_STATES.get(entity.getUUID());
@@ -275,7 +273,6 @@ public class KatanaBlock {
         BLOCKING_STATES.remove(entity.getUUID());
     }
 
-    // ── Private helpers ──────────────────────────────────────────────
 
     private static BlockingState getOrCreateState(LivingEntity entity) {
         return BLOCKING_STATES.computeIfAbsent(entity.getUUID(), k -> new BlockingState());
@@ -358,7 +355,7 @@ public class KatanaBlock {
         player.addEffect(stunEffect);
 
         player.displayClientMessage(
-                Component.literal("✗ Early release!")
+                Component.literal("Early release!")
                         .withStyle(style -> style.withColor(0xFF5555)),
                 true);
 
@@ -392,7 +389,7 @@ public class KatanaBlock {
 
         if (defender instanceof Player player) {
             player.displayClientMessage(
-                    Component.literal("✦ Perfect Parry!")
+                    Component.literal("Perfect Parry!")
                             .withStyle(style -> style.withColor(0x00FF00).withBold(true)),
                     true);
         }
@@ -405,7 +402,7 @@ public class KatanaBlock {
         if (defender instanceof ServerPlayer serverPlayer) {
             NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer,
                     new PlayerAnimationPacket(serverPlayer.getId(), "sword.parry"));
-        } else if (defender instanceof com.xirc.nichirin.common.entity.npc.BaseBreathingTrainerEntity trainer) {
+        } else if (defender instanceof BaseBreathingTrainerEntity trainer) {
             trainer.setAnimation("sword.parry", 1.0f);
         }
 
@@ -430,13 +427,15 @@ public class KatanaBlock {
                 sendParriedCooldown(serverPlayer, "Move (Parried)", PARRIED_ATTACK_COOLDOWN);
             }
 
+            int parryStunTicks = 20;
             attacker.addEffect(new MobEffectInstance(
                     NichirinEffectRegistry.stunned(),
-                    20, 1, false, false, true));
+                    parryStunTicks, 1, false, false, true));
+            ComboTracker.markParryStunned(attacker, parryStunTicks);
 
             if (attacker instanceof Player player) {
                 player.displayClientMessage(
-                        Component.literal("✗ Parried!")
+                        Component.literal("Parried!")
                                 .withStyle(style -> style.withColor(0xFF5555).withBold(true)),
                         true);
             }
@@ -473,19 +472,18 @@ public class KatanaBlock {
                 player.addEffect(stunEffect);
                 stopBlocking(player);
                 player.displayClientMessage(
-                        Component.literal("✗ Stance broken!")
+                        Component.literal("Stance broken!")
                                 .withStyle(style -> style.withColor(0xFF5555).withBold(true)),
                         true);
                 return false;
             }
         }
-        // NPCs don't use stance — they always block successfully (AI controls guard duration)
 
         // Clang feedback
         if (defender instanceof ServerPlayer serverPlayer) {
             NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer,
                     new PlayerAnimationPacket(serverPlayer.getId(), "sword.block"));
-        } else if (defender instanceof com.xirc.nichirin.common.entity.npc.BaseBreathingTrainerEntity trainer) {
+        } else if (defender instanceof BaseBreathingTrainerEntity trainer) {
             trainer.setAnimation("sword.block", 1.0f);
         }
         defender.level().playSound(null, defender.getX(), defender.getY(), defender.getZ(),
@@ -493,7 +491,7 @@ public class KatanaBlock {
 
         if (defender instanceof Player player) {
             player.displayClientMessage(
-                    Component.literal("🛡 Blocked!")
+                    Component.literal("ðŸ›¡ Blocked!")
                             .withStyle(style -> style.withColor(0xAAAAAA)),
                     true);
         }
@@ -518,7 +516,6 @@ public class KatanaBlock {
         entity.removeEffect(MobEffects.DAMAGE_RESISTANCE);
     }
 
-    // ── NBT persistence (Player only) ────────────────────────────────
 
     public static void save(Player player, CompoundTag tag) {
         BlockingState state = BLOCKING_STATES.get(player.getUUID());

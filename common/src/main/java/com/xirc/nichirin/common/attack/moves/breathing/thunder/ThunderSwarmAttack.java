@@ -230,20 +230,6 @@ public class ThunderSwarmAttack extends ThunderBreathingAttackBase {
                 SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.PLAYERS, 1.0f, 1.0f);
     }
 
-    /**
-     * Rotate a vector around the Y-axis by the given angle
-     */
-    private Vec3 rotateVectorY(Vec3 vector, double angleRadians) {
-        double cos = Math.cos(angleRadians);
-        double sin = Math.sin(angleRadians);
-
-        return new Vec3(
-                vector.x * cos - vector.z * sin,
-                vector.y,
-                vector.x * sin + vector.z * cos
-        );
-    }
-
     @Override
     protected void onStop() {
         activeSlashes.clear();

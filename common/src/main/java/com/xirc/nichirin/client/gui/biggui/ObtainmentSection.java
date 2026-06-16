@@ -19,7 +19,7 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * Obtainment subtab — shows how to unlock each moveset and which ones the player has.
+ * Obtainment subtab showing how to unlock each moveset and which ones the player has.
  * Renders inside the Moveset workspace's body region, so it draws NO chrome of its own.
  *
  * <p>Behavior:</p>
@@ -84,7 +84,6 @@ public class ObtainmentSection extends AbstractGuiPage {
             y += CARD_H + GAP;
         }
 
-        // ── Demon arts ──
         y += GAP;
         if (y + font.lineHeight + 10 + DEMON_CARD_H > bottomLimit) return;
         y = drawHeader(graphics, font,
@@ -131,7 +130,7 @@ public class ObtainmentSection extends AbstractGuiPage {
 
     /**
      * Returns a one-line progress string for in-progress unlocks, or null if there's nothing to show.
-     * Only handlers that actually track progress contribute here — most unlocks are atomic conditions.
+     * Only handlers that actually track progress contribute here; most unlocks are atomic conditions.
      */
     private String getProgressHint(Player player, String styleId) {
         return switch (styleId) {
@@ -144,7 +143,7 @@ public class ObtainmentSection extends AbstractGuiPage {
             case "beast_breathing" -> {
                 for (ItemStack stack : player.getInventory().items) {
                     if (stack.getItem() == NichirinItemRegistry.BOAR_HEAD.get()) {
-                        yield "Boar head in inventory — equip it to unlock";
+                        yield "Boar head in inventory - equip it to unlock";
                     }
                 }
                 yield null;

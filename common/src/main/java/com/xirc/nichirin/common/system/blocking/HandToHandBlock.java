@@ -1,8 +1,13 @@
 package com.xirc.nichirin.common.system.blocking;
 
 import com.xirc.nichirin.common.config.NichirinModConfig;
+import com.xirc.nichirin.common.config.NichirinModConfig.BlockingConfig;
+import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
+import com.xirc.nichirin.common.entity.npc.BaseBreathingTrainerEntity;
+import com.xirc.nichirin.common.entity.npc.DemonNPCEntity;
 import com.xirc.nichirin.common.system.StanceManager;
+import com.xirc.nichirin.common.util.ComboTracker;
 import com.xirc.nichirin.common.util.InputHandler;
 import com.xirc.nichirin.common.util.NetworkBufferUtils;
 import com.xirc.nichirin.common.attack.MoveExecutor;
@@ -47,8 +52,8 @@ public class HandToHandBlock {
     private static final int PARRIED_ATTACK_COOLDOWN = 100;
 
     // Blocking tuning is read from config (blocking.* in nichirin-server.toml).
-    private static com.xirc.nichirin.common.config.NichirinModConfig.BlockingConfig bcfg() {
-        return com.xirc.nichirin.common.config.NichirinModConfig.get().blocking;
+    private static BlockingConfig bcfg() {
+        return NichirinModConfig.get().blocking;
     }
     private static float blockStanceDrain()      { return (float) bcfg().blockStanceDrain; }
     private static float parryStanceCost()       { return (float) bcfg().parryStanceCost; }
@@ -90,7 +95,6 @@ public class HandToHandBlock {
         }
     }
 
-    // ── Start blocking ──────────────────────────────────────────────
 
     public static boolean startBlocking(LivingEntity entity) {
         if (entity.level().isClientSide) return false;
@@ -108,7 +112,7 @@ public class HandToHandBlock {
             state.parryWindowTicks = NichirinModConfig.get().combat.parryWindowTicks;
             if (entity instanceof Player player) {
                 player.displayClientMessage(
-                        Component.literal("⚔ Guard Up!")
+                        Component.literal("Guard Up!")
                                 .withStyle(style -> style.withColor(0xFFAA00).withBold(true)),
                         true);
             }
@@ -117,7 +121,7 @@ public class HandToHandBlock {
             state.parryWindowTicks = 0;
             if (entity instanceof Player player) {
                 player.displayClientMessage(
-                        Component.literal("⚔ Blocking")
+                        Component.literal("Blocking")
                                 .withStyle(style -> style.withColor(0xAAAAAA)),
                         true);
             }
@@ -142,7 +146,6 @@ public class HandToHandBlock {
         return true;
     }
 
-    // ── Stop blocking ───────────────────────────────────────────────
 
     public static void stopBlocking(LivingEntity entity) {
         if (entity.level().isClientSide) return;
@@ -170,9 +173,9 @@ public class HandToHandBlock {
         } else if (!(entity instanceof Player) && state.stance != BlockingStance.PARRY_SUCCESS) {
             if (entity instanceof MovesetCapableNPC npc) {
                 npc.asLivingEntity().stopUsingItem();
-                if (entity instanceof com.xirc.nichirin.common.entity.npc.BaseBreathingTrainerEntity trainer) {
+                if (entity instanceof BaseBreathingTrainerEntity trainer) {
                     trainer.setAnimation("", 1.0f);
-                } else if (entity instanceof com.xirc.nichirin.common.entity.npc.DemonNPCEntity demon) {
+                } else if (entity instanceof DemonNPCEntity demon) {
                     demon.stopAnimation();
                 }
             }
@@ -181,7 +184,6 @@ public class HandToHandBlock {
         state.reset();
     }
 
-    // ── Incoming damage ─────────────────────────────────────────────
 
     public static boolean handleIncomingDamage(LivingEntity defender, LivingEntity attacker, float damage) {
         if (defender.level().isClientSide) return false;
@@ -211,7 +213,6 @@ public class HandToHandBlock {
         return handleIncomingDamage((LivingEntity) player, (LivingEntity) attacker, damage);
     }
 
-    // ── Tick ─────────────────────────────────────────────────────────
 
     public static void tick(LivingEntity entity) {
         if (entity.level().isClientSide) return;
@@ -263,7 +264,6 @@ public class HandToHandBlock {
     // Keep old Player signature
     public static void tick(Player player) { tick((LivingEntity) player); }
 
-    // ── Queries ──────────────────────────────────────────────────────
 
     public static BlockingStance getStance(LivingEntity entity) {
         BlockingState state = BLOCKING_STATES.get(entity.getUUID());
@@ -283,7 +283,6 @@ public class HandToHandBlock {
         BLOCKING_STATES.remove(entity.getUUID());
     }
 
-    // ── Private helpers ──────────────────────────────────────────────
 
     private static BlockingState getOrCreateState(LivingEntity entity) {
         return BLOCKING_STATES.computeIfAbsent(entity.getUUID(), k -> new BlockingState());
@@ -296,7 +295,7 @@ public class HandToHandBlock {
                 || player.getOffhandItem().getItem() instanceof SimpleKatana;
         if (katana) return false;
         return player.getMainHandItem().isEmpty()
-                && com.xirc.nichirin.common.data.MovesetHelper.hasFightingMoveset(player);
+                && MovesetHelper.hasFightingMoveset(player);
     }
 
     private static String blockAnimation(LivingEntity entity) {
@@ -305,14 +304,14 @@ public class HandToHandBlock {
         boolean katana = player.getMainHandItem().getItem() instanceof SimpleKatana
                 || player.getOffhandItem().getItem() instanceof SimpleKatana;
         if (katana || !player.getMainHandItem().isEmpty()) return "sword.block";
-        if (!com.xirc.nichirin.common.data.MovesetHelper.hasFightingMoveset(player)) return "sword.block";
+        if (!MovesetHelper.hasFightingMoveset(player)) return "sword.block";
         return PlayerDataProvider.getData(player).getCqcPresetData().getStanceAnimation();
     }
 
     private static int resistanceAmplifier(LivingEntity entity) {
         if (entity instanceof TempleDemonEntity) return 2;
         if (entity instanceof Player player) {
-            int base = com.xirc.nichirin.common.data.MovesetHelper.hasDemonMoveset(player) ? 2 : 1;
+            int base = MovesetHelper.hasDemonMoveset(player) ? 2 : 1;
             if (isCqcPlayer(player)) {
                 return switch (cqcStanceIndex(player)) {
                     case 0 -> Math.max(0, base - 1);
@@ -320,7 +319,7 @@ public class HandToHandBlock {
                     default -> base;
                 };
             }
-            if (com.xirc.nichirin.common.data.MovesetHelper.hasDemonMoveset(player)) {
+            if (MovesetHelper.hasDemonMoveset(player)) {
                 return 2;
             }
         }
@@ -394,7 +393,7 @@ public class HandToHandBlock {
         player.addEffect(stunEffect);
 
         player.displayClientMessage(
-                Component.literal("✗ Early release!")
+                Component.literal("Early release!")
                         .withStyle(style -> style.withColor(0xFF5555)),
                 true);
 
@@ -428,7 +427,7 @@ public class HandToHandBlock {
 
         if (defender instanceof Player player) {
             player.displayClientMessage(
-                    Component.literal("✦ Perfect Parry!")
+                    Component.literal("Perfect Parry!")
                             .withStyle(style -> style.withColor(0x00FF00).withBold(true)),
                     true);
         }
@@ -466,13 +465,15 @@ public class HandToHandBlock {
                 sendParriedCooldown(serverPlayer, "Move (Parried)", PARRIED_ATTACK_COOLDOWN);
             }
 
+            int parryStunTicks = 20;
             attacker.addEffect(new MobEffectInstance(
                     NichirinEffectRegistry.stunned(),
-                    20, 1, false, false, true));
+                    parryStunTicks, 1, false, false, true));
+            ComboTracker.markParryStunned(attacker, parryStunTicks);
 
             if (attacker instanceof Player player) {
                 player.displayClientMessage(
-                        Component.literal("✗ Parried!")
+                        Component.literal("Parried!")
                                 .withStyle(style -> style.withColor(0xFF5555).withBold(true)),
                         true);
             }
@@ -509,13 +510,12 @@ public class HandToHandBlock {
                 player.addEffect(stunEffect);
                 stopBlocking(player);
                 player.displayClientMessage(
-                        Component.literal("✗ Stance broken!")
+                        Component.literal("Stance broken!")
                                 .withStyle(style -> style.withColor(0xFF5555).withBold(true)),
                         true);
                 return false;
             }
         }
-        // NPCs don't use stance — they always block successfully (AI controls guard duration)
 
         // Clang feedback
         if (defender instanceof ServerPlayer serverPlayer) {
@@ -529,7 +529,7 @@ public class HandToHandBlock {
 
         if (defender instanceof Player player) {
             player.displayClientMessage(
-                    Component.literal("🛡 Blocked!")
+                    Component.literal("ðŸ›¡ Blocked!")
                             .withStyle(style -> style.withColor(0xAAAAAA)),
                     true);
         }
@@ -540,7 +540,7 @@ public class HandToHandBlock {
 
     private static boolean isCqcPlayer(Player player) {
         return player.getMainHandItem().isEmpty()
-                && com.xirc.nichirin.common.data.MovesetHelper.hasFightingMoveset(player);
+                && MovesetHelper.hasFightingMoveset(player);
     }
 
     private static int cqcStanceIndex(Player player) {
@@ -588,7 +588,6 @@ public class HandToHandBlock {
         entity.removeEffect(MobEffects.DAMAGE_RESISTANCE);
     }
 
-    // ── NBT persistence (Player only) ────────────────────────────────
 
     public static void save(Player player, CompoundTag tag) {
         BlockingState state = BLOCKING_STATES.get(player.getUUID());

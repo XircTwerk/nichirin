@@ -28,6 +28,8 @@ import com.xirc.nichirin.registry.NichirinItemRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.event.events.common.LootEvent;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.event.events.common.TickEvent;
 import net.minecraft.resources.ResourceLocation;
@@ -202,8 +204,8 @@ public class BreathOfNichirinEventHandler {
                 try { DefaultDemonMoveset.cleanupPlayer(serverPlayer); } catch (Exception ignored) {}
                 try { DestructiveDeathMoveset.cleanupPlayer(serverPlayer); } catch (Exception ignored) {}
                 serverPlayer.displayClientMessage(
-                        net.minecraft.network.chat.Component.translatable("nichirin.message.demon_lost_on_death")
-                                .withStyle(net.minecraft.ChatFormatting.AQUA),
+                        Component.translatable("nichirin.message.demon_lost_on_death")
+                                .withStyle(ChatFormatting.AQUA),
                         false);
             }
         } catch (Exception e) {

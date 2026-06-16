@@ -1,7 +1,11 @@
 package com.xirc.nichirin.client;
 
 import com.xirc.nichirin.client.animation.NichirinAnimations;
+import com.xirc.nichirin.client.aura.AuraNetworkHandler;
+import com.xirc.nichirin.client.aura.EntityAuraTracker;
 import com.xirc.nichirin.client.light.WisteriaLightData;
+import com.xirc.nichirin.client.outline.OutlineNetworkHandler;
+import com.xirc.nichirin.client.outline.OutlineTracker;
 import com.xirc.nichirin.common.util.enums.BreathingStyle;
 import com.xirc.nichirin.client.config.NichirinClientConfig;
 import com.xirc.nichirin.client.handler.*;
@@ -165,15 +169,15 @@ public class BreathOfNichirinClient {
             registerShaders();
 
             // Wire up the entity-attached aura system (2D pixelated billboard renderer).
-            com.xirc.nichirin.client.aura.AuraNetworkHandler.register();
+            AuraNetworkHandler.register();
             // Wire up the entity-attached outline system (configurable colour + see-through).
-            com.xirc.nichirin.client.outline.OutlineNetworkHandler.register();
+            OutlineNetworkHandler.register();
 
             // Wire up the Blurry effect screen shader
             MistBlurShaderHandler.register();
             ImpactFrameOverlay.register();
             SunlightVignetteOverlay.register();
-            com.xirc.nichirin.client.handler.SlammedWobble.register();
+            SlammedWobble.register();
 
             // Register rendering hooks for shaders
             registerRenderingHooks();
@@ -252,8 +256,8 @@ public class BreathOfNichirinClient {
                     ImpactFrameOverlay.tick();
                     ImpactCameraShake.tick();
                     refreshWisteriaLeafColors(minecraft);
-                    com.xirc.nichirin.client.aura.EntityAuraTracker.tick();
-                    com.xirc.nichirin.client.outline.OutlineTracker.tick();
+                    EntityAuraTracker.tick();
+                    OutlineTracker.tick();
 
                     if (minecraft.level.getGameTime() % 100 == 0) {
                         LocalPlayer player = minecraft.player;

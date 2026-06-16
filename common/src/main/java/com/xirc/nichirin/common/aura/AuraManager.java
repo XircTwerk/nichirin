@@ -3,10 +3,12 @@ package com.xirc.nichirin.common.aura;
 import com.xirc.nichirin.common.network.s2c.AddAuraPacket;
 import com.xirc.nichirin.common.network.s2c.ClearAurasPacket;
 import com.xirc.nichirin.common.network.s2c.RemoveAuraPacket;
+import com.xirc.nichirin.common.util.NetworkBufferUtils;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -130,13 +132,13 @@ public final class AuraManager {
         buf.release();
     }
 
-    private static net.minecraft.network.RegistryFriendlyByteBuf copyBuf(FriendlyByteBuf src, ServerPlayer recipient) {
+    private static RegistryFriendlyByteBuf copyBuf(FriendlyByteBuf src, ServerPlayer recipient) {
         // Each NetworkManager.sendToPlayer consumes the buffer; clone before each send.
         // Architectury 1.7+ requires RegistryFriendlyByteBuf for sendToPlayer.
-        return com.xirc.nichirin.common.util.NetworkBufferUtils.serverCopy(src, recipient);
+        return NetworkBufferUtils.serverCopy(src, recipient);
     }
 
-    private static void safeSend(ServerPlayer p, ResourceLocation id, net.minecraft.network.RegistryFriendlyByteBuf buf) {
+    private static void safeSend(ServerPlayer p, ResourceLocation id, RegistryFriendlyByteBuf buf) {
         try {
             NetworkManager.sendToPlayer(p, id, buf);
         } catch (Exception ignored) {}

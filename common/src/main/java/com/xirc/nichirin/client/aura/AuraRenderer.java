@@ -11,6 +11,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
@@ -62,7 +64,7 @@ public final class AuraRenderer {
             poseStack.translate(ex - camPos.x, ey - camPos.y, ez - camPos.z);
 
             VertexConsumer vc = buffers.getBuffer(RenderType.entityTranslucent(
-                    net.minecraft.resources.ResourceLocation.withDefaultNamespace("textures/misc/white.png")));
+                    ResourceLocation.withDefaultNamespace("textures/misc/white.png")));
 
             for (AuraInstance instance : instances) {
                 renderInstance(poseStack, vc, instance, nowMs, camPos, ex, ey, ez);
@@ -73,7 +75,7 @@ public final class AuraRenderer {
 
         RenderSystem.disableCull();
         buffers.endBatch(RenderType.entityTranslucent(
-                net.minecraft.resources.ResourceLocation.withDefaultNamespace("textures/misc/white.png")));
+                ResourceLocation.withDefaultNamespace("textures/misc/white.png")));
         RenderSystem.enableCull();
 
         if (AuraDebugState.overlayEnabled) {
@@ -185,7 +187,7 @@ public final class AuraRenderer {
         vc.addVertex(mat, x, y, z)
           .setColor(r, g, b, a)
           .setUv(0.5f, 0.5f)
-          .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
+          .setOverlay(OverlayTexture.NO_OVERLAY)
           .setLight(packedLight)
           .setNormal(0f, 1f, 0f);
     }
