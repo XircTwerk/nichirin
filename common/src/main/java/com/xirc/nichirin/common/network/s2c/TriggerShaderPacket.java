@@ -18,27 +18,36 @@ public class TriggerShaderPacket {
     private final boolean activate;
     /** For impact shake: precomputed magnitude (damage/stun formula). -1 = use default trigger(). */
     private final float magnitude;
+    /** Impact shake only: separate flash strength so flash can be tuned apart from shake. -1 = coupled. */
+    private final float flashMagnitude;
 
     public TriggerShaderPacket(String shaderEffectClass, boolean activate) {
         this(shaderEffectClass, activate, -1f);
     }
 
     public TriggerShaderPacket(String shaderEffectClass, boolean activate, float magnitude) {
+        this(shaderEffectClass, activate, magnitude, -1f);
+    }
+
+    public TriggerShaderPacket(String shaderEffectClass, boolean activate, float magnitude, float flashMagnitude) {
         this.shaderEffectClass = shaderEffectClass;
         this.activate = activate;
         this.magnitude = magnitude;
+        this.flashMagnitude = flashMagnitude;
     }
 
     public TriggerShaderPacket(FriendlyByteBuf buf) {
         this.shaderEffectClass = buf.readUtf();
         this.activate = buf.readBoolean();
         this.magnitude = buf.readFloat();
+        this.flashMagnitude = buf.readFloat();
     }
 
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeUtf(shaderEffectClass);
         buf.writeBoolean(activate);
         buf.writeFloat(magnitude);
+        buf.writeFloat(flashMagnitude);
     }
 
     public void handleClient() {
@@ -55,7 +64,12 @@ public class TriggerShaderPacket {
 
             if ("com.xirc.nichirin.client.shader.ImpactShakeShaderEffect".equals(shaderEffectClass)) {
                 if (activate) {
-                    ImpactFrameOverlay.trigger(magnitude >= 0f ? magnitude : 1.0f);
+                    if (flashMagnitude >= 0f) {
+                        // Decoupled: gun uses a fainter flash than the shake (and below the legacy floors).
+                        ImpactFrameOverlay.trigger(flashMagnitude, magnitude >= 0f ? magnitude : 1.0f);
+                    } else {
+                        ImpactFrameOverlay.trigger(magnitude >= 0f ? magnitude : 1.0f);
+                    }
                 }
                 return;
             }

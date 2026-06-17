@@ -9,7 +9,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import org.joml.Matrix4f;
+
 import org.joml.Quaternionf;
 
 /**
@@ -55,14 +55,13 @@ public class PlayerModelRenderer {
     }
 
     /**
-     * Renders a player model with automatic rotation (current behavior)
+     * Renders a player model with automatic rotation
      */
     public static void renderPlayerWithRotation(GuiGraphics graphics, int x, int y, int size, Player player) {
-        // Calculate rotation based on time
         float rotation = (System.currentTimeMillis() / 50L % 360L) * 0.017453292F;
 
         graphics.pose().pushPose();
-        graphics.pose().translate(x, y + 55, 50.0F); // Moved down 5 pixels from +50 to +55
+        graphics.pose().translate(x, y + 55, 50.0F);
         graphics.pose().scale((float)size, (float)size, (float)size);
 
         Quaternionf quaternion = Axis.ZP.rotationDegrees(180.0F);
@@ -99,7 +98,10 @@ public class PlayerModelRenderer {
                                                 Quaternionf pose, Quaternionf cameraOrientation, LivingEntity entity) {
         guiGraphics.pose().pushPose();
         guiGraphics.pose().translate((double)x, (double)y + 55, 50.0); // Moved down 5 pixels from +50 to +55
-        guiGraphics.pose().mulPose(new Matrix4f().scaling(scale, scale, -scale));
+        // scale() is used instead of mulPose(Matrix4f) so that PoseStack.computeNormalMatrix() is called.
+        // mulPose(Matrix4f) only updates the pose matrix, leaving the normal matrix as identity.
+        // Without the correct normal matrix the armor normals are transformed wrong and faces appear dark.
+        guiGraphics.pose().scale((float) scale, (float) scale, -(float) scale);
         guiGraphics.pose().mulPose(pose);
 
         Lighting.setupForEntityInInventory();

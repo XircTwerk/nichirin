@@ -76,7 +76,7 @@ public class GunShotAttack extends AbstractKatanaAttack {
         world.playSound(null, player.getX(), player.getY(), player.getZ(),
                 sound, SoundSource.PLAYERS, volume, pitch);
 
-        sendShootShake(player, barrels >= 2 ? 0.45f : 0.25f);
+        sendShootShake(player, barrels >= 2 ? 0.85f : 0.7f);
 
         float pelletDamage = damage / PELLETS_PER_BARREL;
         int totalPellets = barrels * PELLETS_PER_BARREL;
@@ -85,11 +85,15 @@ public class GunShotAttack extends AbstractKatanaAttack {
         }
     }
 
-    /** Slight recoil shake on the shooter's own screen. */
+    /** How much fainter the muzzle flash overlay is than the shake magnitude. */
+    private static final float SHOOT_FLASH_RATIO = 0.12f;
+
+    /** Slight recoil shake + faint flash on the shooter's own screen. */
     public static void sendShootShake(LivingEntity user, float magnitude) {
         if (user instanceof ServerPlayer sp) {
+            float flash = magnitude * SHOOT_FLASH_RATIO;
             NichirinPacketRegistry.sendToPlayer(
-                    new TriggerShaderPacket(IMPACT_SHAKE_EFFECT, true, magnitude), sp);
+                    new TriggerShaderPacket(IMPACT_SHAKE_EFFECT, true, magnitude, flash), sp);
         }
     }
 

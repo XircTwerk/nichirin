@@ -121,6 +121,11 @@ public abstract class AbstractCqcAttack extends AbstractAttack {
     protected void registerForTicking() {}
 
     @Override
+    public void tick() {
+        if (user != null) tick(user);
+    }
+
+    @Override
     public void stop() {
         isActive = false;
         getHitEntities().clear();

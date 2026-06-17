@@ -113,6 +113,7 @@ public interface NichirinPacketRegistry {
     ResourceLocation AFTERIMAGE_ID                 = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "afterimage");
     ResourceLocation THUNDERCLAP_RELEASE_ID        = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "thunderclap_release");
     ResourceLocation DESTRUCTIVE_DEATH_STATE_ID    = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "destructive_death_state");
+    ResourceLocation GUN_ANIMATION_ID              = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "gun_animation");
 
     // Packet class mappings
     Map<Class<?>, ResourceLocation> PACKET_IDS = new HashMap<>();
@@ -182,7 +183,7 @@ public interface NichirinPacketRegistry {
                 MIST_CLONES_ID, CLONE_RING_ID, SHEATH_SYNC_ID, OPEN_CONFIG_SCREEN_ID, CQC_PRESET_SYNC_ID, COOLDOWN_DISPLAY_ID,
                 AURA_ADD_ID, AURA_REMOVE_ID, AURA_CLEAR_ID,
                 OUTLINE_ADD_ID, OUTLINE_REMOVE_ID, OUTLINE_CLEAR_ID, AFTERIMAGE_ID,
-                DESTRUCTIVE_DEATH_STATE_ID
+                DESTRUCTIVE_DEATH_STATE_ID, GUN_ANIMATION_ID
         };
         for (ResourceLocation id : s2cIds) {
             try {
@@ -566,6 +567,11 @@ public interface NichirinPacketRegistry {
 
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, DESTRUCTIVE_DEATH_STATE_ID, (buf, context) -> {
                 DestructiveDeathStateSyncPacket packet = new DestructiveDeathStateSyncPacket(buf);
+                context.queue(packet::handleClient);
+            });
+
+            NetworkManager.registerReceiver(NetworkManager.Side.S2C, GUN_ANIMATION_ID, (buf, context) -> {
+                GunAnimationPacket packet = new GunAnimationPacket(buf);
                 context.queue(packet::handleClient);
             });
 
@@ -1221,6 +1227,19 @@ public interface NichirinPacketRegistry {
                     .forEach(p -> NetworkManager.sendToPlayer(p, id, serverCopy(buf, p)));
             buf.release();
         } catch (Exception ignored) {
+        }
+    }
+
+    static void sendGunAnimation(Player player, String animName) {
+        if (!(player instanceof ServerPlayer serverPlayer)) return;
+        if (player.level().isClientSide) return;
+        try {
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+            new GunAnimationPacket(player.getId(), animName).toBytes(buf);
+            NetworkManager.sendToPlayer(serverPlayer, GUN_ANIMATION_ID, server(buf, serverPlayer));
+            buf.release();
+        } catch (Exception e) {
+            // ignore
         }
     }
 

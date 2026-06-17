@@ -491,7 +491,7 @@ public class KatanaBlock {
 
         if (defender instanceof Player player) {
             player.displayClientMessage(
-                    Component.literal("ðŸ›¡ Blocked!")
+                    Component.literal("🛡 Blocked!")
                             .withStyle(style -> style.withColor(0xAAAAAA)),
                     true);
         }

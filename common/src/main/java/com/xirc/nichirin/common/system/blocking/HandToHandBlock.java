@@ -529,7 +529,7 @@ public class HandToHandBlock {
 
         if (defender instanceof Player player) {
             player.displayClientMessage(
-                    Component.literal("ðŸ›¡ Blocked!")
+                    Component.literal("🛡 Blocked!")
                             .withStyle(style -> style.withColor(0xAAAAAA)),
                     true);
         }

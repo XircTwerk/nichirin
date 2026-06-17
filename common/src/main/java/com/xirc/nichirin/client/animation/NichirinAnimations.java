@@ -5,11 +5,13 @@ import com.zigythebird.playeranim.animation.PlayerAnimationController;
 import com.zigythebird.playeranim.animation.PlayerRawAnimationBuilder;
 import com.zigythebird.playeranim.api.PlayerAnimationAccess;
 import com.zigythebird.playeranim.api.PlayerAnimationFactory;
+import com.zigythebird.playeranimcore.animation.layered.modifier.AdjustmentModifier;
 import com.zigythebird.playeranimcore.animation.layered.modifier.SpeedModifier;
 import com.zigythebird.playeranimcore.api.firstPerson.FirstPersonConfiguration;
 import com.zigythebird.playeranimcore.api.firstPerson.FirstPersonMode;
 import com.zigythebird.playeranimcore.easing.EasingType;
 import com.zigythebird.playeranimcore.enums.PlayState;
+import com.zigythebird.playeranimcore.math.Vec3f;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -18,6 +20,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Optional;
 
 @Environment(EnvType.CLIENT)
 public final class NichirinAnimations {
@@ -44,8 +48,30 @@ public final class NichirinAnimations {
                     controller.setFirstPersonMode(FirstPersonMode.THIRD_PERSON_MODEL);
                     controller.setFirstPersonConfiguration(FIRST_PERSON_CONFIG);
                     controller.setOverrideEasingType(EasingType.EASE_IN_OUT_SINE);
+                    controller.addModifierBefore(crouchingArmModifier(player));
                     return controller;
                 });
+    }
+
+    private static AdjustmentModifier crouchingArmModifier(AbstractClientPlayer player) {
+        AdjustmentModifier modifier = new AdjustmentModifier(partName -> {
+            if (!player.isCrouching() || !FirstPersonMode.isFirstPersonPass()) {
+                return Optional.empty();
+            }
+
+            return switch (partName) {
+                case "right_arm" -> Optional.of(new AdjustmentModifier.PartModifier(
+                        new Vec3f(-0.22f, 0.0f, -0.08f),
+                        new Vec3f(0.0f, -1.5f, -0.75f)));
+                case "left_arm" -> Optional.of(new AdjustmentModifier.PartModifier(
+                        new Vec3f(-0.22f, 0.0f, 0.08f),
+                        new Vec3f(0.0f, -1.5f, -0.75f)));
+                default -> Optional.empty();
+            };
+        });
+        modifier.fadeIn = false;
+        modifier.fadeOut = false;
+        return modifier;
     }
 
     public static void playAnimation(Player player, String animationName) {

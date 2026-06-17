@@ -9,6 +9,7 @@ import com.xirc.nichirin.common.system.GrabManager;
 import com.xirc.nichirin.common.util.NichirinArmorDamage;
 import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
+import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import com.xirc.nichirin.registry.NicirinSoundRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
@@ -169,6 +170,8 @@ public class DefaultGunMoveset extends AbstractMoveset {
         MoveExecutor.executeAttack(player, attack, "default_gun", config.getMoveId());
 
         GenyaDB.setAmmo(stack, ammo - toFire);
+        String animName = toFire >= 2 ? "fire" : ammo == 2 ? "fireleft" : "fireright";
+        NichirinPacketRegistry.sendGunAnimation(player, animName);
         showAmmo(player, ammo - toFire);
     }
 
@@ -183,8 +186,10 @@ public class DefaultGunMoveset extends AbstractMoveset {
                         getLeftClickConfiguration().getDamageOrDefault(0f) * toFire * mult);
                 target.invulnerableTime = 0;
                 GenyaDB.setAmmo(stack, ammo - toFire);
+                String animName = toFire >= 2 ? "fire" : ammo == 2 ? "fireleft" : "fireright";
+                NichirinPacketRegistry.sendGunAnimation(player, animName);
                 playShotSound(player, toFire);
-                GunShotAttack.sendShootShake(player, toFire >= 2 ? 0.45f : 0.25f);
+                GunShotAttack.sendShootShake(player, toFire >= 2 ? 0.85f : 0.7f);
                 impactFx(target);
                 showAmmo(player, ammo - toFire);
             } else {
@@ -207,6 +212,7 @@ public class DefaultGunMoveset extends AbstractMoveset {
         }
         reloadUntil.put(player.getUUID(), now + RELOAD_TICKS);
         GenyaDB.setAmmo(stack, GenyaDB.MAX_AMMO);
+        NichirinPacketRegistry.sendGunAnimation(player, "reload");
         playRandomized(player, NicirinSoundRegistry.GENYA_RELOAD.get(), 0.9f, 1.0f, 0.06f);
         player.displayClientMessage(Component.literal("Reloading...").withStyle(s -> s.withColor(0xFFD080)), true);
     }

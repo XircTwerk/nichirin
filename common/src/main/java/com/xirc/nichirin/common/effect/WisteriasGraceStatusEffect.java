@@ -41,20 +41,20 @@ public class WisteriasGraceStatusEffect extends MobEffect {
 
         if (NichirinModConfig.get().demon.wisteriaDamagesDemons) {
             entity.hurt(NichirinDamageSources.wisteria(entity), 1.0f + amplifier * 0.5f);
-        }
 
-        if (entity.level() instanceof ServerLevel level) {
-            level.sendParticles(
-                    ParticleTypes.WITCH,
-                    entity.getX(),
-                    entity.getY() + entity.getBbHeight() * 0.55,
-                    entity.getZ(),
-                    6,
-                    entity.getBbWidth() * 0.45,
-                    entity.getBbHeight() * 0.35,
-                    entity.getBbWidth() * 0.45,
-                    0.02
-            );
+            if (entity.level() instanceof ServerLevel level) {
+                level.sendParticles(
+                        ParticleTypes.WITCH,
+                        entity.getX(),
+                        entity.getY() + entity.getBbHeight() * 0.55,
+                        entity.getZ(),
+                        6,
+                        entity.getBbWidth() * 0.45,
+                        entity.getBbHeight() * 0.35,
+                        entity.getBbWidth() * 0.45,
+                        0.02
+                );
+            }
         }
         return true;
     }
