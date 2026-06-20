@@ -1,10 +1,14 @@
 package com.xirc.nichirin.client.animation;
 
+import com.xirc.nichirin.common.item.gun.GenyaDB;
 import com.zigythebird.playeranim.animation.PlayerAnimResources;
 import com.zigythebird.playeranim.animation.PlayerAnimationController;
 import com.zigythebird.playeranim.animation.PlayerRawAnimationBuilder;
 import com.zigythebird.playeranim.api.PlayerAnimationAccess;
 import com.zigythebird.playeranim.api.PlayerAnimationFactory;
+import com.zigythebird.playeranimcore.animation.Animation;
+import com.zigythebird.playeranimcore.animation.RawAnimation;
+import com.zigythebird.playeranimcore.animation.layered.modifier.AbstractFadeModifier;
 import com.zigythebird.playeranimcore.animation.layered.modifier.AdjustmentModifier;
 import com.zigythebird.playeranimcore.animation.layered.modifier.SpeedModifier;
 import com.zigythebird.playeranimcore.api.firstPerson.FirstPersonConfiguration;
@@ -31,6 +35,8 @@ public final class NichirinAnimations {
             ResourceLocation.fromNamespaceAndPath("nichirin", "animation_controller");
     private static final FirstPersonConfiguration FIRST_PERSON_CONFIG =
             new FirstPersonConfiguration(true, true, true, true);
+    /** Extra downward tilt on the gun arm so the barrel lines up with where the player is looking. */
+    private static final float GUN_ARM_DOWN_CORRECTION = (float) Math.toRadians(14.0);
     private static boolean initialized;
 
     private NichirinAnimations() {}
@@ -44,13 +50,58 @@ public final class NichirinAnimations {
                 1001,
                 player -> {
                     PlayerAnimationController controller =
-                            new PlayerAnimationController(player, (current, state, setter) -> PlayState.STOP);
+                            new PlayerAnimationController(player, (controller_, state, setter) -> {
+                                // While the gun is held, keep the looping idle (the raised hold pose)
+                                // running as the base animation. It keeps the controller active so PAL
+                                // renders the player body — and therefore the posed right arm — in first
+                                // person, and gives fire/reload a matching pose to hand off to/from.
+                                if (player.getMainHandItem().getItem() instanceof GenyaDB) {
+                                    RawAnimation idle = gunIdleRaw();
+                                    if (idle != null) {
+                                        return setter.setAnimation(idle);
+                                    }
+                                }
+                                return PlayState.STOP;
+                            });
                     controller.setFirstPersonMode(FirstPersonMode.THIRD_PERSON_MODEL);
                     controller.setFirstPersonConfiguration(FIRST_PERSON_CONFIG);
                     controller.setOverrideEasingType(EasingType.EASE_IN_OUT_SINE);
                     controller.addModifierBefore(crouchingArmModifier(player));
+                    controller.addModifierBefore(gunHoldModifier(player));
                     return controller;
                 });
+    }
+
+    /**
+     * Keeps the right arm raised in the gun-holding pose while a {@link GenyaDB} is held and no
+     * triggered animation is playing. The fire/reload player animations start and end at this same
+     * raised pose, so they take over cleanly: while one is active the controller is "active" and this
+     * modifier steps aside, then resumes the hold when the animation finishes. Mirrors the
+     * {@link #crouchingArmModifier} pattern.
+     */
+    private static AdjustmentModifier gunHoldModifier(AbstractClientPlayer player) {
+        AdjustmentModifier modifier = new AdjustmentModifier(partName -> {
+            if (!(player.getMainHandItem().getItem() instanceof GenyaDB)) {
+                return Optional.empty();
+            }
+            if ("right_arm".equals(partName)) {
+                // Aim the gun arm up/down with the player's look pitch (matches the gunmetal approach).
+                // The idle/fire/reload animations all supply the ~-90deg arm raise themselves, so this
+                // modifier only adds the look-pitch and the downward correction ON TOP. Because it is the
+                // same constant offset for every animation, there is no jump when one animation hands off
+                // to another — the hold/fire/reload transitions stay smooth. Applying it during the
+                // triggered animations is also what makes the firing animation follow the look angle.
+                float aim = (float) Math.toRadians(player.getXRot());
+                // PartModifier(rotation, offset) — rotation FIRST. The X rotation aims the arm up/down.
+                return Optional.of(new AdjustmentModifier.PartModifier(
+                        new Vec3f(aim + GUN_ARM_DOWN_CORRECTION, 0.0f, 0.0f),
+                        new Vec3f(0.0f, 0.0f, 0.0f)));
+            }
+            return Optional.empty();
+        });
+        modifier.fadeIn = false;
+        modifier.fadeOut = false;
+        return modifier;
     }
 
     private static AdjustmentModifier crouchingArmModifier(AbstractClientPlayer player) {
@@ -110,6 +161,14 @@ public final class NichirinAnimations {
 
         if ("sword.block".equals(animationName)) {
             controller.triggerAnimation(PlayerRawAnimationBuilder.begin().thenPlayAndHold(animation).build());
+        } else if ("fire".equals(animationName) || "reload".equals(animationName)) {
+            // Ease the gun's fire/reload in from the current pose instead of snapping into the first
+            // frame. Fire is short so it gets a quick fade (a long one would swallow the recoil);
+            // reload is long enough to afford a softer blend. replaceAnimationWithFade also restarts
+            // the animation, so rapid gunfire keeps re-triggering the recoil.
+            int fadeTicks = "reload".equals(animationName) ? 5 : 2;
+            controller.replaceAnimationWithFade(
+                    AbstractFadeModifier.standardFadeIn(fadeTicks, EasingType.EASE_IN_OUT_SINE), animation);
         } else if (isHitAnimation(animationName)) {
             // Re-trigger from the start on every hit so rapid hits keep restarting the flinch
             // instead of being ignored while one is mid-play.
@@ -182,6 +241,23 @@ public final class NichirinAnimations {
         PlayerAnimationController controller = getController(player);
         return controller != null && controller.isActive();
     }
+
+    /** Lazily-built looping idle used as the gun's base animation (see the controller's state
+     *  handler). Cached because it is resolved once the player_animations are loaded. */
+    private static RawAnimation gunIdleRaw() {
+        if (gunIdleRaw == null) {
+            ResourceLocation loc = findAnimation("idle");
+            if (loc != null && PlayerAnimResources.hasAnimation(loc)) {
+                Animation anim = PlayerAnimResources.getAnimation(loc);
+                if (anim != null) {
+                    gunIdleRaw = RawAnimation.begin().thenLoop(anim);
+                }
+            }
+        }
+        return gunIdleRaw;
+    }
+
+    private static RawAnimation gunIdleRaw;
 
     private static PlayerAnimationController getController(AbstractClientPlayer player) {
         return PlayerAnimationAccess.getPlayerAnimationLayer(player, CONTROLLER_ID)

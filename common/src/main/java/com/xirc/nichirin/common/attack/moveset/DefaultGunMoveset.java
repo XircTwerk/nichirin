@@ -172,6 +172,7 @@ public class DefaultGunMoveset extends AbstractMoveset {
         GenyaDB.setAmmo(stack, ammo - toFire);
         String animName = toFire >= 2 ? "fire" : ammo == 2 ? "fireleft" : "fireright";
         NichirinPacketRegistry.sendGunAnimation(player, animName);
+        triggerAnimation(player, "fire");
         showAmmo(player, ammo - toFire);
     }
 
@@ -188,6 +189,7 @@ public class DefaultGunMoveset extends AbstractMoveset {
                 GenyaDB.setAmmo(stack, ammo - toFire);
                 String animName = toFire >= 2 ? "fire" : ammo == 2 ? "fireleft" : "fireright";
                 NichirinPacketRegistry.sendGunAnimation(player, animName);
+                triggerAnimation(player, "fire");
                 playShotSound(player, toFire);
                 GunShotAttack.sendShootShake(player, toFire >= 2 ? 0.85f : 0.7f);
                 impactFx(target);
@@ -213,6 +215,7 @@ public class DefaultGunMoveset extends AbstractMoveset {
         reloadUntil.put(player.getUUID(), now + RELOAD_TICKS);
         GenyaDB.setAmmo(stack, GenyaDB.MAX_AMMO);
         NichirinPacketRegistry.sendGunAnimation(player, "reload");
+        triggerAnimation(player, "reload");
         playRandomized(player, NicirinSoundRegistry.GENYA_RELOAD.get(), 0.9f, 1.0f, 0.06f);
         player.displayClientMessage(Component.literal("Reloading...").withStyle(s -> s.withColor(0xFFD080)), true);
     }
