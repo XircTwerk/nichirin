@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.attack.moveset;
 
+import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.entity.MovesetCapableNPC;
 import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
 import com.xirc.nichirin.common.util.EntityResources;
@@ -23,6 +24,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -162,6 +164,17 @@ public abstract class AbstractMoveset {
     }
 
     /**
+     * Which input slot a move is bound to. {@code NONE} means it's a regular attack-wheel move.
+     * A move tagged with a click slot is routed to that slot instead of the wheel.
+     */
+    public enum ClickSlot {
+        NONE,
+        LEFT,
+        RIGHT,
+        CROUCH_RIGHT
+    }
+
+    /**
      * Apply all moveset modifiers to an entity
      */
     public void applyAllModifiers(LivingEntity entity) {
@@ -210,7 +223,7 @@ public abstract class AbstractMoveset {
             return true;
         }
 
-        if (leftClickMove != null && leftClickMove.startAction != null) {
+        if (leftClickMove != null && leftClickMove.hasExecutable()) {
             if (!hasResourcesForMove(entity, leftClickMove)) return true;
             if (shouldAutoStunClickMoves()) applyMoveStun(entity, leftClickMove);
             executeMove(entity, leftClickMove);
@@ -235,7 +248,7 @@ public abstract class AbstractMoveset {
         }
 
         MoveConfiguration config = isCrouching ? crouchRightClickMove : rightClickMove;
-        if (config != null && config.startAction != null) {
+        if (config != null && config.hasExecutable()) {
             if (!hasResourcesForMove(entity, config)) return true;
             if (shouldAutoStunClickMoves()) applyMoveStun(entity, config);
             executeMove(entity, config);
@@ -358,7 +371,9 @@ public abstract class AbstractMoveset {
         }
         resetFollowupQueueIfDifferent(entity, config);
         startFollowupQueue(entity, config);
-        if (config.startAction != null) {
+        if (config.attackFactory != null) {
+            MoveExecutor.executeFactoryAttack(entity, config.attackFactory.get(), movesetId, config);
+        } else if (config.startAction != null) {
             config.startAction.accept(entity);
         }
     }
@@ -636,6 +651,8 @@ public abstract class AbstractMoveset {
         public final String displayName;
         public final String description;
         public final Consumer<LivingEntity> startAction;
+        public final Supplier<?> attackFactory;
+        public final ClickSlot clickSlot;
         public final ResourceLocation animationId;
         public final int animationPriority;
 
@@ -668,6 +685,8 @@ public abstract class AbstractMoveset {
             this.displayName = builder.displayName;
             this.description = builder.description;
             this.startAction = builder.startAction;
+            this.attackFactory = builder.attackFactory;
+            this.clickSlot = builder.clickSlot;
             this.animationId = builder.animationId;
             this.animationPriority = builder.animationPriority;
 
@@ -695,6 +714,9 @@ public abstract class AbstractMoveset {
 
             this.followups = builder.followups != null ? new ArrayList<>(builder.followups) : new ArrayList<>();
         }
+
+        /** Whether this move has something to run on use — either an attack factory or a raw action. */
+        public boolean hasExecutable() { return attackFactory != null || startAction != null; }
 
         public boolean hasHyperArmor() { return hyperArmor; }
 
@@ -937,6 +959,8 @@ public abstract class AbstractMoveset {
 
         private String description;
         private Consumer<LivingEntity> startAction;
+        private Supplier<?> attackFactory;
+        ClickSlot clickSlot = ClickSlot.NONE;
         private ResourceLocation animationId;
         private int animationPriority = 0;
 
@@ -976,6 +1000,34 @@ public abstract class AbstractMoveset {
 
         public MoveBuilder withAction(Consumer<LivingEntity> action) {
             this.startAction = action;
+            return this;
+        }
+
+        /**
+         * Declares the attack this move runs. At execution time the framework builds a fresh attack
+         * from the supplier, configures it with this move's own config, and dispatches it through
+         * {@link MoveExecutor}. Replaces the old hand-written {@code withAction} boilerplate.
+         */
+        public MoveBuilder withAttack(Supplier<?> attackFactory) {
+            this.attackFactory = attackFactory;
+            return this;
+        }
+
+        /** Binds this move to the left-click (M1) slot instead of the attack wheel. */
+        public MoveBuilder asLeftClick() {
+            this.clickSlot = ClickSlot.LEFT;
+            return this;
+        }
+
+        /** Binds this move to the right-click (M2) slot instead of the attack wheel. */
+        public MoveBuilder asRightClick() {
+            this.clickSlot = ClickSlot.RIGHT;
+            return this;
+        }
+
+        /** Binds this move to the crouch + right-click slot instead of the attack wheel. */
+        public MoveBuilder asCrouchRightClick() {
+            this.clickSlot = ClickSlot.CROUCH_RIGHT;
             return this;
         }
 
@@ -1170,46 +1222,23 @@ public abstract class AbstractMoveset {
             return this;
         }
 
-        public MovesetBuilder withLeftClickMove(MoveBuilder moveBuilder) {
-            this.leftClickMove = moveBuilder.build();
-            return this;
-        }
-
-        public MovesetBuilder withRightClickMove(MoveBuilder moveBuilder) {
-            this.rightClickMove = moveBuilder.build();
-            return this;
-        }
-
-        public MovesetBuilder withCrouchRightClickMove(MoveBuilder moveBuilder) {
-            this.crouchRightClickMove = moveBuilder.build();
-            return this;
-        }
-
-        // Overloads that take an already-built MoveConfiguration. Use these when the same config
-        // needs to be referenced from outside the builder (e.g. a combo executor that reads the
-        // exact same stats) — guarantees a single source of truth across declaration and use.
-        public MovesetBuilder withLeftClickMove(MoveConfiguration config) {
-            this.leftClickMove = config;
-            return this;
-        }
-
-        public MovesetBuilder withRightClickMove(MoveConfiguration config) {
-            this.rightClickMove = config;
-            return this;
-        }
-
-        public MovesetBuilder withCrouchRightClickMove(MoveConfiguration config) {
-            this.crouchRightClickMove = config;
-            return this;
-        }
-
         public MovesetBuilder withMove(MoveBuilder moveBuilder) {
-            this.moveConfigs.add(moveBuilder.build());
-            return this;
+            return withMove(moveBuilder.build());
         }
 
+        /**
+         * Adds a move. A move tagged via {@code asLeftClick}/{@code asRightClick}/{@code asCrouchRightClick}
+         * is routed to that click slot; everything else goes onto the attack wheel. Accepts a prebuilt
+         * {@link MoveConfiguration} so the same config can be reused outside the builder (e.g. a combo
+         * executor) — one declaration, one source of truth.
+         */
         public MovesetBuilder withMove(MoveConfiguration config) {
-            this.moveConfigs.add(config);
+            switch (config.clickSlot) {
+                case LEFT -> this.leftClickMove = config;
+                case RIGHT -> this.rightClickMove = config;
+                case CROUCH_RIGHT -> this.crouchRightClickMove = config;
+                default -> this.moveConfigs.add(config);
+            }
             return this;
         }
     }

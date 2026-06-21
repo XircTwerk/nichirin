@@ -59,6 +59,20 @@ public class MoveExecutor {
         executeAttack((LivingEntity) player, attack, movesetId, moveId);
     }
 
+    /**
+     * Runs a move declared via {@code MoveBuilder.withAttack(...)}: configures the freshly built
+     * attack with its own move config (mirroring the old hand-written lambdas exactly), then
+     * dispatches it. Called by {@link AbstractMoveset}'s move-execution path.
+     */
+    public static void executeFactoryAttack(LivingEntity entity, Object attack, String movesetId, AbstractMoveset.MoveConfiguration config) {
+        if (attack instanceof AbstractBreathingAttack<?, ?> breathingAttack) {
+            breathingAttack.configure(config);
+        } else if (attack instanceof AbstractDemonAttack<?, ?> demonAttack) {
+            demonAttack.configure(config);
+        }
+        executeAttack(entity, attack, movesetId, config.getMoveId());
+    }
+
     private static void handleAttack(LivingEntity entity, AbstractBreathingAttack<?, ?> attack, String movesetId, String moveId) {
         if (!isAttackConfigured(attack)) {
             configureAttackFromMoveset(entity, attack, movesetId, moveId);

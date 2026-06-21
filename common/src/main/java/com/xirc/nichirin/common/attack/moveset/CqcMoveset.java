@@ -867,11 +867,9 @@ public class CqcMoveset extends AbstractMoveset {
     }
 
     private static MovesetBuilder buildMoveset() {
-        MovesetBuilder builder = new MovesetBuilder()
-                .withLeftClickMove(JAB)
-                .withRightClickMove(CROSS)
-                .withCrouchRightClickMove(LOW_KICK);
-
+        // CQC has no static click moves — left/right/crouch slots are resolved per-player from the
+        // active preset (see getLeftClickConfiguration etc.), so only wheel moves are registered here.
+        MovesetBuilder builder = new MovesetBuilder();
         for (MoveConfiguration config : CONFIGS.values()) {
             builder.withMove(config);
         }

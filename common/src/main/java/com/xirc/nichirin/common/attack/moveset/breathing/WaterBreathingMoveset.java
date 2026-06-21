@@ -20,7 +20,6 @@ public class WaterBreathingMoveset extends AbstractMoveset {
     private static final Map<UUID, Map<Integer, Long>> entityCooldowns = new HashMap<>();
     private static final Map<UUID, Boolean> executingMove = new HashMap<>();
     private static final Map<UUID, ComboState> playerComboStates = new HashMap<>();
-    private static final ThreadLocal<WaterBreathingMoveset> CURRENT_MOVESET = new ThreadLocal<>();
 
     private static class ComboState {
         int currentStage = 0;
@@ -103,14 +102,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withHitStun(6) // Very short for continuous hits
                         .withHitboxSize(2.5f)
                         .withDescription("Continuous attack stance hitting nearby enemies for several seconds.")
-                        .withAction(entity -> {
-                            FlowingDanceAttack attack = new FlowingDanceAttack();
-                            WaterBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) {
-                                attack.configure(moveset.getMove(0));
-                            }
-                            MoveExecutor.executeAttack(entity, attack, "water_breathing", "flowing_dance");
-                        })
+                        .withAttack(FlowingDanceAttack::new)
                 )
 
                 // Fourth Form: Striking Tide - Omnidirectional slashes (INDEX 1)
@@ -124,14 +116,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withHitStun(8)
                         .withHitboxSize(4.5f) // Full radius
                         .withDescription("360° slash hitting all surrounding enemies at once.")
-                        .withAction(entity -> {
-                            StrikingTideAttack attack = new StrikingTideAttack();
-                            WaterBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) {
-                                attack.configure(moveset.getMove(1));
-                            }
-                            MoveExecutor.executeAttack(entity, attack, "water_breathing", "striking_tide");
-                        })
+                        .withAttack(StrikingTideAttack::new)
                 )
 
                 // Fifth Form: Blessed Rain After the Drought - Ultimate precision dash (INDEX 2)
@@ -146,14 +131,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withHitboxSize(2.0f) // Minimum hitbox size
                         .withDashSpeed(12.0f) // Fast dash
                         .withDescription("High-speed precision dash strike dealing 20 damage.")
-                        .withAction(entity -> {
-                            BlessedRainAttack attack = new BlessedRainAttack();
-                            WaterBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) {
-                                attack.configure(moveset.getMove(2));
-                            }
-                            MoveExecutor.executeAttack(entity, attack, "water_breathing", "blessed_rain");
-                        })
+                        .withAttack(BlessedRainAttack::new)
                 )
 
                 // Sixth Form: Whirlpool - Rising whirlpool attack (INDEX 3)
@@ -167,14 +145,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withHitStun(7) // Short for spinning effect
                         .withHitboxSize(3.0f)
                         .withDescription("Spinning attack that hits trapped enemies multiple times.")
-                        .withAction(entity -> {
-                            WhirlpoolAttack attack = new WhirlpoolAttack();
-                            WaterBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) {
-                                attack.configure(moveset.getMove(3));
-                            }
-                            MoveExecutor.executeAttack(entity, attack, "water_breathing", "whirlpool");
-                        })
+                        .withAttack(WhirlpoolAttack::new)
                 )
 
                 // Seventh Form: Drop Ripple Thrust - Shield and thrust attack (INDEX 4)
@@ -188,14 +159,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withHitStun(20)
                         .withHitboxSize(4.0f) // Wall of ripples
                         .withDescription("Forward thrust with long reach.")
-                        .withAction(entity -> {
-                            DropRippleThrustAttack attack = new DropRippleThrustAttack();
-                            WaterBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) {
-                                attack.configure(moveset.getMove(4));
-                            }
-                            MoveExecutor.executeAttack(entity, attack, "water_breathing", "drop_ripple_thrust");
-                        })
+                        .withAttack(DropRippleThrustAttack::new)
                 )
 
                 // Eighth Form: Waterfall Basin - BIG ASS MULTIHIT (INDEX 5)
@@ -209,14 +173,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withHitStun(8) // Medium stun for multi-hit
                         .withHitboxSize(6.0f) // BIG ASS HITBOX
                         .withDescription("Multi-hit barrage over a large area lasting several seconds.")
-                        .withAction(entity -> {
-                            WaterfallBasinAttack attack = new WaterfallBasinAttack();
-                            WaterBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) {
-                                attack.configure(moveset.getMove(5));
-                            }
-                            MoveExecutor.executeAttack(entity, attack, "water_breathing", "waterfall_basin");
-                        })
+                        .withAttack(WaterfallBasinAttack::new)
                 )
 
                 // Ninth Form: Splashing Water Flow - Zigzag dash attack (INDEX 6)
@@ -231,14 +188,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withHitboxSize(6f)
                         .withDashSpeed(4.0f) // Fast zigzag speed
                         .withDescription("Zigzag dash that hits enemies along the path.")
-                        .withAction(entity -> {
-                            SplashingWaterFlowAttack attack = new SplashingWaterFlowAttack();
-                            WaterBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) {
-                                attack.configure(moveset.getMove(6));
-                            }
-                            MoveExecutor.executeAttack(entity, attack, "water_breathing", "splashing_water_flow");
-                        })
+                        .withAttack(SplashingWaterFlowAttack::new)
                 )
 
                 // Tenth Form: Constant Flux - 5-hit combo with dragon finisher (INDEX 7)
@@ -252,14 +202,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withHitStun(12)
                         .withHitboxSize(4.0f)
                         .withDescription("5-hit combo ending in a heavy finishing slash.")
-                        .withAction(entity -> {
-                            ConstantFluxAttack attack = new ConstantFluxAttack();
-                            WaterBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) {
-                                attack.configure(moveset.getMove(7));
-                            }
-                            MoveExecutor.executeAttack(entity, attack, "water_breathing", "constant_flux");
-                        })
+                        .withAttack(ConstantFluxAttack::new)
                 )
 
                 // Eleventh Form: Dead Calm - Auto-target AoE field (INDEX 8)
@@ -273,14 +216,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withHitStun(6)
                         .withHitboxSize(6.0f) // Large area field
                         .withDescription("Deploys a large auto-targeting field that damages nearby enemies for 10 seconds.")
-                        .withAction(entity -> {
-                            DeadCalmAttack attack = new DeadCalmAttack();
-                            WaterBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) {
-                                attack.configure(moveset.getMove(8));
-                            }
-                            MoveExecutor.executeAttack(entity, attack, "water_breathing", "dead_calm");
-                        })
+                        .withAttack(DeadCalmAttack::new)
                 );
     }
 
@@ -472,13 +408,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
         }
 
         executingMove.put(entity.getUUID(), true);
-        CURRENT_MOVESET.set(this);
-
-        try {
-            super.performMove(entity, moveIndex);
-        } finally {
-            CURRENT_MOVESET.remove();
-        }
+        super.performMove(entity, moveIndex);
 
         boolean moveExecuted = !executingMove.getOrDefault(entity.getUUID(), false);
         executingMove.remove(entity.getUUID());
@@ -491,10 +421,6 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 CooldownDisplayPacket.sendToClient(serverPlayer, "water_breathing", config);
             }
         }
-    }
-
-    public static WaterBreathingMoveset getCurrentMoveset() {
-        return CURRENT_MOVESET.get();
     }
 
     private boolean canUseMove(LivingEntity entity, int moveIndex) {

@@ -1,6 +1,5 @@
 package com.xirc.nichirin.common.attack.moveset.breathing;
 
-import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.breathing.sound.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
@@ -17,7 +16,6 @@ public class SoundBreathingMoveset extends AbstractMoveset {
 
     private static final Map<UUID, Map<Integer, Long>> entityCooldowns = new HashMap<>();
     private static final Map<UUID, Boolean> executingMove = new HashMap<>();
-    private static final ThreadLocal<SoundBreathingMoveset> CURRENT_MOVESET = new ThreadLocal<>();
 
     public SoundBreathingMoveset() {
         super("sound_breathing", "Sound Breathing", MovesetType.BREATHING, createBuilder());
@@ -28,7 +26,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                 .withIdleAnimation("nichirin:sound_idle")
                 .withSpeedMultiplier(1.1f)
 
-                .withRightClickMove(new MoveBuilder("tempo_breaker", "Tempo Breaker")
+                .withMove(new MoveBuilder("tempo_breaker", "Tempo Breaker")
                         .withAnimation("nichirin:tempo_breaker", 8)
                         .withTiming(0, 8, 42)
                         .withDamage(0f) // explosion is what deals the damage
@@ -38,15 +36,11 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                         .withHitStun(10)
                         .withHitboxSize(3.0f)
                         .withDescription("Wide sweep that triggers a delayed explosion dealing area damage.")
-                        .withAction(entity -> {
-                            TempoBreakerAttack attack = new TempoBreakerAttack();
-                            SoundBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) attack.configure(moveset.getRightClickConfiguration());
-                            MoveExecutor.executeAttack(entity, attack, "sound_breathing", "tempo_breaker");
-                        })
+                        .asRightClick()
+                        .withAttack(TempoBreakerAttack::new)
                 )
 
-                .withCrouchRightClickMove(new MoveBuilder("rhythmic_step", "Rhythmic Step")
+                .withMove(new MoveBuilder("rhythmic_step", "Rhythmic Step")
                         .withAnimation("nichirin:rhythmic_step", 9)
                         .withTiming(0, 0, 14)
                         .withDamage(8.0f)
@@ -57,12 +51,8 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                         .withHitStun(15)
                         .withHitboxSize(3.0f)
                         .withDescription("Short dash that damages enemies you pass through.")
-                        .withAction(entity -> {
-                            RhythmicStepAttack attack = new RhythmicStepAttack();
-                            SoundBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) attack.configure(moveset.getCrouchRightClickConfiguration());
-                            MoveExecutor.executeAttack(entity, attack, "sound_breathing", "rhythmic_step");
-                        })
+                        .asCrouchRightClick()
+                        .withAttack(RhythmicStepAttack::new)
                 )
 
                 // First Form: Roar - AOE slam (INDEX 0 in wheel)
@@ -76,12 +66,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                         .withHitStun(20)
                         .withHitboxSize(13.5f)
                         .withDescription("AOE slam that hits all enemies in a large radius.")
-                        .withAction(entity -> {
-                            RoarAttack attack = new RoarAttack();
-                            SoundBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) attack.configure(moveset.getMove(0));
-                            MoveExecutor.executeAttack(entity, attack, "sound_breathing", "roar");
-                        })
+                        .withAttack(RoarAttack::new)
                 )
 
                 // Fourth Form: Constant Resounding Slashes - 360° defense (INDEX 1 in wheel)
@@ -95,12 +80,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                         .withHitStun(40)
                         .withHitboxSize(12.25f)
                         .withDescription("Spinning 360° attack that hits all nearby enemies multiple times.")
-                        .withAction(entity -> {
-                            ConstantResoundingSlashesAttack attack = new ConstantResoundingSlashesAttack();
-                            SoundBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) attack.configure(moveset.getMove(1));
-                            MoveExecutor.executeAttack(entity, attack, "sound_breathing", "constant_resounding_slashes");
-                        })
+                        .withAttack(ConstantResoundingSlashesAttack::new)
                 )
 
                 // Fifth Form: String Performance - Multi-segment dash (INDEX 2 in wheel)
@@ -115,12 +95,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                         .withHitStun(30)
                         .withHitboxSize(7f)
                         .withDescription("Multi-segment dash that strikes everything along a 16-block path.")
-                        .withAction(entity -> {
-                            StringPerformanceAttack attack = new StringPerformanceAttack();
-                            SoundBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) attack.configure(moveset.getMove(2));
-                            MoveExecutor.executeAttack(entity, attack, "sound_breathing", "string_performance");
-                        })
+                        .withAttack(StringPerformanceAttack::new)
                 );
     }
 
@@ -138,20 +113,10 @@ public class SoundBreathingMoveset extends AbstractMoveset {
         return false;
     }
 
-    /**
-     * Click moves run their .withAction lambda via AbstractMoveset's default handler, which doesn't
-     * set CURRENT_MOVESET. The lambdas look up the moveset via that threadlocal — so wrap the
-     * default handler to set it.
-     */
     @Override
     public boolean handleRightClick(LivingEntity entity, boolean isCrouching) {
         if (!canPerformMoves(entity)) return true;
-        CURRENT_MOVESET.set(this);
-        try {
-            return super.handleRightClick(entity, isCrouching);
-        } finally {
-            CURRENT_MOVESET.remove();
-        }
+        return super.handleRightClick(entity, isCrouching);
     }
 
     @Override
@@ -193,13 +158,7 @@ public class SoundBreathingMoveset extends AbstractMoveset {
         }
 
         executingMove.put(entity.getUUID(), true);
-        CURRENT_MOVESET.set(this);
-
-        try {
-            super.performMove(entity, moveIndex);
-        } finally {
-            CURRENT_MOVESET.remove();
-        }
+        super.performMove(entity, moveIndex);
 
         boolean moveExecuted = !executingMove.getOrDefault(entity.getUUID(), false);
         executingMove.remove(entity.getUUID());
@@ -212,10 +171,6 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                 CooldownDisplayPacket.sendToClient(serverPlayer, "sound_breathing", config);
             }
         }
-    }
-
-    public static SoundBreathingMoveset getCurrentMoveset() {
-        return CURRENT_MOVESET.get();
     }
 
     private boolean canUseMove(LivingEntity entity, int moveIndex) {

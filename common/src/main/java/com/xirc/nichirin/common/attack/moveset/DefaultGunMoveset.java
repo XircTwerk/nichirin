@@ -59,19 +59,21 @@ public class DefaultGunMoveset extends AbstractMoveset {
 
     private static MovesetBuilder createBuilder() {
         return new MovesetBuilder()
-                .withLeftClickMove(new MoveBuilder("shoot", "Shoot")
+                .withMove(new MoveBuilder("shoot", "Shoot")
                         .withTiming(0, 0, 1)
                         .withRecovery(4)
                         .withDamage(16.0f)
                         .withRange(30.0f)
-                        .withKnockback(0.6f))
+                        .withKnockback(0.6f)
+                        .asLeftClick())
 
-                .withRightClickMove(new MoveBuilder("double_shot", "Double Shot")
+                .withMove(new MoveBuilder("double_shot", "Double Shot")
                         .withTiming(0, 0, 1)
                         .withRecovery(15)
                         .withDamage(16.0f)
                         .withRange(30.0f)
-                        .withKnockback(0.6f))
+                        .withKnockback(0.6f)
+                        .asRightClick())
 
                 .withMove(new MoveBuilder("gun_bash", "Gun Bash")
                         .withTiming(60, 1, 4)
