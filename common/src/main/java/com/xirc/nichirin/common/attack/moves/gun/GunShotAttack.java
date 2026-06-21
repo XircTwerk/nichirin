@@ -5,7 +5,7 @@ import com.xirc.nichirin.common.network.s2c.TriggerShaderPacket;
 import com.xirc.nichirin.common.util.NichirinArmorDamage;
 import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
-import com.xirc.nichirin.registry.NicirinSoundRegistry;
+import com.xirc.nichirin.registry.NichirinSoundRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -68,8 +68,8 @@ public class GunShotAttack extends AbstractKatanaAttack {
         Level world = player.level();
 
         SoundEvent sound = barrels >= 2
-                ? NicirinSoundRegistry.GENYA_DOUBLESHOT.get()
-                : NicirinSoundRegistry.GENYA_SINGLESHOT.get();
+                ? NichirinSoundRegistry.GENYA_DOUBLESHOT.get()
+                : NichirinSoundRegistry.GENYA_SINGLESHOT.get();
         RandomSource random = world.getRandom();
         float pitch = 1.0f + (random.nextFloat() - 0.5f) * 0.16f;
         float volume = 0.92f + random.nextFloat() * 0.08f;

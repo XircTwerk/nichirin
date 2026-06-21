@@ -6,7 +6,7 @@ import com.xirc.nichirin.common.system.blocking.HandToHandBlock;
 import com.xirc.nichirin.common.system.blocking.KatanaBlock;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
-import com.xirc.nichirin.registry.NicirinSoundRegistry;
+import com.xirc.nichirin.registry.NichirinSoundRegistry;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.TickEvent;
 import dev.architectury.event.events.common.PlayerEvent;
@@ -82,8 +82,8 @@ public class BlockingEventHandler {
                         NichirinPacketRegistry.sendParrySpark(player);
 
                         SoundEvent clashSound = player.level().random.nextBoolean()
-                                ? NicirinSoundRegistry.PARRY_CLASH.get()
-                                : NicirinSoundRegistry.PARRY_CLASH_2.get();
+                                ? NichirinSoundRegistry.PARRY_CLASH.get()
+                                : NichirinSoundRegistry.PARRY_CLASH_2.get();
                         player.level().playSound(null,
                                 player.getX(), player.getY(), player.getZ(),
                                 clashSound, SoundSource.PLAYERS, 1.0f, 1.0f);

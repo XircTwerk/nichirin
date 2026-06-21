@@ -8,7 +8,7 @@ import com.xirc.nichirin.common.util.NichirinArmorDamage;
 import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
-import com.xirc.nichirin.registry.NicirinSoundRegistry;
+import com.xirc.nichirin.registry.NichirinSoundRegistry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
@@ -209,7 +209,7 @@ public class ShockwaveEntity extends Entity {
         serverLevel.sendParticles(flash, x, y, z, 3, 0.3, 0.3, 0.3, 0.0);
         serverLevel.sendParticles(ring,  x, y, z, 5, 0.5, 0.1, 0.5, 0.05);
         serverLevel.playSound(null, x, y, z,
-                NicirinSoundRegistry.PARRY_CLASH.get(), SoundSource.PLAYERS, 0.9f, 0.5f);
+                NichirinSoundRegistry.PARRY_CLASH.get(), SoundSource.PLAYERS, 0.9f, 0.5f);
     }
 
     private LivingEntity ownerEntity() {

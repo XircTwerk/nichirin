@@ -2,7 +2,7 @@ package com.xirc.nichirin.common.attack.moves.demon.basic;
 
 import com.xirc.nichirin.common.attack.component.AbstractDemonAttack;
 import com.xirc.nichirin.common.attack.component.IDemonAttacker;
-import com.xirc.nichirin.registry.NicirinSoundRegistry;
+import com.xirc.nichirin.registry.NichirinSoundRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -86,7 +86,7 @@ public class DemonStompAttack extends AbstractDemonAttack<DemonStompAttack, IDem
 
             // Impact sound per target
             world.playSound(null, target.getX(), target.getY(), target.getZ(),
-                    NicirinSoundRegistry.STOMP_LAND.get(), SoundSource.PLAYERS, 1.0f, 0.8f);
+                    NichirinSoundRegistry.STOMP_LAND.get(), SoundSource.PLAYERS, 1.0f, 0.8f);
         }
 
         // Create massive ground impact (1 block below user position)

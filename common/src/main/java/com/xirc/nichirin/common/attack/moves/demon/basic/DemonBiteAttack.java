@@ -5,7 +5,7 @@ import com.xirc.nichirin.common.attack.component.IDemonAttacker;
 import com.xirc.nichirin.common.entity.MovesetCapableNPC;
 import com.xirc.nichirin.common.system.DemonManager;
 import com.xirc.nichirin.common.system.NPCResourceManager;
-import com.xirc.nichirin.registry.NicirinSoundRegistry;
+import com.xirc.nichirin.registry.NichirinSoundRegistry;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -80,7 +80,7 @@ public class DemonBiteAttack extends AbstractDemonAttack<DemonBiteAttack, IDemon
 
                 // Bite impact sound
                 world.playSound(null, target.getX(), target.getY(), target.getZ(),
-                        NicirinSoundRegistry.BITE_CRUNCH.get(), SoundSource.PLAYERS, 1.0f, 0.85f + world.random.nextFloat() * 0.15f);
+                        NichirinSoundRegistry.BITE_CRUNCH.get(), SoundSource.PLAYERS, 1.0f, 0.85f + world.random.nextFloat() * 0.15f);
             }
         }
 

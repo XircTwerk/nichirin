@@ -8,7 +8,7 @@ import com.xirc.nichirin.common.util.AttackInterruptTracker;
 import com.xirc.nichirin.common.util.BreathingManager;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
-import com.xirc.nichirin.registry.NicirinSoundRegistry;
+import com.xirc.nichirin.registry.NichirinSoundRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
@@ -442,7 +442,7 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
         // Slight pitch variation per fold-segment so the chain reads as multiple distinct strikes.
         float pitch = 1.8f + (segmentsExecuted % 4) * 0.05f;
         world.playSound(null, player.getX(), player.getY(), player.getZ(),
-                NicirinSoundRegistry.THUNDERCLAP_FLASH.get(), SoundSource.PLAYERS, 0.7f, pitch);
+                NichirinSoundRegistry.THUNDERCLAP_FLASH.get(), SoundSource.PLAYERS, 0.7f, pitch);
     }
 
     /** Burst of particles right at the upcoming waypoint so the player sees where they're about to land. */

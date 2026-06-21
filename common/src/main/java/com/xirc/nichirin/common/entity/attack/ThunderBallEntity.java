@@ -2,7 +2,7 @@ package com.xirc.nichirin.common.entity.attack;
 
 import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
-import com.xirc.nichirin.registry.NicirinSoundRegistry;
+import com.xirc.nichirin.registry.NichirinSoundRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
@@ -109,7 +109,7 @@ public class ThunderBallEntity extends Entity {
         // Play continuous thunder ball sound
         if (this.tickCount % 20 == 0) { // Every second
             this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
-                    NicirinSoundRegistry.THUNDER_BALL.get(), SoundSource.HOSTILE, 0.8f, 1.0f);
+                    NichirinSoundRegistry.THUNDER_BALL.get(), SoundSource.HOSTILE, 0.8f, 1.0f);
         }
     }
 
