@@ -32,9 +32,7 @@ import java.util.UUID;
  */
 public class TempleDemonMoveset extends AbstractMoveset {
 
-    // ── Click-move stat sources ──
     // ONE declaration per move. Both the builder (so AbstractMoveset can resolve
-    // getLeftClickConfiguration() etc.) and the custom handlers below read from these constants —
     // no duplicated stats, no drift bugs.
     private static final MoveConfiguration GUT_PUNCH_CONFIG = new MoveBuilder("demon_gut_punch", "Gut Punch")
             .withAnimation("nichirin:demon_gut_punch", 6)
@@ -55,7 +53,7 @@ public class TempleDemonMoveset extends AbstractMoveset {
             .withKnockback(0f)
             .withHitStun(10)
             .withHitboxSize(2.0f)
-            .withDescription("Basic claw slash — press again for finisher")
+            .withDescription("Basic claw slash - press again for finisher")
             .build();
 
     private static final MoveConfiguration SLASH_2_CONFIG = new MoveBuilder("demon_slash_2", "Slash Finisher")
@@ -230,17 +228,13 @@ public class TempleDemonMoveset extends AbstractMoveset {
 
         if (comboState.currentStage == 1) {
             if (comboState.isReadyForSlash2(currentTick)) {
-                // Player clicked again within the followup window — fire slash2
                 return executeSlashStage(entity, 1, comboState, currentTick);
             } else if (currentTick - comboState.slash1GameTick <= SlashComboState.MAX_FOLLOWUP_TICKS) {
-                // Inside the window but too early — absorb the click, don't restart slash1
                 return true;
             }
-            // Window expired — fall through to fresh slash1
             comboState.reset();
         }
 
-        // Fresh start — start slash1
         if (!canUseMove(entity, -1)) {
             if (entity instanceof Player player) showCooldownMessage(player, -1, SLASH_1_CONFIG.getDisplayName());
             return true;

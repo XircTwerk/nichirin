@@ -5,7 +5,6 @@ import com.xirc.nichirin.common.system.sheathing.SheathInputAction;
 import com.xirc.nichirin.registry.NichirinKeybindRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.event.events.client.ClientTickEvent;
-import net.minecraft.client.Minecraft;
 
 public class SheathingKeyHandler {
     private static boolean wasDown = false;

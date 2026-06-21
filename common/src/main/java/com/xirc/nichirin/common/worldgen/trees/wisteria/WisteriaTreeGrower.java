@@ -1,8 +1,10 @@
 package com.xirc.nichirin.common.worldgen.trees.wisteria;
 
 import com.xirc.nichirin.registry.NichirinConfiguredFeatures;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.grower.TreeGrower;
+import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 
 import java.util.Optional;
 
@@ -34,7 +36,7 @@ public final class WisteriaTreeGrower {
         }
     }
 
-    private static TreeGrower create(String size, net.minecraft.resources.ResourceKey<net.minecraft.world.level.levelgen.feature.ConfiguredFeature<?, ?>> feature) {
+    private static TreeGrower create(String size, ResourceKey<ConfiguredFeature<?, ?>> feature) {
         return new TreeGrower("nichirin:wisteria_" + size, Optional.empty(), Optional.of(feature), Optional.empty());
     }
 }

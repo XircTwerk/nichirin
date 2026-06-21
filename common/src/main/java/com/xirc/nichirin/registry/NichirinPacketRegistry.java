@@ -7,17 +7,19 @@ import com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer;
 import com.xirc.nichirin.client.renderer.effects.ParrySparkHandler;
 import com.xirc.nichirin.common.attack.moves.breathing.thunder.ThunderclapChargeManager;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
+import com.xirc.nichirin.common.attack.moveset.CqcMoveset;
 import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.data.*;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.common.item.gun.GenyaDB;
 import com.xirc.nichirin.common.network.c2s.*;
 import com.xirc.nichirin.common.network.s2c.*;
 import net.minecraft.world.phys.Vec3;
 import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
-import com.xirc.nichirin.common.network.util.MovesetSyncPacket;
 import com.xirc.nichirin.common.system.DemonComponent;
 import com.xirc.nichirin.common.system.blocking.HandToHandBlock;
 import com.xirc.nichirin.common.system.blocking.KatanaBlock;
+import com.xirc.nichirin.common.system.sheathing.PlayerSheathData;
 import com.xirc.nichirin.common.util.MultiplayerInputHandler;
 import dev.architectury.networking.NetworkManager;
 import dev.architectury.platform.Platform;
@@ -33,9 +35,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.InteractionHand;
 import io.netty.buffer.Unpooled;
 
 import java.util.HashMap;
@@ -78,6 +78,7 @@ public interface NichirinPacketRegistry {
     ResourceLocation DEMON_INPUT_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "demon_input");
     ResourceLocation ATTACK_WHEEL_STATE_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "attack_wheel_state");
     ResourceLocation KATANA_INPUT_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "katana_input");
+    ResourceLocation GUN_INPUT_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "gun_input");
     ResourceLocation TRIGGER_SHADER_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "trigger_shader");
     ResourceLocation PARRY_SPARK_ID        = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "parry_spark");
     ResourceLocation OPEN_CONFIG_SCREEN_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "open_config_screen");
@@ -87,6 +88,7 @@ public interface NichirinPacketRegistry {
     ResourceLocation OPEN_TRAINER_DIALOGUE_ID      = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "open_trainer_dialogue");
     ResourceLocation TRAINER_ACTION_ID             = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "trainer_action");
     ResourceLocation MIST_CLONES_ID                = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "mist_clones");
+    ResourceLocation CLONE_RING_ID                 = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "clone_ring");
     ResourceLocation SHEATH_INPUT_ID               = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "sheath_input");
     ResourceLocation SHEATH_CONFIG_ID              = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "sheath_config");
     ResourceLocation SHEATH_SYNC_ID                = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "sheath_sync");
@@ -108,6 +110,7 @@ public interface NichirinPacketRegistry {
     ResourceLocation AFTERIMAGE_ID                 = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "afterimage");
     ResourceLocation THUNDERCLAP_RELEASE_ID        = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "thunderclap_release");
     ResourceLocation DESTRUCTIVE_DEATH_STATE_ID    = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "destructive_death_state");
+    ResourceLocation GUN_ANIMATION_ID              = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "gun_animation");
 
     // Packet class mappings
     Map<Class<?>, ResourceLocation> PACKET_IDS = new HashMap<>();
@@ -132,6 +135,7 @@ public interface NichirinPacketRegistry {
         PACKET_IDS.put(DemonSyncPacket.class, DEMON_SYNC_ID);
         PACKET_IDS.put(TriggerShaderPacket.class, TRIGGER_SHADER_ID);
         PACKET_IDS.put(MistClonesPacket.class, MIST_CLONES_ID);
+        PACKET_IDS.put(CloneRingPacket.class, CLONE_RING_ID);
         PACKET_IDS.put(AfterimagePacket.class, AFTERIMAGE_ID);
         PACKET_IDS.put(SheathInputPacket.class, SHEATH_INPUT_ID);
         PACKET_IDS.put(SheathConfigPacket.class, SHEATH_CONFIG_ID);
@@ -173,10 +177,10 @@ public interface NichirinPacketRegistry {
                 PLAYER_ANIMATION_ID, COMBO_COUNTER_ID, MOVESET_CONFIG_ID, SYNC_BREATHING_STYLE,
                 SYNC_PROGRESSION_ID, DEMON_SYNC_ID, HITBOX_PACKET_ID, TRIGGER_SHADER_ID,
                 PARRY_SPARK_ID, BLOOD_MOON_SYNC_ID, PERK_SYNC_ID, OPEN_TRAINER_DIALOGUE_ID,
-                MIST_CLONES_ID, SHEATH_SYNC_ID, OPEN_CONFIG_SCREEN_ID, CQC_PRESET_SYNC_ID, COOLDOWN_DISPLAY_ID,
+                MIST_CLONES_ID, CLONE_RING_ID, SHEATH_SYNC_ID, OPEN_CONFIG_SCREEN_ID, CQC_PRESET_SYNC_ID, COOLDOWN_DISPLAY_ID,
                 AURA_ADD_ID, AURA_REMOVE_ID, AURA_CLEAR_ID,
                 OUTLINE_ADD_ID, OUTLINE_REMOVE_ID, OUTLINE_CLEAR_ID, AFTERIMAGE_ID,
-                DESTRUCTIVE_DEATH_STATE_ID
+                DESTRUCTIVE_DEATH_STATE_ID, GUN_ANIMATION_ID
         };
         for (ResourceLocation id : s2cIds) {
             try {
@@ -236,6 +240,20 @@ public interface NichirinPacketRegistry {
                         return;
                     }
                     executeKatanaInput(serverPlayer, inputType);
+                });
+            }
+        });
+
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, GUN_INPUT_ID, (buf, context) -> {
+            int barrels = buf.readInt();
+            if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
+                context.queue(() -> {
+                    if (shouldBlockInputsServer(serverPlayer)) {
+                        return;
+                    }
+                    if (serverPlayer.getMainHandItem().getItem() instanceof GenyaDB gun) {
+                        gun.performShoot(serverPlayer, barrels);
+                    }
                 });
             }
         });
@@ -534,6 +552,11 @@ public interface NichirinPacketRegistry {
                 context.queue(() -> packet.handleClient());
             });
 
+            NetworkManager.registerReceiver(NetworkManager.Side.S2C, CLONE_RING_ID, (buf, context) -> {
+                CloneRingPacket packet = new CloneRingPacket(buf);
+                context.queue(packet::handleClient);
+            });
+
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, AFTERIMAGE_ID, (buf, context) -> {
                 AfterimagePacket packet = new AfterimagePacket(buf);
                 context.queue(packet::handleClient);
@@ -541,6 +564,11 @@ public interface NichirinPacketRegistry {
 
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, DESTRUCTIVE_DEATH_STATE_ID, (buf, context) -> {
                 DestructiveDeathStateSyncPacket packet = new DestructiveDeathStateSyncPacket(buf);
+                context.queue(packet::handleClient);
+            });
+
+            NetworkManager.registerReceiver(NetworkManager.Side.S2C, GUN_ANIMATION_ID, (buf, context) -> {
+                GunAnimationPacket packet = new GunAnimationPacket(buf);
                 context.queue(packet::handleClient);
             });
 
@@ -658,8 +686,8 @@ public interface NichirinPacketRegistry {
         if (player.getMainHandItem().isEmpty() && MovesetHelper.hasFightingMoveset(player)) {
             AbstractMoveset fightingMoveset = MovesetHelper.getFightingMoveset(player);
             if (fightingMoveset != null && fightingMoveset.isNeutralMoveset()) {
-                if (fightingMoveset instanceof com.xirc.nichirin.common.attack.moveset.CqcMoveset) {
-                    com.xirc.nichirin.common.attack.moveset.CqcMoveset.withPlayer(player, () -> {
+                if (fightingMoveset instanceof CqcMoveset) {
+                    CqcMoveset.withPlayer(player, () -> {
                         switch (inputType) {
                             case LEFT_CLICK -> fightingMoveset.handleLeftClick(player);
                             case RIGHT_CLICK -> fightingMoveset.handleRightClick(player, false);
@@ -1132,6 +1160,8 @@ public interface NichirinPacketRegistry {
             p.toBytes(buf);
         } else if (packet instanceof MistClonesPacket p) {
             p.toBytes(buf);
+        } else if (packet instanceof CloneRingPacket p) {
+            p.toBytes(buf);
         } else if (packet instanceof AfterimagePacket p) {
             p.toBytes(buf);
         } else if (packet instanceof SheathInputPacket p) {
@@ -1166,6 +1196,20 @@ public interface NichirinPacketRegistry {
         }
     }
 
+    static void sendCloneRing(LivingEntity caster, CloneRingPacket packet) {
+        if (caster.level().isClientSide) return;
+        if (!(caster.level() instanceof ServerLevel serverLevel)) return;
+        try {
+            FriendlyByteBuf buf = encodePacket(packet);
+            serverLevel.getServer().getPlayerList().getPlayers().stream()
+                    .filter(p -> p.level() == caster.level()
+                            && p.distanceToSqr(caster) <= 256.0 * 256.0)
+                    .forEach(p -> NetworkManager.sendToPlayer(p, CLONE_RING_ID, serverCopy(buf, p)));
+            buf.release();
+        } catch (Exception ignored) {
+        }
+    }
+
     static void sendAfterimageTrail(LivingEntity entity, Vec3 from, Vec3 to, int lifetimeTicks, int copies, float alpha) {
         if (entity.level().isClientSide) return;
         if (!(entity.level() instanceof ServerLevel serverLevel)) return;
@@ -1183,7 +1227,20 @@ public interface NichirinPacketRegistry {
         }
     }
 
-    static void sendSheathSync(ServerPlayer player, com.xirc.nichirin.common.system.sheathing.PlayerSheathData data) {
+    static void sendGunAnimation(Player player, String animName) {
+        if (!(player instanceof ServerPlayer serverPlayer)) return;
+        if (player.level().isClientSide) return;
+        try {
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+            new GunAnimationPacket(player.getId(), animName).toBytes(buf);
+            NetworkManager.sendToPlayer(serverPlayer, GUN_ANIMATION_ID, server(buf, serverPlayer));
+            buf.release();
+        } catch (Exception e) {
+            // ignore
+        }
+    }
+
+    static void sendSheathSync(ServerPlayer player, PlayerSheathData data) {
         SheathSyncPacket packet = new SheathSyncPacket(player, data);
         ResourceLocation id = PACKET_IDS.get(SheathSyncPacket.class);
         if (id == null) return;

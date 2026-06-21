@@ -6,7 +6,6 @@ import com.xirc.nichirin.common.system.sheathing.SheathSlotData;
 import com.xirc.nichirin.common.system.sheathing.SheathState;
 import com.xirc.nichirin.common.system.sheathing.SheathingManager;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;

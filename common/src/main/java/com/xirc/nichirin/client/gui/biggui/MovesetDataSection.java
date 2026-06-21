@@ -6,6 +6,7 @@ import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.attack.moveset.CqcMoveset;
 import com.xirc.nichirin.common.attack.moveset.DefaultKatanaMoveset;
 import com.xirc.nichirin.common.data.MovesetHelper;
+import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.registry.NichirinKeybindRegistry;
 import com.xirc.nichirin.registry.NichirinMovesetRegistry;
 import net.minecraft.client.KeyMapping;
@@ -74,8 +75,47 @@ public class MovesetDataSection extends AbstractGuiPage {
                 renderBlock.run();
             }
             contentY = blockBottom[0];
+            if (moveset instanceof CqcMoveset) {
+                contentY = renderStanceInfo(graphics, font, player, contentX, contentY + 8);
+            }
             contentY += SECTION_SPACING;
         }
+    }
+
+    /** Shows the active CQC blocking stance and what it actually does in combat. */
+    private int renderStanceInfo(GuiGraphics graphics, Font font, Player player, int contentX, int contentY) {
+        int stance = PlayerDataProvider.getData(player).getCqcPresetData().getStanceIndex();
+        String name = switch (stance) {
+            case 0 -> "High Guard";
+            case 1 -> "Orthodox";
+            case 2 -> "Cross Guard";
+            case 3 -> "Shoulder Roll";
+            default -> "Unknown";
+        };
+        String[] effects = switch (stance) {
+            case 0 -> new String[] {
+                    "The only stance that can parry attacks.",
+                    "Slightly weaker damage resistance while blocking."};
+            case 1 -> new String[] {
+                    "+20% damage on left-click and right-click CQC moves.",
+                    "No blocking perks — pure offense."};
+            case 2 -> new String[] {
+                    "Guard drains 33% slower while blocking.",
+                    "Cannot parry."};
+            case 3 -> new String[] {
+                    "Guard drains 50% slower and blocks resist more damage.",
+                    "Knocks attackers away when you block their hit. Cannot parry."};
+            default -> new String[] {"No stance data."};
+        };
+
+        graphics.drawString(font, Component.literal("Blocking Stance: " + name)
+                .withStyle(s -> s.withBold(true)), contentX, contentY, COLOR_PALETTE.ACCENT.rgb());
+        contentY += 12;
+        for (String line : effects) {
+            graphics.drawString(font, line, contentX + 8, contentY, COLOR_PALETTE.TEXT_DIM.rgb());
+            contentY += 10;
+        }
+        return contentY;
     }
 
     private int renderMovesetBlock(GuiGraphics graphics, Font font, SelectedMoveset selected, AbstractMoveset moveset,

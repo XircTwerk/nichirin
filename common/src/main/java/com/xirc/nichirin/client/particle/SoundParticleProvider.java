@@ -3,7 +3,6 @@ package com.xirc.nichirin.client.particle;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.*;
 import net.minecraft.core.particles.SimpleParticleType;
-import net.minecraft.util.RandomSource;
 import org.jetbrains.annotations.Nullable;
 
 public class SoundParticleProvider implements ParticleProvider<SimpleParticleType> {

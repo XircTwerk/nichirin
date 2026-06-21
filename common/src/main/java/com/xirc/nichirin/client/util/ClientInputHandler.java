@@ -3,10 +3,12 @@ package com.xirc.nichirin.client.util;
 import com.xirc.nichirin.client.handler.AttackWheelHandler;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.common.item.gun.GenyaDB;
 import com.xirc.nichirin.common.util.MultiplayerInputHandler;
 import com.xirc.nichirin.common.util.NetworkBufferUtils;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import dev.architectury.event.EventResult;
+import dev.architectury.event.events.client.ClientTickEvent;
 import dev.architectury.event.events.common.InteractionEvent;
 import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.networking.NetworkManager;
@@ -27,6 +29,7 @@ public class ClientInputHandler {
     private static final ResourceLocation RIGHT_CLICK_ID = ResourceLocation.fromNamespaceAndPath("nichirin", "katana_right");
     private static final ResourceLocation RIGHT_CROUCH_ID = ResourceLocation.fromNamespaceAndPath("nichirin", "katana_right_crouch");
     private static final ResourceLocation FEEDBACK_ID = ResourceLocation.fromNamespaceAndPath("nichirin", "katana_feedback");
+    private static final ResourceLocation GUN_INPUT_ID = ResourceLocation.fromNamespaceAndPath("nichirin", "gun_input");
     private static boolean registered;
 
     public static void registerClientEvents() {
@@ -40,6 +43,10 @@ public class ClientInputHandler {
         // Left click air. While the block button (RMB) is held, a left click performs the special
         // move that used to be on right-click (crouch variant if sneaking) instead of the M1 attack.
         InteractionEvent.CLIENT_LEFT_CLICK_AIR.register((player, hand) -> {
+            // Gun: firing is driven by the tap/hold poller (tickGunInput), not discrete clicks.
+            if (player.getMainHandItem().getItem() instanceof GenyaDB) {
+                return;
+            }
             if (!canPerformAttacks(player, hand)) {
                 return;
             }
@@ -60,6 +67,10 @@ public class ClientInputHandler {
 
         // Entity attack (LEFT CLICK ON ENTITIES) — same block+left-click special routing.
         PlayerEvent.ATTACK_ENTITY.register((player, level, entity, hand, hitResult) -> {
+            // Gun: never melee entities — firing is handled by the tap/hold poller (tickGunInput).
+            if (player.getMainHandItem().getItem() instanceof GenyaDB) {
+                return EventResult.interruptFalse();
+            }
             if (!canPerformAttacks(player, hand)) {
                 return EventResult.pass();
             }
@@ -77,6 +88,49 @@ public class ClientInputHandler {
 
             return EventResult.interruptFalse();
         });
+
+        // Gun: never mine blocks — left-click is the trigger, handled by the tap/hold poller.
+        InteractionEvent.LEFT_CLICK_BLOCK.register((player, hand, pos, face) -> {
+            if (player.getMainHandItem().getItem() instanceof GenyaDB) {
+                return EventResult.interruptFalse();
+            }
+            return EventResult.pass();
+        });
+
+        // Gun tap/hold firing: tap left-click = single shot, held left-click = double shot.
+        ClientTickEvent.CLIENT_POST.register(minecraft -> {
+            if (minecraft.player != null) {
+                tickGunInput(minecraft);
+            }
+        });
+    }
+
+    private static final int GUN_HOLD_THRESHOLD = 5; // ticks held before a hold counts as a double shot
+    private static int gunHeldTicks = 0;
+    private static boolean gunFiredDouble = false;
+    private static boolean gunWasDown = false;
+
+    /** Poll the attack key while holding the gun to distinguish a tapped vs held left-click. */
+    private static void tickGunInput(Minecraft mc) {
+        boolean holdingGun = mc.player.getMainHandItem().getItem() instanceof GenyaDB;
+        boolean keyDown = holdingGun && mc.screen == null && mc.options.keyAttack.isDown();
+
+        if (keyDown) {
+            gunHeldTicks++;
+            if (!gunFiredDouble && gunHeldTicks >= GUN_HOLD_THRESHOLD) {
+                if (!isInputBlocked()) {
+                    sendGunShoot(2);
+                    gunFiredDouble = true;
+                }
+            }
+        } else {
+            if (gunWasDown && !gunFiredDouble && holdingGun && !isInputBlocked()) {
+                sendGunShoot(1);
+            }
+            gunHeldTicks = 0;
+            gunFiredDouble = false;
+        }
+        gunWasDown = keyDown;
     }
 
     /** True when the player is holding the block button (RMB) and is able to block/attack. */
@@ -161,6 +215,16 @@ public class ClientInputHandler {
             return false;
         } catch (Exception e) {
             return false;
+        }
+    }
+
+    /** Send a fire request for the gun (1 = tapped left-click, 2 = held left-click). */
+    private static void sendGunShoot(int barrels) {
+        try {
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+            buf.writeInt(barrels);
+            NetworkManager.sendToServer(GUN_INPUT_ID, NetworkBufferUtils.client(buf));
+        } catch (Exception ignored) {
         }
     }
 

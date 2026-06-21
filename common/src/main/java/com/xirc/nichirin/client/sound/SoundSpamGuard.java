@@ -6,9 +6,9 @@ import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.ArrayDeque;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Drops near-duplicate sound instances so combat spam can't exhaust the OpenAL channel pool.
@@ -30,7 +30,9 @@ public final class SoundSpamGuard {
 
     private record Recent(long timeMs, double x, double y, double z) {}
 
-    private static final Map<ResourceLocation, ArrayDeque<Recent>> RECENT = new HashMap<>();
+    // Thread-safe: SoundEngine.play normally runs on the render thread, but mods can route
+    // sounds in from other threads — a corrupted plain HashMap can spin forever on resize.
+    private static final Map<ResourceLocation, ArrayDeque<Recent>> RECENT = new ConcurrentHashMap<>();
 
     private SoundSpamGuard() {}
 
@@ -43,35 +45,39 @@ public final class SoundSpamGuard {
         long now = System.currentTimeMillis();
         ArrayDeque<Recent> deque = RECENT.computeIfAbsent(sound.getLocation(), k -> new ArrayDeque<>(8));
 
-        // Prune expired entries for this sound.
-        while (!deque.isEmpty() && now - deque.peekFirst().timeMs > WINDOW_MS) {
-            deque.pollFirst();
-        }
+        synchronized (deque) {
+            // Prune expired entries for this sound.
+            while (!deque.isEmpty() && now - deque.peekFirst().timeMs > WINDOW_MS) {
+                deque.pollFirst();
+            }
 
-        double x = sound.getX(), y = sound.getY(), z = sound.getZ();
-        int nearby = 0;
-        for (Recent recent : deque) {
-            double dx = recent.x - x, dy = recent.y - y, dz = recent.z - z;
-            if (dx * dx + dy * dy + dz * dz <= RADIUS_SQR) {
-                nearby++;
-                if (nearby >= MAX_CONCURRENT_SAME) {
-                    return false;
+            double x = sound.getX(), y = sound.getY(), z = sound.getZ();
+            int nearby = 0;
+            for (Recent recent : deque) {
+                double dx = recent.x - x, dy = recent.y - y, dz = recent.z - z;
+                if (dx * dx + dy * dy + dz * dz <= RADIUS_SQR) {
+                    nearby++;
+                    if (nearby >= MAX_CONCURRENT_SAME) {
+                        return false;
+                    }
                 }
             }
-        }
 
-        deque.addLast(new Recent(now, x, y, z));
+            deque.addLast(new Recent(now, x, y, z));
+        }
 
         // Opportunistic global cleanup so the map can't grow without bound across sound ids.
         if (RECENT.size() > 256) {
             Iterator<Map.Entry<ResourceLocation, ArrayDeque<Recent>>> it = RECENT.entrySet().iterator();
             while (it.hasNext()) {
                 ArrayDeque<Recent> d = it.next().getValue();
-                while (!d.isEmpty() && now - d.peekFirst().timeMs > WINDOW_MS) {
-                    d.pollFirst();
-                }
-                if (d.isEmpty()) {
-                    it.remove();
+                synchronized (d) {
+                    while (!d.isEmpty() && now - d.peekFirst().timeMs > WINDOW_MS) {
+                        d.pollFirst();
+                    }
+                    if (d.isEmpty()) {
+                        it.remove();
+                    }
                 }
             }
         }

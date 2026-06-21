@@ -24,20 +24,23 @@ public class CloneSkinTracker {
             Collections.newSetFromMap(new WeakHashMap<>());
 
     public static PlayerSkin getSkinFor(PlayerCloneEntity clone) {
-        PlayerSkin cached = skinCache.get(clone);
-        if (cached != null) return cached;
-
-        // Prefer the live in-world player's already-resolved skin. It's instant and correct, and
-        // we retry it every frame until available (e.g. the clone's master UUID/name may not have
-        // synced on the first render) so we never get stuck on the default Steve/Alex skin.
+        // The live in-world player's resolved skin is authoritative — check it EVERY frame and
+        // keep the cache fresh from it. Checking live before the cache is what fixes the "most
+        // clones render as Alex" bug: loadAsync resolves an incomplete profile (UUID + name, no
+        // texture properties) to a default slim/Alex skin and caches it permanently; a cache-first
+        // lookup would then shadow the real skin forever. Since BSCA's clones belong to the caster
+        // standing right there, the live skin is always available and the poisoned cache never wins.
         PlayerSkin live = livePlayerSkin(clone);
         if (live != null) {
             skinCache.put(clone, live);
             return live;
         }
 
-        // Fallback for a master who isn't in render range: resolve the profile async (kicked once).
-        // Until it returns, show the UUID-derived default rather than caching it permanently.
+        PlayerSkin cached = skinCache.get(clone);
+        if (cached != null) return cached;
+
+        // Master genuinely out of render range: resolve the profile async (kicked once). Until it
+        // returns, show the UUID-derived default rather than caching it permanently.
         loadAsync(clone);
         UUID uid = clone.getMasterUUID();
         return DefaultPlayerSkin.get(uid != null ? uid : new UUID(0, 0));

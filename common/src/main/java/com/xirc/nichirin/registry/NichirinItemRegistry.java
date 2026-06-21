@@ -8,6 +8,7 @@ import com.xirc.nichirin.common.item.katana.IndividualBeastKatana;
 import com.xirc.nichirin.common.item.katana.IndividualSoundKatana;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.item.katana.SoundKatana;
+import com.xirc.nichirin.common.item.gun.GenyaDB;
 import com.xirc.nichirin.common.item.food.MochiItem;
 import com.xirc.nichirin.common.item.food.RiceItem;
 import com.xirc.nichirin.common.item.throwable.FlashBombItem;
@@ -72,6 +73,9 @@ public interface NichirinItemRegistry {
 
     RegistrySupplier<Item> MIST_KATANA = register("mist_katana",
             () -> new SimpleKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
+
+    RegistrySupplier<Item> GENYA_DB = register("genya_db",
+            () -> new GenyaDB(settings().rarity(Rarity.RARE).stacksTo(1)));
 
     RegistrySupplier<Item> GIYU_KATANA = register("giyu_katana",
             () -> new SimpleKatana(settings().rarity(Rarity.RARE).stacksTo(1)));

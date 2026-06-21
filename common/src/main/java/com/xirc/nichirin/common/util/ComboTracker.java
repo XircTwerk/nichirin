@@ -27,6 +27,18 @@ public class ComboTracker {
     // Map: Player UUID -> Last move ID used
     private static final Map<UUID, String> playerLastMove = new HashMap<>();
 
+    // Entities stunned specifically by a parry. Normal combo stuns also use STUNNED, so this
+    // side-channel lets counterattacks distinguish a real parry punish window.
+    private static final Map<UUID, Long> parryStunnedUntil = new HashMap<>();
+    private static final Map<UUID, AttackStyleContext> currentAttacks = new HashMap<>();
+    private static final Map<UUID, Integer> playerStyleScores = new HashMap<>();
+    private static final Map<UUID, String> playerLastScoredMove = new HashMap<>();
+    private static final Map<UUID, Long> playerAttackSequences = new HashMap<>();
+
+    private static final float COMBO_ATTACK_BONUS_PER_COUNT = 0.15f;
+
+    private record AttackStyleContext(long sequence, String moveId, boolean awarded) {}
+
     /**
      * Check if a move should have reduced hitstun due to spam detection
      * Call this before executing a move to modify hitstun accordingly
@@ -46,6 +58,57 @@ public class ComboTracker {
         // Update last move
         playerLastMove.put(player.getUUID(), moveId);
         return originalHitStun; // Normal hitstun for non-repeated moves
+    }
+
+    /**
+     * Damage and stun multiplier applied once when an attack starts.
+     * Multi-hit attacks keep this single multiplier for their whole lifetime.
+     */
+    public static float getAttackComboMultiplier(Player player) {
+        if (!(player instanceof IComboCounter comboCounter)) {
+            return 1.0f;
+        }
+        int comboCount = Math.max(0, comboCounter.nichirin$getComboCount());
+        return 1.0f + comboCount * COMBO_ATTACK_BONUS_PER_COUNT;
+    }
+
+    public static int scaleHitStunForCombo(Player player, int baseHitStun) {
+        if (baseHitStun <= 0) {
+            return baseHitStun;
+        }
+        return Math.max(1, Math.round(baseHitStun * getAttackComboMultiplier(player)));
+    }
+
+    public static void markParryStunned(LivingEntity entity, int durationTicks) {
+        if (entity == null || entity.level().isClientSide || durationTicks <= 0) {
+            return;
+        }
+        parryStunnedUntil.put(entity.getUUID(), entity.level().getGameTime() + durationTicks);
+    }
+
+    public static boolean isParryStunned(LivingEntity entity) {
+        if (entity == null || entity.level().isClientSide) {
+            return false;
+        }
+        Long until = parryStunnedUntil.get(entity.getUUID());
+        if (until == null) {
+            return false;
+        }
+        if (entity.level().getGameTime() > until || !canContinueCombo(entity)) {
+            parryStunnedUntil.remove(entity.getUUID());
+            return false;
+        }
+        return true;
+    }
+
+    public static void registerAttackStart(Player player, String moveId) {
+        if (player == null || player.level().isClientSide) {
+            return;
+        }
+        UUID playerId = player.getUUID();
+        long sequence = playerAttackSequences.getOrDefault(playerId, 0L) + 1L;
+        playerAttackSequences.put(playerId, sequence);
+        currentAttacks.put(playerId, new AttackStyleContext(sequence, moveId != null ? moveId : "", false));
     }
 
     /**
@@ -75,32 +138,31 @@ public class ComboTracker {
         IComboCounter comboCounter = (IComboCounter) attacker;
         LivingEntity lastAttacked = comboCounter.nichirin$getLastAttacked();
 
+        boolean startedFreshCombo = false;
         if (lastAttacked != victim) {
-            // New target - reset combo to 1
             comboCounter.nichirin$setComboCount(1);
             comboCounter.nichirin$setLastAttacked(victim);
+            startedFreshCombo = true;
         } else {
-            // Same target - check if they were already stunned from previous hit AND if this hit actually applies stun
             if (wasAlreadyStunned && stunDurationTicks > 0) {
-                // Target was still stunned AND this hit applies stun - increment combo
                 comboCounter.nichirin$incrementComboCount();
             } else {
-                // Target broke free from stun OR this hit has no stun (spam detection) - reset combo
                 comboCounter.nichirin$setComboCount(1);
+                startedFreshCombo = true;
             }
 
-            // Update last attacked regardless
             comboCounter.nichirin$setLastAttacked(victim);
         }
 
-        // Track this attacker-victim relationship for automatic reset
         registerAttackerVictimPair(attacker.getUUID(), victim.getUUID());
 
-        // Send combo update to client using packet registry
         int comboCount = comboCounter.nichirin$getComboCount();
-        ComboCounterPacket packet = new ComboCounterPacket(comboCount, stunDurationTicks, damage);
+        if (startedFreshCombo) {
+            resetStyle(attacker.getUUID());
+        }
+        int styleScore = awardStyleForAttack(attacker, victim, comboCount);
+        ComboCounterPacket packet = new ComboCounterPacket(comboCount, stunDurationTicks, damage, styleScore, rankFor(styleScore));
 
-        // Use the registry's sendToPlayer method which handles encoding
         try {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             packet.toBytes(buf);
@@ -175,10 +237,10 @@ public class ComboTracker {
             // Remove from tracking maps
             unregisterPlayerFromAllVictims(player.getUUID());
 
-            // Clear spam tracking
             playerLastMove.remove(player.getUUID());
+            parryStunnedUntil.remove(player.getUUID());
+            resetStyle(player.getUUID());
 
-            // Send reset to client if server player
             if (player instanceof ServerPlayer serverPlayer) {
                 ComboCounterPacket packet = new ComboCounterPacket(0, 0, 0.0f);
                 try {
@@ -207,18 +269,15 @@ public class ComboTracker {
         Set<UUID> attackerUUIDs = victimToAttackers.get(victimUUID);
 
         if (attackerUUIDs != null && !attackerUUIDs.isEmpty()) {
-            // Reset combo for all players who were combo-ing this victim
-            for (UUID attackerUUID : new HashSet<>(attackerUUIDs)) { // Copy to avoid concurrent modification
+            for (UUID attackerUUID : new HashSet<>(attackerUUIDs)) {
                 Player attacker = victim.level().getPlayerByUUID(attackerUUID);
                 if (attacker != null && attacker instanceof IComboCounter comboCounter) {
-                    // Only reset if this victim is their current target
                     if (comboCounter.nichirin$getLastAttacked() == victim) {
 
-                        // Reset combo to 0
                         comboCounter.nichirin$setComboCount(0);
                         comboCounter.nichirin$setLastAttacked(null);
+                        resetStyle(attackerUUID);
 
-                        // Send reset packet to client
                         if (attacker instanceof ServerPlayer serverPlayer) {
                             ComboCounterPacket packet = new ComboCounterPacket(0, 0, 0.0f);
                             try {
@@ -232,8 +291,6 @@ public class ComboTracker {
                     }
                 }
             }
-
-            // Clean up tracking for this victim
             victimToAttackers.remove(victimUUID);
         }
     }
@@ -265,8 +322,44 @@ public class ComboTracker {
      */
     private static void unregisterPlayerFromAllVictims(UUID playerUUID) {
         victimToAttackers.values().forEach(attackerSet -> attackerSet.remove(playerUUID));
-        // Clean up empty sets
         victimToAttackers.entrySet().removeIf(entry -> entry.getValue().isEmpty());
+    }
+
+    private static int awardStyleForAttack(Player attacker, LivingEntity victim, int comboCount) {
+        UUID playerId = attacker.getUUID();
+        AttackStyleContext context = currentAttacks.get(playerId);
+        if (context == null || context.awarded) {
+            return playerStyleScores.getOrDefault(playerId, 0);
+        }
+
+        int gained = 10 + Math.max(0, comboCount - 1) * 3;
+        String previousMove = playerLastScoredMove.get(playerId);
+        if (!context.moveId.isEmpty() && !context.moveId.equals(previousMove)) {
+            gained += 8;
+        }
+        if (isParryStunned(victim)) {
+            gained += 15;
+        }
+
+        int score = Math.min(999, playerStyleScores.getOrDefault(playerId, 0) + gained);
+        playerStyleScores.put(playerId, score);
+        playerLastScoredMove.put(playerId, context.moveId);
+        currentAttacks.put(playerId, new AttackStyleContext(context.sequence, context.moveId, true));
+        return score;
+    }
+
+    private static void resetStyle(UUID playerId) {
+        playerStyleScores.remove(playerId);
+        playerLastScoredMove.remove(playerId);
+        currentAttacks.remove(playerId);
+    }
+
+    private static String rankFor(int score) {
+        if (score >= 240) return "S";
+        if (score >= 160) return "A";
+        if (score >= 100) return "B";
+        if (score >= 50) return "C";
+        return "";
     }
 
     /**

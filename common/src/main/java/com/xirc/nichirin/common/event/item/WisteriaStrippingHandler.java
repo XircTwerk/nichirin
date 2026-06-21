@@ -3,7 +3,6 @@ package com.xirc.nichirin.common.event.item;
 import com.xirc.nichirin.registry.NichirinBlockRegistry;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.InteractionEvent;
-import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.AxeItem;

@@ -226,6 +226,9 @@ public class NichirinModConfig implements ConfigData {
         public int sunDamagePerSecond = 2;
 
         @ConfigEntry.Gui.Tooltip
+        public boolean wisteriaDamagesDemons = true;
+
+        @ConfigEntry.Gui.Tooltip
         public boolean bloodDrainEnabled = true;
 
         @ConfigEntry.Gui.Tooltip

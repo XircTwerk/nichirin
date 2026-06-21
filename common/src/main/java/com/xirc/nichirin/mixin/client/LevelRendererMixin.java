@@ -2,8 +2,13 @@ package com.xirc.nichirin.mixin.client;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.zigythebird.playeranimcore.api.firstPerson.FirstPersonMode;
+import com.xirc.nichirin.client.afterimage.AfterimageRenderer;
+import com.xirc.nichirin.client.aura.AuraPixelize2DRenderer;
 import com.xirc.nichirin.client.handler.BloodMoonClientState;
 import com.xirc.nichirin.client.light.WisteriaLightData;
+import com.xirc.nichirin.client.outline.OutlineRenderer;
+import com.xirc.nichirin.client.renderer.effects.CloneRingRenderer;
+import com.xirc.nichirin.client.renderer.effects.MistCloneRenderer;
 import com.xirc.nichirin.client.shader.DeadCalmShaderEffect;
 import com.xirc.nichirin.client.shader.NichirinShaderManager;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
@@ -86,7 +91,6 @@ public class LevelRendererMixin {
                 .getProcessor(DeadCalmShaderEffect.class);
 
         if (effect != null && effect.getSkyboxRenderer().isActive()) {
-            System.out.println("DEBUG: Rendering Dead Calm skybox!");
             PoseStack poseStack = new PoseStack();
             poseStack.mulPose(modelViewMatrix);
             effect.getSkyboxRenderer().render(poseStack, projectionMatrix, partialTick);
@@ -117,23 +121,22 @@ public class LevelRendererMixin {
         NichirinShaderManager.getInstance().setFrameContext(camera, frustumMatrix);
         NichirinShaderManager.getInstance().processAll(new PoseStack());
 
-        // Aura system: render 2D camera-billboarded pixelated disc at any entity with auras.
+        // Aura system: render 2D pixelated disc at any entity with auras.
         try {
             float partial = deltaTracker.getGameTimeDeltaPartialTick(true);
             PoseStack auraStack = new PoseStack();
             auraStack.mulPose(frustumMatrix);
-            com.xirc.nichirin.client.aura.AuraPixelize2DRenderer.renderAll(
-                    auraStack, camera, partial);
-            com.xirc.nichirin.client.afterimage.AfterimageRenderer.render(
-                    auraStack, camera, partial);
-            com.xirc.nichirin.client.renderer.effects.MistCloneRenderer.render(
-                    auraStack, camera, partial);
+            AuraPixelize2DRenderer.renderAll(auraStack, camera, partial);
+            AfterimageRenderer.render(auraStack, camera, partial);
+            MistCloneRenderer.render(auraStack, camera, partial);
+            CloneRingRenderer.render(auraStack, camera, partial);
 
-            // Outline system: now routes through MC's built-in outline framebuffer + edge-
-            // detection post-shader via EntityOutlineMixin (isCurrentlyGlowing + getTeamColor).
-            // The custom-shader OutlineRenderer is kept in the codebase but no longer driven
-            // from here — switching to MC's outline gives a clean 1-pixel cel-shader edge
-            // with no z-fighting (screen-space rather than depth-tested geometry).
+            // Outline system, two paths:
+            //  - seeThroughWalls=true  → MC's built-in outline framebuffer + edge-detection
+            //    post-shader via EntityOutlineMixin (screen-space, ignores depth by design).
+            //  - seeThroughWalls=false → OutlineRenderer's depth-tested cel-shader geometry
+            //    pass, so the outline is occluded per-pixel where walls cover the entity.
+            OutlineRenderer.renderAll(auraStack, camera, partial);
         } catch (Exception ignored) {
             // Never let aura/outline rendering crash the level render.
         }

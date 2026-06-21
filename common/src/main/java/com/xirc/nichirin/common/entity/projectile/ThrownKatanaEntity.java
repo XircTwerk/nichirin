@@ -1,5 +1,7 @@
 package com.xirc.nichirin.common.entity.projectile;
 
+import com.xirc.nichirin.common.util.ComboIntegration;
+import com.xirc.nichirin.common.util.NichirinArmorDamage;
 import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import net.minecraft.core.particles.ParticleTypes;
@@ -23,6 +25,7 @@ import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
@@ -198,12 +201,16 @@ public class ThrownKatanaEntity extends Entity {
         for (LivingEntity target : targets) {
             DamageSource source = NichirinDamageSources.thrownKatana(target, this, owner);
 
-            boolean hurt = target.hurt(source, damage);
+            boolean hurt = NichirinArmorDamage.hurt(target, source, damage);
             if (hurt) {
                 if (hitStun > 0) {
                     target.invulnerableTime = hitStun;
                     target.addEffect(new MobEffectInstance(
                             NichirinEffectRegistry.stunned(), hitStun, 1, false, false, true));
+                }
+                if (owner instanceof Player player) {
+                    float actualDamage = NichirinArmorDamage.actualDamageOr(target, damage);
+                    ComboIntegration.handleSuccessfulHit(player, target, hitStun, actualDamage);
                 }
                 Vec3 direction = getDeltaMovement().normalize();
                 target.push(direction.x * 0.3, 0.1, direction.z * 0.3);

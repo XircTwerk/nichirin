@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.effect;
 
 import com.xirc.nichirin.common.data.MovesetHelper;
+import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.entity.npc.DemonNPCEntity;
 import com.xirc.nichirin.common.util.NichirinDamageSources;
 import net.minecraft.core.particles.ParticleTypes;
@@ -38,20 +39,22 @@ public class WisteriasGraceStatusEffect extends MobEffect {
         if (!affects(entity)) return true;
         if (entity instanceof Player player && player.isCreative()) return true;
 
-        entity.hurt(NichirinDamageSources.wisteria(entity), 1.0f + amplifier * 0.5f);
+        if (NichirinModConfig.get().demon.wisteriaDamagesDemons) {
+            entity.hurt(NichirinDamageSources.wisteria(entity), 1.0f + amplifier * 0.5f);
 
-        if (entity.level() instanceof ServerLevel level) {
-            level.sendParticles(
-                    ParticleTypes.WITCH,
-                    entity.getX(),
-                    entity.getY() + entity.getBbHeight() * 0.55,
-                    entity.getZ(),
-                    6,
-                    entity.getBbWidth() * 0.45,
-                    entity.getBbHeight() * 0.35,
-                    entity.getBbWidth() * 0.45,
-                    0.02
-            );
+            if (entity.level() instanceof ServerLevel level) {
+                level.sendParticles(
+                        ParticleTypes.WITCH,
+                        entity.getX(),
+                        entity.getY() + entity.getBbHeight() * 0.55,
+                        entity.getZ(),
+                        6,
+                        entity.getBbWidth() * 0.45,
+                        entity.getBbHeight() * 0.35,
+                        entity.getBbWidth() * 0.45,
+                        0.02
+                );
+            }
         }
         return true;
     }

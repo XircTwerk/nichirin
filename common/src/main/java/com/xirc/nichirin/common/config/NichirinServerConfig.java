@@ -203,10 +203,12 @@ public final class NichirinServerConfig {
         appendValue(out, 4, "maxBloodPoints", cfg.maxBloodPoints, defaults.maxBloodPoints, true);
         appendValue(out, 4, "burnInSunlight", cfg.burnInSunlight, defaults.burnInSunlight, true);
         appendValue(out, 4, "sunDamagePerSecond", cfg.sunDamagePerSecond, defaults.sunDamagePerSecond, true);
+        appendValue(out, 4, "wisteriaDamagesDemons", cfg.wisteriaDamagesDemons, defaults.wisteriaDamagesDemons, true);
         appendValue(out, 4, "bloodDrainEnabled", cfg.bloodDrainEnabled, defaults.bloodDrainEnabled, true);
         appendValue(out, 4, "bloodDrainIntervalSeconds", cfg.bloodDrainIntervalSeconds, defaults.bloodDrainIntervalSeconds, true);
         appendValue(out, 4, "peacefulModeMaxBlood", cfg.peacefulModeMaxBlood, defaults.peacefulModeMaxBlood, true);
-        appendValue(out, 4, "demonMaxBreathPercent", cfg.demonMaxBreathPercent, defaults.demonMaxBreathPercent, false);
+        appendValue(out, 4, "demonMaxBreathPercent", cfg.demonMaxBreathPercent, defaults.demonMaxBreathPercent, true);
+        appendValue(out, 4, "removeDemonOnDeath", cfg.removeDemonOnDeath, defaults.removeDemonOnDeath, false);
     }
 
     private static void appendMoveInterrupts(StringBuilder out, NichirinModConfig.MoveInterruptConfig cfg, NichirinModConfig.MoveInterruptConfig defaults) {

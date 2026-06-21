@@ -52,6 +52,7 @@ public class NichirinArmorRenderer extends AzArmorRenderer {
     protected ItemStack currentStack;
 
     @Nullable private final String animationName;
+    private final AzArmorBoneProvider armorBoneProvider;
     // Per-entity last-known animation state. The renderer instance is shared across every wearer,
     // so a single field would let one entity's movement corrupt another's animation state.
     // null = not yet seen this entity (forces an initial dispatch so idle starts at rest).
@@ -81,6 +82,7 @@ public class NichirinArmorRenderer extends AzArmorRenderer {
     protected NichirinArmorRenderer(String modelName, String textureName, AzArmorBoneProvider boneProvider, @Nullable String animationName) {
         super(createConfig(modelName, textureName, boneProvider, animationName));
         this.animationName = animationName;
+        this.armorBoneProvider = boneProvider;
     }
 
     private static AzArmorRendererConfig createConfig(String modelName, String textureName, AzArmorBoneProvider boneProvider, @Nullable String animName) {
@@ -116,6 +118,23 @@ public class NichirinArmorRenderer extends AzArmorRenderer {
                 // Re-apply our bone transforms NOW so they take effect last, before rendering.
                 // This is the actual fix for arms not moving: applyBaseTransformations may not
                 // handle our custom bone names / null body bone correctly, so we override it here.
+
+                // The pipeline copies body ROTATION to the provider's body bone but not POSITION.
+                // Without this, capes and accessories don't shift down when the player crouches.
+                // Apply body position+rotation here so all child animation bones inherit the shift.
+                // Renderers that need an additional offset (e.g. Rengoku's offsetBodyBone) run in
+                // applyBoneTransformations() below and override this call.
+                if (NichirinArmorRenderer.this.currentBaseModel != null
+                        && NichirinArmorRenderer.this.currentBaseModel.body != null
+                        && NichirinArmorRenderer.this.currentModel != null) {
+                    AzBone providerBodyBone = NichirinArmorRenderer.this.armorBoneProvider
+                            .getBodyBone(NichirinArmorRenderer.this.currentModel);
+                    if (providerBodyBone != null) {
+                        NichirinArmorRenderer.this.matchBodyBone(
+                                NichirinArmorRenderer.this.currentBaseModel.body, providerBodyBone);
+                    }
+                }
+
                 NichirinArmorRenderer.this.applyBoneTransformations();
                 // Override pipeline visibility so we control which bones show per slot.
                 var armorCtx = (AzArmorRendererPipelineContext) context;

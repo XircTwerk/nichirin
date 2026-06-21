@@ -1,5 +1,6 @@
 package com.xirc.nichirin.client.renderer.armor;
 
+import com.xirc.nichirin.client.renderer.armor.core.NichirinArmorBoneProvider;
 import net.minecraft.world.entity.EquipmentSlot;
 
 public class JigoroUniformRenderer extends NichirinArmorRenderer {
@@ -8,7 +9,7 @@ public class JigoroUniformRenderer extends NichirinArmorRenderer {
         // Animate the kimono skirt (Lowerpartsfront/Lowerpartsback) with the shared kimono animation.
         // Those bones are only visible on the chest/cape piece, so other slots are unaffected.
         super("jigoro_uniform", "jigoro_uniform",
-                com.xirc.nichirin.client.renderer.armor.core.NichirinArmorBoneProvider.INSTANCE, "kimono");
+                NichirinArmorBoneProvider.INSTANCE, "kimono");
     }
 
     @Override
@@ -16,7 +17,7 @@ public class JigoroUniformRenderer extends NichirinArmorRenderer {
         super.applyBoneTransformations();
         // "Cape" is a top-level geo bone (sibling of chestplate) that holds the kimono skirt
         // (Lowerpartsfront/Lowerpartsback). The uniform bone provider doesn't map it, so the base
-        // transform never moves it — it would stay at the geo origin and not follow the player.
+        // transform never moves it; it would stay at the geo origin and not follow the player.
         // Bind it to the body the same way the cape provider does for the chest piece.
         if (currentBaseModel != null) {
             matchKimonoBone(getBone("Cape"));
@@ -34,12 +35,12 @@ public class JigoroUniformRenderer extends NichirinArmorRenderer {
                 setBoneVisible(getBone("Eyebrows"), true);
             }
             case CHEST -> {
-                // chestplate is the torso bone — must be visible (and transformed) with the chest piece
+                // chestplate is the torso bone and must be visible with the chest piece
                 setBoneVisible(getBone("chestplate"), true);
                 setBoneVisible(getBone("leftArm"), true);
                 setBoneVisible(getBone("rightArm"), true);
                 // Cape contains the kimono skirt (Lowerpartsfront/Lowerpartsback). setAllVisible(false)
-                // above hid the children too — re-enable the whole Cape subtree recursively or
+                // above hid the children too, so re-enable the whole Cape subtree recursively or
                 // the skirt geometry stays invisible even though the parent bone is shown.
                 setAllBonesRecursive(getBone("Cape"), true);
             }

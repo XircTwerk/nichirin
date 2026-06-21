@@ -15,6 +15,8 @@ public class ComboHUD {
     private static int currentCombo = 0;
     private static int lastValidCombo = 0;
     private static float totalDamage = 0.0f;
+    private static int styleScore = 0;
+    private static String styleRank = "";
     private static long stunEndTime = 0;
     private static long comboStartTime = 0;
 
@@ -36,43 +38,43 @@ public class ComboHUD {
     private static final int BAR_ACTIVE_COLOR = 0xFFFFD700; // Golden yellow
     private static final int BAR_FLASH_COLOR = 0xFFFFFFFF; // White flash
     private static final int DAMAGE_TEXT_COLOR = 0xFFFF6B35; // Orange for damage
+    private static final int STYLE_TEXT_COLOR = 0xFF7CFFB2;
 
     /**
      * Update combo display - called when server sends new combo data
      * Simple logic: trust the server completely
      */
     public static void updateCombo(int comboCount, int stunDurationTicks) {
-        long currentTime = System.currentTimeMillis();
+        updateCombo(comboCount, stunDurationTicks, styleScore, styleRank);
+    }
 
-        // If server sends combo count 1, it's always a fresh start
+    public static void updateCombo(int comboCount, int stunDurationTicks, int newStyleScore, String newStyleRank) {
+        long currentTime = System.currentTimeMillis();
+        styleScore = Math.max(0, newStyleScore);
+        styleRank = newStyleRank != null ? newStyleRank : "";
+
         if (comboCount == 1) {
             currentCombo = comboCount;
             lastValidCombo = currentCombo;
             shouldFadeOut = false;
             fadeOutAlpha = 1.0f;
-            totalDamage = 0.0f; // Reset damage on fresh start
+            totalDamage = 0.0f;
         } else if (comboCount > currentCombo) {
-            // Server says combo is progressing - keep accumulating damage
             currentCombo = comboCount;
             lastValidCombo = currentCombo;
             shouldFadeOut = false;
             fadeOutAlpha = 1.0f;
-            // Don't reset totalDamage - let it accumulate
         } else {
-            // Same count or other cases - just update
             currentCombo = comboCount;
             lastValidCombo = currentCombo;
             shouldFadeOut = false;
             fadeOutAlpha = 1.0f;
-            // Don't reset totalDamage
         }
 
-        // Always refill timer bar to full on any hit
-        long durationMs = stunDurationTicks * 50; // Convert ticks to ms
+        long durationMs = stunDurationTicks * 50L;
         comboStartTime = currentTime;
         stunEndTime = currentTime + durationMs;
 
-        // Trigger visual effects
         numberScale = 1.3f;
         barFlashIntensity = 1.0f;
     }
@@ -202,6 +204,10 @@ public class ComboHUD {
             renderDamage(guiGraphics, font, centerX, centerY + 35);
         }
 
+        if (!styleRank.isEmpty() || styleScore > 0) {
+            renderStyle(guiGraphics, font, centerX, centerY + 47);
+        }
+
         RenderSystem.disableBlend();
     }
 
@@ -307,6 +313,20 @@ public class ComboHUD {
         guiGraphics.drawString(font, damageText, damageX, damageY, fadeDamageColor);
     }
 
+    private static void renderStyle(GuiGraphics guiGraphics, Font font, int centerX, int styleY) {
+        String styleText = styleRank.isEmpty() ? String.valueOf(styleScore) : styleRank + "  " + styleScore;
+        int width = font.width(styleText);
+        int x = centerX - width / 2;
+        int outline = applyAlpha(COMBO_OUTLINE_COLOR, fadeOutAlpha);
+        int color = applyAlpha(STYLE_TEXT_COLOR, fadeOutAlpha);
+
+        guiGraphics.drawString(font, styleText, x - 1, styleY, outline);
+        guiGraphics.drawString(font, styleText, x + 1, styleY, outline);
+        guiGraphics.drawString(font, styleText, x, styleY - 1, outline);
+        guiGraphics.drawString(font, styleText, x, styleY + 1, outline);
+        guiGraphics.drawString(font, styleText, x, styleY, color);
+    }
+
     // Utility methods
     private static int blendColors(int color1, int color2, int blend) {
         blend = Math.min(255, Math.max(0, blend));
@@ -347,6 +367,8 @@ public class ComboHUD {
         currentCombo = 0;
         lastValidCombo = 0;
         totalDamage = 0.0f;
+        styleScore = 0;
+        styleRank = "";
         stunEndTime = 0;
         comboStartTime = 0;
         numberScale = 1.0f;

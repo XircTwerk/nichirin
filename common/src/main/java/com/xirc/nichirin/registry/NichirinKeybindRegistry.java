@@ -6,6 +6,7 @@ import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.attack.moveset.CqcMoveset;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.common.item.gun.GenyaDB;
 import com.xirc.nichirin.common.network.c2s.MovementInputPacket;
 import com.xirc.nichirin.common.network.c2s.MoveHotkeyPacket;
 import com.xirc.nichirin.common.util.BreathingManager;
@@ -191,6 +192,15 @@ public interface NichirinKeybindRegistry {
         // Check held item
         ItemStack mainHand = client.player.getMainHandItem();
         boolean holdingKatana = mainHand.getItem() instanceof SimpleKatana;
+        boolean holdingGun = mainHand.getItem() instanceof GenyaDB;
+
+        // Gun has its own two moves (0 = Gun Bash, 1 = Grab); route them through MoveHotkeyPacket.
+        if (holdingGun) {
+            if (moveIndex <= 1) {
+                NichirinPacketRegistry.sendToServer(new MoveHotkeyPacket(moveIndex));
+            }
+            return;
+        }
 
         if (holdingKatana) {
             // Holding katana - use breathing moveset if available

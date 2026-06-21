@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.attack.moves.breathing.sound;
 
+import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.core.particles.ParticleTypes;
@@ -68,7 +69,7 @@ public class TempoBreakerAttack extends SoundBreathingAttackBase {
             // if the attack's duration ended before the timer ran out, which is why the M2
             // looked like it "didn't blow up".
         } catch (Exception e) {
-            e.printStackTrace();
+            BreathOfNichirin.LOGGER.error("Error in Tempo Breaker tick", e);
         }
     }
 

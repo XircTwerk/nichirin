@@ -355,6 +355,11 @@ public class CooldownHUD {
             if (demonId != null) {
                 return new Visuals(resolveMoveIcon(demonId, moveDisplayName), getElementColor(demonId));
             }
+
+            String fightingId = movesetData.getFightingMovesetId();
+            if (fightingId != null) {
+                return new Visuals(resolveMoveIcon(fightingId, moveDisplayName), getElementColor(fightingId));
+            }
         } catch (Exception ignored) {
         }
 

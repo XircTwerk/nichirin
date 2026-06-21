@@ -1,6 +1,7 @@
 package com.xirc.nichirin.client.renderer.effects;
 
 import com.google.common.collect.EvictingQueue;
+import com.xirc.nichirin.BreathOfNichirin;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
@@ -98,7 +99,7 @@ public class AttackHitboxRenderer {
 
             matrices.popPose();
         } catch (Exception e) {
-            e.printStackTrace();
+            BreathOfNichirin.LOGGER.error("Error rendering attack hitboxes", e);
         }
     }
 

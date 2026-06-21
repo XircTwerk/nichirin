@@ -23,7 +23,9 @@
     "client.ItemInHandLayerMixin",
     "client.RenderTargetDepthMixin",
     "client.ShaderInstanceMixin",
-    "client.SoundEngineMixin"
+    "client.SoundEngineMixin",
+    "client.GunEquipAnimMixin",
+    "client.SwingSuppressionMixin"
   ],
   "mixins": [
     "DemonBloodFoodMixin",

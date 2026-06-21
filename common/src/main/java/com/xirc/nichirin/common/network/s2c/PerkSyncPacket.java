@@ -2,8 +2,6 @@ package com.xirc.nichirin.common.network.s2c;
 
 import com.xirc.nichirin.client.data.ClientPerkCache;
 import com.xirc.nichirin.common.system.perks.PerkData;
-import com.xirc.nichirin.common.system.perks.PerkPreset;
-import com.xirc.nichirin.common.system.perks.PerkTier;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.nbt.CompoundTag;

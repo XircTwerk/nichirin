@@ -5,6 +5,8 @@ import com.xirc.nichirin.common.aura.AuraAudience;
 import com.xirc.nichirin.common.aura.AuraInstance;
 import com.xirc.nichirin.common.aura.AuraManager;
 import com.xirc.nichirin.common.data.MovesetHelper;
+import com.xirc.nichirin.common.data.PlayerDataProvider;
+import com.xirc.nichirin.common.system.aura.MovesetAuraTicker;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -25,6 +27,8 @@ public final class DestructiveDeathPlayerAura {
     // Floor radius matches the breathing-aura default so DD doesn't look smaller than other styles.
     private static final float RADIUS_IDLE = 2.0f;
     private static final float RADIUS_COMPASS = 2.8f;
+    // Outer-ring multiplier when layered behind a visible breathing aura (matches MovesetAuraTicker).
+    private static final float RING_SCALE = 1.6f;
     private static final float JITTER = 2.4f;
     // Max alpha for a bright, vivid presence — the aura system applies its own falloff per pixel
     // so this is the rim opacity, not a flat overlay.
@@ -60,14 +64,19 @@ public final class DestructiveDeathPlayerAura {
         }
         boolean overdrive = DestructiveDeathState.isOverdriveEnabled(id, gameTime);
         boolean compass = DestructiveDeathState.isCompassActive(id, gameTime);
+        // Same layering rule as the generic demon aura: when a breathing aura is visible (katana
+        // in hand), the DD aura becomes the larger outer ring drawn behind it.
+        boolean ring = PlayerDataProvider.getMovesetData(player).hasBreathingMoveset()
+                && MovesetAuraTicker.isHoldingKatana(player);
 
-        CachedAuraState desired = new CachedAuraState(overdrive, compass);
+        CachedAuraState desired = new CachedAuraState(overdrive, compass, ring);
         CachedAuraState cached = CACHE.get(id);
         if (desired.equals(cached)) return; // no visual change → no packet
 
         // Remove the old aura before publishing the new one (different params = different visual).
         removeIfPresent(player);
 
+        float radius = (compass ? RADIUS_COMPASS : RADIUS_IDLE) * (ring ? RING_SCALE : 1.0f);
         AuraInstance aura = AuraInstance.builder()
                 // Pure blue / pure red — green pegged at 0.0 so the inner-whiten pass can lift it
                 // without ever drifting toward cyan/teal. Combined with max alpha this reads as a
@@ -77,7 +86,7 @@ public final class DestructiveDeathPlayerAura {
                         overdrive ? 0.0f  : 0.0f,
                         overdrive ? 0.05f : 1.0f,
                         ALPHA)
-                .radius(compass ? RADIUS_COMPASS : RADIUS_IDLE)
+                .radius(radius)
                 .jitter(JITTER)
                 .build();
         AuraManager.addAura(player, aura, AuraAudience.ALL);
@@ -98,26 +107,38 @@ public final class DestructiveDeathPlayerAura {
         CACHE.remove(playerId);
     }
 
+    /**
+     * Properly remove the aura for an online player — broadcasts the removal packet so the disc
+     * actually disappears (e.g. on {@code /nichirin demon remove}). {@link #clear} only drops the
+     * cache, which would otherwise orphan the aura on clients.
+     */
+    public static void remove(ServerPlayer player) {
+        removeIfPresent(player);
+    }
+
     private static final class CachedAuraState {
         final boolean overdrive;
         final boolean compass;
+        final boolean ring;
         UUID auraId;
 
-        CachedAuraState(boolean overdrive, boolean compass) {
+        CachedAuraState(boolean overdrive, boolean compass, boolean ring) {
             this.overdrive = overdrive;
             this.compass = compass;
+            this.ring = ring;
         }
 
         @Override
         public boolean equals(Object o) {
             return o instanceof CachedAuraState other
                     && other.overdrive == overdrive
-                    && other.compass == compass;
+                    && other.compass == compass
+                    && other.ring == ring;
         }
 
         @Override
         public int hashCode() {
-            return (overdrive ? 1 : 0) | (compass ? 2 : 0);
+            return (overdrive ? 1 : 0) | (compass ? 2 : 0) | (ring ? 4 : 0);
         }
     }
 }

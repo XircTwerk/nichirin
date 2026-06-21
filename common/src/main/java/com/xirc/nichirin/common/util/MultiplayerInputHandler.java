@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.util;
 
+import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.network.c2s.BreathingMovePacket;
@@ -73,7 +74,7 @@ public class MultiplayerInputHandler {
                 buf.writeBoolean(open);
                 NetworkManager.sendToServer(ATTACK_WHEEL_STATE_PACKET, NetworkBufferUtils.client(buf));
             } catch (Exception e) {
-                e.printStackTrace();
+                BreathOfNichirin.LOGGER.error("Failed to send attack wheel state", e);
             }
         }
     }
@@ -113,7 +114,7 @@ public class MultiplayerInputHandler {
                     buf.writeEnum(inputType);
                     NetworkManager.sendToServer(KATANA_INPUT_PACKET, NetworkBufferUtils.client(buf));
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    BreathOfNichirin.LOGGER.error("Failed to send katana input", e);
                 }
             } else {
                 sendDemonInput(inputType, player);
@@ -131,7 +132,7 @@ public class MultiplayerInputHandler {
             buf.writeUtf(inputType.name());
             NetworkManager.sendToServer(DEMON_INPUT_PACKET, NetworkBufferUtils.client(buf));
         } catch (Exception e) {
-            e.printStackTrace();
+            BreathOfNichirin.LOGGER.error("Failed to send demon input", e);
         }
     }
 
@@ -151,7 +152,7 @@ public class MultiplayerInputHandler {
                 var packet = new BreathingMovePacket(moveIndex, true);
                 NichirinPacketRegistry.sendToServer(packet);
             } catch (Exception e) {
-                e.printStackTrace();
+                BreathOfNichirin.LOGGER.error("Failed to send breathing move", e);
             }
         }
     }
@@ -165,7 +166,7 @@ public class MultiplayerInputHandler {
                 var packet = new DemonMovePacket(moveIndex, true);
                 NichirinPacketRegistry.sendToServer(packet);
             } catch (Exception e) {
-                e.printStackTrace();
+                BreathOfNichirin.LOGGER.error("Failed to send demon move", e);
             }
         }
     }

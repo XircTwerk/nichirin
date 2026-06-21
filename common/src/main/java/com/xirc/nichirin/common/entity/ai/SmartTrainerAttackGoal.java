@@ -10,7 +10,6 @@ import com.xirc.nichirin.common.system.movement.EntityMovement;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
-import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.Collections;

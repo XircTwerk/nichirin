@@ -1,7 +1,7 @@
 package com.xirc.nichirin.common.attack.moves.cqc;
 
+import com.xirc.nichirin.common.attack.component.AbstractAttack;
 import com.xirc.nichirin.common.attack.moves.demon.destructive.DestructiveDeathCqcHook;
-import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.data.CqcMoveCatalog;
 import com.xirc.nichirin.common.entity.npc.DemonNPCEntity;
@@ -10,6 +10,7 @@ import com.xirc.nichirin.common.system.DemonManager;
 import com.xirc.nichirin.common.util.ComboIntegration;
 import com.xirc.nichirin.common.util.NichirinArmorDamage;
 import com.xirc.nichirin.common.util.NichirinDamageSources;
+import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
@@ -28,113 +29,167 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 /**
  * Base lifecycle for close-quarters-combat attacks.
- *
- * <p>CQC attacks intentionally do not inherit katana behavior. Concrete subclasses exist
- * per move so unique effects can be added later by overriding the hook methods.</p>
+ * Extends AbstractAttack for shared fields and hitbox geometry.
+ * Uses an external tick(LivingEntity) rather than the self-ticking system.
+ * Timing terminology: windup is startup, duration is active frames; recovery is CQC-only.
  */
-public abstract class AbstractCqcAttack {
+public abstract class AbstractCqcAttack extends AbstractAttack {
 
     public static final float DEMON_CQC_STAT_MULTIPLIER = 1.25f;
 
-    protected int startup;
-    protected int active;
+    // CQC-only timing field; windup and duration come from the base
     protected int recovery;
-    protected int cooldown;
-    protected float damage;
-    protected float range;
-    protected float knockback;
-    protected float hitboxSize;
-    protected int hitStun;
-    protected boolean slam;
-    protected boolean hyperArmor;
-    protected float dashDistance;
 
-    private int tickCount;
-    private boolean activeState;
     private boolean hitboxSent;
-    private final Set<LivingEntity> hitEntities = new HashSet<>();
 
     protected AbstractCqcAttack(String moveId) {
         CqcMoveCatalog.Definition definition = CqcMoveCatalog.get(moveId);
-        if (definition == null) {
-            throw new IllegalArgumentException("Unknown CQC move: " + moveId);
-        }
+        if (definition == null) throw new IllegalArgumentException("Unknown CQC move: " + moveId);
 
-        this.startup = Math.max(1, Math.min(6, definition.durationTicks() / 3));
-        this.active = Math.max(2, definition.durationTicks() - startup);
+        this.windup   = Math.max(1, Math.min(6, definition.durationTicks() / 3));
+        this.duration = Math.max(2, definition.durationTicks() - windup);
         this.recovery = 4;
         this.cooldown = definition.cooldown();
-        this.damage = definition.damage();
-        this.range = definition.range();
+        this.damage   = definition.damage();
+        this.range    = definition.range();
         this.knockback = definition.knockback();
         this.hitboxSize = 1.05f;
-        this.hitStun = definition.hitStun();
-        this.dashDistance = definition.dashDistance();
+        this.hitStun   = definition.hitStun();
+        this.dashSpeed = definition.dashDistance(); // reused as dashDistance for CQC
     }
+
 
     public void configure(AbstractMoveset.MoveConfiguration config) {
         if (config == null) return;
-        this.startup = config.getWindupOrDefault(this.startup);
-        this.active = config.getDurationOrDefault(this.active);
-        this.recovery = config.getRecoveryOrDefault(this.recovery);
-        this.cooldown = config.getCooldownOrDefault(this.cooldown);
-        this.damage = config.getDamageOrDefault(this.damage);
-        this.range = config.getRangeOrDefault(this.range);
+        this.windup    = config.getWindupOrDefault(this.windup);
+        this.duration  = config.getDurationOrDefault(this.duration);
+        this.recovery  = config.getRecoveryOrDefault(this.recovery);
+        this.cooldown  = config.getCooldownOrDefault(this.cooldown);
+        this.damage    = config.getDamageOrDefault(this.damage);
+        this.range     = config.getRangeOrDefault(this.range);
         this.knockback = config.getKnockbackOrDefault(this.knockback);
         this.hitboxSize = config.getHitboxSizeOrDefault(this.hitboxSize);
-        this.hitStun = config.getHitStunOrDefault(this.hitStun);
-        this.slam = config.hasSlam();
+        this.hitStun   = config.getHitStunOrDefault(this.hitStun);
+        this.slam      = config.hasSlam();
         this.hyperArmor = config.hasHyperArmor();
-        this.dashDistance = config.getDashSpeedOrDefault(this.dashDistance);
+        this.dashSpeed = config.getDashSpeedOrDefault(this.dashSpeed != null ? this.dashSpeed : 0f);
     }
+
 
     public void start(LivingEntity user) {
         if (user.level().isClientSide()) return;
+        this.user  = user;
+        this.world = user.level();
         tickCount = 0;
         hitboxSent = false;
-        hitEntities.clear();
-        activeState = true;
+        getHitEntities().clear();
+        setHitCount(0);
+        isActive = true;
         onStart(user, user.level());
     }
 
     public void tick(LivingEntity user) {
-        if (!activeState || user.level().isClientSide()) return;
+        if (!isActive || user.level().isClientSide()) return;
 
         tickCount++;
-        // Hyper armor: take the hit without dropping the attack. Without the flag, any windup hit
-        // cancels the swing (vanilla CQC behaviour).
-        if (!hyperArmor && tickCount <= startup && user.hurtTime > 0 && startup > 0) {
-            end(user);
+        // Windup cancel on hit (unless hyper armor)
+        if (!hyperArmor && tickCount <= windup && user.hurtTime > 0 && windup > 0) {
+            endInternal(user);
             return;
         }
 
-        if (tickCount == startup) {
+        if (tickCount == windup) {
             applyDash(user);
             onActiveStart(user, user.level());
         }
 
-        if (tickCount >= startup && tickCount <= startup + active) {
+        if (tickCount >= windup && tickCount <= windup + duration) {
             performHitDetection(user, user.level());
             onActiveTick(user, user.level());
         }
 
-        if (tickCount >= getTotalDuration()) {
-            end(user);
+        if (tickCount >= getTotalDuration()) endInternal(user);
+    }
+
+    @Override
+    public int getTotalDuration() { return windup + duration + recovery; }
+
+    /** CQC is ticked externally and never registers in the self-ticking map. */
+    @Override
+    protected void registerForTicking() {}
+
+    @Override
+    public void tick() {
+        if (user != null) tick(user);
+    }
+
+    @Override
+    public void stop() {
+        isActive = false;
+        getHitEntities().clear();
+    }
+
+
+    protected void performHitDetection(LivingEntity user, Level world) {
+        AABB hitbox = buildHitbox(user);
+        if (!hitboxSent) {
+            NichirinPacketRegistry.sendHitboxToTracking(user, hitbox, Math.max(duration * 50L, 1200L));
+            hitboxSent = true;
         }
+
+        DamageSource source = user instanceof TempleDemonEntity
+                ? NichirinDamageSources.templeDemon(user)
+                : NichirinDamageSources.cqc(user);
+
+        world.getEntitiesOfClass(LivingEntity.class, hitbox,
+                entity -> entity != user && entity.isAlive()
+                        && !getHitEntities().contains(entity.getUUID())
+                        && acceptTarget(user, entity)
+        ).forEach(target -> {
+            getHitEntities().add(target.getUUID());
+            float scaledDamage = scaleCqcStat(user, damage);
+            boolean damaged = NichirinArmorDamage.hurt(target, source, scaledDamage);
+            if (damaged) {
+                applyKnockbackCqc(user, target);
+                if (hitStun > 0) {
+                    target.invulnerableTime = hitStun;
+                    if (slam) target.addEffect(new MobEffectInstance(
+                            NichirinEffectRegistry.slammed(), hitStun, 0, false, false, true));
+                }
+                if (user instanceof Player player)
+                    ComboIntegration.handleSuccessfulHit(player, target, hitStun, scaledDamage);
+            }
+            onHitTarget(user, target, world);
+            DestructiveDeathCqcHook.onCqcHit(user, target, world);
+        });
     }
 
-    public boolean isActive() {
-        return activeState;
+    protected AABB buildHitbox(LivingEntity user) {
+        Vec3 pos = user.position().add(0, user.getBbHeight() / 2, 0);
+        float r = scaleCqcStat(user, range);
+        float s = scaleCqcStat(user, hitboxSize);
+        Vec3 center = pos.add(user.getLookAngle().scale(r));
+        return new AABB(center.x - s, center.y - s, center.z - s,
+                        center.x + s, center.y + s, center.z + s);
     }
 
-    public int getCooldown() {
-        return cooldown;
+    private void applyKnockbackCqc(LivingEntity user, LivingEntity target) {
+        if (knockback <= 0) return;
+        Vec3 kv = target.position().subtract(user.position()).normalize();
+        target.knockback(scaleCqcStat(user, knockback), -kv.x, -kv.z);
+    }
+
+    protected void applyDash(LivingEntity user) {
+        if (dashSpeed == null || dashSpeed <= 0) return;
+        Vec3 look = user.getLookAngle();
+        Vec3 h = new Vec3(look.x, 0, look.z);
+        if (h.lengthSqr() <= 0.0001) return;
+        Vec3 dash = h.normalize().scale(scaleCqcStat(user, dashSpeed) / Math.max(1, duration));
+        user.setDeltaMovement(dash.x, Math.max(user.getDeltaMovement().y, 0.05), dash.z);
+        user.hurtMarked = true;
+        user.hasImpulse = true;
     }
 
     public void applyDamageMultiplier(float multiplier) {
@@ -142,100 +197,21 @@ public abstract class AbstractCqcAttack {
         damage *= multiplier;
     }
 
-    public void stop() {
-        activeState = false;
-        hitEntities.clear();
-    }
-
-    protected int getTotalDuration() {
-        return startup + active + recovery;
-    }
-
-    protected void performHitDetection(LivingEntity user, Level world) {
-        AABB hitbox = buildHitbox(user);
-        if (!hitboxSent) {
-            NichirinPacketRegistry.sendHitboxToTracking(user, hitbox, Math.max(active * 50L, 1200L));
-            hitboxSent = true;
-        }
-
-        List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
-                entity -> entity != user && entity.isAlive() && !hitEntities.contains(entity)
-                        && acceptTarget(user, entity));
-        if (targets.isEmpty()) return;
-
-        DamageSource source = user instanceof TempleDemonEntity
-                ? NichirinDamageSources.templeDemon(user)
-                : NichirinDamageSources.cqc(user);
-
-        for (LivingEntity target : targets) {
-            hitEntities.add(target);
-            float scaledDamage = scaleCqcStat(user, damage);
-            boolean damaged = NichirinArmorDamage.hurt(target, source, scaledDamage);
-            if (damaged) {
-                applyKnockback(user, target);
-                if (hitStun > 0) {
-                    target.invulnerableTime = hitStun;
-                    // Slam moves apply the Slammed effect for hitStun ticks (slam ticks == hit stun).
-                    if (slam) {
-                        target.addEffect(new MobEffectInstance(
-                                NichirinEffectRegistry.slammed(),
-                                hitStun, 0, false, false, true));
-                    }
-                }
-                if (user instanceof Player player) {
-                    ComboIntegration.handleSuccessfulHit(player, target, hitStun, scaledDamage);
-                }
-            }
-            onHitTarget(user, target, world);
-            DestructiveDeathCqcHook.onCqcHit(user, target, world);
-        }
-    }
-
-    protected AABB buildHitbox(LivingEntity user) {
-        Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
-        float scaledRange = scaleCqcStat(user, range);
-        float scaledHitboxSize = scaleCqcStat(user, hitboxSize);
-        Vec3 center = userPos.add(user.getLookAngle().scale(scaledRange));
-        return new AABB(
-                center.x - scaledHitboxSize, center.y - scaledHitboxSize, center.z - scaledHitboxSize,
-                center.x + scaledHitboxSize, center.y + scaledHitboxSize, center.z + scaledHitboxSize
-        );
-    }
-
-    protected void applyKnockback(LivingEntity user, LivingEntity target) {
-        if (knockback <= 0) return;
-        Vec3 knockVec = target.position().subtract(user.position()).normalize();
-        target.knockback(scaleCqcStat(user, knockback), -knockVec.x, -knockVec.z);
-    }
-
-    protected void applyDash(LivingEntity user) {
-        if (dashDistance <= 0) return;
-
-        Vec3 look = user.getLookAngle();
-        Vec3 horizontal = new Vec3(look.x, 0, look.z);
-        if (horizontal.lengthSqr() <= 0.0001) return;
-
-        Vec3 dash = horizontal.normalize().scale(scaleCqcStat(user, dashDistance) / Math.max(1, active));
-        user.setDeltaMovement(dash.x, Math.max(user.getDeltaMovement().y, 0.05), dash.z);
-        user.hurtMarked = true;
-        user.hasImpulse = true;
-    }
-
-    private void end(LivingEntity user) {
-        activeState = false;
-        hitEntities.clear();
+    private void endInternal(LivingEntity user) {
+        isActive = false;
+        getHitEntities().clear();
         onEnd(user, user.level());
+    }
+
+
+    @Override
+    protected void onStart() {
+        if (user != null) onStart(user, user.level());
     }
 
     protected void onStart(LivingEntity user, Level world) {}
 
-    /**
-     * Subclass hook for shape-aware hit filtering (e.g. ring-band on Donut). Returns true to keep
-     * the candidate, false to skip it without marking them as hit. Default accepts everything.
-     */
-    protected boolean acceptTarget(LivingEntity user, LivingEntity candidate) {
-        return true;
-    }
+    protected boolean acceptTarget(LivingEntity user, LivingEntity candidate) { return true; }
 
     protected void onActiveStart(LivingEntity user, Level world) {}
 
@@ -258,54 +234,28 @@ public abstract class AbstractCqcAttack {
         hitBurst(world, target, ParticleTypes.CLOUD, 6, 0.28, 0.12, 0.28, 0.04);
     }
 
-    protected void playUserSound(Level world, LivingEntity user, SoundEvent sound, float volume, float pitch) {
-        world.playSound(null, user.getX(), user.getY(), user.getZ(), sound, SoundSource.PLAYERS, volume, pitch);
-    }
-
-    protected void playTargetSound(Level world, LivingEntity target, SoundEvent sound, float volume, float pitch) {
-        world.playSound(null, target.getX(), target.getY(), target.getZ(), sound, SoundSource.PLAYERS, volume, pitch);
-    }
-
-    protected void forwardBurst(Level world, LivingEntity user, ParticleOptions particle, int count,
-                                double spread, double speed) {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-        Vec3 pos = user.position().add(0, user.getBbHeight() * 0.45, 0)
-                .add(user.getLookAngle().scale(Math.max(0.4f, scaleCqcStat(user, range) * 0.55f)));
-        serverLevel.sendParticles(particle, pos.x, pos.y, pos.z, count, spread, spread * 0.35, spread, speed);
-    }
-
-    protected void hitBurst(Level world, LivingEntity target, ParticleOptions particle, int count,
-                            double xSpread, double ySpread, double zSpread, double speed) {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-        serverLevel.sendParticles(particle,
-                target.getX(), target.getY() + target.getBbHeight() * 0.55, target.getZ(),
-                count, xSpread, ySpread, zSpread, speed);
-    }
 
     protected void launchTarget(LivingEntity user, LivingEntity target, double upward, double away) {
-        if (target.onGround()) {
-            target.setPos(target.getX(), target.getY() + 0.08, target.getZ());
-        }
-        Vec3 direction = target.position().subtract(user.position());
-        Vec3 horizontal = new Vec3(direction.x, 0, direction.z);
-        if (horizontal.lengthSqr() > 0.0001) {
-            horizontal = horizontal.normalize().scale(scaleCqcStat(user, away));
-        }
-        setTargetVelocity(target, horizontal.x, scaleCqcStat(user, upward), horizontal.z);
+        if (target.onGround()) target.setPos(target.getX(), target.getY() + 0.08, target.getZ());
+        Vec3 dir = target.position().subtract(user.position());
+        Vec3 h = new Vec3(dir.x, 0, dir.z);
+        if (h.lengthSqr() > 0.0001) h = h.normalize().scale(scaleCqcStat(user, away));
+        setTargetVelocity(target, h.x, scaleCqcStat(user, upward), h.z);
     }
 
     protected void slamTarget(LivingEntity target, double downward) {
-        setTargetVelocity(target, target.getDeltaMovement().x * 0.25, -Math.abs(downward), target.getDeltaMovement().z * 0.25);
+        setTargetVelocity(target,
+                target.getDeltaMovement().x * 0.25,
+                -Math.abs(downward),
+                target.getDeltaMovement().z * 0.25);
     }
 
     protected void shoveTarget(LivingEntity user, LivingEntity target, double strength, double lift) {
-        Vec3 direction = target.position().subtract(user.position());
-        Vec3 horizontal = new Vec3(direction.x, 0, direction.z);
-        if (horizontal.lengthSqr() <= 0.0001) {
-            horizontal = user.getLookAngle();
-        }
-        horizontal = new Vec3(horizontal.x, 0, horizontal.z).normalize().scale(scaleCqcStat(user, strength));
-        setTargetVelocity(target, horizontal.x, scaleCqcStat(user, lift), horizontal.z);
+        Vec3 dir = target.position().subtract(user.position());
+        Vec3 h = new Vec3(dir.x, 0, dir.z);
+        if (h.lengthSqr() <= 0.0001) h = user.getLookAngle();
+        h = new Vec3(h.x, 0, h.z).normalize().scale(scaleCqcStat(user, strength));
+        setTargetVelocity(target, h.x, scaleCqcStat(user, lift), h.z);
     }
 
     protected void sidestepTarget(LivingEntity user, LivingEntity target, double strength) {
@@ -317,33 +267,60 @@ public abstract class AbstractCqcAttack {
     }
 
     protected void pullTarget(LivingEntity user, LivingEntity target, double strength) {
-        Vec3 towardUser = user.position().subtract(target.position());
-        Vec3 horizontal = new Vec3(towardUser.x, 0, towardUser.z);
-        if (horizontal.lengthSqr() <= 0.0001) return;
-        horizontal = horizontal.normalize().scale(scaleCqcStat(user, strength));
-        setTargetVelocity(target, horizontal.x, Math.max(target.getDeltaMovement().y, 0.03), horizontal.z);
+        Vec3 toward = user.position().subtract(target.position());
+        Vec3 h = new Vec3(toward.x, 0, toward.z);
+        if (h.lengthSqr() <= 0.0001) return;
+        h = h.normalize().scale(scaleCqcStat(user, strength));
+        setTargetVelocity(target, h.x, Math.max(target.getDeltaMovement().y, 0.03), h.z);
     }
 
     protected void slowTarget(LivingEntity target, int durationTicks, int amplifier) {
-        target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, durationTicks, amplifier, false, true, true));
+        target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN,
+                durationTicks, amplifier, false, true, true));
     }
 
     protected void blindTarget(LivingEntity target, int durationTicks) {
-        target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, durationTicks, 0, false, true, true));
+        target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS,
+                durationTicks, 0, false, true, true));
     }
 
     protected void weakenTarget(LivingEntity target, int durationTicks, int amplifier) {
-        target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, durationTicks, amplifier, false, true, true));
+        target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS,
+                durationTicks, amplifier, false, true, true));
     }
 
     private void setTargetVelocity(LivingEntity target, double x, double y, double z) {
         target.setDeltaMovement(x, y, z);
         target.hurtMarked = true;
         target.hasImpulse = true;
-        if (target instanceof ServerPlayer serverPlayer) {
-            serverPlayer.connection.send(new ClientboundSetEntityMotionPacket(target));
-        }
+        if (target instanceof ServerPlayer sp) sp.connection.send(new ClientboundSetEntityMotionPacket(target));
     }
+
+
+    protected void playUserSound(Level world, LivingEntity user, SoundEvent sound, float volume, float pitch) {
+        world.playSound(null, user.getX(), user.getY(), user.getZ(), sound, SoundSource.PLAYERS, volume, pitch);
+    }
+
+    protected void playTargetSound(Level world, LivingEntity target, SoundEvent sound, float volume, float pitch) {
+        world.playSound(null, target.getX(), target.getY(), target.getZ(), sound, SoundSource.PLAYERS, volume, pitch);
+    }
+
+    protected void forwardBurst(Level world, LivingEntity user, ParticleOptions particle,
+                                int count, double spread, double speed) {
+        if (!(world instanceof ServerLevel sl)) return;
+        Vec3 pos = user.position().add(0, user.getBbHeight() * 0.45, 0)
+                .add(user.getLookAngle().scale(Math.max(0.4f, scaleCqcStat(user, range) * 0.55f)));
+        sl.sendParticles(particle, pos.x, pos.y, pos.z, count, spread, spread * 0.35, spread, speed);
+    }
+
+    protected void hitBurst(Level world, LivingEntity target, ParticleOptions particle,
+                            int count, double xSpread, double ySpread, double zSpread, double speed) {
+        if (!(world instanceof ServerLevel sl)) return;
+        sl.sendParticles(particle,
+                target.getX(), target.getY() + target.getBbHeight() * 0.55, target.getZ(),
+                count, xSpread, ySpread, zSpread, speed);
+    }
+
 
     protected static float scaleCqcStat(LivingEntity user, float value) {
         return isDemonUser(user) ? value * DEMON_CQC_STAT_MULTIPLIER : value;
@@ -354,9 +331,7 @@ public abstract class AbstractCqcAttack {
     }
 
     public static boolean isDemonUser(LivingEntity user) {
-        if (user instanceof Player player) {
-            return DemonManager.isDemon(player);
-        }
+        if (user instanceof Player player) return DemonManager.isDemon(player);
         return user instanceof DemonNPCEntity;
     }
 }

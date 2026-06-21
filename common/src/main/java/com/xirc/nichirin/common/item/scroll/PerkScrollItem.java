@@ -10,7 +10,6 @@ import com.xirc.nichirin.common.system.perks.PerkManager;
 import com.xirc.nichirin.common.util.ItemStackData;
 import net.minecraft.ChatFormatting;
 import net.minecraft.util.RandomSource;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;

@@ -77,6 +77,7 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinItemRegistry.UROKODAKI_KATANA.get());
                         entries.accept(NichirinItemRegistry.MIST_KATANA.get());
                         entries.accept(NichirinItemRegistry.GIYU_KATANA.get());
+                        entries.accept(NichirinItemRegistry.GENYA_DB.get());
                     })
                     .build();
         });

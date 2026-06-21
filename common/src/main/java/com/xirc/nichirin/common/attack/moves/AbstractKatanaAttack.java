@@ -6,7 +6,6 @@ import com.xirc.nichirin.common.util.NichirinArmorDamage;
 import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -243,6 +242,14 @@ public abstract class AbstractKatanaAttack {
     public boolean isActive()     { return isActive; }
     public int getTotalDuration() { return startup + active + recovery; }
     public int getCooldown()      { return cooldown; }
+
+    public void applyDamageAndStunMultiplier(float multiplier) {
+        if (multiplier == 1.0f) return;
+        this.damage *= multiplier;
+        if (this.hitStun > 0) {
+            this.hitStun = Math.max(1, Math.round(this.hitStun * multiplier));
+        }
+    }
 
 
     /**

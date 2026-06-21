@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.data;
 
+import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.common.event.system.DemonFoodHandler;
 import com.xirc.nichirin.common.network.s2c.ProgressionSyncPacket;
 import com.xirc.nichirin.common.system.DemonManager;
@@ -16,8 +17,8 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * DEBUG VERSION: Provides and manages player data including movesets, progression, and statistics
- * Uses Architectury events for cross-platform compatibility
+ * Provides and manages player data including movesets, progression, and statistics.
+ * Uses Architectury events for cross-platform compatibility.
  */
 public class PlayerDataProvider {
 
@@ -202,7 +203,7 @@ public class PlayerDataProvider {
         try {
             PlayerDataStorage.savePlayerData(player);
         } catch (Exception e) {
-            e.printStackTrace();
+            BreathOfNichirin.LOGGER.error("Failed to save player data for {}", player.getGameProfile().getName(), e);
         }
     }
 
@@ -255,7 +256,7 @@ public class PlayerDataProvider {
             ProgressionSyncPacket.sendToPlayer(player);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            BreathOfNichirin.LOGGER.error("Failed to sync moveset data to client", e);
         }
     }
 
@@ -272,7 +273,7 @@ public class PlayerDataProvider {
             syncToClient(player);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            BreathOfNichirin.LOGGER.error("Failed to update and sync moveset", e);
         }
     }
 
@@ -283,7 +284,7 @@ public class PlayerDataProvider {
             savePlayerData(player);
             syncToClient(player);
         } catch (Exception e) {
-            e.printStackTrace();
+            BreathOfNichirin.LOGGER.error("Failed to clear fighting moveset", e);
         }
     }
 

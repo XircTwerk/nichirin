@@ -13,7 +13,6 @@ import net.minecraft.world.phys.Vec3;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import net.minecraft.world.entity.ai.attributes.AttributeMap;
 
 /**
  * Stunned Status Effect - Prevents movement and actions but allows knockback
@@ -130,12 +129,13 @@ public class StunnedStatusEffect extends MobEffect {
             player.getAbilities().mayfly = false;
         }
 
-        // Mob-specific restrictions (apply regardless of amplifier level)
+        // Mob-specific: freeze AI completely so the mob can't re-acquire targets or attack mid-stun.
+        // setNoAi stops all goal/target AI ticking while leaving physics (gravity, knockback) intact.
+        // We clear the target as well so it doesn't resume attacking the same entity the instant
+        // the stun expires and setNoAi is reverted.
         if (entity instanceof Mob mob) {
-            // Disable AI but don't interfere with physics
+            mob.setNoAi(true);
             mob.setTarget(null);
-            mob.setAggressive(false);
-            mob.getNavigation().stop();
         }
 
         return true;

@@ -43,68 +43,84 @@ public final class MovesetAuraTicker {
         }
     }
 
+    // How much bigger the demon aura gets when it rings around a breathing aura.
+    private static final float DEMON_RING_SCALE = 1.6f;
+
     private static void update(ServerPlayer player) {
         MovesetData data = PlayerDataProvider.getMovesetData(player);
-        // Priority: breathing > BDA (demon moveset) > none. CQC is intentionally not represented —
-        // its "fighting" slot doesn't trigger an aura. Breathing wins when both are set so the
-        // visible aura matches the style the player thinks they're using.
-        boolean isBreathing = data.hasBreathingMoveset();
-        String movesetId = isBreathing ? data.getBreathingMovesetId()
-                : data.hasDemonMoveset() ? data.getDemonMovesetId()
-                : null;
+        boolean holdingKatana = isHoldingKatana(player);
 
+        // Breathing auras (and their paired outline) only appear while a katana is held.
+        // Demon auras show whenever a (non-DD) demon moveset is equipped; when both are visible
+        // the demon aura becomes the larger outer ring drawn behind the breathing aura.
+        // CQC is intentionally not represented — its "fighting" slot doesn't trigger an aura.
+        String breathingId = data.hasBreathingMoveset() ? data.getBreathingMovesetId() : null;
+        String demonId = data.hasDemonMoveset() ? data.getDemonMovesetId() : null;
         // Destructive Death has its own dynamic-state ticker. Don't double-publish.
-        if (movesetId != null && MovesetAuraPalette.SKIP_IDS.contains(movesetId)) {
+        if (breathingId != null && MovesetAuraPalette.SKIP_IDS.contains(breathingId)) breathingId = null;
+        if (demonId != null && MovesetAuraPalette.SKIP_IDS.contains(demonId)) demonId = null;
+
+        MovesetAuraPalette.Entry breathingPalette = (breathingId != null && holdingKatana)
+                ? MovesetAuraPalette.get(breathingId) : null;
+        MovesetAuraPalette.Entry demonPalette = demonId != null ? MovesetAuraPalette.get(demonId) : null;
+
+        if (breathingPalette == null && demonPalette == null) {
             removeIfPresent(player);
             return;
         }
 
-        MovesetAuraPalette.Entry palette = MovesetAuraPalette.get(movesetId);
-        if (palette == null) {
-            removeIfPresent(player);
-            return;
-        }
-
-        // Breathing auras (and their paired outline) only appear when the player holds a katana.
-        if (isBreathing && !isHoldingKatana(player)) {
-            removeIfPresent(player);
-            return;
-        }
-
-        // Demon auras hide when the player is holding a katana (breathing style takes visual priority).
-        if (!isBreathing && isHoldingKatana(player)) {
-            removeIfPresent(player);
-            return;
-        }
-
+        String stateKey = (breathingPalette != null ? breathingId : "-")
+                + "|" + (demonPalette != null ? demonId : "-");
         CachedAuraState cached = CACHE.get(player.getUUID());
-        if (cached != null && cached.movesetId().equals(movesetId)) return; // no change
+        if (cached != null && cached.stateKey().equals(stateKey)) return; // no change
 
         removeIfPresent(player);
 
-        AuraInstance aura = AuraInstance.builder()
-                .color(palette.r(), palette.g(), palette.b(), palette.alpha())
-                .radius(palette.radius())
-                .jitter(palette.jitter())
-                .build();
-        AuraManager.addAura(player, aura, AuraAudience.ALL);
+        UUID breathingAuraId = null;
+        UUID demonAuraId = null;
+        UUID outlineId = null;
 
-        OutlineInstance outline = null;
-        if (isBreathing) {
-            outline = OutlineInstance.builder()
-                    .color(palette.r(), palette.g(), palette.b(), 0.8f)
+        if (demonPalette != null) {
+            // Outer ring when layered under a breathing aura; normal size on its own. The client
+            // renderer draws bigger auras first, so this always sits behind the breathing disc.
+            float radius = breathingPalette != null
+                    ? demonPalette.radius() * DEMON_RING_SCALE
+                    : demonPalette.radius();
+            AuraInstance demonAura = AuraInstance.builder()
+                    .color(demonPalette.r(), demonPalette.g(), demonPalette.b(), demonPalette.alpha())
+                    .radius(radius)
+                    .jitter(demonPalette.jitter())
+                    .build();
+            AuraManager.addAura(player, demonAura, AuraAudience.ALL);
+            demonAuraId = demonAura.id();
+        }
+
+        if (breathingPalette != null) {
+            AuraInstance aura = AuraInstance.builder()
+                    .color(breathingPalette.r(), breathingPalette.g(), breathingPalette.b(), breathingPalette.alpha())
+                    .radius(breathingPalette.radius())
+                    .jitter(breathingPalette.jitter())
+                    .build();
+            AuraManager.addAura(player, aura, AuraAudience.ALL);
+            breathingAuraId = aura.id();
+
+            // Route through MC's built-in outline post-shader (clean screen-space edge) rather
+            // than the custom cel geometry pass, which front-culls into a flat fill over the whole
+            // model on some setups. Tradeoff: the edge shows faintly through walls.
+            OutlineInstance outline = OutlineInstance.builder()
+                    .color(breathingPalette.r(), breathingPalette.g(), breathingPalette.b(), 0.8f)
                     .thickness(1.04f)
-                    .seeThroughWalls(false)
+                    .seeThroughWalls(true)
                     .lifetimeTicks(-1)
                     .build();
             OutlineManager.addOutline(player, outline, AuraAudience.ALL);
+            outlineId = outline.id();
         }
 
-        CACHE.put(player.getUUID(), new CachedAuraState(movesetId, aura.id(),
-                outline != null ? outline.id() : null));
+        CACHE.put(player.getUUID(), new CachedAuraState(stateKey, breathingAuraId, demonAuraId, outlineId));
     }
 
-    private static boolean isHoldingKatana(ServerPlayer player) {
+    public static boolean isHoldingKatana(ServerPlayer player) {
         Item main = player.getMainHandItem().getItem();
         Item off = player.getOffhandItem().getItem();
         return main instanceof SimpleKatana || main instanceof SoundKatana || main instanceof BeastKatana
@@ -117,6 +133,9 @@ public final class MovesetAuraTicker {
         if (cached.auraId() != null) {
             AuraManager.removeAura(player, cached.auraId());
         }
+        if (cached.demonAuraId() != null) {
+            AuraManager.removeAura(player, cached.demonAuraId());
+        }
         if (cached.outlineId() != null) {
             OutlineManager.removeOutline(player, cached.outlineId());
         }
@@ -126,5 +145,5 @@ public final class MovesetAuraTicker {
         CACHE.remove(playerId);
     }
 
-    private record CachedAuraState(String movesetId, UUID auraId, UUID outlineId) {}
+    private record CachedAuraState(String stateKey, UUID auraId, UUID demonAuraId, UUID outlineId) {}
 }

@@ -17,6 +17,9 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Environment(EnvType.CLIENT)
 public final class EntityAuraTracker {
+    /** Spawn/removal transition length — auras ease in and out over this window. */
+    public static final long FADE_MS = 350;
+
     private static final Map<UUID, List<AuraInstance>> AURAS = new ConcurrentHashMap<>();
 
     private EntityAuraTracker() {}
@@ -29,8 +32,13 @@ public final class EntityAuraTracker {
     public static void removeAura(UUID entityId, UUID instanceId) {
         List<AuraInstance> list = AURAS.get(entityId);
         if (list == null) return;
-        list.removeIf(a -> a.id().equals(instanceId));
-        if (list.isEmpty()) AURAS.remove(entityId);
+        // Mark for fade-out rather than deleting — tick() purges once the fade finishes.
+        long now = System.currentTimeMillis();
+        for (AuraInstance instance : list) {
+            if (instance.id().equals(instanceId)) {
+                instance.markRemoved(now);
+            }
+        }
     }
 
     public static void clearAuras(UUID entityId) {
@@ -49,18 +57,18 @@ public final class EntityAuraTracker {
         return AURAS;
     }
 
-    /** Tick: remove auras whose lifetime expired. */
+    /** Tick: start fade-out on expired lifetimes, purge instances whose fade finished. */
     public static void tick() {
         long now = System.currentTimeMillis();
         Iterator<Map.Entry<UUID, List<AuraInstance>>> it = AURAS.entrySet().iterator();
         while (it.hasNext()) {
             var entry = it.next();
-            entry.getValue().removeIf(a -> {
-                if (a.lifetimeTicks() < 0) return false;
-                long ageMs = now - a.startTimeMs();
-                long lifetimeMs = a.lifetimeTicks() * 50L;
-                return ageMs >= lifetimeMs;
-            });
+            for (AuraInstance a : entry.getValue()) {
+                if (a.lifetimeTicks() >= 0 && now - a.startTimeMs() >= a.lifetimeTicks() * 50L) {
+                    a.markRemoved(now);
+                }
+            }
+            entry.getValue().removeIf(a -> a.fadeComplete(now, FADE_MS));
             if (entry.getValue().isEmpty()) it.remove();
         }
     }

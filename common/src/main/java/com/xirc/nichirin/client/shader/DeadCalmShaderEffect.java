@@ -29,7 +29,6 @@ public class DeadCalmShaderEffect extends NichirinPostProcessor {
     @Override
     protected void beforeProcess(PoseStack viewModelStack) {
         if (effects == null || effects.length == 0) {
-            System.out.println("ERROR: effects is null or empty!");
             return;
         }
 
@@ -56,7 +55,6 @@ public class DeadCalmShaderEffect extends NichirinPostProcessor {
         }
 
         if (effectTicks >= TOTAL_TICKS) {
-            System.out.println("DEBUG: Effect finished after 240 ticks, deactivating");
             setActive(false);
         }
     }
@@ -75,7 +73,6 @@ public class DeadCalmShaderEffect extends NichirinPostProcessor {
     public void trigger(float range) {
         // TODO: Dead Calm shader temporarily disabled
         if (true) return;
-        System.out.println("DEBUG: Dead Calm shader trigger() called with range=" + range);
         effectTicks = 0;
         intensity = 0.0f;
         attackRange = range;
@@ -90,7 +87,6 @@ public class DeadCalmShaderEffect extends NichirinPostProcessor {
         }
 
         setActive(true);
-        System.out.println("DEBUG: Dead Calm shader active with " + range + " block range, will run for 240 ticks");
     }
 
     public DeadCalmSkyBoxRenderer getSkyboxRenderer() {

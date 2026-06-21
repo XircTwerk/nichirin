@@ -6,7 +6,6 @@ import dev.architectury.event.events.common.EntityEvent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 
 import java.util.HashSet;
 import java.util.Set;

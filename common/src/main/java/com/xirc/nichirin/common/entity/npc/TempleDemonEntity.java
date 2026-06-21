@@ -2,13 +2,17 @@ package com.xirc.nichirin.common.entity.npc;
 
 import com.xirc.nichirin.client.renderer.entity.dispatcher.TempleDemonDispatcher;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
+import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moveset.demon.TempleDemonMoveset;
 import com.xirc.nichirin.common.system.GrabManager;
 import com.xirc.nichirin.common.system.blocking.HandToHandBlock;
+import com.xirc.nichirin.common.system.movement.EntityMovement;
 import com.xirc.nichirin.common.util.NichirinDamageSources;
+import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import mod.azure.azurelib.common.util.MoveAnalysis;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -104,7 +108,7 @@ public class TempleDemonEntity extends DemonNPCEntity {
     /**
      * Whether {@code entity} is a demon NPC for the purposes of intra-kind neutrality.
      */
-    private static boolean isDemonKin(net.minecraft.world.entity.Entity entity) {
+    private static boolean isDemonKin(Entity entity) {
         return entity instanceof DemonNPCEntity;
     }
 
@@ -387,7 +391,7 @@ public class TempleDemonEntity extends DemonNPCEntity {
                 demon.getLookControl().setLookAt(target, 30.0F, 30.0F);
 
                 // Stunned demons can't act or move — no dashing or attacking.
-                if (demon.hasEffect(com.xirc.nichirin.registry.NichirinEffectRegistry.stunned())) {
+                if (demon.hasEffect(NichirinEffectRegistry.stunned())) {
                     demon.getNavigation().stop();
                     return;
                 }
@@ -396,7 +400,7 @@ public class TempleDemonEntity extends DemonNPCEntity {
                 if (!HandToHandBlock.isBlocking(demon) && distance < 6.0) {
                     boolean targetAttacking = target.swinging || target.attackAnim > 0
                             || (target.hurtTime > 0 && target.hurtTime < 5)
-                            || com.xirc.nichirin.common.attack.MoveExecutor.hasActiveAttacks(target);
+                            || MoveExecutor.hasActiveAttacks(target);
                     if (!targetAttacking && globalCooldown > 0 && distance < 3.5) {
                         targetAttacking = demon.getRandom().nextFloat() < 0.12f;
                     }
@@ -494,7 +498,7 @@ public class TempleDemonEntity extends DemonNPCEntity {
                 // No attack ready — close the gap. Dash on a cooldown; otherwise just walk.
                 if (dashCooldown <= 0) {
                     Vec3 toTarget = target.position().subtract(demon.position()).normalize();
-                    com.xirc.nichirin.common.system.movement.EntityMovement.applyDash(demon, toTarget);
+                    EntityMovement.applyDash(demon, toTarget);
                     dashCooldown = 18;
                     globalCooldown = 5;
                 } else {

@@ -26,6 +26,11 @@ public interface NicirinSoundRegistry {
     RegistrySupplier<SoundEvent> BITE_CRUNCH = registerSound("bite_crunch");
     RegistrySupplier<SoundEvent> STOMP_LAND = registerSound("stomp_land");
 
+    // Gun (Genya DB) sounds
+    RegistrySupplier<SoundEvent> GENYA_SINGLESHOT = registerSound("genya_db_singleshot");
+    RegistrySupplier<SoundEvent> GENYA_DOUBLESHOT = registerSound("genya_db_doubleshot");
+    RegistrySupplier<SoundEvent> GENYA_RELOAD = registerSound("genya_db_reload");
+
     // Entity sounds
     RegistrySupplier<SoundEvent> THUNDER_BALL = registerSound("thunderball");
 

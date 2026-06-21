@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.data;
 
+import com.xirc.nichirin.common.system.DemonManager;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.player.Player;
 
@@ -138,7 +139,7 @@ public class CqcPresetData {
         if (normalized.isEmpty()) return true;
         CqcMoveCatalog.Definition definition = CqcMoveCatalog.get(moveId);
         if (definition == null) return false;
-        return !definition.demonOnly() || com.xirc.nichirin.common.system.DemonManager.isDemon(player);
+        return !definition.demonOnly() || DemonManager.isDemon(player);
     }
 
     public static boolean canHaveFollowup(String baseMoveId) {

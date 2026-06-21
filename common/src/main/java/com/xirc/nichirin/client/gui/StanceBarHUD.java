@@ -2,7 +2,6 @@ package com.xirc.nichirin.client.gui;
 
 import com.xirc.nichirin.client.gui.NichirinPalette;
 import lombok.Getter;
-import lombok.Setter;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;

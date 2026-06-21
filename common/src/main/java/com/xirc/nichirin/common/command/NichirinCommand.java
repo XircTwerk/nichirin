@@ -8,6 +8,7 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.xirc.nichirin.common.attack.moveset.demon.DefaultDemonMoveset;
 import com.xirc.nichirin.common.attack.moveset.demon.DestructiveDeathMoveset;
+import com.xirc.nichirin.common.attack.moveset.CqcMoveset;
 import com.xirc.nichirin.common.config.NichirinConfig;
 import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.data.MovesetHelper;
@@ -95,8 +96,8 @@ public class NichirinCommand {
                                 .executes(ctx -> giveBlurry(ctx, ctx.getSource().getPlayerOrException()))
                                 .then(Commands.argument("player", EntityArgument.player())
                                         .executes(ctx -> giveBlurry(ctx, EntityArgument.getPlayer(ctx, "player")))))
-                        .then(com.xirc.nichirin.common.command.AuraCommand.build())
-                        .then(com.xirc.nichirin.common.command.OutlineCommand.build()))
+                        .then(AuraCommand.build())
+                        .then(OutlineCommand.build()))
 
                 // Breathing and Demon subtrees — same shape as the old /breathing and /demon roots.
                 .then(buildBreathingSubcommand())
@@ -448,7 +449,7 @@ public class NichirinCommand {
         CommandSourceStack src = ctx.getSource();
         String playerName = player.getName().getString();
 
-        com.xirc.nichirin.common.attack.moveset.CqcMoveset.resetCooldowns(player);
+        CqcMoveset.resetCooldowns(player);
 
         int cleared = 0;
         for (NichirinMovesetRegistry.MoveInfo moveInfo : NichirinMovesetRegistry.getAllMoves().values()) {

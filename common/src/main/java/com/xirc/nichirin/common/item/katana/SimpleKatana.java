@@ -1,6 +1,5 @@
 package com.xirc.nichirin.common.item.katana;
 
-import com.xirc.nichirin.client.animation.NichirinAnimations;
 import com.xirc.nichirin.client.gui.CooldownHUD;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.attack.moveset.DefaultKatanaMoveset;

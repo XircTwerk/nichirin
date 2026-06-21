@@ -1,7 +1,11 @@
 package com.xirc.nichirin.client;
 
 import com.xirc.nichirin.client.animation.NichirinAnimations;
+import com.xirc.nichirin.client.aura.AuraNetworkHandler;
+import com.xirc.nichirin.client.aura.EntityAuraTracker;
 import com.xirc.nichirin.client.light.WisteriaLightData;
+import com.xirc.nichirin.client.outline.OutlineNetworkHandler;
+import com.xirc.nichirin.client.outline.OutlineTracker;
 import com.xirc.nichirin.common.util.enums.BreathingStyle;
 import com.xirc.nichirin.client.config.NichirinClientConfig;
 import com.xirc.nichirin.client.handler.*;
@@ -10,7 +14,6 @@ import dev.architectury.event.events.client.ClientGuiEvent;
 import com.xirc.nichirin.client.renderer.armor.ArmorRendererManager;
 import com.xirc.nichirin.client.renderer.item.KatanaRendererManager;
 import com.xirc.nichirin.common.util.InputHandler;
-import com.xirc.nichirin.registry.NichirinKeybindRegistry;
 import com.xirc.nichirin.client.renderer.gui.BreathingBarRenderer;
 import com.xirc.nichirin.client.renderer.gui.StaminaBarRenderer;
 import com.xirc.nichirin.client.renderer.gui.StanceBarRenderer;
@@ -28,7 +31,6 @@ import dev.architectury.registry.client.rendering.RenderTypeRegistry;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.RenderType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,19 +56,13 @@ public class BreathOfNichirinClient {
             NichirinShaderManager.getInstance().register(impactShakeShaderEffect);
 
         } catch (Exception e) {
-            LOGGER.error("Failed to register shaders: {}", e.getMessage());
-            e.printStackTrace();
+            LOGGER.error("Failed to register shaders", e);
         }
     }
 
     private static void registerRenderingHooks() {
-        try {
-            // Rendering hooks are handled via LevelRendererMixin
-            // See: com.xirc.nichirin.mixin.client.LevelRendererMixin
-
-        } catch (Exception e) {
-            LOGGER.error("Failed to register rendering hooks: {}", e.getMessage());
-        }
+        // Rendering hooks are handled via LevelRendererMixin
+        // (see com.xirc.nichirin.mixin.client.LevelRendererMixin).
     }
 
     private static void registerBlockColors() {
@@ -143,13 +139,14 @@ public class BreathOfNichirinClient {
                     // Add input tracking
                     ClientInputTracker.tick();
 
+                    // Keep the gun's first-person rendering correct (only reload shows in first person)
+                    if (minecraft.player != null) {
+                        NichirinAnimations.tickFirstPersonMode(minecraft.player);
+                    }
+
                     // Tick shader skybox renderers
                     if (deadCalmEffect != null && deadCalmEffect.getSkyboxRenderer().isActive()) {
                         deadCalmEffect.getSkyboxRenderer().tick();
-                    }
-
-                    if (minecraft.level.getGameTime() % 100 == 0) {
-                        LocalPlayer player = minecraft.player;
                     }
                 }
             });
@@ -165,15 +162,15 @@ public class BreathOfNichirinClient {
             registerShaders();
 
             // Wire up the entity-attached aura system (2D pixelated billboard renderer).
-            com.xirc.nichirin.client.aura.AuraNetworkHandler.register();
+            AuraNetworkHandler.register();
             // Wire up the entity-attached outline system (configurable colour + see-through).
-            com.xirc.nichirin.client.outline.OutlineNetworkHandler.register();
+            OutlineNetworkHandler.register();
 
             // Wire up the Blurry effect screen shader
             MistBlurShaderHandler.register();
             ImpactFrameOverlay.register();
             SunlightVignetteOverlay.register();
-            com.xirc.nichirin.client.handler.SlammedWobble.register();
+            SlammedWobble.register();
 
             // Register rendering hooks for shaders
             registerRenderingHooks();
@@ -192,7 +189,7 @@ public class BreathOfNichirinClient {
             try {
                 NichirinEntityRendererRegistry.init();
             } catch (Exception e) {
-                LOGGER.error("ERROR: Failed to initialize renderers", e);
+                LOGGER.error("Failed to initialize renderers", e);
                 // Don't rethrow - continue with other initialization
             }
 
@@ -252,17 +249,13 @@ public class BreathOfNichirinClient {
                     ImpactFrameOverlay.tick();
                     ImpactCameraShake.tick();
                     refreshWisteriaLeafColors(minecraft);
-                    com.xirc.nichirin.client.aura.EntityAuraTracker.tick();
-                    com.xirc.nichirin.client.outline.OutlineTracker.tick();
-
-                    if (minecraft.level.getGameTime() % 100 == 0) {
-                        LocalPlayer player = minecraft.player;
-                    }
+                    EntityAuraTracker.tick();
+                    OutlineTracker.tick();
                 }
             });
 
         } catch (Exception e) {
-            LOGGER.error("ERROR: Failed to initialize client", e);
+            LOGGER.error("Failed to initialize client", e);
             // Set initialized to true anyway to prevent complete failure
             initialized = true;
         }

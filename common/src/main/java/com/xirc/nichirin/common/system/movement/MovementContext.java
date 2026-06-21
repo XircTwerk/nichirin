@@ -4,6 +4,7 @@ import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
 import com.xirc.nichirin.common.util.StaminaManager;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -18,6 +19,7 @@ import java.util.UUID;
  */
 public class MovementContext {
 
+    private static final int MOVEMENT_COLOR = 0xFF9FD7FF;
     private static final float MOVEMENT_STAMINA_COST = 15.0f;
     private static final int DODGE_COOLDOWN_TICKS = 40;
     private static final int AIR_DODGE_COOLDOWN_TICKS = 60;
@@ -198,8 +200,19 @@ public class MovementContext {
                 case NONE -> "Movement";
             };
 
-            CooldownDisplayPacket.sendToClient(serverPlayer, cooldownName, getCooldownTicks(movementType));
+            CooldownDisplayPacket.sendToClient(serverPlayer, cooldownName, getCooldownTicks(movementType),
+                    movementIcon(movementType), MOVEMENT_COLOR);
         }
+    }
+
+    private static ResourceLocation movementIcon(MovementType movementType) {
+        String iconName = switch (movementType) {
+            case AIR_DODGE -> "air_dodge";
+            case BACKSTEP -> "backstep";
+            case DASH, DODGE -> "dash";
+            case NONE -> "dash";
+        };
+        return ResourceLocation.fromNamespaceAndPath("nichirin", "textures/icons/movement/" + iconName + ".png");
     }
 
     /**

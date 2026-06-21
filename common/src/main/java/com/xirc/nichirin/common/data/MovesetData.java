@@ -7,9 +7,9 @@ import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * DEBUG VERSION: Unified data class for storing player's selected movesets (breathing techniques AND demon arts)
- * Supports dual moveset system - player can have both breathing and demon movesets simultaneously
- * Handles modifiers and statistics tracking automatically
+ * Unified data class for storing a player's selected movesets (breathing techniques AND demon arts).
+ * Supports the dual moveset system - a player can have both breathing and demon movesets simultaneously.
+ * Handles modifiers and statistics tracking automatically.
  */
 public class MovesetData {
 

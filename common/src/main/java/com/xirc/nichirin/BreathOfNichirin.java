@@ -7,6 +7,7 @@ import com.xirc.nichirin.common.advancement.NichirinCriteriaTriggers;
 import com.xirc.nichirin.common.event.item.DrinkingGourdInteractionHandler;
 import com.xirc.nichirin.common.event.item.WisteriaStrippingHandler;
 import com.xirc.nichirin.common.event.system.*;
+import com.xirc.nichirin.common.event.system.HitAnimationHandler;
 import com.xirc.nichirin.common.event.*;
 import com.xirc.nichirin.common.event.unlock.*;
 import com.xirc.nichirin.registry.NichirinMovesetRegistry;
@@ -77,7 +78,7 @@ public final class BreathOfNichirin {
         StaminaEventHandler.register();
         BlockingEventHandler.register();
         DodgeEventHandler.register();
-        com.xirc.nichirin.common.event.system.HitAnimationHandler.register();
+        HitAnimationHandler.register();
         DemonFoodHandler.register();
         DrinkingGourdInteractionHandler.register();
         WisteriaStrippingHandler.register();

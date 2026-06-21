@@ -9,6 +9,7 @@ import com.xirc.nichirin.common.entity.MovesetCapableNPC;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.network.s2c.OpenTrainerDialoguePacket;
 import com.xirc.nichirin.common.system.NPCResourceManager;
+import com.xirc.nichirin.common.system.movement.EntityMovement;
 import com.xirc.nichirin.common.util.NetworkBufferUtils;
 import com.xirc.nichirin.registry.NichirinMovesetRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
@@ -49,6 +50,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
@@ -804,14 +806,14 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
             }
 
             if (!trainer.onGround() && doubleJumpCooldown == 0) {
-                com.xirc.nichirin.common.system.movement.EntityMovement.applyAirDodge(
+                EntityMovement.applyAirDodge(
                         trainer, target.position().subtract(trainer.position()).normalize());
                 doubleJumpCooldown = 40;
             }
 
             if (trainer.onGround() && target.getY() > trainer.getY() + 2.0 && trainer.canDoubleJump()) {
                 trainer.markDoubleJumped();
-                com.xirc.nichirin.common.system.movement.EntityMovement.applyDoubleJump(
+                EntityMovement.applyDoubleJump(
                         trainer, target.position().subtract(trainer.position()));
             }
 
@@ -927,20 +929,20 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
         }
 
         private void queueAfterBackstep(int idx) {
-            com.xirc.nichirin.common.system.movement.EntityMovement.applyBackstep(trainer);
+            EntityMovement.applyBackstep(trainer);
             backstepCooldown = 50;
             pendingMoveIndex = idx;
             pendingMoveDelay = BACKSTEP_RELEASE_DELAY;
         }
 
         private void applyDash(LivingEntity target) {
-            net.minecraft.world.phys.Vec3 toTarget = target.position().subtract(trainer.position()).normalize();
-            com.xirc.nichirin.common.system.movement.EntityMovement.applyDash(trainer, toTarget);
+            Vec3 toTarget = target.position().subtract(trainer.position()).normalize();
+            EntityMovement.applyDash(trainer, toTarget);
             globalCooldown = 3;
         }
 
         private int cooldownAfterMove(int idx) {
-            com.xirc.nichirin.common.attack.moveset.AbstractMoveset.MoveConfiguration cfg =
+            AbstractMoveset.MoveConfiguration cfg =
                     trainer.moveset != null ? trainer.moveset.getMove(idx) : null;
             if (cfg == null) return 10;
 

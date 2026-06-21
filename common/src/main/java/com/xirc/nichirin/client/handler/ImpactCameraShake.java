@@ -12,7 +12,15 @@ public final class ImpactCameraShake {
     }
 
     public static void trigger(float strength) {
-        magnitude = Math.max(1.0F, Math.min(2.5F, strength));
+        trigger(strength, 1.0F);
+    }
+
+    /**
+     * @param minFloor minimum allowed magnitude. The default {@link #trigger(float)} floors at 1.0;
+     *                 callers that want a gentler shake (e.g. the gun) can pass a lower floor.
+     */
+    public static void trigger(float strength, float minFloor) {
+        magnitude = Math.max(minFloor, Math.min(2.5F, strength));
         ticksRemaining = DURATION_TICKS;
     }
 

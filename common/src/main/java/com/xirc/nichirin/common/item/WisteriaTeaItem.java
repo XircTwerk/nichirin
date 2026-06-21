@@ -2,7 +2,6 @@ package com.xirc.nichirin.common.item;
 
 import com.xirc.nichirin.common.effect.WisteriasGraceStatusEffect;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;

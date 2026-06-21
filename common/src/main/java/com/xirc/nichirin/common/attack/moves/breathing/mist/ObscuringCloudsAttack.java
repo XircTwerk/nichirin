@@ -8,6 +8,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -163,7 +164,7 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
     private void discardClones() {
         if (!(world instanceof ServerLevel serverLevel)) return;
         for (UUID id : spawnedClones) {
-            net.minecraft.world.entity.Entity e = serverLevel.getEntity(id);
+            Entity e = serverLevel.getEntity(id);
             if (e != null) e.discard();
         }
         spawnedClones.clear();

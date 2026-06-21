@@ -142,6 +142,7 @@
   "fighting_style.cqc": "CQC",
 
   "item.nichirin.katana": "Katana",
+  "item.nichirin.genya_db": "Genya's Double-Barrel",
   "item.nichirin.thunder_katana": "Thunder Katana",
   "item.nichirin.insect_katana": "Insect Katana",
   "item.nichirin.flame_katana": "Flame Katana",
@@ -435,6 +436,8 @@
   "text.autoconfig.nichirin-server.option.demon.burnInSunlight.@Tooltip": "Demons take fire damage when exposed to direct sunlight.",
   "text.autoconfig.nichirin-server.option.demon.sunDamagePerSecond":     "Sun Damage per Second",
   "text.autoconfig.nichirin-server.option.demon.sunDamagePerSecond.@Tooltip": "Half-hearts of damage per second when burning in sunlight.",
+  "text.autoconfig.nichirin-server.option.demon.wisteriaDamagesDemons":  "Wisteria Damages Demons",
+  "text.autoconfig.nichirin-server.option.demon.wisteriaDamagesDemons.@Tooltip": "When enabled, Wisteria's Grace deals periodic poison damage to demons.",
   "text.autoconfig.nichirin-server.option.demon.bloodDrainEnabled":      "Blood Drain",
   "text.autoconfig.nichirin-server.option.demon.bloodDrainEnabled.@Tooltip": "Demons passively lose blood over time and die when it reaches zero.",
   "text.autoconfig.nichirin-server.option.demon.bloodDrainIntervalSeconds": "Blood Drain Interval (seconds)",
@@ -443,6 +446,8 @@
   "text.autoconfig.nichirin-server.option.demon.peacefulModeMaxBlood.@Tooltip": "Keeps demon blood filled while the world is in peaceful difficulty.",
   "text.autoconfig.nichirin-server.option.demon.demonMaxBreathPercent": "Demon Max Breath (%)",
   "text.autoconfig.nichirin-server.option.demon.demonMaxBreathPercent.@Tooltip": "Percent of the normal maximum breath gauge demons can store.",
+  "text.autoconfig.nichirin-server.option.demon.removeDemonOnDeath": "Remove Demon on Death",
+  "text.autoconfig.nichirin-server.option.demon.removeDemonOnDeath.@Tooltip": "When enabled, dying as a demon removes demon status on respawn.",
 
   "text.autoconfig.nichirin-server.category.killRewards": "Kill Rewards",
   "text.autoconfig.nichirin-server.option.bloodMoon.enabled":               "Enable Blood Moon",
