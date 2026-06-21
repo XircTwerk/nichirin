@@ -21,6 +21,7 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +38,9 @@ public final class NichirinAnimations {
             new FirstPersonConfiguration(true, true, true, true);
     /** Extra downward tilt on the gun arm so the barrel lines up with where the player is looking. */
     private static final float GUN_ARM_DOWN_CORRECTION = (float) Math.toRadians(14.0);
+    /** Last gun animation triggered for the LOCAL player — used to decide whether to show the body in
+     *  first person (only the reload should show; idle/fire stay third-person only). */
+    private static String localGunTrigger = "";
     private static boolean initialized;
 
     private NichirinAnimations() {}
@@ -84,17 +88,23 @@ public final class NichirinAnimations {
             if (!(player.getMainHandItem().getItem() instanceof GenyaDB)) {
                 return Optional.empty();
             }
+            // No look-angle aiming in first person — the held gun model handles aiming there, so the
+            // arm just keeps the raw idle/fire/reload pose.
+            if (FirstPersonMode.isFirstPersonPass()) {
+                return Optional.empty();
+            }
             if ("right_arm".equals(partName)) {
-                // Aim the gun arm up/down with the player's look pitch (matches the gunmetal approach).
-                // The idle/fire/reload animations all supply the ~-90deg arm raise themselves, so this
-                // modifier only adds the look-pitch and the downward correction ON TOP. Because it is the
-                // same constant offset for every animation, there is no jump when one animation hands off
-                // to another — the hold/fire/reload transitions stay smooth. Applying it during the
-                // triggered animations is also what makes the firing animation follow the look angle.
-                float aim = (float) Math.toRadians(player.getXRot());
-                // PartModifier(rotation, offset) — rotation FIRST. The X rotation aims the arm up/down.
+                // Aim the gun arm toward where the player looks. The idle/fire/reload animations all
+                // supply the ~-90deg arm raise themselves, so this modifier only adds the look offset
+                // (+ downward correction) ON TOP. It's the same kind of offset for every animation, so
+                // there's no jump when one hands off to another — transitions stay smooth — and applying
+                // it during the triggered animations is what makes fire/reload follow the look angle too.
+                float pitch = (float) Math.toRadians(player.getXRot());          // up/down
+                float yaw = (float) Math.toRadians(                              // side to side
+                        Mth.wrapDegrees(player.getYHeadRot() - player.yBodyRot));
+                // PartModifier(rotation, offset) — rotation FIRST. X = pitch, Y = yaw.
                 return Optional.of(new AdjustmentModifier.PartModifier(
-                        new Vec3f(aim + GUN_ARM_DOWN_CORRECTION, 0.0f, 0.0f),
+                        new Vec3f(pitch + GUN_ARM_DOWN_CORRECTION, yaw, 0.0f),
                         new Vec3f(0.0f, 0.0f, 0.0f)));
             }
             return Optional.empty();
@@ -158,6 +168,11 @@ public final class NichirinAnimations {
         }
 
         setControllerSpeed(controller, speed);
+
+        if (clientPlayer == minecraft.player
+                && ("fire".equals(animationName) || "reload".equals(animationName))) {
+            localGunTrigger = animationName;
+        }
 
         if ("sword.block".equals(animationName)) {
             controller.triggerAnimation(PlayerRawAnimationBuilder.begin().thenPlayAndHold(animation).build());
@@ -235,6 +250,24 @@ public final class NichirinAnimations {
             controller.stopTriggeredAnimation();
             controller.stop();
         }
+    }
+
+    /**
+     * Drives whether the LOCAL player's body shows in first person. While holding the gun we keep the
+     * controller in {@link FirstPersonMode#NONE} so the idle hold pose and the fire recoil stay
+     * third-person only (first person shows the vanilla arm + gun model). Only while a reload is
+     * actively playing do we switch to {@link FirstPersonMode#THIRD_PERSON_MODEL} so the reload shows
+     * in first person. Anything else (no gun) keeps the normal mode so katana/breathing animations
+     * still render in first person. Call once per client tick for the local player.
+     */
+    public static void tickFirstPersonMode(AbstractClientPlayer player) {
+        PlayerAnimationController controller = getController(player);
+        if (controller == null) return;
+        boolean holdingGun = player.getMainHandItem().getItem() instanceof GenyaDB;
+        boolean reloadShowing = "reload".equals(localGunTrigger) && controller.isPlayingTriggeredAnimation();
+        controller.setFirstPersonMode(holdingGun && !reloadShowing
+                ? FirstPersonMode.NONE
+                : FirstPersonMode.THIRD_PERSON_MODEL);
     }
 
     public static boolean isAnimationPlaying(AbstractClientPlayer player) {

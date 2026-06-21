@@ -147,6 +147,11 @@ public class BreathOfNichirinClient {
                     // Add input tracking
                     ClientInputTracker.tick();
 
+                    // Keep the gun's first-person rendering correct (only reload shows in first person)
+                    if (minecraft.player != null) {
+                        NichirinAnimations.tickFirstPersonMode(minecraft.player);
+                    }
+
                     // Tick shader skybox renderers
                     if (deadCalmEffect != null && deadCalmEffect.getSkyboxRenderer().isActive()) {
                         deadCalmEffect.getSkyboxRenderer().tick();
