@@ -6,13 +6,8 @@ import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.network.s2c.MovesetConfigSyncPacket;
 import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
 import com.xirc.nichirin.common.util.EntityResources;
-import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
-import dev.architectury.networking.NetworkManager;
-import io.netty.buffer.Unpooled;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 

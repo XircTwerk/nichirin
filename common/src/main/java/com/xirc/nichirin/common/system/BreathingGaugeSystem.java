@@ -1,6 +1,5 @@
 package com.xirc.nichirin.common.system;
 
-import com.xirc.nichirin.common.util.enums.Gauge;
 import com.xirc.nichirin.common.util.enums.BreathingStyle;
 import lombok.Getter;
 import lombok.Setter;

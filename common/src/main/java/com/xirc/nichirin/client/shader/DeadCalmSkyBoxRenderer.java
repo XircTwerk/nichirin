@@ -54,8 +54,6 @@ public class DeadCalmSkyBoxRenderer {
             bigRipple.maxLifetime = 80; // Last longer
             ripples.add(bigRipple);
         }
-
-        System.out.println("DEBUG: Skybox activated with " + startupWaves.size() + " startup waves + " + ripples.size() + " ground ripples at position " + playerPosAtStart);
     }
 
     public void deactivate() {
@@ -65,7 +63,6 @@ public class DeadCalmSkyBoxRenderer {
         droplets.clear();
         ripples.clear();
         startupWaves.clear();
-        System.out.println("DEBUG: Skybox deactivated!");
     }
 
     public boolean isActive() {

@@ -7,7 +7,6 @@ import com.xirc.nichirin.common.util.NichirinArmorDamage;
 import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.common.system.DemonManager;
 import lombok.Getter;
-import lombok.Setter;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;

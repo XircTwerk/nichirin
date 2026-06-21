@@ -1,6 +1,5 @@
 package com.xirc.nichirin.client.gui.biggui;
 
-import com.xirc.nichirin.common.data.MovesetProgression;
 import com.xirc.nichirin.common.data.ProgressionHelper;
 import com.xirc.nichirin.common.event.unlock.FlameBreathingUnlockHandler;
 import com.xirc.nichirin.registry.NichirinItemRegistry;

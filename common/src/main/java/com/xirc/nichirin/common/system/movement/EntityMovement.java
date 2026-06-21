@@ -2,7 +2,6 @@ package com.xirc.nichirin.common.system.movement;
 
 import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.config.NichirinModConfig.MovementConfig;
-import com.xirc.nichirin.common.entity.MovesetCapableNPC;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;

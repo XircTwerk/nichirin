@@ -3,7 +3,6 @@ package com.xirc.nichirin.common.item.katana;
 import com.xirc.nichirin.registry.NichirinItemRegistry;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;

@@ -9,7 +9,6 @@ import com.xirc.nichirin.common.attack.moveset.DefaultGunMoveset;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.item.gun.GenyaDB;
-import com.xirc.nichirin.registry.NichirinMovesetRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;

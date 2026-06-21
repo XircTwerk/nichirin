@@ -91,7 +91,6 @@ public class LevelRendererMixin {
                 .getProcessor(DeadCalmShaderEffect.class);
 
         if (effect != null && effect.getSkyboxRenderer().isActive()) {
-            System.out.println("DEBUG: Rendering Dead Calm skybox!");
             PoseStack poseStack = new PoseStack();
             poseStack.mulPose(modelViewMatrix);
             effect.getSkyboxRenderer().render(poseStack, projectionMatrix, partialTick);

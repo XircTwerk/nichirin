@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.attack;
 
+import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.client.gui.CooldownHUD;
 import com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer;
 import com.xirc.nichirin.common.attack.component.AbstractAttack;
@@ -280,11 +281,11 @@ public class MoveExecutor {
     private static void startAttack(LivingEntity entity, Object attack) {
         if (attack instanceof AbstractBreathingAttack<?, ?> breathingAttack) {
             if (entity instanceof Player player) {
-                try { breathingAttack.start(player, entity.level()); } catch (Exception e) { e.printStackTrace(); }
+                try { breathingAttack.start(player, entity.level()); } catch (Exception e) { BreathOfNichirin.LOGGER.error("Failed to start breathing attack", e); }
             } else {
                 try {
                     attack.getClass().getMethod("start", LivingEntity.class, Level.class).invoke(attack, entity, entity.level());
-                } catch (Exception e) { e.printStackTrace(); }
+                } catch (Exception e) { BreathOfNichirin.LOGGER.error("Failed to start breathing attack", e); }
             }
             return;
         }
@@ -294,25 +295,25 @@ public class MoveExecutor {
             attack.getClass().getMethod("start", LivingEntity.class, Level.class).invoke(attack, entity, entity.level());
             return;
         } catch (NoSuchMethodException ignored) {}
-        catch (Exception e) { e.printStackTrace(); return; }
+        catch (Exception e) { BreathOfNichirin.LOGGER.error("Failed to start attack", e); return; }
 
         // AbstractKatanaAttack uses start(LivingEntity) without a Level parameter
         try {
             attack.getClass().getMethod("start", LivingEntity.class).invoke(attack, entity);
             return;
         } catch (NoSuchMethodException ignored) {}
-        catch (Exception e) { e.printStackTrace(); return; }
+        catch (Exception e) { BreathOfNichirin.LOGGER.error("Failed to start attack", e); return; }
 
         if (entity instanceof Player player) {
             try {
                 attack.getClass().getMethod("start", Player.class, Level.class).invoke(attack, player, entity.level());
                 return;
             } catch (NoSuchMethodException ignored) {}
-            catch (Exception e) { e.printStackTrace(); return; }
+            catch (Exception e) { BreathOfNichirin.LOGGER.error("Failed to start attack", e); return; }
 
             try {
                 attack.getClass().getMethod("start", Player.class).invoke(attack, player);
-            } catch (Exception e) { e.printStackTrace(); }
+            } catch (Exception e) { BreathOfNichirin.LOGGER.error("Failed to start attack", e); }
         }
     }
 

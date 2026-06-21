@@ -16,7 +16,6 @@ import com.xirc.nichirin.common.network.c2s.*;
 import com.xirc.nichirin.common.network.s2c.*;
 import net.minecraft.world.phys.Vec3;
 import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
-import com.xirc.nichirin.common.network.util.MovesetSyncPacket;
 import com.xirc.nichirin.common.system.DemonComponent;
 import com.xirc.nichirin.common.system.blocking.HandToHandBlock;
 import com.xirc.nichirin.common.system.blocking.KatanaBlock;
@@ -36,9 +35,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.InteractionHand;
 import io.netty.buffer.Unpooled;
 
 import java.util.HashMap;

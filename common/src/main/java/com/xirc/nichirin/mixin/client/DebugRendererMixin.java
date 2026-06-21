@@ -35,7 +35,6 @@ public class DebugRendererMixin {
                 .getProcessor(DeadCalmShaderEffect.class);
 
         if (effect != null && effect.getBlockRenderer().isActive()) {
-            System.out.println("DEBUG: Rendering blue blocks!");
             effect.getBlockRenderer().render(poseStack);
         }
     }

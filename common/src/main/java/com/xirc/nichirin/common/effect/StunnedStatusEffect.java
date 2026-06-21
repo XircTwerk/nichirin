@@ -13,7 +13,6 @@ import net.minecraft.world.phys.Vec3;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import net.minecraft.world.entity.ai.attributes.AttributeMap;
 
 /**
  * Stunned Status Effect - Prevents movement and actions but allows knockback

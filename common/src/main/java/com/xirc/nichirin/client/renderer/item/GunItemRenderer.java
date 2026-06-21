@@ -5,7 +5,6 @@ import com.xirc.nichirin.client.animation.GenyaDBAnimator;
 import com.xirc.nichirin.common.item.gun.GenyaDB;
 import com.xirc.nichirin.common.util.ItemStackData;
 import com.mojang.blaze3d.platform.Lighting;
-import mod.azure.azurelib.common.model.AzBone;
 import mod.azure.azurelib.common.render.AzRendererPipelineContext;
 import mod.azure.azurelib.common.render.item.AzItemRenderer;
 import mod.azure.azurelib.common.render.item.AzItemRendererConfig;

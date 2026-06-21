@@ -1,8 +1,6 @@
 package com.xirc.nichirin.common.data;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.StringTag;
 
 import java.util.HashMap;
 import java.util.Map;

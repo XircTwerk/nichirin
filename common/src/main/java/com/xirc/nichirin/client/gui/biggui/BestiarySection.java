@@ -2,7 +2,6 @@ package com.xirc.nichirin.client.gui.biggui;
 
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 
 /**

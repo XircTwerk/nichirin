@@ -4,7 +4,6 @@ import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.demon.destructive.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.registry.NichirinMovesetRegistry;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;

@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.attack.component;
 
+import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset.MoveConfiguration;
 import com.xirc.nichirin.common.network.s2c.TriggerShaderPacket;
 import com.xirc.nichirin.common.util.BreathingManager;
@@ -75,7 +76,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         try {
             onStart();
         } catch (Exception e) {
-            e.printStackTrace();
+            BreathOfNichirin.LOGGER.error("Error starting breathing attack", e);
             this.isActive = false;
             if (breathConsumed) { BreathingManager.restore(player, breathCost); breathConsumed = false; }
             return;
@@ -102,7 +103,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         try {
             onStart();
         } catch (Exception e) {
-            e.printStackTrace();
+            BreathOfNichirin.LOGGER.error("Error starting breathing attack", e);
             this.isActive = false;
         }
     }

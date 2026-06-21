@@ -6,7 +6,6 @@ import com.xirc.nichirin.common.util.NichirinArmorDamage;
 import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;

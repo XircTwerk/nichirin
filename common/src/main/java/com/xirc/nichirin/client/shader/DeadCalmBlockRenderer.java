@@ -4,7 +4,6 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -43,10 +42,7 @@ public class DeadCalmBlockRenderer {
         attackRange = range;
         affectedBlocks.clear();
 
-        // IMMEDIATELY find all blocks in range
         updateAffectedBlocks();
-
-        System.out.println("DEBUG: Block renderer activated - " + affectedBlocks.size() + " blocks in " + range + " block radius!");
     }
 
     public void activate(Vec3 center) {
@@ -57,7 +53,6 @@ public class DeadCalmBlockRenderer {
         active = false;
         ticks = 0;
         affectedBlocks.clear();
-        System.out.println("DEBUG: Block renderer deactivated");
     }
 
     public boolean isActive() {

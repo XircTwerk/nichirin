@@ -12,7 +12,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**

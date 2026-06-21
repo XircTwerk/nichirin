@@ -12,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
-import java.lang.ref.WeakReference;
 import net.minecraft.world.phys.Vec3;
 
 public class BreathingAuraWispParticleProvider implements ParticleProvider<SimpleParticleType> {

@@ -3,7 +3,6 @@ package com.xirc.nichirin.client.gui;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -115,16 +114,5 @@ public class MoveIcon {
     public static ResourceLocation getIconFormatted(String breathingStyle, String moveDisplayName) {
         String formattedMoveName = formatMoveNameForPath(moveDisplayName);
         return getIcon(breathingStyle, formattedMoveName);
-    }
-
-    /**
-     * Debug method to list all cached icons
-     */
-    public static void debugPrintCache() {
-        System.out.println("=== Move Icon Cache ===");
-        for (Map.Entry<String, ResourceLocation> entry : ICON_CACHE.entrySet()) {
-            System.out.println(entry.getKey() + " -> " + entry.getValue());
-        }
-        System.out.println("=====================");
     }
 }

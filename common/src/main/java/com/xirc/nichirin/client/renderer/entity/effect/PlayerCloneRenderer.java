@@ -1,7 +1,6 @@
 package com.xirc.nichirin.client.renderer.entity.effect;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import com.xirc.nichirin.common.entity.effect.PlayerCloneEntity;
 import net.minecraft.client.model.HumanoidModel;
 import net.fabricmc.api.EnvType;

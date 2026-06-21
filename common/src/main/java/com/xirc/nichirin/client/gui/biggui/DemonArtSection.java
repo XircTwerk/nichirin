@@ -13,7 +13,6 @@ import net.minecraft.world.entity.player.Player;
 
 import static com.xirc.nichirin.common.data.ProgressionHelper.getUnlockRequirement;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 
 /**

@@ -1,12 +1,12 @@
 package com.xirc.nichirin.common.util;
 
+import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.client.animation.NichirinAnimations;
 import com.xirc.nichirin.client.handler.AttackWheelHandler;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
-import com.xirc.nichirin.registry.NichirinKeybindRegistry;
 import dev.architectury.event.events.client.ClientTickEvent;
 import dev.architectury.networking.NetworkManager;
 import dev.architectury.platform.Platform;
@@ -17,7 +17,6 @@ import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 
 /**
  * Handles blocking input with V key
@@ -147,7 +146,7 @@ public class BlockingInputHandler {
                 return true;
             }
         } catch (Exception e) {
-            System.out.println("WARNING: Could not check wheel blocking state: " + e.getMessage());
+            BreathOfNichirin.LOGGER.warn("Could not check wheel blocking state", e);
         }
 
         // Check multiplayer input handler
@@ -156,7 +155,7 @@ public class BlockingInputHandler {
                 return true;
             }
         } catch (Exception e) {
-            System.out.println("WARNING: Could not check multiplayer input blocking: " + e.getMessage());
+            BreathOfNichirin.LOGGER.warn("Could not check multiplayer input blocking", e);
         }
 
         return false;

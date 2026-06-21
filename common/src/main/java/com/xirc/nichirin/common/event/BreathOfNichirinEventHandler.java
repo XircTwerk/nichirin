@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.event;
 
+import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.component.AbstractDemonAttack;
 import com.xirc.nichirin.common.attack.moves.breathing.sound.TempoBreakerAttack;
@@ -209,7 +210,7 @@ public class BreathOfNichirinEventHandler {
                         false);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            BreathOfNichirin.LOGGER.error("Error handling player death", e);
         }
     }
 
@@ -226,7 +227,7 @@ public class BreathOfNichirinEventHandler {
             MovesetAuraTicker.clear(player.getUUID());
             DemonBloodVialItem.clearPending(player.getUUID());
         } catch (Exception e) {
-            e.printStackTrace();
+            BreathOfNichirin.LOGGER.error("Error handling player disconnect", e);
         }
     }
 

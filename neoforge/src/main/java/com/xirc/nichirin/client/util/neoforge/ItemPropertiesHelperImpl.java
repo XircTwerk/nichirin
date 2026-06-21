@@ -1,5 +1,6 @@
 package com.xirc.nichirin.client.util.neoforge;
 
+import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.common.item.tool.BentoBoxItem;
 import com.xirc.nichirin.registry.NichirinItemRegistry;
 import net.minecraft.client.renderer.item.ItemProperties;
@@ -35,7 +36,7 @@ public class ItemPropertiesHelperImpl {
                     }
             );
         } catch (Exception e) {
-            e.printStackTrace();
+            BreathOfNichirin.LOGGER.error("Failed to register bento box item property", e);
         }
     }
 }

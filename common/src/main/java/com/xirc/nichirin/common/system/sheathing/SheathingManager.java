@@ -2,7 +2,6 @@ package com.xirc.nichirin.common.system.sheathing;
 
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.DrawSlashAttack;
-import com.xirc.nichirin.common.attack.moves.KatanaCheckAttack;
 import com.xirc.nichirin.common.attack.moves.KatanaOverheadAttack;
 import com.xirc.nichirin.common.attack.moves.KatanaThrustAttack;
 import com.xirc.nichirin.common.item.katana.IndividualBeastKatana;

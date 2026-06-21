@@ -1,8 +1,6 @@
 package com.xirc.nichirin.registry;
 
-import com.xirc.nichirin.BreathOfNichirin;
 import net.minecraft.client.renderer.ShaderInstance;
-import net.minecraft.resources.ResourceLocation;
 
 import java.util.HashMap;
 import java.util.Map;

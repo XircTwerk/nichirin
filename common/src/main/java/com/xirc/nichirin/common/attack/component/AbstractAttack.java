@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.attack.component;
 
+import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset.MoveConfiguration;
 import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
@@ -134,9 +135,9 @@ public abstract class AbstractAttack {
         if (tickCount > windup) {
             if (!activeStartFired) {
                 activeStartFired = true;
-                try { onActiveStart(); } catch (Exception e) { e.printStackTrace(); }
+                try { onActiveStart(); } catch (Exception e) { BreathOfNichirin.LOGGER.error("Error in attack onActiveStart", e); }
             }
-            try { perform(); } catch (Exception e) { e.printStackTrace(); }
+            try { perform(); } catch (Exception e) { BreathOfNichirin.LOGGER.error("Error in attack perform", e); }
         }
 
         if (tickCount >= windup + duration) stop(false);
@@ -148,7 +149,7 @@ public abstract class AbstractAttack {
         if (isActive) {
             isActive = false;
             unregisterFromTicking();
-            try { onStop(); } catch (Exception e) { e.printStackTrace(); }
+            try { onStop(); } catch (Exception e) { BreathOfNichirin.LOGGER.error("Error in attack onStop", e); }
             if (stopAnimation) stopPlayerAnimation();
         }
     }
@@ -419,7 +420,7 @@ public abstract class AbstractAttack {
                         if (attack.isActive()) attack.tick();
                         else toRemove.add(attack);
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        BreathOfNichirin.LOGGER.error("Error ticking attack", e);
                         toRemove.add(attack);
                     }
                 }

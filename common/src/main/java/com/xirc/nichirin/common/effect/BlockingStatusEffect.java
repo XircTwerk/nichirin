@@ -9,9 +9,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 
-import java.util.UUID;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.ai.attributes.AttributeMap;
 
 /**
  * Blocking Status Effect - Applied when a player is blocking with a katana

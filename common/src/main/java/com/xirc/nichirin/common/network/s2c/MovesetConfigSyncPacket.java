@@ -2,11 +2,9 @@ package com.xirc.nichirin.common.network.s2c;
 
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.registry.NichirinMovesetRegistry;
-import dev.architectury.networking.NetworkManager;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 
-import java.util.function.Supplier;
 
 /**
  * Packet to sync captured moveset configurations from server to client

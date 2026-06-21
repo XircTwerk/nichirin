@@ -28,7 +28,7 @@ import org.lwjgl.glfw.GLFW;
 import java.util.Arrays;
 
 /**
- * DEBUG VERSION: Attack wheel handler with extensive logging
+ * Handles the attack wheel: key input, selection state, and page navigation.
  */
 public class AttackWheelHandler {
 

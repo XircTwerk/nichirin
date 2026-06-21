@@ -1,7 +1,6 @@
 package com.xirc.nichirin.common.item;
 
 import dev.architectury.registry.registries.RegistrySupplier;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
