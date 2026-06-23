@@ -1,6 +1,5 @@
 package com.xirc.nichirin.common.attack.moveset.breathing;
 
-import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.breathing.thunder.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
@@ -19,7 +18,6 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
 
     private static final Map<UUID, Map<Integer, Long>> entityCooldowns = new HashMap<>();
     private static final Map<UUID, Boolean> executingMove = new HashMap<>();
-    private static final ThreadLocal<ThunderBreathingMoveset> CURRENT_MOVESET = new ThreadLocal<>();
 
     public ThunderBreathingMoveset() {
         super("thunder_breathing", "Thunder Breathing", MovesetType.BREATHING, createBuilder());
@@ -32,7 +30,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                 .withIdleAnimation("nichirin:thunder_idle")
                 .withSpeedMultiplier(1.5f)
 
-                .withRightClickMove(new MoveBuilder("thunderclap_flash", "Thunderclap and Flash")
+                .withMove(new MoveBuilder("thunderclap_flash", "Thunderclap and Flash")
                         .withAnimation("nichirin:thunderclap_charge", 10)
                         // Long duration window so the framework keeps the attack alive while charging
                         // and dashing. Breath is drained manually inside the attack per fold.
@@ -44,15 +42,11 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withHitStun(14)
                         .withHitboxSize(2.0f)
                         .withDescription("Hold to charge folds (8 breath each, max scales with breath); release for a multi-bounce dash.")
-                        .withAction(entity -> {
-                            ThunderClapFlashAttack attack = new ThunderClapFlashAttack();
-                            ThunderBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) attack.configure(moveset.getRightClickConfiguration());
-                            MoveExecutor.executeAttack(entity, attack, "thunder_breathing", "thunderclap_flash");
-                        })
+                        .asRightClick()
+                        .withAttack(ThunderClapFlashAttack::new)
                 )
 
-                .withCrouchRightClickMove(new MoveBuilder("godspeed", "Godspeed")
+                .withMove(new MoveBuilder("godspeed", "Godspeed")
                         .withAnimation("nichirin:thunderclap_flash", 10)
                         // windup=10, duration=25 ticks → 10-tick wind-up then drag-dash active window.
                         .withTiming(0, 10, 25)
@@ -63,12 +57,8 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withHitStun(10)
                         .withHitboxSize(2.0f)
                         .withDescription("3x-longer hyper dash. Drags enemies and hits every 5 ticks for 2 damage each.")
-                        .withAction(entity -> {
-                            GodspeedAttack attack = new GodspeedAttack();
-                            ThunderBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) attack.configure(moveset.getCrouchRightClickConfiguration());
-                            MoveExecutor.executeAttack(entity, attack, "thunder_breathing", "godspeed");
-                        })
+                        .asCrouchRightClick()
+                        .withAttack(GodspeedAttack::new)
                 )
 
                 // Second Form: Rice Spirit - 5 quick slashes (INDEX 0 in wheel)
@@ -82,12 +72,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withHitStun(4)
                         .withHitboxSize(2.0f)
                         .withDescription("5 rapid slashes spread in a wide arc around the player.")
-                        .withAction(entity -> {
-                            RiceSpiritAttack attack = new RiceSpiritAttack();
-                            ThunderBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) attack.configure(moveset.getMove(0));
-                            MoveExecutor.executeAttack(entity, attack, "thunder_breathing", "rice_spirit");
-                        })
+                        .withAttack(RiceSpiritAttack::new)
                 )
 
                 // Third Form: Thunder Swarm - AOE slashes (INDEX 1 in wheel)
@@ -101,12 +86,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withHitStun(14)
                         .withHitboxSize(2.5f)
                         .withDescription("4 AOE slashes around the player in quick succession.")
-                        .withAction(entity -> {
-                            ThunderSwarmAttack attack = new ThunderSwarmAttack();
-                            ThunderBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) attack.configure(moveset.getMove(1));
-                            MoveExecutor.executeAttack(entity, attack, "thunder_breathing", "thunder_swarm");
-                        })
+                        .withAttack(ThunderSwarmAttack::new)
                 )
 
                 // Fourth Form: Distant Thunder - Lightning over time (INDEX 2 in wheel)
@@ -119,12 +99,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(45.0f)
                         .withHitStun(25)
                         .withDescription("Calls down 3 delayed lightning strikes over a large area.")
-                        .withAction(entity -> {
-                            DistantThunderAttack attack = new DistantThunderAttack();
-                            ThunderBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) attack.configure(moveset.getMove(2));
-                            MoveExecutor.executeAttack(entity, attack, "thunder_breathing", "distant_thunder");
-                        })
+                        .withAttack(DistantThunderAttack::new)
                 )
 
                 // Fifth Form: Heat Lightning - Anti-air combo (INDEX 3 in wheel)
@@ -138,12 +113,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withHitStun(25)
                         .withHitboxSize(3.0f)
                         .withDescription("Upward slash that launches the target into the air.")
-                        .withAction(entity -> {
-                            HeatLightningAttack attack = new HeatLightningAttack();
-                            ThunderBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) attack.configure(moveset.getMove(3));
-                            MoveExecutor.executeAttack(entity, attack, "thunder_breathing", "heat_lightning");
-                        })
+                        .withAttack(HeatLightningAttack::new)
                 )
 
                 // Sixth Form: Rumble and Flash - Long range precision (INDEX 4 in wheel)
@@ -156,12 +126,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withBreathCost(40.0f)
                         .withHitStun(35)
                         .withDescription("Long-range dash slash with 20-block reach.")
-                        .withAction(entity -> {
-                            RumbleFlashAttack attack = new RumbleFlashAttack();
-                            ThunderBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) attack.configure(moveset.getMove(4));
-                            MoveExecutor.executeAttack(entity, attack, "thunder_breathing", "rumble_flash");
-                        })
+                        .withAttack(RumbleFlashAttack::new)
                 )
 
                 // Seventh Form: Honoikazuchi no Kami - Ultimate finisher (INDEX 5 in wheel)
@@ -175,12 +140,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
                         .withHitStun(60)
                         .withHitboxSize(3.5f)
                         .withDescription("Massive-damage teleport slash. 30-second cooldown.")
-                        .withAction(entity -> {
-                            HonoikazuchiNoKamiAttack attack = new HonoikazuchiNoKamiAttack();
-                            ThunderBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) attack.configure(moveset.getMove(5));
-                            MoveExecutor.executeAttack(entity, attack, "thunder_breathing", "honoikazuchi_no_kami");
-                        })
+                        .withAttack(HonoikazuchiNoKamiAttack::new)
                 );
     }
 
@@ -198,12 +158,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
     @Override
     public boolean handleRightClick(LivingEntity entity, boolean isCrouching) {
         if (!canPerformMoves(entity)) return true;
-        CURRENT_MOVESET.set(this);
-        try {
-            return super.handleRightClick(entity, isCrouching);
-        } finally {
-            CURRENT_MOVESET.remove();
-        }
+        return super.handleRightClick(entity, isCrouching);
     }
 
     @Override
@@ -248,13 +203,7 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
         }
 
         executingMove.put(entity.getUUID(), true);
-        CURRENT_MOVESET.set(this);
-
-        try {
-            super.performMove(entity, moveIndex);
-        } finally {
-            CURRENT_MOVESET.remove();
-        }
+        super.performMove(entity, moveIndex);
 
         boolean moveExecuted = !executingMove.getOrDefault(entity.getUUID(), false);
         executingMove.remove(entity.getUUID());
@@ -278,10 +227,6 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
         List<LivingEntity> entities = entity.level().getEntitiesOfClass(LivingEntity.class, searchBox,
                 e -> e != entity && entity.isAlive() && !entity.isSpectator());
         return !entities.isEmpty();
-    }
-
-    public static ThunderBreathingMoveset getCurrentMoveset() {
-        return CURRENT_MOVESET.get();
     }
 
     private boolean canUseMove(LivingEntity entity, int moveIndex) {

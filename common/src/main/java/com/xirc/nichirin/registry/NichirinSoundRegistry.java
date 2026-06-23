@@ -7,7 +7,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 
-public interface NicirinSoundRegistry {
+public interface NichirinSoundRegistry {
     DeferredRegister<SoundEvent> SOUND_EVENTS =
             DeferredRegister.create(BreathOfNichirin.MOD_ID, Registries.SOUND_EVENT);
 

@@ -1,6 +1,5 @@
 package com.xirc.nichirin.common.attack.moveset.breathing;
 
-import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.breathing.mist.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
@@ -17,7 +16,6 @@ public class MistBreathingMoveset extends AbstractMoveset {
 
     private static final Map<UUID, Map<Integer, Long>> entityCooldowns = new HashMap<>();
     private static final Map<UUID, Boolean> executingMove = new HashMap<>();
-    private static final ThreadLocal<MistBreathingMoveset> CURRENT_MOVESET = new ThreadLocal<>();
 
     public MistBreathingMoveset() {
         super("mist_breathing", "Mist Breathing", MovesetType.BREATHING, createBuilder());
@@ -29,7 +27,7 @@ public class MistBreathingMoveset extends AbstractMoveset {
                 .withSpeedMultiplier(1.2f)
 
                 //Mist breathing second form
-                .withRightClickMove(new MoveBuilder("eight_layered_mist", "Eight-Layered Mist")
+                .withMove(new MoveBuilder("eight_layered_mist", "Eight-Layered Mist")
                         .withAnimation("nichirin:mist_rapid_slash", 6)
                         .withTiming(0, 9, 17)
                         .withDamage(1.0f)
@@ -39,16 +37,12 @@ public class MistBreathingMoveset extends AbstractMoveset {
                         .withHitStun(12)
                         .withHitboxSize(4.5f)
                         .withDescription("Eight rapid slashes that ignore immunity frames.")
-                        .withAction(entity -> {
-                            EightLayeredMistAttack attack = new EightLayeredMistAttack();
-                            MistBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) attack.configure(moveset.getRightClickConfiguration());
-                            MoveExecutor.executeAttack(entity, attack, "mist_breathing", "eight_layered_mist");
-                        })
+                        .asRightClick()
+                        .withAttack(EightLayeredMistAttack::new)
                 )
 
                 //First form
-                .withCrouchRightClickMove(new MoveBuilder("low_clouds_distant_haze", "Low Clouds, Distant Haze")
+                .withMove(new MoveBuilder("low_clouds_distant_haze", "Low Clouds, Distant Haze")
                         .withAnimation("nichirin:mist_thrust", 7)
                         .withTiming(0, 5, 12)
                         .withDamage(7.0f)
@@ -59,12 +53,8 @@ public class MistBreathingMoveset extends AbstractMoveset {
                         .withHitStun(16)
                         .withHitboxSize(2.5f)
                         .withDescription("Lightning-fast thrusting lunge that pierces multiple enemies.")
-                        .withAction(entity -> {
-                            LowCloudsDistantHazeAttack attack = new LowCloudsDistantHazeAttack();
-                            MistBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) attack.configure(moveset.getCrouchRightClickConfiguration());
-                            MoveExecutor.executeAttack(entity, attack, "mist_breathing", "low_clouds_distant_haze");
-                        })
+                        .asCrouchRightClick()
+                        .withAttack(LowCloudsDistantHazeAttack::new)
                 )
 
                 // Form 3: Scattering Mist Splash (INDEX 0 in wheel)
@@ -78,13 +68,7 @@ public class MistBreathingMoveset extends AbstractMoveset {
                         .withHitStun(22)
                         .withHitboxSize(3.5f)
                         .withDescription("360° circular slash that deflects projectiles and knocks back enemies.")
-                        .withAction(entity -> {
-                            MistBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset == null) return;
-                            ScatteringMistSplashAttack attack = new ScatteringMistSplashAttack();
-                            attack.configure(moveset.getMove(0));
-                            MoveExecutor.executeAttack(entity, attack, "mist_breathing", "scattering_mist_splash");
-                        })
+                        .withAttack(ScatteringMistSplashAttack::new)
                 )
 
                 // Form 4: Shifting Flow Slash (INDEX 1 in wheel)
@@ -101,13 +85,7 @@ public class MistBreathingMoveset extends AbstractMoveset {
                         .withHitStun(25)
                         .withHitboxSize(2.5f)
                         .withDescription("10-tick low-stance windup into an 18-block dash. Slashes all enemies in path and delivers a powerful finisher.")
-                        .withAction(entity -> {
-                            MistBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset == null) return;
-                            ShiftingFlowSlashAttack attack = new ShiftingFlowSlashAttack();
-                            attack.configure(moveset.getMove(1));
-                            MoveExecutor.executeAttack(entity, attack, "mist_breathing", "shifting_flow_slash");
-                        })
+                        .withAttack(ShiftingFlowSlashAttack::new)
                 )
 
                 // Form 5: Sea of Clouds and Haze (INDEX 2 in wheel)
@@ -122,13 +100,7 @@ public class MistBreathingMoveset extends AbstractMoveset {
                         .withHitStun(15)
                         .withHitboxSize(7.5f)
                         .withDescription("5-hop zigzag charge with large hitboxes. Drags and slashes enemies into a powerful finisher.")
-                        .withAction(entity -> {
-                            MistBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset == null) return;
-                            SeaOfCloudsAndHazeAttack attack = new SeaOfCloudsAndHazeAttack();
-                            attack.configure(moveset.getMove(2));
-                            MoveExecutor.executeAttack(entity, attack, "mist_breathing", "sea_of_clouds_and_haze");
-                        })
+                        .withAttack(SeaOfCloudsAndHazeAttack::new)
                 )
 
                 // Form 6: Lunar Dispersing Mist (INDEX 3 in wheel)
@@ -143,13 +115,7 @@ public class MistBreathingMoveset extends AbstractMoveset {
                         .withHitStun(20)
                         .withHitboxSize(3.0f)
                         .withDescription("Aerial charge with multiple slashes. Ends with a devastating vertical circular slash.")
-                        .withAction(entity -> {
-                            MistBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset == null) return;
-                            LunarDispersingMistAttack attack = new LunarDispersingMistAttack();
-                            attack.configure(moveset.getMove(3));
-                            MoveExecutor.executeAttack(entity, attack, "mist_breathing", "lunar_dispersing_mist");
-                        })
+                        .withAttack(LunarDispersingMistAttack::new)
                 )
 
                 // Form 7: Obscuring Clouds (INDEX 4 in wheel)
@@ -163,13 +129,7 @@ public class MistBreathingMoveset extends AbstractMoveset {
                         .withHitStun(8)
                         .withHitboxSize(5.0f)
                         .withDescription("Become invisible and teleport around all enemies in 8 blocks for 5 seconds. 32-second cooldown.")
-                        .withAction(entity -> {
-                            MistBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset == null) return;
-                            ObscuringCloudsAttack attack = new ObscuringCloudsAttack();
-                            attack.configure(moveset.getMove(4));
-                            MoveExecutor.executeAttack(entity, attack, "mist_breathing", "obscuring_clouds");
-                        })
+                        .withAttack(ObscuringCloudsAttack::new)
                 );
     }
 
@@ -187,12 +147,7 @@ public class MistBreathingMoveset extends AbstractMoveset {
     @Override
     public boolean handleRightClick(LivingEntity entity, boolean isCrouching) {
         if (!canPerformMoves(entity)) return true;
-        CURRENT_MOVESET.set(this);
-        try {
-            return super.handleRightClick(entity, isCrouching);
-        } finally {
-            CURRENT_MOVESET.remove();
-        }
+        return super.handleRightClick(entity, isCrouching);
     }
 
     @Override
@@ -232,13 +187,7 @@ public class MistBreathingMoveset extends AbstractMoveset {
         }
 
         executingMove.put(entity.getUUID(), true);
-        CURRENT_MOVESET.set(this);
-
-        try {
-            super.performMove(entity, moveIndex);
-        } finally {
-            CURRENT_MOVESET.remove();
-        }
+        super.performMove(entity, moveIndex);
 
         boolean moveExecuted = !executingMove.getOrDefault(entity.getUUID(), false);
         executingMove.remove(entity.getUUID());
@@ -292,10 +241,6 @@ public class MistBreathingMoveset extends AbstractMoveset {
 
     @Override
     public void onMovePerformed(LivingEntity entity, int moveIndex, boolean isCrouching) {}
-
-    public static MistBreathingMoveset getCurrentMoveset() {
-        return CURRENT_MOVESET.get();
-    }
 
     public static void resetCooldowns(LivingEntity entity) {
         entityCooldowns.remove(entity.getUUID());

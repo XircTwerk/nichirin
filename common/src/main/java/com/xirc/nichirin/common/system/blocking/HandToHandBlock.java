@@ -18,7 +18,7 @@ import com.xirc.nichirin.common.entity.npc.TempleDemonEntity;
 import com.xirc.nichirin.common.item.katana.SimpleKatana;
 import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
-import com.xirc.nichirin.registry.NicirinSoundRegistry;
+import com.xirc.nichirin.registry.NichirinSoundRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.networking.NetworkManager;
 import io.netty.buffer.Unpooled;
@@ -525,7 +525,7 @@ public class HandToHandBlock {
             npc.triggerMovesetAnimation(blockAnimation(defender));
         }
         defender.level().playSound(null, defender.getX(), defender.getY(), defender.getZ(),
-                NicirinSoundRegistry.BLOCK_CLANG.get(), SoundSource.PLAYERS, 0.9f, 1.0f);
+                NichirinSoundRegistry.BLOCK_CLANG.get(), SoundSource.PLAYERS, 0.9f, 1.0f);
 
         if (defender instanceof Player player) {
             player.displayClientMessage(

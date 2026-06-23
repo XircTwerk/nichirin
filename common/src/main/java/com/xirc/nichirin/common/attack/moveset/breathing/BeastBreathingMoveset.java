@@ -1,6 +1,5 @@
 package com.xirc.nichirin.common.attack.moveset.breathing;
 
-import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.breathing.beast.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
@@ -17,7 +16,6 @@ public class BeastBreathingMoveset extends AbstractMoveset {
 
     private static final Map<UUID, Map<Integer, Long>> entityCooldowns = new HashMap<>();
     private static final Map<UUID, Boolean> executingMove = new HashMap<>();
-    private static final ThreadLocal<BeastBreathingMoveset> CURRENT_MOVESET = new ThreadLocal<>();
 
     // Explosive Rush has its own per-player cooldown separate from the wheel-move map.
     private static final Map<UUID, Long> explosiveRushCooldownEnd = new HashMap<>();
@@ -31,7 +29,7 @@ public class BeastBreathingMoveset extends AbstractMoveset {
                 .withIdleAnimation("nichirin:beast_idle")
                 .withSpeedMultiplier(1.2f)
 
-                .withLeftClickMove(new MoveBuilder("pierce", "Pierce")
+                .withMove(new MoveBuilder("pierce", "Pierce")
                         .withAnimation("nichirin:beast_pierce", 7)
                         .withTiming(0, 0, 6)
                         .withDamage(3.0f)
@@ -42,15 +40,11 @@ public class BeastBreathingMoveset extends AbstractMoveset {
                         .withHitStun(10)
                         .withHitboxSize(1.5f)
                         .withDescription("Stabs forward")
-                        .withAction(entity -> {
-                            BeastPierceAttack attack = new BeastPierceAttack();
-                            BeastBreathingMoveset m = getCurrentMoveset();
-                            if (m != null) attack.configure(m.getLeftClickConfiguration());
-                            MoveExecutor.executeAttack(entity, attack, "beast_breathing", "pierce");
-                        })
+                        .asLeftClick()
+                        .withAttack(BeastPierceAttack::new)
                 )
 
-                .withRightClickMove(new MoveBuilder("x_slice", "Slice")
+                .withMove(new MoveBuilder("x_slice", "Slice")
                         .withAnimation("nichirin:beast_x_slice", 8)
                         .withTiming(0, 0, 8)
                         .withDamage(5.0f)
@@ -60,15 +54,11 @@ public class BeastBreathingMoveset extends AbstractMoveset {
                         .withHitStun(12)
                         .withHitboxSize(2.0f)
                         .withDescription("Two progressing X-shaped slash projectiles.")
-                        .withAction(entity -> {
-                            BeastXSliceAttack attack = new BeastXSliceAttack();
-                            BeastBreathingMoveset m = getCurrentMoveset();
-                            if (m != null) attack.configure(m.getRightClickConfiguration());
-                            MoveExecutor.executeAttack(entity, attack, "beast_breathing", "x_slice");
-                        })
+                        .asRightClick()
+                        .withAttack(BeastXSliceAttack::new)
                 )
 
-                .withCrouchRightClickMove(new MoveBuilder("explosive_rush", "Explosive Rush")
+                .withMove(new MoveBuilder("explosive_rush", "Explosive Rush")
                         .withAnimation("nichirin:beast_explosive_rush", 12)
                         .withTiming(0, 0, 11)
                         .withDamage(12.0f)
@@ -79,15 +69,8 @@ public class BeastBreathingMoveset extends AbstractMoveset {
                         .withHitStun(20)
                         .withHitboxSize(2.5f)
                         .withDescription("Invulnerable dash at blinding speed; deflects all projectiles.")
-                        .withAction(entity -> {
-                            BeastExplosiveRushAttack attack = new BeastExplosiveRushAttack();
-                            BeastBreathingMoveset m = getCurrentMoveset();
-                            if (m != null) {
-                                attack.configure(m.getCrouchRightClickConfiguration());
-                                m.setExplosiveRushCooldown(entity);
-                            }
-                            MoveExecutor.executeAttack(entity, attack, "beast_breathing", "explosive_rush");
-                        })
+                        .asCrouchRightClick()
+                        .withAttack(BeastExplosiveRushAttack::new)
                 )
 
                 // 0 - Third Fang: Devour
@@ -101,12 +84,7 @@ public class BeastBreathingMoveset extends AbstractMoveset {
                         .withHitStun(40)
                         .withHitboxSize(2.0f)
                         .withDescription("Two simultaneous horizontal slashes. No knockback, heavy stun.")
-                        .withAction(entity -> {
-                            BeastDevourAttack attack = new BeastDevourAttack();
-                            BeastBreathingMoveset m = getCurrentMoveset();
-                            if (m != null) attack.configure(m.getMove(0));
-                            MoveExecutor.executeAttack(entity, attack, "beast_breathing", "devour");
-                        })
+                        .withAttack(BeastDevourAttack::new)
                 )
 
                 // 1 - Fourth Fang: Slice 'n' Dice
@@ -120,12 +98,7 @@ public class BeastBreathingMoveset extends AbstractMoveset {
                         .withHitStun(5)
                         .withHitboxSize(1.8f)
                         .withDescription("8 rapid diagonal slashes. Each hit bypasses immunity frames.")
-                        .withAction(entity -> {
-                            BeastSliceNDiceAttack attack = new BeastSliceNDiceAttack();
-                            BeastBreathingMoveset m = getCurrentMoveset();
-                            if (m != null) attack.configure(m.getMove(1));
-                            MoveExecutor.executeAttack(entity, attack, "beast_breathing", "slice_n_dice");
-                        })
+                        .withAttack(BeastSliceNDiceAttack::new)
                 )
 
                 // 2 - Fifth Fang: Crazy Cutting
@@ -139,12 +112,7 @@ public class BeastBreathingMoveset extends AbstractMoveset {
                         .withHitStun(12)
                         .withHitboxSize(3.5f)
                         .withDescription("Omnidirectional slicing while levitating.")
-                        .withAction(entity -> {
-                            BeastCrazyCuttingAttack attack = new BeastCrazyCuttingAttack();
-                            BeastBreathingMoveset m = getCurrentMoveset();
-                            if (m != null) attack.configure(m.getMove(2));
-                            MoveExecutor.executeAttack(entity, attack, "beast_breathing", "crazy_cutting");
-                        })
+                        .withAttack(BeastCrazyCuttingAttack::new)
                 )
 
                 // 3 - Sixth Fang: Palisade Bite
@@ -158,12 +126,7 @@ public class BeastBreathingMoveset extends AbstractMoveset {
                         .withHitStun(15)
                         .withHitboxSize(2.5f)
                         .withDescription("Four wide progressing slashes in a saw-like pattern.")
-                        .withAction(entity -> {
-                            BeastPalisadeBiteAttack attack = new BeastPalisadeBiteAttack();
-                            BeastBreathingMoveset m = getCurrentMoveset();
-                            if (m != null) attack.configure(m.getMove(3));
-                            MoveExecutor.executeAttack(entity, attack, "beast_breathing", "palisade_bite");
-                        })
+                        .withAttack(BeastPalisadeBiteAttack::new)
                 )
 
                 // 4 - Seventh Form: Spatial Awareness
@@ -177,12 +140,7 @@ public class BeastBreathingMoveset extends AbstractMoveset {
                         .withHitStun(0)
                         .withHitboxSize(30.0f)
                         .withDescription("Sense all enemies through walls via glowing. 10-second cooldown.")
-                        .withAction(entity -> {
-                            BeastSpatialAwarenessAttack attack = new BeastSpatialAwarenessAttack();
-                            BeastBreathingMoveset m = getCurrentMoveset();
-                            if (m != null) attack.configure(m.getMove(4));
-                            MoveExecutor.executeAttack(entity, attack, "beast_breathing", "spatial_awareness");
-                        })
+                        .withAttack(BeastSpatialAwarenessAttack::new)
                 )
 
                 // 5 - Ninth Fang: Bendy Slash
@@ -196,12 +154,7 @@ public class BeastBreathingMoveset extends AbstractMoveset {
                         .withHitStun(15)
                         .withHitboxSize(2.5f)
                         .withDescription("Long-range frontal slash. No windup; covers everything in front.")
-                        .withAction(entity -> {
-                            BeastBendySlashAttack attack = new BeastBendySlashAttack();
-                            BeastBreathingMoveset m = getCurrentMoveset();
-                            if (m != null) attack.configure(m.getMove(5));
-                            MoveExecutor.executeAttack(entity, attack, "beast_breathing", "bendy_slash");
-                        })
+                        .withAttack(BeastBendySlashAttack::new)
                 )
 
                 // 6 - Tenth Fang: Whirling Fangs
@@ -215,12 +168,7 @@ public class BeastBreathingMoveset extends AbstractMoveset {
                         .withHitStun(10)
                         .withHitboxSize(3.0f)
                         .withDescription("Rapid spin; deflects all projectiles around you.")
-                        .withAction(entity -> {
-                            BeastWhirlingFangsAttack attack = new BeastWhirlingFangsAttack();
-                            BeastBreathingMoveset m = getCurrentMoveset();
-                            if (m != null) attack.configure(m.getMove(6));
-                            MoveExecutor.executeAttack(entity, attack, "beast_breathing", "whirling_fangs");
-                        })
+                        .withAttack(BeastWhirlingFangsAttack::new)
                 )
 
                 // 7 - Eleventh Fang: Throwing Strike
@@ -234,12 +182,7 @@ public class BeastBreathingMoveset extends AbstractMoveset {
                         .withHitStun(20)
                         .withHitboxSize(0.5f)
                         .withDescription("Throws both katanas as piercing projectiles. Stick to blocks, expire in 10s.")
-                        .withAction(entity -> {
-                            BeastThrowingStrikeAttack attack = new BeastThrowingStrikeAttack();
-                            BeastBreathingMoveset m = getCurrentMoveset();
-                            if (m != null) attack.configure(m.getMove(7));
-                            MoveExecutor.executeAttack(entity, attack, "beast_breathing", "throwing_strike");
-                        })
+                        .withAttack(BeastThrowingStrikeAttack::new)
                 );
     }
 
@@ -257,12 +200,7 @@ public class BeastBreathingMoveset extends AbstractMoveset {
     @Override
     public boolean handleLeftClick(LivingEntity entity) {
         if (!canPerformMoves(entity)) return true;
-        CURRENT_MOVESET.set(this);
-        try {
-            return super.handleLeftClick(entity);
-        } finally {
-            CURRENT_MOVESET.remove();
-        }
+        return super.handleLeftClick(entity);
     }
 
     @Override
@@ -278,12 +216,16 @@ public class BeastBreathingMoveset extends AbstractMoveset {
                             .withStyle(s -> s.withColor(0xFF5555)), true);
             return true;
         }
-        CURRENT_MOVESET.set(this);
-        try {
-            return super.handleRightClick(entity, isCrouching);
-        } finally {
-            CURRENT_MOVESET.remove();
+        // Explosive Rush starts its cooldown only when the move actually executes — mirror the base
+        // handler's resource gate so a blocked cast doesn't burn the cooldown.
+        MoveConfiguration crouchConfig = getCrouchRightClickConfiguration();
+        boolean willExecuteRush = isCrouching && crouchConfig != null
+                && crouchConfig.hasExecutable() && hasResourcesForMove(entity, crouchConfig);
+        boolean result = super.handleRightClick(entity, isCrouching);
+        if (willExecuteRush) {
+            setExplosiveRushCooldown(entity);
         }
+        return result;
     }
 
     @Override
@@ -319,12 +261,7 @@ public class BeastBreathingMoveset extends AbstractMoveset {
         }
 
         executingMove.put(entity.getUUID(), true);
-        CURRENT_MOVESET.set(this);
-        try {
-            super.performMove(entity, moveIndex);
-        } finally {
-            CURRENT_MOVESET.remove();
-        }
+        super.performMove(entity, moveIndex);
 
         executingMove.remove(entity.getUUID());
         if (config != null) {
@@ -375,10 +312,6 @@ public class BeastBreathingMoveset extends AbstractMoveset {
     @Override
     public String getCrouchRightClickMoveName() {
         return "Eighth Form: Explosive Rush";
-    }
-
-    public static BeastBreathingMoveset getCurrentMoveset() {
-        return CURRENT_MOVESET.get();
     }
 
     public static void resetCooldowns(LivingEntity entity) {

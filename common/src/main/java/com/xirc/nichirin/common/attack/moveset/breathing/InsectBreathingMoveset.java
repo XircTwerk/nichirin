@@ -1,6 +1,5 @@
 package com.xirc.nichirin.common.attack.moveset.breathing;
 
-import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.breathing.insect.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
@@ -22,7 +21,6 @@ public class InsectBreathingMoveset extends AbstractMoveset {
 
     private static final Map<UUID, Map<Integer, Long>> entityCooldowns = new HashMap<>();
     private static final Map<UUID, Boolean> executingMove = new HashMap<>();
-    private static final ThreadLocal<InsectBreathingMoveset> CURRENT_MOVESET = new ThreadLocal<>();
 
     public InsectBreathingMoveset() {
         super("insect_breathing", "Insect Breathing", MovesetType.BREATHING, createBuilder());
@@ -33,7 +31,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                 .withIdleAnimation("nichirin:insect_idle")
                 .withSpeedMultiplier(1.3f)
 
-                .withRightClickMove(new MoveBuilder("quick_sting", "Quick Sting")
+                .withMove(new MoveBuilder("quick_sting", "Quick Sting")
                         .withAnimation("nichirin:quick_sting", 6)
                         .withTiming(5, 3, 14)
                         .withDamage(2.0f)
@@ -43,15 +41,11 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                         .withHitStun(15)
                         .withHitboxSize(0.5f)
                         .withDescription("Fast low-damage thrust that poisons on hit.")
-                        .withAction(entity -> {
-                            QuickStingAttack attack = new QuickStingAttack();
-                            InsectBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) attack.configure(moveset.getRightClickConfiguration());
-                            MoveExecutor.executeAttack(entity, attack, "insect_breathing", "quick_sting");
-                        })
+                        .asRightClick()
+                        .withAttack(QuickStingAttack::new)
                 )
 
-                .withCrouchRightClickMove(new MoveBuilder("bee_sting", "Bee Sting")
+                .withMove(new MoveBuilder("bee_sting", "Bee Sting")
                         .withAnimation("nichirin:bee_sting", 9)
                         .withTiming(0, 6, 9)
                         .withDamage(5.0f)
@@ -62,12 +56,8 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                         .withHitStun(10)
                         .withHitboxSize(2.0f)
                         .withDescription("Short dash strike that deals moderate damage.")
-                        .withAction(entity -> {
-                            BeeStingAttack attack = new BeeStingAttack();
-                            InsectBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) attack.configure(moveset.getCrouchRightClickConfiguration());
-                            MoveExecutor.executeAttack(entity, attack, "insect_breathing", "bee_sting");
-                        })
+                        .asCrouchRightClick()
+                        .withAttack(BeeStingAttack::new)
                 )
 
                 // First Form: Butterfly - Precision dash strike (INDEX 0 in wheel)
@@ -82,12 +72,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                         .withHitStun(30)
                         .withHitboxSize(2f)
                         .withDescription("Lock-on dash strike that deals high single-target damage.")
-                        .withAction(entity -> {
-                            ButterflyAttack attack = new ButterflyAttack();
-                            InsectBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) attack.configure(moveset.getMove(0));
-                            MoveExecutor.executeAttack(entity, attack, "insect_breathing", "butterfly");
-                        })
+                        .withAttack(ButterflyAttack::new)
                 )
 
                 // Third Form: Dragonfly - Multi-hit lock-on (INDEX 1 in wheel)
@@ -101,12 +86,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                         .withHitStun(5)
                         .withHitboxSize(2.0f)
                         .withDescription("Lock-on multi-hit that lands 6 rapid strikes on a single target.")
-                        .withAction(entity -> {
-                            DragonflyAttack attack = new DragonflyAttack();
-                            InsectBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) attack.configure(moveset.getMove(1));
-                            MoveExecutor.executeAttack(entity, attack, "insect_breathing", "dragonfly");
-                        })
+                        .withAttack(DragonflyAttack::new)
                 )
 
                 // Fourth Form: Centipede - Zigzag dash finisher (INDEX 2 in wheel)
@@ -121,12 +101,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                         .withHitStun(40)
                         .withHitboxSize(2.5f)
                         .withDescription("Zigzag multi-dash finisher with high damage and strong knockback.")
-                        .withAction(entity -> {
-                            CentipedeAttack attack = new CentipedeAttack();
-                            InsectBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) attack.configure(moveset.getMove(2));
-                            MoveExecutor.executeAttack(entity, attack, "insect_breathing", "centipede");
-                        })
+                        .withAttack(CentipedeAttack::new)
                 );
     }
 
@@ -144,12 +119,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
     @Override
     public boolean handleRightClick(LivingEntity entity, boolean isCrouching) {
         if (!canPerformMoves(entity)) return true;
-        CURRENT_MOVESET.set(this);
-        try {
-            return super.handleRightClick(entity, isCrouching);
-        } finally {
-            CURRENT_MOVESET.remove();
-        }
+        return super.handleRightClick(entity, isCrouching);
     }
 
     @Override
@@ -190,13 +160,7 @@ public class InsectBreathingMoveset extends AbstractMoveset {
         }
 
         executingMove.put(entity.getUUID(), true);
-        CURRENT_MOVESET.set(this);
-
-        try {
-            super.performMove(entity, moveIndex);
-        } finally {
-            CURRENT_MOVESET.remove();
-        }
+        super.performMove(entity, moveIndex);
 
         boolean moveExecuted = !executingMove.getOrDefault(entity.getUUID(), false);
         executingMove.remove(entity.getUUID());
@@ -209,10 +173,6 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                 CooldownDisplayPacket.sendToClient(serverPlayer, "insect_breathing", config);
             }
         }
-    }
-
-    public static InsectBreathingMoveset getCurrentMoveset() {
-        return CURRENT_MOVESET.get();
     }
 
     private boolean canUseMove(LivingEntity entity, int moveIndex) {

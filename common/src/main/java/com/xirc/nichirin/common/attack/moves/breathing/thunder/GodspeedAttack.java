@@ -3,7 +3,7 @@ package com.xirc.nichirin.common.attack.moves.breathing.thunder;
 import com.xirc.nichirin.common.effect.ShockedStatusEffect;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
-import com.xirc.nichirin.registry.NicirinSoundRegistry;
+import com.xirc.nichirin.registry.NichirinSoundRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerLevel;
@@ -61,7 +61,7 @@ public class GodspeedAttack extends ThunderBreathingAttackBase {
     protected void onActiveStart() {
         if (world.isClientSide) return;
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
-                NicirinSoundRegistry.THUNDERCLAP_FLASH.get(), SoundSource.PLAYERS, 1.0f, 1.5f);
+                NichirinSoundRegistry.THUNDERCLAP_FLASH.get(), SoundSource.PLAYERS, 1.0f, 1.5f);
     }
 
     @Override

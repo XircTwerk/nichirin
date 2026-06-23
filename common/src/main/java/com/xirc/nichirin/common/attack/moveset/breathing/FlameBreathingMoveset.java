@@ -1,6 +1,5 @@
 package com.xirc.nichirin.common.attack.moveset.breathing;
 
-import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moves.breathing.flame.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
@@ -17,7 +16,6 @@ public class FlameBreathingMoveset extends AbstractMoveset {
 
     private static final Map<UUID, Map<Integer, Long>> entityCooldowns = new HashMap<>();
     private static final Map<UUID, Boolean> executingMove = new HashMap<>();
-    private static final ThreadLocal<FlameBreathingMoveset> CURRENT_MOVESET = new ThreadLocal<>();
 
     public FlameBreathingMoveset() {
         super("flame_breathing", "Flame Breathing", MovesetType.BREATHING, createBuilder());
@@ -28,7 +26,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                 .withIdleAnimation("nichirin:flame_idle")
                 .withSpeedMultiplier(1.15f)
 
-                .withRightClickMove(new MoveBuilder("pommel_slash", "Pommel Slash")
+                .withMove(new MoveBuilder("pommel_slash", "Pommel Slash")
                         .withAnimation("nichirin:pommel_slash", 8)
                         // windup 5, then duration must span all 6 slashes (active ticks 0,3,6,9,12,15)
                         .withTiming(0, 5, 18)
@@ -39,15 +37,11 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withHitStun(8)
                         .withHitboxSize(2.0f)
                         .withDescription("6 rapid slashes in quick succession.")
-                        .withAction(entity -> {
-                            PommelSlashAttack attack = new PommelSlashAttack();
-                            FlameBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) attack.configure(moveset.getRightClickConfiguration());
-                            MoveExecutor.executeAttack(entity, attack, "flame_breathing", "pommel_slash");
-                        })
+                        .asRightClick()
+                        .withAttack(PommelSlashAttack::new)
                 )
 
-                .withCrouchRightClickMove(new MoveBuilder("unknowing_fire_quick", "Unknowing Fire")
+                .withMove(new MoveBuilder("unknowing_fire_quick", "Unknowing Fire")
                         .withAnimation("nichirin:unknowing_fire", 9)
                         .withTiming(0, 6, 11)
                         .withDamage(10.0f)
@@ -57,12 +51,8 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withHitStun(20)
                         .withHitboxSize(2.0f)
                         .withDescription("Overhead slam with high damage and short windup.")
-                        .withAction(entity -> {
-                            UnknowingFireAttack attack = new UnknowingFireAttack();
-                            FlameBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) attack.configure(moveset.getCrouchRightClickConfiguration());
-                            MoveExecutor.executeAttack(entity, attack, "flame_breathing", "unknowing_fire_quick");
-                        })
+                        .asCrouchRightClick()
+                        .withAttack(UnknowingFireAttack::new)
                 )
 
                 // INDEX 0: Rising Scorching Sun — upward arc, launches enemies
@@ -78,12 +68,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withSlam()
                         .withArmor(3)
                         .withDescription("Upward arc slash that launches enemies into the air.")
-                        .withAction(entity -> {
-                            RisingScorchingSunAttack attack = new RisingScorchingSunAttack();
-                            FlameBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) attack.configure(moveset.getMove(0));
-                            MoveExecutor.executeAttack(entity, attack, "flame_breathing", "rising_scorching_sun");
-                        })
+                        .withAttack(RisingScorchingSunAttack::new)
                 )
 
                 // INDEX 1: Blazing Universe — charged downward strike, explodes on impact
@@ -97,12 +82,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withHitStun(35)
                         .withHitboxSize(3.0f)
                         .withDescription("Charged downward strike that explodes on impact.")
-                        .withAction(entity -> {
-                            BlazingUniverseAttack attack = new BlazingUniverseAttack();
-                            FlameBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) attack.configure(moveset.getMove(1));
-                            MoveExecutor.executeAttack(entity, attack, "flame_breathing", "blazing_universe");
-                        })
+                        .withAttack(BlazingUniverseAttack::new)
                 )
 
                 // INDEX 2: Blooming Flame Undulation — 360° defense
@@ -116,12 +96,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withHitStun(15)
                         .withHitboxSize(3.5f)
                         .withDescription("Full 360° slash hitting all nearby enemies.")
-                        .withAction(entity -> {
-                            BloomingFlameUndulationAttack attack = new BloomingFlameUndulationAttack();
-                            FlameBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) attack.configure(moveset.getMove(2));
-                            MoveExecutor.executeAttack(entity, attack, "flame_breathing", "blooming_flame_undulation");
-                        })
+                        .withAttack(BloomingFlameUndulationAttack::new)
                 )
 
                 // INDEX 3: Flame Tiger — dashing multi-hit strike
@@ -136,12 +111,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withHitStun(10)
                         .withHitboxSize(2.0f)
                         .withDescription("Dashing multi-hit strike in a straight line.")
-                        .withAction(entity -> {
-                            FlameTigerAttack attack = new FlameTigerAttack();
-                            FlameBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) attack.configure(moveset.getMove(3));
-                            MoveExecutor.executeAttack(entity, attack, "flame_breathing", "flame_tiger");
-                        })
+                        .withAttack(FlameTigerAttack::new)
                 )
 
                 // INDEX 4: Rengoku — ultimate dragon dash
@@ -156,12 +126,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withHitStun(80)
                         .withHitboxSize(4.0f)
                         .withDescription("Massive-damage dash through enemies. 30-second cooldown.")
-                        .withAction(entity -> {
-                            RengokuAttack attack = new RengokuAttack();
-                            FlameBreathingMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) attack.configure(moveset.getMove(4));
-                            MoveExecutor.executeAttack(entity, attack, "flame_breathing", "rengoku");
-                        })
+                        .withAttack(RengokuAttack::new)
                 );
     }
 
@@ -179,12 +144,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
     @Override
     public boolean handleRightClick(LivingEntity entity, boolean isCrouching) {
         if (!canPerformMoves(entity)) return true;
-        CURRENT_MOVESET.set(this);
-        try {
-            return super.handleRightClick(entity, isCrouching);
-        } finally {
-            CURRENT_MOVESET.remove();
-        }
+        return super.handleRightClick(entity, isCrouching);
     }
 
     @Override
@@ -223,13 +183,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
         }
 
         executingMove.put(entity.getUUID(), true);
-        CURRENT_MOVESET.set(this);
-
-        try {
-            super.performMove(entity, moveIndex);
-        } finally {
-            CURRENT_MOVESET.remove();
-        }
+        super.performMove(entity, moveIndex);
 
         boolean moveExecuted = !executingMove.getOrDefault(entity.getUUID(), false);
         executingMove.remove(entity.getUUID());
@@ -241,10 +195,6 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                 CooldownDisplayPacket.sendToClient(serverPlayer, "flame_breathing", config);
             }
         }
-    }
-
-    public static FlameBreathingMoveset getCurrentMoveset() {
-        return CURRENT_MOVESET.get();
     }
 
     private boolean canUseMove(LivingEntity entity, int moveIndex) {

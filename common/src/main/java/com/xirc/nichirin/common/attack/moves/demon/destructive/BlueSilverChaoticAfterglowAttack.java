@@ -9,7 +9,7 @@ import com.xirc.nichirin.common.network.s2c.TriggerShaderPacket;
 import com.xirc.nichirin.registry.NichirinEntityRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
-import com.xirc.nichirin.registry.NicirinSoundRegistry;
+import com.xirc.nichirin.registry.NichirinSoundRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
@@ -225,7 +225,7 @@ public class BlueSilverChaoticAfterglowAttack extends DestructiveDeathAttackBase
                 if (target instanceof Player targetPlayer
                         && AbstractBreathingAttack.cancelActiveAttack(targetPlayer)) {
                     world.playSound(null, target.getX(), target.getY(), target.getZ(),
-                            NicirinSoundRegistry.PARRY_CLASH_2.get(), SoundSource.PLAYERS, 1.5f, 0.5f);
+                            NichirinSoundRegistry.PARRY_CLASH_2.get(), SoundSource.PLAYERS, 1.5f, 0.5f);
                 }
             }
         }
@@ -277,8 +277,8 @@ public class BlueSilverChaoticAfterglowAttack extends DestructiveDeathAttackBase
                 .spawn(NichirinEntityRegistry.SHOCKWAVE.get(), world);
 
         var whoosh = (cloneIndex % 2 == 0)
-                ? NicirinSoundRegistry.SLASH_WHOOSH_1.get()
-                : NicirinSoundRegistry.SLASH_WHOOSH_2.get();
+                ? NichirinSoundRegistry.SLASH_WHOOSH_1.get()
+                : NichirinSoundRegistry.SLASH_WHOOSH_2.get();
         world.playSound(null, origin.x, origin.y, origin.z,
                 whoosh, SoundSource.PLAYERS, 0.9f, 1.2f + pitchProgress * 0.7f);
     }
@@ -290,7 +290,7 @@ public class BlueSilverChaoticAfterglowAttack extends DestructiveDeathAttackBase
         }
         LivingEntity loudest = targets.get(0);
         world.playSound(null, loudest.getX(), loudest.getY(), loudest.getZ(),
-                NicirinSoundRegistry.PARRY_CLASH.get(), SoundSource.PLAYERS, 1.6f, 0.6f);
+                NichirinSoundRegistry.PARRY_CLASH.get(), SoundSource.PLAYERS, 1.6f, 0.6f);
         sendImpactShake(1.0f);
     }
 

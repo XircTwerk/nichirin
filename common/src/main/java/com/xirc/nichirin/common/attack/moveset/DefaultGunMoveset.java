@@ -10,7 +10,7 @@ import com.xirc.nichirin.common.util.NichirinArmorDamage;
 import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
-import com.xirc.nichirin.registry.NicirinSoundRegistry;
+import com.xirc.nichirin.registry.NichirinSoundRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -59,19 +59,21 @@ public class DefaultGunMoveset extends AbstractMoveset {
 
     private static MovesetBuilder createBuilder() {
         return new MovesetBuilder()
-                .withLeftClickMove(new MoveBuilder("shoot", "Shoot")
+                .withMove(new MoveBuilder("shoot", "Shoot")
                         .withTiming(0, 0, 1)
                         .withRecovery(4)
                         .withDamage(16.0f)
                         .withRange(30.0f)
-                        .withKnockback(0.6f))
+                        .withKnockback(0.6f)
+                        .asLeftClick())
 
-                .withRightClickMove(new MoveBuilder("double_shot", "Double Shot")
+                .withMove(new MoveBuilder("double_shot", "Double Shot")
                         .withTiming(0, 0, 1)
                         .withRecovery(15)
                         .withDamage(16.0f)
                         .withRange(30.0f)
-                        .withKnockback(0.6f))
+                        .withKnockback(0.6f)
+                        .asRightClick())
 
                 .withMove(new MoveBuilder("gun_bash", "Gun Bash")
                         .withTiming(60, 1, 4)
@@ -216,7 +218,7 @@ public class DefaultGunMoveset extends AbstractMoveset {
         GenyaDB.setAmmo(stack, GenyaDB.MAX_AMMO);
         NichirinPacketRegistry.sendGunAnimation(player, "reload");
         triggerAnimation(player, "reload");
-        playRandomized(player, NicirinSoundRegistry.GENYA_RELOAD.get(), 0.9f, 1.0f, 0.06f);
+        playRandomized(player, NichirinSoundRegistry.GENYA_RELOAD.get(), 0.9f, 1.0f, 0.06f);
         player.displayClientMessage(Component.literal("Reloading...").withStyle(s -> s.withColor(0xFFD080)), true);
     }
 
@@ -252,8 +254,8 @@ public class DefaultGunMoveset extends AbstractMoveset {
 
     private void playShotSound(Player player, int barrels) {
         SoundEvent sound = barrels >= 2
-                ? NicirinSoundRegistry.GENYA_DOUBLESHOT.get()
-                : NicirinSoundRegistry.GENYA_SINGLESHOT.get();
+                ? NichirinSoundRegistry.GENYA_DOUBLESHOT.get()
+                : NichirinSoundRegistry.GENYA_SINGLESHOT.get();
         playRandomized(player, sound, 1.0f, 1.0f, 0.08f);
     }
 

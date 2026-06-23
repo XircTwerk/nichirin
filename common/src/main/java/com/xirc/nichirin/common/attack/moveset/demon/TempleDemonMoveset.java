@@ -43,6 +43,7 @@ public class TempleDemonMoveset extends AbstractMoveset {
             .withHitStun(15)
             .withHitboxSize(2.8f)
             .withDescription("Powerful close-range punch that stuns enemies")
+            .asLeftClick()
             .build();
 
     private static final MoveConfiguration SLASH_1_CONFIG = new MoveBuilder("demon_slash", "Slash")
@@ -54,6 +55,7 @@ public class TempleDemonMoveset extends AbstractMoveset {
             .withHitStun(10)
             .withHitboxSize(2.0f)
             .withDescription("Basic claw slash - press again for finisher")
+            .asRightClick()
             .build();
 
     private static final MoveConfiguration SLASH_2_CONFIG = new MoveBuilder("demon_slash_2", "Slash Finisher")
@@ -71,6 +73,7 @@ public class TempleDemonMoveset extends AbstractMoveset {
             .withAnimation("nichirin:demon_high_jump", 8)
             .withTiming(220, 0, 4)
             .withDescription("Launch into the air, crouch mid-air to stomp down")
+            .asCrouchRightClick()
             .build();
 
     private static final MoveConfiguration STOMP_CONFIG = new MoveBuilder("demon_stomp", "Stomp")
@@ -90,7 +93,6 @@ public class TempleDemonMoveset extends AbstractMoveset {
     private static final Map<UUID, Boolean> canStompAfterHighJump = new HashMap<>();
     private static final Map<UUID, Boolean> hasUsedHighJumpInAir = new HashMap<>();
     private static final Map<UUID, Long> lastHighJumpTick = new HashMap<>();
-    private static final ThreadLocal<TempleDemonMoveset> CURRENT_MOVESET = new ThreadLocal<>();
     private static final int DEMON_COOLDOWN_COLOR = 0xFFDDDDDD;
 
     private static class SlashComboState {
@@ -128,10 +130,11 @@ public class TempleDemonMoveset extends AbstractMoveset {
                 .withIdleAnimation("nichirin:demon_idle")
                 .withSpeedMultiplier(1.05f)
 
-                // Click moves: stats come from the static MoveConfiguration constants above.
-                .withLeftClickMove(GUT_PUNCH_CONFIG)
-                .withRightClickMove(SLASH_1_CONFIG)
-                .withCrouchRightClickMove(HIGH_JUMP_CONFIG)
+                // Click moves: stats come from the static MoveConfiguration constants above,
+                // which carry their own click-slot tag (asLeftClick/asRightClick/asCrouchRightClick).
+                .withMove(GUT_PUNCH_CONFIG)
+                .withMove(SLASH_1_CONFIG)
+                .withMove(HIGH_JUMP_CONFIG)
 
                 .withMove(new MoveBuilder("demon_kick", "Kick")
                         .withAnimation("nichirin:demon_kick", 8)
@@ -142,12 +145,7 @@ public class TempleDemonMoveset extends AbstractMoveset {
                         .withHitStun(25)
                         .withHitboxSize(2.0f)
                         .withDescription("Powerful front kick with high knockback")
-                        .withAction(entity -> {
-                            DemonKickAttack kickAttack = new DemonKickAttack();
-                            TempleDemonMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) kickAttack.configure(moveset.getMove(0));
-                            MoveExecutor.executeAttack(entity, kickAttack, "default_demon", "demon_kick");
-                        })
+                        .withAttack(DemonKickAttack::new)
                 )
 
                 .withMove(new MoveBuilder("dashing_strike", "Dashing Strike")
@@ -160,12 +158,7 @@ public class TempleDemonMoveset extends AbstractMoveset {
                         .withHitStun(20)
                         .withHitboxSize(2)
                         .withDescription("Dash forward and deliver a devastating punch")
-                        .withAction(entity -> {
-                            DemonDashStrikeAttack dashStrikeAttack = new DemonDashStrikeAttack();
-                            TempleDemonMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) dashStrikeAttack.configure(moveset.getMove(1));
-                            MoveExecutor.executeAttack(entity, dashStrikeAttack, "default_demon", "dashing_strike");
-                        })
+                        .withAttack(DemonDashStrikeAttack::new)
                 )
 
                 .withMove(new MoveBuilder("demon_bite", "Bite")
@@ -177,12 +170,7 @@ public class TempleDemonMoveset extends AbstractMoveset {
                         .withHitStun(20)
                         .withHitboxSize(2.0f)
                         .withDescription("Bite attack that steals blood")
-                        .withAction(entity -> {
-                            DemonBiteAttack biteAttack = new DemonBiteAttack();
-                            TempleDemonMoveset moveset = getCurrentMoveset();
-                            if (moveset != null) biteAttack.configure(moveset.getMove(2));
-                            MoveExecutor.executeAttack(entity, biteAttack, "default_demon", "demon_bite");
-                        })
+                        .withAttack(DemonBiteAttack::new)
                 )
 
                 .withMove(new MoveBuilder("demon_grab", "Throw")
@@ -414,12 +402,7 @@ public class TempleDemonMoveset extends AbstractMoveset {
         // Don't execute or consume cooldown if stunned
         if (entity.hasEffect(NichirinEffectRegistry.stunned())) return;
 
-        CURRENT_MOVESET.set(this);
-        try {
-            super.performMove(entity, moveIndex);
-        } finally {
-            CURRENT_MOVESET.remove();
-        }
+        super.performMove(entity, moveIndex);
 
         MoveConfiguration config = getMove(moveIndex);
         if (config != null) {
@@ -429,10 +412,6 @@ public class TempleDemonMoveset extends AbstractMoveset {
                 sendCooldownPacket(serverPlayer, config);
             }
         }
-    }
-
-    public static TempleDemonMoveset getCurrentMoveset() {
-        return CURRENT_MOVESET.get();
     }
 
     @Override

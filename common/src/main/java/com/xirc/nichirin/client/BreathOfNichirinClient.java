@@ -139,7 +139,7 @@ public class BreathOfNichirinClient {
                     // Add input tracking
                     ClientInputTracker.tick();
 
-                    // Keep the gun's first-person rendering correct (only reload shows in first person)
+                    // Keep gun player animations out of first person.
                     if (minecraft.player != null) {
                         NichirinAnimations.tickFirstPersonMode(minecraft.player);
                     }
