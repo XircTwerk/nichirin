@@ -26,7 +26,9 @@ import net.minecraft.world.entity.player.Player;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
 import java.util.Optional;
+import java.util.WeakHashMap;
 
 @Environment(EnvType.CLIENT)
 public final class NichirinAnimations {
@@ -38,9 +40,9 @@ public final class NichirinAnimations {
             new FirstPersonConfiguration(true, true, true, true);
     /** Extra downward tilt on the gun arm so the barrel lines up with where the player is looking. */
     private static final float GUN_ARM_DOWN_CORRECTION = (float) Math.toRadians(14.0);
-    /** Last gun animation triggered for the LOCAL player — used to decide whether to show the body in
-     *  first person (only the reload should show; idle/fire stay third-person only). */
-    private static String localGunTrigger = "";
+    private static final int GUN_FIRE_RECOIL_TICKS = 6;
+    private static final float GUN_FIRE_RECOIL = 0.25f;
+    private static final Map<AbstractClientPlayer, Long> GUN_FIRE_STARTS = new WeakHashMap<>();
     private static boolean initialized;
 
     private NichirinAnimations() {}
@@ -104,7 +106,7 @@ public final class NichirinAnimations {
                         Mth.wrapDegrees(player.getYHeadRot() - player.yBodyRot));
                 // PartModifier(rotation, offset) — rotation FIRST. X = pitch, Y = yaw.
                 return Optional.of(new AdjustmentModifier.PartModifier(
-                        new Vec3f(pitch + GUN_ARM_DOWN_CORRECTION, yaw, 0.0f),
+                        new Vec3f(pitch + GUN_ARM_DOWN_CORRECTION + gunFireRecoil(player), yaw, 0.0f),
                         new Vec3f(0.0f, 0.0f, 0.0f)));
             }
             return Optional.empty();
@@ -169,21 +171,15 @@ public final class NichirinAnimations {
 
         setControllerSpeed(controller, speed);
 
-        if (clientPlayer == minecraft.player
-                && ("fire".equals(animationName) || "reload".equals(animationName))) {
-            localGunTrigger = animationName;
-        }
-
-        if ("sword.block".equals(animationName)) {
+        if ("fire".equals(animationName)) {
+            controller.stopTriggeredAnimation();
+            GUN_FIRE_STARTS.put(clientPlayer, minecraft.level.getGameTime());
+        } else if ("sword.block".equals(animationName)) {
             controller.triggerAnimation(PlayerRawAnimationBuilder.begin().thenPlayAndHold(animation).build());
-        } else if ("fire".equals(animationName) || "reload".equals(animationName)) {
-            // Ease the gun's fire/reload in from the current pose instead of snapping into the first
-            // frame. Fire is short so it gets a quick fade (a long one would swallow the recoil);
-            // reload is long enough to afford a softer blend. replaceAnimationWithFade also restarts
-            // the animation, so rapid gunfire keeps re-triggering the recoil.
-            int fadeTicks = "reload".equals(animationName) ? 5 : 2;
+        } else if ("reload".equals(animationName)) {
+            // Reload is long enough to blend cleanly from the steady gun-holding pose.
             controller.replaceAnimationWithFade(
-                    AbstractFadeModifier.standardFadeIn(fadeTicks, EasingType.EASE_IN_OUT_SINE), animation);
+                    AbstractFadeModifier.standardFadeIn(5, EasingType.EASE_IN_OUT_SINE), animation);
         } else if (isHitAnimation(animationName)) {
             // Re-trigger from the start on every hit so rapid hits keep restarting the flinch
             // instead of being ignored while one is mid-play.
@@ -211,6 +207,20 @@ public final class NichirinAnimations {
         return "small_hit".equals(animationName)
                 || "medium_hit".equals(animationName)
                 || "large_hit".equals(animationName);
+    }
+
+    private static float gunFireRecoil(AbstractClientPlayer player) {
+        Long startedAt = GUN_FIRE_STARTS.get(player);
+        if (startedAt == null || player.level() == null) return 0.0f;
+
+        long age = player.level().getGameTime() - startedAt;
+        if (age < 0 || age >= GUN_FIRE_RECOIL_TICKS) {
+            GUN_FIRE_STARTS.remove(player);
+            return 0.0f;
+        }
+
+        float progress = age / (float) GUN_FIRE_RECOIL_TICKS;
+        return (float) (-Math.sin(progress * Math.PI) * GUN_FIRE_RECOIL);
     }
 
     private static ResourceLocation findAnimation(String animationName) {
@@ -253,19 +263,14 @@ public final class NichirinAnimations {
     }
 
     /**
-     * Drives whether the LOCAL player's body shows in first person. While holding the gun we keep the
-     * controller in {@link FirstPersonMode#NONE} so the idle hold pose and the fire recoil stay
-     * third-person only (first person shows the vanilla arm + gun model). Only while a reload is
-     * actively playing do we switch to {@link FirstPersonMode#THIRD_PERSON_MODEL} so the reload shows
-     * in first person. Anything else (no gun) keeps the normal mode so katana/breathing animations
-     * still render in first person. Call once per client tick for the local player.
+     * Drives whether the LOCAL player's body shows in first person. Gun player animations stay
+     * third-person only, while other animations retain the normal first-person body rendering.
      */
     public static void tickFirstPersonMode(AbstractClientPlayer player) {
         PlayerAnimationController controller = getController(player);
         if (controller == null) return;
         boolean holdingGun = player.getMainHandItem().getItem() instanceof GenyaDB;
-        boolean reloadShowing = "reload".equals(localGunTrigger) && controller.isPlayingTriggeredAnimation();
-        controller.setFirstPersonMode(holdingGun && !reloadShowing
+        controller.setFirstPersonMode(holdingGun
                 ? FirstPersonMode.NONE
                 : FirstPersonMode.THIRD_PERSON_MODEL);
     }

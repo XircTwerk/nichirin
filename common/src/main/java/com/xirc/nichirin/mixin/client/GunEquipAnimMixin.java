@@ -3,6 +3,7 @@ package com.xirc.nichirin.mixin.client;
 import com.xirc.nichirin.common.item.gun.GenyaDB;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemInHandRenderer;
+import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -14,12 +15,14 @@ public class GunEquipAnimMixin {
 
     @Shadow private float mainHandHeight;
     @Shadow private float oMainHandHeight;
+    @Shadow private ItemStack mainHandItem;
 
     @Inject(method = "tick", at = @At("TAIL"))
     private void nichirin$keepGunAtRest(CallbackInfo ci) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
-        if (mc.player.getMainHandItem().getItem() instanceof GenyaDB) {
+        if (mc.player.getMainHandItem().getItem() instanceof GenyaDB
+                && mainHandItem.getItem() instanceof GenyaDB) {
             oMainHandHeight = 1.0f;
             mainHandHeight = 1.0f;
         }
