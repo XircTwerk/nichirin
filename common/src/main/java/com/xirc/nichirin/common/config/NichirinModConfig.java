@@ -84,6 +84,18 @@ public class NichirinModConfig implements ConfigData {
         public int staminaRegenRate = 8;
     }
 
+    @ConfigEntry.Gui.CollapsibleObject
+    public DamageConfig damage = new DamageConfig();
+
+    public static class DamageConfig {
+
+        @ConfigEntry.Gui.Tooltip
+        public double baseDamageMultiplier = 1.0;
+
+        @ConfigEntry.Gui.Tooltip
+        public boolean percentageDamage = true;
+    }
+
     // Movement
 
     @ConfigEntry.Gui.CollapsibleObject

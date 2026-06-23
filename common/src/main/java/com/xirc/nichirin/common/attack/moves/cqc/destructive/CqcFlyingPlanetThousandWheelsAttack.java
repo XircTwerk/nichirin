@@ -58,6 +58,7 @@ public class CqcFlyingPlanetThousandWheelsAttack extends AbstractCqcAttack imple
                     .lifeTicks(16)
                     .hitboxRadius(1.0f)
                     .pierces(0)
+                    .destructiveDeathCqcDamage()
                     .red(isOverdriveActive(user))
                     .spawn(NichirinEntityRegistry.SHOCKWAVE.get(), world);
         }

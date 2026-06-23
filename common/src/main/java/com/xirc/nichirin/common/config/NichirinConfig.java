@@ -23,6 +23,7 @@ public class NichirinConfig {
     public static final String MAGIC_DAMAGE_INTERRUPTS_MOVES = "magic_damage_interrupts_moves";
     public static final String DROWNING_DAMAGE_INTERRUPTS_MOVES = "drowning_damage_interrupts_moves";
     public static final String STARVATION_DAMAGE_INTERRUPTS_MOVES = "starvation_damage_interrupts_moves";
+    public static final String WISTERIA_DAMAGES_DEMONS = "wisteria_damages_demons";
 
     // Defaults
 
@@ -39,6 +40,7 @@ public class NichirinConfig {
         registerBool(MAGIC_DAMAGE_INTERRUPTS_MOVES, true, "Whether magic damage should end moves early");
         registerBool(DROWNING_DAMAGE_INTERRUPTS_MOVES, true, "Whether drowning damage should end moves early");
         registerBool(STARVATION_DAMAGE_INTERRUPTS_MOVES, true, "Whether starvation damage should end moves early");
+        registerBool(WISTERIA_DAMAGES_DEMONS, true, "Whether Wisteria's Grace damages demons");
 
     }
 
@@ -68,6 +70,7 @@ public class NichirinConfig {
                 case MAGIC_DAMAGE_INTERRUPTS_MOVES -> cfg.moveInterrupts.magicDamageInterruptsMoves ? 1 : 0;
                 case DROWNING_DAMAGE_INTERRUPTS_MOVES -> cfg.moveInterrupts.drowningDamageInterruptsMoves ? 1 : 0;
                 case STARVATION_DAMAGE_INTERRUPTS_MOVES -> cfg.moveInterrupts.starvationDamageInterruptsMoves ? 1 : 0;
+                case WISTERIA_DAMAGES_DEMONS -> cfg.demon.wisteriaDamagesDemons ? 1 : 0;
                 default                      -> null;
             };
             if (clothValue != null) return clothValue;
@@ -166,6 +169,7 @@ public class NichirinConfig {
                 case MAGIC_DAMAGE_INTERRUPTS_MOVES -> cfg.moveInterrupts.magicDamageInterruptsMoves = value != 0;
                 case DROWNING_DAMAGE_INTERRUPTS_MOVES -> cfg.moveInterrupts.drowningDamageInterruptsMoves = value != 0;
                 case STARVATION_DAMAGE_INTERRUPTS_MOVES -> cfg.moveInterrupts.starvationDamageInterruptsMoves = value != 0;
+                case WISTERIA_DAMAGES_DEMONS -> cfg.demon.wisteriaDamagesDemons = value != 0;
                 default -> {
                     return;
                 }
@@ -188,6 +192,7 @@ public class NichirinConfig {
             syncEntry(MAGIC_DAMAGE_INTERRUPTS_MOVES, cfg.moveInterrupts.magicDamageInterruptsMoves ? 1 : 0);
             syncEntry(DROWNING_DAMAGE_INTERRUPTS_MOVES, cfg.moveInterrupts.drowningDamageInterruptsMoves ? 1 : 0);
             syncEntry(STARVATION_DAMAGE_INTERRUPTS_MOVES, cfg.moveInterrupts.starvationDamageInterruptsMoves ? 1 : 0);
+            syncEntry(WISTERIA_DAMAGES_DEMONS, cfg.demon.wisteriaDamagesDemons ? 1 : 0);
         } catch (Exception ignored) {
         }
     }

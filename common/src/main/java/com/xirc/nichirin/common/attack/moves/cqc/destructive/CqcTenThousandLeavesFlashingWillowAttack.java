@@ -74,6 +74,7 @@ public class CqcTenThousandLeavesFlashingWillowAttack extends AbstractCqcAttack 
                         .lifeTicks(20)
                         .hitboxRadius(1.0f)
                         .pierces(2)
+                        .destructiveDeathCqcDamage()
                         .red(isOverdriveActive(user))
                         .spawn(NichirinEntityRegistry.SHOCKWAVE.get(), world);
             }

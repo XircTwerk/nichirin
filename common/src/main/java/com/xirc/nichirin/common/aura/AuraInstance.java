@@ -22,6 +22,7 @@ public final class AuraInstance {
     private final float distortionStrength;
     private final float rotationSpeed;
     private final float jitterAmount;
+    private final int materialProfile;
     private final boolean cameraFacing;
     private final int lifetimeTicks;       // -1 = permanent
     private long startTimeMs;              // client-set on receive; not sent
@@ -34,6 +35,7 @@ public final class AuraInstance {
                         float distortionStrength,
                         float rotationSpeed,
                         float jitterAmount,
+                        int materialProfile,
                         boolean cameraFacing,
                         int lifetimeTicks) {
         this.id = id;
@@ -43,6 +45,7 @@ public final class AuraInstance {
         this.distortionStrength = distortionStrength;
         this.rotationSpeed = rotationSpeed;
         this.jitterAmount = jitterAmount;
+        this.materialProfile = materialProfile;
         this.cameraFacing = cameraFacing;
         this.lifetimeTicks = lifetimeTicks;
     }
@@ -57,6 +60,7 @@ public final class AuraInstance {
     public float distortionStrength() { return distortionStrength; }
     public float rotationSpeed() { return rotationSpeed; }
     public float jitterAmount() { return jitterAmount; }
+    public int materialProfile() { return materialProfile; }
     public boolean cameraFacing() { return cameraFacing; }
     public int lifetimeTicks() { return lifetimeTicks; }
     public long startTimeMs() { return startTimeMs; }
@@ -94,6 +98,7 @@ public final class AuraInstance {
         buf.writeFloat(distortionStrength);
         buf.writeFloat(rotationSpeed);
         buf.writeFloat(jitterAmount);
+        buf.writeInt(materialProfile);
         buf.writeBoolean(cameraFacing);
         buf.writeVarInt(lifetimeTicks);
     }
@@ -106,9 +111,10 @@ public final class AuraInstance {
         float distortion = buf.readFloat();
         float rotation = buf.readFloat();
         float jitter = buf.readFloat();
+        int materialProfile = buf.readInt();
         boolean cameraFacing = buf.readBoolean();
         int lifetime = buf.readVarInt();
-        return new AuraInstance(id, r, g, b, a, radius, pulse, distortion, rotation, jitter,
+        return new AuraInstance(id, r, g, b, a, radius, pulse, distortion, rotation, jitter, materialProfile,
                 cameraFacing, lifetime);
     }
 
@@ -122,6 +128,7 @@ public final class AuraInstance {
         private float distortionStrength = 0.18f;
         private float rotationSpeed = 0.25f;
         private float jitterAmount = 2.2f;
+        private int materialProfile = 0;
         private boolean cameraFacing = false;
         private int lifetimeTicks = -1;
 
@@ -134,11 +141,12 @@ public final class AuraInstance {
         public Builder distortion(float v) { this.distortionStrength = v; return this; }
         public Builder rotationSpeed(float v) { this.rotationSpeed = v; return this; }
         public Builder jitter(float v) { this.jitterAmount = v; return this; }
+        public Builder materialProfile(int v) { this.materialProfile = v; return this; }
         public Builder cameraFacing(boolean v) { this.cameraFacing = v; return this; }
         public Builder lifetimeTicks(int v) { this.lifetimeTicks = v; return this; }
         public AuraInstance build() {
             return new AuraInstance(id, r, g, b, a, radius, pulseSpeed, distortionStrength,
-                    rotationSpeed, jitterAmount, cameraFacing, lifetimeTicks);
+                    rotationSpeed, jitterAmount, materialProfile, cameraFacing, lifetimeTicks);
         }
     }
 }

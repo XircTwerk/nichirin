@@ -38,6 +38,8 @@ import java.util.UUID;
 @Environment(EnvType.CLIENT)
 public final class AuraPixelize2DRenderer {
 
+    private static final float PIXEL_SIZE = 1.0f / 16.0f;
+    private static final float PIXEL_HALF = PIXEL_SIZE * 0.5f;
     private static final ResourceLocation WHITE_TEX =
             ResourceLocation.withDefaultNamespace("textures/misc/white.png");
 
@@ -160,11 +162,9 @@ public final class AuraPixelize2DRenderer {
         float radialFreq = 6.0f + (float) Math.sin(t * 0.17) * 2.0f;
         float radialAmplitude = 0.05f + jitter * 0.005f;
 
-        int gridN = Math.max(2, AuraConfig.pixelize2dGridSize);
+        int gridWidth = Math.max(2, (int) Math.ceil(radiusH * 2.0f / PIXEL_SIZE));
+        int gridHeight = Math.max(2, (int) Math.ceil(radiusV * 2.0f / PIXEL_SIZE));
         // Exact tile size — cells touch their neighbours without overlapping (no alpha bands).
-        float cellHalfH = radiusH / gridN;
-        float cellHalfV = radiusV / gridN;
-
         // Clamp after the brightness multiply: any channel pushed past 1.0 would otherwise wrap
         // around in the byte cast inside setColor (1.15*255 = 293 → &0xFF → 37) and come out
         // near-black, which read as "inverted" colours (red→green, purple→orange).
@@ -172,6 +172,16 @@ public final class AuraPixelize2DRenderer {
         float baseG = Math.min(1.0f, inst.g() * AuraConfig.brightness);
         float baseB = Math.min(1.0f, inst.b() * AuraConfig.brightness);
         float baseA = Math.min(1.0f, inst.a() * AuraConfig.opacityMultiplier) * fade;
+        float[][] palette = buildPalette(baseR, baseG, baseB);
+        int profile = inst.materialProfile();
+        float profileA = ((profile >>> 1) & 255) / 255.0f;
+        float profileB = ((profile >>> 9) & 255) / 255.0f;
+        float profileC = ((profile >>> 17) & 255) / 255.0f;
+        float flowAngle = profileA * (float) (Math.PI * 2.0);
+        float flowX = (float) Math.cos(flowAngle);
+        float flowY = (float) Math.sin(flowAngle);
+        float flowSpeed = 0.65f + profileB * 1.35f;
+        float tileFrequency = 3.0f + profileC * 5.0f;
 
         int packedLight = LightTexture.FULL_BRIGHT;
         // No rigid rotation — that's what was making it look like a spinning wheel. The angular
@@ -180,10 +190,12 @@ public final class AuraPixelize2DRenderer {
         // instance rotationSpeed knob isn't dead.
         float rotPhase = rotation * 0.4f;
 
-        for (int i = 0; i < gridN; i++) {
-            for (int j = 0; j < gridN; j++) {
-                float u = ((i + 0.5f) / gridN) * 2.0f - 1.0f;
-                float v = ((j + 0.5f) / gridN) * 2.0f - 1.0f;
+        for (int i = 0; i < gridWidth; i++) {
+            for (int j = 0; j < gridHeight; j++) {
+                float localX = (i - (gridWidth - 1) * 0.5f) * PIXEL_SIZE;
+                float localY = (j - (gridHeight - 1) * 0.5f) * PIXEL_SIZE;
+                float u = localX / radiusH;
+                float v = localY / radiusV;
 
                 float angle = (float) Math.atan2(v, u);
                 float distFromCentre = (float) Math.sqrt(u * u + v * v);
@@ -218,20 +230,51 @@ public final class AuraPixelize2DRenderer {
                 float normD = Math.min(1.0f, distFromCentre / edge);
                 float inner = 1.0f - normD;
                 float rim   = 1.0f - inner;
-                float intensity = inner * 0.85f + (rim * rim) * 0.45f;
-                float alpha = baseA * (0.25f + intensity * 0.75f);
+                float flowCoord = (u * flowX + v * flowY) * tileFrequency - t * flowSpeed;
+                float crossCoord = (-u * flowY + v * flowX) * (2.0f + profileA * 4.0f);
+                float energyBand = (float) Math.sin(flowCoord * Math.PI
+                        + Math.sin(crossCoord + t) * 0.9f);
+                energyBand = energyBand * 0.5f + 0.5f;
+                float fineGrain = hashTile(i, j, profile);
+                float pigmentPatch = hashTile(Math.floorDiv(i, 3), Math.floorDiv(j, 3),
+                        profile ^ 0x51ed270b);
+                float brushStroke = (float) Math.sin(
+                        i * (0.55f + profileB * 0.35f)
+                                + j * (0.18f + profileC * 0.22f)
+                                + profileA * 9.0f);
+                brushStroke = brushStroke * 0.5f + 0.5f;
+                float chippedPigment = fineGrain > 0.90f ? -0.22f
+                        : fineGrain < 0.08f ? 0.18f : 0.0f;
+                float risingTongue = (float) Math.sin(
+                        u * (8.0f + profileC * 5.0f)
+                                - v * (3.0f + profileB * 2.0f)
+                                + t * (2.4f + profileA));
+                risingTongue = risingTongue * 0.5f + 0.5f;
+                float flameLift = Math.max(0.0f, risingTongue - normD * 0.35f);
+                float materialLight = 0.42f
+                        + energyBand * 0.26f
+                        + flameLift * 0.42f
+                        + (pigmentPatch - 0.5f) * 0.30f
+                        + (brushStroke - 0.5f) * 0.16f
+                        + chippedPigment;
+                float intensity = (inner * 0.85f + (rim * rim) * 0.45f) * materialLight;
+                float alpha = baseA * (0.58f + intensity * 0.42f);
                 if (alpha > 1.0f) alpha = 1.0f;
-                float whiten = inner * inner * 0.4f;
-                float r = baseR + (1.0f - baseR) * whiten;
-                float g = baseG + (1.0f - baseG) * whiten;
-                float b = baseB + (1.0f - baseB) * whiten;
+                float paletteValue = materialLight + inner * 0.22f + flameLift * 0.18f;
+                int paletteIndex = paletteValue < 0.42f ? 0
+                        : paletteValue < 0.62f ? 1
+                        : paletteValue < 0.82f ? 2
+                        : paletteValue < 1.02f ? 3 : 4;
+                float r = palette[paletteIndex][0];
+                float g = palette[paletteIndex][1];
+                float b = palette[paletteIndex][2];
 
-                float cx = right.x() * u * radiusH + up.x() * v * radiusV;
-                float cy = right.y() * u * radiusH + up.y() * v * radiusV;
-                float cz = right.z() * u * radiusH + up.z() * v * radiusV;
+                float cx = right.x() * localX + up.x() * localY;
+                float cy = right.y() * localX + up.y() * localY;
+                float cz = right.z() * localX + up.z() * localY;
 
-                float dxH = right.x() * cellHalfH, dyH = right.y() * cellHalfH, dzH = right.z() * cellHalfH;
-                float dxV = up.x()    * cellHalfV, dyV = up.y()    * cellHalfV, dzV = up.z()    * cellHalfV;
+                float dxH = right.x() * PIXEL_HALF, dyH = right.y() * PIXEL_HALF, dzH = right.z() * PIXEL_HALF;
+                float dxV = up.x()    * PIXEL_HALF, dyV = up.y()    * PIXEL_HALF, dzV = up.z()    * PIXEL_HALF;
 
                 emitQuad(vc, mat,
                         cx - dxH - dxV, cy - dyH - dyV, cz - dzH - dzV,
@@ -241,6 +284,62 @@ public final class AuraPixelize2DRenderer {
                         r, g, b, alpha, packedLight);
             }
         }
+    }
+
+    private static float hashTile(int x, int y, int seed) {
+        int h = seed ^ (x * 0x1f1f1f1f) ^ (y * 0x6d2b79f5);
+        h ^= h >>> 16;
+        h *= 0x7feb352d;
+        h ^= h >>> 15;
+        return (h & 0xFFFF) / 65535.0f;
+    }
+
+    private static float[][] buildPalette(float r, float g, float b) {
+        float[] hsv = rgbToHsv(r, g, b);
+        return new float[][] {
+                hsvToRgb(wrapHue(hsv[0] - 0.035f), Math.min(1.0f, hsv[1] * 1.10f), hsv[2] * 0.42f),
+                hsvToRgb(wrapHue(hsv[0] - 0.015f), Math.min(1.0f, hsv[1] * 1.05f), hsv[2] * 0.68f),
+                new float[] { r, g, b },
+                hsvToRgb(wrapHue(hsv[0] + 0.018f), hsv[1] * 0.82f,
+                        Math.min(1.0f, hsv[2] * 1.18f)),
+                hsvToRgb(wrapHue(hsv[0] + 0.040f), hsv[1] * 0.58f,
+                        Math.min(1.0f, hsv[2] * 1.32f))
+        };
+    }
+
+    private static float[] rgbToHsv(float r, float g, float b) {
+        float max = Math.max(r, Math.max(g, b));
+        float min = Math.min(r, Math.min(g, b));
+        float delta = max - min;
+        float hue = 0.0f;
+        if (delta > 0.0001f) {
+            if (max == r) hue = ((g - b) / delta) / 6.0f;
+            else if (max == g) hue = (2.0f + (b - r) / delta) / 6.0f;
+            else hue = (4.0f + (r - g) / delta) / 6.0f;
+        }
+        return new float[] { wrapHue(hue), max <= 0.0001f ? 0.0f : delta / max, max };
+    }
+
+    private static float[] hsvToRgb(float h, float s, float v) {
+        float scaled = wrapHue(h) * 6.0f;
+        int sector = (int) Math.floor(scaled);
+        float f = scaled - sector;
+        float p = v * (1.0f - s);
+        float q = v * (1.0f - s * f);
+        float t = v * (1.0f - s * (1.0f - f));
+        return switch (sector % 6) {
+            case 0 -> new float[] { v, t, p };
+            case 1 -> new float[] { q, v, p };
+            case 2 -> new float[] { p, v, t };
+            case 3 -> new float[] { p, q, v };
+            case 4 -> new float[] { t, p, v };
+            default -> new float[] { v, p, q };
+        };
+    }
+
+    private static float wrapHue(float hue) {
+        hue %= 1.0f;
+        return hue < 0.0f ? hue + 1.0f : hue;
     }
 
     private static void emitQuad(VertexConsumer vc, Matrix4f mat,

@@ -334,6 +334,7 @@
   "text.autoconfig.nichirin-server.title": "Breath of Nichirin — Server",
 
   "text.autoconfig.nichirin-server.category.combat":    "Combat",
+  "text.autoconfig.nichirin-server.category.damage":    "Damage",
   "text.autoconfig.nichirin-server.category.stamina":   "Stamina",
   "text.autoconfig.nichirin-server.category.breathing": "Breathing",
   "text.autoconfig.nichirin-server.category.demon":     "Demon",
@@ -343,6 +344,7 @@
   "text.autoconfig.nichirin-server.category.perks": "Perks",
 
   "text.autoconfig.nichirin-server.option.combat": "Combat",
+  "text.autoconfig.nichirin-server.option.damage": "Damage",
   "text.autoconfig.nichirin-server.option.stamina": "Stamina",
   "text.autoconfig.nichirin-server.option.breathing": "Breathing",
   "text.autoconfig.nichirin-server.option.demon": "Demon",
@@ -377,6 +379,11 @@
   "text.autoconfig.nichirin-server.option.combat.npcPlayerDuelMinHealth.@Tooltip": "Minimum health a trainer leaves a defeated opponent at instead of killing them (0.5 = half a heart).",
   "text.autoconfig.nichirin-server.option.combat.npcSelfDefenseGraceTicks": "NPC Self-Defense Grace (ticks)",
   "text.autoconfig.nichirin-server.option.combat.npcSelfDefenseGraceTicks.@Tooltip": "Ticks a provoked self-defense fight persists after the target is lost before reverting to peaceful.",
+
+  "text.autoconfig.nichirin-server.option.damage.baseDamageMultiplier": "Base Damage Multiplier",
+  "text.autoconfig.nichirin-server.option.damage.baseDamageMultiplier.@Tooltip": "Multiplies all Nichirin attack damage after the built-in balance increase.",
+  "text.autoconfig.nichirin-server.option.damage.percentageDamage": "Percentage Damage",
+  "text.autoconfig.nichirin-server.option.damage.percentageDamage.@Tooltip": "Converts configured attack damage into defense-bypassing maximum-health damage using damage / 300.",
 
   "text.autoconfig.nichirin-server.category.movement": "Movement",
   "text.autoconfig.nichirin-server.option.movement": "Movement",

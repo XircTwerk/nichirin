@@ -2,6 +2,7 @@ package com.xirc.nichirin.common.attack.moves.cqc;
 
 import com.xirc.nichirin.common.attack.component.AbstractAttack;
 import com.xirc.nichirin.common.attack.moves.demon.destructive.DestructiveDeathCqcHook;
+import com.xirc.nichirin.common.attack.moves.demon.destructive.IDestructiveDeathCQC;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.data.CqcMoveCatalog;
 import com.xirc.nichirin.common.entity.npc.DemonNPCEntity;
@@ -150,7 +151,8 @@ public abstract class AbstractCqcAttack extends AbstractAttack {
         ).forEach(target -> {
             getHitEntities().add(target.getUUID());
             float scaledDamage = scaleCqcStat(user, damage);
-            boolean damaged = NichirinArmorDamage.hurt(target, source, scaledDamage);
+            boolean damaged = NichirinArmorDamage.hurt(
+                    target, source, scaledDamage, this instanceof IDestructiveDeathCQC);
             if (damaged) {
                 applyKnockbackCqc(user, target);
                 if (hitStun > 0) {
