@@ -8,7 +8,7 @@ package com.xirc.nichirin.client.aura;
  * at the entity centre. There is no longer a 3D mesh renderer.
  */
 public final class AuraConfig {
-    public static float opacityMultiplier  = 1.0f;
+    public static float opacityMultiplier  = 1.35f;
     public static float brightness         = 1.15f;
     public static float pulseAmplitude     = 0.08f;
     public static float waveAnimAmplitude  = 0.8f;

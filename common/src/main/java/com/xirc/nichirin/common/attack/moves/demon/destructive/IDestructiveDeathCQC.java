@@ -76,6 +76,7 @@ public interface IDestructiveDeathCQC {
                 .lifeTicks(Math.max(4, lifeTicks))
                 .hitboxRadius(hitboxRadius)
                 .pierces(pierces)
+                .destructiveDeathCqcDamage()
                 .red(isOverdriveActive(user))
                 .spawn(NichirinEntityRegistry.SHOCKWAVE.get(), world);
     }

@@ -94,7 +94,18 @@ public class ClientInputHandler {
             if (player.getMainHandItem().getItem() instanceof GenyaDB) {
                 return EventResult.interruptFalse();
             }
-            return EventResult.pass();
+            if (!player.level().isClientSide || !canPerformAttacks(player, hand)) {
+                return EventResult.pass();
+            }
+            if (isBlockHeld(player)) {
+                sendBlockSpecial(player);
+                return EventResult.interruptFalse();
+            }
+            if (isInputBlocked()) {
+                return EventResult.interruptFalse();
+            }
+            sendLeftClick(player);
+            return EventResult.interruptFalse();
         });
 
         // Gun tap/hold firing: tap left-click = single shot, held left-click = double shot.

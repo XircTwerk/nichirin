@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.entity.attack;
 
 import com.xirc.nichirin.common.util.NichirinDamageSources;
+import com.xirc.nichirin.common.util.NichirinArmorDamage;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinSoundRegistry;
 import net.minecraft.core.particles.ParticleTypes;
@@ -128,7 +129,7 @@ public class ThunderBallEntity extends Entity {
         for (LivingEntity entity : nearbyEntities) {
             // Only damage each entity once every 20 ticks (1 second) to prevent spam
             if (!damagedEntities.contains(entity) || this.tickCount % 20 == 0) {
-                entity.hurt(this.owner instanceof LivingEntity le
+                NichirinArmorDamage.hurt(entity, this.owner instanceof LivingEntity le
                         ? NichirinDamageSources.breathing(le)
                         : this.level().damageSources().generic(), damage);
 

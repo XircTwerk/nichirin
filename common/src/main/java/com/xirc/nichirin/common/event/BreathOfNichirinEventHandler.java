@@ -10,6 +10,7 @@ import com.xirc.nichirin.common.system.aura.MovesetAuraTicker;
 import com.xirc.nichirin.common.attack.moveset.demon.DefaultDemonMoveset;
 import com.xirc.nichirin.common.attack.moveset.demon.DestructiveDeathMoveset;
 import com.xirc.nichirin.common.config.NichirinModConfig;
+import com.xirc.nichirin.common.config.NichirinServerConfig;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.data.PlayerDataStorage;
@@ -53,6 +54,7 @@ public class BreathOfNichirinEventHandler {
     private static MinecraftServer currentServer;
 
     public static void init() {
+        LifecycleEvent.SERVER_BEFORE_START.register(server -> NichirinServerConfig.load());
         LifecycleEvent.SERVER_STARTING.register(BreathOfNichirinEventHandler::onServerStarting);
         LifecycleEvent.SERVER_STOPPING.register(BreathOfNichirinEventHandler::onServerStopping);
         TickEvent.SERVER_PRE.register(BreathOfNichirinEventHandler::onServerTick);

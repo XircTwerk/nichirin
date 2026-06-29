@@ -63,6 +63,7 @@ public class ShockwaveEntity extends Entity {
     private boolean noHorizontalPush = false; // true = knockback applies as pure lift, no sideways
     private boolean noVanillaKnockback = false; // true = cancel vanilla hurt() knockback entirely
     private boolean red = false;
+    private boolean destructiveDeathCqcDamage = false;
     private Boolean redImpact = null; // impact-burst colour override; null = follow the red flag
     private static final float IMPACT_HALF_EXTENT = 1.0f; // 2x2x2 impact hitbox at end of life
 
@@ -141,7 +142,7 @@ public class ShockwaveEntity extends Entity {
         // Capture velocity so we can cancel the knockback vanilla hurt() applies away from the
         // owner — our custom knockback below is the only displacement allowed.
         Vec3 preHitMotion = target.getDeltaMovement();
-        NichirinArmorDamage.hurt(target, source, damage);
+        NichirinArmorDamage.hurt(target, source, damage, destructiveDeathCqcDamage);
         if (noVanillaKnockback) {
             target.setDeltaMovement(preHitMotion);
             target.hurtMarked = true;
@@ -269,6 +270,7 @@ public class ShockwaveEntity extends Entity {
         private boolean noHorizontalPush = false;
         private boolean noVanillaKnockback = false;
         private boolean red = false;
+        private boolean destructiveDeathCqcDamage = false;
         private Boolean redImpact = null;
 
         public Builder owner(LivingEntity o) { this.owner = o; return this; }
@@ -287,6 +289,7 @@ public class ShockwaveEntity extends Entity {
         /** Cancels the knockback vanilla hurt() applies, so the target isn't displaced at all. */
         public Builder noVanillaKnockback() { this.noVanillaKnockback = true; return this; }
         public Builder red(boolean v) { this.red = v; return this; }
+        public Builder destructiveDeathCqcDamage() { this.destructiveDeathCqcDamage = true; return this; }
         /** Impact-burst colour independent of the travel tint (e.g. blue wave, red impact). */
         public Builder redImpact(boolean v) { this.redImpact = v; return this; }
 
@@ -308,6 +311,7 @@ public class ShockwaveEntity extends Entity {
             sw.noHorizontalPush = noHorizontalPush;
             sw.noVanillaKnockback = noVanillaKnockback;
             sw.red = red;
+            sw.destructiveDeathCqcDamage = destructiveDeathCqcDamage;
             sw.redImpact = redImpact;
             sw.setPos(origin.x, origin.y, origin.z);
             sw.setDeltaMovement(direction.scale(speed));

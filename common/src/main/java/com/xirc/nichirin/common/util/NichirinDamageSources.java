@@ -27,6 +27,7 @@ public final class NichirinDamageSources {
     public static final ResourceKey<DamageType> BOAR = key("boar");
     public static final ResourceKey<DamageType> TEMPLE_DEMON = key("temple_demon");
     public static final ResourceKey<DamageType> TRAINER = key("trainer");
+    public static final ResourceKey<DamageType> PERCENTAGE = key("percentage");
 
     private NichirinDamageSources() {}
 
@@ -84,6 +85,13 @@ public final class NichirinDamageSources {
         return source(trainer, TRAINER, trainer);
     }
 
+    public static DamageSource percentage(LivingEntity target, DamageSource original) {
+        Holder<DamageType> holder = holder(target, PERCENTAGE);
+        Entity direct = original.getDirectEntity();
+        Entity attacker = original.getEntity();
+        return new PercentageDamageSource(holder, direct, attacker, original);
+    }
+
     private static DamageSource source(LivingEntity context, ResourceKey<DamageType> key, @Nullable Entity attacker) {
         Holder<DamageType> holder = holder(context, key);
         return attacker != null ? new DamageSource(holder, attacker) : new DamageSource(holder);
@@ -130,6 +138,21 @@ public final class NichirinDamageSources {
                 default -> "death.attack.nichirin_breathing_overwhelmed";
             };
             return Component.translatable(key, victim.getDisplayName(), attacker.getDisplayName(), breathingStyle);
+        }
+    }
+
+    private static final class PercentageDamageSource extends DamageSource {
+        private final DamageSource original;
+
+        private PercentageDamageSource(Holder<DamageType> type, Entity direct, Entity attacker,
+                                       DamageSource original) {
+            super(type, direct, attacker);
+            this.original = original;
+        }
+
+        @Override
+        public Component getLocalizedDeathMessage(LivingEntity victim) {
+            return original.getLocalizedDeathMessage(victim);
         }
     }
 }

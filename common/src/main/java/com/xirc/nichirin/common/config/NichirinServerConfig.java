@@ -4,8 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.xirc.nichirin.BreathOfNichirin;
 import me.shedaniel.cloth.clothconfig.shadowed.com.moandjiezana.toml.Toml;
-import me.shedaniel.autoconfig.AutoConfig;
-
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
@@ -25,7 +23,7 @@ public final class NichirinServerConfig {
     private NichirinServerConfig() {
     }
 
-    public static void load() {
+    public static synchronized void load() {
         try {
             config = loadConfig();
         } catch (Exception e) {
@@ -72,26 +70,17 @@ public final class NichirinServerConfig {
     }
 
     public static NichirinModConfig get() {
-        try {
-            config = AutoConfig.getConfigHolder(NichirinModConfig.class).getConfig();
-            return config;
-        } catch (Exception ignored) {
-        }
         if (config == null) {
             load();
         }
         return config;
     }
 
-    public static void save() {
-        try {
-            config = AutoConfig.getConfigHolder(NichirinModConfig.class).getConfig();
-        } catch (Exception ignored) {
-        }
+    public static synchronized void save() {
         save(config);
     }
 
-    public static void save(NichirinModConfig configToSave) {
+    public static synchronized void save(NichirinModConfig configToSave) {
         config = configToSave;
         if (config == null) return;
         try {
@@ -122,6 +111,8 @@ public final class NichirinServerConfig {
         out.append("# Breath of Nichirin server config\n");
         out.append("# Change the value before each inline comment. The comment shows the default.\n\n");
         appendCombat(out, cfg.combat, defaults.combat);
+        out.append('\n');
+        appendDamage(out, cfg.damage, defaults.damage);
         out.append('\n');
         appendMovement(out, cfg.movement, defaults.movement);
         out.append('\n');
@@ -158,6 +149,12 @@ public final class NichirinServerConfig {
         appendValue(out, 4, "npcPlayerDuelMinHealth", cfg.npcPlayerDuelMinHealth, defaults.npcPlayerDuelMinHealth, true);
         appendValue(out, 4, "npcSelfDefenseGraceTicks", cfg.npcSelfDefenseGraceTicks, defaults.npcSelfDefenseGraceTicks, true);
         appendValue(out, 4, "staminaRegenRate", cfg.staminaRegenRate, defaults.staminaRegenRate, false);
+    }
+
+    private static void appendDamage(StringBuilder out, NichirinModConfig.DamageConfig cfg, NichirinModConfig.DamageConfig defaults) {
+        out.append("[damage]\n");
+        appendValue(out, 4, "baseDamageMultiplier", cfg.baseDamageMultiplier, defaults.baseDamageMultiplier, true);
+        appendValue(out, 4, "percentageDamage", cfg.percentageDamage, defaults.percentageDamage, false);
     }
 
     private static void appendMovement(StringBuilder out, NichirinModConfig.MovementConfig cfg, NichirinModConfig.MovementConfig defaults) {

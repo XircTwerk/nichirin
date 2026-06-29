@@ -88,6 +88,7 @@ public final class DestructiveDeathPlayerAura {
                         ALPHA)
                 .radius(radius)
                 .jitter(JITTER)
+                .materialProfile("destructive_death".hashCode())
                 .build();
         AuraManager.addAura(player, aura, AuraAudience.ALL);
 

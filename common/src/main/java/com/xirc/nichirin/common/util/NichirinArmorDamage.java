@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.util;
 
+import com.xirc.nichirin.common.config.NichirinModConfig;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -11,6 +12,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class NichirinArmorDamage {
     public static final float ARMOR_DAMAGE_MULTIPLIER = 0.1f;
+    private static final float ATTACK_DAMAGE_MULTIPLIER = 1.35f;
+    private static final float DESTRUCTIVE_DEATH_CQC_DAMAGE_MULTIPLIER = 1.15f;
+    private static final float PERCENTAGE_DAMAGE_DIVISOR = 300.0f;
 
     private static final ThreadLocal<Boolean> REDUCE_ARMOR_DAMAGE =
             ThreadLocal.withInitial(() -> false);
@@ -26,9 +30,23 @@ public final class NichirinArmorDamage {
     }
 
     public static boolean hurt(LivingEntity target, DamageSource source, float amount) {
+        return hurt(target, source, amount, false);
+    }
+
+    public static boolean hurt(LivingEntity target, DamageSource source, float amount,
+                               boolean destructiveDeathCqc) {
         boolean previous = REDUCE_ARMOR_DAMAGE.get();
         REDUCE_ARMOR_DAMAGE.set(true);
         try {
+            NichirinModConfig.DamageConfig config = NichirinModConfig.get().damage;
+            float balanceMultiplier = destructiveDeathCqc
+                    ? DESTRUCTIVE_DEATH_CQC_DAMAGE_MULTIPLIER
+                    : ATTACK_DAMAGE_MULTIPLIER;
+            amount *= balanceMultiplier * Math.max(0.0f, (float) config.baseDamageMultiplier);
+            if (config.percentageDamage) {
+                amount = target.getMaxHealth() * amount / PERCENTAGE_DAMAGE_DIVISOR;
+                source = NichirinDamageSources.percentage(target, source);
+            }
             amount = applyParryPunishDamage(target, source, amount);
             float before = target.getHealth() + target.getAbsorptionAmount();
             boolean result = target.hurt(source, amount);

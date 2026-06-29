@@ -90,6 +90,7 @@ public final class MovesetAuraTicker {
                     .color(demonPalette.r(), demonPalette.g(), demonPalette.b(), demonPalette.alpha())
                     .radius(radius)
                     .jitter(demonPalette.jitter())
+                    .materialProfile(demonId.hashCode())
                     .build();
             AuraManager.addAura(player, demonAura, AuraAudience.ALL);
             demonAuraId = demonAura.id();
@@ -100,6 +101,7 @@ public final class MovesetAuraTicker {
                     .color(breathingPalette.r(), breathingPalette.g(), breathingPalette.b(), breathingPalette.alpha())
                     .radius(breathingPalette.radius())
                     .jitter(breathingPalette.jitter())
+                    .materialProfile(breathingId.hashCode())
                     .build();
             AuraManager.addAura(player, aura, AuraAudience.ALL);
             breathingAuraId = aura.id();
