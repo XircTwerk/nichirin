@@ -14,6 +14,8 @@ public class TengenUniformRenderer extends NichirinArmorRenderer {
         switch (slot) {
             case HEAD -> {
                 setBoneVisible(getBone("Head"), true);
+                setBoneVisible(getBone("headband"), true);
+                setBoneVisible(getBone("Tied hair"), true);
                 setBoneVisible(getBone("head swingy bead right"), true);
                 setBoneVisible(getBone("head swingy bead left"), true);
             }

@@ -11,7 +11,7 @@ import com.xirc.nichirin.common.util.NetworkBufferUtils;
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
 import com.xirc.nichirin.common.attack.moveset.DefaultKatanaMoveset;
-import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.common.item.katana.Katana;
 import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinSoundRegistry;
@@ -280,8 +280,8 @@ public class KatanaBlock {
 
     private static boolean isKatanaBlocker(LivingEntity entity) {
         if (!(entity instanceof Player player)) return true;
-        return player.getMainHandItem().getItem() instanceof SimpleKatana
-                || player.getOffhandItem().getItem() instanceof SimpleKatana;
+        return player.getMainHandItem().getItem() instanceof Katana
+                || player.getOffhandItem().getItem() instanceof Katana;
     }
 
     private static boolean isCqcBlocker(LivingEntity entity) {
@@ -491,7 +491,7 @@ public class KatanaBlock {
 
         if (defender instanceof Player player) {
             player.displayClientMessage(
-                    Component.literal("🛡 Blocked!")
+                    Component.literal("Blocked!")
                             .withStyle(style -> style.withColor(0xAAAAAA)),
                     true);
         }

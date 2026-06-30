@@ -7,7 +7,7 @@ import com.xirc.nichirin.common.attack.moveset.CqcMoveset;
 import com.xirc.nichirin.common.attack.moveset.DefaultKatanaMoveset;
 import com.xirc.nichirin.common.attack.moveset.DefaultGunMoveset;
 import com.xirc.nichirin.common.data.MovesetHelper;
-import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.common.item.katana.Katana;
 import com.xirc.nichirin.common.item.gun.GenyaDB;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -103,7 +103,7 @@ public class AttackWheelOverlay {
 
         // Check held item
         ItemStack mainHand = player.getMainHandItem();
-        boolean holdingKatana = mainHand.getItem() instanceof SimpleKatana;
+        boolean holdingKatana = mainHand.getItem() instanceof Katana;
         boolean holdingGun = mainHand.getItem() instanceof GenyaDB;
 
         if (holdingGun) {
@@ -363,7 +363,7 @@ public class AttackWheelOverlay {
         if (minecraft.player != null && segment.config != null) {
             Player player = minecraft.player;
             ItemStack mainHand = player.getMainHandItem();
-            boolean holdingKatana = mainHand.getItem() instanceof SimpleKatana;
+            boolean holdingKatana = mainHand.getItem() instanceof Katana;
             boolean holdingGun = mainHand.getItem() instanceof GenyaDB;
 
             String movesetId = null;

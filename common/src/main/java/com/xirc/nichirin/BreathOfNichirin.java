@@ -49,6 +49,7 @@ public final class BreathOfNichirin {
         NichirinParticleRegistry.init();
         NichirinSoundRegistry.init();
         NichirinEffectRegistry.init();
+        NichirinStatRegistry.init();
         NichirinCommandRegistry.init();
         NichirinStructureTypeRegistry.init();
         NichirinStructurePieceTypeRegistry.init();
@@ -68,6 +69,7 @@ public final class BreathOfNichirin {
         WaterBreathingUnlockHandler.register();
         BeastBreathingUnlockHandler.register();
         MistBreathingUnlockHandler.register();
+        DestructiveDeathUnlockHandler.register();
 
         // SERVER-SIDE handlers only
         BreathOfNichirinEventHandler.init();
@@ -80,6 +82,7 @@ public final class BreathOfNichirin {
         DodgeEventHandler.register();
         HitAnimationHandler.register();
         DemonFoodHandler.register();
+        DemonAggroHandler.register();
         DrinkingGourdInteractionHandler.register();
         WisteriaStrippingHandler.register();
 

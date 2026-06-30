@@ -15,7 +15,7 @@ import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
 import com.xirc.nichirin.common.attack.moveset.DefaultKatanaMoveset;
 import com.xirc.nichirin.common.entity.MovesetCapableNPC;
 import com.xirc.nichirin.common.entity.npc.TempleDemonEntity;
-import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.common.item.katana.Katana;
 import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinSoundRegistry;
@@ -291,8 +291,8 @@ public class HandToHandBlock {
     private static boolean isHandToHandBlocker(LivingEntity entity) {
         if (entity instanceof TempleDemonEntity) return true;
         if (!(entity instanceof Player player)) return false;
-        boolean katana = player.getMainHandItem().getItem() instanceof SimpleKatana
-                || player.getOffhandItem().getItem() instanceof SimpleKatana;
+        boolean katana = player.getMainHandItem().getItem() instanceof Katana
+                || player.getOffhandItem().getItem() instanceof Katana;
         if (katana) return false;
         return player.getMainHandItem().isEmpty()
                 && MovesetHelper.hasFightingMoveset(player);
@@ -301,8 +301,8 @@ public class HandToHandBlock {
     private static String blockAnimation(LivingEntity entity) {
         if (entity instanceof TempleDemonEntity) return "cqc_stance_3";
         if (!(entity instanceof Player player)) return "sword.block";
-        boolean katana = player.getMainHandItem().getItem() instanceof SimpleKatana
-                || player.getOffhandItem().getItem() instanceof SimpleKatana;
+        boolean katana = player.getMainHandItem().getItem() instanceof Katana
+                || player.getOffhandItem().getItem() instanceof Katana;
         if (katana || !player.getMainHandItem().isEmpty()) return "sword.block";
         if (!MovesetHelper.hasFightingMoveset(player)) return "sword.block";
         return PlayerDataProvider.getData(player).getCqcPresetData().getStanceAnimation();
@@ -529,7 +529,7 @@ public class HandToHandBlock {
 
         if (defender instanceof Player player) {
             player.displayClientMessage(
-                    Component.literal("🛡 Blocked!")
+                    Component.literal("Blocked!")
                             .withStyle(style -> style.withColor(0xAAAAAA)),
                     true);
         }

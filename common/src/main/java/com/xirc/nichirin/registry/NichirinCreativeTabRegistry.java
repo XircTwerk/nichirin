@@ -53,6 +53,7 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinItemRegistry.SMOKE_BOMB.get());
                         entries.accept(NichirinItemRegistry.FLASH_BOMB.get());
                         entries.accept(NichirinItemRegistry.DEMON_BLOOD_VIAL.get());
+                        entries.accept(NichirinItemRegistry.BLOODY_FLESH.get());
                         entries.accept(NichirinItemRegistry.WISTERIA_FLOWER.get());
                         entries.accept(NichirinItemRegistry.WISTERIA_EXTRACT.get());
                         entries.accept(NichirinItemRegistry.WISTERIA_ARROW.get());

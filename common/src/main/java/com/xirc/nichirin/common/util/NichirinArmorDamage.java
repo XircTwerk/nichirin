@@ -14,7 +14,7 @@ public final class NichirinArmorDamage {
     public static final float ARMOR_DAMAGE_MULTIPLIER = 0.1f;
     private static final float ATTACK_DAMAGE_MULTIPLIER = 1.35f;
     private static final float DESTRUCTIVE_DEATH_CQC_DAMAGE_MULTIPLIER = 1.15f;
-    private static final float PERCENTAGE_DAMAGE_DIVISOR = 300.0f;
+    private static final float PERCENTAGE_DAMAGE_DIVISOR = 500.0f;
 
     private static final ThreadLocal<Boolean> REDUCE_ARMOR_DAMAGE =
             ThreadLocal.withInitial(() -> false);
@@ -44,7 +44,9 @@ public final class NichirinArmorDamage {
                     : ATTACK_DAMAGE_MULTIPLIER;
             amount *= balanceMultiplier * Math.max(0.0f, (float) config.baseDamageMultiplier);
             if (config.percentageDamage) {
-                amount = target.getMaxHealth() * amount / PERCENTAGE_DAMAGE_DIVISOR;
+                // Add a bonus on TOP of the base damage: (damage / 300) of the target's max health.
+                // e.g. a 20-damage attack adds 1/15 of the target's max health.
+                amount += target.getMaxHealth() * amount / PERCENTAGE_DAMAGE_DIVISOR;
                 source = NichirinDamageSources.percentage(target, source);
             }
             amount = applyParryPunishDamage(target, source, amount);

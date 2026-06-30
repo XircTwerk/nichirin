@@ -167,5 +167,6 @@ public class NichirinModelProvider extends FabricModelProvider {
 
         // Demon items
         generator.generateFlatItem(NichirinItemRegistry.DEMON_BLOOD_VIAL.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.BLOODY_FLESH.get(), ModelTemplates.FLAT_ITEM);
     }
 }

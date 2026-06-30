@@ -1,7 +1,7 @@
 package com.xirc.nichirin.client.renderer.entity.layer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.common.item.katana.Katana;
 import com.xirc.nichirin.common.util.ItemStackData;
 import com.xirc.nichirin.common.system.sheathing.PlayerSheathData;
 import com.xirc.nichirin.common.system.sheathing.SheathPosition;
@@ -36,7 +36,7 @@ public class SheathedKatanaLayer extends RenderLayer<AbstractClientPlayer, Playe
             ItemStack stack = slot.hasStoredSword()
                     ? slot.getStoredSword()
                     : player.getInventory().getItem(slot.getLinkedHotbarSlot());
-            if (!(stack.getItem() instanceof SimpleKatana)) continue;
+            if (!(stack.getItem() instanceof Katana)) continue;
             renderSlot(poseStack, buffer, packedLight, player, slot, stack);
         }
     }

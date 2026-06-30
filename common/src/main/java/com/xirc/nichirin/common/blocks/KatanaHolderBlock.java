@@ -1,6 +1,6 @@
 package com.xirc.nichirin.common.blocks;
 
-import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.common.item.katana.Katana;
 import com.xirc.nichirin.registry.NichirinBlockEntityRegistry;
 import com.mojang.serialization.MapCodec;
 import lombok.Getter;
@@ -183,7 +183,7 @@ public class KatanaHolderBlock extends BaseEntityBlock {
             return InteractionResult.SUCCESS;
         }
 
-        if (handItem.getItem() instanceof SimpleKatana) {
+        if (handItem.getItem() instanceof Katana) {
             ItemStack katanaToPlace = handItem.copy();
             katanaToPlace.setCount(1);
             holderEntity.setKatana(katanaToPlace);
@@ -232,7 +232,7 @@ public class KatanaHolderBlock extends BaseEntityBlock {
         }
 
         public void setKatana(ItemStack katana) {
-            if (katana.isEmpty() || katana.getItem() instanceof SimpleKatana) {
+            if (katana.isEmpty() || katana.getItem() instanceof Katana) {
                 this.storedKatana = katana.copy();
                 if (!katana.isEmpty()) {
                     this.storedKatana.setCount(1);

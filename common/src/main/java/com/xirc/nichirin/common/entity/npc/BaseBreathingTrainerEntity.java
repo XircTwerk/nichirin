@@ -6,7 +6,7 @@ import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.system.blocking.KatanaBlock;
 import com.xirc.nichirin.common.data.ProgressionHelper;
 import com.xirc.nichirin.common.entity.MovesetCapableNPC;
-import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.common.item.katana.Katana;
 import com.xirc.nichirin.common.network.s2c.OpenTrainerDialoguePacket;
 import com.xirc.nichirin.common.system.NPCResourceManager;
 import com.xirc.nichirin.common.system.movement.EntityMovement;
@@ -316,7 +316,7 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
         if (!(player instanceof ServerPlayer sp)) return InteractionResult.sidedSuccess(true);
 
         // Don't open dialogue if the player is holding a katana (they're likely mid-attack)
-        if (player.getMainHandItem().getItem() instanceof SimpleKatana) {
+        if (player.getMainHandItem().getItem() instanceof Katana) {
             return InteractionResult.PASS;
         }
 

@@ -5,6 +5,8 @@ import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.data.ProgressionHelper;
 import com.xirc.nichirin.registry.NichirinMovesetRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
+import com.xirc.nichirin.registry.NichirinStatRegistry;
+import net.minecraft.stats.Stats;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -41,6 +43,11 @@ public class DemonArtSection extends AbstractGuiPage {
             graphics.drawString(font, current, contentX, contentY, COLOR_PALETTE.DANGER.rgb());
             contentY += 25;
         }
+
+        // Humans devoured as a demon (read from the vanilla statistic)
+        Component humansEaten = Component.translatable("gui.nichirin.demon_arts.humans_eaten", getHumansEaten());
+        graphics.drawString(font, humansEaten, contentX, contentY, COLOR_PALETTE.DANGER.rgb());
+        contentY += 18;
 
         // Instructions
         Component instructions = Component.translatable("gui.nichirin.demon_arts.instructions");
@@ -95,33 +102,15 @@ public class DemonArtSection extends AbstractGuiPage {
             graphics.drawString(font, tooltip, centerX - font.width(tooltip) / 2, tooltipY, COLOR_PALETTE.DANGER.rgb());
         }
 
-        // "None" button - gives default demon moveset
-        int noneButtonY = gridY + 20;
-        int noneButtonX = centerX - 75;
-        int noneButtonWidth = 150;
-        int noneButtonHeight = 20;
-
-        // None button is selected when player has default_demon moveset
-        boolean isNoneSelected = "default_demon".equals(currentStyle);
-        int noneButtonBg = isNoneSelected ? COLOR_PALETTE.PANEL_HOVER.argb() : COLOR_PALETTE.PANEL_MID.argb();
-        int noneButtonBorder = isNoneSelected ? COLOR_PALETTE.DANGER.argb() : COLOR_PALETTE.BORDER_HI.argb();
-
-        if (isNoneSelected) {
-            graphics.fill(noneButtonX - 3, noneButtonY - 3,
-                    noneButtonX + noneButtonWidth + 3, noneButtonY + noneButtonHeight + 3, withAlpha(noneButtonBorder, 0x24));
+        // Demon status line pinned to the bottom of the panel (replaces the old Basic Demon Arts
+        // button — Basic Demon Arts can still be selected from the Obtainment subtab).
+        if (currentStyle != null && isDemonArt(currentStyle)) {
+            Component demonStatus = Component.translatable("gui.nichirin.demon_arts.you_are_demon")
+                    .withStyle(style -> style.withColor(COLOR_PALETTE.DANGER.rgb()).withBold(true));
+            graphics.drawString(font, demonStatus,
+                    centerX - font.width(demonStatus) / 2,
+                    contentHeight - 16, COLOR_PALETTE.DANGER.rgb());
         }
-        graphics.fill(noneButtonX - 1, noneButtonY - 1,
-                noneButtonX + noneButtonWidth + 1, noneButtonY + noneButtonHeight + 1, noneButtonBorder);
-        graphics.fill(noneButtonX, noneButtonY,
-                noneButtonX + noneButtonWidth, noneButtonY + noneButtonHeight, noneButtonBg);
-        graphics.fill(noneButtonX, noneButtonY, noneButtonX + noneButtonWidth, noneButtonY + 2,
-                withAlpha(noneButtonBorder, isNoneSelected ? 0xEE : 0x70));
-
-        Component noneText = Component.literal("Basic Demon Arts");
-        int noneTextColor = isNoneSelected ? COLOR_PALETTE.DANGER.rgb() : COLOR_PALETTE.GRAY.rgb();
-        graphics.drawString(font, noneText,
-                noneButtonX + (noneButtonWidth - font.width(noneText)) / 2,
-                noneButtonY + 6, noneTextColor);
     }
 
     /**
@@ -196,6 +185,21 @@ public class DemonArtSection extends AbstractGuiPage {
     }
 
     /**
+     * Reads the player's "humans eaten as demon" count from the vanilla statistics (client-side).
+     */
+    private int getHumansEaten() {
+        try {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player != null && mc.player.getStats() != null) {
+                return mc.player.getStats().getValue(
+                        Stats.CUSTOM.get(NichirinStatRegistry.HUMANS_EATEN_AS_DEMON.get()));
+            }
+        } catch (Exception ignored) {
+        }
+        return 0;
+    }
+
+    /**
      * Check if an art is unlocked
      */
     private boolean isArtUnlocked(Player player, String artId) {
@@ -254,9 +258,10 @@ public class DemonArtSection extends AbstractGuiPage {
                 "destructive_death"
         };
 
-        // Base Y matches render(): TOP_MARGIN+10 (30) + title (30) + instructions (20) + grid offset (10)
+        // Base Y matches render(): TOP_MARGIN+10 (30) + title (30) + humans-eaten line (18)
+        // + instructions (20) + grid offset (10).
         // Only add 25 when the current-art line is drawn (same condition as render())
-        int topRowY = TOP_MARGIN + 10 + 30 + 20 + 10;
+        int topRowY = TOP_MARGIN + 10 + 30 + 18 + 20 + 10;
         if (currentStyle != null && isDemonArt(currentStyle)) topRowY += 25;
 
         // Check clicks on additional demon art boxes (if any exist)
@@ -281,30 +286,6 @@ public class DemonArtSection extends AbstractGuiPage {
                 }
             }
 
-            topRowY += ((additionalDemonArts.length - 1) / cols + 1) * (boxHeight + spacing);
-        }
-
-        // Check for "None" button click - sets default_demon moveset
-        int noneButtonY = topRowY + 20;
-        int noneButtonX = centerX - 75;
-        int noneButtonWidth = 150;
-        int noneButtonHeight = 20;
-
-        if (mouseX >= noneButtonX && mouseX <= noneButtonX + noneButtonWidth &&
-                mouseY >= noneButtonY && mouseY <= noneButtonY + noneButtonHeight) {
-
-            // Set default demon moveset (basic demon abilities)
-            NichirinPacketRegistry.requestMovesetChange("default_demon");
-
-            // Play click sound
-            Minecraft.getInstance().getSoundManager().play(
-                    SimpleSoundInstance.forUI(
-                            SoundEvents.UI_BUTTON_CLICK.value(), 1.0F
-                    )
-            );
-
-            lastClickTime = currentTime;
-            return true;
         }
 
         return false;

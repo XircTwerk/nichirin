@@ -2,7 +2,7 @@ package com.xirc.nichirin.client.util;
 
 import com.xirc.nichirin.client.handler.AttackWheelHandler;
 import com.xirc.nichirin.common.data.MovesetHelper;
-import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.common.item.katana.Katana;
 import com.xirc.nichirin.common.item.gun.GenyaDB;
 import com.xirc.nichirin.common.util.MultiplayerInputHandler;
 import com.xirc.nichirin.common.util.NetworkBufferUtils;
@@ -148,8 +148,8 @@ public class ClientInputHandler {
     public static boolean isBlockHeld(Player player) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.options == null || !mc.options.keyUse.isDown()) return false;
-        if (player.getMainHandItem().getItem() instanceof SimpleKatana) return true;
-        if (player.getOffhandItem().getItem() instanceof SimpleKatana) return true;
+        if (player.getMainHandItem().getItem() instanceof Katana) return true;
+        if (player.getOffhandItem().getItem() instanceof Katana) return true;
         return player.getMainHandItem().isEmpty()
                 && (MovesetHelper.hasFightingMoveset(player) || MovesetHelper.hasDemonMoveset(player));
     }
@@ -158,7 +158,7 @@ public class ClientInputHandler {
     private static void sendBlockSpecial(Player player) {
         boolean crouch = isCrouchInputDown(player);
         try {
-            if (player.getMainHandItem().getItem() instanceof SimpleKatana katana) {
+            if (player.getMainHandItem().getItem() instanceof Katana katana) {
                 katana.displayClientRightClickFeedback(player, crouch);
             }
         } catch (Exception ignored) {
@@ -183,7 +183,7 @@ public class ClientInputHandler {
         ItemStack item = player.getItemInHand(hand);
 
         // Check if holding katana (for breathing users ONLY)
-        if (item.getItem() instanceof SimpleKatana) {
+        if (item.getItem() instanceof Katana) {
             return true; // Katana holders can use breathing abilities
         }
 
@@ -193,7 +193,7 @@ public class ClientInputHandler {
 
     private static boolean canPerformRightClickAttacks(Player player, InteractionHand hand) {
         ItemStack item = player.getItemInHand(hand);
-        if (item.getItem() instanceof SimpleKatana) {
+        if (item.getItem() instanceof Katana) {
             return true;
         }
         return hand == InteractionHand.MAIN_HAND && item.isEmpty() && MovesetHelper.hasFightingMoveset(player);
@@ -242,7 +242,7 @@ public class ClientInputHandler {
     private static void sendLeftClick(Player player) {
         try {
             // Show cooldown for katana users
-            if (player.getMainHandItem().getItem() instanceof SimpleKatana katana) {
+            if (player.getMainHandItem().getItem() instanceof Katana katana) {
                 katana.displayClientCooldown(player);
             }
         } catch (Exception e) {
@@ -266,7 +266,7 @@ public class ClientInputHandler {
 
         try {
             // Show cooldown for katana users
-            if (player.getMainHandItem().getItem() instanceof SimpleKatana katana) {
+            if (player.getMainHandItem().getItem() instanceof Katana katana) {
                 katana.displayClientRightClickFeedback(player, crouch);
             }
         } catch (Exception e) {

@@ -25,6 +25,9 @@ public class MovesetProgression {
     private int techniqueExperience = 0;
     @Getter
     private int slayerRank = 0;
+    // Demons killed using only close-quarters combat — gates the Destructive Death unlock.
+    @Getter
+    private int cqcDemonKills = 0;
 
     public MovesetProgression() {
         // Everyone starts with no movesets unlocked
@@ -64,7 +67,8 @@ public class MovesetProgression {
             case "water_breathing" -> "Kill a Drowned with your bare hands";
             case "mist_breathing"  -> "Kill a mob in a mountain biome while it's raining";
             case "beast_breathing" -> "Kill a boar, then equip the boar head";
-            case "default_demon" -> "Become a demon to unlock basic demon arts";
+            case "default_demon" -> "Drink a Demon Blood Vial dropped by a slain demon";
+            case "destructive_death" -> "As a demon, kill 5 demons using only close-quarters combat";
             default -> "Unknown requirement";
         };
     }
@@ -75,6 +79,11 @@ public class MovesetProgression {
         demonsSlain++;
         techniqueExperience += 100;
         updateSlayerRank();
+    }
+
+    /** Records a demon killed with close-quarters combat. Returns the new total. */
+    public int addCqcDemonKill() {
+        return ++cqcDemonKills;
     }
 
     public void addDamageDealt(int damage) {
@@ -104,6 +113,7 @@ public class MovesetProgression {
         this.unlockedMovesets.clear();
         this.unlockedMovesets.addAll(other.unlockedMovesets);
         this.demonsSlain = other.demonsSlain;
+        this.cqcDemonKills = other.cqcDemonKills;
         this.totalDamageDealt = other.totalDamageDealt;
         this.techniqueExperience = other.techniqueExperience;
         this.slayerRank = other.slayerRank;
@@ -124,6 +134,7 @@ public class MovesetProgression {
 
         // Save stats
         tag.putInt("DemonsSlain", demonsSlain);
+        tag.putInt("CqcDemonKills", cqcDemonKills);
         tag.putInt("TotalDamageDealt", totalDamageDealt);
         tag.putInt("TechniqueExperience", techniqueExperience);
         tag.putInt("SlayerRank", slayerRank);
@@ -155,6 +166,7 @@ public class MovesetProgression {
 
         // Load stats with backwards compatibility
         demonsSlain = tag.getInt("DemonsSlain");
+        cqcDemonKills = tag.getInt("CqcDemonKills");
         totalDamageDealt = tag.getInt("TotalDamageDealt");
 
         // Try new name first, fallback to old name

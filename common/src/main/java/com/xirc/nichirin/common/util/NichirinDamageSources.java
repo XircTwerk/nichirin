@@ -92,6 +92,17 @@ public final class NichirinDamageSources {
         return new PercentageDamageSource(holder, direct, attacker, original);
     }
 
+    /**
+     * Type check that sees through the percentage wrapper. When {@code percentageDamage} is enabled
+     * the original move source (CQC, blade, etc.) is wrapped in a {@link PercentageDamageSource} before
+     * the entity is hurt, so a plain {@code source.is(CQC)} would miss it. Use this when reacting to a
+     * kill/hit by move type (e.g. unlock conditions).
+     */
+    public static boolean is(DamageSource source, ResourceKey<DamageType> key) {
+        if (source.is(key)) return true;
+        return source instanceof PercentageDamageSource wrapped && wrapped.original.is(key);
+    }
+
     private static DamageSource source(LivingEntity context, ResourceKey<DamageType> key, @Nullable Entity attacker) {
         Holder<DamageType> holder = holder(context, key);
         return attacker != null ? new DamageSource(holder, attacker) : new DamageSource(holder);

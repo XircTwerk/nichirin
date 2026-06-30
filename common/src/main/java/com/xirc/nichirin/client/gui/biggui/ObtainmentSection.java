@@ -44,9 +44,13 @@ public class ObtainmentSection extends AbstractGuiPage {
             new Entry("mist_breathing",    "breathing_style.mist_breathing",    0xFFB0C4DE)
     );
 
+    private static final List<Entry> DEMON_ARTS = List.of(
+            new Entry("default_demon",     "demon_art.default_demon",     0xFFAA0000),
+            new Entry("destructive_death", "demon_art.destructive_death", 0xFFAA0000)
+    );
+
     private static final int CARD_H = 50;
     private static final int GAP = 8;
-    private static final int DEMON_CARD_H = 36;
     private static final long CLICK_COOLDOWN_MS = 500;
 
     /** Last hit-test layout snapshot, recorded each render so click handling can find cards. */
@@ -64,38 +68,45 @@ public class ObtainmentSection extends AbstractGuiPage {
                        int contentWidth, int contentHeight, int mouseX, int mouseY) {
         hitRects.clear();
 
-        int x = DEFAULT_PAD;
-        int y = DEFAULT_PAD;
         int rowW = contentWidth - DEFAULT_PAD * 2;
+        int colW = (rowW - GAP) / 2;
+        int leftX = DEFAULT_PAD;
+        int rightX = leftX + colW + GAP;
         int bottomLimit = contentHeight - DEFAULT_PAD;
 
-        // Sort unlocked-first within breathing styles; preserve insertion order within each group.
+        // Two columns so demon arts are always visible next to the long breathing list, rather
+        // than pushed off the bottom of the panel. Left = breathing, right = demon arts.
+
+        // Left column: breathing styles (unlocked-first).
         List<Entry> orderedBreathing = new ArrayList<>(BREATHING_STYLES);
         orderedBreathing.sort(Comparator.comparing(
                 (Entry e) -> ProgressionHelper.isStyleUnlocked(player, e.id()) ? 0 : 1));
-
-        y = drawHeader(graphics, font,
+        int yLeft = drawHeader(graphics, font,
                 Component.translatable("gui.nichirin.obtainment.header.breathing_styles").getString(),
-                x, y, COLOR_PALETTE.BREATH_CYAN.rgb());
+                leftX, DEFAULT_PAD, colW, COLOR_PALETTE.BREATH_CYAN.rgb());
         for (Entry e : orderedBreathing) {
-            if (y + CARD_H > bottomLimit) return;
-            renderEntry(graphics, font, player, e, x, y, rowW);
-            y += CARD_H + GAP;
+            if (yLeft + CARD_H > bottomLimit) break;
+            renderEntry(graphics, font, player, e, leftX, yLeft, colW);
+            yLeft += CARD_H + GAP;
         }
 
-        y += GAP;
-        if (y + font.lineHeight + 10 + DEMON_CARD_H > bottomLimit) return;
-        y = drawHeader(graphics, font,
+        // Right column: demon arts (unlocked-first).
+        List<Entry> orderedDemon = new ArrayList<>(DEMON_ARTS);
+        orderedDemon.sort(Comparator.comparing(
+                (Entry e) -> ProgressionHelper.isStyleUnlocked(player, e.id()) ? 0 : 1));
+        int yRight = drawHeader(graphics, font,
                 Component.translatable("gui.nichirin.obtainment.header.demon_arts").getString(),
-                x, y, COLOR_PALETTE.DEMON_RED.rgb());
-        String comingSoon = Component.translatable("gui.nichirin.obtainment.demon_coming_soon").getString();
-        drawInfoCard(graphics, font, x, y, rowW, DEMON_CARD_H,
-                comingSoon, "", COLOR_PALETTE.DEMON_RED.argb());
+                rightX, DEFAULT_PAD, colW, COLOR_PALETTE.DEMON_RED.rgb());
+        for (Entry e : orderedDemon) {
+            if (yRight + CARD_H > bottomLimit) break;
+            renderEntry(graphics, font, player, e, rightX, yRight, colW);
+            yRight += CARD_H + GAP;
+        }
     }
 
-    private int drawHeader(GuiGraphics graphics, Font font, String label, int x, int y, int color) {
+    private int drawHeader(GuiGraphics graphics, Font font, String label, int x, int y, int width, int color) {
         graphics.drawString(font, label, x, y, color, false);
-        drawHorizontalDivider(graphics, x, y + font.lineHeight + 3, 220);
+        drawHorizontalDivider(graphics, x, y + font.lineHeight + 3, width);
         return y + font.lineHeight + 10;
     }
 

@@ -10,7 +10,7 @@ import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.attack.moveset.CqcMoveset;
 import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.data.*;
-import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.common.item.katana.Katana;
 import com.xirc.nichirin.common.item.gun.GenyaDB;
 import com.xirc.nichirin.common.network.c2s.*;
 import com.xirc.nichirin.common.network.s2c.*;
@@ -667,7 +667,7 @@ public interface NichirinPacketRegistry {
 
     static void executeKatanaInput(ServerPlayer player, MultiplayerInputHandler.InputType inputType) {
         var mainHand = player.getMainHandItem();
-        if (!(mainHand.getItem() instanceof SimpleKatana katana)) {
+        if (!(mainHand.getItem() instanceof Katana katana)) {
             return;
         }
 

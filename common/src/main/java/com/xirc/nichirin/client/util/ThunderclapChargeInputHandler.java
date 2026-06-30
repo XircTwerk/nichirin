@@ -1,7 +1,7 @@
 package com.xirc.nichirin.client.util;
 
 import com.xirc.nichirin.common.data.MovesetHelper;
-import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.common.item.katana.Katana;
 import com.xirc.nichirin.common.util.NetworkBufferUtils;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.event.events.client.ClientTickEvent;
@@ -57,7 +57,7 @@ public final class ThunderclapChargeInputHandler {
     }
 
     private static boolean isThunderBreathingKatanaHolder(Player player) {
-        if (!(player.getMainHandItem().getItem() instanceof SimpleKatana)) return false;
+        if (!(player.getMainHandItem().getItem() instanceof Katana)) return false;
         if (!MovesetHelper.hasBreathingMoveset(player)) return false;
         String id = MovesetHelper.getBreathingMovesetId(player);
         return THUNDER_BREATHING_ID.equals(id);

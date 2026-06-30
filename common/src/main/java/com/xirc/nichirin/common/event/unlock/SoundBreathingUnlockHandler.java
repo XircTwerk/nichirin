@@ -56,7 +56,7 @@ public class SoundBreathingUnlockHandler {
         PlayerDataProvider.updateAndSync(player, "sound_breathing");
 
         player.displayClientMessage(
-                Component.literal("🎵 Let my musical score technique lead us to victory! Sound breathing unlocked! 🎵")
+                Component.literal("Let my musical score technique lead us to victory! Sound breathing unlocked!")
                         .withStyle(style -> style.withColor(0x00CED1).withBold(true)),
                 false
         );

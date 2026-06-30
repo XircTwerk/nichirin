@@ -39,7 +39,7 @@ public class WaterBreathingUnlockHandler {
         PlayerDataProvider.updateAndSync(player, "water_breathing");
 
         player.displayClientMessage(
-                Component.literal("💧 The current of life flows through you. Water Breathing unlocked! 💧")
+                Component.literal("The current of life flows through you. Water Breathing unlocked!")
                         .withStyle(style -> style.withColor(0x00AAFF).withBold(true)),
                 false
         );

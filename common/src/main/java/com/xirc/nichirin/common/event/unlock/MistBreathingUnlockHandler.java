@@ -45,7 +45,7 @@ public class MistBreathingUnlockHandler {
         PlayerDataProvider.updateAndSync(player, "mist_breathing");
 
         player.displayClientMessage(
-                Component.literal("🌫 The mountain mist embraces you. Mist Breathing unlocked! 🌫")
+                Component.literal("The mountain mist embraces you. Mist Breathing unlocked!")
                         .withStyle(style -> style.withColor(0xB0C4DE).withBold(true)),
                 false
         );

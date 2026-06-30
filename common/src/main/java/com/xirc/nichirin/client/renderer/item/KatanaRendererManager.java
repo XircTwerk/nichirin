@@ -10,6 +10,8 @@ public class KatanaRendererManager {
     public static void registerAll() {
         registerKatana(NichirinItemRegistry.SABITO_KATANA.get(), "sabito_katana", "sabito_katana");
         registerKatana(NichirinItemRegistry.MIST_KATANA.get(), "muichiro_katana", "mist_katana");
+        registerKatana(NichirinItemRegistry.THUNDER_KATANA.get(), "thunder_katana", "thunder_katana");
+        registerKatana(NichirinItemRegistry.UROKODAKI_KATANA.get(), "urokodaki_katana", "urokodaki_katana");
         registerKatana(NichirinItemRegistry.FLAME_KATANA.get(), "flame_katana", "flame_katana");
         registerKatana(NichirinItemRegistry.INSECT_KATANA.get(), "insect_katana", "insect_katana");
         registerKatana(NichirinItemRegistry.GIYU_KATANA.get(), "giyu_katana", "giyu_katana");

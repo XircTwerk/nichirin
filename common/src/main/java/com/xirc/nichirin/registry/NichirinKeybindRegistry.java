@@ -5,7 +5,7 @@ import com.xirc.nichirin.client.gui.CooldownHUD;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.attack.moveset.CqcMoveset;
 import com.xirc.nichirin.common.data.MovesetHelper;
-import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.common.item.katana.Katana;
 import com.xirc.nichirin.common.item.gun.GenyaDB;
 import com.xirc.nichirin.common.network.c2s.MovementInputPacket;
 import com.xirc.nichirin.common.network.c2s.MoveHotkeyPacket;
@@ -191,7 +191,7 @@ public interface NichirinKeybindRegistry {
 
         // Check held item
         ItemStack mainHand = client.player.getMainHandItem();
-        boolean holdingKatana = mainHand.getItem() instanceof SimpleKatana;
+        boolean holdingKatana = mainHand.getItem() instanceof Katana;
         boolean holdingGun = mainHand.getItem() instanceof GenyaDB;
 
         // Gun has its own two moves (0 = Gun Bash, 1 = Grab); route them through MoveHotkeyPacket.
@@ -220,7 +220,7 @@ public interface NichirinKeybindRegistry {
         }
 
         // Default katana case: holding katana with no breathing style assigned
-        // Route through MoveHotkeyPacket so SimpleKatana.performWheelMove handles it server-side
+        // Route through MoveHotkeyPacket so Katana.performWheelMove handles it server-side
         if (moveset == null) {
             if (holdingKatana && moveIndex <= 2) {
                 NichirinPacketRegistry.sendToServer(new MoveHotkeyPacket(moveIndex));
