@@ -41,7 +41,7 @@ side = "BOTH"
 [[dependencies.nichirin]]
 modId = "azurelib"
 type = "required"
-versionRange = "[3.1.8,)"
+versionRange = "[3.1.10,)"
 ordering = "AFTER"
 side = "BOTH"
 
