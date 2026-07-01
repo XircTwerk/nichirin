@@ -58,7 +58,7 @@ public class ThunderBreathingUnlockHandler {
         PlayerDataProvider.updateAndSync(player, "thunder_breathing");
 
         player.displayClientMessage(
-                Component.literal("⚡ You have been baptized by the storm! Thunder Breathing unlocked! ⚡")
+                Component.literal("You have been baptized by the storm! Thunder Breathing unlocked!")
                         .withStyle(style -> style.withColor(0xFFFF55).withBold(true)),
                 false
         );

@@ -6,7 +6,7 @@ import com.xirc.nichirin.common.attack.moves.KatanaOverheadAttack;
 import com.xirc.nichirin.common.attack.moves.KatanaThrustAttack;
 import com.xirc.nichirin.common.item.katana.IndividualBeastKatana;
 import com.xirc.nichirin.common.item.katana.IndividualSoundKatana;
-import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.common.item.katana.Katana;
 import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
 import com.xirc.nichirin.common.util.StaminaManager;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
@@ -265,7 +265,7 @@ public class SheathingManager {
 
     private static void startSheathe(ServerPlayer player, PlayerSheathData data, SheathSlotData slot) {
         ItemStack sword = player.getInventory().getItem(slot.getLinkedHotbarSlot());
-        if (!(sword.getItem() instanceof SimpleKatana)) {
+        if (!(sword.getItem() instanceof Katana)) {
             feedback(player, "No katana in Hotbar " + (slot.getLinkedHotbarSlot() + 1), 0xFF5555, false);
             return;
         }
@@ -275,7 +275,7 @@ public class SheathingManager {
         }
 
         // Dual wield: player is holding a beast or sound dual-katana pair (the individual halves
-        // in main+off). Generic SimpleKatanas in both hands are NOT treated as dual — those are
+        // in main+off). Generic Katanas in both hands are NOT treated as dual — those are
         // just two separate weapons and shouldn't auto-sheathe together.
         ItemStack offhand = player.getOffhandItem();
         boolean dualWield = isDualKatanaPair(sword, offhand);
@@ -504,7 +504,7 @@ public class SheathingManager {
 
     private static boolean hasHotbarSword(Player player, SheathSlotData slot) {
         ItemStack stack = player.getInventory().getItem(slot.getLinkedHotbarSlot());
-        return stack.getItem() instanceof SimpleKatana;
+        return stack.getItem() instanceof Katana;
     }
 
     private static void feedback(Player player, String text, int color, boolean bold) {

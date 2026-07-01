@@ -7,7 +7,7 @@ import com.xirc.nichirin.common.attack.moveset.CqcMoveset;
 import com.xirc.nichirin.common.attack.moveset.DefaultKatanaMoveset;
 import com.xirc.nichirin.common.attack.moveset.DefaultGunMoveset;
 import com.xirc.nichirin.common.data.MovesetHelper;
-import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.common.item.katana.Katana;
 import com.xirc.nichirin.common.item.gun.GenyaDB;
 import com.xirc.nichirin.common.network.c2s.MoveHotkeyPacket;
 import com.xirc.nichirin.common.util.BreathingManager;
@@ -221,7 +221,7 @@ public class AttackWheelHandler {
 
         // Check held item
         ItemStack mainHand = mc.player.getMainHandItem();
-        boolean holdingKatana = mainHand.getItem() instanceof SimpleKatana;
+        boolean holdingKatana = mainHand.getItem() instanceof Katana;
         boolean holdingGun = mainHand.getItem() instanceof GenyaDB;
 
         if (holdingGun) {
@@ -447,7 +447,7 @@ public class AttackWheelHandler {
         } else if (currentWheelIsFighting) {
             MultiplayerInputHandler.sendDemonMove(selectedMove, mc.player);
         } else if (isDefaultKatanaWheel) {
-            // Default katana wheel — server handles via SimpleKatana.performWheelMove
+            // Default katana wheel — server handles via Katana.performWheelMove
             NichirinPacketRegistry.sendToServer(new MoveHotkeyPacket(selectedMove));
         } else if (isDefaultGunWheel) {
             // Gun wheel — server handles via GenyaDB.performWheelMove

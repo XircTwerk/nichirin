@@ -2,7 +2,7 @@ package com.xirc.nichirin.common.util;
 
 import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.common.data.MovesetHelper;
-import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.common.item.katana.Katana;
 import com.xirc.nichirin.common.network.c2s.BreathingMovePacket;
 import com.xirc.nichirin.common.network.c2s.DemonMovePacket;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
@@ -106,7 +106,7 @@ public class MultiplayerInputHandler {
                 return;
             }
 
-            boolean holdingKatana = player.getMainHandItem().getItem() instanceof SimpleKatana;
+            boolean holdingKatana = player.getMainHandItem().getItem() instanceof Katana;
 
             if (holdingKatana) {
                 try {

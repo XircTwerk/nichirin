@@ -233,7 +233,7 @@ public abstract class AbstractMoveset {
     }
 
     /**
-     * Override the right-click (M2) behavior for SimpleKatana with stun checking and followup queuing
+     * Override the right-click (M2) behavior for Katana with stun checking and followup queuing
      */
     public boolean handleRightClick(LivingEntity entity, boolean isCrouching) {
         if (entity.hasEffect(NichirinEffectRegistry.stunned())) {

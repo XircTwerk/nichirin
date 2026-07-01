@@ -6,7 +6,7 @@ import com.xirc.nichirin.common.aura.AuraManager;
 import com.xirc.nichirin.common.data.MovesetData;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.item.katana.BeastKatana;
-import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.common.item.katana.Katana;
 import com.xirc.nichirin.common.item.katana.SoundKatana;
 import com.xirc.nichirin.common.outline.OutlineInstance;
 import com.xirc.nichirin.common.outline.OutlineManager;
@@ -125,8 +125,8 @@ public final class MovesetAuraTicker {
     public static boolean isHoldingKatana(ServerPlayer player) {
         Item main = player.getMainHandItem().getItem();
         Item off = player.getOffhandItem().getItem();
-        return main instanceof SimpleKatana || main instanceof SoundKatana || main instanceof BeastKatana
-                || off instanceof SimpleKatana || off instanceof SoundKatana || off instanceof BeastKatana;
+        return main instanceof Katana || main instanceof SoundKatana || main instanceof BeastKatana
+                || off instanceof Katana || off instanceof SoundKatana || off instanceof BeastKatana;
     }
 
     private static void removeIfPresent(ServerPlayer player) {

@@ -16,9 +16,11 @@ import mod.azure.azurelib.common.render.armor.AzArmorRendererPipeline;
 import mod.azure.azurelib.common.render.armor.AzArmorRendererPipelineContext;
 import mod.azure.azurelib.common.render.armor.bone.AzArmorBoneContext;
 import mod.azure.azurelib.common.render.armor.bone.AzArmorBoneProvider;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
 import com.xirc.nichirin.mixin.client.PlayerModelAccessor;
 import net.minecraft.client.model.PlayerModel;
+import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.resources.ResourceLocation;
@@ -90,7 +92,8 @@ public class NichirinArmorRenderer extends AzArmorRenderer {
         ResourceLocation texture = BreathOfNichirin.id("textures/armor/" + textureName + ".png");
 
         var builder = AzArmorRendererConfig.builder(geoModel, texture)
-                .setBoneProvider(boneProvider);
+                .setBoneProvider(boneProvider)
+                .setPrerenderEntry(NichirinArmorRenderer::scaleArmsToSkin);
 
         if (animName != null) {
             final String name = animName;
@@ -231,14 +234,31 @@ public class NichirinArmorRenderer extends AzArmorRenderer {
         matchRotation(currentBaseModel.rightLeg, getBone("rightBoot"));
         matchRotation(currentBaseModel.leftLeg, getBone("leftBoot"));
 
-        // Wide (Steve) skins have 4px arms vs slim (Alex) 3px — scale arm bones to match.
-        boolean slim = currentBaseModel instanceof PlayerModel<?>
-                && ((PlayerModelAccessor) currentBaseModel).isSlim();
-        float armScaleX = slim ? 0.75f : (4.0f / 3.0f) + 0.05f;
-        AzBone rightArm = getBone("rightArm");
-        AzBone leftArm = getBone("leftArm");
-        if (rightArm != null) rightArm.setScaleX(armScaleX);
-        if (leftArm != null) leftArm.setScaleX(armScaleX);
+        // Arm-width scaling is applied via the prerender hook (scaleArmsToSkin) so the pipeline
+        // doesn't overwrite it afterwards.
+    }
+
+    private static final float REGULAR_ARM_SCALE_X = (4.0f / 3.0f) + 0.05f;
+
+    /**
+     * Prerender hook: scales the armor arm bones to the wearer's skin width. Geo arms are modeled
+     * slim (3px), so regular (Steve) arms widen to {@link #REGULAR_ARM_SCALE_X}; slim (Alex) arms
+     * render at 0.75x that. Applied here rather than in applyBoneTransformations because the pipeline
+     * resets bone scale after preRender, which silently undid the old approach.
+     */
+    private static AzRendererPipelineContext<UUID, ItemStack> scaleArmsToSkin(
+            AzRendererPipelineContext<UUID, ItemStack> ctx) {
+        AzBakedModel model = ctx.bakedModel();
+        if (model == null) return ctx;
+
+        AzBone leftArm = model.getBoneOrNull("leftArm");
+        AzBone rightArm = model.getBoneOrNull("rightArm");
+        if (leftArm == null || rightArm == null) return ctx;
+
+        float scaleX = isSlimSkin(ctx.currentEntity()) ? REGULAR_ARM_SCALE_X * 0.75f : REGULAR_ARM_SCALE_X;
+        leftArm.setScaleX(scaleX);
+        rightArm.setScaleX(scaleX);
+        return ctx;
     }
 
     /**
@@ -378,6 +398,20 @@ public class NichirinArmorRenderer extends AzArmorRenderer {
         if (armBone != null && armPart != null) {
             matchRotation(armPart, armBone);
         }
+    }
+
+    /**
+     * Reliable slim-skin check for the armor wearer. AzureLib passes a plain {@link HumanoidModel}
+     * here (no slim flag), and skin-string checks are unreliable in singleplayer/dev, so we read
+     * the player's actual {@link PlayerModel} straight from its renderer and check the {@code slim}
+     * field via {@link PlayerModelAccessor}.
+     */
+    protected static boolean isSlimSkin(@Nullable Entity entity) {
+        if (!(entity instanceof AbstractClientPlayer player)) return false;
+        var renderer = Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(player);
+        if (!(renderer instanceof PlayerRenderer playerRenderer)) return false;
+        PlayerModel<AbstractClientPlayer> playerModel = playerRenderer.getModel();
+        return ((PlayerModelAccessor) playerModel).isSlim();
     }
 
     /**

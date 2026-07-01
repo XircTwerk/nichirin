@@ -2,7 +2,7 @@ package com.xirc.nichirin.common.util;
 
 import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
 import com.xirc.nichirin.common.data.MovesetHelper;
-import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.common.item.katana.Katana;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.event.events.common.TickEvent;
@@ -31,7 +31,7 @@ public class InputHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(InputHandler.class);
 
     // Server-side data
-    private static final Map<UUID, SimpleKatana> PLAYER_KATANAS = new HashMap<>();
+    private static final Map<UUID, Katana> PLAYER_KATANAS = new HashMap<>();
     private static final Map<UUID, Long> BLOCKED_UNTIL = new HashMap<>();
     private static final Map<UUID, Long> INTERACTION_BLOCKED_UNTIL = new HashMap<>();
 
@@ -70,7 +70,7 @@ public class InputHandler {
         ItemStack heldItem = player.getMainHandItem();
 
         // Check for katana with breathing moveset
-        if (heldItem.getItem() instanceof SimpleKatana) {
+        if (heldItem.getItem() instanceof Katana) {
             return MovesetHelper.hasBreathingMoveset(player);
         }
 
@@ -104,8 +104,8 @@ public class InputHandler {
         }
 
         ItemStack item = player.getMainHandItem();
-        if (item.getItem() instanceof SimpleKatana katana) {
-            SimpleKatana instance = getKatanaInstance(player, katana);
+        if (item.getItem() instanceof Katana katana) {
+            Katana instance = getKatanaInstance(player, katana);
             instance.performAttack(player);
         }
     }
@@ -121,8 +121,8 @@ public class InputHandler {
         }
 
         ItemStack item = player.getMainHandItem();
-        if (item.getItem() instanceof SimpleKatana katana) {
-            SimpleKatana instance = getKatanaInstance(player, katana);
+        if (item.getItem() instanceof Katana katana) {
+            Katana instance = getKatanaInstance(player, katana);
 
             boolean originalCrouch = player.isShiftKeyDown();
             if (crouch != originalCrouch) {
@@ -208,10 +208,10 @@ public class InputHandler {
     }
 
     private static void tickPlayer(Player player) {
-        SimpleKatana katana = PLAYER_KATANAS.get(player.getUUID());
+        Katana katana = PLAYER_KATANAS.get(player.getUUID());
         if (katana != null) {
             ItemStack mainHand = player.getMainHandItem();
-            if (mainHand.getItem() instanceof SimpleKatana) {
+            if (mainHand.getItem() instanceof Katana) {
                 katana.tick(player);
             } else {
                 PLAYER_KATANAS.remove(player.getUUID());
@@ -219,9 +219,9 @@ public class InputHandler {
         }
     }
 
-    private static SimpleKatana getKatanaInstance(Player player, SimpleKatana item) {
+    private static Katana getKatanaInstance(Player player, Katana item) {
         UUID id = player.getUUID();
-        SimpleKatana existing = PLAYER_KATANAS.get(id);
+        Katana existing = PLAYER_KATANAS.get(id);
 
         if (existing == null || existing != item) {
             PLAYER_KATANAS.put(id, item);

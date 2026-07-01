@@ -5,7 +5,7 @@ import com.xirc.nichirin.client.animation.NichirinAnimations;
 import com.xirc.nichirin.client.handler.AttackWheelHandler;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
-import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.common.item.katana.Katana;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import dev.architectury.event.events.client.ClientTickEvent;
 import dev.architectury.networking.NetworkManager;
@@ -99,15 +99,15 @@ public class BlockingInputHandler {
     private static boolean wasAnimPlayingLastTick = false;
 
     private static boolean canBlock(Player player) {
-        if (player.getMainHandItem().getItem() instanceof SimpleKatana) return true;
-        if (player.getOffhandItem().getItem() instanceof SimpleKatana) return true;
+        if (player.getMainHandItem().getItem() instanceof Katana) return true;
+        if (player.getOffhandItem().getItem() instanceof Katana) return true;
         return player.getMainHandItem().isEmpty()
                 && MovesetHelper.hasFightingMoveset(player);
     }
 
     private static String blockAnimation(Player player) {
-        if (player.getMainHandItem().getItem() instanceof SimpleKatana) return "sword.block";
-        if (player.getOffhandItem().getItem() instanceof SimpleKatana) return "sword.block";
+        if (player.getMainHandItem().getItem() instanceof Katana) return "sword.block";
+        if (player.getOffhandItem().getItem() instanceof Katana) return "sword.block";
         if (!player.getMainHandItem().isEmpty()) return "sword.block";
         if (!MovesetHelper.hasFightingMoveset(player)) return "sword.block";
         return PlayerDataProvider.getData(player)

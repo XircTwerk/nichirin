@@ -44,6 +44,7 @@ public abstract class LivingEntityMixin {
         if (effect.getEffect().value() == NichirinEffectRegistry.stunned().value()) {
             StunnedStatusEffect.removeMovementModifier(entity);
             StunnedStatusEffect.removeKnockbackGrace(entity);
+            StunnedStatusEffect.restoreAi(entity);
 
             if (!entity.level().isClientSide && effect.getDuration() <= 0) {
                 ComboTracker.handleStunExpired(entity);

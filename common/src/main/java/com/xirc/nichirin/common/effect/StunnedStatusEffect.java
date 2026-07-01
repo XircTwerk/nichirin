@@ -28,6 +28,10 @@ public class StunnedStatusEffect extends MobEffect {
     private static final Map<UUID, Long> recentKnockback = new HashMap<>();
     private static final int KNOCKBACK_GRACE_TICKS = 15; // Allow movement for 15 ticks after knockback
 
+    // Remembers each stunned mob's NoAi state from BEFORE the stun forced it off, so we can restore
+    // it exactly when the stun ends. Without this the mob would stay frozen (NoAi) forever.
+    private static final Map<UUID, Boolean> aiSuppressed = new HashMap<>();
+
     public StunnedStatusEffect() {
         super(MobEffectCategory.NEUTRAL, 0xFFD700); // Golden color for stun
 
@@ -134,10 +138,28 @@ public class StunnedStatusEffect extends MobEffect {
         // We clear the target as well so it doesn't resume attacking the same entity the instant
         // the stun expires and setNoAi is reverted.
         if (entity instanceof Mob mob) {
+            // Remember the mob's original NoAi state once, so restoreAi() can put it back exactly.
+            aiSuppressed.putIfAbsent(mob.getUUID(), mob.isNoAi());
             mob.setNoAi(true);
             mob.setTarget(null);
         }
 
         return true;
+    }
+
+    /**
+     * Restores a stunned mob's AI when the stun ends. Returns NoAi to whatever it was before the
+     * stun (so mobs intentionally spawned with NoAi stay frozen). Must be called whenever the
+     * stunned effect is removed, otherwise the mob stays permanently frozen.
+     */
+    public static void restoreAi(LivingEntity entity) {
+        if (!(entity instanceof Mob mob)) return;
+        Boolean originalNoAi = aiSuppressed.remove(mob.getUUID());
+        if (originalNoAi != null) {
+            mob.setNoAi(originalNoAi);
+        } else if (mob.isNoAi()) {
+            // Safety net for mobs that were stunned before this revert existed.
+            mob.setNoAi(false);
+        }
     }
 }

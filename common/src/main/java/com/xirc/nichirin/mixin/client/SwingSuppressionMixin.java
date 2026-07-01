@@ -2,7 +2,7 @@ package com.xirc.nichirin.mixin.client;
 
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.item.gun.GenyaDB;
-import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.common.item.katana.Katana;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
@@ -20,7 +20,7 @@ public class SwingSuppressionMixin {
         LivingEntity entity = (LivingEntity)(Object)this;
         if (!(entity instanceof LocalPlayer player)) return;
         ItemStack item = player.getMainHandItem();
-        if (item.getItem() instanceof SimpleKatana
+        if (item.getItem() instanceof Katana
                 || item.getItem() instanceof GenyaDB
                 || (item.isEmpty() && (MovesetHelper.hasFightingMoveset(player) || MovesetHelper.hasDemonMoveset(player)))) {
             ci.cancel();

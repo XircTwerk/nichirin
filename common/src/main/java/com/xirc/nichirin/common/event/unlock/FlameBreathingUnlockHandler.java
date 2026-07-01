@@ -55,7 +55,7 @@ public class FlameBreathingUnlockHandler {
         PlayerDataProvider.updateAndSync(player, "flame_breathing");
 
         player.displayClientMessage(
-                Component.literal("🔥 If you are feeling disheartened, that you are somehow not enough. Set your heart ablaze! Flame Breathing unlocked! 🔥")
+                Component.literal("If you are feeling disheartened, that you are somehow not enough. Set your heart ablaze! Flame Breathing unlocked!")
                         .withStyle(style -> style.withColor(0xFF5500).withBold(true)),
                 false
         );

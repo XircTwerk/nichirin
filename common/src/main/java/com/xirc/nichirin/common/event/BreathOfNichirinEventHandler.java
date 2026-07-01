@@ -20,6 +20,7 @@ import com.xirc.nichirin.common.event.item.RiceInteractionHandler;
 import com.xirc.nichirin.common.event.system.DemonFoodHandler;
 import com.xirc.nichirin.common.event.system.WisteriaGraceHandler;
 import com.xirc.nichirin.common.system.BloodMoonManager;
+import com.xirc.nichirin.common.item.BloodyFleshItem;
 import com.xirc.nichirin.common.system.DemonManager;
 import com.xirc.nichirin.common.system.KillRewardManager;
 import com.xirc.nichirin.common.system.movement.MovementContext;
@@ -82,6 +83,14 @@ public class BreathOfNichirinEventHandler {
             if (entity instanceof DemonNPCEntity demon && !demon.level().isClientSide) {
                 ItemStack vial = new ItemStack(NichirinItemRegistry.DEMON_BLOOD_VIAL.get());
                 demon.spawnAtLocation(vial);
+            }
+            // Bloody flesh drops when a demon player lands the kill on any fleshy mob
+            // (no flesh from undead or constructs like iron golems).
+            if (!entity.level().isClientSide
+                    && source != null && source.getEntity() instanceof ServerPlayer killer
+                    && DemonManager.isDemon(killer)
+                    && BloodyFleshItem.hasFlesh(entity)) {
+                entity.spawnAtLocation(BloodyFleshItem.createDrop(entity));
             }
             return dev.architectury.event.EventResult.pass();
         });

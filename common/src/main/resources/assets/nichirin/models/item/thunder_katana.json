@@ -1,63 +1,34 @@
 {
-	"format_version": "1.21.110",
-	"minecraft:geometry": [
-		{
-			"description": {
-				"identifier": "geometry.katana_zenitsu - Converted",
-				"texture_width": 32,
-				"texture_height": 32,
-				"visible_bounds_width": 2,
-				"visible_bounds_height": 3.5,
-				"visible_bounds_offset": [0, 1.25, 0]
-			},
-			"bones": [
-				{
-					"name": "Sword",
-					"pivot": [0, 0, 0]
-				},
-				{
-					"name": "Handle",
-					"parent": "Sword",
-					"pivot": [0, 0, 0],
-					"cubes": [
-						{"origin": [-0.5, 2, 1], "size": [1, 8, 2], "uv": [6, 6]},
-						{"origin": [-0.775, 9.5, 0.725], "size": [1.55, 2, 2.55], "uv": [17, 14]},
-						{"origin": [-0.75, 7.3, 0.75], "size": [1.5, 1, 2.5], "inflate": -0.15, "uv": [12, 9]},
-						{"origin": [-0.75, 6.3, 0.75], "size": [1.5, 1, 2.5], "inflate": -0.15, "uv": [12, 9]},
-						{"origin": [-0.75, 5.3, 0.75], "size": [1.5, 1, 2.5], "inflate": -0.15, "uv": [12, 9]},
-						{"origin": [-0.75, 4.3, 0.75], "size": [1.5, 1, 2.5], "inflate": -0.15, "uv": [12, 9]},
-						{"origin": [-0.75, 3.3, 0.75], "size": [1.5, 1, 2.5], "inflate": -0.15, "uv": [12, 9]},
-						{"origin": [-0.75, 8.3, 0.75], "size": [1.5, 1, 2.5], "inflate": -0.15, "uv": [12, 9]}
-					]
-				},
-				{
-					"name": "Guard2",
-					"parent": "Sword",
-					"pivot": [0, 0, 0],
-					"cubes": [
-						{"origin": [-1.525, 9.975, -0.025], "size": [3.05, 1, 4.05], "inflate": 0.001, "uv": [9, 1]},
-						{"origin": [-2.025, 9.975, 0.975], "size": [4.05, 1, 2.05], "uv": [9, 17]}
-					]
-				},
-				{
-					"name": "Blade",
-					"parent": "Sword",
-					"pivot": [0, 0, 0],
-					"cubes": [
-						{"origin": [-0.475, 28.69344, 0.5412], "size": [0.95, 2.6, 1], "pivot": [0.35, 27.69344, 1.5412], "rotation": [-22.5, 0, 0], "uv": [2, -1]},
-						{"origin": [-0.5, 11, 1], "size": [1, 18, 2], "uv": [0, 0]},
-						{"origin": [-0.5, 29, 2], "size": [1, 2.4, 1], "uv": [12, 12]}
-					]
-				},
-				{
-					"name": "Guard",
-					"parent": "Sword",
-					"pivot": [0, 0, 0],
-					"cubes": [
-						{"origin": [-0.5, 11.4, 1], "size": [1, 20, 2], "inflate": 0.4, "uv": [23, 2]}
-					]
-				}
-			]
+	"parent": "builtin/entity",
+	"display": {
+		"thirdperson_righthand": {
+			"translation": [0, -9.25, 0]
+		},
+		"thirdperson_lefthand": {
+			"translation": [0, -9.25, 0]
+		},
+		"firstperson_righthand": {
+			"translation": [0, -8, 0],
+			"scale": [0.8, 0.8, 0.8]
+		},
+		"firstperson_lefthand": {
+			"translation": [0, -8, 0],
+			"scale": [0.8, 0.8, 0.8]
+		},
+		"ground": {
+			"rotation": [0, 0, 90],
+			"translation": [5.75, 0, 0],
+			"scale": [0.5, 0.5, 0.5]
+		},
+		"gui": {
+			"rotation": [90, 45, -90],
+			"translation": [-11.75, -7.5, 0],
+			"scale": [0.8, 0.8, 0.8]
+		},
+		"fixed": {
+			"rotation": [90, 45, -90],
+			"translation": [-11.75, -8.5, 0],
+			"scale": [0.9, 0.9, 0.9]
 		}
-	]
+	}
 }

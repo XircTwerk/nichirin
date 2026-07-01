@@ -21,9 +21,9 @@ import net.minecraft.world.level.Level;
  * breathing-style {@link AbstractMoveset} (if the player has one assigned).
  * This class is purely a routing/delegation layer.</p>
  */
-public class SimpleKatana extends Item {
+public class Katana extends Item {
 
-    public SimpleKatana(Properties properties) {
+    public Katana(Properties properties) {
         super(properties);
     }
 
@@ -141,8 +141,8 @@ public class SimpleKatana extends Item {
         ItemStack mainHand = player.getMainHandItem();
         ItemStack offHand  = player.getOffhandItem();
 
-        boolean mainIsKatana = mainHand.getItem() instanceof SimpleKatana;
-        boolean offIsKatana  = offHand.getItem()  instanceof SimpleKatana;
+        boolean mainIsKatana = mainHand.getItem() instanceof Katana;
+        boolean offIsKatana  = offHand.getItem()  instanceof Katana;
 
         if (mainIsKatana && offIsKatana)  return mainHand.getItem() == this;
         if (mainIsKatana)                 return mainHand.getItem() == this;
@@ -153,8 +153,8 @@ public class SimpleKatana extends Item {
     private ItemStack getActiveHandItem(Player player) {
         ItemStack mainHand = player.getMainHandItem();
         ItemStack offHand  = player.getOffhandItem();
-        boolean mainIsKatana = mainHand.getItem() instanceof SimpleKatana;
-        boolean offIsKatana  = offHand.getItem()  instanceof SimpleKatana;
+        boolean mainIsKatana = mainHand.getItem() instanceof Katana;
+        boolean offIsKatana  = offHand.getItem()  instanceof Katana;
         if (mainIsKatana && offIsKatana) return mainHand;
         if (mainIsKatana)                return mainHand;
         if (offIsKatana)                 return offHand;

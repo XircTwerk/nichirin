@@ -1,7 +1,7 @@
 package com.xirc.nichirin.network;
 
 import com.xirc.nichirin.BreathOfNichirin;
-import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.common.item.katana.Katana;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -28,7 +28,7 @@ public class FabricPacketHandler {
         ItemStack mainHand = player.getItemInHand(InteractionHand.MAIN_HAND);
 
         // Verify player is still holding a katana
-        if (mainHand.getItem() instanceof SimpleKatana katana) {
+        if (mainHand.getItem() instanceof Katana katana) {
             // Call the performAttack method
             katana.performAttack(player);
         }

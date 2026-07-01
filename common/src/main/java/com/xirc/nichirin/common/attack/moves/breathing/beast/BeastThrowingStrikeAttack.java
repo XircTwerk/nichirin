@@ -4,7 +4,7 @@ import com.xirc.nichirin.common.entity.projectile.ThrownKatanaEntity;
 import com.xirc.nichirin.common.item.katana.BeastKatana;
 import com.xirc.nichirin.common.item.katana.IndividualBeastKatana;
 import com.xirc.nichirin.common.item.katana.IndividualSoundKatana;
-import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.common.item.katana.Katana;
 import com.xirc.nichirin.common.item.katana.SoundKatana;
 import com.xirc.nichirin.registry.NichirinEntityRegistry;
 import com.xirc.nichirin.registry.NichirinItemRegistry;
@@ -68,7 +68,7 @@ public class BeastThrowingStrikeAttack extends BeastBreathingAttackBase {
     }
 
     private static boolean isKatana(ItemStack stack) {
-        return !stack.isEmpty() && (stack.getItem() instanceof SimpleKatana
+        return !stack.isEmpty() && (stack.getItem() instanceof Katana
                 || stack.getItem() instanceof BeastKatana
                 || stack.getItem() instanceof IndividualBeastKatana
                 || stack.getItem() instanceof SoundKatana

@@ -6,7 +6,7 @@ import com.xirc.nichirin.common.item.armor.NichirinArmorItem;
 import com.xirc.nichirin.common.item.katana.BeastKatana;
 import com.xirc.nichirin.common.item.katana.IndividualBeastKatana;
 import com.xirc.nichirin.common.item.katana.IndividualSoundKatana;
-import com.xirc.nichirin.common.item.katana.SimpleKatana;
+import com.xirc.nichirin.common.item.katana.Katana;
 import com.xirc.nichirin.common.item.katana.SoundKatana;
 import com.xirc.nichirin.common.item.gun.GenyaDB;
 import com.xirc.nichirin.common.item.food.MochiItem;
@@ -18,6 +18,7 @@ import com.xirc.nichirin.common.item.LazySpawnEggItem;
 import com.xirc.nichirin.common.item.tool.DrinkingGourdItem;
 import com.xirc.nichirin.common.item.scroll.PerkScrollItem;
 import com.xirc.nichirin.common.item.scroll.CursedScrollItem;
+import com.xirc.nichirin.common.item.BloodyFleshItem;
 import com.xirc.nichirin.common.item.DemonBloodVialItem;
 import com.xirc.nichirin.common.item.WisteriaArrowItem;
 import com.xirc.nichirin.common.item.WisteriaTeaItem;
@@ -48,16 +49,16 @@ public interface NichirinItemRegistry {
     Map<RegistrySupplier<? extends Item>, ResourceLocation> ITEMS = new LinkedHashMap<>();
 
     RegistrySupplier<Item> KATANA = register("katana",
-            () -> new SimpleKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
+            () -> new Katana(settings().rarity(Rarity.RARE).stacksTo(1)));
 
     RegistrySupplier<Item> THUNDER_KATANA = register("thunder_katana",
-            () -> new SimpleKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
+            () -> new Katana(settings().rarity(Rarity.RARE).stacksTo(1)));
 
     RegistrySupplier<Item> FLAME_KATANA = register("flame_katana",
-            () -> new SimpleKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
+            () -> new Katana(settings().rarity(Rarity.RARE).stacksTo(1)));
 
     RegistrySupplier<Item> INSECT_KATANA = register("insect_katana",
-            () -> new SimpleKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
+            () -> new Katana(settings().rarity(Rarity.RARE).stacksTo(1)));
 
     RegistrySupplier<Item> SOUND_KATANAS = register("sound_katanas", () -> new SoundKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
 
@@ -66,19 +67,19 @@ public interface NichirinItemRegistry {
     RegistrySupplier<Item> LEFT_SOUND_KATANA = register("left_sound_katana", () -> new IndividualSoundKatana(settings().rarity(Rarity.RARE).stacksTo(1), false));
 
     RegistrySupplier<Item> SABITO_KATANA = register("sabito_katana",
-            () -> new SimpleKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
+            () -> new Katana(settings().rarity(Rarity.RARE).stacksTo(1)));
 
     RegistrySupplier<Item> UROKODAKI_KATANA = register("urokodaki_katana",
-            () -> new SimpleKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
+            () -> new Katana(settings().rarity(Rarity.RARE).stacksTo(1)));
 
     RegistrySupplier<Item> MIST_KATANA = register("mist_katana",
-            () -> new SimpleKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
+            () -> new Katana(settings().rarity(Rarity.RARE).stacksTo(1)));
 
     RegistrySupplier<Item> GENYA_DB = register("genya_db",
             () -> new GenyaDB(settings().rarity(Rarity.RARE).stacksTo(1)));
 
     RegistrySupplier<Item> GIYU_KATANA = register("giyu_katana",
-            () -> new SimpleKatana(settings().rarity(Rarity.RARE).stacksTo(1)));
+            () -> new Katana(settings().rarity(Rarity.RARE).stacksTo(1)));
 
     RegistrySupplier<Item> SCARLET_CRIMSON_IRON_GEM = register("scarlet_crimson_iron_gem", () -> new Item(settings()));
 
@@ -364,6 +365,10 @@ public interface NichirinItemRegistry {
     /** One-way demonic transformation. Drops 100% from slain demons; double right-click to drink. */
     RegistrySupplier<Item> DEMON_BLOOD_VIAL = register("demon_blood_vial",
             () -> new DemonBloodVialItem(settings().stacksTo(16)));
+
+    /** Raw flesh from slain mobs (drops when a demon makes the kill). Demons eat it to restore blood. */
+    RegistrySupplier<Item> BLOODY_FLESH = register("bloody_flesh",
+            () -> new BloodyFleshItem(settings().stacksTo(64)));
 
 
     static <T extends Item> RegistrySupplier<T> register(String id, Supplier<? extends T> supplier) {
