@@ -12,7 +12,8 @@ public class NichirinTerraFabric implements TerraBlenderApi {
 
     @Override
     public void onTerraBlenderInitialized() {
-        Regions.register(new OverworldRegionFabric(BreathOfNichirin.id("overworld"), 4));
+        // Archived for the 1.0.5 port release: wisteria biome/worldgen is not shipping.
+        // Regions.register(new OverworldRegionFabric(BreathOfNichirin.id("overworld"), 4));
 
         // Add ore features to biomes
         NichirinBiomeModifications.addOres();

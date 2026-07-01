@@ -18,7 +18,8 @@ public class MovesetSection extends AbstractGuiPage {
     public enum MovesetTab {
         BREATHING_STYLES("gui.nichirin.moveset.tab.breathing_styles"),
         DEMON_ARTS("gui.nichirin.moveset.tab.demon_arts"),
-        CQC("gui.nichirin.moveset.tab.cqc"),
+        // Archived for the 1.0.5 port release: CQC is not presentation-complete yet.
+        // CQC("gui.nichirin.moveset.tab.cqc"),
         OBTAINMENT("gui.nichirin.moveset.tab.obtainment"),
         DATA("gui.nichirin.moveset.tab.data");
 
@@ -37,7 +38,8 @@ public class MovesetSection extends AbstractGuiPage {
 
     private final BreathingStylesSection breathingStylesSection = new BreathingStylesSection();
     private final DemonArtSection demonArtSection = new DemonArtSection();
-    private final CqcSection cqcSection = new CqcSection();
+    // Archived for the 1.0.5 port release: CQC GUI section is not shipping.
+    // private final CqcSection cqcSection = new CqcSection();
     private final MovesetDataSection dataSection = new MovesetDataSection();
     private final ObtainmentSection obtainmentSection = new ObtainmentSection();
     // SheathingSection removed — the sheathing GUI page exposed only default-static info
@@ -61,8 +63,9 @@ public class MovesetSection extends AbstractGuiPage {
                     graphics, player, contentWidth, bodyH, font, mouseX, bodyMouseY);
             case DEMON_ARTS -> demonArtSection.render(
                     graphics, player, contentWidth, bodyH, font, mouseX, bodyMouseY);
-            case CQC -> cqcSection.render(
-                    graphics, player, contentWidth, bodyH, font, mouseX, bodyMouseY);
+            // Archived for the 1.0.5 port release: CQC GUI section is not shipping.
+            // case CQC -> cqcSection.render(
+            //         graphics, player, contentWidth, bodyH, font, mouseX, bodyMouseY);
             case OBTAINMENT -> obtainmentSection.render(
                     graphics, player, font, contentWidth, bodyH, mouseX, bodyMouseY);
             case DATA -> dataSection.render(
@@ -125,7 +128,8 @@ public class MovesetSection extends AbstractGuiPage {
         return switch (currentTab) {
             case BREATHING_STYLES -> breathingStylesSection.handleClick(mouseX, bodyMouseY, player, contentWidth);
             case DEMON_ARTS -> demonArtSection.handleClick(mouseX, bodyMouseY, player, contentWidth);
-            case CQC -> cqcSection.handleClick(mouseX, bodyMouseY, player, contentWidth);
+            // Archived for the 1.0.5 port release: CQC GUI section is not shipping.
+            // case CQC -> cqcSection.handleClick(mouseX, bodyMouseY, player, contentWidth);
             case OBTAINMENT -> obtainmentSection.handleClick(mouseX, bodyMouseY, player);
             case DATA -> dataSection.handleClick(mouseX, bodyMouseY, player, contentWidth);
         };
@@ -136,7 +140,9 @@ public class MovesetSection extends AbstractGuiPage {
         int bodyY = workspaceBodyY();
         if (mouseY < bodyY || mouseY >= contentHeight - WORKSPACE_FOOTER_H) return false;
         double bodyMouseY = mouseY - bodyY;
-        return currentTab == MovesetTab.CQC && cqcSection.handleRelease(mouseX, bodyMouseY, player, contentWidth);
+        // Archived for the 1.0.5 port release: CQC GUI section is not shipping.
+        // return currentTab == MovesetTab.CQC && cqcSection.handleRelease(mouseX, bodyMouseY, player, contentWidth);
+        return false;
     }
 
     // Position helpers - derived from BreathingStylesSection layout constants
@@ -161,7 +167,8 @@ public class MovesetSection extends AbstractGuiPage {
         return switch (currentTab) {
             case BREATHING_STYLES -> "Breathing Styles";
             case DEMON_ARTS -> "Demon Arts";
-            case CQC -> "CQC";
+            // Archived for the 1.0.5 port release: CQC GUI section is not shipping.
+            // case CQC -> "CQC";
             case OBTAINMENT -> "Obtainment";
             case DATA -> "Move Data";
         };

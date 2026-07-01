@@ -25,24 +25,25 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinBlockRegistry.SCARLET_CRIMSON_IRON_SAND_ITEM.get());
                         entries.accept(NichirinBlockRegistry.KATANA_HOLDER_BLOCK.get());
 
-                        entries.accept(NichirinBlockRegistry.WISTERIA_LOG.get());
-                        entries.accept(NichirinBlockRegistry.STRIPPED_WISTERIA_LOG.get());
-                        entries.accept(NichirinBlockRegistry.WISTERIA_WOOD.get());
-                        entries.accept(NichirinBlockRegistry.STRIPPED_WISTERIA_WOOD.get());
-                        entries.accept(NichirinBlockRegistry.WISTERIA_PLANKS.get());
-                        entries.accept(NichirinBlockRegistry.WISTERIA_LEAVES.get());
-                        entries.accept(NichirinBlockRegistry.WISTERIA_GLOW_LICHEN.get());
-                        entries.accept(NichirinBlockRegistry.WISTERIA_GLOW_BERRIES.get());
-                        entries.accept(NichirinBlockRegistry.WISTERIA_LANTERN_ITEM.get());
-                        entries.accept(NichirinBlockRegistry.WISTERIA_STAIRS.get());
-                        entries.accept(NichirinBlockRegistry.WISTERIA_SLAB.get());
-                        entries.accept(NichirinBlockRegistry.WISTERIA_FENCE.get());
-                        entries.accept(NichirinBlockRegistry.WISTERIA_FENCE_GATE.get());
-                        entries.accept(NichirinBlockRegistry.WISTERIA_DOOR.get());
-                        entries.accept(NichirinBlockRegistry.WISTERIA_TRAPDOOR.get());
-                        entries.accept(NichirinBlockRegistry.WISTERIA_PRESSURE_PLATE.get());
-                        entries.accept(NichirinBlockRegistry.WISTERIA_BUTTON.get());
-                        entries.accept(NichirinBlockRegistry.WISTERIA_SAPLING_ITEM.get());
+                        // Archived for the 1.0.5 port release: wisteria content is not shipping.
+                        // entries.accept(NichirinBlockRegistry.WISTERIA_LOG.get());
+                        // entries.accept(NichirinBlockRegistry.STRIPPED_WISTERIA_LOG.get());
+                        // entries.accept(NichirinBlockRegistry.WISTERIA_WOOD.get());
+                        // entries.accept(NichirinBlockRegistry.STRIPPED_WISTERIA_WOOD.get());
+                        // entries.accept(NichirinBlockRegistry.WISTERIA_PLANKS.get());
+                        // entries.accept(NichirinBlockRegistry.WISTERIA_LEAVES.get());
+                        // entries.accept(NichirinBlockRegistry.WISTERIA_GLOW_LICHEN.get());
+                        // entries.accept(NichirinBlockRegistry.WISTERIA_GLOW_BERRIES.get());
+                        // entries.accept(NichirinBlockRegistry.WISTERIA_LANTERN_ITEM.get());
+                        // entries.accept(NichirinBlockRegistry.WISTERIA_STAIRS.get());
+                        // entries.accept(NichirinBlockRegistry.WISTERIA_SLAB.get());
+                        // entries.accept(NichirinBlockRegistry.WISTERIA_FENCE.get());
+                        // entries.accept(NichirinBlockRegistry.WISTERIA_FENCE_GATE.get());
+                        // entries.accept(NichirinBlockRegistry.WISTERIA_DOOR.get());
+                        // entries.accept(NichirinBlockRegistry.WISTERIA_TRAPDOOR.get());
+                        // entries.accept(NichirinBlockRegistry.WISTERIA_PRESSURE_PLATE.get());
+                        // entries.accept(NichirinBlockRegistry.WISTERIA_BUTTON.get());
+                        // entries.accept(NichirinBlockRegistry.WISTERIA_SAPLING_ITEM.get());
 
                         entries.accept(NichirinBlockRegistry.TATAMI_BLOCK_ITEM.get());
                         entries.accept(NichirinBlockRegistry.INFINITY_GLASS1_ITEM.get());
@@ -54,9 +55,10 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinItemRegistry.FLASH_BOMB.get());
                         entries.accept(NichirinItemRegistry.DEMON_BLOOD_VIAL.get());
                         entries.accept(NichirinItemRegistry.BLOODY_FLESH.get());
-                        entries.accept(NichirinItemRegistry.WISTERIA_FLOWER.get());
-                        entries.accept(NichirinItemRegistry.WISTERIA_EXTRACT.get());
-                        entries.accept(NichirinItemRegistry.WISTERIA_ARROW.get());
+                        // Archived for the 1.0.5 port release: wisteria content is not shipping.
+                        // entries.accept(NichirinItemRegistry.WISTERIA_FLOWER.get());
+                        // entries.accept(NichirinItemRegistry.WISTERIA_EXTRACT.get());
+                        // entries.accept(NichirinItemRegistry.WISTERIA_ARROW.get());
                     })
                     .build();
         });
@@ -151,7 +153,8 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinItemRegistry.BENTO_BOX.get());
                         entries.accept(NichirinItemRegistry.ONIGIRI.get());
                         entries.accept(NichirinItemRegistry.SAKURAMOCHI.get());
-                        entries.accept(NichirinItemRegistry.WISTERIA_TEA.get());
+                        // Archived for the 1.0.5 port release: wisteria content is not shipping.
+                        // entries.accept(NichirinItemRegistry.WISTERIA_TEA.get());
                         entries.accept(NichirinItemRegistry.DRINKING_GOURD.get());
                         entries.accept(NichirinItemRegistry.MOCHI.get());
                         entries.accept(NichirinItemRegistry.RED_MOCHI.get());

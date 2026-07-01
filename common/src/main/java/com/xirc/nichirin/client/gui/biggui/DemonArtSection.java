@@ -55,8 +55,9 @@ public class DemonArtSection extends AbstractGuiPage {
         contentY += 20;
 
         // Show demon arts (if any additional ones exist beyond default)
+        // Archived for the 1.0.5 port release: Destructive Death is not presentation-complete yet.
         String[] additionalDemonArts = {
-                "destructive_death"
+                // "destructive_death"
         };
 
         // Calculate layout
@@ -254,8 +255,9 @@ public class DemonArtSection extends AbstractGuiPage {
         int centerX = (contentWidth - 20) / 2;
 
         // Additional demon arts (future ones beyond default)
+        // Archived for the 1.0.5 port release: Destructive Death is not presentation-complete yet.
         String[] additionalDemonArts = {
-                "destructive_death"
+                // "destructive_death"
         };
 
         // Base Y matches render(): TOP_MARGIN+10 (30) + title (30) + humans-eaten line (18)

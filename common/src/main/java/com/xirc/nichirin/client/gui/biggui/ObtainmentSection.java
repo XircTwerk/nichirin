@@ -45,8 +45,9 @@ public class ObtainmentSection extends AbstractGuiPage {
     );
 
     private static final List<Entry> DEMON_ARTS = List.of(
-            new Entry("default_demon",     "demon_art.default_demon",     0xFFAA0000),
-            new Entry("destructive_death", "demon_art.destructive_death", 0xFFAA0000)
+            new Entry("default_demon",     "demon_art.default_demon",     0xFFAA0000)
+            // Archived for the 1.0.5 port release: Destructive Death is not presentation-complete yet.
+            // , new Entry("destructive_death", "demon_art.destructive_death", 0xFFAA0000)
     );
 
     private static final int CARD_H = 50;

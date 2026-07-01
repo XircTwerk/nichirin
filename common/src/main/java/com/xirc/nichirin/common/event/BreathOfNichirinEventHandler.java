@@ -5,10 +5,8 @@ import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.component.AbstractDemonAttack;
 import com.xirc.nichirin.common.attack.moves.breathing.sound.TempoBreakerAttack;
 import com.xirc.nichirin.common.attack.moveset.DefaultKatanaMoveset;
-import com.xirc.nichirin.common.attack.moves.demon.destructive.DestructiveDeathPlayerAura;
 import com.xirc.nichirin.common.system.aura.MovesetAuraTicker;
 import com.xirc.nichirin.common.attack.moveset.demon.DefaultDemonMoveset;
-import com.xirc.nichirin.common.attack.moveset.demon.DestructiveDeathMoveset;
 import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.config.NichirinServerConfig;
 import com.xirc.nichirin.common.data.MovesetHelper;
@@ -18,7 +16,6 @@ import com.xirc.nichirin.common.entity.npc.DemonNPCEntity;
 import com.xirc.nichirin.common.item.DemonBloodVialItem;
 import com.xirc.nichirin.common.event.item.RiceInteractionHandler;
 import com.xirc.nichirin.common.event.system.DemonFoodHandler;
-import com.xirc.nichirin.common.event.system.WisteriaGraceHandler;
 import com.xirc.nichirin.common.system.BloodMoonManager;
 import com.xirc.nichirin.common.item.BloodyFleshItem;
 import com.xirc.nichirin.common.system.DemonManager;
@@ -64,7 +61,8 @@ public class BreathOfNichirinEventHandler {
         registerDemonEvents();
         registerKillRewards();
         RiceInteractionHandler.register();
-        WisteriaGraceHandler.register();
+        // Archived for the 1.0.5 port release: wisteria content is not shipping.
+        // WisteriaGraceHandler.register();
         registerLootInjection();
     }
 
@@ -157,7 +155,8 @@ public class BreathOfNichirinEventHandler {
         if (server != null) {
             BloodMoonManager.onServerTick(server);
             MoveExecutor.tickAllAttacks(server);
-            DestructiveDeathPlayerAura.tick(server);
+            // Archived for the 1.0.5 port release: Destructive Death aura is not shipping.
+            // DestructiveDeathPlayerAura.tick(server);
             MovesetAuraTicker.tick(server);
             // Tempo Breaker's delayed-explosion timer lives outside any single attack instance —
             // tick it here so explosions still fire after the attack itself has finished.
@@ -214,7 +213,8 @@ public class BreathOfNichirinEventHandler {
                 if (serverPlayer.server != null) PlayerDataProvider.forceSync(serverPlayer.server);
                 NichirinPacketRegistry.sendDemonSync(serverPlayer, 0, 0, false);
                 try { DefaultDemonMoveset.cleanupPlayer(serverPlayer); } catch (Exception ignored) {}
-                try { DestructiveDeathMoveset.cleanupPlayer(serverPlayer); } catch (Exception ignored) {}
+                // Archived for the 1.0.5 port release: Destructive Death is not shipping.
+                // try { DestructiveDeathMoveset.cleanupPlayer(serverPlayer); } catch (Exception ignored) {}
                 serverPlayer.displayClientMessage(
                         Component.translatable("nichirin.message.demon_lost_on_death")
                                 .withStyle(ChatFormatting.AQUA),
@@ -234,7 +234,8 @@ public class BreathOfNichirinEventHandler {
             MovementContext.cleanupPlayer(player);
             SheathingManager.cleanupPlayer(player);
             DefaultKatanaMoveset.cleanupPlayer(player);
-            DestructiveDeathMoveset.cleanupPlayer(player);
+            // Archived for the 1.0.5 port release: Destructive Death is not shipping.
+            // DestructiveDeathMoveset.cleanupPlayer(player);
             MovesetAuraTicker.clear(player.getUUID());
             DemonBloodVialItem.clearPending(player.getUUID());
         } catch (Exception e) {

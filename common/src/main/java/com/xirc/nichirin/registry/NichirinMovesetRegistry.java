@@ -2,10 +2,8 @@ package com.xirc.nichirin.registry;
 
 import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
-import com.xirc.nichirin.common.attack.moveset.CqcMoveset;
 import com.xirc.nichirin.common.attack.moveset.breathing.*;
 import com.xirc.nichirin.common.attack.moveset.demon.DefaultDemonMoveset;
-import com.xirc.nichirin.common.attack.moveset.demon.DestructiveDeathMoveset;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
@@ -134,8 +132,10 @@ public interface NichirinMovesetRegistry {
         registerMoveset("beast_breathing", BeastBreathingMoveset::new);
         registerMoveset("mist_breathing", MistBreathingMoveset::new);
         registerMoveset("default_demon", DefaultDemonMoveset::new);
-        registerMoveset("destructive_death", DestructiveDeathMoveset::new);
-        registerMoveset(CqcMoveset.ID, CqcMoveset::new);
+        // Archived for the 1.0.5 port release: Destructive Death is not presentation-complete yet.
+        // registerMoveset("destructive_death", DestructiveDeathMoveset::new);
+        // Archived for the 1.0.5 port release: CQC still needs full icon/polish coverage.
+        // registerMoveset(CqcMoveset.ID, CqcMoveset::new);
 
     }
 

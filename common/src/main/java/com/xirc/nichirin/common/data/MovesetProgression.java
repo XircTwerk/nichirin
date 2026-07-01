@@ -68,7 +68,8 @@ public class MovesetProgression {
             case "mist_breathing"  -> "Kill a mob in a mountain biome while it's raining";
             case "beast_breathing" -> "Kill a boar, then equip the boar head";
             case "default_demon" -> "Drink a Demon Blood Vial dropped by a slain demon";
-            case "destructive_death" -> "As a demon, kill 5 demons using only close-quarters combat";
+            // Archived for the 1.0.5 port release: Destructive Death is not shipping.
+            // case "destructive_death" -> "As a demon, kill 5 demons using only close-quarters combat";
             default -> "Unknown requirement";
         };
     }

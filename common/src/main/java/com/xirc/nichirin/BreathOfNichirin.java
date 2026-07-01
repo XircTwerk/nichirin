@@ -5,7 +5,6 @@ import com.xirc.nichirin.common.config.NichirinServerConfig;
 import com.xirc.nichirin.common.config.NichirinServerConfigSerializer;
 import com.xirc.nichirin.common.advancement.NichirinCriteriaTriggers;
 import com.xirc.nichirin.common.event.item.DrinkingGourdInteractionHandler;
-import com.xirc.nichirin.common.event.item.WisteriaStrippingHandler;
 import com.xirc.nichirin.common.event.system.*;
 import com.xirc.nichirin.common.event.system.HitAnimationHandler;
 import com.xirc.nichirin.common.event.*;
@@ -69,7 +68,8 @@ public final class BreathOfNichirin {
         WaterBreathingUnlockHandler.register();
         BeastBreathingUnlockHandler.register();
         MistBreathingUnlockHandler.register();
-        DestructiveDeathUnlockHandler.register();
+        // Archived for the 1.0.5 port release: Destructive Death unlock/progression is not shipping.
+        // DestructiveDeathUnlockHandler.register();
 
         // SERVER-SIDE handlers only
         BreathOfNichirinEventHandler.init();
@@ -84,7 +84,8 @@ public final class BreathOfNichirin {
         DemonFoodHandler.register();
         DemonAggroHandler.register();
         DrinkingGourdInteractionHandler.register();
-        WisteriaStrippingHandler.register();
+        // Archived for the 1.0.5 port release: wisteria content is not shipping.
+        // WisteriaStrippingHandler.register();
 
         // Data
         NichirinMovesetRegistry.init();

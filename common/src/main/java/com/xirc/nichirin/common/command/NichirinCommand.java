@@ -691,7 +691,8 @@ public class NichirinCommand {
     private static boolean isDemonArt(String movesetId) {
         if (movesetId == null) return false;
         return movesetId.equals("default_demon")
-                || movesetId.equals("destructive_death")
+                // Archived for the 1.0.5 port release: Destructive Death is not shipping.
+                // || movesetId.equals("destructive_death")
                 || movesetId.contains("demon");
     }
 
