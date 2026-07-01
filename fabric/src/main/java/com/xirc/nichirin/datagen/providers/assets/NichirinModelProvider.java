@@ -44,7 +44,6 @@ public class NichirinModelProvider extends FabricModelProvider {
         generator.createTrivialBlock(NichirinBlockRegistry.WISTERIA_LEAVES.get(), TexturedModel.LEAVES);
         generator.createTrivialBlock(NichirinBlockRegistry.WISTERIA_GLOW_LICHEN.get(), TexturedModel.CUBE);
         generator.createTrivialBlock(NichirinBlockRegistry.WISTERIA_GLOW_BERRIES.get(), TexturedModel.CUBE);
-        generator.createTrivialBlock(NichirinBlockRegistry.WISTERIA_LANTERN.get(), TexturedModel.CUBE);
         generator.createTrivialBlock(NichirinBlockRegistry.INFINITY_GLASS1.get(), TexturedModel.CUBE);
         generator.createTrivialBlock(NichirinBlockRegistry.INFINITY_GLASS2.get(), TexturedModel.CUBE);
 
@@ -73,6 +72,7 @@ public class NichirinModelProvider extends FabricModelProvider {
         generator.generateFlatItem(NichirinItemRegistry.WISTERIA_EXTRACT.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.WISTERIA_TEA.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.WISTERIA_ARROW.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinBlockRegistry.WISTERIA_LANTERN_ITEM.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.MOCHI.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.BLACK_MOCHI.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.BLUE_MOCHI.get(), ModelTemplates.FLAT_ITEM);
@@ -164,6 +164,8 @@ public class NichirinModelProvider extends FabricModelProvider {
 
         // Inosuke armor
         generator.generateFlatItem(NichirinItemRegistry.BOAR_HEAD.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.INOSUKE_LEGGINGS.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.INOSUKE_BOOTS.get(), ModelTemplates.FLAT_ITEM);
 
         // Demon items
         generator.generateFlatItem(NichirinItemRegistry.DEMON_BLOOD_VIAL.get(), ModelTemplates.FLAT_ITEM);

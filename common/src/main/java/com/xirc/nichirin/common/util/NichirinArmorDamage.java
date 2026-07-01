@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.util;
 
 import com.xirc.nichirin.common.config.NichirinModConfig;
+import com.xirc.nichirin.common.entity.npc.BaseBreathingTrainerEntity;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -50,6 +51,10 @@ public final class NichirinArmorDamage {
                 source = NichirinDamageSources.percentage(target, source);
             }
             amount = applyParryPunishDamage(target, source, amount);
+            // Trainers deal half damage to players (covers their breathing / moveset attacks).
+            if (target instanceof Player && source.getEntity() instanceof BaseBreathingTrainerEntity) {
+                amount *= 0.5f;
+            }
             float before = target.getHealth() + target.getAbsorptionAmount();
             boolean result = target.hurt(source, amount);
             float dealt = Math.max(0.0f, before - (target.getHealth() + target.getAbsorptionAmount()));

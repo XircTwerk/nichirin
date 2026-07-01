@@ -3,7 +3,7 @@ package com.xirc.nichirin.common.event.system;
 import com.xirc.nichirin.common.effect.WisteriasGraceStatusEffect;
 import com.xirc.nichirin.common.entity.npc.DemonNPCEntity;
 import com.xirc.nichirin.common.system.DemonManager;
-import com.xirc.nichirin.registry.NichirinBlockRegistry;
+import com.xirc.nichirin.common.util.WisteriaBlocks;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.EntityEvent;
@@ -82,10 +82,7 @@ public final class WisteriaGraceHandler {
                     if (x * x + y * y + z * z > radiusSqr) continue;
                     mutable.set(center.getX() + x, center.getY() + y, center.getZ() + z);
                     var state = level.getBlockState(mutable);
-                    if (state.is(NichirinBlockRegistry.WISTERIA_LEAVES.get())
-                            || state.is(NichirinBlockRegistry.WISTERIA_GLOW_LICHEN.get())
-                            || state.is(NichirinBlockRegistry.WISTERIA_GLOW_BERRIES.get())
-                            || state.is(NichirinBlockRegistry.WISTERIA_LANTERN.get())) {
+                    if (WisteriaBlocks.isWisteriaLightSource(state)) {
                         return true;
                     }
                 }

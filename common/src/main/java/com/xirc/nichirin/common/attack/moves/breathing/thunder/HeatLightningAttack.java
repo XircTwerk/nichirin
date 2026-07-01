@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.attack.moves.breathing.thunder;
 
+import com.xirc.nichirin.common.effect.ShockedStatusEffect;
 import com.xirc.nichirin.common.util.HitboxData;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
@@ -104,6 +105,9 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
         target.setDeltaMovement(launchVelocity);
         target.hurtMarked = true;
         target.hasImpulse = true;
+        // Without this, the Shocked effect (applied by the hit) clamps the upward velocity to 0 next
+        // tick and the target never leaves the ground.
+        ShockedStatusEffect.markRecentLaunch(target);
 
         if (world instanceof ServerLevel serverLevel) {
             serverLevel.getChunkSource().broadcast(target, new ClientboundSetEntityMotionPacket(target));

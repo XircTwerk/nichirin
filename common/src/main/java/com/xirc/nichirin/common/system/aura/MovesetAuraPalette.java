@@ -31,7 +31,7 @@ public final class MovesetAuraPalette {
         // order the BreathingStyle.color int happens to use for HUD/cooldowns.
         OVERRIDES.put("water_breathing",     rgb(0.05f, 0.50f, 1.00f));
         OVERRIDES.put("flame_breathing",     rgb(1.00f, 0.22f, 0.00f));
-        OVERRIDES.put("thunder_breathing",   rgb(1.00f, 0.88f, 0.00f));
+        OVERRIDES.put("thunder_breathing",   rgb(1.00f, 0.82f, 0.00f));
         OVERRIDES.put("mist_breathing",      rgb(0.55f, 0.80f, 1.00f));
         OVERRIDES.put("insect_breathing",    rgb(0.65f, 0.10f, 0.90f));
         OVERRIDES.put("sound_breathing",     rgb(1.00f, 0.20f, 0.65f));
