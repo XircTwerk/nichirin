@@ -4,6 +4,7 @@ import com.xirc.nichirin.client.renderer.entity.dispatcher.TempleDemonDispatcher
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moveset.demon.TempleDemonMoveset;
+import com.xirc.nichirin.common.entity.npc.goal.WisteriaBlockAvoidanceGoal;
 import com.xirc.nichirin.common.system.GrabManager;
 import com.xirc.nichirin.common.system.blocking.HandToHandBlock;
 import com.xirc.nichirin.common.system.movement.EntityMovement;
@@ -78,10 +79,11 @@ public class TempleDemonEntity extends DemonNPCEntity {
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new DayShelterGoal(this));
-        this.goalSelector.addGoal(2, new SmartDemonAttackGoal(this, 1.2, true));
-        this.goalSelector.addGoal(3, new LookAtPlayerGoal(this, Player.class, 32.0f));
-        this.goalSelector.addGoal(4, new WaterAvoidingRandomStrollGoal(this, 1.0));
-        this.goalSelector.addGoal(5, new RandomLookAroundGoal(this));
+        this.goalSelector.addGoal(2, new WisteriaBlockAvoidanceGoal(this, 1.35));
+        this.goalSelector.addGoal(3, new SmartDemonAttackGoal(this, 1.2, true));
+        this.goalSelector.addGoal(4, new LookAtPlayerGoal(this, Player.class, 32.0f));
+        this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 1.0));
+        this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
 
         // HurtByTargetGoal with a kin filter: retaliate against anything that hits us, but
         // don't turn on fellow demon NPCs.

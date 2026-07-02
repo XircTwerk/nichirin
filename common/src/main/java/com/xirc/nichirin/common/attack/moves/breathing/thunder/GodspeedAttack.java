@@ -9,8 +9,6 @@ import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -24,7 +22,7 @@ import java.util.UUID;
 /**
  * Godspeed — Thunder Breathing crouch-right-click.
  *
- * <p>10-tick windup (handled by the base class), then a 7-tick 300-block velocity dash in the
+ * <p>10-tick windup (handled by the base class), then a smooth velocity dash in the
  * look direction. Any entity swept during the dash is "dragged" — it receives the same per-tick
  * velocity as the player so it travels alongside them, and is hit for {@code damage} every
  * {@link #HIT_INTERVAL_TICKS} ticks for the remainder of the active window.</p>
@@ -32,7 +30,8 @@ import java.util.UUID;
 public class GodspeedAttack extends ThunderBreathingAttackBase {
 
     private static final float DEFAULT_DASH_DISTANCE = 300.0f;
-    private static final int DASH_TICKS = 7;
+    private static final int DASH_TICKS = 25;
+    private static final float MAX_SMOOTH_DISTANCE_PER_TICK = 3.5f;
     private static final int HIT_INTERVAL_TICKS = 5;
     private static final float AFTERIMAGE_ALPHA = 0.7f;
     private static final int AFTERIMAGE_LIFETIME_TICKS = 18;
@@ -42,24 +41,34 @@ public class GodspeedAttack extends ThunderBreathingAttackBase {
     private static final double DRAG_SEARCH_RADIUS = 60.0;
 
     private Vec3 dashDirection = Vec3.ZERO;
-    private float remainingDistance = 0f;
+    private Vec3 dashOrigin = Vec3.ZERO;
+    private float totalDistance = 0f;
     private float distancePerTick = 0f;
+    private float traveled = 0f;
+    private float maxTravel = 0f;
     // Maps dragged entity UUID → tickCount at which drag started (for hit-interval math).
     private final Map<UUID, Integer> dragStart = new HashMap<>();
 
     @Override
     protected void onStart() {
         if (world.isClientSide) return;
-        dashDirection = user.getLookAngle().normalize();
-        float total = teleportDistance != null ? teleportDistance : DEFAULT_DASH_DISTANCE;
-        remainingDistance = total;
-        distancePerTick = total / DASH_TICKS;
+        totalDistance = teleportDistance != null ? teleportDistance : DEFAULT_DASH_DISTANCE;
+        distancePerTick = Math.min(totalDistance / DASH_TICKS, MAX_SMOOTH_DISTANCE_PER_TICK);
         dragStart.clear();
     }
 
     @Override
     protected void onActiveStart() {
         if (world.isClientSide) return;
+        // Lock the dash direction and origin at dash-start (after windup). We advance along this
+        // pre-clipped path each tick instead of re-reading user.position(), whose server-side value
+        // lags far behind the client during a fast velocity dash (and sags under gravity) — that lag
+        // was what placed the dash/particles "under and behind" the player.
+        dashDirection = user.getLookAngle().normalize();
+        dashOrigin = user.position();
+        Vec3 clippedEnd = clipForward(dashOrigin, dashOrigin.add(dashDirection.scale(totalDistance)));
+        maxTravel = (float) clippedEnd.distanceTo(dashOrigin);
+        traveled = 0f;
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 NichirinSoundRegistry.THUNDERCLAP_FLASH.get(), SoundSource.PLAYERS, 1.0f, 1.5f);
     }
@@ -70,27 +79,32 @@ public class GodspeedAttack extends ThunderBreathingAttackBase {
 
         Vec3 perTickVelocity = Vec3.ZERO;
 
-        if (remainingDistance > 0f) {
-            Vec3 from = user.position();
-            float step = Math.min(distancePerTick, remainingDistance);
-            Vec3 desired = from.add(dashDirection.scale(step));
-            Vec3 clipped = clipForward(from, desired);
+        if (traveled < maxTravel) {
+            float prev = traveled;
+            traveled = Math.min(maxTravel, traveled + distancePerTick);
+            Vec3 from = dashOrigin.add(dashDirection.scale(prev));
+            Vec3 to = dashOrigin.add(dashDirection.scale(traveled));
+            perTickVelocity = to.subtract(from);
 
-            sweepIntoDrag(from, clipped);
-            perTickVelocity = clipped.subtract(from);
-            teleportPlayer(user, clipped);
-            NichirinPacketRegistry.sendAfterimageTrail(user, from, clipped,
+            sweepIntoDrag(from, to);
+            applySmoothDashVelocity(perTickVelocity);
+
+            NichirinPacketRegistry.sendAfterimageTrail(user, from, to,
                     AFTERIMAGE_LIFETIME_TICKS, AFTERIMAGE_COPIES, AFTERIMAGE_ALPHA);
-            spawnTrailParticles(from, clipped);
-
-            float traveled = (float) clipped.distanceTo(from);
-            remainingDistance -= traveled;
-            if (traveled < step - 0.05f) {
-                remainingDistance = 0f;
-            }
+            spawnTrailParticles(from, to);
         }
 
         applyDragAndHit(perTickVelocity);
+    }
+
+    private void applySmoothDashVelocity(Vec3 velocity) {
+        user.setDeltaMovement(velocity);
+        user.hurtMarked = true;
+        user.hasImpulse = true;
+        user.fallDistance = 0;
+        if (user instanceof ServerPlayer sp) {
+            sp.connection.send(new ClientboundSetEntityMotionPacket(user));
+        }
     }
 
     /** Adds any entity inside the swept volume to the drag set (first contact only). */
@@ -114,10 +128,16 @@ public class GodspeedAttack extends ThunderBreathingAttackBase {
                 e -> dragStart.containsKey(e.getUUID()) && e.isAlive());
 
         for (LivingEntity target : nearby) {
-            int startTick = dragStart.get(target.getUUID());
-            int elapsed = tickCount - startTick;
+            int elapsed = tickCount - dragStart.get(target.getUUID());
 
-            // Drag: pull the entity along with the dash.
+            // Hit first (every HIT_INTERVAL_TICKS) so its knockback can't override the drag below.
+            if (elapsed % HIT_INTERVAL_TICKS == 0) {
+                hitTargetNoImmunity(target);
+                ShockedStatusEffect.markRecentLaunch(target);
+            }
+
+            // Drag: carry the entity along with the dash via the same per-tick velocity (smooth),
+            // applied after the hit above so the hit's knockback can't override it.
             if (!dashVelocity.equals(Vec3.ZERO)) {
                 target.setDeltaMovement(dashVelocity);
                 target.hurtMarked = true;
@@ -128,13 +148,6 @@ public class GodspeedAttack extends ThunderBreathingAttackBase {
                 if (target instanceof ServerPlayer sp) {
                     sp.connection.send(new ClientboundSetEntityMotionPacket(target));
                 }
-            }
-
-            // Hit every HIT_INTERVAL_TICKS ticks (elapsed 0, 5, 10, …).
-            if (elapsed % HIT_INTERVAL_TICKS == 0) {
-                hitTargetNoImmunity(target);
-                target.addEffect(new MobEffectInstance(MobEffects.LEVITATION, hitStun, 1, false, false, true));
-                ShockedStatusEffect.markRecentLaunch(target);
             }
         }
 
@@ -161,21 +174,20 @@ public class GodspeedAttack extends ThunderBreathingAttackBase {
         return lastSafe;
     }
 
-    private void teleportPlayer(LivingEntity entity, Vec3 to) {
-        Vec3 delta = to.subtract(entity.position());
-        entity.setDeltaMovement(delta);
-        entity.hurtMarked = true;
-        entity.hasImpulse = true;
-        if (entity instanceof ServerPlayer sp) {
-            sp.connection.send(new ClientboundSetEntityMotionPacket(entity));
-        }
-        entity.fallDistance = 0;
-    }
-
     private void spawnTrailParticles(Vec3 from, Vec3 to) {
         if (!(world instanceof ServerLevel serverLevel)) return;
         Vec3 mid = from.add(to).scale(0.5);
         serverLevel.sendParticles(NichirinParticleRegistry.THUNDER.get(),
                 mid.x, mid.y + 0.9, mid.z, 6, 0.2, 0.2, 0.2, 0.05);
+    }
+
+    @Override
+    protected void onStop() {
+        if (user != null) {
+            user.setDeltaMovement(Vec3.ZERO);
+            user.hurtMarked = true;
+        }
+        dragStart.clear();
+        super.onStop();
     }
 }

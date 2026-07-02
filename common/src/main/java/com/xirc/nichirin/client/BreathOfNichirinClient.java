@@ -227,6 +227,7 @@ public class BreathOfNichirinClient {
             RenderTypeRegistry.register(RenderType.cutout(),
                     NichirinBlockRegistry.WISTERIA_DOOR.get(),
                     NichirinBlockRegistry.WISTERIA_TRAPDOOR.get(),
+                    NichirinBlockRegistry.WISTERIA_LANTERN.get(),
                     NichirinBlockRegistry.WISTERIA_SAPLING.get());
 
             initialized = true;

@@ -50,7 +50,8 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
     private static final float DAMAGE_PER_FOLD_SCALAR = 0.05f;
     private static final float AFTERIMAGE_ALPHA = 0.58f;
     private static final int AFTERIMAGE_LIFETIME_TICKS = 14;
-    private static final int AFTERIMAGE_COPIES = 7;
+    // Drop one afterimage every this-many blocks along the dash path.
+    private static final float AFTERIMAGE_SPACING = 2.0f;
     // Past-target overshoot: waypoint = enemyPos + dir × OVERSHOOT so the player passes through.
     private static final float OVERSHOOT_DISTANCE = 1.75f;
     // Extra vertical lift on top of the entity's CURRENT y-position when overshooting through them.
@@ -75,6 +76,7 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
     private int segmentTickProgress = 0;
     private Vec3 segmentStart = Vec3.ZERO;
     private Vec3 segmentEnd = Vec3.ZERO;
+    private double nextAfterimageDistance = AFTERIMAGE_SPACING;
     // Target locked in at segment plan time so beginSegment can guarantee a hit on it even when the
     // sweep AABB misses (target launched out of the swept volume between plan and hit).
     private LivingEntity plannedTarget = null;
@@ -98,9 +100,17 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
         segmentTickProgress = 0;
         segmentStart = Vec3.ZERO;
         segmentEnd = Vec3.ZERO;
+        nextAfterimageDistance = AFTERIMAGE_SPACING;
         plannedTarget = null;
 
         if (world.isClientSide || !(user instanceof Player player)) return;
+
+        // Spam guard: if a charge is already running for this player, don't stack a second instance
+        // (each would tick independently and fight over movement/breath/animation).
+        if (ThunderclapChargeManager.isCharging(player.getUUID())) {
+            this.isActive = false;
+            return;
+        }
 
         float maxBreath = BreathingManager.getMaxBreath(player);
         maxFold = Math.max(1, (int) Math.floor(maxBreath / BREATH_PER_FOLD));
@@ -243,7 +253,8 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
             }
             totalSegments = fold;
             phase = Phase.DASHING;
-            ThunderclapChargeManager.unregister(player.getUUID());
+            // Stay registered through the dash so the spam guard in onStart keeps blocking new
+            // charges until this attack fully ends (onStop unregisters).
             broadcastAnimation(player, "thunderclap_flash");
         }
     }
@@ -355,9 +366,11 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
             beginSegment(player);
         }
 
-        segmentTickProgress++;
-        // Velocity-based per-tick movement (matches Rhythmic Step's feel — smoother than teleport).
         Vec3 fullDelta = segmentEnd.subtract(segmentStart);
+        double segDist = fullDelta.length();
+        double previousDistance = segDist * segmentTickProgress / SEGMENT_DASH_TICKS;
+        segmentTickProgress++;
+        double currentDistance = segDist * segmentTickProgress / SEGMENT_DASH_TICKS;
         Vec3 perTickVelocity = fullDelta.scale(1.0 / SEGMENT_DASH_TICKS);
         player.setDeltaMovement(perTickVelocity);
         player.hurtMarked = true;
@@ -365,6 +378,7 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
         if (player instanceof ServerPlayer sp) {
             sp.connection.send(new ClientboundSetEntityMotionPacket(player));
         }
+        sendAfterimagesCrossed(previousDistance, currentDistance, fullDelta, player);
 
         if (segmentTickProgress >= SEGMENT_DASH_TICKS) {
             segmentTickProgress = 0;
@@ -385,10 +399,7 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
     private void beginSegment(Player player) {
         segmentStart = player.position();
         segmentEnd = planNextWaypoint(player);
-        // One trail packet per segment (not per tick) — covers the same path with a fraction of
-        // the entries, which keeps multiplayer observers from re-rendering dozens of ghosts.
-        NichirinPacketRegistry.sendAfterimageTrail(player, segmentStart, segmentEnd,
-                AFTERIMAGE_LIFETIME_TICKS, AFTERIMAGE_COPIES, AFTERIMAGE_ALPHA);
+        nextAfterimageDistance = AFTERIMAGE_SPACING;
         faceTarget(player, segmentEnd);
         playFoldSound(player);
         telegraphSegmentImpact(segmentEnd);
@@ -398,6 +409,20 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
         // plan and hit).
         if (plannedTarget != null && plannedTarget.isAlive()) {
             applyFoldHit(player, plannedTarget);
+        }
+    }
+
+    private void sendAfterimagesCrossed(double previousDistance, double currentDistance, Vec3 path, Player player) {
+        double segDist = path.length();
+        if (segDist < 1e-4) return;
+        Vec3 direction = path.normalize();
+        while (nextAfterimageDistance <= currentDistance && nextAfterimageDistance <= segDist) {
+            if (nextAfterimageDistance > previousDistance) {
+                Vec3 pos = segmentStart.add(direction.scale(nextAfterimageDistance));
+                NichirinPacketRegistry.sendAfterimageTrail(player, pos, pos,
+                        AFTERIMAGE_LIFETIME_TICKS, 1, AFTERIMAGE_ALPHA);
+            }
+            nextAfterimageDistance += AFTERIMAGE_SPACING;
         }
     }
 

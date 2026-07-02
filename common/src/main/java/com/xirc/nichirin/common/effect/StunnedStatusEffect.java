@@ -28,10 +28,6 @@ public class StunnedStatusEffect extends MobEffect {
     private static final Map<UUID, Long> recentKnockback = new HashMap<>();
     private static final int KNOCKBACK_GRACE_TICKS = 15; // Allow movement for 15 ticks after knockback
 
-    // Remembers each stunned mob's NoAi state from BEFORE the stun forced it off, so we can restore
-    // it exactly when the stun ends. Without this the mob would stay frozen (NoAi) forever.
-    private static final Map<UUID, Boolean> aiSuppressed = new HashMap<>();
-
     public StunnedStatusEffect() {
         super(MobEffectCategory.NEUTRAL, 0xFFD700); // Golden color for stun
 
@@ -114,11 +110,12 @@ public class StunnedStatusEffect extends MobEffect {
             inGracePeriod = false;
         }
 
-        if (amplifier >= 1 && !inGracePeriod) {
+        if (!inGracePeriod) {
             Vec3 currentMovement = entity.getDeltaMovement();
 
-            // Only restrict horizontal movement that's likely from input/AI
-            // Allow significant movement (likely from knockback) and preserve Y movement always
+            // Pin the entity in place by cancelling self/AI-driven horizontal movement, while still
+            // allowing knockback (large velocity) and gravity (Y is always preserved). Doing this for
+            // every amplifier means stuns no longer need setNoAi to hold a mob still.
             double threshold = 0.3; // Movement below this is considered input-based
 
             double newX = Math.abs(currentMovement.x) > threshold ? currentMovement.x : 0;
@@ -133,14 +130,11 @@ public class StunnedStatusEffect extends MobEffect {
             player.getAbilities().mayfly = false;
         }
 
-        // Mob-specific: freeze AI completely so the mob can't re-acquire targets or attack mid-stun.
-        // setNoAi stops all goal/target AI ticking while leaving physics (gravity, knockback) intact.
-        // We clear the target as well so it doesn't resume attacking the same entity the instant
-        // the stun expires and setNoAi is reverted.
+        // Mob-specific: clear the target each tick so a stunned mob can't attack. We deliberately do
+        // NOT use setNoAi ? NoAi mobs stop interpolating on the client (they float, skip client-side
+        // gravity, and snap/teleport between server positions). The velocity pinning above plus this
+        // target clear keep the mob effectively frozen while still moving smoothly.
         if (entity instanceof Mob mob) {
-            // Remember the mob's original NoAi state once, so restoreAi() can put it back exactly.
-            aiSuppressed.putIfAbsent(mob.getUUID(), mob.isNoAi());
-            mob.setNoAi(true);
             mob.setTarget(null);
         }
 
@@ -148,17 +142,11 @@ public class StunnedStatusEffect extends MobEffect {
     }
 
     /**
-     * Restores a stunned mob's AI when the stun ends. Returns NoAi to whatever it was before the
-     * stun (so mobs intentionally spawned with NoAi stay frozen). Must be called whenever the
-     * stunned effect is removed, otherwise the mob stays permanently frozen.
+     * Legacy safety net: un-freeze any mob still flagged NoAi when its stun ends. New stuns no longer
+     * touch NoAi, but this clears mobs left permanently frozen by older versions if they get re-stunned.
      */
     public static void restoreAi(LivingEntity entity) {
-        if (!(entity instanceof Mob mob)) return;
-        Boolean originalNoAi = aiSuppressed.remove(mob.getUUID());
-        if (originalNoAi != null) {
-            mob.setNoAi(originalNoAi);
-        } else if (mob.isNoAi()) {
-            // Safety net for mobs that were stunned before this revert existed.
+        if (entity instanceof Mob mob && mob.isNoAi()) {
             mob.setNoAi(false);
         }
     }

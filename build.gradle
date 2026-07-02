@@ -1,7 +1,7 @@
 plugins {
     id 'dev.architectury.loom' version '1.7-SNAPSHOT' apply false
     id 'architectury-plugin' version '3.4-SNAPSHOT'
-    id 'com.gradleup.shadow' version '8.3.7' apply false
+    id 'com.gradleup.shadow' version '8.3.11' apply false
     id 'maven-publish'
 }
 
@@ -51,11 +51,11 @@ subprojects {
             officialMojangMappings()
             parchment("org.parchmentmc.data:parchment-${project.minecraft_version}:${project.parchment_mappings}@zip")
         }
-        compileOnly "com.google.guava:guava:32.1.2-jre"
-        runtimeOnly "org.joml:joml:1.10.4"
+        compileOnly "com.google.guava:guava:33.6.0-jre"
+        runtimeOnly "org.joml:joml:1.10.9"
 
-        compileOnly 'org.projectlombok:lombok:1.18.32'
-        annotationProcessor 'org.projectlombok:lombok:1.18.32'
+        compileOnly 'org.projectlombok:lombok:1.18.46'
+        annotationProcessor 'org.projectlombok:lombok:1.18.46'
     }
 
     java {

@@ -154,8 +154,16 @@ public class ClientInputHandler {
                 && (MovesetHelper.hasFightingMoveset(player) || MovesetHelper.hasDemonMoveset(player));
     }
 
+    // Debounce so an autoclicker can't fire the block + left-click special dozens of times a second
+    // (which floods charge specials like Thunderclap and leaves the block/charge state thrashing).
+    private static long lastBlockSpecialMs = 0L;
+    private static final long BLOCK_SPECIAL_COOLDOWN_MS = 200L;
+
     /** Send the old right-click special (crouch variant if sneaking) — used for block + left-click. */
     private static void sendBlockSpecial(Player player) {
+        long now = System.currentTimeMillis();
+        if (now - lastBlockSpecialMs < BLOCK_SPECIAL_COOLDOWN_MS) return;
+        lastBlockSpecialMs = now;
         boolean crouch = isCrouchInputDown(player);
         try {
             if (player.getMainHandItem().getItem() instanceof Katana katana) {
@@ -187,8 +195,9 @@ public class ClientInputHandler {
             return true; // Katana holders can use breathing abilities
         }
 
-        // Empty-hand fighting styles take priority over demon arts.
-        return item.isEmpty() && (MovesetHelper.hasFightingMoveset(player) || MovesetHelper.hasDemonMoveset(player));
+        // Empty-hand left-click is an attack only when the CQC fighting style is on — demon status
+        // alone shouldn't hijack left-click, so demons with CQC off can still mine normally.
+        return item.isEmpty() && MovesetHelper.hasFightingMoveset(player);
     }
 
     private static boolean canPerformRightClickAttacks(Player player, InteractionHand hand) {

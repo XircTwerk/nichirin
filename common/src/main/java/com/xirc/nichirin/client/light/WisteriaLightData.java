@@ -1,7 +1,7 @@
 package com.xirc.nichirin.client.light;
 
 import com.xirc.nichirin.client.shader.NichirinShaderInjection;
-import com.xirc.nichirin.registry.NichirinBlockRegistry;
+import com.xirc.nichirin.common.util.WisteriaBlocks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.core.BlockPos;
@@ -175,7 +175,7 @@ public final class WisteriaLightData {
         }
 
         for (BlockPos pos : BlockPos.betweenClosed(min, max)) {
-            if (level.getBlockState(pos).is(NichirinBlockRegistry.WISTERIA_LEAVES.get())) {
+            if (WisteriaBlocks.isWisteriaShaderLightSource(level.getBlockState(pos))) {
                 long key = pos.asLong();
                 Light light = TRACKED.get(key);
                 if (light == null) {

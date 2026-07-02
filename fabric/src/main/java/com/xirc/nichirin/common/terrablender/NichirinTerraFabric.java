@@ -12,7 +12,8 @@ public class NichirinTerraFabric implements TerraBlenderApi {
 
     @Override
     public void onTerraBlenderInitialized() {
-        Regions.register(new OverworldRegionFabric(BreathOfNichirin.id("overworld"), 4));
+        // Archived for the 1.0.5 port release: wisteria biome/worldgen is not shipping.
+        // Regions.register(new OverworldRegionFabric(BreathOfNichirin.id("overworld"), 4));
 
         // Add ore features to biomes
         NichirinBiomeModifications.addOres();
@@ -32,10 +33,11 @@ public class NichirinTerraFabric implements TerraBlenderApi {
 
     private static void registerSurfaceRules() {
         // We still register surface rules but they're minimal since we use features for ores
-        SurfaceRuleManager.addSurfaceRules(
-                SurfaceRuleManager.RuleCategory.OVERWORLD,
-                BreathOfNichirin.MOD_ID,
-                MaterialRulesFabric.makeRules()
-        );
+        // Archived for the 1.0.5 port release: wisteria biome/worldgen is not shipping.
+        // SurfaceRuleManager.addSurfaceRules(
+        //         SurfaceRuleManager.RuleCategory.OVERWORLD,
+        //         BreathOfNichirin.MOD_ID,
+        //         MaterialRulesFabric.makeRules()
+        // );
     }
 }

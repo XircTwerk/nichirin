@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/template_lantern",
+  "textures": {
+    "lantern": "nichirin:block/wisteria_lantern_block",
+    "particle": "nichirin:block/wisteria_lantern_block"
+  }
+}
