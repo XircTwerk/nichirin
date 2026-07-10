@@ -5,6 +5,13 @@ plugins {
 loom {
     accessWidenerPath = project(":common").loom.accessWidenerPath
 
+    // The common classes copied into this jar contain mixins with named (Mojang)
+    // references and no usable refmap. Disable the legacy mixin AP so remapJar
+    // statically rewrites mixin annotations and @Shadow members to SRG names.
+    mixin {
+        useLegacyMixinAp = false
+    }
+
     forge {
         convertAccessWideners.set(true)
         extraAccessWideners.add loom.accessWidenerPath.get().asFile.name
@@ -20,7 +27,8 @@ architectury {
 dependencies {
     forge "net.minecraftforge:forge:$rootProject.forge_version"
     modImplementation "dev.architectury:architectury-forge:$rootProject.architectury_api_version"
-    modImplementation "me.shedaniel.cloth:cloth-config-forge:${rootProject.cloth_config_version}"
+    // Bundled so players don't need a separate install (matches the fabric build)
+    include modImplementation("me.shedaniel.cloth:cloth-config-forge:${rootProject.cloth_config_version}")
     modImplementation("dev.kosmx.player-anim:player-animation-lib-forge:${player_anim_version}")
     modImplementation "mod.azure.azurelib:azurelib-neo-1.20.1:${azurelib_version}"
 

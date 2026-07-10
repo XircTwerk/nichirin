@@ -45,3 +45,10 @@ mandatory = true
 versionRange = "[1.0.2-rc1+1.20,)"
 ordering = "AFTER"
 side = "CLIENT"
+
+[[dependencies.nichirin]]
+modId = "cloth_config"
+mandatory = true
+versionRange = "[11,)"
+ordering = "AFTER"
+side = "BOTH"
