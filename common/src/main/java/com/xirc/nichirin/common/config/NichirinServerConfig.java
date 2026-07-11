@@ -10,6 +10,7 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
 import java.util.List;
 
 public final class NichirinServerConfig {
@@ -19,6 +20,9 @@ public final class NichirinServerConfig {
     private static final Path LEGACY_MOD_JSON_PATH = Paths.get("config", "nichirin.json");
 
     private static NichirinModConfig config;
+    // Last-modified stamp of PATH we have already applied, used to detect external edits
+    // (e.g. a host panel's file manager) and hot-reload without a server restart.
+    private static FileTime lastModified;
 
     private NichirinServerConfig() {
     }
@@ -30,6 +34,30 @@ public final class NichirinServerConfig {
             BreathOfNichirin.LOGGER.warn("Failed to load {}, using defaults.", PATH, e);
             config = new NichirinModConfig();
         }
+        lastModified = currentModifiedTime();
+    }
+
+    /**
+     * Re-reads the config from disk if the file has been modified since we last loaded or saved it.
+     * Called from the server tick so edits made through a host panel's file manager apply live,
+     * without a restart. Gameplay reads {@link NichirinModConfig#get()} fresh, so swapping the cached
+     * instance is enough for server-side values.
+     */
+    public static synchronized void pollForChanges() {
+        FileTime current = currentModifiedTime();
+        if (current == null || current.equals(lastModified)) return;
+        BreathOfNichirin.LOGGER.info("Detected change to {}, reloading server config.", PATH);
+        load();
+    }
+
+    private static FileTime currentModifiedTime() {
+        try {
+            if (Files.exists(PATH)) {
+                return Files.getLastModifiedTime(PATH);
+            }
+        } catch (IOException ignored) {
+        }
+        return null;
     }
 
     public static NichirinModConfig loadConfig() {
@@ -88,6 +116,7 @@ public final class NichirinServerConfig {
             try (Writer writer = Files.newBufferedWriter(PATH)) {
                 writer.write(toCommentedToml(config));
             }
+            lastModified = currentModifiedTime();
         } catch (IOException e) {
             BreathOfNichirin.LOGGER.warn("Failed to save {}.", PATH, e);
         }

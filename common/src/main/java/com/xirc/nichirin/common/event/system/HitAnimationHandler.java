@@ -3,6 +3,7 @@ package com.xirc.nichirin.common.event.system;
 import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
 import com.xirc.nichirin.common.system.blocking.HandToHandBlock;
 import com.xirc.nichirin.common.system.blocking.KatanaBlock;
+import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.event.EventResult;
@@ -25,6 +26,10 @@ public final class HitAnimationHandler {
         EntityEvent.LIVING_HURT.register((entity, source, amount) -> {
             if (!(entity instanceof ServerPlayer player)) return EventResult.pass();
             if (amount <= 0.0f) return EventResult.pass();
+            // Only Nichirin attacks should flinch the player — not vanilla mobs, fall damage, etc.
+            if (!NichirinDamageSources.isNichirinAttack(source)) return EventResult.pass();
+            // Creative (and spectator) players shouldn't react to hits.
+            if (player.isCreative() || player.isSpectator()) return EventResult.pass();
             // The guard pose owns the visual while blocking — don't stomp it with a flinch.
             if (KatanaBlock.isBlocking(player) || HandToHandBlock.isBlocking(player)) return EventResult.pass();
 

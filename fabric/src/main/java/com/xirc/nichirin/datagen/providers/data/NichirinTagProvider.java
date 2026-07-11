@@ -61,7 +61,11 @@ public class NichirinTagProvider extends FabricTagProvider.BlockTagProvider {
                 .add(NichirinBlockRegistry.WISTERIA_DOOR.get())
                 .add(NichirinBlockRegistry.WISTERIA_TRAPDOOR.get())
                 .add(NichirinBlockRegistry.WISTERIA_PRESSURE_PLATE.get())
-                .add(NichirinBlockRegistry.WISTERIA_BUTTON.get());
+                .add(NichirinBlockRegistry.WISTERIA_BUTTON.get())
+                .add(NichirinBlockRegistry.WISTERIA_SIGN.get())
+                .add(NichirinBlockRegistry.WISTERIA_WALL_SIGN.get())
+                .add(NichirinBlockRegistry.WISTERIA_HANGING_SIGN.get())
+                .add(NichirinBlockRegistry.WISTERIA_WALL_HANGING_SIGN.get());
 
         getOrCreateTagBuilder(BlockTags.LOGS)
                 .add(NichirinBlockRegistry.WISTERIA_LOG.get())

@@ -22,6 +22,8 @@ import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
+import net.minecraft.client.renderer.blockentity.HangingSignRenderer;
+import net.minecraft.client.renderer.blockentity.SignRenderer;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
@@ -101,6 +103,8 @@ public class BreathOfNichirinNeoForgeClient {
 
             // BentoBoxBlockRenderer not yet implemented
             BlockEntityRenderers.register(NichirinBlockEntityRegistry.KATANA_HOLDER_BLOCK_ENTITY.get(), KatanaHolderBlockRenderer::new);
+            BlockEntityRenderers.register(NichirinBlockEntityRegistry.WISTERIA_SIGN.get(), SignRenderer::new);
+            BlockEntityRenderers.register(NichirinBlockEntityRegistry.WISTERIA_HANGING_SIGN.get(), HangingSignRenderer::new);
         });
     }
 }

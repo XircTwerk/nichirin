@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "C": { "item": "minecraft:chain" },
+    "W": { "item": "nichirin:stripped_wisteria_log" }
+  },
+  "pattern": [
+    "C C",
+    "WWW",
+    "WWW"
+  ],
+  "result": {
+    "id": "nichirin:wisteria_hanging_sign",
+    "count": 6
+  }
+}

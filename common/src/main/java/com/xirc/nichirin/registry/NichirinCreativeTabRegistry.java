@@ -42,6 +42,8 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinBlockRegistry.WISTERIA_TRAPDOOR.get());
                         entries.accept(NichirinBlockRegistry.WISTERIA_PRESSURE_PLATE.get());
                         entries.accept(NichirinBlockRegistry.WISTERIA_BUTTON.get());
+                        entries.accept(NichirinBlockRegistry.WISTERIA_SIGN_ITEM.get());
+                        entries.accept(NichirinBlockRegistry.WISTERIA_HANGING_SIGN_ITEM.get());
                         entries.accept(NichirinBlockRegistry.WISTERIA_SAPLING_ITEM.get());
 
                         entries.accept(NichirinBlockRegistry.TATAMI_BLOCK_ITEM.get());

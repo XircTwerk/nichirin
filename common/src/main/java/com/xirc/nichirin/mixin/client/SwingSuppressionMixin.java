@@ -20,9 +20,12 @@ public class SwingSuppressionMixin {
         LivingEntity entity = (LivingEntity)(Object)this;
         if (!(entity instanceof LocalPlayer player)) return;
         ItemStack item = player.getMainHandItem();
+        // Katana, gun, and bare-hand CQC all play their own arm animation, so hide the vanilla swing.
+        // Demons are intentionally excluded: their default bare-hand left click has no replacement
+        // animation, so suppressing the swing would leave no feedback at all.
         if (item.getItem() instanceof Katana
                 || item.getItem() instanceof GenyaDB
-                || (item.isEmpty() && (MovesetHelper.hasFightingMoveset(player) || MovesetHelper.hasDemonMoveset(player)))) {
+                || (item.isEmpty() && MovesetHelper.hasFightingMoveset(player))) {
             ci.cancel();
         }
     }

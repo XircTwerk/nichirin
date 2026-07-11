@@ -25,14 +25,17 @@
     "client.ShaderInstanceMixin",
     "client.SoundEngineMixin",
     "client.GunEquipAnimMixin",
-    "client.SwingSuppressionMixin"
+    "client.SwingSuppressionMixin",
+    "client.HangingSignEditScreenMixin",
+    "client.SheetsMixin"
   ],
   "mixins": [
     "DemonBloodFoodMixin",
     "DemonBloodFoodUseMixin",
     "LivingEntityMixin",
     "MobDemonTargetMixin",
-    "PlayerMixin"
+    "PlayerMixin",
+    "WoodTypeInvoker"
   ],
   "injectors": {
     "defaultRequire": 1
