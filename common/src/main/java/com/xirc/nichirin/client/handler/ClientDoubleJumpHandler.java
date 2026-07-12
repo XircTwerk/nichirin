@@ -1,12 +1,15 @@
 package com.xirc.nichirin.client.handler;
 
 import com.xirc.nichirin.common.system.abilities.PlayerDoubleJump;
+import com.xirc.nichirin.common.system.abilities.PlayerWallJump;
 import com.xirc.nichirin.common.util.StaminaManager;
 import com.xirc.nichirin.common.network.c2s.DoubleJumpPacket;
+import com.xirc.nichirin.common.network.c2s.WallJumpPacket;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import dev.architectury.event.events.client.ClientTickEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.world.phys.Vec3;
 
 public class ClientDoubleJumpHandler {
 
@@ -31,7 +34,15 @@ public class ClientDoubleJumpHandler {
 
         // Detect jump key press (rising edge detection)
         boolean jumpPressed = isJumping && !wasJumping;
-        if (jumpPressed && jumpCooldown == 0) {
+
+        // Wall jump: pressing jump mid-air right next to a block bounces off it instead of double
+        // jumping. Checked outside the double-jump cooldown gate — it has no cooldown, doesn't
+        // consume the double jump, and the rising-edge key detection is the only rate limit.
+        if (jumpPressed && !player.onGround()
+                && PlayerWallJump.canWallJump(player)
+                && !PlayerWallJump.findAwayFromWall(player).equals(Vec3.ZERO)) {
+            NichirinPacketRegistry.sendToServer(new WallJumpPacket());
+        } else if (jumpPressed && jumpCooldown == 0) {
 
             if (player.onGround()) {
                 // Do nothing

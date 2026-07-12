@@ -5,6 +5,7 @@ import com.zigythebird.playeranimcore.api.firstPerson.FirstPersonMode;
 import com.xirc.nichirin.client.afterimage.AfterimageRenderer;
 import com.xirc.nichirin.client.aura.AuraPixelize2DRenderer;
 import com.xirc.nichirin.client.handler.BloodMoonClientState;
+import com.xirc.nichirin.client.light.WisteriaGlowRenderer;
 import com.xirc.nichirin.client.light.WisteriaLightData;
 import com.xirc.nichirin.client.outline.OutlineRenderer;
 import com.xirc.nichirin.client.renderer.effects.CloneRingRenderer;
@@ -130,6 +131,9 @@ public class LevelRendererMixin {
             AfterimageRenderer.render(auraStack, camera, partial);
             MistCloneRenderer.render(auraStack, camera, partial);
             CloneRingRenderer.render(auraStack, camera, partial);
+            // Wisteria glow halos — geometry fallback for Sodium/Iris where the core-shader
+            // injection can't run (no-op on the vanilla pipeline).
+            WisteriaGlowRenderer.render(auraStack, camera, partial);
 
             // Outline system, two paths:
             //  - seeThroughWalls=true  → MC's built-in outline framebuffer + edge-detection

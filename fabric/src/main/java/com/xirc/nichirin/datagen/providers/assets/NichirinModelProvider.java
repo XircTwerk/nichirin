@@ -93,6 +93,9 @@ public class NichirinModelProvider extends FabricModelProvider {
 
         generator.generateFlatItem(NichirinItemRegistry.SMOKE_BOMB.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.FLASH_BOMB.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.BULLET.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinBlockRegistry.WISTERIA_SIGN_ITEM.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinBlockRegistry.WISTERIA_HANGING_SIGN_ITEM.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.BENTO_BOX.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.DRINKING_GOURD.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.RICE.get(), ModelTemplates.FLAT_ITEM);
@@ -158,7 +161,8 @@ public class NichirinModelProvider extends FabricModelProvider {
         generator.generateFlatItem(NichirinItemRegistry.UROKODAKI_BOOTS.get(), ModelTemplates.FLAT_ITEM);
 
         // Muichiro armor
-        generator.generateFlatItem(NichirinItemRegistry.MUICHIRO_HEADPIECE.get(), ModelTemplates.FLAT_ITEM);
+        // muichiro_headpiece intentionally NOT generated: it has a hand-written model in resources
+        // pointing at the muichiro_hair texture, which a generated flat model would conflict with.
         generator.generateFlatItem(NichirinItemRegistry.MUICHIRO_CHESTPLATE.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.MUICHIRO_BOOTS.get(), ModelTemplates.FLAT_ITEM);
 

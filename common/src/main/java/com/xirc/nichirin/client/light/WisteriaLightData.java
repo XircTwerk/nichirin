@@ -1,6 +1,5 @@
 package com.xirc.nichirin.client.light;
 
-import com.xirc.nichirin.client.shader.NichirinShaderInjection;
 import com.xirc.nichirin.common.util.WisteriaBlocks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
@@ -67,11 +66,11 @@ public final class WisteriaLightData {
     }
 
     public static void tick(Minecraft minecraft) {
-        // Sodium/Iris replace or patch the shader pipeline our glow injects into — with the
-        // injection disabled there must be no half-applied lighting (entity-only boosts), so
-        // the whole dynamic-light system goes dormant. Leaf tint is independent and stays.
-        if (!NichirinShaderInjection.injectionEnabled()
-                || minecraft.level == null || minecraft.player == null) {
+        // Lights are tracked regardless of the render pipeline. On vanilla the glow is injected
+        // into the core shaders (NichirinShaderInjection); under Sodium/Iris that injection is
+        // impossible, so WisteriaGlowRenderer draws geometry halos from this same data instead,
+        // and the entity light boost (applyEntityLight) works on both paths.
+        if (minecraft.level == null || minecraft.player == null) {
             TRACKED.clear();
             lightCount = 0;
             return;
@@ -94,6 +93,18 @@ public final class WisteriaLightData {
     public static boolean hasLights() {
         return lightCount > 0;
     }
+
+    // Read-only accessors for the geometry-glow fallback renderer (Sodium/Iris path).
+    public static int getLightCount() { return lightCount; }
+    public static float getLightX(int i) { return LIGHTS[i * 4]; }
+    public static float getLightY(int i) { return LIGHTS[i * 4 + 1]; }
+    public static float getLightZ(int i) { return LIGHTS[i * 4 + 2]; }
+    public static float getLightRadius(int i) { return LIGHTS[i * 4 + 3]; }
+    public static float getMaxRadius() { return LIGHT_RADIUS; }
+    public static float getRed() { return red; }
+    public static float getGreen() { return green; }
+    public static float getBlue() { return blue; }
+    public static float getStrength() { return strength; }
 
     public static int applyEntityLight(Vec3 worldPos, int packedLight) {
         if (lightCount <= 0) {

@@ -9,6 +9,7 @@ import com.xirc.nichirin.common.system.GrabManager;
 import com.xirc.nichirin.common.util.NichirinArmorDamage;
 import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
+import com.xirc.nichirin.registry.NichirinItemRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import com.xirc.nichirin.registry.NichirinSoundRegistry;
 import net.minecraft.core.particles.ParticleTypes;
@@ -209,17 +210,56 @@ public class DefaultGunMoveset extends AbstractMoveset {
     private void reload(Player player) {
         ItemStack stack = player.getMainHandItem();
         if (!(stack.getItem() instanceof GenyaDB)) return;
-        long now = player.level().getGameTime();        if (now < reloadUntil.getOrDefault(player.getUUID(), 0L)) return;
-        if (GenyaDB.getAmmo(stack) >= GenyaDB.MAX_AMMO) {
+        long now = player.level().getGameTime();
+        if (now < reloadUntil.getOrDefault(player.getUUID(), 0L)) return;
+        int ammo = GenyaDB.getAmmo(stack);
+        if (ammo >= GenyaDB.MAX_AMMO) {
             player.displayClientMessage(Component.literal("Already loaded").withStyle(s -> s.withColor(0xAAAAAA)), true);
             return;
         }
+
+        int needed = GenyaDB.MAX_AMMO - ammo;
+        int toLoad;
+        // Creative has infinite ammo; otherwise a reload consumes bullets from the inventory.
+        if (player.getAbilities().instabuild) {
+            toLoad = needed;
+        } else {
+            int available = countBullets(player);
+            if (available <= 0) {
+                player.displayClientMessage(
+                        Component.literal("No bullets!").withStyle(s -> s.withColor(0xFF5555)), true);
+                playSound(player, SoundEvents.LEVER_CLICK, 0.6f, 1.4f);
+                return;
+            }
+            toLoad = Math.min(needed, available);
+            consumeBullets(player, toLoad);
+        }
+
         reloadUntil.put(player.getUUID(), now + RELOAD_TICKS);
-        GenyaDB.setAmmo(stack, GenyaDB.MAX_AMMO);
+        GenyaDB.setAmmo(stack, ammo + toLoad);
         NichirinPacketRegistry.sendGunAnimation(player, "reload");
         triggerAnimation(player, "reload");
         playRandomized(player, NichirinSoundRegistry.GENYA_RELOAD.get(), 0.9f, 1.0f, 0.06f);
         player.displayClientMessage(Component.literal("Reloading...").withStyle(s -> s.withColor(0xFFD080)), true);
+    }
+
+    private static int countBullets(Player player) {
+        int count = 0;
+        for (ItemStack s : player.getInventory().items) {
+            if (s.getItem() == NichirinItemRegistry.BULLET.get()) count += s.getCount();
+        }
+        return count;
+    }
+
+    private static void consumeBullets(Player player, int amount) {
+        for (ItemStack s : player.getInventory().items) {
+            if (amount <= 0) break;
+            if (s.getItem() == NichirinItemRegistry.BULLET.get()) {
+                int take = Math.min(amount, s.getCount());
+                s.shrink(take);
+                amount -= take;
+            }
+        }
     }
 
     private void emptyClick(Player player) {

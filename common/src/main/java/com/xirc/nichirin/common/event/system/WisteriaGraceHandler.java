@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.event.system;
 
+import com.xirc.nichirin.common.config.NichirinServerConfig;
 import com.xirc.nichirin.common.effect.WisteriasGraceStatusEffect;
 import com.xirc.nichirin.common.entity.npc.DemonNPCEntity;
 import com.xirc.nichirin.common.system.DemonManager;
@@ -66,6 +67,9 @@ public final class WisteriaGraceHandler {
     }
 
     private static void applyFromNearbyWisteria(LivingEntity entity) {
+        // When wisteria isn't set to affect demons, don't apply the grace effect at all — otherwise
+        // the slow/particles (and its residual damage) would still fire with the config off.
+        if (!NichirinServerConfig.get().demon.wisteriaDamagesDemons) return;
         if (!(entity.level() instanceof ServerLevel level)) return;
         if (hasNearbyWisteriaLight(level, entity.blockPosition())) {
             entity.addEffect(new MobEffectInstance(NichirinEffectRegistry.wisteriasGrace(), EFFECT_DURATION, 0, true, true, true));

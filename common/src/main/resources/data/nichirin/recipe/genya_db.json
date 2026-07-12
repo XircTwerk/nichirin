@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "I": { "item": "minecraft:iron_ingot" },
+    "R": { "item": "minecraft:redstone" },
+    "P": { "tag": "minecraft:planks" }
+  },
+  "pattern": [
+    "III",
+    "IRI",
+    "PP "
+  ],
+  "result": {
+    "id": "nichirin:genya_db",
+    "count": 1
+  }
+}

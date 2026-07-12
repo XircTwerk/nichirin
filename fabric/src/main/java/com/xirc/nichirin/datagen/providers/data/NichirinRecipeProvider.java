@@ -117,6 +117,36 @@ public class NichirinRecipeProvider extends FabricRecipeProvider {
                 .unlockedBy("has_paper", InventoryChangeTrigger.TriggerInstance.hasItems(Items.PAPER))
                 .save(exporter);
 
+        // Bullet - shotgun shell for Genya's double-barrel
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.COMBAT, NichirinItemRegistry.BULLET.get(), 2)
+                .requires(Items.GUNPOWDER)
+                .requires(Items.IRON_NUGGET)
+                .unlockedBy("has_gunpowder", InventoryChangeTrigger.TriggerInstance.hasItems(Items.GUNPOWDER))
+                .save(exporter);
+
+        // Genya's double-barrel recipe is hand-written in resources (data/nichirin/recipe/genya_db.json):
+        // AzureLib stamps a random per-stack az_id component onto geo-item stacks at construction, so a
+        // datagen-built result bakes a fresh random UUID into the recipe JSON on every run.
+
+        // Wisteria signs (mirror the vanilla oak sign / hanging sign recipes)
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, NichirinBlockRegistry.WISTERIA_SIGN_ITEM.get(), 3)
+                .define('P', NichirinBlockRegistry.WISTERIA_PLANKS_ITEM.get())
+                .define('S', Items.STICK)
+                .pattern("PPP")
+                .pattern("PPP")
+                .pattern(" S ")
+                .unlockedBy("has_wisteria_planks", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinBlockRegistry.WISTERIA_PLANKS_ITEM.get()))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, NichirinBlockRegistry.WISTERIA_HANGING_SIGN_ITEM.get(), 6)
+                .define('C', Items.CHAIN)
+                .define('W', NichirinBlockRegistry.STRIPPED_WISTERIA_LOG_ITEM.get())
+                .pattern("C C")
+                .pattern("WWW")
+                .pattern("WWW")
+                .unlockedBy("has_stripped_wisteria_log", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinBlockRegistry.STRIPPED_WISTERIA_LOG_ITEM.get()))
+                .save(exporter);
+
         ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, NichirinItemRegistry.WISTERIA_FLOWER.get(), 2)
                 .requires(NichirinBlockRegistry.WISTERIA_LEAVES_ITEM.get())
                 .unlockedBy("has_wisteria_leaves", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinBlockRegistry.WISTERIA_LEAVES_ITEM.get()))

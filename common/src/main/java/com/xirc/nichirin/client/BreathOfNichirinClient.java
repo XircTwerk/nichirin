@@ -106,7 +106,10 @@ public class BreathOfNichirinClient {
         }
 
         long gameTime = minecraft.level.getGameTime();
-        if (gameTime - lastWisteriaLeafRefreshTick < 5L) {
+        // 2s cadence: the day/night tint blend is slow, and each refresh remeshes a large block
+        // region — at the old 5-tick cadence that's constant chunk-rebuild churn near trees
+        // (especially costly now that lights are also tracked under Sodium/Iris).
+        if (gameTime - lastWisteriaLeafRefreshTick < 40L) {
             return;
         }
 

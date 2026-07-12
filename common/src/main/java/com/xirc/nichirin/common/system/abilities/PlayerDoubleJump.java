@@ -375,6 +375,7 @@ public class PlayerDoubleJump {
             state.hasLeftGround = false;
             state.airTicks = 0;
             state.fallDistanceAtDoubleJump = 0;
+            PlayerWallJump.onLanded(player);
         }
 
         // Update current ground state for next tick
@@ -418,6 +419,17 @@ public class PlayerDoubleJump {
      */
     public static boolean hasDoubleJumped(Player player) {
         return getOrCreateState(player).hasDoubleJumped;
+    }
+
+    /**
+     * True while the player is in the window where a double jump could be ATTEMPTED (airborne,
+     * left the ground, past the grace ticks) — ignoring stamina and whether the double jump was
+     * already used. Wall jumps trigger on the same window so they read as "double jump input".
+     */
+    public static boolean hasAirJumpTiming(Player player) {
+        if (player.onGround()) return false;
+        JumpState state = getOrCreateState(player);
+        return state.hasLeftGround && state.airTicks >= 5;
     }
 
     /**
