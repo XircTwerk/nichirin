@@ -11,7 +11,13 @@ import net.minecraft.world.item.ArmorMaterial;
  */
 public class NichirinArmorItem extends ArmorItem {
 
+    // Netherite-tier durability multiplier (helmet 407 / chest 592 / legs 555 / boots 481).
+    private static final int DURABILITY_MULTIPLIER = 37;
+
     public NichirinArmorItem(Holder<ArmorMaterial> material, Type armorType, Properties properties) {
-        super(material, armorType, properties);
+        // Registrations never set a durability, which made every piece unbreakable. Apply it here
+        // so all nichirin armor wears down; nichirin attacks wear it slower (NichirinDamageHandler
+        // scales hurtArmor damage down for mod attack sources).
+        super(material, armorType, properties.durability(armorType.getDurability(DURABILITY_MULTIPLIER)));
     }
 }

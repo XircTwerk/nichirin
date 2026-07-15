@@ -1,7 +1,7 @@
 package com.xirc.nichirin.common.entity.projectile;
 
 import com.xirc.nichirin.common.util.ComboIntegration;
-import com.xirc.nichirin.common.util.NichirinArmorDamage;
+import com.xirc.nichirin.common.util.NichirinDamageHandler;
 import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import net.minecraft.core.particles.ParticleTypes;
@@ -201,7 +201,7 @@ public class ThrownKatanaEntity extends Entity {
         for (LivingEntity target : targets) {
             DamageSource source = NichirinDamageSources.thrownKatana(target, this, owner);
 
-            boolean hurt = NichirinArmorDamage.hurt(target, source, damage);
+            boolean hurt = NichirinDamageHandler.hurt(target, source, damage);
             if (hurt) {
                 if (hitStun > 0) {
                     target.invulnerableTime = hitStun;
@@ -209,7 +209,7 @@ public class ThrownKatanaEntity extends Entity {
                             NichirinEffectRegistry.stunned(), hitStun, 1, false, false, true));
                 }
                 if (owner instanceof Player player) {
-                    float actualDamage = NichirinArmorDamage.actualDamageOr(target, damage);
+                    float actualDamage = NichirinDamageHandler.actualDamageOr(target, damage);
                     ComboIntegration.handleSuccessfulHit(player, target, hitStun, actualDamage);
                 }
                 Vec3 direction = getDeltaMovement().normalize();

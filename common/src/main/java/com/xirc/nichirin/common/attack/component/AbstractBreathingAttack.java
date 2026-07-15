@@ -5,7 +5,7 @@ import com.xirc.nichirin.common.attack.moveset.AbstractMoveset.MoveConfiguration
 import com.xirc.nichirin.common.network.s2c.TriggerShaderPacket;
 import com.xirc.nichirin.common.util.BreathingManager;
 import com.xirc.nichirin.common.util.ComboIntegration;
-import com.xirc.nichirin.common.util.NichirinArmorDamage;
+import com.xirc.nichirin.common.util.NichirinDamageHandler;
 import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
@@ -126,7 +126,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         if (getHitEntities().contains(target.getUUID())) return;
 
         DamageSource source = NichirinDamageSources.breathing(user);
-        boolean damaged = NichirinArmorDamage.hurt(target, source, damage);
+        boolean damaged = NichirinDamageHandler.hurt(target, source, damage);
 
         if (damaged && user instanceof Player player) {
             ComboIntegration.handleSuccessfulHit(player, target, hitStun, damage);
@@ -152,7 +152,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         target.hurtTime = 0;
 
         DamageSource source = NichirinDamageSources.breathing(user);
-        boolean damaged = NichirinArmorDamage.hurt(target, source, damage);
+        boolean damaged = NichirinDamageHandler.hurt(target, source, damage);
 
         if (damaged && user instanceof Player player) {
             ComboIntegration.handleSuccessfulHit(player, target, hitStun, damage);

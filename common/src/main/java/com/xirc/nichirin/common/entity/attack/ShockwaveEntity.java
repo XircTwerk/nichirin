@@ -4,7 +4,7 @@ import com.xirc.nichirin.common.aura.AuraAudience;
 import com.xirc.nichirin.common.aura.AuraInstance;
 import com.xirc.nichirin.common.aura.AuraManager;
 import com.xirc.nichirin.common.util.ComboIntegration;
-import com.xirc.nichirin.common.util.NichirinArmorDamage;
+import com.xirc.nichirin.common.util.NichirinDamageHandler;
 import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
@@ -142,12 +142,12 @@ public class ShockwaveEntity extends Entity {
         // Capture velocity so we can cancel the knockback vanilla hurt() applies away from the
         // owner — our custom knockback below is the only displacement allowed.
         Vec3 preHitMotion = target.getDeltaMovement();
-        NichirinArmorDamage.hurt(target, source, damage, destructiveDeathCqcDamage);
+        NichirinDamageHandler.hurt(target, source, damage, destructiveDeathCqcDamage);
         if (noVanillaKnockback) {
             target.setDeltaMovement(preHitMotion);
             target.hurtMarked = true;
         }
-        float actualDamage = NichirinArmorDamage.actualDamageOr(target, damage);
+        float actualDamage = NichirinDamageHandler.actualDamageOr(target, damage);
 
         if (knockback > 0) {
             if (noHorizontalPush) {

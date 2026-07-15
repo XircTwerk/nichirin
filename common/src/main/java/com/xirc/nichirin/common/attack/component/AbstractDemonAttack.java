@@ -3,7 +3,7 @@ package com.xirc.nichirin.common.attack.component;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset.MoveConfiguration;
 import com.xirc.nichirin.common.entity.npc.TempleDemonEntity;
 import com.xirc.nichirin.common.util.ComboIntegration;
-import com.xirc.nichirin.common.util.NichirinArmorDamage;
+import com.xirc.nichirin.common.util.NichirinDamageHandler;
 import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.common.system.DemonManager;
 import lombok.Getter;
@@ -113,7 +113,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
         if (getHitEntities().contains(target.getUUID())) return;
 
         DamageSource source = damageSourceFor(user);
-        boolean damaged = NichirinArmorDamage.hurt(target, source, damage);
+        boolean damaged = NichirinDamageHandler.hurt(target, source, damage);
 
         if (damaged) {
             if (user instanceof Player player)
@@ -135,7 +135,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
         target.hurtTime = 0;
 
         DamageSource source = damageSourceFor(user);
-        boolean damaged = NichirinArmorDamage.hurt(target, source, damage);
+        boolean damaged = NichirinDamageHandler.hurt(target, source, damage);
 
         if (damaged) {
             if (user instanceof Player player)

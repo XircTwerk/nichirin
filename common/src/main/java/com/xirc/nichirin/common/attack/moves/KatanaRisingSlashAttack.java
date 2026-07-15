@@ -1,7 +1,7 @@
 package com.xirc.nichirin.common.attack.moves;
 
 import com.xirc.nichirin.common.util.ComboIntegration;
-import com.xirc.nichirin.common.util.NichirinArmorDamage;
+import com.xirc.nichirin.common.util.NichirinDamageHandler;
 import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
@@ -75,7 +75,7 @@ public class KatanaRisingSlashAttack extends AbstractKatanaAttack {
 
         for (LivingEntity target : targets) {
             // Damage first
-            NichirinArmorDamage.hurt(target, damageSource, damage);
+            NichirinDamageHandler.hurt(target, damageSource, damage);
             hitEntities.add(target);
 
             // Launch

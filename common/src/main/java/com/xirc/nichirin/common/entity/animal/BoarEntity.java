@@ -2,7 +2,7 @@ package com.xirc.nichirin.common.entity.animal;
 
 import com.xirc.nichirin.client.renderer.entity.dispatcher.BoarEntityDispatcher;
 import com.xirc.nichirin.common.util.NichirinDamageSources;
-import com.xirc.nichirin.common.util.NichirinArmorDamage;
+import com.xirc.nichirin.common.util.NichirinDamageHandler;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import mod.azure.azurelib.common.util.MoveAnalysis;
 import net.minecraft.core.particles.ParticleTypes;
@@ -368,7 +368,7 @@ public class BoarEntity extends TamableAnimal {
             }
 
             float finalDamage = isEnraged() ? damage * 1.5f : damage;
-            NichirinArmorDamage.hurt(entity, NichirinDamageSources.boar(this), finalDamage);
+            NichirinDamageHandler.hurt(entity, NichirinDamageSources.boar(this), finalDamage);
 
             entity.addEffect(new MobEffectInstance(
                     NichirinEffectRegistry.stunned(),
@@ -395,7 +395,7 @@ public class BoarEntity extends TamableAnimal {
             }
 
             float finalDamage = isEnraged() ? damage * 1.5f : damage;
-            NichirinArmorDamage.hurt(entity, NichirinDamageSources.boar(this), finalDamage);
+            NichirinDamageHandler.hurt(entity, NichirinDamageSources.boar(this), finalDamage);
 
             Vec3 direction = entity.position().subtract(this.position()).normalize();
             entity.setDeltaMovement(entity.getDeltaMovement().add(direction.scale(CHARGE_KNOCKBACK)));

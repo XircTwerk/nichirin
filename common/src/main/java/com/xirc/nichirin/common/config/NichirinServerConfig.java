@@ -122,6 +122,16 @@ public final class NichirinServerConfig {
         }
     }
 
+    /** Serialises a config to JSON for the client→server config sync packet. */
+    public static String toJson(NichirinModConfig cfg) {
+        return GSON.toJson(cfg);
+    }
+
+    /** Parses a config from JSON (config sync packet payload). */
+    public static NichirinModConfig fromJson(String json) {
+        return GSON.fromJson(json, NichirinModConfig.class);
+    }
+
     private static NichirinModConfig readToml(Path path) throws IOException {
         try (Reader reader = Files.newBufferedReader(path)) {
             return new Toml().read(reader).to(NichirinModConfig.class);

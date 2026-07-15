@@ -4,7 +4,7 @@ import com.xirc.nichirin.registry.NichirinEntityRegistry;
 import com.xirc.nichirin.registry.NichirinItemRegistry;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import com.xirc.nichirin.common.util.NichirinDamageSources;
-import com.xirc.nichirin.common.util.NichirinArmorDamage;
+import com.xirc.nichirin.common.util.NichirinDamageHandler;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -252,7 +252,7 @@ public class FlashBombEntity extends ThrowableItemProjectile {
 
                 // Apply explosion damage WITHOUT immunity frames
                 entity.invulnerableTime = 0; // Remove immunity frames
-                NichirinArmorDamage.hurt(
+                NichirinDamageHandler.hurt(
                         entity, NichirinDamageSources.explosion(entity, this, this.getOwner()), damage);
 
                 // Add knockback effect

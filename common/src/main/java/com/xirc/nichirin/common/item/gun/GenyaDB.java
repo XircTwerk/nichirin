@@ -62,14 +62,19 @@ public class GenyaDB extends Item {
             if (GrabManager.isGrabbing(player)) {
                 GrabManager.tick(player);
             }
+            // Complete a pending reload once its timer elapses (bullets are consumed here).
+            DefaultGunMoveset.tickReload(player, stack);
             // Keep the demon render flag in sync so the flesh bone shows only for demons.
             boolean demon = DemonManager.isDemon(player);
             if (demon != ItemStackData.get(stack).getBoolean(DEMON_RENDER_KEY)) {
                 ItemStackData.update(stack, tag -> tag.putBoolean(DEMON_RENDER_KEY, demon));
             }
-        } else if (GrabManager.isGrabbing(player)) {
-            // Stopped holding the gun — drop the grab cleanly.
-            GrabManager.releaseGrab(player, false);
+        } else {
+            // Swapped off the gun — a reload in progress is canceled, and any grab is dropped.
+            DefaultGunMoveset.cancelReload(player);
+            if (GrabManager.isGrabbing(player)) {
+                GrabManager.releaseGrab(player, false);
+            }
         }
     }
 

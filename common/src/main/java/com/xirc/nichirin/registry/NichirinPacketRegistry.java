@@ -56,6 +56,7 @@ public interface NichirinPacketRegistry {
     // Packet IDs
     ResourceLocation DOUBLE_JUMP_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "double_jump");
     ResourceLocation WALL_JUMP_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "wall_jump");
+    ResourceLocation CONFIG_SYNC_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "config_sync");
     ResourceLocation BREATHING_MOVE_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "breathing_move");
     ResourceLocation BREATHING_EFFECT_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "breathing_effect");
     ResourceLocation SYNC_BREATH_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "sync_breath");
@@ -123,6 +124,7 @@ public interface NichirinPacketRegistry {
         // Map packet classes to IDs
         PACKET_IDS.put(DoubleJumpPacket.class, DOUBLE_JUMP_ID);
         PACKET_IDS.put(WallJumpPacket.class, WALL_JUMP_ID);
+        PACKET_IDS.put(ConfigSyncPacket.class, CONFIG_SYNC_ID);
         PACKET_IDS.put(BreathingMovePacket.class, BREATHING_MOVE_ID);
         PACKET_IDS.put(DemonMovePacket.class, DEMON_MOVE_ID);
         PACKET_IDS.put(BreathingEffectPacket.class, BREATHING_EFFECT_ID);
@@ -203,6 +205,13 @@ public interface NichirinPacketRegistry {
 
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, WALL_JUMP_ID, (buf, context) -> {
             WallJumpPacket packet = new WallJumpPacket(buf);
+            if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
+                context.queue(() -> packet.handle(serverPlayer));
+            }
+        });
+
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, CONFIG_SYNC_ID, (buf, context) -> {
+            ConfigSyncPacket packet = new ConfigSyncPacket(buf);
             if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
                 context.queue(() -> packet.handle(serverPlayer));
             }
@@ -1142,6 +1151,8 @@ public interface NichirinPacketRegistry {
         if (packet instanceof DoubleJumpPacket p) {
             p.toBytes(buf);
         } else if (packet instanceof WallJumpPacket p) {
+            p.toBytes(buf);
+        } else if (packet instanceof ConfigSyncPacket p) {
             p.toBytes(buf);
         } else if (packet instanceof BreathingMovePacket p) {
             p.toBytes(buf);

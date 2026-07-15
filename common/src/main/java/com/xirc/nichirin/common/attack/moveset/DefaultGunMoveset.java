@@ -6,7 +6,7 @@ import com.xirc.nichirin.common.attack.moves.gun.GunGrabAttack;
 import com.xirc.nichirin.common.attack.moves.gun.GunShotAttack;
 import com.xirc.nichirin.common.item.gun.GenyaDB;
 import com.xirc.nichirin.common.system.GrabManager;
-import com.xirc.nichirin.common.util.NichirinArmorDamage;
+import com.xirc.nichirin.common.util.NichirinDamageHandler;
 import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinItemRegistry;
@@ -52,6 +52,8 @@ public class DefaultGunMoveset extends AbstractMoveset {
     private static final float PISTOL_WHIP_DAMAGE = 3.0f;
 
     private static final Map<UUID, Long> reloadUntil = new ConcurrentHashMap<>();
+    // Players whose reload timer is running; the chamber fills when the timer completes.
+    private static final java.util.Set<UUID> pendingReloads = ConcurrentHashMap.newKeySet();
     private static final Map<UUID, Map<Integer, Long>> moveCooldowns = new HashMap<>();
 
     private DefaultGunMoveset() {
@@ -63,7 +65,8 @@ public class DefaultGunMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("shoot", "Shoot")
                         .withTiming(0, 0, 1)
                         .withRecovery(4)
-                        .withDamage(16.0f)
+                        // 16/1.5: with the global /2 in NichirinDamageHandler this puts bullets at /3 overall.
+                        .withDamage(16.0f / 1.5f)
                         .withRange(30.0f)
                         .withKnockback(0.6f)
                         .asLeftClick())
@@ -71,7 +74,8 @@ public class DefaultGunMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("double_shot", "Double Shot")
                         .withTiming(0, 0, 1)
                         .withRecovery(15)
-                        .withDamage(16.0f)
+                        // 16/1.5: with the global /2 in NichirinDamageHandler this puts bullets at /3 overall.
+                        .withDamage(16.0f / 1.5f)
                         .withRange(30.0f)
                         .withKnockback(0.6f)
                         .asRightClick())
@@ -186,7 +190,7 @@ public class DefaultGunMoveset extends AbstractMoveset {
             if (ammo > 0) {
                 int toFire = Math.min(barrels, ammo);
                 float mult = GunShotAttack.damageMultiplier(player.getEyePosition().distanceTo(target.position()));
-                NichirinArmorDamage.hurt(target, NichirinDamageSources.blade(player),
+                NichirinDamageHandler.hurt(target, NichirinDamageSources.blade(player),
                         getLeftClickConfiguration().getDamageOrDefault(0f) * toFire * mult);
                 target.invulnerableTime = 0;
                 GenyaDB.setAmmo(stack, ammo - toFire);
@@ -198,7 +202,7 @@ public class DefaultGunMoveset extends AbstractMoveset {
                 impactFx(target);
                 showAmmo(player, ammo - toFire);
             } else {
-                NichirinArmorDamage.hurt(target, NichirinDamageSources.blade(player), PISTOL_WHIP_DAMAGE);
+                NichirinDamageHandler.hurt(target, NichirinDamageSources.blade(player), PISTOL_WHIP_DAMAGE);
                 target.invulnerableTime = 0;
                 playSound(player, SoundEvents.PLAYER_ATTACK_CRIT, 1.0f, 1.0f);
                 impactFx(target);
@@ -218,29 +222,59 @@ public class DefaultGunMoveset extends AbstractMoveset {
             return;
         }
 
-        int needed = GenyaDB.MAX_AMMO - ammo;
-        int toLoad;
-        // Creative has infinite ammo; otherwise a reload consumes bullets from the inventory.
-        if (player.getAbilities().instabuild) {
-            toLoad = needed;
-        } else {
-            int available = countBullets(player);
-            if (available <= 0) {
-                player.displayClientMessage(
-                        Component.literal("No bullets!").withStyle(s -> s.withColor(0xFF5555)), true);
-                playSound(player, SoundEvents.LEVER_CLICK, 0.6f, 1.4f);
-                return;
-            }
-            toLoad = Math.min(needed, available);
-            consumeBullets(player, toLoad);
+        // Bullets are only checked here and consumed at COMPLETION (tickReload) — swapping off the
+        // gun mid-reload cancels the reload cleanly with nothing to refund.
+        if (!player.getAbilities().instabuild && countBullets(player) <= 0) {
+            player.displayClientMessage(
+                    Component.literal("No bullets!").withStyle(s -> s.withColor(0xFF5555)), true);
+            playSound(player, SoundEvents.LEVER_CLICK, 0.6f, 1.4f);
+            return;
         }
 
         reloadUntil.put(player.getUUID(), now + RELOAD_TICKS);
-        GenyaDB.setAmmo(stack, ammo + toLoad);
+        pendingReloads.add(player.getUUID());
         NichirinPacketRegistry.sendGunAnimation(player, "reload");
         triggerAnimation(player, "reload");
         playRandomized(player, NichirinSoundRegistry.GENYA_RELOAD.get(), 0.9f, 1.0f, 0.06f);
         player.displayClientMessage(Component.literal("Reloading...").withStyle(s -> s.withColor(0xFFD080)), true);
+    }
+
+    /**
+     * SERVER, called every tick the gun is SELECTED: completes a pending reload once its timer
+     * elapses — bullets are consumed and the chamber filled here, not at reload start.
+     */
+    public static void tickReload(Player player, ItemStack stack) {
+        if (!pendingReloads.contains(player.getUUID())) return;
+        long now = player.level().getGameTime();
+        if (now < reloadUntil.getOrDefault(player.getUUID(), 0L)) return;
+        pendingReloads.remove(player.getUUID());
+
+        int ammo = GenyaDB.getAmmo(stack);
+        int needed = GenyaDB.MAX_AMMO - ammo;
+        if (needed <= 0) return;
+        int toLoad;
+        if (player.getAbilities().instabuild) {
+            toLoad = needed;
+        } else {
+            // Re-count at completion: bullets may have been dropped/used during the reload.
+            toLoad = Math.min(needed, countBullets(player));
+            if (toLoad <= 0) {
+                player.displayClientMessage(
+                        Component.literal("No bullets!").withStyle(s -> s.withColor(0xFF5555)), true);
+                return;
+            }
+            consumeBullets(player, toLoad);
+        }
+        GenyaDB.setAmmo(stack, ammo + toLoad);
+    }
+
+    /** SERVER, called when the gun stops being the selected item: cancels any pending reload. */
+    public static void cancelReload(Player player) {
+        if (pendingReloads.remove(player.getUUID())) {
+            reloadUntil.remove(player.getUUID());
+            player.displayClientMessage(
+                    Component.literal("Reload canceled").withStyle(s -> s.withColor(0xAAAAAA)), true);
+        }
     }
 
     private static int countBullets(Player player) {

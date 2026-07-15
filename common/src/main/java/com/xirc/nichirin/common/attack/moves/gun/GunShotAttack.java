@@ -2,7 +2,7 @@ package com.xirc.nichirin.common.attack.moves.gun;
 
 import com.xirc.nichirin.common.attack.moves.AbstractKatanaAttack;
 import com.xirc.nichirin.common.network.s2c.TriggerShaderPacket;
-import com.xirc.nichirin.common.util.NichirinArmorDamage;
+import com.xirc.nichirin.common.util.NichirinDamageHandler;
 import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import com.xirc.nichirin.registry.NichirinSoundRegistry;
@@ -127,7 +127,7 @@ public class GunShotAttack extends AbstractKatanaAttack {
         if (entityHit != null && entityHit.getEntity() instanceof LivingEntity target) {
             impact = entityHit.getLocation();
             float dmg = pelletDamage * damageMultiplier(eye.distanceTo(impact));
-            boolean damaged = dmg > 0 && NichirinArmorDamage.hurt(target, NichirinDamageSources.blade(user), dmg);
+            boolean damaged = dmg > 0 && NichirinDamageHandler.hurt(target, NichirinDamageSources.blade(user), dmg);
             target.invulnerableTime = 0;
             if (damaged && knockback > 0) {
                 Vec3 kb = target.position().subtract(user.position()).normalize();

@@ -110,7 +110,7 @@ public class StunnedStatusEffect extends MobEffect {
             inGracePeriod = false;
         }
 
-        if (!inGracePeriod) {
+        if (amplifier >= 1 && !inGracePeriod) {
             Vec3 currentMovement = entity.getDeltaMovement();
 
             // Pin the entity in place by cancelling self/AI-driven horizontal movement, while still

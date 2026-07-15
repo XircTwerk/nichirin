@@ -1,7 +1,7 @@
 package com.xirc.nichirin.mixin;
 
 import com.xirc.nichirin.common.util.AttackInterruptTracker;
-import com.xirc.nichirin.common.util.NichirinArmorDamage;
+import com.xirc.nichirin.common.util.NichirinDamageHandler;
 import com.xirc.nichirin.common.util.ComboTracker;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.common.effect.ShockedStatusEffect;
@@ -29,7 +29,7 @@ public abstract class LivingEntityMixin {
 
     @ModifyVariable(method = "hurtArmor", at = @At("HEAD"), argsOnly = true, ordinal = 0)
     private float nichirin$reduceAttackArmorWear(float damageAmount, DamageSource damageSource) {
-        return NichirinArmorDamage.scaleArmorDamage(damageSource, damageAmount);
+        return NichirinDamageHandler.scaleArmorDamage(damageSource, damageAmount);
     }
 
     @Inject(method = "hurt", at = @At("HEAD"))

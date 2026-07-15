@@ -2,7 +2,7 @@ package com.xirc.nichirin.common.attack.moves;
 
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.util.ComboIntegration;
-import com.xirc.nichirin.common.util.NichirinArmorDamage;
+import com.xirc.nichirin.common.util.NichirinDamageHandler;
 import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.sounds.SoundEvent;
@@ -162,7 +162,7 @@ public abstract class AbstractKatanaAttack {
 
             // Damage first — vanilla hurt() resets invulnerableTime internally,
             // so we must override it AFTER the call, not before.
-            boolean damaged = NichirinArmorDamage.hurt(target, damageSource, damage);
+            boolean damaged = NichirinDamageHandler.hurt(target, damageSource, damage);
             hitEntities.add(target);
 
             if (damaged) {

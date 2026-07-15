@@ -67,7 +67,13 @@ dependencies {
     }
 
     // TerraBlender - Fixed to use Modrinth format
-    modImplementation "com.github.glitchfiend:TerraBlender-fabric:${minecraft_version}-${terrablender_version}"
+    modImplementation "maven.modrinth:terrablender:XNtIBXyQ"
+    // TerraBlender needs night-config at runtime. The Modrinth maven serves a bare jar with no
+    // POM (no transitive deps), and Loom strips the jar's nested night-config during remapping,
+    // so dev runs (datagen/client) crash with NoClassDefFoundError without these. Production is
+    // unaffected — the released TerraBlender jar keeps its bundled copies.
+    implementation "com.electronwill.night-config:core:3.6.7"
+    implementation "com.electronwill.night-config:toml:3.6.7"
 
     common(project(path: ':common', configuration: 'namedElements')) { transitive false }
     shadowBundle project(path: ':common', configuration: 'transformProductionFabric')

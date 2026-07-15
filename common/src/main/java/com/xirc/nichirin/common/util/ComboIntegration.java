@@ -29,7 +29,7 @@ public class ComboIntegration {
 
         // Prefer the measured post-armor damage from this tick's hurt() call so the combo bar
         // reflects what the victim actually lost, not the attack's raw damage stat.
-        float realDamage = NichirinArmorDamage.actualDamageOr(victim, damage);
+        float realDamage = NichirinDamageHandler.actualDamageOr(victim, damage);
 
         // Check for existing stun BEFORE applying new stun
         boolean wasAlreadyStunned = ComboTracker.canContinueCombo(victim);

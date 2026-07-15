@@ -120,6 +120,7 @@ public class ClientInputHandler {
     private static int gunHeldTicks = 0;
     private static boolean gunFiredDouble = false;
     private static boolean gunWasDown = false;
+    private static boolean gunUseWasDown = false;
 
     /** Poll the attack key while holding the gun to distinguish a tapped vs held left-click. */
     private static void tickGunInput(Minecraft mc) {
@@ -131,17 +132,48 @@ public class ClientInputHandler {
             if (!gunFiredDouble && gunHeldTicks >= GUN_HOLD_THRESHOLD) {
                 if (!isInputBlocked()) {
                     sendGunShoot(2);
+                    predictFireAnimation(mc, 2);
                     gunFiredDouble = true;
                 }
             }
         } else {
             if (gunWasDown && !gunFiredDouble && holdingGun && !isInputBlocked()) {
                 sendGunShoot(1);
+                predictFireAnimation(mc, 1);
             }
             gunHeldTicks = 0;
             gunFiredDouble = false;
         }
         gunWasDown = keyDown;
+
+        // Reload prediction: right-click (vanilla use) starts the reload server-side; play the
+        // reload animation immediately so it isn't delayed by the server round trip.
+        boolean useDown = holdingGun && mc.screen == null && mc.options.keyUse.isDown();
+        if (useDown && !gunUseWasDown) {
+            ItemStack gun = mc.player.getMainHandItem();
+            if (GenyaDB.getAmmo(gun) < GenyaDB.MAX_AMMO
+                    && (mc.player.getAbilities().instabuild || clientHasBullets(mc.player))) {
+                com.xirc.nichirin.client.animation.GenyaDBAnimator.predict("reload");
+            }
+        }
+        gunUseWasDown = useDown;
+    }
+
+    /** Mirrors the server's fire animation choice so the local player sees it instantly. */
+    private static void predictFireAnimation(Minecraft mc, int barrels) {
+        ItemStack gun = mc.player.getMainHandItem();
+        int ammo = GenyaDB.getAmmo(gun);
+        if (ammo <= 0) return;
+        int toFire = Math.min(barrels, ammo);
+        String animName = toFire >= 2 ? "fire" : ammo == 2 ? "fireleft" : "fireright";
+        com.xirc.nichirin.client.animation.GenyaDBAnimator.predict(animName);
+    }
+
+    private static boolean clientHasBullets(Player player) {
+        for (ItemStack s : player.getInventory().items) {
+            if (s.getItem() == com.xirc.nichirin.registry.NichirinItemRegistry.BULLET.get()) return true;
+        }
+        return false;
     }
 
     /** True when the player is holding the block button (RMB) and is able to block/attack. */

@@ -1,6 +1,6 @@
 package com.xirc.nichirin.common.attack.moves.breathing.sound;
 
-import com.xirc.nichirin.common.util.NichirinArmorDamage;
+import com.xirc.nichirin.common.util.NichirinDamageHandler;
 import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import net.minecraft.core.particles.ParticleTypes;
@@ -199,7 +199,7 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
         }
 
         // Apply damage directly using DamageSource
-        NichirinArmorDamage.hurt(target, NichirinDamageSources.breathing(user), damage);
+        NichirinDamageHandler.hurt(target, NichirinDamageSources.breathing(user), damage);
 
         // Apply knockback manually
         Vec3 knockbackDirection = target.position().subtract(user.position()).normalize();
@@ -305,7 +305,7 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
         }
 
         // Apply full damage for finale
-        NichirinArmorDamage.hurt(target, NichirinDamageSources.breathing(user), damage);
+        NichirinDamageHandler.hurt(target, NichirinDamageSources.breathing(user), damage);
 
         // Apply status effects if configured
         applyDisorientedEffect(target);

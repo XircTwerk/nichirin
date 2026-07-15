@@ -27,6 +27,29 @@ public class GenyaDBAnimator extends AzItemAnimator {
     public static volatile String requestedAnim = null;
     public static volatile long requestSeq = 0;
 
+    // Client-side prediction bookkeeping: the local player plays gun animations immediately when
+    // the input is sent (instead of waiting a full server round trip), and the server's echo
+    // packet for the same animation is then swallowed so it doesn't restart the animation.
+    private static String lastPredictedAnim = null;
+    private static long lastPredictedAtMs = 0;
+    private static final long PREDICTION_ECHO_WINDOW_MS = 1000;
+
+    /** Plays an animation locally right now and remembers it so the server echo can be skipped. */
+    public static void predict(String animName) {
+        lastPredictedAnim = animName;
+        lastPredictedAtMs = System.currentTimeMillis();
+        requestedAnim = animName;
+        requestSeq++;
+    }
+
+    /** True when a just-predicted animation matches the incoming echo — consume and skip it. */
+    public static boolean shouldSkipEcho(String animName) {
+        boolean match = animName.equals(lastPredictedAnim)
+                && System.currentTimeMillis() - lastPredictedAtMs <= PREDICTION_ECHO_WINDOW_MS;
+        if (match) lastPredictedAnim = null;
+        return match;
+    }
+
     // Per-instance request bookkeeping. setCustomAnimations fires once per display context per frame
     // (FIRST_PERSON, THIRD_PERSON, GUI, …) and Minecraft may use distinct ItemStack instances per
     // context, each with its own animator. Tracking the last consumed request per instance lets every
