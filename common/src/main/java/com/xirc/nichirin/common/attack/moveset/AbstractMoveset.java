@@ -338,9 +338,21 @@ public abstract class AbstractMoveset {
     }
 
     private int animMatchDuration(MoveConfiguration cfg, String animationName) {
-        if (cfg == null || cfg.animationId == null) return -1;
-        if (!cfg.animationId.getPath().equals(animationName)) return -1;
+        if (cfg == null) return -1;
+        String anim = moveAnimationName(cfg);
+        if (anim == null || !anim.equals(animationName)) return -1;
         return cfg.getWindupOrDefault(0) + cfg.getDurationOrDefault(0);
+    }
+
+    /**
+     * The animation a move plays. Uses an explicit {@code withAnimation(...)} id when set;
+     * otherwise the move's own id doubles as the animation name (the animation file keys its
+     * entry by that id), so movesets no longer need a separate animation declaration.
+     */
+    private static String moveAnimationName(MoveConfiguration cfg) {
+        if (cfg == null) return null;
+        if (cfg.animationId != null) return cfg.animationId.getPath();
+        return cfg.moveId;
     }
 
     /**
@@ -366,8 +378,9 @@ public abstract class AbstractMoveset {
     }
 
     private void executeMove(LivingEntity entity, MoveConfiguration config) {
-        if (config.animationId != null) {
-            triggerAnimation(entity, config.animationId.getPath());
+        String anim = moveAnimationName(config);
+        if (anim != null) {
+            triggerAnimation(entity, anim);
         }
         resetFollowupQueueIfDifferent(entity, config);
         startFollowupQueue(entity, config);

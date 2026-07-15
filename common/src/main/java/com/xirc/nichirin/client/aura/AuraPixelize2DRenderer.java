@@ -161,6 +161,10 @@ public final class AuraPixelize2DRenderer {
         // like a churning aura rather than a rotating wheel.
         float radialFreq = 6.0f + (float) Math.sin(t * 0.17) * 2.0f;
         float radialAmplitude = 0.05f + jitter * 0.005f;
+        // waviness (per-instance): how far the flowing energy bands snake sideways. A near-straight
+        // band (low) bends into deep sinuous S-waves (high), like body-wave hair. Added on top of the
+        // baseline band sway; 0 (default) leaves the bands exactly as they were.
+        float waviness = inst.wavinessAmount();
 
         int gridWidth = Math.max(2, (int) Math.ceil(radiusH * 2.0f / PIXEL_SIZE));
         int gridHeight = Math.max(2, (int) Math.ceil(radiusV * 2.0f / PIXEL_SIZE));
@@ -233,7 +237,7 @@ public final class AuraPixelize2DRenderer {
                 float flowCoord = (u * flowX + v * flowY) * tileFrequency - t * flowSpeed;
                 float crossCoord = (-u * flowY + v * flowX) * (2.0f + profileA * 4.0f);
                 float energyBand = (float) Math.sin(flowCoord * Math.PI
-                        + Math.sin(crossCoord + t) * 0.9f);
+                        + Math.sin(crossCoord + t) * (0.9f + waviness * 3.0f));
                 energyBand = energyBand * 0.5f + 0.5f;
                 float fineGrain = hashTile(i, j, profile);
                 float pigmentPatch = hashTile(Math.floorDiv(i, 3), Math.floorDiv(j, 3),

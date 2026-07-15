@@ -19,8 +19,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 /**
  * Cancels armor rendering on invisible entities so MobEffects.INVISIBILITY
  * truly hides all visuals (vanilla only fades the body model; layers always render).
+ *
+ * <p>Priority is raised above AzureLib's MixinHumanoidArmorLayer (default 1000): both inject at
+ * the head of renderArmorPiece, and the later-applied handler runs first. Ours must win so ghost
+ * (afterimage/clone) dispatches skip AzureLib geo armor instead of re-rendering it per copy.</p>
  */
-@Mixin(HumanoidArmorLayer.class)
+@Mixin(value = HumanoidArmorLayer.class, priority = 1500)
 public class LivingEntityRendererMixin<T extends LivingEntity, M extends HumanoidModel<T>, A extends HumanoidModel<T>> {
 
     @Inject(method = "renderArmorPiece", at = @At("HEAD"), cancellable = true, require = 0)

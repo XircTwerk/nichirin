@@ -50,7 +50,6 @@ public class DestructiveDeathMoveset extends AbstractMoveset {
 
                 // Wheel 1 — Compass Needle (crouch while activating to enter Compass Overdrive)
                 .withMove(new MoveBuilder("compass_needle", "Compass Needle")
-                        .withAnimation("nichirin:compass_needle", 6)
                         .withTiming(0, 1, 4)
                         .withRange(20f)
                         .withDescription("Tracks nearby entities for 6 seconds and amplifies damage on them. Crouch while activating to enter Compass Overdrive (Speed I + Strength I + red shockwaves).")
@@ -82,7 +81,7 @@ public class DestructiveDeathMoveset extends AbstractMoveset {
                         .withAnimation("nichirin:snap_punch", 12)
                         // Duration must match BlueSilverChaoticAfterglowAttack.TOTAL_TICKS.
                         .withTiming(800, 5, BlueSilverChaoticAfterglowAttack.TOTAL_TICKS)
-                        .withDamage(9.0f)
+                        .withDamage(5.0f)
                         .withRange(20f)
                         .withHitStun(40)
                         .withHyperArmor()

@@ -1,15 +1,19 @@
 package com.xirc.nichirin.registry;
 
 import com.xirc.nichirin.common.blocks.*;
+import com.xirc.nichirin.common.blocks.sign.*;
 import com.xirc.nichirin.common.worldgen.trees.wisteria.WisteriaSaplingBlock;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.HangingSignItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.SignItem;
 
 public interface NichirinBlockRegistry {
     DeferredRegister<Block> BLOCKS = DeferredRegister.create("nichirin", Registries.BLOCK);
@@ -104,6 +108,32 @@ public interface NichirinBlockRegistry {
     RegistrySupplier<Block> WISTERIA_SAPLING = BLOCKS.register("wisteria_sapling",
             () -> new WisteriaSaplingBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_SAPLING)));
 
+    // Fresh sign properties (mirrors vanilla oak signs). Deliberately NOT ofFullCopy(OAK_SIGN):
+    // that copies oak's loot-table reference, so the block would ignore its own loot table and drop
+    // an oak sign. With no copied drops, each block derives its own "nichirin:blocks/<id>" table.
+    static BlockBehaviour.Properties signProperties() {
+        return BlockBehaviour.Properties.of()
+                .mapColor(MapColor.COLOR_PURPLE)
+                .forceSolidOn()
+                .instrument(NoteBlockInstrument.BASS)
+                .noCollission()
+                .strength(1.0F)
+                .sound(SoundType.WOOD)
+                .ignitedByLava();
+    }
+
+    RegistrySupplier<Block> WISTERIA_SIGN = BLOCKS.register("wisteria_sign",
+            () -> new WisteriaStandingSignBlock(NichirinWoodTypes.WISTERIA, signProperties()));
+
+    RegistrySupplier<Block> WISTERIA_WALL_SIGN = BLOCKS.register("wisteria_wall_sign",
+            () -> new WisteriaWallSignBlock(NichirinWoodTypes.WISTERIA, signProperties()));
+
+    RegistrySupplier<Block> WISTERIA_HANGING_SIGN = BLOCKS.register("wisteria_hanging_sign",
+            () -> new WisteriaCeilingHangingSignBlock(NichirinWoodTypes.WISTERIA, signProperties()));
+
+    RegistrySupplier<Block> WISTERIA_WALL_HANGING_SIGN = BLOCKS.register("wisteria_wall_hanging_sign",
+            () -> new WisteriaWallHangingSignBlock(NichirinWoodTypes.WISTERIA, signProperties()));
+
     // Tatami shi by Nacho
     RegistrySupplier<Block> TATAMI_BLOCK = BLOCKS.register("tatami_block",
             () -> new RotatedPillarBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_LOG)));
@@ -177,6 +207,14 @@ public interface NichirinBlockRegistry {
 
     RegistrySupplier<Item> WISTERIA_TRAPDOOR_ITEM = ITEMS.register("wisteria_trapdoor",
             () -> new BlockItem(WISTERIA_TRAPDOOR.get(), new Item.Properties()));
+
+    RegistrySupplier<Item> WISTERIA_SIGN_ITEM = ITEMS.register("wisteria_sign",
+            () -> new SignItem(new Item.Properties().stacksTo(16),
+                    WISTERIA_SIGN.get(), WISTERIA_WALL_SIGN.get()));
+
+    RegistrySupplier<Item> WISTERIA_HANGING_SIGN_ITEM = ITEMS.register("wisteria_hanging_sign",
+            () -> new HangingSignItem(WISTERIA_HANGING_SIGN.get(), WISTERIA_WALL_HANGING_SIGN.get(),
+                    new Item.Properties().stacksTo(16)));
 
     RegistrySupplier<Item> WISTERIA_PRESSURE_PLATE_ITEM = ITEMS.register("wisteria_pressure_plate",
             () -> new BlockItem(WISTERIA_PRESSURE_PLATE.get(), new Item.Properties()));

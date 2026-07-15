@@ -39,7 +39,7 @@ dependencies {
     implementation("com.zigythebird.playeranim:PlayerAnimationLibNeo:${rootProject.pal_version}") {
         exclude group: "com.zigythebird.playeranim", module: "PlayerAnimationLibCore"
     }
-    modImplementation "com.github.glitchfiend:TerraBlender-neoforge:${rootProject.minecraft_version}-${rootProject.terrablender_version}"
+    modImplementation "maven.modrinth:terrablender:6e8GCrLb"
 
     common(project(path: ':common', configuration: 'namedElements')) { transitive false }
     shadowBundle project(path: ':common', configuration: 'transformProductionNeoForge')

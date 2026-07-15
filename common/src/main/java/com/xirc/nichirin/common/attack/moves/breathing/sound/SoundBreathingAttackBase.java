@@ -3,7 +3,7 @@ package com.xirc.nichirin.common.attack.moves.breathing.sound;
 import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
 import com.xirc.nichirin.common.attack.component.IBreathingAttacker;
 import com.xirc.nichirin.common.effect.StunnedStatusEffect;
-import com.xirc.nichirin.common.util.NichirinArmorDamage;
+import com.xirc.nichirin.common.util.NichirinDamageHandler;
 import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
@@ -47,7 +47,7 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
         applyComboBonus();
 
         DamageSource source = NichirinDamageSources.breathing(user);
-        boolean damaged = NichirinArmorDamage.hurt(target, source, damage);
+        boolean damaged = NichirinDamageHandler.hurt(target, source, damage);
 
         if (knockback > 0) {
             StunnedStatusEffect.markRecentKnockback(target);
@@ -84,7 +84,7 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
         applyComboBonus();
 
         DamageSource source = NichirinDamageSources.breathing(user);
-        boolean damaged = NichirinArmorDamage.hurt(target, source, damage);
+        boolean damaged = NichirinDamageHandler.hurt(target, source, damage);
 
         if (knockback > 0) {
             StunnedStatusEffect.markRecentKnockback(target);
@@ -123,7 +123,7 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
         target.hurtTime = 0;
 
         DamageSource source = NichirinDamageSources.breathing(user);
-        boolean damaged = NichirinArmorDamage.hurt(target, source, damage);
+        boolean damaged = NichirinDamageHandler.hurt(target, source, damage);
 
         if (knockback > 0) {
             StunnedStatusEffect.markRecentKnockback(target);
@@ -275,7 +275,7 @@ public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<S
                 entity -> entity != user && entity.isAlive());
 
         for (LivingEntity target : nearbyTargets) {
-            NichirinArmorDamage.hurt(target, NichirinDamageSources.explosion(target, null, user), damage * 0.3f);
+            NichirinDamageHandler.hurt(target, NichirinDamageSources.explosion(target, null, user), damage * 0.3f);
             target.addEffect(new MobEffectInstance(
                     MobEffects.MOVEMENT_SLOWDOWN,
                     DEFAULT_STUN_DURATION, 5, false, false));

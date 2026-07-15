@@ -32,7 +32,6 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                 .withSpeedMultiplier(1.3f)
 
                 .withMove(new MoveBuilder("quick_sting", "Quick Sting")
-                        .withAnimation("nichirin:quick_sting", 6)
                         .withTiming(5, 3, 14)
                         .withDamage(2.0f)
                         .withRange(2.5f)
@@ -46,7 +45,6 @@ public class InsectBreathingMoveset extends AbstractMoveset {
                 )
 
                 .withMove(new MoveBuilder("bee_sting", "Bee Sting")
-                        .withAnimation("nichirin:bee_sting", 9)
                         .withTiming(0, 6, 9)
                         .withDamage(5.0f)
                         .withDashSpeed(6.0f)
@@ -62,7 +60,6 @@ public class InsectBreathingMoveset extends AbstractMoveset {
 
                 // First Form: Butterfly - Precision dash strike (INDEX 0 in wheel)
                 .withMove(new MoveBuilder("butterfly", "Butterfly")
-                        .withAnimation("nichirin:butterfly", 8)
                         .withTiming(120, 8, 28)
                         .withDamage(11.0f)
                         .withDashSpeed(5.0f)
@@ -77,7 +74,6 @@ public class InsectBreathingMoveset extends AbstractMoveset {
 
                 // Third Form: Dragonfly - Multi-hit lock-on (INDEX 1 in wheel)
                 .withMove(new MoveBuilder("dragonfly", "Dragonfly")
-                        .withAnimation("nichirin:dragonfly", 12)
                         .withTiming(180, 15, 21)
                         .withDamage(2.0f)
                         .withRange(6.0f)
@@ -91,7 +87,6 @@ public class InsectBreathingMoveset extends AbstractMoveset {
 
                 // Fourth Form: Centipede - Zigzag dash finisher (INDEX 2 in wheel)
                 .withMove(new MoveBuilder("centipede", "Centipede")
-                        .withAnimation("nichirin:centipede", 15)
                         .withTiming(240, 20, 35)
                         .withDamage(14.0f)
                         .withDashSpeed(4.0f)

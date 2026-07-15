@@ -9,7 +9,7 @@ import com.xirc.nichirin.common.entity.npc.DemonNPCEntity;
 import com.xirc.nichirin.common.entity.npc.TempleDemonEntity;
 import com.xirc.nichirin.common.system.DemonManager;
 import com.xirc.nichirin.common.util.ComboIntegration;
-import com.xirc.nichirin.common.util.NichirinArmorDamage;
+import com.xirc.nichirin.common.util.NichirinDamageHandler;
 import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
@@ -151,7 +151,7 @@ public abstract class AbstractCqcAttack extends AbstractAttack {
         ).forEach(target -> {
             getHitEntities().add(target.getUUID());
             float scaledDamage = scaleCqcStat(user, damage);
-            boolean damaged = NichirinArmorDamage.hurt(
+            boolean damaged = NichirinDamageHandler.hurt(
                     target, source, scaledDamage, this instanceof IDestructiveDeathCQC);
             if (damaged) {
                 applyKnockbackCqc(user, target);

@@ -3,6 +3,8 @@ package com.xirc.nichirin.registry;
 import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.common.blocks.BentoBoxBlock;
 import com.xirc.nichirin.common.blocks.KatanaHolderBlock;
+import com.xirc.nichirin.common.blocks.sign.WisteriaHangingSignBlockEntity;
+import com.xirc.nichirin.common.blocks.sign.WisteriaSignBlockEntity;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.minecraft.core.registries.Registries;
@@ -16,6 +18,14 @@ public interface NichirinBlockEntityRegistry {
 
     RegistrySupplier<BlockEntityType<KatanaHolderBlock.KatanaHolderBlockEntity>> KATANA_HOLDER_BLOCK_ENTITY = BLOCK_ENTITIES.register("katana_holder_block_entity",
             () -> BlockEntityType.Builder.of(KatanaHolderBlock.KatanaHolderBlockEntity::new, NichirinBlockRegistry.KATANA_HOLDER_BLOCK.get()).build(null));
+
+    RegistrySupplier<BlockEntityType<WisteriaSignBlockEntity>> WISTERIA_SIGN = BLOCK_ENTITIES.register("wisteria_sign",
+            () -> BlockEntityType.Builder.of(WisteriaSignBlockEntity::new,
+                    NichirinBlockRegistry.WISTERIA_SIGN.get(), NichirinBlockRegistry.WISTERIA_WALL_SIGN.get()).build(null));
+
+    RegistrySupplier<BlockEntityType<WisteriaHangingSignBlockEntity>> WISTERIA_HANGING_SIGN = BLOCK_ENTITIES.register("wisteria_hanging_sign",
+            () -> BlockEntityType.Builder.of(WisteriaHangingSignBlockEntity::new,
+                    NichirinBlockRegistry.WISTERIA_HANGING_SIGN.get(), NichirinBlockRegistry.WISTERIA_WALL_HANGING_SIGN.get()).build(null));
 
     static void register() {
         BLOCK_ENTITIES.register();

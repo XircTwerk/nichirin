@@ -52,3 +52,6 @@ run/
 /common/src/main/generated/assets/nichirin/*
 
 .architectury-transformer/
+
+/secrets/
+/graphify-out/

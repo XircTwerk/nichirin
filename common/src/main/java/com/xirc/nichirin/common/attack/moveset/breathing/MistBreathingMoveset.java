@@ -28,7 +28,6 @@ public class MistBreathingMoveset extends AbstractMoveset {
 
                 //Mist breathing second form
                 .withMove(new MoveBuilder("eight_layered_mist", "Eight-Layered Mist")
-                        .withAnimation("nichirin:mist_rapid_slash", 6)
                         .withTiming(0, 9, 17)
                         .withDamage(1.0f)
                         .withRange(2.5f)
@@ -43,7 +42,6 @@ public class MistBreathingMoveset extends AbstractMoveset {
 
                 //First form
                 .withMove(new MoveBuilder("low_clouds_distant_haze", "Low Clouds, Distant Haze")
-                        .withAnimation("nichirin:mist_thrust", 7)
                         .withTiming(0, 5, 12)
                         .withDamage(7.0f)
                         .withRange(8.0f)
@@ -59,7 +57,6 @@ public class MistBreathingMoveset extends AbstractMoveset {
 
                 // Form 3: Scattering Mist Splash (INDEX 0 in wheel)
                 .withMove(new MoveBuilder("scattering_mist_splash", "Scattering Mist Splash")
-                        .withAnimation("nichirin:mist_spin", 10)
                         .withTiming(144, 8, 14)
                         .withDamage(10.0f)
                         .withRange(3.5f)
@@ -73,7 +70,6 @@ public class MistBreathingMoveset extends AbstractMoveset {
 
                 // Form 4: Shifting Flow Slash (INDEX 1 in wheel)
                 .withMove(new MoveBuilder("shifting_flow_slash", "Shifting Flow Slash")
-                        .withAnimation("nichirin:mist_dash_slash", 12)
                         // Dash tuned to match Sound Breathing's Rhythmic Step (crouch-M2):
                         // dashSpeed 4 blocks/tick over a 14-tick window = the same smooth glide.
                         .withTiming(96, 10, 14)
@@ -90,7 +86,6 @@ public class MistBreathingMoveset extends AbstractMoveset {
 
                 // Form 5: Sea of Clouds and Haze (INDEX 2 in wheel)
                 .withMove(new MoveBuilder("sea_of_clouds_and_haze", "Sea of Clouds")
-                        .withAnimation("nichirin:mist_zigzag", 13)
                         .withTiming(128, 8, 56)
                         .withDamage(6.0f)
                         .withRange(12.0f)
@@ -105,7 +100,6 @@ public class MistBreathingMoveset extends AbstractMoveset {
 
                 // Form 6: Lunar Dispersing Mist (INDEX 3 in wheel)
                 .withMove(new MoveBuilder("lunar_dispersing_mist", "Lunar Dispersing Mist")
-                        .withAnimation("nichirin:mist_aerial", 14)
                         .withTiming(160, 10, 25)
                         .withDamage(6.0f)
                         .withRange(14.0f)
@@ -120,7 +114,6 @@ public class MistBreathingMoveset extends AbstractMoveset {
 
                 // Form 7: Obscuring Clouds (INDEX 4 in wheel)
                 .withMove(new MoveBuilder("obscuring_clouds", "Obscuring Clouds")
-                        .withAnimation("nichirin:mist_vanish", 16)
                         .withTiming(640, 5, 210)
                         .withDamage(4.0f)
                         .withRange(8.0f)

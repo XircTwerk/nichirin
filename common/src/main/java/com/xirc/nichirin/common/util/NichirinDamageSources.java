@@ -103,6 +103,23 @@ public final class NichirinDamageSources {
         return source instanceof PercentageDamageSource wrapped && wrapped.original.is(key);
     }
 
+    /**
+     * True when the damage came from a Nichirin offensive attack (a weapon, breathing/CQC/demon move,
+     * or a mod combatant). Environmental Nichirin damage — sunlight, blood loss, wisteria proximity —
+     * is excluded, since those are damage-over-time effects rather than a hit to react to.
+     */
+    public static boolean isNichirinAttack(DamageSource source) {
+        return is(source, BLADE)
+                || is(source, BREATHING)
+                || is(source, CQC)
+                || is(source, DEMON)
+                || is(source, THROWN_KATANA)
+                || is(source, EXPLOSION)
+                || is(source, BOAR)
+                || is(source, TEMPLE_DEMON)
+                || is(source, TRAINER);
+    }
+
     private static DamageSource source(LivingEntity context, ResourceKey<DamageType> key, @Nullable Entity attacker) {
         Holder<DamageType> holder = holder(context, key);
         return attacker != null ? new DamageSource(holder, attacker) : new DamageSource(holder);

@@ -17,6 +17,8 @@ import dev.architectury.registry.registries.RegistrySupplier;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.client.renderer.blockentity.HangingSignRenderer;
+import net.minecraft.client.renderer.blockentity.SignRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -54,7 +56,9 @@ public interface NichirinEntityRendererRegistry {
     };
 
     BlockEntityRendererData<?>[] blockEntityEntries = {
-            new BlockEntityRendererData<>(NichirinBlockEntityRegistry.KATANA_HOLDER_BLOCK_ENTITY, KatanaHolderBlockRenderer::new)
+            new BlockEntityRendererData<>(NichirinBlockEntityRegistry.KATANA_HOLDER_BLOCK_ENTITY, KatanaHolderBlockRenderer::new),
+            new BlockEntityRendererData<>(NichirinBlockEntityRegistry.WISTERIA_SIGN, SignRenderer::new),
+            new BlockEntityRendererData<>(NichirinBlockEntityRegistry.WISTERIA_HANGING_SIGN, HangingSignRenderer::new)
     };
 
 

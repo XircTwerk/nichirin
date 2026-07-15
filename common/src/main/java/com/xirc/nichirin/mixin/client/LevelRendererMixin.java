@@ -5,6 +5,7 @@ import com.zigythebird.playeranimcore.api.firstPerson.FirstPersonMode;
 import com.xirc.nichirin.client.afterimage.AfterimageRenderer;
 import com.xirc.nichirin.client.aura.AuraPixelize2DRenderer;
 import com.xirc.nichirin.client.handler.BloodMoonClientState;
+import com.xirc.nichirin.client.light.WisteriaLightShaderEffect;
 import com.xirc.nichirin.client.light.WisteriaLightData;
 import com.xirc.nichirin.client.outline.OutlineRenderer;
 import com.xirc.nichirin.client.renderer.effects.CloneRingRenderer;
@@ -120,6 +121,16 @@ public class LevelRendererMixin {
     ) {
         NichirinShaderManager.getInstance().setFrameContext(camera, frustumMatrix);
         NichirinShaderManager.getInstance().processAll(new PoseStack());
+
+        // Wisteria colored lighting for pipelines the core-shader injection can't reach
+        // (Sodium/Embeddium terrain shaders): screen-space pass over the finished frame,
+        // reconstructing world positions from the depth buffer. No-op on vanilla, where the
+        // GLSL injection lights geometry directly, and under an active Iris shaderpack.
+        try {
+            WisteriaLightShaderEffect.INSTANCE.renderFrame(frustumMatrix, projectionMatrix);
+        } catch (Exception ignored) {
+            // Never let the light pass break the frame.
+        }
 
         // Aura system: render 2D pixelated disc at any entity with auras.
         try {

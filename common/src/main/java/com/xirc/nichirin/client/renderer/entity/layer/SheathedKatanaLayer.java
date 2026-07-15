@@ -1,6 +1,7 @@
 package com.xirc.nichirin.client.renderer.entity.layer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.xirc.nichirin.client.afterimage.AfterimageRenderState;
 import com.xirc.nichirin.common.item.katana.Katana;
 import com.xirc.nichirin.common.util.ItemStackData;
 import com.xirc.nichirin.common.system.sheathing.PlayerSheathData;
@@ -30,6 +31,11 @@ public class SheathedKatanaLayer extends RenderLayer<AbstractClientPlayer, Playe
                        float limbSwing, float limbSwingAmount, float partialTick, float ageInTicks,
                        float netHeadYaw, float headPitch) {
         if (player.isInvisible()) return;
+        // Afterimage/clone ghost dispatches re-render the whole player model many times per frame.
+        // Held items and armor are already suppressed for ghosts; sheathed katanas must be too —
+        // each one is a full AzureLib geo render, and per-ghost copies were freezing viewers
+        // during another player's Thunderclap trail.
+        if (AfterimageRenderState.isRendering()) return;
         PlayerSheathData data = SheathingManager.get(player);
         for (SheathSlotData slot : data.getSlots()) {
             if (!shouldRender(slot)) continue;
@@ -71,18 +77,26 @@ public class SheathedKatanaLayer extends RenderLayer<AbstractClientPlayer, Playe
         return position == SheathPosition.LEFT_HIP || position == SheathPosition.RIGHT_HIP;
     }
 
+    // Cached twin stacks. Constructing a fresh ItemStack every frame stamps a fresh AzureLib
+    // az_id each time, and AzureLib's animator cache maps az_id -> animator with no eviction —
+    // a per-frame twin allocation therefore leaks an animator into a static map on every frame.
+    private static ItemStack rightBeastTwin;
+    private static ItemStack rightSoundTwin;
+
     /**
-     * If the stack is the left half of a dual-katana pair, return a fresh stack of the right
+     * If the stack is the left half of a dual-katana pair, return a cached stack of the right
      * half so sheathed rendering reuses the canonical orientation. NBT (custom names, damage,
      * etc.) is not copied because the sheathed render only needs the model — gameplay state
      * lives on the actual stored {@link ItemStack}, which is untouched.
      */
     private ItemStack renderTwin(ItemStack stack) {
         if (stack.is(NichirinItemRegistry.LEFT_BEAST_KATANA.get())) {
-            return new ItemStack(NichirinItemRegistry.RIGHT_BEAST_KATANA.get());
+            if (rightBeastTwin == null) rightBeastTwin = new ItemStack(NichirinItemRegistry.RIGHT_BEAST_KATANA.get());
+            return rightBeastTwin;
         }
         if (stack.is(NichirinItemRegistry.LEFT_SOUND_KATANA.get())) {
-            return new ItemStack(NichirinItemRegistry.RIGHT_SOUND_KATANA.get());
+            if (rightSoundTwin == null) rightSoundTwin = new ItemStack(NichirinItemRegistry.RIGHT_SOUND_KATANA.get());
+            return rightSoundTwin;
         }
         return stack;
     }

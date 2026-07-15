@@ -21,12 +21,13 @@ import java.util.List;
 public final class AfterimageRenderer {
     private static final List<Entry> ENTRIES = new ArrayList<>();
     // Hard caps so a fold-heavy Thunderclap can't pile up enough ghosts to tank the frame rate.
-    private static final int MAX_ENTRIES = 24;
+    private static final int MAX_ENTRIES = 16;
     private static final double MAX_RENDER_DIST_SQR = 96.0 * 96.0;
     // Absolute ceiling on full entity-model re-renders per frame, across all trails. Each ghost
-    // is a complete model dispatch; without a budget a long multi-trail chain can hard-freeze
-    // weaker machines (and shader pipelines) instead of just dropping frames.
-    private static final int MAX_COPIES_PER_FRAME = 48;
+    // is a complete model dispatch (player animation hooks included, and shader packs multiply
+    // the per-dispatch cost); without a tight budget a long multi-trail chain lags viewers out
+    // instead of just dropping the trail density.
+    private static final int MAX_COPIES_PER_FRAME = 24;
 
     private record Entry(int entityId, Vec3 from, Vec3 to, long spawnTick, int lifetimeTicks,
                          int copies, float alpha) {

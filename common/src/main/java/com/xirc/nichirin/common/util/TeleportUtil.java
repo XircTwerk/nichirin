@@ -306,7 +306,7 @@ public class TeleportUtil {
                 if (options.pathDamageCallback != null) {
                     options.pathDamageCallback.accept(target);
                 } else {
-                    NichirinArmorDamage.hurt(
+                    NichirinDamageHandler.hurt(
                             target, NichirinDamageSources.breathing(attacker), options.pathDamage);
                 }
             }

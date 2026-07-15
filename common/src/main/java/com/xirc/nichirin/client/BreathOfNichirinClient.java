@@ -10,6 +10,10 @@ import com.xirc.nichirin.common.util.enums.BreathingStyle;
 import com.xirc.nichirin.client.config.NichirinClientConfig;
 import com.xirc.nichirin.client.handler.*;
 import com.xirc.nichirin.client.shader.*;
+import com.xirc.nichirin.common.config.NichirinModConfig;
+import com.xirc.nichirin.common.config.NichirinServerConfig;
+import com.xirc.nichirin.common.network.c2s.ConfigSyncPacket;
+import net.minecraft.world.InteractionResult;
 import dev.architectury.event.events.client.ClientGuiEvent;
 import com.xirc.nichirin.client.renderer.armor.ArmorRendererManager;
 import com.xirc.nichirin.client.renderer.item.KatanaRendererManager;
@@ -46,6 +50,24 @@ public class BreathOfNichirinClient {
     // Store shader effect for easy access
     private static DeadCalmShaderEffect deadCalmEffect;
     private static ImpactShakeShaderEffect impactShakeShaderEffect;
+
+    private static void registerConfigSyncListener() {
+        try {
+            me.shedaniel.autoconfig.AutoConfig.getConfigHolder(NichirinModConfig.class)
+                    .registerSaveListener((holder, cfg) -> {
+                        Minecraft mc = Minecraft.getInstance();
+                        // Singleplayer / LAN host: the save already lands in the shared server
+                        // statics and file — only remote connections need the packet.
+                        if (mc.getConnection() != null && !mc.hasSingleplayerServer()) {
+                            NichirinPacketRegistry.sendToServer(
+                                    new ConfigSyncPacket(NichirinServerConfig.toJson(cfg)));
+                        }
+                        return InteractionResult.SUCCESS;
+                    });
+        } catch (Exception e) {
+            // cloth-config not installed — there is no config screen, nothing to sync.
+        }
+    }
 
     private static void registerShaders() {
         try {
@@ -106,7 +128,10 @@ public class BreathOfNichirinClient {
         }
 
         long gameTime = minecraft.level.getGameTime();
-        if (gameTime - lastWisteriaLeafRefreshTick < 5L) {
+        // 2s cadence: the day/night tint blend is slow, and each refresh remeshes a large block
+        // region — at the old 5-tick cadence that's constant chunk-rebuild churn near trees
+        // (especially costly now that lights are also tracked under Sodium/Iris).
+        if (gameTime - lastWisteriaLeafRefreshTick < 40L) {
             return;
         }
 
@@ -125,6 +150,11 @@ public class BreathOfNichirinClient {
 
         // Register client-only visual config
         NichirinClientConfig.register();
+
+        // When the cloth config screen is saved while connected to a REMOTE server, push the
+        // config to the server (op-gated there). Without this the screen only wrote the client's
+        // own file, so config edits made in multiplayer silently never took effect.
+        registerConfigSyncListener();
 
         try {
             // Register armor renderers EARLY - before anything else that might need them

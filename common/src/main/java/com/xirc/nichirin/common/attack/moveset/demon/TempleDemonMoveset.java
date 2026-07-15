@@ -35,7 +35,6 @@ public class TempleDemonMoveset extends AbstractMoveset {
     // ONE declaration per move. Both the builder (so AbstractMoveset can resolve
     // no duplicated stats, no drift bugs.
     private static final MoveConfiguration GUT_PUNCH_CONFIG = new MoveBuilder("demon_gut_punch", "Gut Punch")
-            .withAnimation("nichirin:demon_gut_punch", 6)
             .withTiming(15, 1, 7)
             .withDamage(6.0f)
             .withRange(2.0f)
@@ -47,7 +46,6 @@ public class TempleDemonMoveset extends AbstractMoveset {
             .build();
 
     private static final MoveConfiguration SLASH_1_CONFIG = new MoveBuilder("demon_slash", "Slash")
-            .withAnimation("nichirin:demon_slash", 6)
             .withTiming(0, 0, 14)
             .withDamage(4.0f)
             .withRange(3.0f)
@@ -59,7 +57,6 @@ public class TempleDemonMoveset extends AbstractMoveset {
             .build();
 
     private static final MoveConfiguration SLASH_2_CONFIG = new MoveBuilder("demon_slash_2", "Slash Finisher")
-            .withAnimation("nichirin:demon_slash_2", 6)
             .withTiming(5, 0, 18)
             .withDamage(6.0f)
             .withRange(3.0f)
@@ -77,7 +74,6 @@ public class TempleDemonMoveset extends AbstractMoveset {
             .build();
 
     private static final MoveConfiguration STOMP_CONFIG = new MoveBuilder("demon_stomp", "Stomp")
-            .withAnimation("nichirin:demon_stomp", 6)
             .withTiming(60, 0, 11)
             .withDamage(10.0f)
             .withRange(4.0f)
@@ -137,7 +133,6 @@ public class TempleDemonMoveset extends AbstractMoveset {
                 .withMove(HIGH_JUMP_CONFIG)
 
                 .withMove(new MoveBuilder("demon_kick", "Kick")
-                        .withAnimation("nichirin:demon_kick", 8)
                         .withTiming(60, 5, 11)
                         .withDamage(6.0f)
                         .withRange(2.5f)
@@ -162,7 +157,6 @@ public class TempleDemonMoveset extends AbstractMoveset {
                 )
 
                 .withMove(new MoveBuilder("demon_bite", "Bite")
-                        .withAnimation("nichirin:demon_bite", 9)
                         .withTiming(100, 5, 11)
                         .withDamage(8.0f)
                         .withRange(2.0f)
@@ -174,7 +168,6 @@ public class TempleDemonMoveset extends AbstractMoveset {
                 )
 
                 .withMove(new MoveBuilder("demon_grab", "Throw")
-                        .withAnimation("nichirin:demon_grab", 5)
                         .withTiming(80, 3, 8)
                         .withDescription("Grab and instantly throw the target forward")
                         .withAction(entity -> {

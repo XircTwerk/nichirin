@@ -27,8 +27,6 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                 .withSpeedMultiplier(1.15f)
 
                 .withMove(new MoveBuilder("pommel_slash", "Pommel Slash")
-                        .withAnimation("nichirin:pommel_slash", 8)
-                        // windup 5, then duration must span all 6 slashes (active ticks 0,3,6,9,12,15)
                         .withTiming(0, 5, 18)
                         .withDamage(0.5f)
                         .withRange(2.5f)
@@ -42,7 +40,6 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                 )
 
                 .withMove(new MoveBuilder("unknowing_fire_quick", "Unknowing Fire")
-                        .withAnimation("nichirin:unknowing_fire", 9)
                         .withTiming(0, 6, 11)
                         .withDamage(10.0f)
                         .withRange(3.0f)
@@ -57,7 +54,6 @@ public class FlameBreathingMoveset extends AbstractMoveset {
 
                 // INDEX 0: Rising Scorching Sun — upward arc, launches enemies
                 .withMove(new MoveBuilder("rising_scorching_sun", "Scorching Sun")
-                        .withAnimation("nichirin:rising_scorching_sun", 8)
                         .withTiming(100, 12, 18)
                         .withDamage(9.0f)
                         .withRange(6.0f)
@@ -73,7 +69,6 @@ public class FlameBreathingMoveset extends AbstractMoveset {
 
                 // INDEX 1: Blazing Universe — charged downward strike, explodes on impact
                 .withMove(new MoveBuilder("blazing_universe", "Blazing Universe")
-                        .withAnimation("nichirin:blazing_universe", 12)
                         .withTiming(160, 13, 35)
                         .withDamage(5.0f)
                         .withRange(4.0f)
@@ -87,7 +82,6 @@ public class FlameBreathingMoveset extends AbstractMoveset {
 
                 // INDEX 2: Blooming Flame Undulation — 360° defense
                 .withMove(new MoveBuilder("blooming_flame_undulation", "Blooming Flame")
-                        .withAnimation("nichirin:blooming_flame_undulation", 10)
                         .withTiming(140, 11, 25)
                         .withDamage(5.0f)
                         .withRange(3.5f)
@@ -101,7 +95,6 @@ public class FlameBreathingMoveset extends AbstractMoveset {
 
                 // INDEX 3: Flame Tiger — dashing multi-hit strike
                 .withMove(new MoveBuilder("flame_tiger", "Flame Tiger")
-                        .withAnimation("nichirin:flame_tiger", 11)
                         .withTiming(120, 10, 28)
                         .withDamage(11.0f)
                         .withDashSpeed(35.0f)
@@ -114,10 +107,9 @@ public class FlameBreathingMoveset extends AbstractMoveset {
                         .withAttack(FlameTigerAttack::new)
                 )
 
-                // INDEX 4: Rengoku — ultimate dragon dash
+                // INDEX 4: Rengoku
                 .withMove(new MoveBuilder("rengoku", "Rengoku")
-                        .withAnimation("nichirin:rengoku", 20)
-                        .withTiming(600, 120, 42)
+                        .withTiming(600, 90, 42)
                         .withDamage(30.0f)
                         .withDashSpeed(50.0f)
                         .withRange(20.0f)

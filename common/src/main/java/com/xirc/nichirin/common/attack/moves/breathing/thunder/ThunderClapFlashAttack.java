@@ -49,9 +49,10 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
     private static final float BASE_HIT_DAMAGE = 6.0f;
     private static final float DAMAGE_PER_FOLD_SCALAR = 0.05f;
     private static final float AFTERIMAGE_ALPHA = 0.58f;
-    private static final int AFTERIMAGE_LIFETIME_TICKS = 14;
-    // Drop one afterimage every this-many blocks along the dash path.
-    private static final float AFTERIMAGE_SPACING = 2.0f;
+    private static final int AFTERIMAGE_LIFETIME_TICKS = 10;
+    // Drop one afterimage every this-many blocks along the dash path. Wider spacing + shorter
+    // lifetime keep the number of live ghost renders on viewer clients down during long dashes.
+    private static final float AFTERIMAGE_SPACING = 3.5f;
     // Past-target overshoot: waypoint = enemyPos + dir × OVERSHOOT so the player passes through.
     private static final float OVERSHOOT_DISTANCE = 1.75f;
     // Extra vertical lift on top of the entity's CURRENT y-position when overshooting through them.

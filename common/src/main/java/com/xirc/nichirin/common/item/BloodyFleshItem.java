@@ -175,6 +175,12 @@ public class BloodyFleshItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+        String tierKey = switch (readTier(stack)) {
+            case TIER_HUMAN -> "item.nichirin.bloody_flesh.tier_human";
+            case TIER_TOUGH -> "item.nichirin.bloody_flesh.tier_tough";
+            default -> "item.nichirin.bloody_flesh.tier_common";
+        };
+        tooltip.add(Component.translatable(tierKey).withStyle(ChatFormatting.RED));
         tooltip.add(Component.translatable("item.nichirin.bloody_flesh.tooltip")
                 .withStyle(ChatFormatting.DARK_RED));
     }

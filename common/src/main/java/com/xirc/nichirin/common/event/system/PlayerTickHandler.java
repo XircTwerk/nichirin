@@ -82,6 +82,7 @@ public class PlayerTickHandler {
             SheathingManager.tick(player);
             Dodge.tickForPlayer(player);
             DemonManager.tickDemon(player);
+            clearLeakedInvulnerability(player);
 
             if (player instanceof ServerPlayer) {
                 ServerPlayer serverPlayer = (ServerPlayer) player;
@@ -91,6 +92,22 @@ public class PlayerTickHandler {
                     tickFlawEffects(serverPlayer);
                 }
             }
+        }
+    }
+
+    /**
+     * Several moves (Blessed Rain, Honoikazuchi, Centipede, ...) set {@code setInvulnerable(true)}
+     * for their duration and restore it when they finish. If the attack is interrupted in a way
+     * that skips its cleanup, the flag leaks — and it PERSISTS in player NBT, leaving the player
+     * permanently damage-immune ("I just stop taking damage"). Survival players are never meant
+     * to keep this flag outside an active move, so clear it whenever no move is running.
+     */
+    private static void clearLeakedInvulnerability(Player player) {
+        if (player.isInvulnerable()
+                && !player.isCreative()
+                && !player.isSpectator()
+                && !com.xirc.nichirin.common.attack.MoveExecutor.hasActiveAttacks(player)) {
+            player.setInvulnerable(false);
         }
     }
 

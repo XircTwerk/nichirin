@@ -11,6 +11,8 @@ import java.util.UUID;
  * `startTimeMs` is set on the client when the packet arrives and drives the animation phase.
  * `jitterAmount` controls how much the surface SHAPE morphs over time (renamed from
  * shapeMorphAmount, now per-aura instead of global).
+ * `wavinessAmount` adds a rippling sinusoidal undulation to the silhouette edge on top of jitter;
+ * 0 (the default) leaves the shape unchanged.
  * `cameraFacing == true` billboards the disc to the observer's camera instead of following the
  * host's body yaw — used by projectiles (shockwaves) so the aura always reads as a full disc.
  */
@@ -22,6 +24,7 @@ public final class AuraInstance {
     private final float distortionStrength;
     private final float rotationSpeed;
     private final float jitterAmount;
+    private final float wavinessAmount;
     private final int materialProfile;
     private final boolean cameraFacing;
     private final int lifetimeTicks;       // -1 = permanent
@@ -35,6 +38,7 @@ public final class AuraInstance {
                         float distortionStrength,
                         float rotationSpeed,
                         float jitterAmount,
+                        float wavinessAmount,
                         int materialProfile,
                         boolean cameraFacing,
                         int lifetimeTicks) {
@@ -45,6 +49,7 @@ public final class AuraInstance {
         this.distortionStrength = distortionStrength;
         this.rotationSpeed = rotationSpeed;
         this.jitterAmount = jitterAmount;
+        this.wavinessAmount = wavinessAmount;
         this.materialProfile = materialProfile;
         this.cameraFacing = cameraFacing;
         this.lifetimeTicks = lifetimeTicks;
@@ -60,6 +65,7 @@ public final class AuraInstance {
     public float distortionStrength() { return distortionStrength; }
     public float rotationSpeed() { return rotationSpeed; }
     public float jitterAmount() { return jitterAmount; }
+    public float wavinessAmount() { return wavinessAmount; }
     public int materialProfile() { return materialProfile; }
     public boolean cameraFacing() { return cameraFacing; }
     public int lifetimeTicks() { return lifetimeTicks; }
@@ -98,6 +104,7 @@ public final class AuraInstance {
         buf.writeFloat(distortionStrength);
         buf.writeFloat(rotationSpeed);
         buf.writeFloat(jitterAmount);
+        buf.writeFloat(wavinessAmount);
         buf.writeInt(materialProfile);
         buf.writeBoolean(cameraFacing);
         buf.writeVarInt(lifetimeTicks);
@@ -111,11 +118,12 @@ public final class AuraInstance {
         float distortion = buf.readFloat();
         float rotation = buf.readFloat();
         float jitter = buf.readFloat();
+        float waviness = buf.readFloat();
         int materialProfile = buf.readInt();
         boolean cameraFacing = buf.readBoolean();
         int lifetime = buf.readVarInt();
-        return new AuraInstance(id, r, g, b, a, radius, pulse, distortion, rotation, jitter, materialProfile,
-                cameraFacing, lifetime);
+        return new AuraInstance(id, r, g, b, a, radius, pulse, distortion, rotation, jitter, waviness,
+                materialProfile, cameraFacing, lifetime);
     }
 
     public static Builder builder() { return new Builder(); }
@@ -128,6 +136,7 @@ public final class AuraInstance {
         private float distortionStrength = 0.18f;
         private float rotationSpeed = 0.25f;
         private float jitterAmount = 2.2f;
+        private float wavinessAmount = 0.0f;
         private int materialProfile = 0;
         private boolean cameraFacing = false;
         private int lifetimeTicks = -1;
@@ -141,12 +150,13 @@ public final class AuraInstance {
         public Builder distortion(float v) { this.distortionStrength = v; return this; }
         public Builder rotationSpeed(float v) { this.rotationSpeed = v; return this; }
         public Builder jitter(float v) { this.jitterAmount = v; return this; }
+        public Builder waviness(float v) { this.wavinessAmount = v; return this; }
         public Builder materialProfile(int v) { this.materialProfile = v; return this; }
         public Builder cameraFacing(boolean v) { this.cameraFacing = v; return this; }
         public Builder lifetimeTicks(int v) { this.lifetimeTicks = v; return this; }
         public AuraInstance build() {
             return new AuraInstance(id, r, g, b, a, radius, pulseSpeed, distortionStrength,
-                    rotationSpeed, jitterAmount, materialProfile, cameraFacing, lifetimeTicks);
+                    rotationSpeed, jitterAmount, wavinessAmount, materialProfile, cameraFacing, lifetimeTicks);
         }
     }
 }

@@ -35,6 +35,12 @@ public class GunAnimationPacket {
         Entity entity = mc.level.getEntity(playerId);
         if (!(entity instanceof Player player)) return;
         if (player.getMainHandItem().isEmpty()) return;
+        // The local player predicts their own gun animations at input time (no round-trip delay);
+        // skip the server echo for a just-predicted animation so it doesn't restart.
+        if (mc.player != null && playerId == mc.player.getId()
+                && GenyaDBAnimator.shouldSkipEcho(animName)) {
+            return;
+        }
         // Publish the animation name, then bump the sequence so every gun animator instance picks it up
         // exactly once on its next render. Order matters for the volatile happens-before guarantee.
         GenyaDBAnimator.requestedAnim = animName;

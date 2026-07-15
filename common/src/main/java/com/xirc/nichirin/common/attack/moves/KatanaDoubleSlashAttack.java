@@ -1,7 +1,7 @@
 package com.xirc.nichirin.common.attack.moves;
 
 import com.xirc.nichirin.common.util.ComboIntegration;
-import com.xirc.nichirin.common.util.NichirinArmorDamage;
+import com.xirc.nichirin.common.util.NichirinDamageHandler;
 import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
@@ -104,7 +104,7 @@ public class KatanaDoubleSlashAttack extends AbstractKatanaAttack {
         DamageSource damageSource = NichirinDamageSources.blade(user);
 
         for (LivingEntity target : targets) {
-            NichirinArmorDamage.hurt(target, damageSource, damage);
+            NichirinDamageHandler.hurt(target, damageSource, damage);
 
             int currentHitCount = perTargetHitCount.getOrDefault(target, 0) + 1;
             perTargetHitCount.put(target, currentHitCount);

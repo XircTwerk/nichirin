@@ -153,8 +153,15 @@ public class BreathOfNichirinEventHandler {
         DemonBloodVialItem.clearAll();
     }
 
+    private static int configPollTicks = 0;
+
     private static void onServerTick(MinecraftServer server) {
         if (server != null) {
+            // Hot-reload the server config if it was edited on disk (e.g. through a host panel).
+            if (++configPollTicks >= 20) {
+                configPollTicks = 0;
+                NichirinServerConfig.pollForChanges();
+            }
             BloodMoonManager.onServerTick(server);
             MoveExecutor.tickAllAttacks(server);
             DestructiveDeathPlayerAura.tick(server);
