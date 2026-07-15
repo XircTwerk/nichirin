@@ -50,7 +50,6 @@ public class DestructiveDeathMoveset extends AbstractMoveset {
 
                 // Wheel 1 — Compass Needle (crouch while activating to enter Compass Overdrive)
                 .withMove(new MoveBuilder("compass_needle", "Compass Needle")
-                        .withAnimation("nichirin:compass_needle", 6)
                         .withTiming(0, 1, 4)
                         .withRange(20f)
                         .withDescription("Tracks nearby entities for 6 seconds and amplifies damage on them. Crouch while activating to enter Compass Overdrive (Speed I + Strength I + red shockwaves).")

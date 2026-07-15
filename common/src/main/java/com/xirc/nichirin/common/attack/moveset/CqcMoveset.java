@@ -37,7 +37,6 @@ public class CqcMoveset extends AbstractMoveset {
     private static final Map<UUID, CqcFollowupState> FOLLOWUP_STATES = new ConcurrentHashMap<>();
 
     public static final MoveConfiguration JAB = new MoveBuilder("jab", "Jab")
-            .withAnimation("nichirin:jab", 6)
             .withDescription("Short gut jab. Fast body-shot that stuns at close range.")
             .withTiming(10, 1, 3)
             .withDamage(2.0f)
@@ -49,7 +48,6 @@ public class CqcMoveset extends AbstractMoveset {
             .build();
 
     public static final MoveConfiguration CROSS = new MoveBuilder("cross", "Cross")
-            .withAnimation("nichirin:cross", 6)
             .withDescription("Committed straight punch. Pulls you into boxing range.")
             .withTiming(16, 2, 8)
             .withDamage(2.4f)
@@ -62,7 +60,6 @@ public class CqcMoveset extends AbstractMoveset {
             .build();
 
     public static final MoveConfiguration LEFT_HOOK = new MoveBuilder("lefthook", "Left Hook")
-            .withAnimation("nichirin:lefthook", 6)
             .withDescription("Short hook with a wider hitbox and stronger stagger.")
             .withTiming(20, 3, 7)
             .withDamage(2.8f)
@@ -74,7 +71,6 @@ public class CqcMoveset extends AbstractMoveset {
             .build();
 
     public static final MoveConfiguration ROUNDHOUSE_FAST = new MoveBuilder("roundhouse_fast", "Roundhouse Fast")
-            .withAnimation("nichirin:roundhouse_fast", 6)
             .withDescription("Fast sweeping kick with extra reach.")
             .withTiming(24, 3, 8)
             .withDamage(2.8f)
@@ -86,7 +82,6 @@ public class CqcMoveset extends AbstractMoveset {
             .build();
 
     public static final MoveConfiguration EYE_POKE = new MoveBuilder("eye_poke", "Eye Poke")
-            .withAnimation("nichirin:eye_poke", 6)
             .withDescription("Low damage poke that briefly blinds and interrupts.")
             .withTiming(28, 2, 5)
             .withDamage(1.2f)
@@ -98,7 +93,6 @@ public class CqcMoveset extends AbstractMoveset {
             .build();
 
     public static final MoveConfiguration THROAT_CHOP = new MoveBuilder("throat_chop", "Throat Chop")
-            .withAnimation("nichirin:throat_chop", 6)
             .withDescription("Close interrupt that slows and locks down a target.")
             .withTiming(30, 3, 5)
             .withDamage(2.0f)
@@ -110,7 +104,6 @@ public class CqcMoveset extends AbstractMoveset {
             .build();
 
     public static final MoveConfiguration HEADKICK = new MoveBuilder("headkick", "Headkick")
-            .withAnimation("nichirin:headkick", 6)
             .withDescription("Heavy high kick that heavily staggers targets.")
             .withTiming(46, 5, 9)
             .withDamage(4.4f)
@@ -122,7 +115,6 @@ public class CqcMoveset extends AbstractMoveset {
             .build();
 
     public static final MoveConfiguration SPINNING_BACKFIST = new MoveBuilder("spinning_backfist", "Spinning Backfist")
-            .withAnimation("nichirin:spinning_backfist", 6)
             .withDescription("Spinning strike with a wide arc and solid knockback.")
             .withTiming(42, 4, 9)
             .withDamage(3.8f)
@@ -134,7 +126,6 @@ public class CqcMoveset extends AbstractMoveset {
             .build();
 
     public static final MoveConfiguration OVERHAND_RIGHT = new MoveBuilder("overhand_right", "Overhand Right")
-            .withAnimation("nichirin:overhand_right", 6)
             .withDescription("Heavy downward punch that punishes airborne targets.")
             .withTiming(34, 4, 7)
             .withDamage(3.4f)
@@ -146,7 +137,6 @@ public class CqcMoveset extends AbstractMoveset {
             .build();
 
     public static final MoveConfiguration UPPERCUT = new MoveBuilder("uppercut", "Uppercut")
-            .withAnimation("nichirin:uppercut", 6)
             .withDescription("Dashing launcher. Dashes 5 blocks and knocks targets upward.")
             .withTiming(38, 4, 8)
             .withDamage(3.4f)
@@ -159,7 +149,6 @@ public class CqcMoveset extends AbstractMoveset {
             .build();
 
     public static final MoveConfiguration KNEE_STRIKE = new MoveBuilder("knee_strike", "Knee Strike")
-            .withAnimation("nichirin:knee_strike", 6)
             .withDescription("Close knee that pulls targets into clinch range.")
             .withTiming(34, 4, 8)
             .withDamage(3.2f)
@@ -171,7 +160,6 @@ public class CqcMoveset extends AbstractMoveset {
             .build();
 
     public static final MoveConfiguration ELBOW_STRIKE = new MoveBuilder("elbow_strike", "Elbow Strike")
-            .withAnimation("nichirin:elbow_strike", 6)
             .withDescription("Compact elbow with fast armor-break style impact.")
             .withTiming(24, 2, 6)
             .withDamage(2.6f)
@@ -183,7 +171,6 @@ public class CqcMoveset extends AbstractMoveset {
             .build();
 
     public static final MoveConfiguration SPINNING_HEEL_KICK = new MoveBuilder("spinning_heel_kick", "Spinning Heel Kick")
-            .withAnimation("nichirin:spinning_heel_kick", 6)
             .withDescription("Slow, wide, heavy kick that launches sideways.")
             .withTiming(56, 6, 11)
             .withDamage(5.2f)
@@ -195,7 +182,6 @@ public class CqcMoveset extends AbstractMoveset {
             .build();
 
     public static final MoveConfiguration KNEE = new MoveBuilder("knee", "Knee")
-            .withAnimation("nichirin:knee", 6)
             .withDescription("Short, reliable knee with strong stun.")
             .withTiming(28, 3, 7)
             .withDamage(2.8f)
@@ -207,7 +193,6 @@ public class CqcMoveset extends AbstractMoveset {
             .build();
 
     public static final MoveConfiguration AXE_KICK = new MoveBuilder("axe_kick", "Axe Kick")
-            .withAnimation("nichirin:axe_kick", 6)
             .withDescription("Heavy vertical kick that slams airborne targets down.")
             .withTiming(48, 5, 9)
             .withDamage(4.6f)
@@ -219,7 +204,6 @@ public class CqcMoveset extends AbstractMoveset {
             .build();
 
     public static final MoveConfiguration LOW_KICK = new MoveBuilder("low_kick", "Low Kick")
-            .withAnimation("nichirin:low_kick", 6)
             .withDescription("Fast leg kick that slows grounded targets.")
             .withTiming(22, 2, 6)
             .withDamage(2.2f)
@@ -231,7 +215,6 @@ public class CqcMoveset extends AbstractMoveset {
             .build();
 
     public static final MoveConfiguration SUPERMAN_PUNCH = new MoveBuilder("superman_punch", "Superman Punch")
-            .withAnimation("nichirin:superman_punch", 6)
             .withDescription("Leaping punch with reach and forward burst.")
             .withTiming(44, 4, 9)
             .withDamage(3.6f)
@@ -244,7 +227,6 @@ public class CqcMoveset extends AbstractMoveset {
             .build();
 
     public static final MoveConfiguration DOUBLE_PALM = new MoveBuilder("double_palm", "Double Palm")
-            .withAnimation("nichirin:double_palm", 6)
             .withDescription("Two-handed shove that creates space.")
             .withTiming(32, 3, 7)
             .withDamage(3.0f)
@@ -256,7 +238,6 @@ public class CqcMoveset extends AbstractMoveset {
             .build();
 
     public static final MoveConfiguration SNAP_PUNCH = new MoveBuilder("snap_punch", "Snap Punch")
-            .withAnimation("nichirin:snap_punch", 6)
             .withDescription("Quick forward strike. Spawns a short-range shockwave when Destructive Death's toggle is on.")
             .withTiming(14, 1, 6)
             .withDamage(4.5f)
@@ -268,7 +249,6 @@ public class CqcMoveset extends AbstractMoveset {
             .build();
 
     public static final MoveConfiguration ANNIHILATION_TYPE = new MoveBuilder("annihilation_type", "Annihilation Type")
-            .withAnimation("nichirin:annihilation_type", 6)
             .withDescription("Crouched-stance forward palm dash. Twin circular shockwaves on swing start.")
             .withTiming(34, 4, 12)
             .withDamage(7.0f)
@@ -281,7 +261,6 @@ public class CqcMoveset extends AbstractMoveset {
             .build();
 
     public static final MoveConfiguration CROWN_SPLITTER = new MoveBuilder("crown_splitter", "Crown Splitter")
-            .withAnimation("nichirin:crown", 6)
             .withDescription("Rising reverse axe-kick. High burst damage with a vertical shockwave on connect.")
             .withTiming(22, 2, 8)
             .withDamage(6.0f)
@@ -293,7 +272,6 @@ public class CqcMoveset extends AbstractMoveset {
             .build();
 
     public static final MoveConfiguration EXPLOSIVE_FLURRY = new MoveBuilder("explosive_flurry", "Explosive Flurry")
-            .withAnimation("nichirin:explosive_flurry", 6)
             .withDescription("Flurry of fast straight kicks. Each kick lays a piercing shockwave forward.")
             .withTiming(20, 3, 10)
             .withDamage(3.0f)
@@ -305,7 +283,6 @@ public class CqcMoveset extends AbstractMoveset {
             .build();
 
     public static final MoveConfiguration FLYING_PLANET = new MoveBuilder("flying_planet_thousand_wheels", "Flying Planet Thousand Wheels")
-            .withAnimation("nichirin:flying_planet_thousand_wheels", 6)
             .withDescription("Upward kick that lifts both you and the target. Sets up aerial follow-ups.")
             .withTiming(28, 2, 9)
             .withDamage(5.0f)
@@ -317,7 +294,6 @@ public class CqcMoveset extends AbstractMoveset {
             .build();
 
     public static final MoveConfiguration EIGHT_LAYERED_DEMON_CORE = new MoveBuilder("eight_layered_demon_core", "Eight-Layered Demon Core")
-            .withAnimation("nichirin:eight_layered_demon_core", 6)
             .withDescription("Eight stacked punches firing overlapping shockwave rings forward — one per punch.")
             // 8 punches × 3-tick interval = 21 active ticks needed; 24 gives a small buffer.
             .withTiming(20, 6, 24)
@@ -343,7 +319,6 @@ public class CqcMoveset extends AbstractMoveset {
             .build();
 
     public static final MoveConfiguration TEN_THOUSAND_LEAVES = new MoveBuilder("ten_thousand_leaves_flashing_willow", "Ten Thousand Leaves Flashing Willow")
-            .withAnimation("nichirin:ten_thousand_leaves_flashing_willow", 6)
             .withDescription("25s windup. Hyper-armoured ring-shaped AoE around you. 1.5s stun on hit.")
             .withTiming(500, 8, 14)
             .withDamage(12.0f)
@@ -356,7 +331,6 @@ public class CqcMoveset extends AbstractMoveset {
             .build();
 
     public static final MoveConfiguration BACKHAND_SLAP = new MoveBuilder("backhand_slap", "Backhand Slap")
-            .withAnimation("nichirin:backhand_slap", 6)
             .withDescription("Fast backhand counter with sideways displacement.")
             .withTiming(24, 2, 6)
             .withDamage(2.2f)
@@ -368,7 +342,6 @@ public class CqcMoveset extends AbstractMoveset {
             .build();
 
     public static final MoveConfiguration DEMON_GUT_PUNCH = new MoveBuilder("demon_gut_punch", "Gut Punch")
-            .withAnimation("nichirin:demon_gut_punch", 6)
             .withDescription("Powerful close-range punch that stuns enemies.")
             .withTiming(15, 1, 7)
             .withDamage(6.0f)
@@ -379,7 +352,6 @@ public class CqcMoveset extends AbstractMoveset {
             .build();
 
     public static final MoveConfiguration DEMON_SLASH = new MoveBuilder("demon_slash", "Slash")
-            .withAnimation("nichirin:demon_slash", 6)
             .withDescription("Basic claw slash, press again for the finisher.")
             .withTiming(0, 0, 14)
             .withDamage(4.0f)
@@ -390,7 +362,6 @@ public class CqcMoveset extends AbstractMoveset {
             .build();
 
     private static final MoveConfiguration DEMON_SLASH_2 = new MoveBuilder("demon_slash_2", "Slash Finisher")
-            .withAnimation("nichirin:demon_slash_2", 6)
             .withDescription("Finishing claw slash after the initial slash.")
             .withTiming(5, 0, 18)
             .withDamage(6.0f)
@@ -407,7 +378,6 @@ public class CqcMoveset extends AbstractMoveset {
             .build();
 
     public static final MoveConfiguration DEMON_STOMP = new MoveBuilder("demon_stomp", "Stomp")
-            .withAnimation("nichirin:demon_stomp", 6)
             .withDescription("Airborne stomp that slams enemies down.")
             .withTiming(60, 0, 11)
             .withDamage(10.0f)
@@ -418,7 +388,6 @@ public class CqcMoveset extends AbstractMoveset {
             .build();
 
     public static final MoveConfiguration DEMON_KICK = new MoveBuilder("demon_kick", "Kick")
-            .withAnimation("nichirin:demon_kick", 8)
             .withDescription("Powerful front kick with high knockback.")
             .withTiming(60, 5, 11)
             .withDamage(6.0f)
@@ -441,7 +410,6 @@ public class CqcMoveset extends AbstractMoveset {
             .build();
 
     public static final MoveConfiguration DEMON_BITE = new MoveBuilder("demon_bite", "Bite")
-            .withAnimation("nichirin:demon_bite", 9)
             .withDescription("Bite attack that steals blood.")
             .withTiming(100, 5, 11)
             .withDamage(8.0f)
@@ -452,7 +420,6 @@ public class CqcMoveset extends AbstractMoveset {
             .build();
 
     public static final MoveConfiguration DEMON_GRAB = new MoveBuilder("demon_grab", "Throw")
-            .withAnimation("nichirin:demon_grab", 5)
             .withDescription("Grab and instantly throw the target forward.")
             .withTiming(80, 3, 8)
             .build();

@@ -63,7 +63,6 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
 
                 // Second Form: Rice Spirit - 5 quick slashes (INDEX 0 in wheel)
                 .withMove(new MoveBuilder("rice_spirit", "Rice Spirit")
-                        .withAnimation("nichirin:rice_spirit", 8)
                         .withTiming(120, 8, 84)
                         .withDamage(2.0f)
                         .withRange(10.0f)
@@ -77,7 +76,6 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
 
                 // Third Form: Thunder Swarm - AOE slashes (INDEX 1 in wheel)
                 .withMove(new MoveBuilder("thunder_swarm", "Thunder Swarm")
-                        .withAnimation("nichirin:thunder_swarm", 9)
                         .withTiming(140, 12, 25)
                         .withDamage(3.0f)
                         .withRange(7.0f)
@@ -91,7 +89,6 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
 
                 // Fourth Form: Distant Thunder - Lightning over time (INDEX 2 in wheel)
                 .withMove(new MoveBuilder("distant_thunder", "Distant Thunder")
-                        .withAnimation("nichirin:distant_thunder", 7)
                         .withTiming(320, 7, 84)
                         .withDamage(8.0f)
                         .withRange(15.0f)
@@ -104,7 +101,6 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
 
                 // Fifth Form: Heat Lightning - Anti-air combo (INDEX 3 in wheel)
                 .withMove(new MoveBuilder("heat_lightning", "Heat Lightning")
-                        .withAnimation("nichirin:heat_lightning", 9)
                         .withTiming(180, 10, 40)
                         .withDamage(4.0f)
                         .withRange(2.5f)
@@ -118,7 +114,6 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
 
                 // Sixth Form: Rumble and Flash - Long range precision (INDEX 4 in wheel)
                 .withMove(new MoveBuilder("rumble_flash", "Rumble and Flash")
-                        .withAnimation("nichirin:rumble_flash", 8)
                         .withTiming(180, 9, 18)
                         .withDamage(7.5f)
                         .withRange(20.0f)
@@ -131,7 +126,6 @@ public class ThunderBreathingMoveset extends AbstractMoveset {
 
                 // Seventh Form: Honoikazuchi no Kami - Ultimate finisher (INDEX 5 in wheel)
                 .withMove(new MoveBuilder("honoikazuchi_no_kami", "Honoikazuchi no Kami")
-                        .withAnimation("nichirin:honoikazuchi_no_kami", 15)
                         .withTiming(600, 120, 7)
                         .withDamage(48.0f)
                         .withTeleportDistance(20.0f)

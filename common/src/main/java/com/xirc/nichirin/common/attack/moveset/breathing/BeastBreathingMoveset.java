@@ -30,7 +30,6 @@ public class BeastBreathingMoveset extends AbstractMoveset {
                 .withSpeedMultiplier(1.2f)
 
                 .withMove(new MoveBuilder("pierce", "Pierce")
-                        .withAnimation("nichirin:beast_pierce", 7)
                         .withTiming(0, 0, 6)
                         .withDamage(3.0f)
                         .withRange(4.0f)
@@ -45,7 +44,6 @@ public class BeastBreathingMoveset extends AbstractMoveset {
                 )
 
                 .withMove(new MoveBuilder("x_slice", "Slice")
-                        .withAnimation("nichirin:beast_x_slice", 8)
                         .withTiming(0, 0, 8)
                         .withDamage(5.0f)
                         .withRange(6.0f)
@@ -59,7 +57,6 @@ public class BeastBreathingMoveset extends AbstractMoveset {
                 )
 
                 .withMove(new MoveBuilder("explosive_rush", "Explosive Rush")
-                        .withAnimation("nichirin:beast_explosive_rush", 12)
                         .withTiming(0, 0, 11)
                         .withDamage(12.0f)
                         .withDashSpeed(40.0f)
@@ -75,7 +72,6 @@ public class BeastBreathingMoveset extends AbstractMoveset {
 
                 // 0 - Third Fang: Devour
                 .withMove(new MoveBuilder("devour", "Devour")
-                        .withAnimation("nichirin:beast_devour", 8)
                         .withTiming(60, 3, 14)
                         .withDamage(8.0f)
                         .withRange(3.5f)
@@ -89,7 +85,6 @@ public class BeastBreathingMoveset extends AbstractMoveset {
 
                 // 1 - Fourth Fang: Slice 'n' Dice
                 .withMove(new MoveBuilder("slice_n_dice", "Slice 'n' Dice")
-                        .withAnimation("nichirin:beast_slice_dice", 9)
                         .withTiming(70, 2, 14)
                         .withDamage(3.0f)
                         .withRange(2.5f)
@@ -103,7 +98,6 @@ public class BeastBreathingMoveset extends AbstractMoveset {
 
                 // 2 - Fifth Fang: Crazy Cutting
                 .withMove(new MoveBuilder("crazy_cutting", "Crazy Cutting")
-                        .withAnimation("nichirin:beast_crazy_cutting", 10)
                         .withTiming(100, 2, 21)
                         .withDamage(5.0f)
                         .withRange(3.5f)
@@ -117,7 +111,6 @@ public class BeastBreathingMoveset extends AbstractMoveset {
 
                 // 3 - Sixth Fang: Palisade Bite
                 .withMove(new MoveBuilder("palisade_bite", "Palisade Bite")
-                        .withAnimation("nichirin:beast_palisade_bite", 9)
                         .withTiming(80, 2, 14)
                         .withDamage(6.0f)
                         .withRange(5.0f)
@@ -131,7 +124,6 @@ public class BeastBreathingMoveset extends AbstractMoveset {
 
                 // 4 - Seventh Form: Spatial Awareness
                 .withMove(new MoveBuilder("spatial_awareness", "Spatial Awareness")
-                        .withAnimation("nichirin:beast_spatial_awareness", 6)
                         .withTiming(200, 0, 4)
                         .withDamage(0.0f)
                         .withRange(30.0f)
@@ -145,7 +137,6 @@ public class BeastBreathingMoveset extends AbstractMoveset {
 
                 // 5 - Ninth Fang: Bendy Slash
                 .withMove(new MoveBuilder("bendy_slash", "Bendy Slash")
-                        .withAnimation("nichirin:beast_bendy_slash", 8)
                         .withTiming(60, 0, 4)
                         .withDamage(9.0f)
                         .withRange(8.0f)
@@ -159,7 +150,6 @@ public class BeastBreathingMoveset extends AbstractMoveset {
 
                 // 6 - Tenth Fang: Whirling Fangs
                 .withMove(new MoveBuilder("whirling_fangs", "Whirling Fangs")
-                        .withAnimation("nichirin:beast_whirling_fangs", 9)
                         .withTiming(80, 0, 14)
                         .withDamage(4.0f)
                         .withRange(3.0f)
@@ -173,7 +163,6 @@ public class BeastBreathingMoveset extends AbstractMoveset {
 
                 // 7 - Eleventh Fang: Throwing Strike
                 .withMove(new MoveBuilder("throwing_strike", "Throwing Strike")
-                        .withAnimation("nichirin:beast_throwing_strike", 10)
                         .withTiming(120, 3, 7)
                         .withDamage(12.0f)
                         .withRange(15.0f)

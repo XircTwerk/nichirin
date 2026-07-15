@@ -27,7 +27,6 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                 .withSpeedMultiplier(1.1f)
 
                 .withMove(new MoveBuilder("tempo_breaker", "Tempo Breaker")
-                        .withAnimation("nichirin:tempo_breaker", 8)
                         .withTiming(0, 8, 42)
                         .withDamage(0f) // explosion is what deals the damage
                         .withRange(5.0f)
@@ -41,7 +40,6 @@ public class SoundBreathingMoveset extends AbstractMoveset {
                 )
 
                 .withMove(new MoveBuilder("rhythmic_step", "Rhythmic Step")
-                        .withAnimation("nichirin:rhythmic_step", 9)
                         .withTiming(0, 0, 14)
                         .withDamage(8.0f)
                         .withDashSpeed(4.0f)
@@ -57,7 +55,6 @@ public class SoundBreathingMoveset extends AbstractMoveset {
 
                 // First Form: Roar - AOE slam (INDEX 0 in wheel)
                 .withMove(new MoveBuilder("roar", "Roar")
-                        .withAnimation("nichirin:roar", 10)
                         .withTiming(160, 50, 14)
                         .withDamage(20.0f)
                         .withRange(13.5f)
@@ -71,7 +68,6 @@ public class SoundBreathingMoveset extends AbstractMoveset {
 
                 // Fourth Form: Constant Resounding Slashes - 360° defense (INDEX 1 in wheel)
                 .withMove(new MoveBuilder("constant_resounding_slashes", "Constant Resounding Slashes")
-                        .withAnimation("nichirin:constant_resounding_slashes", 12)
                         .withTiming(180, 5, 140)
                         .withDamage(6.0f)
                         .withRange(20.0f)
@@ -85,7 +81,6 @@ public class SoundBreathingMoveset extends AbstractMoveset {
 
                 // Fifth Form: String Performance - Multi-segment dash (INDEX 2 in wheel)
                 .withMove(new MoveBuilder("string_performance", "String Performance")
-                        .withAnimation("nichirin:string_performance", 15)
                         .withTiming(160, 14, 56)
                         .withDamage(14.0f)
                         .withDashSpeed(16.0f)
