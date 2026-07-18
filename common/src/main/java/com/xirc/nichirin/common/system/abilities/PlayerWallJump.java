@@ -73,9 +73,14 @@ public final class PlayerWallJump {
      * chain cost.
      */
     public static boolean canWallJump(Player player) {
+
         if (!PlayerDoubleJump.hasAirJumpTiming(player)) return false;
+
         if (player.hasEffect(NichirinEffectRegistry.stunned())
                 || player.hasEffect(NichirinEffectRegistry.disoriented())) return false;
+
+        if (player.getAbilities().flying) return false;
+
         return StaminaManager.hasStamina(player, getCost(player));
     }
 
