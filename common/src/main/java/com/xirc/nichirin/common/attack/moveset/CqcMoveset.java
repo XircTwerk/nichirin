@@ -412,7 +412,7 @@ public class CqcMoveset extends AbstractMoveset {
     public static final MoveConfiguration DEMON_BITE = new MoveBuilder("demon_bite", "Bite")
             .withDescription("Bite attack that steals blood.")
             .withTiming(100, 5, 11)
-            .withDamage(8.0f)
+            .withDamage(5.0f)
             .withRange(2.0f)
             .withKnockback(0.1f)
             .withHitStun(20)
