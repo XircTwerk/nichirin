@@ -132,7 +132,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 // Sixth Form: Whirlpool - Rising whirlpool attack (INDEX 3)
                 .withMove(new MoveBuilder("whirlpool", "Whirlpool")
                         .withTiming(380, 14, 49)
-                        .withDamage(2f) // Multi-hit spinning damage
+                        .withDamage(1f) // Multi-hit spinning damage
                         .withRange(3.0f) // Whirlpool radius
                         .withKnockback(0.1f) // Light knockback, enemies spin around
                         .withBreathCost(20.0f)

@@ -17,11 +17,11 @@ import java.util.UUID;
 // Form 5: Fast multi-hop zigzag charge with large hitboxes. Drags enemies into a straight finisher.
 public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
 
-    private static final int   ZIGZAG_COUNT   = 10;  // many quick dashes
-    private static final int   DASH_DURATION  = 4;   // hit-sampling window per hop
+    private static final int   ZIGZAG_COUNT   = 5;  // many quick dashes
+    private static final int   DASH_DURATION  = 2;   // hit-sampling window per hop
     private static final int   DASH_INTERVAL  = 1;   // ticks between hops
     private static final float ZIGZAG_ANGLE   = 30f; // alternating left/right angle
-    private static final float SPEED_FACTOR   = 0.9f; // dashSpeed * this = hop velocity (blocks/tick)
+    private static final float SPEED_FACTOR   = 1.2f; // dashSpeed * this = hop velocity (blocks/tick)
 
     private int     zigzagsExecuted = 0;
     private int     nextZigzagTick  = 0;
