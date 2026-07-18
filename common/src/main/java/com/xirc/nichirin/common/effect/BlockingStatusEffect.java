@@ -7,9 +7,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.player.Player;
 
-import net.minecraft.network.chat.Component;
 
 /**
  * Blocking Status Effect - Applied when a player is blocking with a katana
@@ -41,17 +39,10 @@ public class BlockingStatusEffect extends MobEffect {
 
     @Override
     public boolean applyEffectTick(LivingEntity entity, int amplifier) {
-        // If entity has blocking effect and gets stunned, remove the stun
+        // If entity has blocking effect and gets stunned, remove the stun (silently — the
+        // per-tick action-bar message was too spammy).
         if (entity.hasEffect(NichirinEffectRegistry.stunned())) {
             entity.removeEffect(NichirinEffectRegistry.stunned());
-
-            if (entity instanceof Player player) {
-                player.displayClientMessage(
-                        Component.literal("Blocking protects you from stun!")
-                                .withStyle(style -> style.withColor(0x55FF55)),
-                        true
-                );
-            }
         }
         return true;
     }

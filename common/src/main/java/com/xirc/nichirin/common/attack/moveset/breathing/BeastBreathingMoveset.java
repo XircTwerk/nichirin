@@ -187,7 +187,7 @@ public class BeastBreathingMoveset extends AbstractMoveset {
 
     @Override
     public boolean canPerformMoves(LivingEntity entity) {
-        return super.canPerformMoves(entity) && hasDualKatanas(entity);
+        return super.canPerformMoves(entity) && requireDualKatanas(entity);
     }
 
     @Override
@@ -202,9 +202,8 @@ public class BeastBreathingMoveset extends AbstractMoveset {
     }
 
     @Override
-    public boolean handleLeftClick(LivingEntity entity) {
-        if (!canPerformMoves(entity)) return true;
-        return super.handleLeftClick(entity);
+    protected boolean canPerformLeftClick(LivingEntity entity) {
+        return super.canPerformMoves(entity) && requireMainhandKatana(entity);
     }
 
     @Override

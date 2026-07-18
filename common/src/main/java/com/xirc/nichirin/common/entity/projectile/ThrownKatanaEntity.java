@@ -67,7 +67,6 @@ public class ThrownKatanaEntity extends Entity {
 
     public ThrownKatanaEntity(EntityType<? extends ThrownKatanaEntity> entityType, Level level) {
         super(entityType, level);
-        this.setNoGravity(true);
     }
 
     public ThrownKatanaEntity(EntityType<? extends ThrownKatanaEntity> entityType, Level level,
@@ -140,16 +139,13 @@ public class ThrownKatanaEntity extends Entity {
 
         Vec3 motion = getDeltaMovement().add(0.0, -0.05, 0.0);
         setDeltaMovement(motion);
+        Vec3 start = position();
+        Vec3 end = start.add(motion);
 
         // Keep travelDir current so makeBoundingBox() stays accurate in flight.
         if (motion.lengthSqr() > 0.001) {
             travelDir = motion.normalize();
         }
-
-        // Move forward
-        this.setPos(getX() + motion.x, getY() + motion.y, getZ() + motion.z);
-        // Refresh AABB after moving so the oriented hitbox tracks the new position.
-        this.setBoundingBox(makeBoundingBox());
 
         // Point toward travel direction
         double horizDist = Math.sqrt(motion.x * motion.x + motion.z * motion.z);
@@ -158,22 +154,18 @@ public class ThrownKatanaEntity extends Entity {
         this.setYRot((float) (Mth.atan2(motion.x, motion.z) * (180.0 / Math.PI)));
         this.setXRot((float) (Mth.atan2(-motion.y, horizDist) * (180.0 / Math.PI)));
 
-        // Check block collision
-        if (!this.level().noCollision(this, this.getBoundingBox().move(motion))) {
-            // Raycast to exact surface, then back off so tip sits at the surface
-            // (blade tip is 31/16 blocks from model origin along travel direction)
-            BlockHitResult hit = level().clip(new ClipContext(
-                    position(), position().add(motion),
-                    ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
-            if (hit.getType() != HitResult.Type.MISS) {
-                Vec3 dir = motion.normalize();
-                Vec3 surface = hit.getLocation();
-                // Back off by (KATANA_HALF_LEN - 0.3) so the tip embeds ~0.3 blocks into the block
-                double backoff = KATANA_HALF_LEN - 0.3;
-                setPos(surface.x - dir.x * backoff,
-                       surface.y - dir.y * backoff,
-                       surface.z - dir.z * backoff);
-            }
+        // Only stick after a real block hit along this tick's path. The old broad
+        // collision check could report a nearby block and freeze the katana in air.
+        BlockHitResult hit = level().clip(new ClipContext(
+                start, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+        if (hit.getType() == HitResult.Type.BLOCK) {
+            Vec3 dir = motion.normalize();
+            Vec3 surface = hit.getLocation();
+            // Back off so the blade tip embeds about 0.3 blocks into the surface.
+            double backoff = KATANA_HALF_LEN - 0.3;
+            setPos(surface.x - dir.x * backoff,
+                   surface.y - dir.y * backoff,
+                   surface.z - dir.z * backoff);
             stuck = true;
             entityData.set(STUCK, true);
             setDeltaMovement(Vec3.ZERO);
@@ -183,6 +175,10 @@ public class ThrownKatanaEntity extends Entity {
                     SoundEvents.ARROW_HIT, SoundSource.NEUTRAL, 1.0f, 1.2f);
             return;
         }
+
+        setPos(end);
+        // Refresh AABB after moving so the oriented hitbox tracks the new position.
+        this.setBoundingBox(makeBoundingBox());
 
         // Pierce entities
         if (!this.level().isClientSide) {
@@ -227,6 +223,7 @@ public class ThrownKatanaEntity extends Entity {
     protected void readAdditionalSaveData(CompoundTag tag) {
         lifeTicks = tag.getInt("LifeTicks");
         stuck = tag.getBoolean("Stuck");
+        entityData.set(STUCK, stuck);
         damage = tag.getFloat("Damage");
         hitStun = tag.getInt("HitStun");
         if (tag.contains("ThrownItem")) {

@@ -124,7 +124,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
 
     @Override
     public boolean canPerformMoves(LivingEntity entity) {
-        return super.canPerformMoves(entity) && hasSingleKatana(entity);
+        return super.canPerformMoves(entity) && requireSingleKatana(entity);
     }
 
     @Override

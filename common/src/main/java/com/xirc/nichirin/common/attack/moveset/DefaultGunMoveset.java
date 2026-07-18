@@ -114,6 +114,13 @@ public class DefaultGunMoveset extends AbstractMoveset {
     }
 
     @Override
+    protected boolean usesMoveIdAnimation() {
+        // The gun uses AzureLib held-item animations sent via GunAnimationPacket, not player
+        // animations keyed by move id — so no move-id fallback for gun_bash / grab.
+        return false;
+    }
+
+    @Override
     public boolean handleLeftClick(LivingEntity entity) {
         if (entity instanceof Player player) fire(player, 1);
         return true;
