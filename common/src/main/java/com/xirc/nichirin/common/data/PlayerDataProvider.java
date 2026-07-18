@@ -83,6 +83,7 @@ public class PlayerDataProvider {
             } // Sync to client AFTER data is loaded and applied
             syncToClient(serverPlayer);
             SheathingManager.syncPlayer(serverPlayer);
+            NichirinPacketRegistry.sendServerConfig(serverPlayer);
         });
 
         // Handle player quit - save data and cleanup

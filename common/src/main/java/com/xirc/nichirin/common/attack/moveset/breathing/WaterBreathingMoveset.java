@@ -158,7 +158,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 // Eighth Form: Waterfall Basin - BIG ASS MULTIHIT (INDEX 5)
                 .withMove(new MoveBuilder("waterfall_basin", "Waterfall Basin")
                         .withTiming(400, 16, 84)
-                        .withDamage(0.75f) // High DPS multi-hit
+                        .withDamage(0.25f) // High DPS multi-hit
                         .withRange(6.0f) // Large waterfall area
                         .withKnockback(0.0f) // Light knockback to keep enemies in waterfall
                         .withBreathCost(35.0f)
@@ -207,6 +207,11 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                         .withDescription("Deploys a large auto-targeting field that damages nearby enemies for 10 seconds.")
                         .withAttack(DeadCalmAttack::new)
                 );
+    }
+
+    @Override
+    public boolean canPerformMoves(LivingEntity entity) {
+        return super.canPerformMoves(entity) && hasSingleKatana(entity);
     }
 
     @Override

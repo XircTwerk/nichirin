@@ -50,8 +50,10 @@ public class ComboTracker {
      */
     public static int getModifiedHitStun(Player player, String moveId, int originalHitStun) {
         String lastMove = playerLastMove.get(player.getUUID());
+        boolean inCombo = player instanceof IComboCounter comboCounter
+                && comboCounter.nichirin$getComboCount() > 0;
 
-        if (moveId != null && moveId.equals(lastMove)) {
+        if (inCombo && moveId != null && moveId.equals(lastMove)) {
             return 0;
         }
 

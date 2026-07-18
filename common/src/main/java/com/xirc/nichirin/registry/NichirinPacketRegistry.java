@@ -57,6 +57,7 @@ public interface NichirinPacketRegistry {
     ResourceLocation DOUBLE_JUMP_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "double_jump");
     ResourceLocation WALL_JUMP_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "wall_jump");
     ResourceLocation CONFIG_SYNC_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "config_sync");
+    ResourceLocation SERVER_CONFIG_SYNC_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "server_config_sync");
     ResourceLocation BREATHING_MOVE_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "breathing_move");
     ResourceLocation BREATHING_EFFECT_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "breathing_effect");
     ResourceLocation SYNC_BREATH_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "sync_breath");
@@ -125,6 +126,7 @@ public interface NichirinPacketRegistry {
         PACKET_IDS.put(DoubleJumpPacket.class, DOUBLE_JUMP_ID);
         PACKET_IDS.put(WallJumpPacket.class, WALL_JUMP_ID);
         PACKET_IDS.put(ConfigSyncPacket.class, CONFIG_SYNC_ID);
+        PACKET_IDS.put(ServerConfigSyncPacket.class, SERVER_CONFIG_SYNC_ID);
         PACKET_IDS.put(BreathingMovePacket.class, BREATHING_MOVE_ID);
         PACKET_IDS.put(DemonMovePacket.class, DEMON_MOVE_ID);
         PACKET_IDS.put(BreathingEffectPacket.class, BREATHING_EFFECT_ID);
@@ -177,7 +179,7 @@ public interface NichirinPacketRegistry {
      */
     static void registerS2CTypesForServer() {
         ResourceLocation[] s2cIds = {
-                BREATHING_EFFECT_ID, SYNC_BREATH_ID, SYNC_STAMINA_ID, SYNC_STANCE_ID,
+                BREATHING_EFFECT_ID, SYNC_BREATH_ID, SYNC_STAMINA_ID, SYNC_STANCE_ID, SERVER_CONFIG_SYNC_ID,
                 PLAYER_ANIMATION_ID, COMBO_COUNTER_ID, MOVESET_CONFIG_ID, SYNC_BREATHING_STYLE,
                 SYNC_PROGRESSION_ID, DEMON_SYNC_ID, HITBOX_PACKET_ID, TRIGGER_SHADER_ID,
                 PARRY_SPARK_ID, BLOOD_MOON_SYNC_ID, PERK_SYNC_ID, OPEN_TRAINER_DIALOGUE_ID,
@@ -445,6 +447,11 @@ public interface NichirinPacketRegistry {
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, SYNC_STANCE_ID, (buf, context) -> {
                 StanceSyncPacket packet = new StanceSyncPacket(buf);
                 context.queue(() -> packet.handleClient());
+            });
+
+            NetworkManager.registerReceiver(NetworkManager.Side.S2C, SERVER_CONFIG_SYNC_ID, (buf, context) -> {
+                ServerConfigSyncPacket packet = new ServerConfigSyncPacket(buf);
+                context.queue(packet::handleClient);
             });
 
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, PLAYER_ANIMATION_ID, (buf, context) -> {
@@ -1133,6 +1140,20 @@ public interface NichirinPacketRegistry {
         }
     }
 
+    static void sendServerConfig(ServerPlayer player) {
+        if (player == null) return;
+        sendToPlayer(new ServerConfigSyncPacket(
+                com.xirc.nichirin.common.config.NichirinServerConfig.toJson(
+                        com.xirc.nichirin.common.config.NichirinServerConfig.get())), player);
+    }
+
+    static void broadcastServerConfig(MinecraftServer server) {
+        if (server == null) return;
+        sendToAll(new ServerConfigSyncPacket(
+                com.xirc.nichirin.common.config.NichirinServerConfig.toJson(
+                        com.xirc.nichirin.common.config.NichirinServerConfig.get())), server);
+    }
+
     static void sendDemonSync(ServerPlayer player, int bloodPoints, int halfBloodPoints, boolean isDemon) {
         try {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
@@ -1153,6 +1174,8 @@ public interface NichirinPacketRegistry {
         } else if (packet instanceof WallJumpPacket p) {
             p.toBytes(buf);
         } else if (packet instanceof ConfigSyncPacket p) {
+            p.toBytes(buf);
+        } else if (packet instanceof ServerConfigSyncPacket p) {
             p.toBytes(buf);
         } else if (packet instanceof BreathingMovePacket p) {
             p.toBytes(buf);

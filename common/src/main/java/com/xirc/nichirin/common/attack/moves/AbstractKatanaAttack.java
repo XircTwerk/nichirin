@@ -242,6 +242,7 @@ public abstract class AbstractKatanaAttack {
     public boolean isActive()     { return isActive; }
     public int getTotalDuration() { return startup + active + recovery; }
     public int getCooldown()      { return cooldown; }
+    public int getHitStun()       { return hitStun; }
 
     public void applyDamageAndStunMultiplier(float multiplier) {
         if (multiplier == 1.0f) return;
@@ -249,6 +250,10 @@ public abstract class AbstractKatanaAttack {
         if (this.hitStun > 0) {
             this.hitStun = Math.max(1, Math.round(this.hitStun * multiplier));
         }
+    }
+
+    public void setHitStun(int hitStun) {
+        this.hitStun = Math.max(0, hitStun);
     }
 
 

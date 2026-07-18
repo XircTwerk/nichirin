@@ -144,6 +144,12 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
     }
 
     @Override
+    protected void hitTargetNoImmunity(LivingEntity target) {
+        super.hitTargetNoImmunity(target);
+        applyMistBlur(target, 60);
+    }
+
+    @Override
     protected void onStop() {
         user.setDeltaMovement(Vec3.ZERO);
         user.removeEffect(MobEffects.INVISIBILITY);

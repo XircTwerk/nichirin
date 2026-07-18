@@ -54,9 +54,9 @@ public class LunarDispersingMistAttack extends MistBreathingAttackBase {
 
         sustainFlight();
 
-        // Slash hitbox pulses every 4 ticks during mid-flight
+        // Slash hitbox pulses every 2 ticks during mid-flight.
         int ticksSinceWindup = tickCount - windup;
-        if (ticksSinceWindup >= 2 && ticksSinceWindup <= duration - 6 && ticksSinceWindup % 4 == 0) {
+        if (ticksSinceWindup >= 2 && ticksSinceWindup <= duration - 6 && ticksSinceWindup % 2 == 0) {
             performMidFlightSlash();
         }
 

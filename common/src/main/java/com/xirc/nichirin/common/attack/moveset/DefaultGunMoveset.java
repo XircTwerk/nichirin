@@ -40,7 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * <ul>
  *   <li>Left-click — fire 1 bullet</li>
  *   <li>Right-click — fire both bullets</li>
- *   <li>Crouch + Right-click — reload to {@link GenyaDB#MAX_AMMO}</li>
+ *   <li>Right-click — reload to {@link GenyaDB#MAX_AMMO}</li>
  *   <li>Wheel 0 — Gun Bash, Wheel 1 — Grab</li>
  * </ul>
  */
@@ -48,7 +48,7 @@ public class DefaultGunMoveset extends AbstractMoveset {
 
     public static final DefaultGunMoveset INSTANCE = new DefaultGunMoveset();
 
-    private static final int RELOAD_TICKS = 30;
+    public static final int RELOAD_TICKS = 30;
     private static final float PISTOL_WHIP_DAMAGE = 3.0f;
 
     private static final Map<UUID, Long> reloadUntil = new ConcurrentHashMap<>();
@@ -248,6 +248,7 @@ public class DefaultGunMoveset extends AbstractMoveset {
         long now = player.level().getGameTime();
         if (now < reloadUntil.getOrDefault(player.getUUID(), 0L)) return;
         pendingReloads.remove(player.getUUID());
+        reloadUntil.remove(player.getUUID());
 
         int ammo = GenyaDB.getAmmo(stack);
         int needed = GenyaDB.MAX_AMMO - ammo;
@@ -299,7 +300,7 @@ public class DefaultGunMoveset extends AbstractMoveset {
     private void emptyClick(Player player) {
         playSound(player, SoundEvents.LEVER_CLICK, 0.6f, 1.4f);
         player.displayClientMessage(
-                Component.literal("Empty! Crouch + Right-click to reload").withStyle(s -> s.withColor(0xFF5555)), true);
+                Component.literal("Empty! Right-click to reload").withStyle(s -> s.withColor(0xFF5555)), true);
     }
 
     private boolean onCooldown(LivingEntity entity, int moveIndex) {

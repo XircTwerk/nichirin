@@ -8,6 +8,7 @@ import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
 import com.xirc.nichirin.common.attack.component.AbstractDemonAttack;
 import com.xirc.nichirin.common.attack.moves.AbstractKatanaAttack;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
+import com.xirc.nichirin.common.item.katana.Katana;
 import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
 import com.xirc.nichirin.common.util.ComboTracker;
 import com.xirc.nichirin.common.util.NetworkBufferUtils;
@@ -42,6 +43,7 @@ public class MoveExecutor {
     private static final ResourceLocation COOLDOWN_PACKET_ID = ResourceLocation.fromNamespaceAndPath("nichirin", "cooldown_display");
     private static boolean hitboxDebuggingEnabled = false;
     private static final Set<Object> comboScaledAttacks = Collections.newSetFromMap(new WeakHashMap<>());
+    private static final ConcurrentHashMap<UUID, String> activeKatanaMovesets = new ConcurrentHashMap<>();
 
     public static void executeAttack(LivingEntity entity, Object attack, String movesetId, String moveId) {
         if (entity.hasEffect(NichirinEffectRegistry.stunned())) return;
@@ -98,15 +100,6 @@ public class MoveExecutor {
         AbstractMoveset.MoveConfiguration config = findMoveConfig(moveset, moveId);
         if (config == null) return;
 
-        int originalHitStun = config.getHitStunOrDefault(0);
-        int modifiedHitStun = originalHitStun;
-        if (entity instanceof Player player) {
-            modifiedHitStun = ComboTracker.getModifiedHitStun(player, moveId, originalHitStun);
-        }
-        if (modifiedHitStun != originalHitStun) {
-            config = createModifiedConfig(config, modifiedHitStun);
-        }
-
         applyMoveStun(entity, config);
 
         if (attack instanceof AbstractBreathingAttack<?, ?> breathingAttack) {
@@ -117,16 +110,10 @@ public class MoveExecutor {
     }
 
     private static void applyPreConfiguredEffects(LivingEntity entity, AbstractBreathingAttack<?, ?> attack, String moveId) {
-        if (entity instanceof Player player) {
-            ComboTracker.getModifiedHitStun(player, moveId, attack.getHitStun());
-        }
         applyPreConfiguredMoveStun(entity, attack);
     }
 
     private static void applyPreConfiguredDemonEffects(LivingEntity entity, AbstractDemonAttack<?, ?> attack, String moveId) {
-        if (entity instanceof Player player) {
-            ComboTracker.getModifiedHitStun(player, moveId, getHitStunFromAttack(attack));
-        }
         applyPreConfiguredDemonMoveStun(entity, attack);
     }
 
@@ -206,10 +193,6 @@ public class MoveExecutor {
         } catch (Exception e) { return 0; }
     }
 
-    private static AbstractMoveset.MoveConfiguration createModifiedConfig(AbstractMoveset.MoveConfiguration originalConfig, int newHitStun) {
-        return originalConfig;
-    }
-
     private static AbstractMoveset.MoveConfiguration findMoveConfig(AbstractMoveset moveset, String moveId) {
         for (int i = 0; i < moveset.getMoveCount(); i++) {
             var config = moveset.getMove(i);
@@ -245,11 +228,13 @@ public class MoveExecutor {
     private static void executeAttackInternal(LivingEntity entity, Object attack, String displayName, int cooldown,
                                               String movesetId, AbstractMoveset.MoveConfiguration config) {
         if (!isAttackActive(attack)) {
-            applyComboAttackScaling(entity, attack, displayName);
+            String moveId = config != null ? config.getMoveId() : displayName;
+            applyComboAttackScaling(entity, attack, moveId);
             startAttack(entity, attack);
 
             if (isAttackActive(attack)) {
                 trackAttack(entity, attack);
+                trackKatanaRequirement(entity, movesetId);
                 if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer && cooldown > 0) {
                     if (movesetId != null && config != null) {
                         CooldownDisplayPacket.sendToClient(serverPlayer, movesetId, config);
@@ -261,12 +246,13 @@ public class MoveExecutor {
         }
     }
 
-    private static void applyComboAttackScaling(LivingEntity entity, Object attack, String displayName) {
+    private static void applyComboAttackScaling(LivingEntity entity, Object attack, String moveId) {
         if (!(entity instanceof Player player) || attack == null || comboScaledAttacks.contains(attack)) {
             return;
         }
 
-        ComboTracker.registerAttackStart(player, displayName);
+        applyInfinitePrevention(player, attack, moveId);
+        ComboTracker.registerAttackStart(player, moveId);
         float multiplier = ComboTracker.getAttackComboMultiplier(player);
         if (multiplier == 1.0f) {
             comboScaledAttacks.add(attack);
@@ -361,6 +347,7 @@ public class MoveExecutor {
     public static boolean isHitboxDebuggingEnabled() { return hitboxDebuggingEnabled; }
 
     public static void tickAttacks(LivingEntity entity) {
+        if (entity instanceof Player player && cancelForInvalidKatanaSetup(player)) return;
         var attacks = activeAttacks.get(entity.getUUID());
         if (attacks != null) {
             attacks.removeIf(attack -> {
@@ -368,6 +355,19 @@ public class MoveExecutor {
                 catch (Exception e) { return true; }
             });
             if (attacks.isEmpty()) activeAttacks.remove(entity.getUUID());
+        }
+        if (!hasActiveAttacks(entity) && !AbstractAttack.hasActiveAttack(entity)) {
+            activeKatanaMovesets.remove(entity.getUUID());
+        }
+    }
+
+    private static void applyInfinitePrevention(Player player, Object attack, String moveId) {
+        if (attack instanceof AbstractAttack abstractAttack) {
+            abstractAttack.setHitStun(ComboTracker.getModifiedHitStun(
+                    player, moveId, abstractAttack.getHitStun()));
+        } else if (attack instanceof AbstractKatanaAttack katanaAttack) {
+            katanaAttack.setHitStun(ComboTracker.getModifiedHitStun(
+                    player, moveId, katanaAttack.getHitStun()));
         }
     }
 
@@ -410,6 +410,7 @@ public class MoveExecutor {
                 stopAttackObject(attack);
             }
         }
+        activeKatanaMovesets.remove(entity.getUUID());
     }
 
     public static void clearAttacks(Player player) { clearAttacks((LivingEntity) player); }
@@ -493,6 +494,36 @@ public class MoveExecutor {
 
     public static int stopAttacksOfType(Player player, Class<?> attackType) {
         return stopAttacksOfType((LivingEntity) player, attackType);
+    }
+
+    private static void trackKatanaRequirement(LivingEntity entity, String movesetId) {
+        if (!(entity instanceof Player) || movesetId == null) return;
+        AbstractMoveset moveset = NichirinMovesetRegistry.getMoveset(movesetId);
+        if (moveset != null && (moveset.isBreathingMoveset() || "default_katana".equals(movesetId))) {
+            activeKatanaMovesets.put(entity.getUUID(), movesetId);
+        }
+    }
+
+    private static boolean cancelForInvalidKatanaSetup(Player player) {
+        String movesetId = activeKatanaMovesets.get(player.getUUID());
+        if (movesetId == null) return false;
+        boolean valid = switch (movesetId) {
+            case "sound_breathing", "beast_breathing" -> AbstractMoveset.hasDualKatanas(player);
+            case "default_katana" -> player.getMainHandItem().getItem() instanceof Katana;
+            default -> AbstractMoveset.hasSingleKatana(player);
+        };
+        if (valid) return false;
+
+        boolean cancelled = hasActiveAttacks(player) || AbstractAttack.hasActiveAttack(player);
+        clearAttacks(player);
+        AbstractAttack.clearSelfTickingAttacks(player);
+        activeKatanaMovesets.remove(player.getUUID());
+        if (cancelled) {
+            player.setDeltaMovement(0.0, player.getDeltaMovement().y, 0.0);
+            player.addEffect(new MobEffectInstance(
+                    NichirinEffectRegistry.stunned(), 5, 0, false, false, false));
+        }
+        return cancelled;
     }
 
     public static void registerClientHandler() {

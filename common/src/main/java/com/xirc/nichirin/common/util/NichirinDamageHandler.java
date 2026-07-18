@@ -1,7 +1,6 @@
 package com.xirc.nichirin.common.util;
 
 import com.xirc.nichirin.common.config.NichirinModConfig;
-import com.xirc.nichirin.common.entity.npc.BaseBreathingTrainerEntity;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -13,10 +12,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class NichirinDamageHandler {
     public static final float ARMOR_DAMAGE_MULTIPLIER = 0.1f;
-    // Halved from 1.35 / 1.15 — global rebalance: all mod attack damage divided by 2.
     private static final float ATTACK_DAMAGE_MULTIPLIER = 0.675f;
     private static final float DESTRUCTIVE_DEATH_CQC_DAMAGE_MULTIPLIER = 0.575f;
-    private static final float PERCENTAGE_DAMAGE_DIVISOR = 500.0f;
+    private static final float PERCENTAGE_DAMAGE_DIVISOR = 250.0f;
+    private static final float PLAYER_DAMAGE_MULTIPLIER = 0.5f;
 
     private static final ThreadLocal<Boolean> REDUCE_ARMOR_DAMAGE =
             ThreadLocal.withInitial(() -> false);
@@ -52,10 +51,7 @@ public final class NichirinDamageHandler {
                 source = NichirinDamageSources.percentage(target, source);
             }
             amount = applyParryPunishDamage(target, source, amount);
-            // Trainers deal half damage to players (covers their breathing / moveset attacks).
-            if (target instanceof Player && source.getEntity() instanceof BaseBreathingTrainerEntity) {
-                amount *= 0.5f;
-            }
+            if (target instanceof Player) amount *= PLAYER_DAMAGE_MULTIPLIER;
             float before = target.getHealth() + target.getAbsorptionAmount();
             boolean result = target.hurt(source, amount);
             float dealt = Math.max(0.0f, before - (target.getHealth() + target.getAbsorptionAmount()));

@@ -3,6 +3,7 @@ package com.xirc.nichirin.common.network.c2s;
 import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.config.NichirinServerConfig;
+import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -49,7 +50,14 @@ public class ConfigSyncPacket {
         NichirinServerConfig.save(parsed);
         BreathOfNichirin.LOGGER.info("Server config updated by {} via config screen.",
                 player.getGameProfile().getName());
-        player.displayClientMessage(Component.literal("Server config updated.")
-                .withStyle(ChatFormatting.GREEN), false);
+        NichirinPacketRegistry.broadcastServerConfig(player.getServer());
+        Component message = Component.literal("Server config updated by "
+                        + player.getGameProfile().getName() + ".")
+                .withStyle(ChatFormatting.GREEN);
+        for (ServerPlayer onlinePlayer : player.getServer().getPlayerList().getPlayers()) {
+            if (onlinePlayer.hasPermissions(2)) {
+                onlinePlayer.displayClientMessage(message, false);
+            }
+        }
     }
 }

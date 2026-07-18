@@ -12,7 +12,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 // Base for all Mist Breathing attacks. Provides shared particle helpers and hit overrides.
@@ -104,35 +103,12 @@ public abstract class MistBreathingAttackBase extends AbstractBreathingAttack<Mi
                 position.x, position.y + 0.5, position.z, 3, 0.2, 0.2, 0.2, 0.02);
     }
 
-    /** Apply the Blurry effect to all living entities within (range + 4) of the user. */
-    protected void applyBlurryEffect(int durationTicks) {
-        if (world == null || user == null || world.isClientSide) return;
-        double r = range + 4.0;
-        Vec3 pos = user.position();
-        world.getEntitiesOfClass(LivingEntity.class,
-                new AABB(pos.subtract(r, r, r), pos.add(r, r, r)),
-                e -> e.isAlive() && e != user)
-            .forEach(e -> e.addEffect(new MobEffectInstance(
-                    NichirinEffectRegistry.blurry(),
-                    durationTicks, 0, false, false, false)));
-
-        world.getEntitiesOfClass(ServerPlayer.class,
-                new AABB(pos.subtract(r, r, r), pos.add(r, r, r)),
-                e -> e.isAlive() && e != user)
-            .forEach(this::triggerMistBlur);
-
-    }
-
     @Override
     protected void hitTarget(LivingEntity target) {
         if (world.isClientSide) return;
         super.hitTarget(target);
         createMistHitParticles(target.position());
         playMistHitSound(target.position());
-        target.addEffect(new MobEffectInstance(NichirinEffectRegistry.blurry(), 60, 0, false, false, false));
-        if (target instanceof ServerPlayer player) {
-            triggerMistBlur(player);
-        }
     }
 
     @Override
@@ -141,10 +117,12 @@ public abstract class MistBreathingAttackBase extends AbstractBreathingAttack<Mi
         super.hitTargetNoImmunity(target);
         createMistHitParticles(target.position());
         playMistHitSound(target.position());
-        target.addEffect(new MobEffectInstance(NichirinEffectRegistry.blurry(), 60, 0, false, false, false));
-        if (target instanceof ServerPlayer player) {
-            triggerMistBlur(player);
-        }
+    }
+
+    protected void applyMistBlur(LivingEntity target, int durationTicks) {
+        target.addEffect(new MobEffectInstance(
+                NichirinEffectRegistry.blurry(), durationTicks, 0, false, false, false));
+        if (target instanceof ServerPlayer player) triggerMistBlur(player);
     }
 
     private void triggerMistBlur(ServerPlayer player) {

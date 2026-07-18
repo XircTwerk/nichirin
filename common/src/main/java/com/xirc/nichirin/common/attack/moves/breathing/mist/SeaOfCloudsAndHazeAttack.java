@@ -191,7 +191,7 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
         if (distance < 0.01) return getTargetsInCustomHitbox(to, radius, hitboxSize, radius);
 
         Set<LivingEntity> found = new HashSet<>();
-        int steps = Math.max(1, (int) Math.ceil(distance / Math.max(radius * 0.25, 0.1)));
+        int steps = Math.max(1, (int) Math.ceil(distance / Math.max(radius * 0.125, 0.05)));
         for (int i = 0; i <= steps; i++) {
             Vec3 sample = from.add(path.scale((double) i / steps));
             found.addAll(getTargetsInCustomHitbox(sample, radius, hitboxSize, radius));

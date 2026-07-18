@@ -31,7 +31,7 @@ public final class MistBlurOverlay {
         ((NichirinBlurAccessor) minecraft.gameRenderer).nichirin$processBlurEffect(
                 partialTicks.getGameTimeDeltaTicks(),
                 5.5F + alpha * 10.0F);
-        graphics.fill(0, 0, width, height, argb(alpha * 0.72F, 0xA9E4FF));
+        graphics.fill(0, 0, width, height, argb(alpha * 0.72F, 0xA9E4B8));
     }
 
     public static void tick() {

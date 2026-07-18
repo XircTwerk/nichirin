@@ -138,7 +138,8 @@ public class ThrownKatanaEntity extends Entity {
             return;
         }
 
-        Vec3 motion = getDeltaMovement();
+        Vec3 motion = getDeltaMovement().add(0.0, -0.05, 0.0);
+        setDeltaMovement(motion);
 
         // Keep travelDir current so makeBoundingBox() stays accurate in flight.
         if (motion.lengthSqr() > 0.001) {

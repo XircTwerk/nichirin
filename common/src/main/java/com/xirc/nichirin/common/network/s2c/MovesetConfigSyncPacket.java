@@ -197,9 +197,12 @@ public class MovesetConfigSyncPacket {
         }
 
         public AbstractMoveset.MoveConfiguration toMoveConfig() {
-            return new AbstractMoveset.MoveBuilder(moveId, displayName)
-                    .withDescription(description)
-                    .withAnimation(animationId != null ? animationId.toString() : null, animationPriority)
+            AbstractMoveset.MoveBuilder builder = new AbstractMoveset.MoveBuilder(moveId, displayName)
+                    .withDescription(description);
+            if (animationId != null) {
+                builder.withAnimation(animationId.toString(), animationPriority);
+            }
+            return builder
                     .withDamage(damage != null ? damage : 0)
                     .withRange(range != null ? range : 0)
                     .withKnockback(knockback != null ? knockback : 0)

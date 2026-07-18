@@ -23,6 +23,7 @@ public class LowCloudsDistantHazeAttack extends MistBreathingAttackBase {
     private Vec3 dashStartPos;
     private int dashTick = 0;
     private int dashDuration = 0;
+    private Vec3 lastHitboxPos;
     private final Set<LivingEntity> hitEntities = new HashSet<>();
 
     @Override
@@ -33,6 +34,7 @@ public class LowCloudsDistantHazeAttack extends MistBreathingAttackBase {
         hitEntities.clear();
         dashDirection = null;
         dashStartPos = null;
+        lastHitboxPos = null;
 
         // Mist coils at feet during windup
         if (world instanceof ServerLevel serverLevel) {
@@ -88,14 +90,17 @@ public class LowCloudsDistantHazeAttack extends MistBreathingAttackBase {
         boolean isFinalTick = dashTick >= dashDuration;
         float boxSize = isFinalTick ? hitboxSize * 1.5f : hitboxSize;
         HitboxData hb = new HitboxData(boxSize);
-        AABB hitbox = hb.createAABB(center, dashDirection, (float) Math.toRadians(user.getYRot()));
-
-        if (user instanceof ServerPlayer sp) {
-            NichirinPacketRegistry.sendHitboxToClient(sp, hitbox, 200L);
+        Set<LivingEntity> targets = new HashSet<>();
+        Vec3 midpoint = lastHitboxPos != null ? lastHitboxPos.lerp(center, 0.5) : center;
+        for (Vec3 sample : List.of(midpoint, center)) {
+            AABB hitbox = hb.createAABB(sample, dashDirection, (float) Math.toRadians(user.getYRot()));
+            if (user instanceof ServerPlayer sp) {
+                NichirinPacketRegistry.sendHitboxToClient(sp, hitbox, 200L);
+            }
+            targets.addAll(world.getEntitiesOfClass(LivingEntity.class, hitbox,
+                    e -> e != user && e.isAlive()));
         }
-
-        List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, hitbox,
-                e -> e != user && e.isAlive());
+        lastHitboxPos = center;
         for (LivingEntity target : targets) {
             if (!hitEntities.contains(target)) {
                 hitTarget(target);
@@ -126,6 +131,7 @@ public class LowCloudsDistantHazeAttack extends MistBreathingAttackBase {
         dashTick = 0;
         dashDuration = 0;
         dashStartPos = null;
+        lastHitboxPos = null;
         hitEntities.clear();
     }
 

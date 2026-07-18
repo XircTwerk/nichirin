@@ -825,8 +825,10 @@ public class CqcMoveset extends AbstractMoveset {
     }
 
     public static String animationNameFor(MoveConfiguration config) {
-        if (config == null || config.getAnimationId() == null) return "";
-        return config.getAnimationId().getPath();
+        if (config == null) return "";
+        return config.getAnimationId() != null
+                ? config.getAnimationId().getPath()
+                : config.getMoveId();
     }
 
     private static CqcPresetData defaultPreset() {

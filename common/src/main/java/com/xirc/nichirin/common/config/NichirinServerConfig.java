@@ -43,11 +43,12 @@ public final class NichirinServerConfig {
      * without a restart. Gameplay reads {@link NichirinModConfig#get()} fresh, so swapping the cached
      * instance is enough for server-side values.
      */
-    public static synchronized void pollForChanges() {
+    public static synchronized boolean pollForChanges() {
         FileTime current = currentModifiedTime();
-        if (current == null || current.equals(lastModified)) return;
+        if (current == null || current.equals(lastModified)) return false;
         BreathOfNichirin.LOGGER.info("Detected change to {}, reloading server config.", PATH);
         load();
+        return true;
     }
 
     private static FileTime currentModifiedTime() {
@@ -119,6 +120,17 @@ public final class NichirinServerConfig {
             lastModified = currentModifiedTime();
         } catch (IOException e) {
             BreathOfNichirin.LOGGER.warn("Failed to save {}.", PATH, e);
+        }
+    }
+
+    /** Applies a server-provided config in memory without writing it to the client's config file. */
+    public static synchronized void applySyncedConfig(NichirinModConfig syncedConfig) {
+        if (syncedConfig == null) return;
+        config = syncedConfig;
+        try {
+            me.shedaniel.autoconfig.AutoConfig.getConfigHolder(NichirinModConfig.class)
+                    .setConfig(syncedConfig);
+        } catch (Exception ignored) {
         }
     }
 

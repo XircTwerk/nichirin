@@ -2,6 +2,7 @@ package com.xirc.nichirin.common.attack.moveset;
 
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.entity.MovesetCapableNPC;
+import com.xirc.nichirin.common.item.katana.Katana;
 import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
 import com.xirc.nichirin.common.util.EntityResources;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
@@ -11,6 +12,7 @@ import lombok.Setter;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -219,7 +221,7 @@ public abstract class AbstractMoveset {
      * Override the left-click (M1) behavior - works for both Player and NPC
      */
     public boolean handleLeftClick(LivingEntity entity) {
-        if (entity.hasEffect(NichirinEffectRegistry.stunned())) {
+        if (!canPerformMoves(entity)) {
             return true;
         }
 
@@ -236,13 +238,15 @@ public abstract class AbstractMoveset {
      * Override the right-click (M2) behavior for Katana with stun checking and followup queuing
      */
     public boolean handleRightClick(LivingEntity entity, boolean isCrouching) {
-        if (entity.hasEffect(NichirinEffectRegistry.stunned())) {
-            FollowupQueue queue = entityFollowupQueues.get(entity.getUUID());
-            if (queue != null && queue.isAttackActive(System.currentTimeMillis()) && queue.canQueueNext()) {
-                queue.queueNext();
+        if (!canPerformMoves(entity)) {
+            if (entity.hasEffect(NichirinEffectRegistry.stunned())) {
+                FollowupQueue queue = entityFollowupQueues.get(entity.getUUID());
+                if (queue != null && queue.isAttackActive(System.currentTimeMillis()) && queue.canQueueNext()) {
+                    queue.queueNext();
 
-                EntityResources.sendMessage(entity,
-                        Component.literal("Followup queued!").withStyle(style -> style.withColor(0x55FF55)), true);
+                    EntityResources.sendMessage(entity,
+                            Component.literal("Followup queued!").withStyle(style -> style.withColor(0x55FF55)), true);
+                }
             }
             return true;
         }
@@ -366,7 +370,7 @@ public abstract class AbstractMoveset {
      * Performs a move by index with automatic animation handling - WORKS FOR ENTITIES
      */
     public void performMove(LivingEntity entity, int moveIndex) {
-        if (entity.hasEffect(NichirinEffectRegistry.stunned())) {
+        if (!canPerformMoves(entity)) {
             return;
         }
 
@@ -520,6 +524,18 @@ public abstract class AbstractMoveset {
      */
     public boolean canPerformMoves(LivingEntity entity) {
         return !entity.hasEffect(NichirinEffectRegistry.stunned());
+    }
+
+    public static boolean hasSingleKatana(LivingEntity entity) {
+        if (!(entity instanceof Player player)) return true;
+        return player.getMainHandItem().getItem() instanceof Katana
+                && player.getOffhandItem().isEmpty();
+    }
+
+    public static boolean hasDualKatanas(LivingEntity entity) {
+        if (!(entity instanceof Player player)) return true;
+        return player.getMainHandItem().getItem() instanceof Katana
+                && player.getOffhandItem().getItem() instanceof Katana;
     }
 
     /**

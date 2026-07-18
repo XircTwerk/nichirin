@@ -7,6 +7,7 @@ import com.xirc.nichirin.common.util.BreathingManager;
 import com.xirc.nichirin.common.util.ComboIntegration;
 import com.xirc.nichirin.common.util.NichirinDamageHandler;
 import com.xirc.nichirin.common.util.NichirinDamageSources;
+import com.xirc.nichirin.common.util.StaminaManager;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import lombok.Getter;
@@ -34,13 +35,18 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         extends AbstractAttack {
 
     protected float breathCost;
+    protected float staminaCost;
     private boolean breathConsumed = false;
+    private boolean staminaConsumed = false;
 
 
     public void configure(MoveConfiguration config) {
         if (configured) return;
         configureCommon(config);
-        if (config != null) this.breathCost = config.getBreathCostOrDefault(0f);
+        if (config != null) {
+            this.breathCost = config.getBreathCostOrDefault(0f);
+            this.staminaCost = config.getStaminaCostOrDefault(0f);
+        }
     }
 
 
@@ -51,10 +57,17 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         this.world = world;
         resetTickState();
         breathConsumed = false;
+        staminaConsumed = false;
 
         if (breathCost > 0 && !BreathingManager.hasBreath(player, breathCost)) {
             player.displayClientMessage(
                     Component.literal("Not enough breath!")
+                            .withStyle(s -> s.withColor(0xFF5555)), true);
+            return;
+        }
+        if (staminaCost > 0 && !StaminaManager.hasStamina(player, staminaCost)) {
+            player.displayClientMessage(
+                    Component.literal("Not enough stamina!")
                             .withStyle(s -> s.withColor(0xFF5555)), true);
             return;
         }
@@ -69,6 +82,14 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
                 return;
             }
         }
+        if (staminaCost > 0) {
+            if (StaminaManager.consume(player, staminaCost)) {
+                staminaConsumed = true;
+            } else {
+                if (breathConsumed) { BreathingManager.restore(player, breathCost); breathConsumed = false; }
+                return;
+            }
+        }
 
         this.isActive = true;
         registerForTicking();
@@ -79,12 +100,13 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
             BreathOfNichirin.LOGGER.error("Error starting breathing attack", e);
             this.isActive = false;
             if (breathConsumed) { BreathingManager.restore(player, breathCost); breathConsumed = false; }
+            if (staminaConsumed) { StaminaManager.restore(player, staminaCost); staminaConsumed = false; }
             return;
         }
 
-        if (!isActive && breathConsumed) {
-            BreathingManager.restore(player, breathCost);
-            breathConsumed = false;
+        if (!isActive) {
+            if (breathConsumed) { BreathingManager.restore(player, breathCost); breathConsumed = false; }
+            if (staminaConsumed) { StaminaManager.restore(player, staminaCost); staminaConsumed = false; }
         }
     }
 
