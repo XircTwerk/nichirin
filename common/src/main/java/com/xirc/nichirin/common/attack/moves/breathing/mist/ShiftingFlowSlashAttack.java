@@ -133,7 +133,7 @@ public class ShiftingFlowSlashAttack extends MistBreathingAttackBase {
         if (dist < 0.01) return getTargetsInCustomHitbox(to, radius, radius * 1.5, radius);
 
         Set<LivingEntity> found = new HashSet<>();
-        int steps = Math.max(1, (int) Math.ceil(dist / Math.max(radius * 0.25, 0.1)));
+        int steps = Math.max(1, (int) Math.ceil(dist / Math.max(radius * 0.125, 0.05)));
         for (int i = 0; i <= steps; i++) {
             Vec3 sample = from.add(dir.scale((double) i / steps));
             found.addAll(getTargetsInCustomHitbox(sample, radius, radius * 1.5, radius));

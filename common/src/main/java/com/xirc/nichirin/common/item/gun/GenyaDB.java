@@ -23,7 +23,7 @@ import net.minecraft.world.level.Level;
  * <ul>
  *   <li>Left-click — single shot (routed via the gun input packet)</li>
  *   <li>Right-click — double shot</li>
- *   <li>Crouch + Right-click — reload</li>
+ *   <li>Right-click — reload</li>
  *   <li>Wheel/hotkey 0 — Gun Bash, 1 — Grab</li>
  * </ul>
  */
@@ -69,7 +69,7 @@ public class GenyaDB extends Item {
             if (demon != ItemStackData.get(stack).getBoolean(DEMON_RENDER_KEY)) {
                 ItemStackData.update(stack, tag -> tag.putBoolean(DEMON_RENDER_KEY, demon));
             }
-        } else {
+        } else if (!(player.getMainHandItem().getItem() instanceof GenyaDB)) {
             // Swapped off the gun — a reload in progress is canceled, and any grab is dropped.
             DefaultGunMoveset.cancelReload(player);
             if (GrabManager.isGrabbing(player)) {

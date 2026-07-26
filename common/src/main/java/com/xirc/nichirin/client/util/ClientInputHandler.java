@@ -2,6 +2,7 @@ package com.xirc.nichirin.client.util;
 
 import com.xirc.nichirin.client.handler.AttackWheelHandler;
 import com.xirc.nichirin.common.data.MovesetHelper;
+import com.xirc.nichirin.common.attack.moveset.DefaultGunMoveset;
 import com.xirc.nichirin.common.item.katana.Katana;
 import com.xirc.nichirin.common.item.gun.GenyaDB;
 import com.xirc.nichirin.common.util.MultiplayerInputHandler;
@@ -121,6 +122,7 @@ public class ClientInputHandler {
     private static boolean gunFiredDouble = false;
     private static boolean gunWasDown = false;
     private static boolean gunUseWasDown = false;
+    private static long gunReloadPredictionUntil = 0L;
 
     /** Poll the attack key while holding the gun to distinguish a tapped vs held left-click. */
     private static void tickGunInput(Minecraft mc) {
@@ -149,11 +151,14 @@ public class ClientInputHandler {
         // Reload prediction: right-click (vanilla use) starts the reload server-side; play the
         // reload animation immediately so it isn't delayed by the server round trip.
         boolean useDown = holdingGun && mc.screen == null && mc.options.keyUse.isDown();
-        if (useDown && !gunUseWasDown) {
+        if (!holdingGun) gunReloadPredictionUntil = 0L;
+        long now = mc.level != null ? mc.level.getGameTime() : 0L;
+        if (useDown && !gunUseWasDown && now >= gunReloadPredictionUntil) {
             ItemStack gun = mc.player.getMainHandItem();
             if (GenyaDB.getAmmo(gun) < GenyaDB.MAX_AMMO
                     && (mc.player.getAbilities().instabuild || clientHasBullets(mc.player))) {
                 com.xirc.nichirin.client.animation.GenyaDBAnimator.predict("reload");
+                gunReloadPredictionUntil = now + DefaultGunMoveset.RELOAD_TICKS;
             }
         }
         gunUseWasDown = useDown;

@@ -95,6 +95,11 @@ public class SoundBreathingMoveset extends AbstractMoveset {
     }
 
     @Override
+    public boolean canPerformMoves(LivingEntity entity) {
+        return super.canPerformMoves(entity) && requireDualKatanas(entity);
+    }
+
+    @Override
     public int getMoveCount() {
         return 3;
     }

@@ -24,6 +24,7 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.BossEvent;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
@@ -483,6 +484,9 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
 
     @Override
     public boolean hurt(@NotNull DamageSource source, float amount) {
+        if (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+            return super.hurt(source, amount);
+        }
         if ((mode == TrainerMode.DUELING || mode == TrainerMode.SELF_DEFENSE)
                 && source.getEntity() instanceof LivingEntity attacker
                 && KatanaBlock.handleIncomingDamage(this, attacker, amount)) {

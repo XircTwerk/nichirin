@@ -2,6 +2,7 @@ package com.xirc.nichirin.common.attack.moveset;
 
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.entity.MovesetCapableNPC;
+import com.xirc.nichirin.common.item.katana.Katana;
 import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
 import com.xirc.nichirin.common.util.EntityResources;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
@@ -11,6 +12,7 @@ import lombok.Setter;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -219,11 +221,8 @@ public abstract class AbstractMoveset {
      * Override the left-click (M1) behavior - works for both Player and NPC
      */
     public boolean handleLeftClick(LivingEntity entity) {
-        if (entity.hasEffect(NichirinEffectRegistry.stunned())) {
-            return true;
-        }
-
         if (leftClickMove != null && leftClickMove.hasExecutable()) {
+            if (!canPerformLeftClick(entity)) return true;
             if (!hasResourcesForMove(entity, leftClickMove)) return true;
             if (shouldAutoStunClickMoves()) applyMoveStun(entity, leftClickMove);
             executeMove(entity, leftClickMove);
@@ -236,13 +235,15 @@ public abstract class AbstractMoveset {
      * Override the right-click (M2) behavior for Katana with stun checking and followup queuing
      */
     public boolean handleRightClick(LivingEntity entity, boolean isCrouching) {
-        if (entity.hasEffect(NichirinEffectRegistry.stunned())) {
-            FollowupQueue queue = entityFollowupQueues.get(entity.getUUID());
-            if (queue != null && queue.isAttackActive(System.currentTimeMillis()) && queue.canQueueNext()) {
-                queue.queueNext();
+        if (!canPerformMoves(entity)) {
+            if (entity.hasEffect(NichirinEffectRegistry.stunned())) {
+                FollowupQueue queue = entityFollowupQueues.get(entity.getUUID());
+                if (queue != null && queue.isAttackActive(System.currentTimeMillis()) && queue.canQueueNext()) {
+                    queue.queueNext();
 
-                EntityResources.sendMessage(entity,
-                        Component.literal("Followup queued!").withStyle(style -> style.withColor(0x55FF55)), true);
+                    EntityResources.sendMessage(entity,
+                            Component.literal("Followup queued!").withStyle(style -> style.withColor(0x55FF55)), true);
+                }
             }
             return true;
         }
@@ -345,12 +346,23 @@ public abstract class AbstractMoveset {
     }
 
     /**
+     * Whether this moveset plays PLAYER animations keyed by the move id when a move has no
+     * explicit {@code withAnimation(...)}. Default true. The gun overrides to false — it drives
+     * AzureLib held-item animations through its own packets, so a move-id player-animation
+     * lookup would only ever fail.
+     */
+    protected boolean usesMoveIdAnimation() {
+        return true;
+    }
+
+    /**
      * The animation a move plays. Uses an explicit {@code withAnimation(...)} id when set;
      * otherwise the move's own id doubles as the animation name (the animation file keys its
      * entry by that id), so movesets no longer need a separate animation declaration.
      */
-    private static String moveAnimationName(MoveConfiguration cfg) {
+    private String moveAnimationName(MoveConfiguration cfg) {
         if (cfg == null) return null;
+        if (cfg.animationId == null && !usesMoveIdAnimation()) return null;
         if (cfg.animationId != null) return cfg.animationId.getPath();
         return cfg.moveId;
     }
@@ -366,7 +378,7 @@ public abstract class AbstractMoveset {
      * Performs a move by index with automatic animation handling - WORKS FOR ENTITIES
      */
     public void performMove(LivingEntity entity, int moveIndex) {
-        if (entity.hasEffect(NichirinEffectRegistry.stunned())) {
+        if (!canPerformMoves(entity)) {
             return;
         }
 
@@ -520,6 +532,65 @@ public abstract class AbstractMoveset {
      */
     public boolean canPerformMoves(LivingEntity entity) {
         return !entity.hasEffect(NichirinEffectRegistry.stunned());
+    }
+
+    public static boolean hasSingleKatana(LivingEntity entity) {
+        if (!(entity instanceof Player player)) return true;
+        return player.getMainHandItem().getItem() instanceof Katana
+                && player.getOffhandItem().isEmpty();
+    }
+
+    public static boolean hasMainhandKatana(LivingEntity entity) {
+        if (!(entity instanceof Player player)) return true;
+        return player.getMainHandItem().getItem() instanceof Katana;
+    }
+
+    public static boolean hasDualKatanas(LivingEntity entity) {
+        if (!(entity instanceof Player player)) return true;
+        return player.getMainHandItem().getItem() instanceof Katana
+                && player.getOffhandItem().getItem() instanceof Katana;
+    }
+
+    protected boolean requireSingleKatana(LivingEntity entity) {
+        if (hasSingleKatana(entity)) return true;
+        if (entity instanceof Player player) {
+            String message = player.getMainHandItem().getItem() instanceof Katana
+                    ? "Remove offhand item!"
+                    : "Missing mainhand katana!";
+            EntityResources.sendMessage(entity,
+                    Component.literal(message).withStyle(style -> style.withColor(0xFF3333)), true);
+        }
+        return false;
+    }
+
+    /**
+     * Validates an M1 move separately from the moveset's special-move loadout.
+     * Most movesets use the same rules; styles with a custom M1 can relax them.
+     */
+    protected boolean canPerformLeftClick(LivingEntity entity) {
+        return canPerformMoves(entity);
+    }
+
+    protected boolean requireMainhandKatana(LivingEntity entity) {
+        if (hasMainhandKatana(entity)) return true;
+        EntityResources.sendMessage(entity,
+                Component.literal("Missing mainhand katana!")
+                        .withStyle(style -> style.withColor(0xFF3333)), true);
+        return false;
+    }
+
+    protected boolean requireDualKatanas(LivingEntity entity) {
+        if (hasDualKatanas(entity)) return true;
+        if (entity instanceof Player player) {
+            boolean mainKatana = player.getMainHandItem().getItem() instanceof Katana;
+            boolean offhandKatana = player.getOffhandItem().getItem() instanceof Katana;
+            String message = !mainKatana && !offhandKatana
+                    ? "Requires a katana in both hands!"
+                    : !mainKatana ? "Missing mainhand katana!" : "Missing offhand katana!";
+            EntityResources.sendMessage(entity,
+                    Component.literal(message).withStyle(style -> style.withColor(0xFF3333)), true);
+        }
+        return false;
     }
 
     /**

@@ -160,7 +160,16 @@ public class BreathOfNichirinEventHandler {
             // Hot-reload the server config if it was edited on disk (e.g. through a host panel).
             if (++configPollTicks >= 20) {
                 configPollTicks = 0;
-                NichirinServerConfig.pollForChanges();
+                if (NichirinServerConfig.pollForChanges()) {
+                    NichirinPacketRegistry.broadcastServerConfig(server);
+                    Component message = Component.literal("Server config reloaded.")
+                            .withStyle(ChatFormatting.GREEN);
+                    for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+                        if (player.hasPermissions(2)) {
+                            player.displayClientMessage(message, false);
+                        }
+                    }
+                }
             }
             BloodMoonManager.onServerTick(server);
             MoveExecutor.tickAllAttacks(server);

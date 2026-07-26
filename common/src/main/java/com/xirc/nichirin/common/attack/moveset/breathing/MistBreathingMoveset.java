@@ -44,7 +44,7 @@ public class MistBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("low_clouds_distant_haze", "Low Clouds, Distant Haze")
                         .withTiming(0, 5, 12)
                         .withDamage(7.0f)
-                        .withRange(8.0f)
+                        .withRange(4.0f)
                         .withKnockback(0.3f)
                         .withDashSpeed(28.0f)
                         .withBreathCost(10.0f)
@@ -74,25 +74,25 @@ public class MistBreathingMoveset extends AbstractMoveset {
                         // dashSpeed 4 blocks/tick over a 14-tick window = the same smooth glide.
                         .withTiming(96, 10, 14)
                         .withDamage(7.0f)
-                        .withRange(18.0f)
+                        .withRange(9.0f)
                         .withKnockback(0.35f)
                         .withDashSpeed(4.0f)
                         .withBreathCost(28.0f)
                         .withHitStun(25)
                         .withHitboxSize(2.5f)
-                        .withDescription("10-tick low-stance windup into an 18-block dash. Slashes all enemies in path and delivers a powerful finisher.")
+                        .withDescription("10-tick low-stance windup into a 9-block dash. Slashes all enemies in path and delivers a powerful finisher.")
                         .withAttack(ShiftingFlowSlashAttack::new)
                 )
 
                 // Form 5: Sea of Clouds and Haze (INDEX 2 in wheel)
                 .withMove(new MoveBuilder("sea_of_clouds_and_haze", "Sea of Clouds")
                         .withTiming(128, 8, 56)
-                        .withDamage(6.0f)
+                        .withDamage(4.0f)
                         .withRange(12.0f)
                         .withKnockback(0.25f)
-                        .withDashSpeed(10.0f)
+                        .withDashSpeed(5.0f)
                         .withBreathCost(25.0f)
-                        .withHitStun(15)
+                        .withHitStun(25)
                         .withHitboxSize(7.5f)
                         .withDescription("5-hop zigzag charge with large hitboxes. Drags and slashes enemies into a powerful finisher.")
                         .withAttack(SeaOfCloudsAndHazeAttack::new)
@@ -104,7 +104,7 @@ public class MistBreathingMoveset extends AbstractMoveset {
                         .withDamage(6.0f)
                         .withRange(14.0f)
                         .withKnockback(0.35f)
-                        .withDashSpeed(8.0f)
+                        .withDashSpeed(4.0f)
                         .withBreathCost(25.0f)
                         .withHitStun(20)
                         .withHitboxSize(3.0f)
@@ -124,6 +124,11 @@ public class MistBreathingMoveset extends AbstractMoveset {
                         .withDescription("Become invisible and teleport around all enemies in 8 blocks for 5 seconds. 32-second cooldown.")
                         .withAttack(ObscuringCloudsAttack::new)
                 );
+    }
+
+    @Override
+    public boolean canPerformMoves(LivingEntity entity) {
+        return super.canPerformMoves(entity) && requireSingleKatana(entity);
     }
 
     @Override

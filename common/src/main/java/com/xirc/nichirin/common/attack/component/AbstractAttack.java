@@ -457,4 +457,17 @@ public abstract class AbstractAttack {
         }
         return cancelled;
     }
+
+    public void setHitStun(int hitStun) {
+        this.hitStun = Math.max(0, hitStun);
+    }
+
+    public static boolean hasActiveAttack(LivingEntity entity) {
+        var attacks = selfTickingAttacks.get(entity.getUUID());
+        if (attacks == null) return false;
+        for (var attack : attacks) {
+            if (attack.isActive()) return true;
+        }
+        return false;
+    }
 }
