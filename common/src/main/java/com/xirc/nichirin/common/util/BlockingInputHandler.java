@@ -106,6 +106,8 @@ public class BlockingInputHandler {
     }
 
     private static String blockAnimation(Player player) {
+        if (player.getMainHandItem().getItem() instanceof Katana
+                && player.getOffhandItem().getItem() instanceof Katana) return "dual_block";
         if (player.getMainHandItem().getItem() instanceof Katana) return "sword.block";
         if (player.getOffhandItem().getItem() instanceof Katana) return "sword.block";
         if (!player.getMainHandItem().isEmpty()) return "sword.block";

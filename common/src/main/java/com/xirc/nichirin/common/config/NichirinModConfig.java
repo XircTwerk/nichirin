@@ -237,6 +237,9 @@ public class NichirinModConfig implements ConfigData {
         public boolean wisteriaDamagesDemons = true;
 
         @ConfigEntry.Gui.Tooltip
+        public boolean upperMoonPact = true;
+
+        @ConfigEntry.Gui.Tooltip
         public boolean bloodDrainEnabled = true;
 
         @ConfigEntry.Gui.Tooltip

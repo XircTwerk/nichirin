@@ -463,6 +463,8 @@
   "text.autoconfig.nichirin-server.option.demon.sunDamagePerSecond.@Tooltip": "Half-hearts of damage per second when burning in sunlight.",
   "text.autoconfig.nichirin-server.option.demon.wisteriaDamagesDemons":  "Wisteria Damages Demons",
   "text.autoconfig.nichirin-server.option.demon.wisteriaDamagesDemons.@Tooltip": "When enabled, Wisteria's Grace deals periodic poison damage to demons.",
+  "text.autoconfig.nichirin-server.option.demon.upperMoonPact":  "Upper Moon Pact",
+  "text.autoconfig.nichirin-server.option.demon.upperMoonPact.@Tooltip": "When enabled, an un-enraged Upper Moon demon spares a human at the killing blow and offers to recruit them (kneel + drink) instead of killing. When off, they just kill you.",
   "text.autoconfig.nichirin-server.option.demon.bloodDrainEnabled":      "Blood Drain",
   "text.autoconfig.nichirin-server.option.demon.bloodDrainEnabled.@Tooltip": "Demons passively lose blood over time and die when it reaches zero.",
   "text.autoconfig.nichirin-server.option.demon.bloodDrainIntervalSeconds": "Blood Drain Interval (seconds)",

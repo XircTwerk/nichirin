@@ -7,6 +7,7 @@ import com.xirc.nichirin.client.renderer.entity.animator.AkazaAnimator;
 import com.xirc.nichirin.client.renderer.entity.layer.AkazaEmissiveLayer;
 import com.xirc.nichirin.common.entity.npc.AkazaEntity;
 import mod.azure.azurelib.common.render.entity.AzEntityRendererConfig;
+import net.minecraft.network.chat.Component;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
@@ -40,6 +41,16 @@ public class AkazaRenderer extends BaseAZNichirinEntityRenderer<AkazaEntity> {
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
         DemonBloodBarRenderer.render(entity, poseStack, bufferSource, packedLight);
 
+        poseStack.popPose();
+    }
+
+    /** Lift Akaza's name tag a bit higher above his head. */
+    @Override
+    protected void renderNameTag(AkazaEntity entity, Component displayName, PoseStack poseStack,
+                                 MultiBufferSource bufferSource, int packedLight, float partialTick) {
+        poseStack.pushPose();
+        poseStack.translate(0.0, 0.45, 0.0);
+        super.renderNameTag(entity, displayName, poseStack, bufferSource, packedLight, partialTick);
         poseStack.popPose();
     }
 }

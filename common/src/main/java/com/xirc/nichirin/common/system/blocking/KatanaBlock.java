@@ -133,7 +133,7 @@ public class KatanaBlock {
 
         if (entity instanceof ServerPlayer serverPlayer) {
             NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer,
-                    new PlayerAnimationPacket(serverPlayer.getId(), "sword.block"));
+                    new PlayerAnimationPacket(serverPlayer.getId(), blockAnimation(entity)));
         } else if (entity instanceof BaseBreathingTrainerEntity trainer) {
             trainer.setAnimation("sword.block", 1.0f);
         }
@@ -235,7 +235,7 @@ public class KatanaBlock {
             if (state.wasAttackingLastTick && !attacking) {
                 if (entity instanceof ServerPlayer serverPlayer) {
                     NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer,
-                            new PlayerAnimationPacket(serverPlayer.getId(), "sword.block"));
+                            new PlayerAnimationPacket(serverPlayer.getId(), blockAnimation(entity)));
                 } else if (entity instanceof BaseBreathingTrainerEntity trainer) {
                     trainer.setAnimation("sword.block", 1.0f);
                 }
@@ -282,6 +282,20 @@ public class KatanaBlock {
         if (!(entity instanceof Player player)) return true;
         return player.getMainHandItem().getItem() instanceof Katana
                 || player.getOffhandItem().getItem() instanceof Katana;
+    }
+
+    private static boolean isDualWieldingKatanas(LivingEntity entity) {
+        if (!(entity instanceof Player player)) return false;
+        return player.getMainHandItem().getItem() instanceof Katana
+                && player.getOffhandItem().getItem() instanceof Katana;
+    }
+
+    private static String blockAnimation(LivingEntity entity) {
+        return isDualWieldingKatanas(entity) ? "dual_block" : "sword.block";
+    }
+
+    private static String parryAnimation(LivingEntity entity) {
+        return isDualWieldingKatanas(entity) ? "dual_parry" : "sword.parry";
     }
 
     private static boolean isCqcBlocker(LivingEntity entity) {
@@ -401,7 +415,7 @@ public class KatanaBlock {
         // Defender parry animation
         if (defender instanceof ServerPlayer serverPlayer) {
             NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer,
-                    new PlayerAnimationPacket(serverPlayer.getId(), "sword.parry"));
+                    new PlayerAnimationPacket(serverPlayer.getId(), parryAnimation(defender)));
         } else if (defender instanceof BaseBreathingTrainerEntity trainer) {
             trainer.setAnimation("sword.parry", 1.0f);
         }
@@ -482,7 +496,7 @@ public class KatanaBlock {
         // Clang feedback
         if (defender instanceof ServerPlayer serverPlayer) {
             NichirinPacketRegistry.broadcastPlayerAnimation(serverPlayer,
-                    new PlayerAnimationPacket(serverPlayer.getId(), "sword.block"));
+                    new PlayerAnimationPacket(serverPlayer.getId(), blockAnimation(defender)));
         } else if (defender instanceof BaseBreathingTrainerEntity trainer) {
             trainer.setAnimation("sword.block", 1.0f);
         }

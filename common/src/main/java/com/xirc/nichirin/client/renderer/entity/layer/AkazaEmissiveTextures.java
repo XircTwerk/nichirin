@@ -15,34 +15,42 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Produces the red Overdrive variant of Akaza's blue emissive textures (lines / eyes) entirely in
- * code — no baked red asset. The blue source is loaded once, hue-rotated per pixel into a
- * {@link DynamicTexture}, registered, and cached. On any failure it falls back to the blue texture
- * so the glow degrades gracefully instead of crashing the render.
+ * Builds Akaza's emissive glow textures in code from his blue source textures — no baked assets.
+ *
+ * <p>Every variant is dimmed a little (so the glow reads as a glow, not a flat fullbright decal)
+ * while still emitting light. The Overdrive variant additionally hue-rotates blue → red. Results are
+ * cached; on any failure it falls back to the untouched source so the glow degrades gracefully.</p>
  */
 @Environment(EnvType.CLIENT)
 public final class AkazaEmissiveTextures {
 
     /** +0.4 turns (144°): the ~216° blue lines land on red while keeping their shading. */
     private static final float HUE_SHIFT = 0.4f;
+    /** Darken the glow a bit — still emissive, just not blown-out white-bright. */
+    private static final float BRIGHTNESS = 0.6f;
 
-    private static final Map<ResourceLocation, ResourceLocation> RED_CACHE = new ConcurrentHashMap<>();
+    private static final Map<String, ResourceLocation> CACHE = new ConcurrentHashMap<>();
 
     private AkazaEmissiveTextures() {}
 
-    public static ResourceLocation redVariant(ResourceLocation blue) {
-        ResourceLocation cached = RED_CACHE.get(blue);
+    /**
+     * Returns the processed glow texture for {@code source}. {@code overdrive} selects the red
+     * hue-shifted variant; otherwise it's the dimmed blue.
+     */
+    public static ResourceLocation processed(ResourceLocation source, boolean overdrive) {
+        String key = source + (overdrive ? "#od" : "#base");
+        ResourceLocation cached = CACHE.get(key);
         if (cached != null) return cached;
 
-        ResourceLocation red = ResourceLocation.fromNamespaceAndPath(
-                blue.getNamespace(),
-                blue.getPath().replace(".png", "") + "_overdrive.png");
+        ResourceLocation out = ResourceLocation.fromNamespaceAndPath(
+                source.getNamespace(),
+                source.getPath().replace(".png", "") + (overdrive ? "_glow_od.png" : "_glow.png"));
         try {
             Minecraft mc = Minecraft.getInstance();
-            Optional<Resource> res = mc.getResourceManager().getResource(blue);
+            Optional<Resource> res = mc.getResourceManager().getResource(source);
             if (res.isEmpty()) {
-                RED_CACHE.put(blue, blue);
-                return blue;
+                CACHE.put(key, source);
+                return source;
             }
             NativeImage image;
             try (InputStream in = res.get().open()) {
@@ -50,20 +58,20 @@ public final class AkazaEmissiveTextures {
             }
             for (int y = 0; y < image.getHeight(); y++) {
                 for (int x = 0; x < image.getWidth(); x++) {
-                    image.setPixelRGBA(x, y, shiftPixel(image.getPixelRGBA(x, y)));
+                    image.setPixelRGBA(x, y, process(image.getPixelRGBA(x, y), overdrive));
                 }
             }
-            mc.getTextureManager().register(red, new DynamicTexture(image));
-            RED_CACHE.put(blue, red);
-            return red;
+            mc.getTextureManager().register(out, new DynamicTexture(image));
+            CACHE.put(key, out);
+            return out;
         } catch (Exception e) {
-            RED_CACHE.put(blue, blue); // graceful fallback: keep the blue glow
-            return blue;
+            CACHE.put(key, source); // graceful fallback
+            return source;
         }
     }
 
-    /** Hue-rotates one pixel. NativeImage packs colors as ABGR (0xAABBGGRR). */
-    private static int shiftPixel(int abgr) {
+    /** Darkens (and, for overdrive, hue-rotates) one pixel. NativeImage packs colors as ABGR. */
+    private static int process(int abgr, boolean overdrive) {
         int a = (abgr >>> 24) & 0xFF;
         if (a == 0) return abgr; // transparent — leave as-is
         int b = (abgr >> 16) & 0xFF;
@@ -71,7 +79,10 @@ public final class AkazaEmissiveTextures {
         int r = abgr & 0xFF;
 
         float[] hsb = Color.RGBtoHSB(r, g, b, null);
-        int rgb = Color.HSBtoRGB((hsb[0] + HUE_SHIFT) % 1.0f, hsb[1], hsb[2]);
+        float hue = overdrive ? (hsb[0] + HUE_SHIFT) % 1.0f : hsb[0];
+        float brightness = hsb[2] * BRIGHTNESS;
+        int rgb = Color.HSBtoRGB(hue, hsb[1], brightness);
+
         int nr = (rgb >> 16) & 0xFF;
         int ng = (rgb >> 8) & 0xFF;
         int nb = rgb & 0xFF;

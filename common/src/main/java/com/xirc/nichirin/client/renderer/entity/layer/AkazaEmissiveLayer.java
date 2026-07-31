@@ -37,11 +37,8 @@ public class AkazaEmissiveLayer implements AzRenderLayer<UUID, AkazaEntity> {
         AkazaEntity akaza = context.animatable();
         boolean overdrive = akaza != null && akaza.isOverdrive();
 
-        ResourceLocation lines = overdrive ? AkazaEmissiveTextures.redVariant(LINES) : LINES;
-        ResourceLocation eyes = overdrive ? AkazaEmissiveTextures.redVariant(EYES) : EYES;
-
-        renderEmissive(context, lines);
-        renderEmissive(context, eyes);
+        renderEmissive(context, AkazaEmissiveTextures.processed(LINES, overdrive));
+        renderEmissive(context, AkazaEmissiveTextures.processed(EYES, overdrive));
     }
 
     private void renderEmissive(AzRendererPipelineContext<UUID, AkazaEntity> context, ResourceLocation texture) {

@@ -3,6 +3,12 @@ package com.xirc.nichirin.common.data;
 import com.xirc.nichirin.common.system.perks.PerkData;
 import lombok.Getter;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Complete player data container including movesets, progression, and statistics
@@ -35,8 +41,27 @@ public class PlayerData {
      */
     private final PerkData perkData = new PerkData();
 
+    /**
+     * Demon types (e.g. "akaza") that have spared this player in a mercy/recruitment encounter.
+     * Each such Upper Moon demon stays neutral until the player attacks it again. Per-demon, not
+     * global — being spared by one Upper Moon doesn't pacify the others.
+     */
+    private final Set<String> sparedByDemons = new HashSet<>();
+
     public PlayerData() {
         // Constructor
+    }
+
+    public boolean isSparedBy(String demonType) {
+        return demonType != null && sparedByDemons.contains(demonType);
+    }
+
+    public void setSparedBy(String demonType) {
+        if (demonType != null) sparedByDemons.add(demonType);
+    }
+
+    public boolean removeSparedBy(String demonType) {
+        return sparedByDemons.remove(demonType);
     }
 
     /**
@@ -48,6 +73,8 @@ public class PlayerData {
         this.statistics.copyFrom(other.statistics);
         this.cqcPresetData.copyFrom(other.cqcPresetData);
         this.perkData.copyFrom(other.perkData);
+        this.sparedByDemons.clear();
+        this.sparedByDemons.addAll(other.sparedByDemons);
     }
 
     /**
@@ -60,6 +87,12 @@ public class PlayerData {
         tag.put("Statistics", statistics.save());
         tag.put("CqcPresetData", cqcPresetData.save());
         tag.put("PerkData", perkData.save());
+
+        ListTag spared = new ListTag();
+        for (String demonType : sparedByDemons) {
+            spared.add(StringTag.valueOf(demonType));
+        }
+        tag.put("SparedByDemons", spared);
         return tag;
     }
 
@@ -87,6 +120,14 @@ public class PlayerData {
         }
         if (tag.contains("PerkData")) {
             perkData.load(tag.getCompound("PerkData"));
+        }
+
+        sparedByDemons.clear();
+        if (tag.contains("SparedByDemons")) {
+            ListTag spared = tag.getList("SparedByDemons", Tag.TAG_STRING);
+            for (int i = 0; i < spared.size(); i++) {
+                sparedByDemons.add(spared.getString(i));
+            }
         }
     }
 

@@ -96,6 +96,10 @@ public class NichirinCommand {
                                 .executes(ctx -> giveBlurry(ctx, ctx.getSource().getPlayerOrException()))
                                 .then(Commands.argument("player", EntityArgument.player())
                                         .executes(ctx -> giveBlurry(ctx, EntityArgument.getPlayer(ctx, "player")))))
+                        .then(Commands.literal("forgetpact")
+                                .executes(ctx -> clearAkazaPact(ctx, ctx.getSource().getPlayerOrException()))
+                                .then(Commands.argument("player", EntityArgument.player())
+                                        .executes(ctx -> clearAkazaPact(ctx, EntityArgument.getPlayer(ctx, "player")))))
                         .then(AuraCommand.build())
                         .then(OutlineCommand.build()))
 
@@ -132,6 +136,16 @@ public class NichirinCommand {
                 )
         );
 
+    }
+
+    private static int clearAkazaPact(CommandContext<CommandSourceStack> ctx, ServerPlayer player) {
+        boolean removed = com.xirc.nichirin.common.system.UpperMoonPact.unmark(player, "akaza");
+        ctx.getSource().sendSuccess(() -> Component.literal(
+                        removed
+                                ? "Removed Akaza's pact from " + player.getName().getString() + " — he will hunt you again."
+                                : player.getName().getString() + " has no pact with Akaza.")
+                .withStyle(s -> s.withColor(removed ? COL_OK : COL_WARN)), true);
+        return 1;
     }
 
     private static int giveBlurry(CommandContext<CommandSourceStack> ctx, ServerPlayer player) {

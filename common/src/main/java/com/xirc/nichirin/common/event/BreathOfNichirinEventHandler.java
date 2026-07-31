@@ -65,6 +65,7 @@ public class BreathOfNichirinEventHandler {
         registerKillRewards();
         RiceInteractionHandler.register();
         WisteriaGraceHandler.register();
+        com.xirc.nichirin.common.event.system.UpperMoonMercyHandler.register();
         registerLootInjection();
     }
 
