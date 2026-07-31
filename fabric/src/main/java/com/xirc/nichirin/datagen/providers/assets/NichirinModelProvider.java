@@ -105,6 +105,7 @@ public class NichirinModelProvider extends FabricModelProvider {
 
         generator.generateFlatItem(NichirinItemRegistry.BOAR_SPAWN_EGG.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.TEMPLE_DEMON_SPAWN_EGG.get(), ModelTemplates.FLAT_ITEM);
+        generator.generateFlatItem(NichirinItemRegistry.AKAZA_SPAWN_EGG.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.WATER_BREATHING_TRAINER_SPAWN_EGG.get(), ModelTemplates.FLAT_ITEM);
         generator.generateFlatItem(NichirinItemRegistry.THUNDER_BREATHING_TRAINER_SPAWN_EGG.get(), ModelTemplates.FLAT_ITEM);
 

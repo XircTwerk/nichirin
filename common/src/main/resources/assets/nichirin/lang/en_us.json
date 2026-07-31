@@ -31,6 +31,7 @@
 
   "entity.nichirin.boar": "Boar",
   "entity.nichirin.temple_demon": "Temple Demon",
+  "entity.nichirin.akaza": "Akaza",
   "entity.nichirin.thunder_ball": "Thunder Ball",
   "entity.nichirin.flash_bomb": "Flash Bomb",
   "entity.nichirin.smoke_bomb": "Smoke Bomb",
@@ -177,6 +178,7 @@
   "item.nichirin.wisteria_tea": "Wisteria Tea",
   "item.nichirin.wisteria_arrow": "Wisteria Arrow",
   "item.nichirin.temple_demon_spawn_egg": "Temple Demon Spawn Egg",
+  "item.nichirin.akaza_spawn_egg": "Akaza Spawn Egg",
   "item.nichirin.boar_spawn_egg": "Boar Spawn Egg",
   "item.nichirin.water_breathing_trainer_spawn_egg": "Water Breathing Trainer Spawn Egg",
   "item.nichirin.thunder_breathing_trainer_spawn_egg": "Thunder Breathing Trainer Spawn Egg",

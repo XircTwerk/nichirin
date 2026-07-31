@@ -18,8 +18,10 @@ import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -39,7 +41,10 @@ public abstract class DemonNPCEntity extends Monster implements MovesetCapableNP
     private static final EntityDataAccessor<Integer> BLOOD_POINTS      =
             SynchedEntityData.defineId(DemonNPCEntity.class, EntityDataSerializers.INT);
 
+    /** The currently active moveset (the one that drives inputs/AI). */
     protected AbstractMoveset moveset;
+    /** All movesets this NPC can switch between, keyed by moveset id. Insertion-ordered. */
+    protected final Map<String, AbstractMoveset> movesets = new LinkedHashMap<>();
 
     protected int   maxBloodPoints         = 10;
     protected float maxBreathGauge         = 100.0f;
@@ -55,7 +60,8 @@ public abstract class DemonNPCEntity extends Monster implements MovesetCapableNP
 
     protected final Set<Integer> blacklistedMoves = new HashSet<>();
 
-    private static final Map<UUID, Map<Integer, Long>> npcCooldowns = new HashMap<>();
+    // Keyed by "<activeMovesetId>:<moveIndex>" so two switchable movesets never share a cooldown slot.
+    private static final Map<UUID, Map<String, Long>> npcCooldowns = new HashMap<>();
     private float lastBloodSyncedHealth = -1.0F;
 
     public DemonNPCEntity(EntityType<? extends Monster> entityType, Level level) {
@@ -116,7 +122,44 @@ public abstract class DemonNPCEntity extends Monster implements MovesetCapableNP
 
 
     @Override public AbstractMoveset getMoveset()                { return moveset; }
-    @Override public void setMoveset(AbstractMoveset m)          { moveset = m; }
+
+    /**
+     * Sets the active moveset and registers it as available for switching. Kept as the primary
+     * single-moveset entry point (backward compatible): NPCs that only ever use one moveset can
+     * keep calling this.
+     */
+    @Override public void setMoveset(AbstractMoveset m) {
+        moveset = m;
+        if (m != null) movesets.put(m.getMovesetId(), m);
+    }
+
+    /**
+     * Registers an additional moveset this NPC can {@link #switchMoveset(String) switch} to. The
+     * first moveset added also becomes the active one if none is set yet.
+     */
+    public void addMoveset(AbstractMoveset m) {
+        if (m == null) return;
+        movesets.put(m.getMovesetId(), m);
+        if (moveset == null) moveset = m;
+    }
+
+    /**
+     * Switches the active moveset to the one registered under {@code movesetId}. Moveset attribute
+     * modifiers (e.g. speed) are swapped so they never stack across a switch. Returns {@code true}
+     * if the switch happened (id known and not already active).
+     */
+    public boolean switchMoveset(String movesetId) {
+        AbstractMoveset target = movesets.get(movesetId);
+        if (target == null || target == moveset) return false;
+        if (moveset != null) moveset.removeAllModifiers(this);
+        moveset = target;
+        if (!level().isClientSide) moveset.applyAllModifiers(this);
+        return true;
+    }
+
+    public String getActiveMovesetId()                           { return moveset != null ? moveset.getMovesetId() : null; }
+    public boolean hasMovesetLoaded(String movesetId)            { return movesets.containsKey(movesetId); }
+    public Collection<AbstractMoveset> getLoadedMovesets()       { return movesets.values(); }
     @Override public UUID getEntityUUID()                        { return getUUID(); }
     @Override public Level getEntityLevel()                      { return level(); }
     @Override public LivingEntity asLivingEntity()               { return this; }
@@ -212,17 +255,21 @@ public abstract class DemonNPCEntity extends Monster implements MovesetCapableNP
     @Override public Set<Integer> getBlacklistedMoves()           { return blacklistedMoves; }
 
 
+    private String cooldownKey(int moveIndex) {
+        return getActiveMovesetId() + ":" + moveIndex;
+    }
+
     private boolean isOnCooldown(int moveIndex) {
-        Map<Integer, Long> cooldowns = npcCooldowns.get(getUUID());
+        Map<String, Long> cooldowns = npcCooldowns.get(getUUID());
         if (cooldowns == null) return false;
-        Long end = cooldowns.get(moveIndex);
+        Long end = cooldowns.get(cooldownKey(moveIndex));
         return end != null && level().getGameTime() < end;
     }
 
     private void setCooldown(int moveIndex, int ticks) {
         if (ticks <= 0) return;
         npcCooldowns.computeIfAbsent(getUUID(), k -> new HashMap<>())
-                .put(moveIndex, level().getGameTime() + ticks);
+                .put(cooldownKey(moveIndex), level().getGameTime() + ticks);
     }
 
 

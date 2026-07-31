@@ -179,6 +179,7 @@ public interface NichirinCreativeTabRegistry {
 
         CreativeTabRegistry.append(CreativeModeTabs.SPAWN_EGGS,
                 NichirinItemRegistry.TEMPLE_DEMON_SPAWN_EGG,
+                NichirinItemRegistry.AKAZA_SPAWN_EGG,
                 NichirinItemRegistry.BOAR_SPAWN_EGG,
                 NichirinItemRegistry.WATER_BREATHING_TRAINER_SPAWN_EGG,
                 NichirinItemRegistry.THUNDER_BREATHING_TRAINER_SPAWN_EGG

@@ -8,6 +8,7 @@ import com.xirc.nichirin.common.entity.projectile.ThrownKatanaEntity;
 import com.xirc.nichirin.common.entity.attack.ShockwaveEntity;
 import com.xirc.nichirin.common.entity.attack.ThunderBallEntity;
 import com.xirc.nichirin.common.entity.effect.PlayerCloneEntity;
+import com.xirc.nichirin.common.entity.npc.AkazaEntity;
 import com.xirc.nichirin.common.entity.npc.TempleDemonEntity;
 import com.xirc.nichirin.common.entity.npc.ThunderBreathingTrainerEntity;
 import com.xirc.nichirin.common.entity.npc.WaterBreathingTrainerEntity;
@@ -70,6 +71,14 @@ public interface NichirinEntityRegistry {
                     .updateInterval(2)
                     .build(BreathOfNichirin.id("temple_demon").toString()));
 
+    RegistrySupplier<EntityType<AkazaEntity>> AKAZA =
+            ENTITY_TYPES.register("akaza", () -> EntityType.Builder.<AkazaEntity>of(
+                            AkazaEntity::new, MobCategory.MONSTER)
+                    .sized(0.7f, 1.95f)
+                    .clientTrackingRange(48)
+                    .updateInterval(1)
+                    .build(BreathOfNichirin.id("akaza").toString()));
+
     RegistrySupplier<EntityType<WaterBreathingTrainerEntity>> WATER_BREATHING_TRAINER =
             ENTITY_TYPES.register("water_breathing_trainer", () -> EntityType.Builder.<WaterBreathingTrainerEntity>of(
                             WaterBreathingTrainerEntity::new, MobCategory.CREATURE)
@@ -105,6 +114,7 @@ public interface NichirinEntityRegistry {
     static void registerAttributes() {
         EntityAttributeRegistry.register(BOAR, BoarEntity::createAttributes);
         EntityAttributeRegistry.register(TEMPLE_DEMON, TempleDemonEntity::createAttributes);
+        EntityAttributeRegistry.register(AKAZA, AkazaEntity::createAttributes);
         EntityAttributeRegistry.register(WATER_BREATHING_TRAINER, WaterBreathingTrainerEntity::createAttributes);
         EntityAttributeRegistry.register(THUNDER_BREATHING_TRAINER, ThunderBreathingTrainerEntity::createAttributes);
         EntityAttributeRegistry.register(PLAYER_CLONE, PlayerCloneEntity::createAttributes);

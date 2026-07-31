@@ -21,9 +21,21 @@ public final class DestructiveDeathCqcHook {
 
     public static void onCqcHit(LivingEntity attacker, LivingEntity target, Level world) {
         if (world.isClientSide) return;
-        if (!(attacker instanceof ServerPlayer sp)) return;
-        if (!"destructive_death".equals(MovesetHelper.getDemonMovesetId(sp))) return;
-        if (!DestructiveDeathState.isShockwaveEnabled(sp.getUUID())) return;
+
+        boolean shockwaveEnabled;
+        boolean overdrive;
+        if (attacker instanceof IDestructiveDeathHost host) {
+            // NPC host (Akaza) — state lives on the entity.
+            shockwaveEnabled = host.ddShockwaveEnabled();
+            overdrive = host.ddOverdriveActive();
+        } else if (attacker instanceof ServerPlayer sp) {
+            if (!"destructive_death".equals(MovesetHelper.getDemonMovesetId(sp))) return;
+            shockwaveEnabled = DestructiveDeathState.isShockwaveEnabled(sp.getUUID());
+            overdrive = DestructiveDeathState.isOverdriveEnabled(sp.getUUID(), world.getGameTime());
+        } else {
+            return;
+        }
+        if (!shockwaveEnabled) return;
 
         Vec3 origin = attacker.position()
                 .add(0, attacker.getBbHeight() * 0.55, 0)
@@ -39,7 +51,7 @@ public final class DestructiveDeathCqcHook {
                 .hitboxRadius(0.95f)
                 .pierces(0)
                 .destructiveDeathCqcDamage()
-                .red(DestructiveDeathState.isOverdriveEnabled(sp.getUUID(), world.getGameTime()))
+                .red(overdrive)
                 .spawn(NichirinEntityRegistry.SHOCKWAVE.get(), world);
     }
 }

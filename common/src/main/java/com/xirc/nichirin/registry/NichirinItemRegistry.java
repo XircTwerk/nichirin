@@ -350,6 +350,8 @@ public interface NichirinItemRegistry {
     // Spawn eggs
     RegistrySupplier<Item> TEMPLE_DEMON_SPAWN_EGG = register("temple_demon_spawn_egg",
             () -> new LazySpawnEggItem(NichirinEntityRegistry.TEMPLE_DEMON, settings()));
+    RegistrySupplier<Item> AKAZA_SPAWN_EGG = register("akaza_spawn_egg",
+            () -> new LazySpawnEggItem(NichirinEntityRegistry.AKAZA, settings()));
     RegistrySupplier<Item> BOAR_SPAWN_EGG = register("boar_spawn_egg",
             () -> new LazySpawnEggItem(NichirinEntityRegistry.BOAR, settings()));
     RegistrySupplier<Item> WATER_BREATHING_TRAINER_SPAWN_EGG = register("water_breathing_trainer_spawn_egg",
