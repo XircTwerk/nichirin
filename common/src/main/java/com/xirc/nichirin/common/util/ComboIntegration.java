@@ -26,6 +26,10 @@ public class ComboIntegration {
         if (attacker == null || victim == null || attacker.level().isClientSide) {
             return; // Server-side only
         }
+        // Creative/spectator players take no stun, combo, or hit at all.
+        if (NichirinDamageHandler.isImmune(victim)) {
+            return;
+        }
 
         // Prefer the measured post-armor damage from this tick's hurt() call so the combo bar
         // reflects what the victim actually lost, not the attack's raw damage stat.

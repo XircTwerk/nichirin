@@ -90,20 +90,21 @@ public final class AuraPixelize2DRenderer {
             double ey = host.yo + (host.getY() - host.yo) * partialTick + host.getBbHeight() * 0.5;
             double ez = host.zo + (host.getZ() - host.zo) * partialTick;
 
+            // Push the disc away from the camera along the FULL view direction (not just the
+            // horizontal component) so it sits behind the player's whole body from any angle —
+            // otherwise a steep up/down camera makes the camera-facing disc cover the player.
             Vec3 toCam = camPos.subtract(ex, ey, ez).normalize();
-            double toCamHX = toCam.x, toCamHZ = toCam.z;
-            double toCamHLen = Math.sqrt(toCamHX * toCamHX + toCamHZ * toCamHZ);
-            if (toCamHLen > 1e-6) { toCamHX /= toCamHLen; toCamHZ /= toCamHLen; }
 
             for (int idx = 0; idx < instances.size(); idx++) {
                 AuraInstance instance = instances.get(idx);
-                double backOffset = host.getBbWidth() * 0.5 + 0.15;
-                double bias = idx * 0.08;
+                // At least the player's half-height back, so the whole model is in front of the disc
+                // plane and occludes it (depth test does the rest).
+                double backOffset = host.getBbHeight() * 0.5 + 0.25 - idx * 0.08;
                 poseStack.pushPose();
                 poseStack.translate(
-                        ex - camPos.x - toCamHX * backOffset + toCamHX * bias,
-                        ey - camPos.y,
-                        ez - camPos.z - toCamHZ * backOffset + toCamHZ * bias);
+                        ex - camPos.x - toCam.x * backOffset,
+                        ey - camPos.y - toCam.y * backOffset,
+                        ez - camPos.z - toCam.z * backOffset);
                 renderInstance2D(vc, poseStack.last().pose(), instance, nowMs,
                         camRight, up, host.getBbWidth(), host.getBbHeight());
                 poseStack.popPose();

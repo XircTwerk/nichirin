@@ -537,5 +537,7 @@
   "text.autoconfig.nichirin_client.option.visual.enableHitParticles":    "Hit Impact Particles",
   "text.autoconfig.nichirin_client.option.visual.enableHitParticles.@Tooltip": "Show blood splat and spark particles when attacks connect. This only affects your own game.",
   "text.autoconfig.nichirin_client.option.visual.enableParrySparks":     "Parry Spark Effects",
-  "text.autoconfig.nichirin_client.option.visual.enableParrySparks.@Tooltip": "Play the burst of sparks and flash when a perfect parry is triggered. This only affects your own game."
+  "text.autoconfig.nichirin_client.option.visual.enableParrySparks.@Tooltip": "Play the burst of sparks and flash when a perfect parry is triggered. This only affects your own game.",
+  "text.autoconfig.nichirin_client.option.visual.enableAfterimages":     "Afterimage Trails",
+  "text.autoconfig.nichirin_client.option.visual.enableAfterimages.@Tooltip": "Show the ghost/afterimage trails during fast dashes like Thunderclap and Flash. Turn OFF if fast moves lag your game. This only affects your own game."
 }

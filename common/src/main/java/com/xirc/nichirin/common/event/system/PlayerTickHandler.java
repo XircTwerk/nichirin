@@ -83,6 +83,7 @@ public class PlayerTickHandler {
             Dodge.tickForPlayer(player);
             DemonManager.tickDemon(player);
             clearLeakedInvulnerability(player);
+            com.xirc.nichirin.common.util.ComboTracker.tickPlayer(player);
 
             if (player instanceof ServerPlayer) {
                 ServerPlayer serverPlayer = (ServerPlayer) player;

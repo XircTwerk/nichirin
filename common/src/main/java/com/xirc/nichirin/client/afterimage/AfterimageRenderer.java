@@ -21,13 +21,14 @@ import java.util.List;
 public final class AfterimageRenderer {
     private static final List<Entry> ENTRIES = new ArrayList<>();
     // Hard caps so a fold-heavy Thunderclap can't pile up enough ghosts to tank the frame rate.
-    private static final int MAX_ENTRIES = 16;
-    private static final double MAX_RENDER_DIST_SQR = 96.0 * 96.0;
+    private static final int MAX_ENTRIES = 10;
+    private static final double MAX_RENDER_DIST_SQR = 64.0 * 64.0;
     // Absolute ceiling on full entity-model re-renders per frame, across all trails. Each ghost
     // is a complete model dispatch (player animation hooks included, and shader packs multiply
     // the per-dispatch cost); without a tight budget a long multi-trail chain lags viewers out
-    // instead of just dropping the trail density.
-    private static final int MAX_COPIES_PER_FRAME = 24;
+    // instead of just dropping the trail density. Players can also turn afterimages off entirely
+    // (client config → enableAfterimages).
+    private static final int MAX_COPIES_PER_FRAME = 12;
 
     private record Entry(int entityId, Vec3 from, Vec3 to, long spawnTick, int lifetimeTicks,
                          int copies, float alpha) {
@@ -39,6 +40,9 @@ public final class AfterimageRenderer {
     public static void add(int entityId, Vec3 from, Vec3 to, int lifetimeTicks, int copies, float alpha) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null || copies <= 0 || lifetimeTicks <= 0 || alpha <= 0.0F) {
+            return;
+        }
+        if (!com.xirc.nichirin.client.config.NichirinClientConfig.get().visual.enableAfterimages) {
             return;
         }
 
@@ -61,6 +65,10 @@ public final class AfterimageRenderer {
     public static void render(PoseStack poseStack, Camera camera, float partialTick) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null || ENTRIES.isEmpty() || AfterimageRenderState.isRendering()) {
+            return;
+        }
+        if (!com.xirc.nichirin.client.config.NichirinClientConfig.get().visual.enableAfterimages) {
+            ENTRIES.clear();
             return;
         }
 

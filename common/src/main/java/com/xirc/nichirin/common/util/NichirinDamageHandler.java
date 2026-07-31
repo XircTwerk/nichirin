@@ -34,8 +34,17 @@ public final class NichirinDamageHandler {
         return hurt(target, source, amount, false);
     }
 
+    /**
+     * Creative and spectator players are fully immune to mod combat — no damage, stun, combo,
+     * knockback, or status effects. Attacks check this so nothing lands on them at all.
+     */
+    public static boolean isImmune(LivingEntity target) {
+        return target instanceof Player p && (p.isCreative() || p.isSpectator());
+    }
+
     public static boolean hurt(LivingEntity target, DamageSource source, float amount,
                                boolean destructiveDeathCqc) {
+        if (isImmune(target)) return false;
         boolean previous = REDUCE_ARMOR_DAMAGE.get();
         REDUCE_ARMOR_DAMAGE.set(true);
         try {

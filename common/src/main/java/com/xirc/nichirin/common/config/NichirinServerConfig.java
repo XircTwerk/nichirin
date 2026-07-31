@@ -187,7 +187,6 @@ public final class NichirinServerConfig {
 
     private static void appendCombat(StringBuilder out, NichirinModConfig.CombatConfig cfg, NichirinModConfig.CombatConfig defaults) {
         out.append("[combat]\n");
-        appendValue(out, 4, "comboWindowTicks", cfg.comboWindowTicks, defaults.comboWindowTicks, true);
         appendValue(out, 4, "parryWindowTicks", cfg.parryWindowTicks, defaults.parryWindowTicks, true);
         appendValue(out, 4, "enableParrySystem", cfg.enableParrySystem, defaults.enableParrySystem, true);
         appendValue(out, 4, "npcAiLevel", cfg.npcAiLevel, defaults.npcAiLevel, true);

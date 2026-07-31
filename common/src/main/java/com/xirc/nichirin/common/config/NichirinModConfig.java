@@ -27,10 +27,6 @@ public class NichirinModConfig implements ConfigData {
     public static class CombatConfig {
 
         @ConfigEntry.Gui.Tooltip
-        @ConfigEntry.BoundedDiscrete(min = 5, max = 100)
-        public int comboWindowTicks = 20;
-
-        @ConfigEntry.Gui.Tooltip
         @ConfigEntry.BoundedDiscrete(min = 1, max = 30)
         public int parryWindowTicks = 10;
 
