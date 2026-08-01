@@ -15,7 +15,7 @@ import net.minecraft.resources.ResourceLocation;
 public class AkazaRenderer extends BaseAZNichirinEntityRenderer<AkazaEntity> {
 
     private static final ResourceLocation GEO = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "geo/akaza_npc.geo.json");
-    private static final ResourceLocation TEX = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "textures/entity/npc/akaza/akaza_npc.png");
+    private static final ResourceLocation TEX = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "textures/entity/npc/akaza/naked_akaza_npc.png");
 
     public AkazaRenderer(EntityRendererProvider.Context context) {
         super(
