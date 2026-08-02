@@ -75,7 +75,12 @@ public final class BladeTrailRenderer {
                         Vec3 d = current.base.subtract(cameraPosition);
                         int alpha = Math.max(0, Math.min(255,
                                 Math.round(255.0f * profile.opacity() * life * life)));
-                        drawThemedTrail(buffer, matrix, a, b, c, d, profile.theme(), alpha);
+                        float tipTravel = (float) Math.sqrt(previous.tip.distanceToSqr(current.tip));
+                        float baseTravel = (float) Math.sqrt(previous.base.distanceToSqr(current.base));
+                        float energy = Math.max(0.0f, Math.min(1.0f,
+                                (tipTravel + baseTravel - 0.055f) / 0.72f));
+                        int flowPhase = (int) ((current.time / 42L) % 4L);
+                        drawThemedTrail(buffer, matrix, a, b, c, d, profile.theme(), alpha, energy, flowPhase);
                     }
                 }
                 previous = current;
@@ -106,16 +111,34 @@ public final class BladeTrailRenderer {
 
     private static void drawThemedTrail(BufferBuilder buffer, Matrix4f matrix,
                                         Vec3 a, Vec3 b, Vec3 c, Vec3 d,
-                                        BladeTrailProfiles.Theme theme, int alpha) {
+                                        BladeTrailProfiles.Theme theme, int alpha,
+                                        float energy, int flowPhase) {
         Vec3 aShadow = a.lerp(b, 0.18);
         Vec3 dShadow = d.lerp(c, 0.18);
         Vec3 bHighlight = a.lerp(b, 0.78);
         Vec3 cHighlight = d.lerp(c, 0.78);
         quad(buffer, matrix, a, aShadow, dShadow, d, color(theme.shadow(), alpha, 0.76f));
-        quad(buffer, matrix, aShadow, bHighlight, cHighlight, dShadow,
-                color(theme.body(), alpha, 0.94f));
+        int flowingBody = color(theme.body(), alpha, 0.94f);
+        if (flowPhase == 1 || flowPhase == 2) {
+            flowingBody = VfxPixelRender.mixRgb(flowingBody, theme.highlight(),
+                    0.10f + energy * 0.14f);
+        } else if (flowPhase == 3) {
+            flowingBody = VfxPixelRender.mixRgb(flowingBody, theme.shadow(), 0.12f);
+        }
+        quad(buffer, matrix, aShadow, bHighlight, cHighlight, dShadow, flowingBody);
         quad(buffer, matrix, bHighlight, b, c, cHighlight,
                 color(theme.highlight(), alpha, 1.0f));
+
+        // Fast sword motion earns a narrow hot core. Slow stance movement remains clean.
+        if (energy > 0.22f) {
+            Vec3 previousInner = a.lerp(b, 0.56);
+            Vec3 previousOuter = a.lerp(b, 0.88);
+            Vec3 currentOuter = d.lerp(c, 0.88);
+            Vec3 currentInner = d.lerp(c, 0.56);
+            int coreAlpha = Math.max(0, Math.min(255, Math.round(alpha * energy * 0.48f)));
+            quad(buffer, matrix, previousInner, previousOuter, currentOuter, currentInner,
+                    color(theme.highlight(), coreAlpha, 1.0f));
+        }
     }
 
     private static void quad(BufferBuilder buffer, Matrix4f matrix,
