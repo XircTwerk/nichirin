@@ -107,6 +107,7 @@ public interface NichirinPacketRegistry {
     ResourceLocation AURA_ADD_ID                   = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "aura_add");
     ResourceLocation AURA_REMOVE_ID                = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "aura_remove");
     ResourceLocation AURA_CLEAR_ID                 = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "aura_clear");
+    ResourceLocation VFX_TRIGGER_ID                = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "vfx_trigger");
     ResourceLocation OUTLINE_ADD_ID                = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "outline_add");
     ResourceLocation OUTLINE_REMOVE_ID             = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "outline_remove");
     ResourceLocation OUTLINE_CLEAR_ID              = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "outline_clear");
@@ -147,6 +148,7 @@ public interface NichirinPacketRegistry {
         PACKET_IDS.put(SheathConfigPacket.class, SHEATH_CONFIG_ID);
         PACKET_IDS.put(SheathSyncPacket.class, SHEATH_SYNC_ID);
         PACKET_IDS.put(DestructiveDeathStateSyncPacket.class, DESTRUCTIVE_DEATH_STATE_ID);
+        PACKET_IDS.put(VfxTriggerPacket.class, VFX_TRIGGER_ID);
 
         registerPackets();
     }
@@ -186,7 +188,7 @@ public interface NichirinPacketRegistry {
                 MIST_CLONES_ID, CLONE_RING_ID, SHEATH_SYNC_ID, OPEN_CONFIG_SCREEN_ID, CQC_PRESET_SYNC_ID, COOLDOWN_DISPLAY_ID,
                 AURA_ADD_ID, AURA_REMOVE_ID, AURA_CLEAR_ID,
                 OUTLINE_ADD_ID, OUTLINE_REMOVE_ID, OUTLINE_CLEAR_ID, AFTERIMAGE_ID,
-                DESTRUCTIVE_DEATH_STATE_ID, GUN_ANIMATION_ID
+                DESTRUCTIVE_DEATH_STATE_ID, GUN_ANIMATION_ID, VFX_TRIGGER_ID
         };
         for (ResourceLocation id : s2cIds) {
             try {
@@ -548,6 +550,11 @@ public interface NichirinPacketRegistry {
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, TRIGGER_SHADER_ID, (buf, context) -> {
                 TriggerShaderPacket packet = new TriggerShaderPacket(buf);
                 context.queue(() -> packet.handleClient());
+            });
+
+            NetworkManager.registerReceiver(NetworkManager.Side.S2C, VFX_TRIGGER_ID, (buf, context) -> {
+                VfxTriggerPacket packet = new VfxTriggerPacket(buf);
+                context.queue(packet::handleClient);
             });
 
             NetworkManager.registerReceiver(NetworkManager.Side.S2C, PARRY_SPARK_ID, (buf, context) -> {
@@ -1214,6 +1221,8 @@ public interface NichirinPacketRegistry {
         } else if (packet instanceof SheathConfigPacket p) {
             p.toBytes(buf);
         } else if (packet instanceof DestructiveDeathStateSyncPacket p) {
+            p.toBytes(buf);
+        } else if (packet instanceof VfxTriggerPacket p) {
             p.toBytes(buf);
         }
 

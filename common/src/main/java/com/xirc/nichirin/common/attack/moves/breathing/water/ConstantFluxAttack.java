@@ -1,11 +1,10 @@
 package com.xirc.nichirin.common.attack.moves.breathing.water;
 
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
+import com.xirc.nichirin.common.vfx.VfxIds;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -61,7 +60,6 @@ public class ConstantFluxAttack extends WaterBreathingAttackBase {
                 SoundEvents.WATER_AMBIENT, SoundSource.PLAYERS, 1.0f, 1.1f);
 
         // Create initial flux buildup
-        createFluxStartEffect();
     }
 
     @Override
@@ -92,6 +90,9 @@ public class ConstantFluxAttack extends WaterBreathingAttackBase {
 
     private void executeComboHit() {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
+        if (comboHitsExecuted == 0) {
+            playWaterVfx(VfxIds.CONSTANT_FLUX, user.position(), user.getLookAngle(), 0.85f);
+        }
 
         // Hit enemies in combo range
         List<LivingEntity> hitTargets = getTargetsAtRange();
@@ -113,11 +114,9 @@ public class ConstantFluxAttack extends WaterBreathingAttackBase {
             Vec3 comboKnockback = user.getLookAngle().scale(knockback * 0.1);
             target.push(comboKnockback.x, 0.02, comboKnockback.z);
 
-            createComboHitEffect(target.position());
         }
 
         // Create combo slash visual
-        createComboSlashEffect(userPos, comboHitsExecuted);
 
 // Combo hit sounds with increasing intensity
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
@@ -167,7 +166,6 @@ public class ConstantFluxAttack extends WaterBreathingAttackBase {
             entity.hasImpulse = true;
 
             // Create drag trail effect
-            createDragTrailEffect(entity.position());
 
             // Hit dragged entities periodically for constant damage
             if (dragData.dragTicks % 10 == 0) {
@@ -188,9 +186,9 @@ public class ConstantFluxAttack extends WaterBreathingAttackBase {
     private void executeWaterDragonFinisher() {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDir = user.getLookAngle();
+        playWaterVfx(VfxIds.CONSTANT_FLUX, user.position(), lookDir, 1.35f);
 
         // Create massive water dragon
-        createWaterDragonEffect();
 
         // Hit all enemies in large finisher area
         List<LivingEntity> finisherTargets = getTargetsInCustomHitbox(
@@ -205,7 +203,6 @@ public class ConstantFluxAttack extends WaterBreathingAttackBase {
             Vec3 dragonKnockback = lookDir.scale(knockback * 1.2);
             target.push(dragonKnockback.x, 0.6, dragonKnockback.z);
 
-            createDragonImpactEffect(target.position());
         }
 
         // Extra damage for dragged enemies (they were set up for this)
@@ -221,7 +218,6 @@ public class ConstantFluxAttack extends WaterBreathingAttackBase {
                 Vec3 epicKnockback = lookDir.scale(knockback * 2.0);
                 draggedEnemy.push(epicKnockback.x, 0.8, epicKnockback.z);
 
-                createDragonImpactEffect(draggedEnemy.position());
             }
         }
 
@@ -234,148 +230,6 @@ public class ConstantFluxAttack extends WaterBreathingAttackBase {
                 SoundEvents.GENERIC_SPLASH, SoundSource.PLAYERS, 1.5f, 0.7f);
     }
 
-    private void createFluxStartEffect() {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-
-        Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
-
-        // Constant flux energy buildup
-        for (int i = 0; i < 24; i++) {
-            double angle = (i / 24.0) * 2 * Math.PI;
-            double radius = 2.5;
-            double x = userPos.x + Math.cos(angle) * radius;
-            double z = userPos.z + Math.sin(angle) * radius;
-            double y = userPos.y + Math.sin(angle * 2) * 0.8;
-
-            // Flux energy particles
-            serverLevel.sendParticles(ParticleTypes.DRIPPING_WATER,
-                    x, y, z, 2, 0.1, 0.1, 0.1, 0.05);
-
-            if (i % 3 == 0) {
-                serverLevel.sendParticles(ParticleTypes.BUBBLE,
-                        x, y, z, 1, 0.05, 0.05, 0.05, 0.02);
-            }
-        }
-    }
-
-    private void createComboSlashEffect(Vec3 userPos, int hitNumber) {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-
-        Vec3 lookDir = user.getLookAngle();
-
-        // Different slash patterns for each combo hit
-        for (int i = -3; i <= 3; i++) {
-            double angle = i * 20 + (hitNumber * 30); // Vary angle based on hit number
-            double radians = Math.toRadians(angle);
-
-            Vec3 slashDir = lookDir.yRot((float)radians);
-            Vec3 slashPos = userPos.add(slashDir.scale(range * 0.8));
-
-            // Combo slash particles
-            serverLevel.sendParticles(ParticleTypes.SPLASH,
-                    slashPos.x, slashPos.y, slashPos.z,
-                    3, 0.2, 0.2, 0.2, 0.1);
-
-            if (Math.abs(i) <= 1) {
-                serverLevel.sendParticles(ParticleTypes.CRIT,
-                        slashPos.x, slashPos.y, slashPos.z,
-                        2, 0.1, 0.1, 0.1, 0.08);
-            }
-        }
-    }
-
-    private void createComboHitEffect(Vec3 hitPos) {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-
-        Vec3 targetPos = hitPos.add(0, 1, 0);
-
-        // Combo hit particles
-        serverLevel.sendParticles(ParticleTypes.SPLASH,
-                targetPos.x, targetPos.y, targetPos.z,
-                8, 0.3, 0.3, 0.3, 0.15);
-
-        serverLevel.sendParticles(ParticleTypes.CRIT,
-                targetPos.x, targetPos.y, targetPos.z,
-                5, 0.2, 0.2, 0.2, 0.1);
-    }
-
-    private void createDragTrailEffect(Vec3 entityPos) {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-
-        // Trail behind dragged entities
-        serverLevel.sendParticles(ParticleTypes.SPLASH,
-                entityPos.x, entityPos.y + 0.5, entityPos.z,
-                2, 0.2, 0.2, 0.2, 0.08);
-
-        // Occasional bubbles
-        if (fluxTicks % 4 == 0) {
-            serverLevel.sendParticles(ParticleTypes.BUBBLE,
-                    entityPos.x, entityPos.y, entityPos.z,
-                    1, 0.1, 0.1, 0.1, 0.05);
-        }
-    }
-
-    private void createWaterDragonEffect() {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-
-        Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
-        Vec3 lookDir = user.getLookAngle();
-
-        // Create water dragon body extending forward
-        for (int segment = 0; segment < 12; segment++) {
-            Vec3 dragonPos = userPos.add(lookDir.scale(segment * 0.8));
-
-            // Dragon body undulation
-            double undulation = Math.sin(segment * 0.5) * 1.2;
-            Vec3 rightDir = lookDir.cross(new Vec3(0, 1, 0)).normalize();
-            dragonPos = dragonPos.add(rightDir.scale(undulation)).add(0, Math.abs(undulation) * 0.5, 0);
-
-            // Main dragon body
-            serverLevel.sendParticles(ParticleTypes.SPLASH,
-                    dragonPos.x, dragonPos.y, dragonPos.z,
-                    8, 0.4, 0.4, 0.4, 0.2);
-
-            // Dragon details
-            if (segment % 2 == 0) {
-                serverLevel.sendParticles(ParticleTypes.BUBBLE,
-                        dragonPos.x, dragonPos.y, dragonPos.z,
-                        4, 0.3, 0.3, 0.3, 0.15);
-            }
-
-            // Dragon head (first segment)
-            if (segment == 0) {
-                serverLevel.sendParticles(ParticleTypes.EXPLOSION,
-                        dragonPos.x, dragonPos.y, dragonPos.z,
-                        2, 0.2, 0.2, 0.2, 0);
-            }
-        }
-
-        // Dragon roar effect
-        Vec3 dragonHead = userPos.add(lookDir.scale(range));
-        createWaterExplosion(dragonHead, 3.0f);
-    }
-
-    private void createDragonImpactEffect(Vec3 impactPos) {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-
-        Vec3 targetPos = impactPos.add(0, 1, 0);
-
-        // Dragon impact - very dramatic
-        serverLevel.sendParticles(ParticleTypes.EXPLOSION,
-                targetPos.x, targetPos.y, targetPos.z,
-                3, 0.3, 0.3, 0.3, 0);
-
-        serverLevel.sendParticles(ParticleTypes.SPLASH,
-                targetPos.x, targetPos.y, targetPos.z,
-                25, 0.8, 0.8, 0.8, 0.4);
-
-        serverLevel.sendParticles(ParticleTypes.CRIT,
-                targetPos.x, targetPos.y, targetPos.z,
-                20, 0.6, 0.6, 0.6, 0.3);
-
-        // Water burst around impact
-        createWaterCircle(targetPos, 3.0f, 16);
-    }
 
     @Override
     protected void onStop() {
@@ -386,26 +240,6 @@ public class ConstantFluxAttack extends WaterBreathingAttackBase {
                 entity.setDeltaMovement(Vec3.ZERO);
             }
         }
-
-        // Final dragon dissolution
-        if (world instanceof ServerLevel serverLevel) {
-            Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
-
-            // Dragon dissolving into water
-            createWaterExplosion(userPos, 3.5f);
-
-            // Rain from dissolved dragon
-            for (int i = 0; i < 60; i++) {
-                double x = userPos.x + (Math.random() - 0.5) * range * 1.5;
-                double z = userPos.z + (Math.random() - 0.5) * range * 1.5;
-                double y = userPos.y + 5 + Math.random() * 3;
-
-                serverLevel.sendParticles(ParticleTypes.DRIPPING_WATER,
-                        x, y, z, 1, 0, -0.4, 0, 0.15);
-            }
-        }
-
-
 
         // Clear state
         draggedEntities.clear();

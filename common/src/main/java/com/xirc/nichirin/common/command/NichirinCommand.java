@@ -20,6 +20,8 @@ import com.xirc.nichirin.common.network.s2c.TriggerShaderPacket;
 import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
 import com.xirc.nichirin.common.system.BloodMoonManager;
 import com.xirc.nichirin.common.system.DemonManager;
+import com.xirc.nichirin.common.vfx.VfxIds;
+import com.xirc.nichirin.common.vfx.VfxManager;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinMovesetRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
@@ -28,6 +30,7 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 
@@ -66,6 +69,18 @@ public class NichirinCommand {
     private static final int COL_OK      = 0x55FF55;
     private static final int COL_WARN    = 0xFFAA00;
     private static final int COL_ERR     = 0xFF5555;
+    private static final Map<String, ResourceLocation> VFX_DEBUG_EFFECTS = Map.ofEntries(
+            Map.entry("water_surface_slash", VfxIds.WATER_SURFACE_SLASH),
+            Map.entry("water_wheel", VfxIds.WATER_WHEEL),
+            Map.entry("drop_ripple_thrust", VfxIds.DROP_RIPPLE_THRUST),
+            Map.entry("flowing_dance", VfxIds.FLOWING_DANCE),
+            Map.entry("striking_tide", VfxIds.STRIKING_TIDE),
+            Map.entry("waterfall_basin", VfxIds.WATERFALL_BASIN),
+            Map.entry("splashing_water_flow", VfxIds.SPLASHING_WATER_FLOW),
+            Map.entry("whirlpool", VfxIds.WHIRLPOOL),
+            Map.entry("blessed_rain", VfxIds.BLESSED_RAIN),
+            Map.entry("constant_flux", VfxIds.CONSTANT_FLUX),
+            Map.entry("dead_calm", VfxIds.DEAD_CALM));
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("nichirin")
@@ -100,6 +115,19 @@ public class NichirinCommand {
                                 .executes(ctx -> clearAkazaPact(ctx, ctx.getSource().getPlayerOrException()))
                                 .then(Commands.argument("player", EntityArgument.player())
                                         .executes(ctx -> clearAkazaPact(ctx, EntityArgument.getPlayer(ctx, "player")))))
+                        .then(Commands.literal("vfx")
+                                .then(Commands.argument("effect", StringArgumentType.word())
+                                        .suggests((ctx, builder) -> {
+                                            VFX_DEBUG_EFFECTS.keySet().forEach(builder::suggest);
+                                            return builder.buildFuture();
+                                        })
+                                        .executes(ctx -> playDebugVfx(ctx,
+                                                ctx.getSource().getPlayerOrException(),
+                                                StringArgumentType.getString(ctx, "effect")))
+                                        .then(Commands.argument("player", EntityArgument.player())
+                                                .executes(ctx -> playDebugVfx(ctx,
+                                                        EntityArgument.getPlayer(ctx, "player"),
+                                                        StringArgumentType.getString(ctx, "effect"))))))
                         .then(AuraCommand.build())
                         .then(OutlineCommand.build()))
 
@@ -157,6 +185,25 @@ public class NichirinCommand {
                         + " blurry debug effect to " + player.getName().getString()
                         + " (effect id: nichirin:blurry)")
                 .withStyle(s -> s.withColor(COL_OK)), true);
+        return 1;
+    }
+
+    private static int playDebugVfx(CommandContext<CommandSourceStack> ctx, ServerPlayer player, String effectName) {
+        ResourceLocation effectId = VFX_DEBUG_EFFECTS.get(effectName);
+        if (effectId == null) {
+            ctx.getSource().sendFailure(Component.literal("Unknown VFX: " + effectName)
+                    .withStyle(s -> s.withColor(COL_ERR)));
+            return 0;
+        }
+        var look = player.getLookAngle();
+        var direction = new net.minecraft.world.phys.Vec3(look.x, 0.0, look.z);
+        if (direction.lengthSqr() < 1.0E-6) direction = new net.minecraft.world.phys.Vec3(0.0, 0.0, 1.0);
+        direction = direction.normalize();
+        var origin = player.position().add(direction.scale(1.25)).add(0.0, 0.08, 0.0);
+        VfxManager.play((net.minecraft.server.level.ServerLevel) player.level(),
+                effectId, origin, direction, 1.0f);
+        ctx.getSource().sendSuccess(() -> Component.literal("Played " + effectName + " VFX for "
+                + player.getName().getString()).withStyle(s -> s.withColor(COL_OK)), false);
         return 1;
     }
 

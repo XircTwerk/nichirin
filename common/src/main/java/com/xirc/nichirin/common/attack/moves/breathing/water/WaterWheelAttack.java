@@ -1,11 +1,10 @@
 package com.xirc.nichirin.common.attack.moves.breathing.water;
 
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
+import com.xirc.nichirin.common.vfx.VfxIds;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -62,6 +61,8 @@ public class WaterWheelAttack extends WaterBreathingAttackBase {
     }
 
     private void startWheel() {
+        playWaterVfx(VfxIds.WATER_WHEEL,
+                user.position().add(0, user.getBbHeight() * 0.15, 0), user.getLookAngle(), 1.0f);
         // Small forward lunge using dash speed
         if (dashSpeed != null && dashSpeed > 0) {
             Vec3 lungeDirection = user.getLookAngle().normalize();
@@ -76,14 +77,12 @@ public class WaterWheelAttack extends WaterBreathingAttackBase {
                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0f, 0.9f);
 
         // Create initial wheel effect
-        createWheelStartEffect();
     }
 
     private void performWheel() {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
         // Create continuous vertical wheel effect
-        createVerticalWheelEffect(userPos);
         dragCaughtEnemies();
 
         // Hit enemies in wheel radius - allow multiple hits but with timing
@@ -167,79 +166,6 @@ public class WaterWheelAttack extends WaterBreathingAttackBase {
         }
     }
 
-    /** Returns [fwdX, fwdZ] — the normalized horizontal forward vector (player's look direction). */
-    private double[] getWheelForwardDir() {
-        Vec3 look = user.getLookAngle();
-        double fwdLen = Math.sqrt(look.x * look.x + look.z * look.z);
-        double fx = fwdLen > 0.001 ? look.x / fwdLen : 0;
-        double fz = fwdLen > 0.001 ? look.z / fwdLen : 1;
-        return new double[]{fx, fz};
-    }
-
-    private void createWheelStartEffect() {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-
-        Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
-        double[] rightDir = getWheelForwardDir();
-
-        // Initial wheel formation - vertical circle oriented to player facing
-        for (int i = 0; i < 16; i++) {
-            double angle = (i / 16.0) * 2 * Math.PI;
-            double radius = hitboxSize * 0.8;
-
-            double x = userPos.x + Math.sin(angle) * radius * rightDir[0];
-            double y = userPos.y + Math.cos(angle) * radius;
-            double z = userPos.z + Math.sin(angle) * radius * rightDir[1];
-
-            serverLevel.sendParticles(ParticleTypes.SPLASH,
-                    x, y, z, 3, 0.2, 0.2, 0.2, 0.1);
-
-            serverLevel.sendParticles(ParticleTypes.DRIPPING_WATER,
-                    x, y, z, 1, 0.1, 0.1, 0.1, 0.05);
-        }
-
-        // Water burst at center
-        serverLevel.sendParticles(ParticleTypes.SPLASH,
-                userPos.x, userPos.y, userPos.z,
-                20, 0.5, 0.5, 0.5, 0.2);
-    }
-
-    private void createVerticalWheelEffect(Vec3 userPos) {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-
-        // Create rotating vertical wheel effect oriented to player facing
-        double wheelSpeed = wheelTicks * 0.4;
-        int particlesPerFrame = 12;
-        double[] rightDir = getWheelForwardDir();
-
-        for (int i = 0; i < particlesPerFrame; i++) {
-            double angle = (i / (double)particlesPerFrame) * 2 * Math.PI + wheelSpeed;
-            double radius = hitboxSize * 0.7;
-
-            double x = userPos.x + Math.sin(angle) * radius * rightDir[0];
-            double y = userPos.y + Math.cos(angle) * radius;
-            double z = userPos.z + Math.sin(angle) * radius * rightDir[1];
-
-            serverLevel.sendParticles(ParticleTypes.SPLASH,
-                    x, y, z, 2, 0.1, 0.1, 0.1, 0.08);
-
-            serverLevel.sendParticles(ParticleTypes.DRIPPING_WATER,
-                    x, y, z, 1, 0.05, 0.05, 0.05, 0.03);
-        }
-
-        // Central water spout
-        if (wheelTicks % 5 == 0) {
-            serverLevel.sendParticles(ParticleTypes.SPLASH,
-                    userPos.x, userPos.y, userPos.z,
-                    6, 0.2, 0.8, 0.2, 0.1);
-        }
-
-        // Outer wheel rim effect
-        if (wheelTicks % 8 == 0) {
-            createWaterCircle(userPos, hitboxSize, 16);
-        }
-    }
-
     @Override
     protected void onStop() {
         // Reset user velocity
@@ -251,28 +177,6 @@ public class WaterWheelAttack extends WaterBreathingAttackBase {
         wheelTicks = 0;
         wheelStarted = false;
         lastWheelPos = null;
-
-        // Final wheel dissolution effect
-        if (world instanceof ServerLevel serverLevel) {
-            Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
-
-            // Final water explosion
-            createWaterExplosion(userPos, 1.5f);
-
-            // Wheel dissolution particles — vertical ring along the forward axis
-            double[] fwdDir = getWheelForwardDir();
-            for (int i = 0; i < 20; i++) {
-                double angle = (i / 20.0) * 2 * Math.PI;
-                double radius = hitboxSize;
-
-                double x = userPos.x + Math.sin(angle) * radius * fwdDir[0];
-                double y = userPos.y + Math.cos(angle) * radius;
-                double z = userPos.z + Math.sin(angle) * radius * fwdDir[1];
-
-                serverLevel.sendParticles(ParticleTypes.SPLASH,
-                        x, y, z, 3, 0.3, 0.3, 0.3, 0.15);
-            }
-        }
 
         // Final water sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),

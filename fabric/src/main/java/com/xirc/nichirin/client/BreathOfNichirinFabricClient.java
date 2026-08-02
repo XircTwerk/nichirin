@@ -2,6 +2,7 @@ package com.xirc.nichirin.client;
 
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.xirc.nichirin.client.outline.OutlineShaderHolder;
+import com.xirc.nichirin.client.vfx.VfxShaderHolder;
 import com.xirc.nichirin.client.particle.*;
 import com.xirc.nichirin.client.util.fabric.ItemPropertiesHelperImpl;
 import com.xirc.nichirin.registry.NichirinKeybindRegistry;
@@ -17,6 +18,7 @@ public class BreathOfNichirinFabricClient implements ClientModInitializer {
     public void onInitializeClient() {
         registerParticles();
         registerOutlineShader();
+        registerVfxShader();
 
         // Register item properties first (client-only)
         ItemPropertiesHelperImpl.registerBentoBoxProperty();
@@ -34,6 +36,13 @@ public class BreathOfNichirinFabricClient implements ClientModInitializer {
                 ResourceLocation.fromNamespaceAndPath("nichirin", "outline_cel"),
                 DefaultVertexFormat.NEW_ENTITY,
                 OutlineShaderHolder::setShader));
+    }
+
+    private static void registerVfxShader() {
+        CoreShaderRegistrationCallback.EVENT.register(context -> context.register(
+                ResourceLocation.fromNamespaceAndPath("nichirin", "vfx_pixel"),
+                DefaultVertexFormat.POSITION_COLOR,
+                VfxShaderHolder::setShader));
     }
 
     private static void registerParticles() {

@@ -1,12 +1,11 @@
 package com.xirc.nichirin.common.attack.moves.breathing.water;
 
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
+import com.xirc.nichirin.common.vfx.VfxIds;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -78,18 +77,12 @@ public class WaterSurfaceSlashAttack extends WaterBreathingAttackBase {
     private void executeSlash() {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDir = user.getLookAngle();
-
-        // Different slash effects based on combo stage
-        switch (comboStage) {
-            case 1 -> {
-                createLeftToRightSlash(userPos, lookDir);
-            }
-            case 2 -> {
-                createRightToLeftSlash(userPos, lookDir);
-            }
-            case 3 -> {
-                createDownwardSlam(userPos, lookDir);
-            }
+        Vec3 effectOrigin = user.position().add(lookDir.scale(1.25)).add(0, 0.08, 0);
+        if (comboStage == 3) {
+            playWaterVfx(VfxIds.WATERFALL_BASIN, effectOrigin, lookDir, 0.8f);
+        } else {
+            playWaterVfx(VfxIds.WATER_SURFACE_SLASH, effectOrigin, lookDir,
+                    comboStage == 2 ? 1.12f : 1.0f);
         }
 
         // Hit enemies in front - use hitTargetNoImmunity for combo attacks
@@ -121,188 +114,6 @@ public class WaterSurfaceSlashAttack extends WaterBreathingAttackBase {
                 attackSound, SoundSource.PLAYERS, attackVolume, attackPitch);
     }
 
-    private void createLeftToRightSlash(Vec3 userPos, Vec3 lookDir) {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-
-        // Calculate perpendicular vector for horizontal slashing
-        Vec3 rightVector = lookDir.cross(new Vec3(0, 1, 0)).normalize();
-
-        // Move particle spawn point away from player (in front of them)
-        Vec3 slashCenter = userPos.add(lookDir.scale(range * 0.5)).add(0, 0.2, 0);
-
-        // Create timed slash from LEFT TO RIGHT with arc effect
-        int totalParticles = 12;
-        float arcHeight = 0.8f; // Height of the arc
-
-        for (int i = 0; i < totalParticles; i++) {
-            int finalI = i;
-
-            // Schedule each particle with a small delay to create motion effect
-            CompletableFuture.delayedExecutor(i * 20L, TimeUnit.MILLISECONDS)
-                    .execute(() -> {
-                        if (world instanceof ServerLevel level) {
-                            float progress = (float) finalI / (totalParticles - 1); // 0.0 to 1.0
-
-                            // Create arc motion: start left, peak in middle, end right
-                            float horizontalOffset = (progress - 0.5f) * range * 1.4f; // -range*0.7 to +range*0.7
-                            float forwardOffset = arcHeight * (1.0f - 4.0f * (progress - 0.5f) * (progress - 0.5f)); // Parabolic arc forward
-
-                            Vec3 particlePos = slashCenter
-                                    .add(rightVector.scale(horizontalOffset))
-                                    .add(lookDir.scale(forwardOffset)); // Arc forward instead of up
-
-                            // More particles at the peak of the arc for emphasis
-                            int particleCount = (progress > 0.3f && progress < 0.7f) ? 6 : 4;
-
-                            level.sendParticles(ParticleTypes.SPLASH,
-                                    particlePos.x, particlePos.y, particlePos.z,
-                                    particleCount, 0.15, 0.1, 0.15, 0.12);
-
-                            level.sendParticles(ParticleTypes.DRIPPING_WATER,
-                                    particlePos.x, particlePos.y, particlePos.z,
-                                    2, 0.08, 0.05, 0.08, 0.08);
-                        }
-                    });
-        }
-
-        // Add immediate initial splash at start position (left side)
-        Vec3 startPos = slashCenter.add(rightVector.scale(-range * 0.7));
-        serverLevel.sendParticles(ParticleTypes.SPLASH,
-                startPos.x, startPos.y, startPos.z,
-                4, 0.1, 0.1, 0.1, 0.1);
-    }
-
-    private void createRightToLeftSlash(Vec3 userPos, Vec3 lookDir) {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-
-        // Calculate perpendicular vector for horizontal slashing
-        Vec3 rightVector = lookDir.cross(new Vec3(0, 1, 0)).normalize();
-
-        // Move particle spawn point away from player
-        Vec3 slashCenter = userPos.add(lookDir.scale(range * 0.5)).add(0, 0.3, 0);
-
-        // Create timed slash from RIGHT TO LEFT with deeper arc
-        int totalParticles = 14;
-        float arcHeight = 1.0f; // Slightly higher arc for second hit
-
-        for (int i = 0; i < totalParticles; i++) {
-            int finalI = i;
-
-            // Slightly faster timing for second hit
-            CompletableFuture.delayedExecutor(i * 15L, TimeUnit.MILLISECONDS)
-                    .execute(() -> {
-                        if (world instanceof ServerLevel level) {
-                            float progress = (float) finalI / (totalParticles - 1); // 0.0 to 1.0
-
-                            // Create arc motion: start right, peak in middle, end left
-                            float horizontalOffset = (0.5f - progress) * range * 1.4f; // +range*0.7 to -range*0.7
-                            float forwardOffset = arcHeight * (1.0f - 4.0f * (progress - 0.5f) * (progress - 0.5f)); // Parabolic arc forward
-
-                            Vec3 particlePos = slashCenter
-                                    .add(rightVector.scale(horizontalOffset))
-                                    .add(lookDir.scale(forwardOffset)); // Arc forward instead of up
-
-                            // Enhanced particles for second hit
-                            int particleCount = (progress > 0.25f && progress < 0.75f) ? 7 : 5;
-
-                            level.sendParticles(ParticleTypes.SPLASH,
-                                    particlePos.x, particlePos.y, particlePos.z,
-                                    particleCount, 0.18, 0.12, 0.18, 0.15);
-
-                            level.sendParticles(ParticleTypes.DRIPPING_WATER,
-                                    particlePos.x, particlePos.y, particlePos.z,
-                                    3, 0.1, 0.08, 0.1, 0.1);
-                        }
-                    });
-        }
-
-        // Add immediate initial splash at start position (right side)
-        Vec3 startPos = slashCenter.add(rightVector.scale(range * 0.7));
-        serverLevel.sendParticles(ParticleTypes.SPLASH,
-                startPos.x, startPos.y, startPos.z,
-                5, 0.12, 0.1, 0.12, 0.12);
-    }
-
-    private void createDownwardSlam(Vec3 userPos, Vec3 lookDir) {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-
-        // Move slam effect in front of player
-        Vec3 slamCenter = userPos.add(lookDir.scale(range * 0.6));
-
-        // Create timed vertical slash from UP TO DOWN
-        int totalParticles = 16;
-        float maxHeight = 2.5f;
-
-        for (int i = 0; i < totalParticles; i++) {
-            int finalI = i;
-
-            // Faster timing for slam effect
-            CompletableFuture.delayedExecutor(i * 25L, TimeUnit.MILLISECONDS)
-                    .execute(() -> {
-                        if (world instanceof ServerLevel level) {
-                            float progress = (float) finalI / (totalParticles - 1); // 0.0 to 1.0
-
-                            // Vertical motion from top to bottom
-                            float verticalOffset = maxHeight * (1.0f - progress); // Start high, end low
-
-                            Vec3 particlePos = slamCenter.add(0, verticalOffset, 0);
-
-                            // More particles as we get closer to impact
-                            int particleCount = (int)(4 + progress * 8); // 4-12 particles
-
-                            if (progress < 0.8f) {
-                                // Falling water particles for most of the descent
-                                level.sendParticles(ParticleTypes.FALLING_WATER,
-                                        particlePos.x, particlePos.y, particlePos.z,
-                                        particleCount, 0.2, 0.1, 0.2, 0.15);
-                            } else {
-                                // Heavy splash particles near impact
-                                level.sendParticles(ParticleTypes.SPLASH,
-                                        particlePos.x, particlePos.y, particlePos.z,
-                                        particleCount, 0.4, 0.2, 0.4, 0.25);
-                            }
-                        }
-                    });
-        }
-
-        // Delayed massive ground impact effect
-        CompletableFuture.delayedExecutor(totalParticles * 25L + 100L, TimeUnit.MILLISECONDS)
-                .execute(() -> {
-                    if (world instanceof ServerLevel level) {
-                        Vec3 impactPos = slamCenter.add(0, -0.5, 0);
-
-                        // Massive ground splash
-                        level.sendParticles(ParticleTypes.SPLASH,
-                                impactPos.x, impactPos.y, impactPos.z,
-                                30, 1.5, 0.3, 1.5, 0.4);
-
-                        // Radial splash pattern
-                        for (int angle = 0; angle < 360; angle += 20) {
-                            double radians = Math.toRadians(angle);
-                            double offsetX = Math.cos(radians) * 2.0;
-                            double offsetZ = Math.sin(radians) * 2.0;
-
-                            level.sendParticles(ParticleTypes.SPLASH,
-                                    impactPos.x + offsetX, impactPos.y, impactPos.z + offsetZ,
-                                    4, 0.2, 0.15, 0.2, 0.15);
-                        }
-
-                        // Upward water columns
-                        for (int column = 0; column < 8; column++) {
-                            float height = 0.3f + column * 0.25f;
-                            level.sendParticles(ParticleTypes.SPLASH,
-                                    impactPos.x, impactPos.y + height, impactPos.z,
-                                    3, 0.15, 0.1, 0.15, 0.1);
-                        }
-                    }
-                });
-
-        // Immediate startup particles at the top
-        Vec3 startPos = slamCenter.add(0, maxHeight, 0);
-        serverLevel.sendParticles(ParticleTypes.FALLING_WATER,
-                startPos.x, startPos.y, startPos.z,
-                6, 0.1, 0.1, 0.1, 0.1);
-    }
 
     @Override
     protected void onStop() {
@@ -311,22 +122,6 @@ public class WaterSurfaceSlashAttack extends WaterBreathingAttackBase {
         slashExecuted = false;
         isComboActive = false;
 
-        // Final effect based on combo stage
-        if (world instanceof ServerLevel serverLevel) {
-            Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
-
-            if (comboStage == 3) {
-                // Larger final splash for slam finisher
-                serverLevel.sendParticles(ParticleTypes.SPLASH,
-                        userPos.x, userPos.y, userPos.z,
-                        15, 0.5, 0.5, 0.5, 0.2);
-            } else {
-                // Standard final splash
-                serverLevel.sendParticles(ParticleTypes.SPLASH,
-                        userPos.x, userPos.y, userPos.z,
-                        8, 0.3, 0.3, 0.3, 0.1);
-            }
-        }
     }
 
     /**
@@ -354,7 +149,5 @@ public class WaterSurfaceSlashAttack extends WaterBreathingAttackBase {
      * Trigger the next combo stage manually (for manual combo system)
      */
     public void triggerNextStage() {
-        if (isComboActive() && comboStage < 3) {
-        }
     }
 }

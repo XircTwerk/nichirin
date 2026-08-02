@@ -3,6 +3,7 @@ package com.xirc.nichirin.neoforge.client;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.xirc.nichirin.client.BreathOfNichirinClient;
 import com.xirc.nichirin.client.outline.OutlineShaderHolder;
+import com.xirc.nichirin.client.vfx.VfxShaderHolder;
 import com.xirc.nichirin.client.particle.*;
 import com.xirc.nichirin.client.renderer.block.KatanaHolderBlockRenderer;
 import com.xirc.nichirin.client.renderer.entity.animal.BoarEntityRenderer;
@@ -67,6 +68,12 @@ public class BreathOfNichirinNeoForgeClient {
                         ResourceLocation.fromNamespaceAndPath("nichirin", "outline_cel"),
                         DefaultVertexFormat.NEW_ENTITY),
                 OutlineShaderHolder::setShader);
+        event.registerShader(
+                new ShaderInstance(
+                        event.getResourceProvider(),
+                        ResourceLocation.fromNamespaceAndPath("nichirin", "vfx_pixel"),
+                        DefaultVertexFormat.POSITION_COLOR),
+                VfxShaderHolder::setShader);
     }
 
     @SubscribeEvent

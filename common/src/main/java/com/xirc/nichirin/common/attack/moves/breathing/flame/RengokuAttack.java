@@ -1,6 +1,6 @@
 package com.xirc.nichirin.common.attack.moves.breathing.flame;
 
-import net.minecraft.core.particles.ParticleTypes;
+import com.xirc.nichirin.common.vfx.VfxIds;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -50,7 +50,6 @@ public class RengokuAttack extends FlameBreathingAttackBase {
                 SoundEvents.ENDER_DRAGON_GROWL, SoundSource.PLAYERS, 2.0f, 0.3f);
 
         // Create charging flame aura
-        createChargeUpEffect();
     }
 
     @Override
@@ -61,7 +60,6 @@ public class RengokuAttack extends FlameBreathingAttackBase {
         if (tickCount <= windup) {
             // Still in windup phase, create charging effects
             if (tickCount % 10 == 0) {
-                createChargeUpEffect();
                 // Rumbling sound during charge
                 world.playSound(null, user.getX(), user.getY(), user.getZ(),
                         SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, 1.0f, 0.5f);
@@ -139,23 +137,18 @@ public class RengokuAttack extends FlameBreathingAttackBase {
                 double x = userPos.x + Math.cos(angle) * ringRadius;
                 double z = userPos.z + Math.sin(angle) * ringRadius;
                 double y = userPos.y + ring * 0.3;
-
-                serverLevel.sendParticles(ParticleTypes.FLAME,
-                        x, y, z, 2, 0.1, 0.1, 0.1, 0.05);
-            }
+}
         }
 
         // Central flame pillar
-        serverLevel.sendParticles(ParticleTypes.FLAME,
-                userPos.x, userPos.y, userPos.z, 20, 0.5, 2.0, 0.5, 0.2);
-    }
+}
 
     private void startFastDash() {
+        playFlameVfx(VfxIds.RENGOKU, user.position(), dashDirection, 1.35f);
         // Capture start position for velocity-based dashing
         dashStartPos = user.position();
 
         // Create dragon emergence effect
-        createDragonEmergenceEffect();
 
         // Dragon roar
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
@@ -177,7 +170,6 @@ public class RengokuAttack extends FlameBreathingAttackBase {
         }
 
         // Create intense dragon trail effects
-        createIntenseDragonTrailEffect();
 
         // Hit enemies along the dragon's path with large hitbox
         List<LivingEntity> targets = getTargetsInCustomHitbox(
@@ -192,7 +184,6 @@ public class RengokuAttack extends FlameBreathingAttackBase {
         }
 
         // Create ground carving effect at current position
-        createGroundCarvingEffect();
     }
 
     private void refreshDashDirection() {
@@ -237,18 +228,11 @@ public class RengokuAttack extends FlameBreathingAttackBase {
                     .add(0, 2 + dragonHeight, 0);
 
             // Dragon spine
-            serverLevel.sendParticles(ParticleTypes.FLAME,
-                    spinePos.x, spinePos.y, spinePos.z,
-                    5, 0.2, 0.2, 0.2, 0.1);
-
-            // Dragon sides
+// Dragon sides
             Vec3 sideDir = lookDir.cross(new Vec3(0, 1, 0)).normalize();
             for (int side = -1; side <= 1; side += 2) {
                 Vec3 sidePos = spinePos.add(sideDir.scale(side * dragonWidth));
-                serverLevel.sendParticles(ParticleTypes.FLAME,
-                        sidePos.x, sidePos.y, sidePos.z,
-                        3, 0.3, 0.3, 0.3, 0.1);
-            }
+}
         }
     }
 
@@ -262,30 +246,16 @@ public class RengokuAttack extends FlameBreathingAttackBase {
             Vec3 trailPos = userPos.subtract(dashDirection.scale(i * 0.8));
 
             // Main dragon body flames - much more intense
-            serverLevel.sendParticles(ParticleTypes.FLAME,
-                    trailPos.x, trailPos.y, trailPos.z,
-                    12, 0.8, 0.8, 0.8, 0.3);
-
-            serverLevel.sendParticles(ParticleTypes.FLAME,
-                    trailPos.x, trailPos.y + 1, trailPos.z,
-                    6, 0.5, 0.5, 0.5, 0.2);
-
-            // Explosion particles for dragon power
+// Explosion particles for dragon power
             if (i % 3 == 0) {
-                serverLevel.sendParticles(ParticleTypes.EXPLOSION,
-                        trailPos.x, trailPos.y, trailPos.z,
-                        1, 0, 0, 0, 0);
-            }
+}
         }
 
         // Dragon wings effect
         Vec3 rightDir = dashDirection.cross(new Vec3(0, 1, 0)).normalize();
         for (int side = -1; side <= 1; side += 2) {
             Vec3 wingPos = userPos.add(rightDir.scale(side * 3.0));
-            serverLevel.sendParticles(ParticleTypes.FLAME,
-                    wingPos.x, wingPos.y, wingPos.z,
-                    10, 0.6, 0.6, 0.6, 0.25);
-        }
+}
     }
 
     private void createGroundCarvingEffect() {
@@ -294,20 +264,9 @@ public class RengokuAttack extends FlameBreathingAttackBase {
         Vec3 userPos = user.position();
 
         // Create carved ground effect at current position
-        serverLevel.sendParticles(ParticleTypes.FLAME,
-                userPos.x, userPos.y, userPos.z,
-                15, 1.5, 0.5, 1.5, 0.2);
-
-        // Lava particles for carved ground
-        serverLevel.sendParticles(ParticleTypes.LAVA,
-                userPos.x, userPos.y, userPos.z,
-                8, 0.8, 0.3, 0.8, 0.1);
-
-        // Ground explosion
-        serverLevel.sendParticles(ParticleTypes.EXPLOSION,
-                userPos.x, userPos.y, userPos.z,
-                1, 0, 0, 0, 0);
-    }
+// Lava particles for carved ground
+// Ground explosion
+}
 
     private void createMassiveExplosion() {
         if (!(world instanceof ServerLevel serverLevel)) return;
@@ -316,17 +275,12 @@ public class RengokuAttack extends FlameBreathingAttackBase {
 
         // Multiple explosion particles
         for (int i = 0; i < 8; i++) {
-            serverLevel.sendParticles(ParticleTypes.EXPLOSION_EMITTER,
-                    pos.x, pos.y + 1 + i, pos.z,
-                    1, 0, 0, 0, 0);
-        }
+}
 
         // Massive flame burst
-        createFlameExplosion(pos.add(0, 2, 0), 5.0f); // Bigger explosion
 
         // Ground shockwave
         for (int radius = 1; radius <= 15; radius++) {
-            createFlameCircle(pos, radius * 2, radius * 6);
         }
 
         // Explosion sound
@@ -351,7 +305,6 @@ public class RengokuAttack extends FlameBreathingAttackBase {
         target.igniteForSeconds(8); // Longer fire for ultimate
 
         // Massive particle explosion per target
-        createFlameExplosion(target.position().add(0, 1, 0), 3.0f);
     }
 
     @Override

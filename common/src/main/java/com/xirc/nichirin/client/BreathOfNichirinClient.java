@@ -26,6 +26,7 @@ import com.xirc.nichirin.client.util.ClientInputTracker;
 import com.xirc.nichirin.client.util.ItemPropertiesHelper;
 import com.xirc.nichirin.common.event.system.CooldownClearEventHandler;
 import com.xirc.nichirin.client.util.ThunderclapChargeInputHandler;
+import com.xirc.nichirin.client.vfx.VfxEngine;
 import com.xirc.nichirin.common.util.BlockingInputHandler;
 import com.xirc.nichirin.common.util.PlayerStats;
 import com.xirc.nichirin.registry.*;
@@ -193,6 +194,7 @@ public class BreathOfNichirinClient {
 
             // Wire up the entity-attached aura system (2D pixelated billboard renderer).
             AuraNetworkHandler.register();
+            VfxEngine.init();
             // Wire up the entity-attached outline system (configurable colour + see-through).
             OutlineNetworkHandler.register();
 
@@ -282,6 +284,7 @@ public class BreathOfNichirinClient {
                     refreshWisteriaLeafColors(minecraft);
                     EntityAuraTracker.tick();
                     OutlineTracker.tick();
+                    VfxEngine.tick();
                 }
             });
 

@@ -1,6 +1,6 @@
 package com.xirc.nichirin.common.attack.moves.breathing.flame;
 
-import net.minecraft.core.particles.ParticleTypes;
+import com.xirc.nichirin.common.vfx.VfxIds;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -40,7 +40,7 @@ public class RisingScorchingSunAttack extends FlameBreathingAttackBase {
                 SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 1.0f, 1.5f);
 
         // Create initial flame particles
-        createFlameParticles();
+        playFlameVfx(VfxIds.RISING_SCORCHING_SUN, user.position(), user.getLookAngle(), 1.0f);
     }
 
     @Override
@@ -100,11 +100,7 @@ public class RisingScorchingSunAttack extends FlameBreathingAttackBase {
             Vec3 rimPos = playerPos.add(lookDir.scale(forwardOffset)).add(upDir.scale(upOffset));
 
             // Flame particles on the ring
-            serverLevel.sendParticles(ParticleTypes.FLAME,
-                    rimPos.x, rimPos.y, rimPos.z,
-                    3, 0.1, 0.1, 0.1, 0.05);
-
-            // Create hitbox at each particle position
+// Create hitbox at each particle position
             List<LivingEntity> targets = getTargetsInCustomHitbox(rimPos, hitboxSize * 0.75, hitboxSize * 0.75, hitboxSize * 0.75);
 
             for (LivingEntity target : targets) {
@@ -121,7 +117,6 @@ public class RisingScorchingSunAttack extends FlameBreathingAttackBase {
                         damage = originalDamage; // Reset damage
 
                         // Extra flame burst for airborne hits
-                        createFlameHitParticles(target.position().add(0, 1, 0));
 
                         // Bonus fire duration
                         target.igniteForSeconds(getFireDuration() + 5);
@@ -155,11 +150,7 @@ public class RisingScorchingSunAttack extends FlameBreathingAttackBase {
             Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
             // Large final flame burst around the player
-            serverLevel.sendParticles(ParticleTypes.FLAME,
-                    userPos.x, userPos.y, userPos.z,
-                    40, 3.0, 2.0, 3.0, 0.5);
-
-            // Additional explosion rings
+// Additional explosion rings
             for (int ring = 1; ring <= 3; ring++) {
                 double ringRadius = ring * 1.5;
                 for (int i = 0; i < 16; i++) {
@@ -168,10 +159,7 @@ public class RisingScorchingSunAttack extends FlameBreathingAttackBase {
                     double z = Math.sin(angle) * ringRadius;
 
                     Vec3 ringPos = userPos.add(x, 0, z);
-                    serverLevel.sendParticles(ParticleTypes.FLAME,
-                            ringPos.x, ringPos.y, ringPos.z,
-                            8, 0.5, 0.5, 0.5, 0.2);
-                }
+}
             }
 
             // Explosion sound

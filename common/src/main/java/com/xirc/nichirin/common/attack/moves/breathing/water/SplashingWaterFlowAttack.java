@@ -1,11 +1,10 @@
 package com.xirc.nichirin.common.attack.moves.breathing.water;
 
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
+import com.xirc.nichirin.common.vfx.VfxIds;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -15,7 +14,7 @@ import java.util.Set;
 /**
  * Ninth Form: Splashing Water Flow
  * Segmented dash ending in a quick slash
- * About 10 block range with particles appearing at user's feet every time they "jump"
+ * About 10 block range with a water VFX burst at every jump.
  * Short repeated jumps in a zigzag pattern (like Centipede Attack)
  */
 public class SplashingWaterFlowAttack extends WaterBreathingAttackBase {
@@ -64,7 +63,6 @@ public class SplashingWaterFlowAttack extends WaterBreathingAttackBase {
                 SoundEvents.PLAYER_SPLASH, SoundSource.PLAYERS, 1.0f, 1.3f);
 
         // Create initial water flow effect
-        createFlowStartEffect();
     }
 
     @Override
@@ -103,6 +101,8 @@ public class SplashingWaterFlowAttack extends WaterBreathingAttackBase {
             zigzagDirection = rotateDirection(baseDirection, 15);
         }
 
+        playWaterVfx(VfxIds.SPLASHING_WATER_FLOW, user.position(), zigzagDirection, 0.72f);
+
         // Calculate jump distance (total 10 blocks across 5 jumps = 2 blocks per jump)
         float jumpDistance = range / JUMP_COUNT;
         Vec3 jumpVelocity = zigzagDirection.scale(dashSpeed * 0.4).add(0, 0, 0); // Upward arc
@@ -118,7 +118,6 @@ public class SplashingWaterFlowAttack extends WaterBreathingAttackBase {
         hitEnemiesAlongJump();
 
         // Jump effects
-        createJumpEffect();
 
         // Jump sounds with increasing pitch
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
@@ -158,7 +157,6 @@ public class SplashingWaterFlowAttack extends WaterBreathingAttackBase {
                 draggedEnemies.add(target);
             }
 
-            createJumpImpactEffect(target.position());
         }
     }
 
@@ -187,6 +185,8 @@ public class SplashingWaterFlowAttack extends WaterBreathingAttackBase {
     }
 
     private void executeFinalSlash() {
+        playWaterVfx(VfxIds.WATER_SURFACE_SLASH,
+                user.position().add(baseDirection.scale(1.0)), baseDirection, 1.25f);
         // Massive final slash in the flow direction
         Vec3 slashVelocity = baseDirection.scale(dashSpeed * 0.6);
         user.setDeltaMovement(slashVelocity);
@@ -205,11 +205,9 @@ public class SplashingWaterFlowAttack extends WaterBreathingAttackBase {
             Vec3 slashKnockback = baseDirection.scale(knockback);
             target.push(slashKnockback.x, 0.4, slashKnockback.z);
 
-            createFinalSlashImpactEffect(target.position());
         }
 
         // Create massive final water slash
-        createFinalWaterSlash();
 
         // Final slash sounds
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
@@ -218,156 +216,6 @@ public class SplashingWaterFlowAttack extends WaterBreathingAttackBase {
                 SoundEvents.GENERIC_SPLASH, SoundSource.PLAYERS, 1.2f, 1.0f);
     }
 
-    private void createFlowStartEffect() {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-
-        Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
-
-        // Initial water gathering for flow
-        for (int i = 0; i < 20; i++) {
-            double angle = (i / 20.0) * 2 * Math.PI;
-            double radius = 2.0;
-            double x = userPos.x + Math.cos(angle) * radius;
-            double z = userPos.z + Math.sin(angle) * radius;
-            double y = userPos.y + Math.sin(angle * 3) * 0.4;
-
-            // Flow preparation particles
-            serverLevel.sendParticles(ParticleTypes.SPLASH,
-                    x, y, z, 2, 0.2, 0.2, 0.2, 0.1);
-
-            if (i % 4 == 0) {
-                serverLevel.sendParticles(ParticleTypes.DRIPPING_WATER,
-                        x, y, z, 1, 0.1, 0.1, 0.1, 0.05);
-            }
-        }
-
-        // Direction preview
-        for (int i = 1; i <= 3; i++) {
-            Vec3 previewPos = userPos.add(baseDirection.scale(i * 1.5));
-            serverLevel.sendParticles(ParticleTypes.SPLASH,
-                    previewPos.x, previewPos.y, previewPos.z,
-                    3, 0.2, 0.2, 0.2, 0.1);
-        }
-    }
-
-    private void createJumpEffect() {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-
-        Vec3 jumpPos = user.position();
-
-        // Splash at feet when jumping
-        serverLevel.sendParticles(ParticleTypes.SPLASH,
-                jumpPos.x, jumpPos.y, jumpPos.z,
-                12, 0.6, 0.2, 0.6, 0.2);
-
-        // Water spray around jump
-        for (int i = 0; i < 8; i++) {
-            double angle = (i / 8.0) * 2 * Math.PI;
-            double radius = 1.5;
-
-            double x = jumpPos.x + Math.cos(angle) * radius;
-            double z = jumpPos.z + Math.sin(angle) * radius;
-            double y = jumpPos.y + 0.5;
-
-            serverLevel.sendParticles(ParticleTypes.SPLASH,
-                    x, y, z, 2, 0.3, 0.3, 0.3, 0.15);
-        }
-
-        // Trailing water behind jump
-        if (jumpsExecuted > 0 && !jumpPositions.isEmpty()) {
-            Vec3 lastJumpPos = jumpPositions.get(jumpPositions.size() - 1);
-            createWaterTrail(lastJumpPos, jumpPos);
-        }
-
-        // Zigzag trail effect
-        createZigzagTrail();
-    }
-
-    private void createZigzagTrail() {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-
-        Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
-
-        // Create trail showing the zigzag pattern
-        for (int i = 1; i <= 4; i++) {
-            Vec3 trailPos = userPos.subtract(baseDirection.scale(i * 0.5));
-
-            // Add slight zigzag offset to trail
-            Vec3 rightDir = baseDirection.cross(new Vec3(0, 1, 0)).normalize();
-            double zigzagOffset = Math.sin(i * 0.8) * 0.3;
-            trailPos = trailPos.add(rightDir.scale(zigzagOffset));
-
-            serverLevel.sendParticles(ParticleTypes.SPLASH,
-                    trailPos.x, trailPos.y, trailPos.z,
-                    3, 0.2, 0.2, 0.2, 0.1);
-
-            // Dripping water for flow effect
-            serverLevel.sendParticles(ParticleTypes.DRIPPING_WATER,
-                    trailPos.x, trailPos.y + 0.5, trailPos.z,
-                    1, 0.1, 0, 0.1, 0.05);
-        }
-    }
-
-    private void createJumpImpactEffect(Vec3 impactPos) {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-
-        Vec3 targetPos = impactPos.add(0, 1, 0);
-
-        // Jump impact particles
-        serverLevel.sendParticles(ParticleTypes.SPLASH,
-                targetPos.x, targetPos.y, targetPos.z,
-                8, 0.4, 0.4, 0.4, 0.2);
-
-        serverLevel.sendParticles(ParticleTypes.CRIT,
-                targetPos.x, targetPos.y, targetPos.z,
-                4, 0.2, 0.2, 0.2, 0.1);
-    }
-
-    private void createFinalWaterSlash() {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-
-        Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
-        Vec3 lookDir = user.getLookAngle();
-
-        // Massive horizontal water slash
-        for (int i = -8; i <= 8; i++) {
-            double angle = i * 10; // 10-degree increments for wide slash
-            double radians = Math.toRadians(angle);
-
-            Vec3 slashDir = lookDir.yRot((float)radians);
-            Vec3 slashPos = userPos.add(slashDir.scale(range * 0.9));
-
-            // Final slash particles
-            serverLevel.sendParticles(ParticleTypes.SPLASH,
-                    slashPos.x, slashPos.y, slashPos.z,
-                    6, 0.4, 0.4, 0.4, 0.2);
-
-            serverLevel.sendParticles(ParticleTypes.CRIT,
-                    slashPos.x, slashPos.y, slashPos.z,
-                    3, 0.2, 0.2, 0.2, 0.1);
-        }
-
-        // Central explosion
-        createWaterExplosion(userPos.add(lookDir.scale(range * 0.7)), 2.0f);
-    }
-
-    private void createFinalSlashImpactEffect(Vec3 impactPos) {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-
-        Vec3 targetPos = impactPos.add(0, 1, 0);
-
-        // Final impact particles
-        serverLevel.sendParticles(ParticleTypes.SPLASH,
-                targetPos.x, targetPos.y, targetPos.z,
-                20, 0.8, 0.8, 0.8, 0.4);
-
-        serverLevel.sendParticles(ParticleTypes.CRIT,
-                targetPos.x, targetPos.y, targetPos.z,
-                15, 0.6, 0.6, 0.6, 0.3);
-
-        // Water burst around impact
-        createWaterCircle(targetPos, 2.0f, 12);
-    }
 
     @Override
     public boolean isDashAttack() {
@@ -379,21 +227,6 @@ public class SplashingWaterFlowAttack extends WaterBreathingAttackBase {
         // Restore invulnerability
         user.setInvulnerable(wasInvulnerable);
         user.setDeltaMovement(Vec3.ZERO);
-
-        // Final flow dissolution
-        if (world instanceof ServerLevel serverLevel) {
-            Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
-
-            // Final water burst
-            createWaterExplosion(userPos, 2.5f);
-
-            // Trail dissolution effect
-            for (Vec3 jumpPos : jumpPositions) {
-                serverLevel.sendParticles(ParticleTypes.SPLASH,
-                        jumpPos.x, jumpPos.y + 0.5, jumpPos.z,
-                        8, 0.5, 0.5, 0.5, 0.2);
-            }
-        }
 
         // Final flow sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
