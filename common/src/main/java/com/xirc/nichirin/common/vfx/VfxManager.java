@@ -17,7 +17,7 @@ public final class VfxManager {
     public static void play(ServerLevel level, ResourceLocation effectId, Vec3 origin, Vec3 direction, float scale) {
         Vec3 facing = direction.lengthSqr() > 1.0E-6 ? direction.normalize() : new Vec3(0.0, 0.0, 1.0);
         VfxTriggerPacket packet = new VfxTriggerPacket(
-                effectId, origin, facing, scale, ThreadLocalRandom.current().nextLong(), -1);
+                effectId, origin, facing, scale, ThreadLocalRandom.current().nextLong(), -1, -1);
         level.players().stream()
                 .filter(player -> player.distanceToSqr(origin) <= TRACKING_RANGE_SQR)
                 .forEach(player -> NichirinPacketRegistry.sendToPlayer(packet, player));
@@ -25,9 +25,25 @@ public final class VfxManager {
 
     public static void playAttached(ServerLevel level, Entity entity, ResourceLocation effectId,
                                     Vec3 origin, Vec3 direction, float scale) {
+        playAttached(level, entity, entity, effectId, origin, direction, scale);
+    }
+
+    public static void playAttached(ServerLevel level, Entity attachment, Entity owner,
+                                    ResourceLocation effectId, Vec3 origin, Vec3 direction, float scale) {
         Vec3 facing = direction.lengthSqr() > 1.0E-6 ? direction.normalize() : new Vec3(0.0, 0.0, 1.0);
         VfxTriggerPacket packet = new VfxTriggerPacket(
-                effectId, origin, facing, scale, ThreadLocalRandom.current().nextLong(), entity.getId());
+                effectId, origin, facing, scale, ThreadLocalRandom.current().nextLong(),
+                attachment.getId(), owner != null ? owner.getId() : -1);
+        level.players().stream()
+                .filter(player -> player.distanceToSqr(origin) <= TRACKING_RANGE_SQR)
+                .forEach(player -> NichirinPacketRegistry.sendToPlayer(packet, player));
+    }
+
+    public static void playOwned(ServerLevel level, Entity owner, ResourceLocation effectId,
+                                 Vec3 origin, Vec3 direction, float scale) {
+        Vec3 facing = direction.lengthSqr() > 1.0E-6 ? direction.normalize() : new Vec3(0.0, 0.0, 1.0);
+        VfxTriggerPacket packet = new VfxTriggerPacket(
+                effectId, origin, facing, scale, ThreadLocalRandom.current().nextLong(), -1, owner.getId());
         level.players().stream()
                 .filter(player -> player.distanceToSqr(origin) <= TRACKING_RANGE_SQR)
                 .forEach(player -> NichirinPacketRegistry.sendToPlayer(packet, player));

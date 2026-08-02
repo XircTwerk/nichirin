@@ -64,7 +64,7 @@ public class WaterfallBasinAttack extends WaterBreathingAttackBase {
 
 
     private void startWaterfall() {
-        playWaterVfx(VfxIds.WATERFALL_BASIN,
+        playWaterVfxAt(VfxIds.WATERFALL_BASIN,
                 user.position().add(user.getLookAngle().scale(range * 0.35)), user.getLookAngle(), 1.15f);
         // BIG ASS waterfall start sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),

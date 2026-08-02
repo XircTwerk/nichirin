@@ -1,8 +1,7 @@
 package com.xirc.nichirin.common.attack.moves.breathing.beast;
 
-import net.minecraft.core.particles.ParticleTypes;
+import com.xirc.nichirin.common.vfx.VfxIds;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -54,7 +53,8 @@ public class BeastSpatialAwarenessAttack extends BeastBreathingAttackBase {
             detected++;
         }
 
-        createAwarenessEffect();
+        playBeastVfx(VfxIds.BEAST_SPATIAL_AWARENESS,
+                user.position().add(0, user.getBbHeight() * 0.4, 0), user.getLookAngle(), range / 6.0f);
 
         if (user instanceof Player) {
             Player player = (Player) user;
@@ -67,25 +67,6 @@ public class BeastSpatialAwarenessAttack extends BeastBreathingAttackBase {
 
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.AMETHYST_CLUSTER_BREAK, SoundSource.PLAYERS, 1.0f, 0.8f);
-    }
-
-    private void createAwarenessEffect() {
-        if (!(world instanceof ServerLevel sl)) return;
-        Vec3 center = user.position().add(0, user.getBbHeight() / 2, 0);
-
-        for (int ring = 1; ring <= 5; ring++) {
-            double r = ring * (range / 5.0);
-            int steps = ring * 8;
-            for (int i = 0; i < steps; i++) {
-                double angle = (i / (double) steps) * 2 * Math.PI;
-                double x = center.x + Math.cos(angle) * r;
-                double z = center.z + Math.sin(angle) * r;
-                sl.sendParticles(ParticleTypes.END_ROD, x, center.y, z, 1, 0.05, 0.3, 0.05, 0.02);
-            }
-        }
-
-        sl.sendParticles(ParticleTypes.END_ROD, center.x, center.y, center.z,
-                20, 1.0, 1.0, 1.0, 0.3);
     }
 
     @Override

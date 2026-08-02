@@ -14,7 +14,8 @@ import java.util.function.DoubleFunction;
 public final class WaterTechniqueEffect implements VfxEffect {
     public enum Style {
         WHEEL(30), RIPPLE_THRUST(22), FLOWING_DANCE(34), STRIKING_TIDE(28), WATERFALL(36),
-        SPLASHING_FLOW(24), WHIRLPOOL(40), BLESSED_RAIN(28), CONSTANT_FLUX(38), DEAD_CALM(50);
+        SPLASHING_FLOW(24), WHIRLPOOL(40), BLESSED_RAIN(28), BLESSED_RAIN_LEAP(22),
+        CONSTANT_FLUX(38), DEAD_CALM(50);
 
         private final int lifetime;
         Style(int lifetime) { this.lifetime = lifetime; }
@@ -36,6 +37,7 @@ public final class WaterTechniqueEffect implements VfxEffect {
             case SPLASHING_FLOW -> new Palette(0x127590, 0x36ABCC, 0x68EDFF, 0xF7FFFF);
             case WHIRLPOOL -> new Palette(0x1A8BAB, 0x22ABD2, 0x34D1FD, 0x71EEFF);
             case BLESSED_RAIN -> new Palette(0x34E5FD, 0x71EEFF, 0xA4F1FB, 0xD3FFF6);
+            case BLESSED_RAIN_LEAP -> new Palette(0x127590, 0x34D1FD, 0xA4F1FB, 0xF2FDFF);
             case CONSTANT_FLUX -> new Palette(0x0B1883, 0x1179EA, 0x34E5FD, 0xF7FFFF);
             case DEAD_CALM -> new Palette(0x127590, 0x18A5CC, 0x34D1FD, 0xF2FDFF);
         };
@@ -49,8 +51,10 @@ public final class WaterTechniqueEffect implements VfxEffect {
     @Override
     public void render(VfxInstance instance, PoseStack poseStack, Camera camera, float partialTick) {
         float age = instance.ageTicks() + partialTick;
-        float progress = clamp(age / Math.min(10.0f, style.lifetime * 0.35f));
-        shapeReveal = smooth(progress);
+        float progress = style == Style.WHEEL
+                ? 1.0f
+                : clamp(age / Math.min(10.0f, style.lifetime * 0.35f));
+        shapeReveal = style == Style.WHEEL ? 1.0f : smooth(progress);
         float fade = 1.0f - clamp((age - style.lifetime * 0.58f) / (style.lifetime * 0.42f));
         if (fade <= 0.0f) return;
         Vec3 origin = instance.origin(partialTick).subtract(camera.getPosition());
@@ -70,6 +74,8 @@ public final class WaterTechniqueEffect implements VfxEffect {
             case SPLASHING_FLOW -> drawSplashingFlow(buffer, matrix, origin, forward, right, scale, progress, fade, age);
             case WHIRLPOOL -> drawWhirlpool(buffer, matrix, origin, forward, right, scale, progress, fade, age);
             case BLESSED_RAIN -> drawBlessedRain(buffer, matrix, origin, forward, right, scale, progress, fade);
+            case BLESSED_RAIN_LEAP -> drawBlessedRainLeap(buffer, matrix, origin, forward, right,
+                    scale, progress, fade, age);
             case CONSTANT_FLUX -> drawConstantFlux(buffer, matrix, origin, forward, right, scale, progress, fade, age);
             case DEAD_CALM -> drawDeadCalm(buffer, matrix, origin, forward, right, scale, progress, fade, age);
         }
@@ -229,6 +235,30 @@ public final class WaterTechniqueEffect implements VfxEffect {
         ring(b, m, o.add(f.scale(2.5 * s)), f, r, 2.4f * s * p, 0.22f * s, 36, color(palette.water, fade));
     }
 
+    private void drawBlessedRainLeap(BufferBuilder b, Matrix4f m, Vec3 o, Vec3 f, Vec3 r,
+                                     float s, float p, float fade, float age) {
+        Vec3 center = o.add(renderUp.scale(0.12 * s));
+        ring(b, m, center, f, r, (0.55f + 1.45f * ease(p)) * s, 0.16f * s, 24,
+                color(palette.light, fade * 0.82f));
+
+        float fullReveal = shapeReveal;
+        for (int stream = 0; stream < 4; stream++) {
+            final int current = stream;
+            shapeReveal = clamp((fullReveal - current * 0.07f) / (1.0f - current * 0.07f));
+            if (shapeReveal <= 0.0f) continue;
+            stripedRibbon(b, m, 28, t -> {
+                double angle = current * Math.PI * 0.5 + t * Math.PI * 0.72 + age * 0.035;
+                double radius = (1.35 - t * 1.02) * s;
+                return center.add(f.scale(Math.cos(angle) * radius))
+                        .add(r.scale(Math.sin(angle) * radius))
+                        .add(renderUp.scale((0.10 + t * 4.8) * s));
+            }, r, t -> (float) ((0.055 + Math.sin(t * Math.PI) * 0.07) * s),
+                    color(current == 0 ? palette.foam : palette.light, fade * (0.90f - current * 0.08f)),
+                    palette.foam, age + current, 7);
+        }
+        shapeReveal = fullReveal;
+    }
+
     private void drawConstantFlux(BufferBuilder b, Matrix4f m, Vec3 o, Vec3 f, Vec3 r,
                                          float s, float p, float fade, float age) {
         float length = (1.5f + 9.0f * ease(p)) * s;
@@ -350,7 +380,9 @@ public final class WaterTechniqueEffect implements VfxEffect {
     private void drawMovementTrail(BufferBuilder b, Matrix4f m, VfxInstance instance, Camera camera,
                                    Vec3 right, float scale, float fade) {
         var points = instance.originHistory();
+        Vec3 currentOrigin = instance.origin();
         for (int i = 1; i < points.size(); i++) {
+            if (points.get(i).subtract(currentOrigin).dot(instance.direction()) > 0.12) continue;
             Vec3 a = points.get(i - 1).subtract(camera.getPosition()).add(renderUp.scale(0.45 * scale));
             Vec3 c = points.get(i).subtract(camera.getPosition()).add(renderUp.scale(0.45 * scale));
             if (a.distanceToSqr(c) < 0.0025) continue;

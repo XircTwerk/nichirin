@@ -3,6 +3,7 @@ package com.xirc.nichirin.client.renderer.item;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.xirc.nichirin.client.animation.NichirinAnimations;
 import com.xirc.nichirin.client.vfx.BladeTrailRenderer;
+import com.xirc.nichirin.client.vfx.BladeTrailProfiles;
 import mod.azure.azurelib.common.model.AzBone;
 import mod.azure.azurelib.common.render.AzLayerRenderer;
 import mod.azure.azurelib.common.render.AzRendererPipelineContext;
@@ -45,7 +46,8 @@ final class KatanaItemModelRenderer extends AzItemModelRenderer {
             Vec3 base = transform(transform, 0.0f, 11.0f / 16.0f, 2.0f / 16.0f).add(camera);
             Vec3 tip = transform(transform, 0.0f, 31.35f / 16.0f, 1.55f / 16.0f).add(camera);
             poseStack.popPose();
-            BladeTrailRenderer.capture(player.getUUID(), itemContext.getTransformType(), base, tip);
+            BladeTrailRenderer.capture(player.getUUID(), itemContext.getTransformType(), base, tip,
+                    BladeTrailProfiles.forPlayer(player));
         }
         super.renderRecursively(context, bone, isReRender);
     }

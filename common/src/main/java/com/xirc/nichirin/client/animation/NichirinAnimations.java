@@ -292,6 +292,10 @@ public final class NichirinAnimations {
                 && !name.equals("fire") && !name.endsWith("_hit");
     }
 
+    public static String getActiveAnimationName(AbstractClientPlayer player) {
+        return isAnimationPlaying(player) ? ACTIVE_PLAYER_ANIMATIONS.get(player) : null;
+    }
+
     /** Lazily-built looping idle used as the gun's base animation (see the controller's state
      *  handler). Cached because it is resolved once the player_animations are loaded. */
     private static RawAnimation gunIdleRaw() {

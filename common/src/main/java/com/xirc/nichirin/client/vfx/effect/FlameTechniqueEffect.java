@@ -14,7 +14,7 @@ import java.util.function.DoubleFunction;
 /** Connected, code-authored Flame Breathing geometry rendered by the shared pixel framebuffer. */
 public final class FlameTechniqueEffect implements VfxEffect {
     public enum Style {
-        UNKNOWING_FIRE(48), RISING_SUN(64), BLAZING_UNIVERSE(42), BLOOMING(44),
+        UNKNOWING_FIRE(48), RISING_SUN(64), BLAZING_UNIVERSE(42), BLAZING_UNIVERSE_IMPACT(20), BLOOMING(44),
         FLAME_TIGER(46), RENGOKU(58), POMMEL_SLASH(18);
 
         private final int lifetime;
@@ -32,6 +32,7 @@ public final class FlameTechniqueEffect implements VfxEffect {
             case UNKNOWING_FIRE -> new Palette(0x692F0F, 0xFC5520, 0xFF831E, 0xFFBD1E, 0xFFF245);
             case RISING_SUN -> new Palette(0x3A0A04, 0xFC5520, 0xFF831E, 0xFEEF24, 0xFFF245);
             case BLAZING_UNIVERSE -> new Palette(0x780404, 0xFF4300, 0xFC5520, 0xFFBD1E, 0xFFFFFF);
+            case BLAZING_UNIVERSE_IMPACT -> new Palette(0x520303, 0xE83208, 0xFC5520, 0xFF9D1E, 0xFFFFFF);
             case BLOOMING -> new Palette(0x711B08, 0xFC5520, 0xFF831E, 0xFFBD1E, 0xFEEF24);
             case FLAME_TIGER -> new Palette(0x5D1305, 0xFC5520, 0xFF831E, 0xFFBD1E, 0xFFF678);
             case RENGOKU -> new Palette(0x780404, 0xFC5520, 0xFF831E, 0xFEEF24, 0xFFF678);
@@ -69,6 +70,8 @@ public final class FlameTechniqueEffect implements VfxEffect {
             case UNKNOWING_FIRE -> drawUnknowingFire(buffer, matrix, origin, forward, right, scale, progress, fade, age);
             case RISING_SUN -> drawRisingSun(buffer, matrix, origin, forward, right, scale, progress, fade, age);
             case BLAZING_UNIVERSE -> drawBlazingUniverse(buffer, matrix, origin, forward, right, scale, progress, fade, age);
+            case BLAZING_UNIVERSE_IMPACT -> drawBlazingUniverseImpact(buffer, matrix, origin,
+                    forward, right, scale, progress, fade, age);
             case BLOOMING -> drawBlooming(buffer, matrix, origin, forward, right, scale, progress, fade, age);
             case FLAME_TIGER -> drawFlameTiger(buffer, matrix, origin, forward, right, scale, progress, fade, age);
             case RENGOKU -> drawRengoku(buffer, matrix, origin, forward, right, scale, progress, fade, age);
@@ -90,16 +93,6 @@ public final class FlameTechniqueEffect implements VfxEffect {
                         .add(renderUp.scale((0.22 + Math.sin(t * Math.PI) * 0.55) * s)),
                 r, t -> (float) ((0.18 + (1.0 - t) * 0.42) * s),
                 color(palette.ember, fade), age, 6);
-        if (shapeReveal > 0.82f) {
-            float slash = clamp((shapeReveal - 0.82f) / 0.18f);
-            float savedReveal = shapeReveal;
-            shapeReveal = slash;
-            crescent(b, m, o.add(f.scale(length)).add(renderUp.scale(0.8 * s)), f, r,
-                    2.7f * s, 0.46f * s, -78, 78, color(palette.hot, fade * slash), age);
-            burst(b, m, o.add(f.scale(length)).add(renderUp.scale(0.82 * s)), f, r,
-                    0.55f * s, 1.75f * s, 8, color(palette.gold, fade * slash * 0.82f));
-            shapeReveal = savedReveal;
-        }
     }
 
     private void drawRisingSun(BufferBuilder b, Matrix4f m, Vec3 o, Vec3 f, Vec3 r,
@@ -110,35 +103,97 @@ public final class FlameTechniqueEffect implements VfxEffect {
         Vec3 center = o.subtract(f.scale(0.30 * s)).add(renderUp.scale(1.05 * s));
         Vec3 up = renderUp;
         float radius = (3.35f + 0.45f * ease(p)) * s;
-        float outerReveal = clamp((shapeReveal - 0.10f) / 0.90f);
+        float outerReveal = clamp((shapeReveal - 0.08f) / 0.92f);
         sweptRing(b, m, center, f, up, radius, 0.60f * s, 28,
-                color(palette.ember, fade), age, 7, 205, 250, shapeReveal);
+                color(palette.ember, fade), age, 7, -155, -250, shapeReveal);
         sweptRing(b, m, center.add(r.scale(0.03 * s)), f, up, radius * 0.80f,
                 0.20f * s, 24, color(palette.gold, fade * 0.92f), age + 3, 6,
-                205, 250, outerReveal);
+                -155, -250, outerReveal);
+        float edgeReveal = clamp((shapeReveal - 0.18f) / 0.82f);
+        sweptRing(b, m, center.subtract(r.scale(0.04 * s)), f, up, radius * 1.08f,
+                0.13f * s, 28, color(palette.hot, fade * 0.86f), age + 6, 8,
+                -155, -250, edgeReveal);
+        flameFins(b, m, center, f, up, r, radius, 0.60f * s, -155, -250,
+                shapeReveal, 9, s, fade, age);
         float contact = clamp((shapeReveal - 0.72f) / 0.28f);
-        Vec3 leadingImpact = center.add(f.scale(radius * 0.35)).add(up.scale(radius * 0.94));
+        double leadingAngle = Math.toRadians(-155.0 - 250.0 * shapeReveal);
+        Vec3 leadingImpact = ellipse(center, f, up, radius, leadingAngle);
+        diamond(b, m, leadingImpact, r, up, 0.22f * s, 0.34f * s,
+                color(palette.hot, fade * (0.55f + shapeReveal * 0.45f)));
         burst(b, m, leadingImpact, f, r, 0.16f * s, 0.95f * s * contact, 7,
                 color(palette.hot, fade * contact * 0.82f));
     }
 
     private void drawBlazingUniverse(BufferBuilder b, Matrix4f m, Vec3 o, Vec3 f, Vec3 r,
                                      float s, float p, float fade, float age) {
-        float length = (1.0f + 5.8f * ease(p)) * s;
-        stripedRibbon(b, m, 26,
-                t -> o.add(f.scale(t * length)).add(renderUp.scale((3.8 * (1.0 - t) + 0.2) * s)),
-                r, t -> (float) ((0.22 + Math.sin(t * Math.PI) * 0.72) * s),
+        DoubleFunction<Vec3> slashPath = t -> {
+            double inverse = 1.0 - t;
+            return o.add(f.scale((-0.65 + t * 6.9) * s))
+                    .add(r.scale(Math.sin(t * Math.PI) * 0.42 * s))
+                    .add(renderUp.scale((0.12 + inverse * inverse * 4.25) * s));
+        };
+        stripedRibbon(b, m, 30, slashPath, r,
+                t -> (float) ((0.28 + Math.sin(t * Math.PI) * 0.76) * s),
+                color(palette.deep, fade * 0.90f), age + 2, 7);
+
+        float fullReveal = shapeReveal;
+        shapeReveal = clamp((fullReveal - 0.08f) / 0.92f);
+        stripedRibbon(b, m, 30, t -> slashPath.apply(t).add(renderUp.scale(0.10 * s)), r,
+                t -> (float) ((0.13 + Math.sin(t * Math.PI) * 0.34) * s),
                 color(palette.ember, fade), age, 5);
-        if (p > 0.48f) {
-            float impact = clamp((p - 0.48f) / 0.52f);
-            Vec3 hit = o.add(f.scale(length)).add(renderUp.scale(0.12 * s));
-            ring(b, m, hit, f, r, 3.4f * s * impact, 0.34f * s, 24,
-                    color(palette.gold, fade), age, 6);
-            ring(b, m, hit, f, r, 1.9f * s * impact, 0.22f * s, 20,
-                    color(palette.hot, fade), age + 2, 5);
-            burst(b, m, hit, f, r, 0.45f * s, 3.1f * s * impact, 12,
-                    color(palette.orange, fade * 0.92f));
+        shapeReveal = clamp((fullReveal - 0.20f) / 0.80f);
+        stripedRibbon(b, m, 28, t -> slashPath.apply(t).subtract(r.scale(0.30 * s))
+                        .add(renderUp.scale(0.16 * s)), r,
+                t -> (float) ((0.06 + Math.sin(t * Math.PI) * 0.10) * s),
+                color(palette.hot, fade * 0.88f), age + 4, 8);
+
+        float impact = clamp((fullReveal - 0.68f) / 0.32f);
+        if (impact > 0.0f) {
+            shapeReveal = impact;
+            Vec3 hit = slashPath.apply(1.0);
+            sweptRing(b, m, hit.add(renderUp.scale(0.04 * s)), f, r, 3.6f * s,
+                    0.34f * s, 26, color(palette.ember, fade * impact), age, 7,
+                    -145, 290, impact);
+            for (int tongue = -2; tongue <= 2; tongue++) {
+                final int current = tongue;
+                stripedRibbon(b, m, 18, t -> hit
+                                .add(f.scale(t * (2.3 + (2 - Math.abs(current)) * 0.34) * s))
+                                .add(r.scale(t * current * 0.82 * s))
+                                .add(renderUp.scale(Math.sin(t * Math.PI) * (0.42 + (2 - Math.abs(current)) * 0.18) * s)),
+                        r, t -> (float) ((0.08 + (1.0 - t) * 0.15) * s),
+                        color(current == 0 ? palette.hot : palette.orange,
+                                fade * impact * (current == 0 ? 0.94f : 0.76f)),
+                        age + tongue, 6);
+            }
+            burst(b, m, hit, f, r, 0.38f * s, 2.45f * s, 9,
+                    color(palette.orange, fade * impact * 0.84f));
         }
+        shapeReveal = fullReveal;
+    }
+
+    private void drawBlazingUniverseImpact(BufferBuilder b, Matrix4f m, Vec3 o, Vec3 f, Vec3 r,
+                                            float s, float p, float fade, float age) {
+        Vec3 center = o.add(renderUp.scale(0.08 * s));
+        sweptRing(b, m, center, f, r, 3.25f * s, 0.36f * s, 26,
+                color(palette.ember, fade), age, 7, -150, 300, shapeReveal);
+        float fullReveal = shapeReveal;
+        for (int tongue = -3; tongue <= 3; tongue++) {
+            final int current = tongue;
+            shapeReveal = clamp((fullReveal - (Math.abs(current) * 0.045f)) /
+                    (1.0f - Math.abs(current) * 0.045f));
+            if (shapeReveal <= 0.0f) continue;
+            stripedRibbon(b, m, 16, t -> center
+                            .add(f.scale(t * (2.4 + (3 - Math.abs(current)) * 0.30) * s))
+                            .add(r.scale(t * current * 0.74 * s))
+                            .add(renderUp.scale(Math.sin(t * Math.PI) *
+                                    (0.34 + (3 - Math.abs(current)) * 0.16) * s)),
+                    r, t -> (float) ((0.07 + (1.0 - t) * 0.14) * s),
+                    color(current == 0 ? palette.hot : current % 2 == 0 ? palette.ember : palette.orange,
+                            fade * (current == 0 ? 0.96f : 0.78f)), age + current, 6);
+        }
+        shapeReveal = fullReveal;
+        burst(b, m, center, f, r, 0.38f * s, 2.8f * s, 10,
+                color(palette.orange, fade * 0.82f));
     }
 
     private void drawBlooming(BufferBuilder b, Matrix4f m, Vec3 o, Vec3 f, Vec3 r,
@@ -238,12 +293,10 @@ public final class FlameTechniqueEffect implements VfxEffect {
                                  float s, float p, float fade, float age) {
         Vec3 center = o.add(f.scale(2.2 * s)).add(renderUp.scale(1.05 * s));
         crescent(b, m, center, f, r, (0.55f + 2.7f * ease(p)) * s,
-                0.42f * s, -72, 72, color(palette.ember, fade), age);
+                0.42f * s, -72, 72, color(palette.deep, fade), age);
         crescent(b, m, center.add(renderUp.scale(0.16 * s)), f, r,
                 (0.45f + 2.4f * ease(p)) * s, 0.14f * s,
-                -68, 68, color(palette.hot, fade), age + 2);
-        burst(b, m, center, f, r, 0.35f * s, 1.35f * s * p, 7,
-                color(palette.gold, fade * 0.76f));
+                -68, 68, color(palette.orange, fade), age + 2);
     }
 
     private void ring(BufferBuilder b, Matrix4f m, Vec3 center, Vec3 axisA, Vec3 axisB,
@@ -310,6 +363,26 @@ public final class FlameTechniqueEffect implements VfxEffect {
         }
     }
 
+    private void flameFins(BufferBuilder b, Matrix4f m, Vec3 center, Vec3 axisA, Vec3 axisB,
+                           Vec3 facingAxis, float radius, float bandWidth, float startDegrees,
+                           float sweepDegrees, float reveal, int count, float scale, float fade,
+                           float age) {
+        int visible = Math.min(count, (int) Math.floor(clamp(reveal) * count));
+        for (int i = 0; i < visible; i++) {
+            float along = (i + 0.55f) / count;
+            double angle = Math.toRadians(startDegrees + sweepDegrees * along);
+            float flicker = 0.86f + 0.14f * (float) Math.sin(age * 0.34f + i * 1.73f);
+            float height = (0.38f + (i % 3) * 0.16f) * scale * flicker;
+            Vec3 root = ellipse(center, axisA, axisB, radius + bandWidth * 0.18f, angle);
+            Vec3 tip = ellipse(center, axisA, axisB, radius + bandWidth * 0.18f + height, angle)
+                    .add(axisB.scale(((i & 1) == 0 ? 0.10 : -0.08) * scale));
+            Vec3 side = facingAxis.scale((0.13f + (i % 2) * 0.035f) * scale);
+            int finColor = color(i % 4 == 0 ? palette.gold : i % 3 == 0 ? palette.hot : palette.orange,
+                    fade * (0.72f + 0.20f * along));
+            quad(b, m, root.subtract(side), tip, tip, root.add(side), finColor);
+        }
+    }
+
     private static void diamond(BufferBuilder b, Matrix4f m, Vec3 center, Vec3 horizontal,
                                 Vec3 vertical, float halfWidth, float halfHeight, int color) {
         quad(b, m, center.subtract(horizontal.scale(halfWidth)), center.add(vertical.scale(halfHeight)),
@@ -354,7 +427,9 @@ public final class FlameTechniqueEffect implements VfxEffect {
     private void drawMovementTrail(BufferBuilder b, Matrix4f m, VfxInstance instance, Camera camera,
                                    Vec3 right, float scale, float fade, float age) {
         var points = instance.originHistory();
+        Vec3 currentOrigin = instance.origin();
         for (int i = 1; i < points.size(); i++) {
+            if (points.get(i).subtract(currentOrigin).dot(instance.direction()) > 0.12) continue;
             Vec3 a = points.get(i - 1).subtract(camera.getPosition()).add(renderUp.scale(0.65 * scale));
             Vec3 c = points.get(i).subtract(camera.getPosition()).add(renderUp.scale(0.65 * scale));
             if (a.distanceToSqr(c) < 0.0025) continue;

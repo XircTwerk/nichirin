@@ -75,7 +75,7 @@ public class BlessedRainAttack extends WaterBreathingAttackBase {
 
 
     private void executeInitialLeap() {
-        playWaterVfx(VfxIds.BLESSED_RAIN, user.position(), leapDirection, 0.75f);
+        playWaterVfx(VfxIds.BLESSED_RAIN_LEAP, user.position(), leapDirection, 0.88f);
         // Leap upward with slight forward movement (like Butterfly)
         double upwardVelocity = 0.9;
         double forwardVelocity = 0.15;
@@ -106,7 +106,7 @@ public class BlessedRainAttack extends WaterBreathingAttackBase {
         // Instant teleport, stopping at block collision instead of failing or clipping.
         teleportSafe(teleportDestination);
         Vec3 strikePosition = user.position();
-        playWaterVfx(VfxIds.BLESSED_RAIN, strikePosition, teleportDirection, 1.25f);
+        playWaterVfxAt(VfxIds.BLESSED_RAIN, strikePosition, teleportDirection, 1.25f);
 
         // Create massive rain strike effect
 

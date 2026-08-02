@@ -4,6 +4,8 @@ import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.common.util.NichirinDamageHandler;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinSoundRegistry;
+import com.xirc.nichirin.common.vfx.VfxIds;
+import com.xirc.nichirin.common.vfx.VfxManager;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
@@ -144,10 +146,6 @@ public class ThunderBallEntity extends Entity {
 
                 damagedEntities.add(entity);
 
-                // Create damage particles around the entity
-                serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK,
-                        entity.getX(), entity.getY() + entity.getBbHeight() / 2, entity.getZ(),
-                        10, 0.3, 0.3, 0.3, 0.1);
             }
         }
 
@@ -181,26 +179,24 @@ public class ThunderBallEntity extends Entity {
                 serverLevel.addFreshEntity(lightning);
             }
 
-            // Create extra particles at strike location
-            serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK,
-                    strikePos.x, strikePos.y, strikePos.z,
-                    30, 1.0, 2.0, 1.0, 0.3);
+            Vec3 strikeDirection = getDeltaMovement().lengthSqr() > 1.0E-6
+                    ? getDeltaMovement() : new Vec3(0, 0, 1);
+            if (owner != null) {
+                VfxManager.playOwned(serverLevel, owner, VfxIds.THUNDER_STRIKE, strikePos, strikeDirection, 0.85f);
+            } else {
+                VfxManager.play(serverLevel, VfxIds.THUNDER_STRIKE, strikePos, strikeDirection, 0.85f);
+            }
         }
     }
 
     private void createVisualEffects() {
         if (!(this.level() instanceof ServerLevel serverLevel)) return;
 
-        // Continuous electric particles around the ball
-        serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK,
-                this.getX(), this.getY(), this.getZ(),
-                5, 0.5, 0.5, 0.5, 0.1);
-
-        // Occasional larger sparks
-        if (this.tickCount % 5 == 0) {
-            serverLevel.sendParticles(ParticleTypes.END_ROD,
-                    this.getX(), this.getY(), this.getZ(),
-                    3, 0.3, 0.3, 0.3, 0.05);
+        if (this.tickCount == 1 || this.tickCount % 18 == 0) {
+            Vec3 direction = getDeltaMovement().lengthSqr() > 1.0E-6
+                    ? getDeltaMovement() : new Vec3(0, 0, 1);
+            VfxManager.playAttached(serverLevel, this, owner, VfxIds.DISTANT_THUNDER_CHARGE,
+                    position(), direction, 0.68f);
         }
     }
 

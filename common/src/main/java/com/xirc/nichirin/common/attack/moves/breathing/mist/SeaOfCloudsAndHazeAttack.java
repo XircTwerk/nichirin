@@ -1,6 +1,6 @@
 package com.xirc.nichirin.common.attack.moves.breathing.mist;
 
-import net.minecraft.core.particles.ParticleTypes;
+import com.xirc.nichirin.common.vfx.VfxIds;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -50,7 +50,6 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
         baseDirection = new Vec3(look.x, 0, look.z).normalize();
         wasInvulnerable = user.isInvulnerable();
 
-        createMistParticles();
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0f, 0.9f);
     }
@@ -94,6 +93,8 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
 
         double angle = (zigzagsExecuted % 2 == 0) ? ZIGZAG_ANGLE : -ZIGZAG_ANGLE;
         Vec3 dir = rotateDirection(baseDirection, angle);
+        playMistVfx(VfxIds.SEA_OF_CLOUDS_AND_HAZE,
+                user.position().add(0, user.getBbHeight() * 0.35, 0), dir, 0.85f);
 
         float speed = dashSpeed != null ? dashSpeed * SPEED_FACTOR : 6.0f;
         Vec3 vel = dir.scale(speed);
@@ -104,7 +105,6 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
         lastDashPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
         catchAndDragEnemies();
-        createHopTrailEffect();
 
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 0.7f, 1.3f + zigzagsExecuted * 0.08f);
@@ -123,7 +123,6 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
 
                 world.playSound(null, enemy.getX(), enemy.getY(), enemy.getZ(),
                         SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.PLAYERS, 0.6f, 1.4f);
-                createMistHitParticles(enemy.position());
             }
         }
     }
@@ -147,7 +146,6 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
                             user.getDeltaMovement().z
                     );
                 }
-                createWaterTrailParticles(draggedEnemy.position());
             } else {
                 draggedEnemies.remove(draggedEnemy);
             }
@@ -208,13 +206,13 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
         }
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
+        playMistVfx(VfxIds.MIST_FINISHER, userPos, baseDirection, range / 4.0f);
         List<LivingEntity> finisherTargets = getTargetsInCustomHitbox(userPos, hitboxSize * 1.5f, 2.5, hitboxSize * 1.5f);
 
         for (LivingEntity target : finisherTargets) {
             hitTarget(target);
             Vec3 finisherKnockback = target.position().subtract(user.position()).normalize();
             target.push(finisherKnockback.x * knockback * 0.7f, 0.35, finisherKnockback.z * knockback * 0.7f);
-            createMistHitParticles(target.position());
         }
 
         for (LivingEntity draggedEnemy : draggedEnemies) {
@@ -226,32 +224,11 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
 
                 Vec3 finalKnockback = baseDirection.scale(knockback * 1.2f);
                 draggedEnemy.push(finalKnockback.x, 0.4, finalKnockback.z);
-                createMistHitParticles(draggedEnemy.position());
             }
         }
 
-        float circleRadius = range * 0.4f;
-        Vec3 circleCenter  = userPos;
-        createMistCircle(circleCenter, circleRadius, 28);
-
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.PLAYERS, 1.4f, 0.9f);
-    }
-
-    private void createHopTrailEffect() {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-
-        Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
-        for (int i = 1; i <= 6; i++) {
-            Vec3 trailPos = userPos.subtract(baseDirection.scale(i * 0.5));
-            serverLevel.sendParticles(ParticleTypes.CLOUD,
-                    trailPos.x, trailPos.y, trailPos.z, 3, 0.3, 0.3, 0.3, 0.03);
-            serverLevel.sendParticles(ParticleTypes.WHITE_ASH,
-                    trailPos.x, trailPos.y, trailPos.z, 2, 0.2, 0.2, 0.2, 0.02);
-        }
-
-        serverLevel.sendParticles(ParticleTypes.ENCHANT,
-                userPos.x, userPos.y, userPos.z, 6, 0.5, 0.5, 0.5, 0.1);
     }
 
     @Override
@@ -259,7 +236,6 @@ public class SeaOfCloudsAndHazeAttack extends MistBreathingAttackBase {
         user.setInvulnerable(wasInvulnerable);
         user.setDeltaMovement(Vec3.ZERO);
 
-        createMistCircle(user.position().add(0, 1, 0), range * 0.5f, 32);
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.PLAYERS, 1.0f, 1.1f);
 

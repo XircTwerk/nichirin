@@ -3,9 +3,11 @@ package com.xirc.nichirin.common.attack.moves.breathing.insect;
 import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
 import com.xirc.nichirin.common.attack.component.IBreathingAttacker;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
+import com.xirc.nichirin.common.vfx.VfxManager;
 import net.minecraft.core.Holder;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -18,6 +20,18 @@ import net.minecraft.world.entity.player.Player;
 // Base for Insect Breathing attacks. All hits apply stackable venom; invulnerability is granted for the full attack duration.
 @SuppressWarnings("rawtypes")
 public abstract class InsectBreathingAttackBase extends AbstractBreathingAttack<InsectBreathingAttackBase, IBreathingAttacker> {
+
+    protected void playInsectVfx(ResourceLocation effectId, Vec3 origin, Vec3 direction, float scale) {
+        if (world instanceof ServerLevel serverLevel) {
+            VfxManager.playAttached(serverLevel, user, effectId, origin, direction, scale);
+        }
+    }
+
+    protected void playInsectVfxAt(ResourceLocation effectId, Vec3 origin, Vec3 direction, float scale) {
+        if (world instanceof ServerLevel serverLevel) {
+            VfxManager.playOwned(serverLevel, user, effectId, origin, direction, scale);
+        }
+    }
 
     private static final int DEFAULT_POISON_DURATION = 200;
     private static final int INSECT_PARTICLE_COUNT = 12;

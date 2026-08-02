@@ -16,6 +16,15 @@ public final class WaterSurfaceSlashEffect implements VfxEffect {
     private static final int WATER = 0xD81B93F0;
     private static final int LIGHT_WATER = 0xE867EDFF;
     private static final int FOAM = 0xF2EEFBFD;
+    private final boolean reverse;
+
+    public WaterSurfaceSlashEffect() {
+        this(false);
+    }
+
+    public WaterSurfaceSlashEffect(boolean reverse) {
+        this.reverse = reverse;
+    }
 
     @Override
     public int lifetimeTicks() {
@@ -42,24 +51,24 @@ public final class WaterSurfaceSlashEffect implements VfxEffect {
         float reveal = smooth(progress);
         drawMovementHistory(buffer, matrix, instance, camera, right, up, scale, alpha);
         drawTrailingWake(buffer, matrix, origin, forward, right, up, radius, scale, progress, alpha, age,
-                clamp((reveal - 0.16f) / 0.84f));
-        drawSurfaceArc(buffer, matrix, origin, forward, right, up, radius, scale, alpha, age, reveal);
+                clamp((reveal - 0.16f) / 0.84f), reverse);
+        drawSurfaceArc(buffer, matrix, origin, forward, right, up, radius, scale, alpha, age, reveal, reverse);
         drawWaveCrest(buffer, matrix, origin, forward, right, up, radius, scale, progress, alpha, age,
-                clamp((reveal - 0.08f) / 0.92f));
+                clamp((reveal - 0.08f) / 0.92f), reverse);
         VfxPixelRender.finish(buffer);
     }
 
     private static void drawSurfaceArc(BufferBuilder buffer, Matrix4f matrix, Vec3 origin,
                                        Vec3 forward, Vec3 right, Vec3 up, float radius, float scale,
-                                       float alpha, float age, float reveal) {
+                                       float alpha, float age, float reveal, boolean reverse) {
         int stripePhase = (int) Math.floor(age * 0.22f);
         float visible = reveal * SEGMENTS;
         int visibleSegments = Math.min(SEGMENTS, (int) Math.ceil(visible));
         for (int i = 0; i < visibleSegments; i++) {
             float end = Math.min(1.0f, visible - i);
             float shadePosition = (i + 0.5f) / SEGMENTS;
-            double a0 = Math.toRadians(-82.0 + 164.0 * i / SEGMENTS);
-            double a1 = Math.toRadians(-82.0 + 164.0 * (i + end) / SEGMENTS);
+            double a0 = slashAngle(82.0, 164.0, i, SEGMENTS, reverse);
+            double a1 = slashAngle(82.0, 164.0, i + end, SEGMENTS, reverse);
             Vec3 inner0 = arcPoint(origin, forward, right, up, radius - 0.48f * scale, a0, 0.10f * scale);
             Vec3 inner1 = arcPoint(origin, forward, right, up, radius - 0.48f * scale, a1, 0.10f * scale);
             Vec3 bottom0 = arcPoint(origin, forward, right, up, radius - 0.68f * scale, a0, -0.10f * scale);
@@ -79,15 +88,15 @@ public final class WaterSurfaceSlashEffect implements VfxEffect {
 
     private static void drawWaveCrest(BufferBuilder buffer, Matrix4f matrix, Vec3 origin,
                                       Vec3 forward, Vec3 right, Vec3 up, float radius, float scale,
-                                      float progress, float alpha, float age, float reveal) {
+                                      float progress, float alpha, float age, float reveal, boolean reverse) {
         int stripePhase = (int) Math.floor(age * 0.22f);
         float visible = reveal * SEGMENTS;
         int visibleSegments = Math.min(SEGMENTS, (int) Math.ceil(visible));
         for (int i = 0; i < visibleSegments; i++) {
             float end = Math.min(1.0f, visible - i);
             float shadePosition = (i + 0.5f) / SEGMENTS;
-            double a0 = Math.toRadians(-78.0 + 156.0 * i / SEGMENTS);
-            double a1 = Math.toRadians(-78.0 + 156.0 * (i + end) / SEGMENTS);
+            double a0 = slashAngle(78.0, 156.0, i, SEGMENTS, reverse);
+            double a1 = slashAngle(78.0, 156.0, i + end, SEGMENTS, reverse);
             double crest0 = Math.pow(Math.max(0.0, Math.cos(a0)), 1.45);
             double crest1 = Math.pow(Math.max(0.0, Math.cos(a1)), 1.45);
             float base0 = (float) (0.22 + crest0 * 0.56 * progress) * scale;
@@ -114,7 +123,7 @@ public final class WaterSurfaceSlashEffect implements VfxEffect {
 
     private static void drawTrailingWake(BufferBuilder buffer, Matrix4f matrix, Vec3 origin,
                                          Vec3 forward, Vec3 right, Vec3 up, float radius, float scale,
-                                         float progress, float alpha, float age, float reveal) {
+                                         float progress, float alpha, float age, float reveal, boolean reverse) {
         float wakeRadius = Math.max(0.32f * scale, radius - 0.82f * scale);
         int phase = (int) Math.floor(age * 0.18f);
         int wakeSegments = 10;
@@ -122,8 +131,8 @@ public final class WaterSurfaceSlashEffect implements VfxEffect {
         int visibleSegments = Math.min(wakeSegments, (int) Math.ceil(visible));
         for (int i = 0; i < visibleSegments; i++) {
             float end = Math.min(1.0f, visible - i);
-            double a0 = Math.toRadians(-70.0 + 140.0 * i / wakeSegments);
-            double a1 = Math.toRadians(-70.0 + 140.0 * (i + end) / wakeSegments);
+            double a0 = slashAngle(70.0, 140.0, i, wakeSegments, reverse);
+            double a1 = slashAngle(70.0, 140.0, i + end, wakeSegments, reverse);
             float lift0 = (0.03f + (float) Math.cos(a0) * 0.12f * progress) * scale;
             float lift1 = (0.03f + (float) Math.cos(a1) * 0.12f * progress) * scale;
             Vec3 inner0 = arcPoint(origin, forward, right, up, wakeRadius - 0.12f * scale, a0, lift0);
@@ -152,10 +161,18 @@ public final class WaterSurfaceSlashEffect implements VfxEffect {
                 .add(up.scale(y));
     }
 
+    private static double slashAngle(double halfArc, double span, double segment, int count,
+                                     boolean reverse) {
+        double degrees = -halfArc + span * segment / count;
+        return Math.toRadians(reverse ? -degrees : degrees);
+    }
+
     private static void drawMovementHistory(BufferBuilder buffer, Matrix4f matrix, VfxInstance instance,
                                             Camera camera, Vec3 right, Vec3 up, float scale, float alpha) {
         var points = instance.originHistory();
+        Vec3 currentOrigin = instance.origin();
         for (int i = 1; i < points.size(); i++) {
+            if (points.get(i).subtract(currentOrigin).dot(instance.direction()) > 0.12) continue;
             Vec3 a = points.get(i - 1).subtract(camera.getPosition()).add(up.scale(0.55 * scale));
             Vec3 b = points.get(i).subtract(camera.getPosition()).add(up.scale(0.55 * scale));
             if (a.distanceToSqr(b) < 0.0025) continue;

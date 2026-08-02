@@ -12,6 +12,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
+import com.xirc.nichirin.common.vfx.VfxIds;
 
 import java.util.HashSet;
 import java.util.List;
@@ -64,24 +65,7 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDir = user.getLookAngle();
         Vec3 slashBase = userPos.add(lookDir.scale(2.0));
-
-        if (world instanceof ServerLevel serverLevel) {
-            float slashHeight = 4.0f;
-            for (int i = 0; i <= 10; i++) {
-                float progress = i / 10.0f;
-                Vec3 particlePos = slashBase.add(0, progress * slashHeight, 0);
-
-                serverLevel.sendParticles(ParticleTypes.SWEEP_ATTACK,
-                        particlePos.x, particlePos.y, particlePos.z,
-                        1, 0, 0, 0, 0);
-
-                if (i % 2 == 0) {
-                    serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK,
-                            particlePos.x, particlePos.y, particlePos.z,
-                            5, 0.2, 0.2, 0.2, 0.05);
-                }
-            }
-        }
+        playThunderVfx(VfxIds.HEAT_LIGHTNING_RISE, user.position(), lookDir, 1.0f);
 
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, 0.4f, 2.5f);
@@ -132,12 +116,7 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
 
             if (target.isAlive()) {
                 hitTargetNoImmunity(target);
-
-                if (world instanceof ServerLevel sl) {
-                    sl.sendParticles(ParticleTypes.ELECTRIC_SPARK,
-                            target.getX(), target.getY() + target.getBbHeight() / 2, target.getZ(),
-                            40, 0.8, 0.8, 0.8, 0.3);
-                }
+                playThunderVfxAt(VfxIds.THUNDER_STRIKE, targetPos, user.getLookAngle(), 0.80f);
 
                 target.igniteForSeconds(3);
             }

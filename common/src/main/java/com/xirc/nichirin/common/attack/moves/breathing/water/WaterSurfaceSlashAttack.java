@@ -79,9 +79,10 @@ public class WaterSurfaceSlashAttack extends WaterBreathingAttackBase {
         Vec3 lookDir = user.getLookAngle();
         Vec3 effectOrigin = user.position().add(lookDir.scale(1.25)).add(0, 0.08, 0);
         if (comboStage == 3) {
-            playWaterVfx(VfxIds.WATERFALL_BASIN, effectOrigin, lookDir, 0.8f);
+            playWaterVfxAt(VfxIds.WATERFALL_BASIN, effectOrigin, lookDir, 0.8f);
         } else {
-            playWaterVfx(VfxIds.WATER_SURFACE_SLASH, effectOrigin, lookDir,
+            playWaterVfx(comboStage == 2 ? VfxIds.WATER_SURFACE_SLASH_REVERSE : VfxIds.WATER_SURFACE_SLASH,
+                    effectOrigin, lookDir,
                     comboStage == 2 ? 1.12f : 1.0f);
         }
 

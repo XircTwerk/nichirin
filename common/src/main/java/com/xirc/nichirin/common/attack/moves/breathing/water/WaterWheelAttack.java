@@ -61,7 +61,7 @@ public class WaterWheelAttack extends WaterBreathingAttackBase {
     }
 
     private void startWheel() {
-        playWaterVfx(VfxIds.WATER_WHEEL,
+        playWaterVfxAt(VfxIds.WATER_WHEEL,
                 user.position().add(0, user.getBbHeight() * 0.15, 0), user.getLookAngle(), 1.0f);
         // Small forward lunge using dash speed
         if (dashSpeed != null && dashSpeed > 0) {

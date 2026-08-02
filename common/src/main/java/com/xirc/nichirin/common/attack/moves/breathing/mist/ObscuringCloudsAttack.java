@@ -1,8 +1,8 @@
 package com.xirc.nichirin.common.attack.moves.breathing.mist;
 
 import com.xirc.nichirin.common.entity.effect.PlayerCloneEntity;
+import com.xirc.nichirin.common.vfx.VfxIds;
 import com.xirc.nichirin.registry.NichirinEntityRegistry;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -60,12 +60,9 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
 
         user.addEffect(new MobEffectInstance(
                 MobEffects.INVISIBILITY, windup + duration + 10, 0, false, false, false));
+        playMistVfx(VfxIds.OBSCURING_CLOUDS,
+                user.position().add(0, user.getBbHeight() * 0.3, 0), user.getLookAngle(), 1.0f);
 
-        if (world instanceof ServerLevel serverLevel) {
-            Vec3 pos = user.position().add(0, user.getBbHeight() / 2, 0);
-            serverLevel.sendParticles(ParticleTypes.CLOUD,    pos.x, pos.y, pos.z, 40, 1.2, 1.0, 1.2, 0.04);
-            serverLevel.sendParticles(ParticleTypes.WHITE_ASH, pos.x, pos.y, pos.z, 30, 1.0, 0.8, 1.0, 0.03);
-        }
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 1.0f, 0.6f);
     }
@@ -84,6 +81,10 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
         int ticksSinceWindup = tickCount - windup;
         if (ticksSinceWindup < 0) return;
         if (!(world instanceof ServerLevel serverLevel)) return;
+        if (ticksSinceWindup > 0 && ticksSinceWindup % 44 == 0) {
+            playMistVfx(VfxIds.OBSCURING_CLOUDS,
+                    user.position().add(0, user.getBbHeight() * 0.3, 0), user.getLookAngle(), 1.0f);
+        }
 
         // Center tracks the target's feet so we stay grounded
         Vec3 center = orbitTarget.position();
@@ -133,14 +134,6 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
             }
         }
 
-        // Mist trail
-        Vec3 trail = new Vec3(newX, y + user.getBbHeight() / 2, newZ);
-        serverLevel.sendParticles(ParticleTypes.CLOUD,
-                trail.x, trail.y, trail.z, 2, 0.12, 0.12, 0.12, 0.03);
-        if (ticksSinceWindup % 3 == 0) {
-            serverLevel.sendParticles(ParticleTypes.WHITE_ASH,
-                    trail.x, trail.y, trail.z, 1, 0.08, 0.08, 0.08, 0.02);
-        }
     }
 
     @Override
@@ -154,11 +147,6 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
         user.setDeltaMovement(Vec3.ZERO);
         user.removeEffect(MobEffects.INVISIBILITY);
 
-        if (world instanceof ServerLevel serverLevel) {
-            Vec3 pos = user.position().add(0, user.getBbHeight() / 2, 0);
-            serverLevel.sendParticles(ParticleTypes.CLOUD,         pos.x, pos.y, pos.z, 50, 1.5, 1.2, 1.5, 0.06);
-            serverLevel.sendParticles(ParticleTypes.FALLING_WATER, pos.x, pos.y, pos.z, 30, 1.0, 0.8, 1.0, 0.05);
-        }
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 1.0f, 0.7f);
 
@@ -192,11 +180,6 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
         clone.copyEquipmentFrom(user);
         spawnedClones.add(clone.getUUID());
 
-        // Small mist burst at spawn point of this individual clone
-        Vec3 spawnPos = spawnCenter.add(
-                Math.cos(angle) * 8, user.getBbHeight() / 2, Math.sin(angle) * 8);
-        serverLevel.sendParticles(ParticleTypes.CLOUD,
-                spawnPos.x, spawnPos.y, spawnPos.z, 10, 0.3, 0.3, 0.3, 0.03);
     }
 
     private LivingEntity findClosestEnemy() {

@@ -12,6 +12,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.*;
 import net.minecraft.util.RandomSource;
+import com.xirc.nichirin.common.vfx.VfxIds;
 
 /**
  * Sixth Form: Rumble and Flash
@@ -85,6 +86,8 @@ public class RumbleFlashAttack extends ThunderBreathingAttackBase {
 
                     // Add to pending strikes at this FIXED position
                     pendingStrikes.put(strikePos, WARNING_DURATION);
+                    playThunderVfxAt(VfxIds.THUNDER_STRIKE_WARNING, strikePos,
+                            user.getLookAngle(), 0.75f);
 
                     // Warning sound at the fixed strike position
                     world.playSound(null, strikePos.x, strikePos.y, strikePos.z,
@@ -106,6 +109,8 @@ public class RumbleFlashAttack extends ThunderBreathingAttackBase {
             );
 
             pendingStrikes.put(envStrike, WARNING_DURATION);
+            playThunderVfxAt(VfxIds.THUNDER_STRIKE_WARNING, envStrike,
+                    user.getLookAngle(), 0.62f);
         }
     }
 
@@ -118,9 +123,6 @@ public class RumbleFlashAttack extends ThunderBreathingAttackBase {
             Vec3 strikePos = entry.getKey(); // Fixed position - never changes
             int timeLeft = entry.getValue();
 
-            // Show warning particles at the FIXED position
-            showWarningParticles(serverLevel, strikePos, timeLeft);
-
             // Countdown
             timeLeft--;
             entry.setValue(timeLeft);
@@ -130,36 +132,6 @@ public class RumbleFlashAttack extends ThunderBreathingAttackBase {
                 executeLightningStrike(serverLevel, strikePos);
                 iterator.remove();
             }
-        }
-    }
-
-    private void showWarningParticles(ServerLevel serverLevel, Vec3 strikePos, int timeLeft) {
-        // Intensity increases as strike gets closer
-        float intensity = 1.0f - (timeLeft / (float) WARNING_DURATION);
-
-        // Warning particles - increasing intensity at FIXED position
-        int particleCount = (int) (5 + intensity * 15);
-
-        // Electric sparks at ground level - STAYS at original position
-        serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK,
-                strikePos.x, strikePos.y + 0.1, strikePos.z,
-                particleCount, 0.3, 0.1, 0.3, 0.1);
-
-        // Glowstone dust particles in a column (shows fixed strike zone)
-        serverLevel.sendParticles(ParticleTypes.END_ROD,
-                strikePos.x, strikePos.y + 2, strikePos.z,
-                (int) (3 + intensity * 7), 0.2, 1.0, 0.2, 0.05);
-
-        // Final warning particles (last few ticks)
-        if (timeLeft <= 10) {
-            serverLevel.sendParticles(ParticleTypes.FLAME,
-                    strikePos.x, strikePos.y + 0.5, strikePos.z,
-                    10, 0.5, 0.2, 0.5, 0.1);
-
-            // Warning sound gets more intense at the FIXED position
-            world.playSound(null, strikePos.x, strikePos.y, strikePos.z,
-                    SoundEvents.NOTE_BLOCK_BELL.value(), SoundSource.PLAYERS,
-                    0.2f + intensity * 0.3f, 1.2f + intensity * 0.8f);
         }
     }
 
@@ -185,28 +157,13 @@ public class RumbleFlashAttack extends ThunderBreathingAttackBase {
             Vec3 knockbackDir = target.position().subtract(user.position()).normalize();
             target.push(knockbackDir.x * knockback, 0.3, knockbackDir.z * knockback);
 
-            // Impact particle effects
-            serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK,
-                    target.getX(), target.getY() + 1, target.getZ(),
-                    50, 1.0, 1.0, 1.0, 0.3);
-
-            serverLevel.sendParticles(ParticleTypes.END_ROD,
-                    target.getX(), target.getY() + target.getBbHeight(), target.getZ(),
-                    30, 0.5, 0.5, 0.5, 0.2);
         }
 
         // Thunder impact sound
         world.playSound(null, strikePos.x, strikePos.y, strikePos.z,
                 SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.PLAYERS, 1.0f, 0.8f);
 
-        // Ground impact particles
-        serverLevel.sendParticles(ParticleTypes.EXPLOSION,
-                strikePos.x, strikePos.y, strikePos.z,
-                1, 0, 0, 0, 0);
-
-        serverLevel.sendParticles(ParticleTypes.SMOKE,
-                strikePos.x, strikePos.y + 0.1, strikePos.z,
-                20, 1.0, 0.1, 1.0, 0.05);
+        playThunderVfxAt(VfxIds.THUNDER_STRIKE, strikePos, user.getLookAngle(), 1.0f);
     }
 
     @Override

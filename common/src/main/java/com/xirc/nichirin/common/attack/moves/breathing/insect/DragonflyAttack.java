@@ -1,5 +1,7 @@
 package com.xirc.nichirin.common.attack.moves.breathing.insect;
 
+import com.xirc.nichirin.common.vfx.VfxIds;
+
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -29,6 +31,8 @@ public class DragonflyAttack extends InsectBreathingAttackBase {
 
     @Override
     protected void onActiveStart() {
+        playInsectVfx(VfxIds.INSECT_DRAGONFLY,
+                user.position().add(0, user.getBbHeight() * 0.5, 0), user.getLookAngle(), 1.0f);
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.DROWNED_AMBIENT, SoundSource.PLAYERS, 0.8f, 1.8f);
         createCompoundEyeEffect();

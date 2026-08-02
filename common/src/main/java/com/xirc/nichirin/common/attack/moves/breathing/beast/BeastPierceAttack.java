@@ -1,7 +1,6 @@
 package com.xirc.nichirin.common.attack.moves.breathing.beast;
 
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.server.level.ServerLevel;
+import com.xirc.nichirin.common.vfx.VfxIds;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -23,7 +22,6 @@ public class BeastPierceAttack extends BeastBreathingAttackBase {
         knockbackApplied = false;
         storedTarget = null;
         playSlashSound();
-        createChargeEffect();
     }
 
     @Override
@@ -39,10 +37,6 @@ public class BeastPierceAttack extends BeastBreathingAttackBase {
             Vec3 dir = storedTarget.position().subtract(user.position()).normalize();
             storedTarget.push(dir.x * knockback, 0.1 * knockback, dir.z * knockback);
             knockbackApplied = true;
-            if (world instanceof ServerLevel sl) {
-                sl.sendParticles(ParticleTypes.CRIT, storedTarget.getX(), storedTarget.getY() + 1, storedTarget.getZ(),
-                        15, 0.4, 0.4, 0.4, 0.2);
-            }
         }
     }
 
@@ -60,24 +54,9 @@ public class BeastPierceAttack extends BeastBreathingAttackBase {
             if (storedTarget == null) storedTarget = target;
         }
 
-        createThrustEffect(pos, look);
+        playBeastVfx(VfxIds.BEAST_PIERCE, pos, look, 1.0f);
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.PLAYERS, 1.0f, 1.5f);
-    }
-
-    private void createChargeEffect() {
-        if (!(world instanceof ServerLevel sl)) return;
-        Vec3 pos = user.position().add(0, user.getBbHeight() / 2, 0);
-        sl.sendParticles(ParticleTypes.CRIT, pos.x, pos.y, pos.z, 8, 0.3, 0.3, 0.3, 0.1);
-    }
-
-    private void createThrustEffect(Vec3 origin, Vec3 direction) {
-        if (!(world instanceof ServerLevel sl)) return;
-        for (int i = 1; i <= 6; i++) {
-            Vec3 p = origin.add(direction.scale(i * 0.5));
-            sl.sendParticles(ParticleTypes.SWEEP_ATTACK, p.x, p.y, p.z, 1, 0.05, 0.05, 0.05, 0);
-            sl.sendParticles(ParticleTypes.CRIT, p.x, p.y, p.z, 2, 0.1, 0.1, 0.1, 0.05);
-        }
     }
 
     @Override

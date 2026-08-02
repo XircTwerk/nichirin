@@ -93,6 +93,12 @@ public abstract class WaterBreathingAttackBase extends AbstractBreathingAttack<W
         }
     }
 
+    protected void playWaterVfxAt(ResourceLocation effectId, Vec3 origin, Vec3 direction, float scale) {
+        if (world instanceof ServerLevel serverLevel) {
+            VfxManager.playOwned(serverLevel, user, effectId, origin, direction, scale);
+        }
+    }
+
     public boolean isWhirlpoolAttack() { return false; }
     public boolean isDashAttack() { return hasDash() || hasTeleport(); }
     public boolean isOmnidirectional() { return false; }

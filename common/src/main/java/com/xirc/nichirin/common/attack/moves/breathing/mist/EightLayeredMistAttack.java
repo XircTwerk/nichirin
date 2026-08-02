@@ -1,7 +1,6 @@
 package com.xirc.nichirin.common.attack.moves.breathing.mist;
 
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.server.level.ServerLevel;
+import com.xirc.nichirin.common.vfx.VfxIds;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -25,8 +24,6 @@ public class EightLayeredMistAttack extends MistBreathingAttackBase {
 
     @Override
     protected void onActiveStart() {
-        createMistParticles();
-
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.8f, 1.5f);
     }
@@ -51,7 +48,11 @@ public class EightLayeredMistAttack extends MistBreathingAttackBase {
     private void performSlash(int slashIndex) {
         boolean isLeftSlash = slashIndex % 2 == 0;
 
-        createSlashParticles(isLeftSlash);
+        if (slashIndex == 0) {
+            Vec3 vfxDirection = rotateDirection(user.getLookAngle(), isLeftSlash ? -12 : 12);
+            playMistVfx(VfxIds.EIGHT_LAYERED_MIST,
+                    user.position().add(0, user.getBbHeight() * 0.5, 0), vfxDirection, hitboxSize / 3.0f);
+        }
 
         // Spherical hit pattern centred on the user: every slash strikes all enemies within
         // hitboxSize of the player (a true sphere, not a forward box), bypassing immunity frames
@@ -77,33 +78,8 @@ public class EightLayeredMistAttack extends MistBreathingAttackBase {
                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.6f, pitch);
     }
 
-    private void createSlashParticles(boolean isLeftSlash) {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-
-        // Ring of mist around the user to sell the spherical, all-around slash.
-        Vec3 center = user.position().add(0, user.getBbHeight() * 0.5, 0);
-        int points = 10;
-        double phase = isLeftSlash ? 0.0 : Math.PI / points;
-        for (int i = 0; i < points; i++) {
-            double angle = (2 * Math.PI * i) / points + phase;
-            Vec3 p = center.add(Math.cos(angle) * hitboxSize, (i % 2 == 0 ? 0.2 : -0.2), Math.sin(angle) * hitboxSize);
-
-            serverLevel.sendParticles(ParticleTypes.CLOUD,
-                    p.x, p.y, p.z, 1, 0.05, 0.05, 0.05, 0.02);
-            if (i % 2 == 0) {
-                serverLevel.sendParticles(ParticleTypes.WHITE_ASH,
-                        p.x, p.y, p.z, 1, 0.02, 0.02, 0.02, 0.01);
-            }
-        }
-    }
-
     @Override
     protected void onStop() {
-        if (world instanceof ServerLevel serverLevel) {
-            Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
-            serverLevel.sendParticles(ParticleTypes.CLOUD,
-                    userPos.x, userPos.y, userPos.z, 14, 0.5, 0.5, 0.5, 0.03);
-        }
         slashesPerformed = 0;
     }
 }

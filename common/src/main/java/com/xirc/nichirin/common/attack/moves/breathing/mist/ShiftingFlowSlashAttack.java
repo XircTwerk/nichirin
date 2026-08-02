@@ -1,7 +1,6 @@
 package com.xirc.nichirin.common.attack.moves.breathing.mist;
 
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.server.level.ServerLevel;
+import com.xirc.nichirin.common.vfx.VfxIds;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -34,16 +33,6 @@ public class ShiftingFlowSlashAttack extends MistBreathingAttackBase {
         dashStartPos = null;
         dashTick = 0;
 
-        if (world instanceof ServerLevel serverLevel) {
-            Vec3 pos = user.position();
-            for (int i = 0; i < 20; i++) {
-                double angle = (2 * Math.PI * i) / 20;
-                serverLevel.sendParticles(ParticleTypes.CLOUD,
-                        pos.x + Math.cos(angle) * 1.5, pos.y + 0.1, pos.z + Math.sin(angle) * 1.5,
-                        1, 0.1, 0.0, 0.1, 0.01);
-            }
-        }
-
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.9f, 0.7f);
     }
@@ -71,6 +60,8 @@ public class ShiftingFlowSlashAttack extends MistBreathingAttackBase {
     private void launchDash() {
         dashStartPos = user.position();
         dashTick = 0;
+        playMistVfx(VfxIds.SHIFTING_FLOW_SLASH,
+                user.position().add(0, user.getBbHeight() * 0.45, 0), dashDirection, 1.0f);
 
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 0.9f, 1.6f);
@@ -96,11 +87,6 @@ public class ShiftingFlowSlashAttack extends MistBreathingAttackBase {
         if (user instanceof ServerPlayer serverPlayer) {
             serverPlayer.connection.send(new ClientboundSetEntityMotionPacket(user));
         }
-        }
-        if (world instanceof ServerLevel serverLevel) {
-            Vec3 pos = user.position();
-            serverLevel.sendParticles(ParticleTypes.CLOUD,
-                    pos.x, pos.y + 0.3, pos.z, 5, 0.4, 0.1, 0.4, 0.02);
         }
     }
 
@@ -143,16 +129,13 @@ public class ShiftingFlowSlashAttack extends MistBreathingAttackBase {
 
     private void executeFinisher() {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
+        playMistVfx(VfxIds.MIST_FINISHER, userPos, dashDirection, range / 4.0f);
 
         List<LivingEntity> sweepTargets = getTargetsInSweep(100f, range * 0.35f, 6);
 
         for (LivingEntity target : sweepTargets) {
             hitTarget(target);
-            createMistHitParticles(target.position());
         }
-
-        // Final flash
-        createMistCircle(userPos, 3.5f, 18);
 
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.PLAYERS, 1.1f, 1.2f);

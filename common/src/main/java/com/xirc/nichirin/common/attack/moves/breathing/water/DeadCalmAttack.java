@@ -87,7 +87,7 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
 
         Vec3 lookDir = user.getLookAngle();
         fieldCenter = user.position();
-        playWaterVfx(VfxIds.DEAD_CALM, fieldCenter, lookDir, 1.0f);
+        playWaterVfxAt(VfxIds.DEAD_CALM, fieldCenter, lookDir, 1.0f);
 
 
         world.playSound(null, fieldCenter.x, fieldCenter.y, fieldCenter.z,
@@ -100,7 +100,7 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
         // Refresh before the previous pulse finishes fading so the field remains visible for
         // the full channel. Movement cancellation stops scheduling these immediately.
         if (calmTicks % 32 == 0) {
-            playWaterVfx(VfxIds.DEAD_CALM, fieldCenter, user.getLookAngle(), 1.0f);
+            playWaterVfxAt(VfxIds.DEAD_CALM, fieldCenter, user.getLookAngle(), 1.0f);
         }
 
         // Anchor the user in place — teleport overrides client-side prediction

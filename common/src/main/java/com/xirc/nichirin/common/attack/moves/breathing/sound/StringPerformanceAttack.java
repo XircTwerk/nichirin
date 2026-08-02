@@ -1,5 +1,7 @@
 package com.xirc.nichirin.common.attack.moves.breathing.sound;
 
+import com.xirc.nichirin.common.vfx.VfxIds;
+
 import com.xirc.nichirin.common.util.NichirinDamageHandler;
 import com.xirc.nichirin.common.util.NichirinDamageSources;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
@@ -117,6 +119,8 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
         // Calculate dash target position
         Vec3 currentPos = user.position();
         Vec3 dashTarget = currentPos.add(dashDirection.scale(SEGMENT_LENGTH));
+        playSoundVfx(VfxIds.SOUND_STRING_PERFORMANCE,
+                currentPos.add(0, user.getBbHeight() * 0.5, 0), dashDirection, 1.0f);
 
         // Set dash velocity instead of teleporting
         Vec3 dashVelocity = dashDirection.scale(SEGMENT_LENGTH * 0.8f); // Dash speed
@@ -254,6 +258,7 @@ public class StringPerformanceAttack extends SoundBreathingAttackBase {
 
     private void executeFinishingExplosion() {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
+        playSoundVfxAt(VfxIds.SOUND_IMPACT, userPos, user.getLookAngle(), 1.35f);
 
         // Massive finale explosion
         createStringFinaleExplosion(userPos);

@@ -1,8 +1,7 @@
 package com.xirc.nichirin.common.attack.moves.breathing.beast;
 
 import com.xirc.nichirin.common.util.HitboxData;
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.server.level.ServerLevel;
+import com.xirc.nichirin.common.vfx.VfxIds;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -50,6 +49,7 @@ public class BeastDevourAttack extends BeastBreathingAttackBase {
         Vec3 origin = user.position().add(0, user.getBbHeight() * 0.7 + yOffset, 0);
         Vec3 look = user.getLookAngle();
         Vec3 perp = new Vec3(-look.z, 0, look.x).normalize();
+        if (yOffset > 0.0f) playBeastVfx(VfxIds.BEAST_DEVOUR, origin, look, 1.0f);
 
         for (int i = -3; i <= 3; i++) {
             Vec3 center = origin.add(perp.scale(i * 0.6)).add(look.scale(1.5));
@@ -63,16 +63,6 @@ public class BeastDevourAttack extends BeastBreathingAttackBase {
             }
         }
 
-        createHorizontalSlashEffect(origin, perp, look);
-    }
-
-    private void createHorizontalSlashEffect(Vec3 origin, Vec3 perp, Vec3 look) {
-        if (!(world instanceof ServerLevel sl)) return;
-        for (int i = -5; i <= 5; i++) {
-            Vec3 p = origin.add(perp.scale(i * 0.5)).add(look.scale(1.0));
-            sl.sendParticles(ParticleTypes.SWEEP_ATTACK, p.x, p.y, p.z, 1, 0.05, 0.02, 0.05, 0);
-            sl.sendParticles(ParticleTypes.CRIT, p.x, p.y, p.z, 1, 0.1, 0.05, 0.1, 0.05);
-        }
     }
 
     @Override

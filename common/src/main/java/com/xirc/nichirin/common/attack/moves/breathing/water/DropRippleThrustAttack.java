@@ -65,7 +65,8 @@ public class DropRippleThrustAttack extends WaterBreathingAttackBase {
 
     private void executeThrust() {
         playWaterVfx(VfxIds.DROP_RIPPLE_THRUST,
-                user.position().add(0, user.getBbHeight() * 0.45, 0), user.getLookAngle(), 1.0f);
+                user.position().add(user.getLookAngle().normalize().scale(1.15))
+                        .add(0, user.getBbHeight() * 0.45, 0), user.getLookAngle(), 1.0f);
         // Activate defensive shield
         activateShield();
         shieldActive = true;

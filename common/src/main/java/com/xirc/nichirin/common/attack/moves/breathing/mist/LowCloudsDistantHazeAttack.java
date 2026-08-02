@@ -1,9 +1,8 @@
 package com.xirc.nichirin.common.attack.moves.breathing.mist;
 
 import com.xirc.nichirin.common.util.HitboxData;
+import com.xirc.nichirin.common.vfx.VfxIds;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -36,17 +35,6 @@ public class LowCloudsDistantHazeAttack extends MistBreathingAttackBase {
         dashStartPos = null;
         lastHitboxPos = null;
 
-        // Mist coils at feet during windup
-        if (world instanceof ServerLevel serverLevel) {
-            Vec3 feetPos = user.position();
-            for (int i = 0; i < 16; i++) {
-                double angle = (2 * Math.PI * i) / 16;
-                serverLevel.sendParticles(ParticleTypes.CLOUD,
-                        feetPos.x + Math.cos(angle), feetPos.y + 0.15, feetPos.z + Math.sin(angle),
-                        1, 0.05, 0.0, 0.05, 0.01);
-            }
-        }
-
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.9f, 0.8f);
     }
@@ -60,6 +48,8 @@ public class LowCloudsDistantHazeAttack extends MistBreathingAttackBase {
             dashStartPos = user.position();
             dashDuration = Math.max(1, duration);
             dashStarted = true;
+            playMistVfx(VfxIds.LOW_CLOUDS_DISTANT_HAZE,
+                    user.position().add(0, user.getBbHeight() * 0.45, 0), dashDirection, 1.0f);
 
             world.playSound(null, user.getX(), user.getY(), user.getZ(),
                     SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 0.8f, 1.8f);
@@ -83,8 +73,6 @@ public class LowCloudsDistantHazeAttack extends MistBreathingAttackBase {
             user.hurtMarked = true;
             user.hasImpulse = true;
         }
-
-        createMistTrail(user.position(), user.position().subtract(dashDirection.scale(1.5)));
 
         Vec3 center = user.position().add(0, user.getBbHeight() / 2, 0);
         boolean isFinalTick = dashTick >= dashDuration;
@@ -118,14 +106,6 @@ public class LowCloudsDistantHazeAttack extends MistBreathingAttackBase {
     protected void onStop() {
         user.setDeltaMovement(Vec3.ZERO);
         user.hurtMarked = true;
-
-        if (world instanceof ServerLevel serverLevel) {
-            Vec3 pos = user.position().add(0, 1, 0);
-            serverLevel.sendParticles(ParticleTypes.CLOUD, pos.x, pos.y, pos.z,
-                    20, 0.8, 0.5, 0.8, 0.04);
-            serverLevel.sendParticles(ParticleTypes.WHITE_ASH, pos.x, pos.y, pos.z,
-                    12, 0.6, 0.4, 0.6, 0.03);
-        }
 
         dashStarted = false;
         dashTick = 0;

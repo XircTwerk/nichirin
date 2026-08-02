@@ -170,6 +170,7 @@ public class BlazingUniverseAttack extends FlameBreathingAttackBase {
 
     private void createFinalExplosion() {
         Vec3 explosionCenter = user.position().add(user.getLookAngle().scale(range * 0.8));
+        playFlameVfx(VfxIds.BLAZING_UNIVERSE_IMPACT, explosionCenter, user.getLookAngle(), 1.25f);
 
         // Create massive flame explosion
 

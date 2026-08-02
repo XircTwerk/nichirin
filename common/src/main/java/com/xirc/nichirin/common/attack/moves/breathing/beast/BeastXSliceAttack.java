@@ -1,8 +1,7 @@
 package com.xirc.nichirin.common.attack.moves.breathing.beast;
 
 import com.xirc.nichirin.common.util.HitboxData;
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.server.level.ServerLevel;
+import com.xirc.nichirin.common.vfx.VfxIds;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -21,6 +20,8 @@ public class BeastXSliceAttack extends BeastBreathingAttackBase {
     @Override
     protected void onStart() {
         playSlashSound();
+        playBeastVfx(VfxIds.BEAST_X_SLICE,
+                user.position().add(0, user.getBbHeight() * 0.5, 0), user.getLookAngle(), 1.0f);
     }
 
     @Override
@@ -41,7 +42,7 @@ public class BeastXSliceAttack extends BeastBreathingAttackBase {
             Vec3 diagB = origin.add(look.subtract(perp).normalize().scale(dist));
 
             hitInXPattern(center, diagA, diagB, look, perp);
-            createXSlashParticles(center, look, perp, 1);
+            playXSlashSound(center, 1);
         }
 
         if (t >= SLASH_2_START && t <= SLASH_2_END) {
@@ -53,7 +54,7 @@ public class BeastXSliceAttack extends BeastBreathingAttackBase {
             Vec3 diagB = origin.add(look.subtract(perp).normalize().scale(dist));
 
             hitInXPattern(center, diagA, diagB, look, perp);
-            createXSlashParticles(center, look, perp, 2);
+            playXSlashSound(center, 2);
         }
     }
 
@@ -68,22 +69,7 @@ public class BeastXSliceAttack extends BeastBreathingAttackBase {
         for (LivingEntity t : targetsB) hitTarget(t);
     }
 
-    private void createXSlashParticles(Vec3 center, Vec3 look, Vec3 perp, int slashNum) {
-        if (!(world instanceof ServerLevel sl)) return;
-
-        float spread = 2.5f;
-        for (int i = -3; i <= 3; i++) {
-            double t = i / 3.0;
-            Vec3 p1 = center.add(look.scale(t * 0.5)).add(perp.scale(t * spread));
-            sl.sendParticles(ParticleTypes.SWEEP_ATTACK, p1.x, p1.y, p1.z, 1, 0.05, 0.05, 0.05, 0);
-
-            Vec3 p2 = center.add(look.scale(t * 0.5)).add(perp.scale(-t * spread));
-            sl.sendParticles(ParticleTypes.SWEEP_ATTACK, p2.x, p2.y, p2.z, 1, 0.05, 0.05, 0.05, 0);
-
-            sl.sendParticles(ParticleTypes.CRIT, p1.x, p1.y, p1.z, 1, 0.1, 0.1, 0.1, 0.05);
-            sl.sendParticles(ParticleTypes.CRIT, p2.x, p2.y, p2.z, 1, 0.1, 0.1, 0.1, 0.05);
-        }
-
+    private void playXSlashSound(Vec3 center, int slashNum) {
         if (slashNum == 1 || tickCount % 2 == 0) {
             world.playSound(null, center.x, center.y, center.z,
                     SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.8f, 1.3f + slashNum * 0.1f);

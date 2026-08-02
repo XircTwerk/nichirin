@@ -6,9 +6,9 @@ import com.xirc.nichirin.common.item.katana.IndividualBeastKatana;
 import com.xirc.nichirin.common.item.katana.IndividualSoundKatana;
 import com.xirc.nichirin.common.item.katana.Katana;
 import com.xirc.nichirin.common.item.katana.SoundKatana;
+import com.xirc.nichirin.common.vfx.VfxIds;
 import com.xirc.nichirin.registry.NichirinEntityRegistry;
 import com.xirc.nichirin.registry.NichirinItemRegistry;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -64,7 +64,7 @@ public class BeastThrowingStrikeAttack extends BeastBreathingAttackBase {
             spawnKatana(origin.add(perp.scale(0.3)), look, damage, fallback);
         }
 
-        createThrowEffect();
+        playBeastVfx(VfxIds.BEAST_THROWING_STRIKE, origin, look, 1.0f);
     }
 
     private static boolean isKatana(ItemStack stack) {
@@ -91,13 +91,6 @@ public class BeastThrowingStrikeAttack extends BeastBreathingAttackBase {
         );
 
         sl.addFreshEntity(katana);
-    }
-
-    private void createThrowEffect() {
-        if (!(world instanceof ServerLevel sl)) return;
-        Vec3 pos = user.getEyePosition();
-        sl.sendParticles(ParticleTypes.CRIT, pos.x, pos.y, pos.z, 15, 0.3, 0.3, 0.3, 0.3);
-        sl.sendParticles(ParticleTypes.SWEEP_ATTACK, pos.x, pos.y, pos.z, 5, 0.2, 0.2, 0.2, 0);
     }
 
     @Override

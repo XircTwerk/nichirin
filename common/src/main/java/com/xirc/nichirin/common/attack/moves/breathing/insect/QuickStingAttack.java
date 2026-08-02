@@ -1,5 +1,7 @@
 package com.xirc.nichirin.common.attack.moves.breathing.insect;
 
+import com.xirc.nichirin.common.vfx.VfxIds;
+
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -59,6 +61,7 @@ public class QuickStingAttack extends InsectBreathingAttackBase {
     private void executeQuickSting() {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDir = user.getLookAngle();
+        playInsectVfx(VfxIds.INSECT_QUICK_STING, userPos, lookDir, 1.0f);
 
         createThrustEffect();
 

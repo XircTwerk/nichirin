@@ -1,5 +1,7 @@
 package com.xirc.nichirin.common.attack.moves.breathing.sound;
 
+import com.xirc.nichirin.common.vfx.VfxIds;
+
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -58,6 +60,8 @@ public class ConstantResoundingSlashesAttack extends SoundBreathingAttackBase {
 
     @Override
     protected void onActiveStart() {
+        playSoundVfx(VfxIds.SOUND_RESONDING_SLASHES,
+                user.position().add(0, user.getBbHeight() * 0.55, 0), user.getLookAngle(), 1.0f);
         // Initial spinning sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.ELYTRA_FLYING, SoundSource.PLAYERS, 1.0f, 2.0f);
