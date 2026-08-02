@@ -110,10 +110,7 @@ public class AttackWheelOverlay {
             moveset = DefaultGunMoveset.INSTANCE;
             movesetId = DefaultGunMoveset.INSTANCE.getMovesetId();
         } else if (holdingKatana) {
-            if (DualKatanaMoveset.isDualWielding(player)) {
-                moveset = DualKatanaMoveset.INSTANCE;
-                movesetId = moveset.getMovesetId();
-            } else if (MovesetHelper.hasBreathingMoveset(player)) {
+            if (MovesetHelper.hasBreathingMoveset(player)) {
                 moveset = MovesetHelper.getBreathingMoveset(player);
                 movesetId = MovesetHelper.getBreathingMovesetId(player);
             } else {
@@ -372,9 +369,7 @@ public class AttackWheelOverlay {
             if (holdingGun) {
                 movesetId = DefaultGunMoveset.INSTANCE.getMovesetId();
             } else if (holdingKatana) {
-                if (DualKatanaMoveset.isDualWielding(player)) {
-                    movesetId = DualKatanaMoveset.INSTANCE.getMovesetId();
-                } else if (MovesetHelper.hasBreathingMoveset(player)) {
+                if (MovesetHelper.hasBreathingMoveset(player)) {
                     movesetId = MovesetHelper.getBreathingMovesetId(player);
                 } else {
                     movesetId = DualKatanaMoveset.neutralMovesetFor(player).getMovesetId();

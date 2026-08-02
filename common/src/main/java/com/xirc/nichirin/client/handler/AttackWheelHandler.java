@@ -229,16 +229,12 @@ public class AttackWheelHandler {
             moveset = DefaultGunMoveset.INSTANCE;
             isDefaultGunWheel = true;
         } else if (holdingKatana) {
-            // Dual wielding is a complete moveset and takes priority over an assigned breathing style.
-            if (DualKatanaMoveset.isDualWielding(mc.player)) {
-                moveset = DualKatanaMoveset.INSTANCE;
-                isBreathingWheel = false;
-                isDefaultKatanaWheel = true;
-            } else if (MovesetHelper.hasBreathingMoveset(mc.player)) {
+            // An equipped breathing style owns the wheel. Dual Katana is the
+            // equipment-based neutral fallback when no breathing style is equipped.
+            if (MovesetHelper.hasBreathingMoveset(mc.player)) {
                 moveset = MovesetHelper.getBreathingMoveset(mc.player);
                 isBreathingWheel = true;
             } else {
-                // No breathing style — show the 3 default wheel moves (Check, Overhead, Thrust)
                 moveset = DualKatanaMoveset.neutralMovesetFor(mc.player);
                 isBreathingWheel = false;
                 isDefaultKatanaWheel = true;

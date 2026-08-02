@@ -151,7 +151,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         boolean damaged = NichirinDamageHandler.hurt(target, source, damage);
 
         if (damaged && user instanceof Player player) {
-            ComboIntegration.handleSuccessfulHit(player, target, hitStun, damage);
+            ComboIntegration.handleSuccessfulHit(player, target, hitStun, damage, comboSequence);
         }
 
         applyHitStun(target);
@@ -177,7 +177,7 @@ public abstract class AbstractBreathingAttack<T extends AbstractBreathingAttack,
         boolean damaged = NichirinDamageHandler.hurt(target, source, damage);
 
         if (damaged && user instanceof Player player) {
-            ComboIntegration.handleSuccessfulHit(player, target, hitStun, damage);
+            ComboIntegration.handleSuccessfulHit(player, target, hitStun, damage, comboSequence);
         }
 
         // No-immunity variant always applies stunned (not slam)

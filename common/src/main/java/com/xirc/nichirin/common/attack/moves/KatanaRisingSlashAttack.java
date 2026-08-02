@@ -94,7 +94,7 @@ public class KatanaRisingSlashAttack extends AbstractKatanaAttack {
             if (hitStun > 0) target.invulnerableTime = hitStun;
 
             if (user instanceof Player p) {
-                ComboIntegration.handleSuccessfulHit(p, target, hitStun, damage);
+                ComboIntegration.handleSuccessfulHit(p, target, hitStun, damage, comboSequence);
             }
 
             if (target instanceof ServerPlayer sp) {

@@ -220,12 +220,12 @@ public class MovesetDataSection extends AbstractGuiPage {
     private List<SelectedMoveset> getSelectedMovesets(Player player) {
         List<SelectedMoveset> selected = new ArrayList<>();
         String breathingId = MovesetHelper.getBreathingMovesetId(player);
-        if (DualKatanaMoveset.isDualWielding(player)) {
-            selected.add(new SelectedMoveset("Dual Katana", DualKatanaMoveset.INSTANCE.getMovesetId(),
-                    COLOR_PALETTE.SLAYER_BLUE.argb(), COLOR_PALETTE.SLAYER_BLUE.rgb()));
-        } else if (breathingId != null) {
+        if (breathingId != null) {
             selected.add(new SelectedMoveset("Breathing Style", breathingId,
                     COLOR_PALETTE.BREATH_CYAN.argb(), COLOR_PALETTE.BREATH_CYAN.rgb()));
+        } else if (DualKatanaMoveset.isDualWielding(player)) {
+            selected.add(new SelectedMoveset("Dual Katana", DualKatanaMoveset.INSTANCE.getMovesetId(),
+                    COLOR_PALETTE.SLAYER_BLUE.argb(), COLOR_PALETTE.SLAYER_BLUE.rgb()));
         } else {
             selected.add(new SelectedMoveset("Default Katana", DefaultKatanaMoveset.INSTANCE.getMovesetId(),
                     COLOR_PALETTE.SLAYER_BLUE.argb(), COLOR_PALETTE.SLAYER_BLUE.rgb()));

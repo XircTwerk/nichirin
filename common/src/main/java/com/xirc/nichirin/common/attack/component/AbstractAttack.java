@@ -64,6 +64,7 @@ public abstract class AbstractAttack {
     private long lastArmorInterruptTick = Long.MIN_VALUE;
     private boolean activeStartFired = false;
     protected boolean configured = false;
+    protected long comboSequence = 0L;
 
 
     private static final ConcurrentHashMap<UUID, List<AbstractAttack>> selfTickingAttacks =
@@ -460,6 +461,10 @@ public abstract class AbstractAttack {
 
     public void setHitStun(int hitStun) {
         this.hitStun = Math.max(0, hitStun);
+    }
+
+    public void setComboSequence(long comboSequence) {
+        this.comboSequence = comboSequence;
     }
 
     public static boolean hasActiveAttack(LivingEntity entity) {

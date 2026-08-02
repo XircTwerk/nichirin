@@ -257,7 +257,12 @@ public class MoveExecutor {
         }
 
         applyInfinitePrevention(player, attack, moveId);
-        ComboTracker.registerAttackStart(player, moveId);
+        long attackSequence = ComboTracker.registerAttackStart(player, moveId);
+        if (attack instanceof AbstractAttack abstractAttack) {
+            abstractAttack.setComboSequence(attackSequence);
+        } else if (attack instanceof AbstractKatanaAttack katanaAttack) {
+            katanaAttack.setComboSequence(attackSequence);
+        }
         float multiplier = ComboTracker.getAttackComboMultiplier(player);
         if (multiplier == 1.0f) {
             comboScaledAttacks.add(attack);

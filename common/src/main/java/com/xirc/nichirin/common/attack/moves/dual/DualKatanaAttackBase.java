@@ -20,7 +20,7 @@ public abstract class DualKatanaAttackBase
 
         boolean damaged = NichirinDamageHandler.hurt(target, NichirinDamageSources.blade(user), damage);
         if (damaged && user instanceof net.minecraft.world.entity.player.Player player) {
-            ComboIntegration.handleSuccessfulHit(player, target, hitStun, damage);
+            ComboIntegration.handleSuccessfulHit(player, target, hitStun, damage, comboSequence);
         }
 
         applyHitStun(target);
@@ -38,7 +38,7 @@ public abstract class DualKatanaAttackBase
         target.hurtTime = 0;
         boolean damaged = NichirinDamageHandler.hurt(target, NichirinDamageSources.blade(user), damage);
         if (damaged && user instanceof net.minecraft.world.entity.player.Player player) {
-            ComboIntegration.handleSuccessfulHit(player, target, hitStun, damage);
+            ComboIntegration.handleSuccessfulHit(player, target, hitStun, damage, comboSequence);
         }
 
         applyHitStun(target);

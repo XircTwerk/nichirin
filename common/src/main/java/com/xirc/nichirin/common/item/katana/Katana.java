@@ -61,14 +61,9 @@ public class Katana extends Item {
         if (player.hasEffect(NichirinEffectRegistry.blocking())) return;
         if (SheathingManager.isSelectedKatanaSheathed(player)) return;
 
-        if (DualKatanaMoveset.isDualWielding(player)) {
-            DualKatanaMoveset.INSTANCE.handleLeftClick(player);
-            return;
-        }
-
         AbstractMoveset moveset = MovesetHelper.getBreathingMoveset(player);
         // If the breathing moveset claims the hit (returns true) we're done.
-        // Otherwise fall through to the default slash combo.
+        // Otherwise fall through to the equipment-appropriate neutral slash combo.
         if (moveset != null && moveset.handleLeftClick(player)) return;
         DualKatanaMoveset.neutralMovesetFor(player).handleLeftClick(player);
     }
@@ -92,13 +87,8 @@ public class Katana extends Item {
         if (player.hasEffect(NichirinEffectRegistry.stunned())) return;
         if (SheathingManager.isSelectedKatanaSheathed(player)) return;
 
-        if (DualKatanaMoveset.isDualWielding(player)) {
-            DualKatanaMoveset.INSTANCE.handleRightClick(player, isCrouching);
-            return;
-        }
-
         // If the breathing moveset claims the right-click (returns true) we're done.
-        // Otherwise fall through to the default double-slash / rising-slash.
+        // Otherwise fall through to the equipment-appropriate neutral special.
         AbstractMoveset moveset = MovesetHelper.getBreathingMoveset(player);
         if (moveset != null && moveset.handleRightClick(player, isCrouching)) {
             return;
@@ -120,6 +110,7 @@ public class Katana extends Item {
     /** CLIENT ONLY: Update the cooldown HUD and play the attack animation. */
     public void displayClientCooldown(Player player) {
         if (!player.level().isClientSide) return;
+        if (MovesetHelper.getBreathingMoveset(player) != null) return;
         boolean dualWielding = DualKatanaMoveset.isDualWielding(player);
         int comboCount = dualWielding
                 ? DualKatanaMoveset.getComboCount(player)
@@ -137,8 +128,7 @@ public class Katana extends Item {
     public void displayClientRightClickFeedback(Player player, boolean isCrouching) {
         if (!player.level().isClientSide) return;
         // Breathing movesets handle their own HUD
-        if (!DualKatanaMoveset.isDualWielding(player)
-                && MovesetHelper.getBreathingMoveset(player) != null) return;
+        if (MovesetHelper.getBreathingMoveset(player) != null) return;
 
         if (isCrouching) {
             CooldownHUD.setCooldown("Rising Slash", 25);

@@ -61,22 +61,12 @@ public class MoveHotkeyPacket {
             return;
         }
 
-        // No breathing style — delegate to Katana wheel moves
-        if (DualKatanaMoveset.isDualWielding(player)) {
-            Katana katana = (Katana) mainHand.getItem();
-            katana.performWheelMove(player, moveIndex);
-            return;
-        }
-
-        String currentBreathingStyle = MovesetHelper.getBreathingMovesetId(player);
-        if (currentBreathingStyle == null || currentBreathingStyle.isEmpty()) {
-            Katana katana = (Katana) mainHand.getItem();
-            katana.performWheelMove(player, moveIndex);
-            return;
-        }
-
         AbstractMoveset moveset = MovesetHelper.getBreathingMoveset(player);
         if (moveset == null) {
+            // Dual Katana is an equipment-based neutral fallback, never a replacement
+            // for the player's equipped breathing style.
+            Katana katana = (Katana) mainHand.getItem();
+            katana.performWheelMove(player, moveIndex);
             return;
         }
 

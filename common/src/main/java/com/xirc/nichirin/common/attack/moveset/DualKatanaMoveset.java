@@ -52,7 +52,7 @@ public final class DualKatanaMoveset extends AbstractMoveset {
 
     private static final MoveConfiguration X_SLASH_CONFIG = new MoveBuilder("x_slash", "X Slash")
             .withAnimation("nichirin:sword.dual_xslash", 20)
-            .withTiming(20, 5, 15)
+            .withTiming(0, 5, 15)
             .withStaminaCost(SPECIAL_STAMINA_COST)
             .withDamage(3.5f)
             .withRange(2.8f)
@@ -67,7 +67,7 @@ public final class DualKatanaMoveset extends AbstractMoveset {
     private static final MoveConfiguration CROUCH_HEAVY_CONFIG =
             new MoveBuilder("crouching_heavy", "Crouching Heavy")
                     .withAnimation("nichirin:sword.dualcrouchheavy", 50)
-                    .withTiming(50, 5, 45)
+                    .withTiming(0, 5, 45)
                     .withStaminaCost(SPECIAL_STAMINA_COST)
                     .withDamage(6.0f)
                     .withRange(2.5f)
@@ -107,7 +107,7 @@ public final class DualKatanaMoveset extends AbstractMoveset {
 
     private static final MoveConfiguration THRUST_CONFIG = new MoveBuilder("thrust", "Thrust")
             .withAnimation("nichirin:sword.dual_thrust", 27)
-            .withTiming(50, 10, 17)
+            .withTiming(100, 10, 17)
             .withStaminaCost(SPECIAL_STAMINA_COST)
             .withDamage(8.0f)
             .withRange(10.0f)
