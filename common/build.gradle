@@ -31,11 +31,30 @@ shadowJar {
     enabled = false
 }
 
+def playerAnimationFiles = fileTree("src/main/resources/assets/nichirin/player_animations") {
+    include "**/*.json"
+}
+
+tasks.register("validatePlayerAnimationIds") {
+    inputs.files(playerAnimationFiles)
+    doLast {
+        playerAnimationFiles.each { animationFile ->
+            def root = new groovy.json.JsonSlurper().parse(animationFile)
+            root.animations?.keySet()?.each { animationId ->
+                if (!(animationId ==~ /[a-z0-9\/._-]+/)) {
+                    throw new GradleException("Invalid player animation id '${animationId}' in ${animationFile}: Minecraft resource IDs must be lowercase")
+                }
+            }
+        }
+    }
+}
+
 // Add duplicate handling to all jar tasks
 tasks.withType(Jar) {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 processResources {
+    dependsOn tasks.named("validatePlayerAnimationIds")
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }

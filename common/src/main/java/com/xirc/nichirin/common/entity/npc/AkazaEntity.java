@@ -331,7 +331,7 @@ public class AkazaEntity extends UpperMoonDemonEntity implements IDestructiveDea
      * lives), so Akaza is <em>always</em> doing something purposeful: charging, dash-closing,
      * air-chasing, footsie-strafing, or attacking. Decisions read the fight — anti-airing elevated
      * targets, whiff-punishing committed swings with a dashing palm, chaining pressure inside a
-     * combo window, and finishing low targets in Overdrive. Cooldowns are short and Overdrive makes
+     * a short pressure chain, and finishing low targets in Overdrive. Cooldowns are short and Overdrive makes
      * everything faster.</p>
      */
     public static class AkazaCombatGoal extends Goal {
@@ -344,7 +344,7 @@ public class AkazaEntity extends UpperMoonDemonEntity implements IDestructiveDea
         private int globalCd;
         private int pokeCd, burstCd, dashPalmCd, zoneCd, signatureCd;
         private int gapDashCd, leapCd, pathCd;
-        private int comboWindow;      // brief window after an attack where he chains faster
+        private int chainTicksRemaining; // brief post-attack period where he chains faster
         private int strafeDir = 1;    // +1 / -1 — which way he's currently circling
         private int strafeFlipCd = 0; // ticks until he reverses the circle direction
 
@@ -431,7 +431,7 @@ public class AkazaEntity extends UpperMoonDemonEntity implements IDestructiveDea
             if (gapDashCd > 0) gapDashCd--;
             if (leapCd > 0) leapCd--;
             if (pathCd > 0) pathCd--;
-            if (comboWindow > 0) comboWindow--;
+            if (chainTicksRemaining > 0) chainTicksRemaining--;
         }
 
         /**
@@ -508,11 +508,11 @@ public class AkazaEntity extends UpperMoonDemonEntity implements IDestructiveDea
 
             if (distance <= 2.6) {
                 // Point-blank pressure. Overdrive finisher on a low or already-pressured target.
-                if (overdrive && signatureCd == 0 && (targetLowHp || comboWindow > 0)) {
+                if (overdrive && signatureCd == 0 && (targetLowHp || chainTicksRemaining > 0)) {
                     fireSignature(overdrive);
                     return;
                 }
-                if (burstCd == 0 && (comboWindow > 0 || akaza.getRandom().nextFloat() < 0.5f)) {
+                if (burstCd == 0 && (chainTicksRemaining > 0 || akaza.getRandom().nextFloat() < 0.5f)) {
                     fireBurst(overdrive);
                     return;
                 }
@@ -560,21 +560,21 @@ public class AkazaEntity extends UpperMoonDemonEntity implements IDestructiveDea
             akaza.getMoveset().handleLeftClick(akaza);
             pokeCd = overdrive ? 5 : 7;
             globalCd = overdrive ? 4 : 6;
-            comboWindow = 24;
+            chainTicksRemaining = 24;
         }
 
         private void fireBurst(boolean overdrive) {
             akaza.getMoveset().performMove(akaza, AkazaMoveset.MOVE_BURST);
             burstCd = overdrive ? 16 : 24;
             globalCd = overdrive ? 6 : 9;
-            comboWindow = 24;
+            chainTicksRemaining = 24;
         }
 
         private void fireDashPalm(boolean overdrive) {
             akaza.getMoveset().performMove(akaza, AkazaMoveset.MOVE_DASH);
             dashPalmCd = overdrive ? 22 : 34;
             globalCd = 8;
-            comboWindow = 20;
+            chainTicksRemaining = 20;
         }
 
         private void fireZone(boolean overdrive) {
@@ -587,7 +587,7 @@ public class AkazaEntity extends UpperMoonDemonEntity implements IDestructiveDea
             akaza.getMoveset().performMove(akaza, AkazaMoveset.MOVE_SIGNATURE);
             signatureCd = overdrive ? 55 : 26;
             globalCd = 10;
-            comboWindow = 20;
+            chainTicksRemaining = 20;
         }
 
         private void faceTarget(LivingEntity target) {

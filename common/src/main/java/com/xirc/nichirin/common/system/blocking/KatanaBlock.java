@@ -11,6 +11,7 @@ import com.xirc.nichirin.common.util.NetworkBufferUtils;
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
 import com.xirc.nichirin.common.attack.moveset.DefaultKatanaMoveset;
+import com.xirc.nichirin.common.attack.moveset.DualKatanaMoveset;
 import com.xirc.nichirin.common.item.katana.Katana;
 import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
@@ -437,6 +438,7 @@ public class KatanaBlock {
 
             if (attacker instanceof ServerPlayer serverPlayer) {
                 DefaultKatanaMoveset.interruptPlayerAttack(serverPlayer);
+                DualKatanaMoveset.interruptPlayerAttack(serverPlayer);
                 NichirinPacketRegistry.clearInputBlock(serverPlayer);
                 sendParriedCooldown(serverPlayer, "Move (Parried)", PARRIED_ATTACK_COOLDOWN);
             }

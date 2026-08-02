@@ -33,7 +33,7 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
 
     public static final DefaultKatanaMoveset INSTANCE = new DefaultKatanaMoveset();
 
-    private static final int COMBO_WINDOW = 20;
+    private static final int LIGHT_FOLLOWUP_TIMEOUT_TICKS = 20;
     private static final float SPECIAL_STAMINA_COST = 15.0f;
 
     private static final Map<UUID, ComboState> comboStates = new ConcurrentHashMap<>();
@@ -124,7 +124,7 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
 
         ComboState combo = comboStates.computeIfAbsent(entity.getUUID(), k -> new ComboState());
         long now = entity.level().getGameTime();
-        boolean isCombo = (now - combo.lastAttackTime) <= COMBO_WINDOW && combo.comboCount > 0;
+        boolean isCombo = (now - combo.lastAttackTime) <= LIGHT_FOLLOWUP_TIMEOUT_TICKS && combo.comboCount > 0;
 
         if (isCombo && combo.comboCount == 1) {
             KatanaSlashAttack attack = KatanaSlashAttack.createSlash2();
@@ -222,14 +222,14 @@ public class DefaultKatanaMoveset extends AbstractMoveset {
         if (combo == null) return;
 
         long now = player.level().getGameTime();
-        if (now - combo.lastAttackTime > COMBO_WINDOW && combo.comboCount > 0) {
+        if (now - combo.lastAttackTime > LIGHT_FOLLOWUP_TIMEOUT_TICKS && combo.comboCount > 0) {
             combo.comboCount = 0;
         }
 
         if (now % 100 == 0) {
             comboStates.entrySet().removeIf(e -> {
                 ComboState s = e.getValue();
-                return s.comboCount == 0 && now - s.lastAttackTime > COMBO_WINDOW;
+                return s.comboCount == 0 && now - s.lastAttackTime > LIGHT_FOLLOWUP_TIMEOUT_TICKS;
             });
         }
     }

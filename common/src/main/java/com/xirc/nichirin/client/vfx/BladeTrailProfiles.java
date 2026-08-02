@@ -49,6 +49,20 @@ public final class BladeTrailProfiles {
     private static final Map<String, Profile> ATTACK_PROFILES = new HashMap<>();
 
     static {
+        Profile light = new Profile(340L, 32, 1.35f, 0.92f, Theme.WHITE);
+        Profile heavy = new Profile(420L, 36, 1.55f, 0.94f, Theme.WHITE);
+        register("sword.check", new Profile(120L, 10, 0.55f, 0.78f, Theme.WHITE));
+        register("sword.slash", light);
+        register("sword.doubleslash", new Profile(380L, 34, 1.45f, 0.93f, Theme.WHITE));
+        register("sword.vertical", heavy);
+        register("sword.thrust", new Profile(460L, 38, 1.35f, 0.92f, Theme.WHITE));
+        register("sword.dual_m1", light);
+        register("sword.dual_m1_followup", light);
+        register("sword.dual_xslash", new Profile(420L, 36, 1.50f, 0.94f, Theme.WHITE));
+        register("sword.dualcrouchheavy", new Profile(480L, 38, 1.70f, 0.95f, Theme.WHITE));
+        register("sword.dual_combo", new Profile(420L, 38, 1.50f, 0.94f, Theme.WHITE));
+        register("sword.dual_slam", heavy);
+        register("sword.dual_thrust", new Profile(540L, 40, 1.65f, 0.95f, Theme.WHITE));
         register("water_wheel", new Profile(380L, 32, 2.15f, 0.96f, Theme.WATER));
     }
 

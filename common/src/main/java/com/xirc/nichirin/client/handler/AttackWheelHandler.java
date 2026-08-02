@@ -4,7 +4,7 @@ import com.xirc.nichirin.client.gui.AttackWheelOverlay;
 import com.xirc.nichirin.client.gui.CooldownHUD;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.attack.moveset.CqcMoveset;
-import com.xirc.nichirin.common.attack.moveset.DefaultKatanaMoveset;
+import com.xirc.nichirin.common.attack.moveset.DualKatanaMoveset;
 import com.xirc.nichirin.common.attack.moveset.DefaultGunMoveset;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.item.katana.Katana;
@@ -229,14 +229,17 @@ public class AttackWheelHandler {
             moveset = DefaultGunMoveset.INSTANCE;
             isDefaultGunWheel = true;
         } else if (holdingKatana) {
-            // Holding katana - use breathing moveset if available, otherwise default katana
-            boolean hasBreathing = MovesetHelper.hasBreathingMoveset(mc.player);
-            if (hasBreathing) {
+            // Dual wielding is a complete moveset and takes priority over an assigned breathing style.
+            if (DualKatanaMoveset.isDualWielding(mc.player)) {
+                moveset = DualKatanaMoveset.INSTANCE;
+                isBreathingWheel = false;
+                isDefaultKatanaWheel = true;
+            } else if (MovesetHelper.hasBreathingMoveset(mc.player)) {
                 moveset = MovesetHelper.getBreathingMoveset(mc.player);
                 isBreathingWheel = true;
             } else {
                 // No breathing style — show the 3 default wheel moves (Check, Overhead, Thrust)
-                moveset = DefaultKatanaMoveset.INSTANCE;
+                moveset = DualKatanaMoveset.neutralMovesetFor(mc.player);
                 isBreathingWheel = false;
                 isDefaultKatanaWheel = true;
             }
@@ -376,7 +379,7 @@ public class AttackWheelHandler {
             moveset = MovesetHelper.getFightingMoveset(mc.player);
         } else if (isDefaultKatanaWheel) {
             // Default katana — use the static display moveset for config lookup only
-            moveset = DefaultKatanaMoveset.INSTANCE;
+            moveset = DualKatanaMoveset.neutralMovesetFor(mc.player);
         } else if (isDefaultGunWheel) {
             // Gun — static display moveset for config lookup only
             moveset = DefaultGunMoveset.INSTANCE;

@@ -34,7 +34,7 @@ public class SmartTrainerAttackGoal extends MeleeAttackGoal {
     private static final int   BACKSTEP_RELEASE_DELAY = 8;
     // Dash/mobility pacing is read from config: combat.npcDashCooldownTicks / npcMobilityCooldownTicks.
     private static final int   MAX_COMBO_LENGTH       = 6;
-    private static final int   COMBO_WINDOW_TICKS     = 25;
+    private static final int   CHAIN_TIMEOUT_TICKS    = 25;
     private static final int   COMBO_GLOBAL_CD        = 4;
     private static final double ELEVATION_THRESHOLD   = 2.5; // blocks above us before we try to climb
 
@@ -56,7 +56,7 @@ public class SmartTrainerAttackGoal extends MeleeAttackGoal {
     private int    timesStuck      = 0;
 
     private int comboHits   = 0;
-    private int comboWindow = 0;
+    private int chainTicksRemaining = 0;
     private int lastComboMove = Integer.MIN_VALUE;
 
     public SmartTrainerAttackGoal(BaseBreathingTrainerEntity trainer, double speedModifier, boolean followEvenIfNotSeen) {
@@ -95,7 +95,7 @@ public class SmartTrainerAttackGoal extends MeleeAttackGoal {
         if (mobilityCooldown   > 0) mobilityCooldown--;
         if (pendingMoveDelay   > 0) pendingMoveDelay--;
         if (thinkPauseTicks    > 0) thinkPauseTicks--;
-        if (comboWindow > 0 && --comboWindow == 0) {
+        if (chainTicksRemaining > 0 && --chainTicksRemaining == 0) {
             comboHits = 0;
             lastComboMove = Integer.MIN_VALUE;
         }
@@ -252,7 +252,7 @@ public class SmartTrainerAttackGoal extends MeleeAttackGoal {
 
     private void decideAction(LivingEntity target, double distSq) {
         // Continue a combo with a different move while the window is open and we're close.
-        if (comboWindow > 0 && comboHits < MAX_COMBO_LENGTH && distSq < 6.0 * 6.0) {
+        if (chainTicksRemaining > 0 && comboHits < MAX_COMBO_LENGTH && distSq < 6.0 * 6.0) {
             if (tryRightClick()) return;
             if (tryAnyReadyMove(target)) return;
             if (fireLeftClick()) return;
@@ -325,7 +325,7 @@ public class SmartTrainerAttackGoal extends MeleeAttackGoal {
         snapToFaceTarget();
         trainer.performRightClickMove(false);
         startComboBeat();
-        globalCooldown = comboWindow > 0 ? COMBO_GLOBAL_CD : 5;
+        globalCooldown = chainTicksRemaining > 0 ? COMBO_GLOBAL_CD : 5;
         return true;
     }
 
@@ -334,7 +334,7 @@ public class SmartTrainerAttackGoal extends MeleeAttackGoal {
         snapToFaceTarget();
         trainer.getMoveset().handleLeftClick(trainer);
         startComboBeat();
-        globalCooldown = comboWindow > 0 ? COMBO_GLOBAL_CD : 3;
+        globalCooldown = chainTicksRemaining > 0 ? COMBO_GLOBAL_CD : 3;
         return true;
     }
 
@@ -347,12 +347,12 @@ public class SmartTrainerAttackGoal extends MeleeAttackGoal {
     private void registerMoveUse(int idx) {
         lastComboMove = idx;
         startComboBeat();
-        globalCooldown = comboWindow > 0 ? COMBO_GLOBAL_CD : cooldownAfterMove(idx);
+        globalCooldown = chainTicksRemaining > 0 ? COMBO_GLOBAL_CD : cooldownAfterMove(idx);
     }
 
     private void startComboBeat() {
         comboHits++;
-        comboWindow = COMBO_WINDOW_TICKS;
+        chainTicksRemaining = CHAIN_TIMEOUT_TICKS;
     }
 
     private void snapToFaceTarget() {

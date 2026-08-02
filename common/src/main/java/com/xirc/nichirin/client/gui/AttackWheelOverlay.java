@@ -4,7 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.attack.moveset.CqcMoveset;
-import com.xirc.nichirin.common.attack.moveset.DefaultKatanaMoveset;
+import com.xirc.nichirin.common.attack.moveset.DualKatanaMoveset;
 import com.xirc.nichirin.common.attack.moveset.DefaultGunMoveset;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.item.katana.Katana;
@@ -110,13 +110,15 @@ public class AttackWheelOverlay {
             moveset = DefaultGunMoveset.INSTANCE;
             movesetId = DefaultGunMoveset.INSTANCE.getMovesetId();
         } else if (holdingKatana) {
-            // Holding katana - use breathing moveset if available, otherwise default katana
-            if (MovesetHelper.hasBreathingMoveset(player)) {
+            if (DualKatanaMoveset.isDualWielding(player)) {
+                moveset = DualKatanaMoveset.INSTANCE;
+                movesetId = moveset.getMovesetId();
+            } else if (MovesetHelper.hasBreathingMoveset(player)) {
                 moveset = MovesetHelper.getBreathingMoveset(player);
                 movesetId = MovesetHelper.getBreathingMovesetId(player);
             } else {
-                moveset = DefaultKatanaMoveset.INSTANCE;
-                movesetId = DefaultKatanaMoveset.INSTANCE.getMovesetId();
+                moveset = DualKatanaMoveset.neutralMovesetFor(player);
+                movesetId = moveset.getMovesetId();
             }
         } else {
             // Empty hand - fighting styles take priority over demon arts.
@@ -370,10 +372,12 @@ public class AttackWheelOverlay {
             if (holdingGun) {
                 movesetId = DefaultGunMoveset.INSTANCE.getMovesetId();
             } else if (holdingKatana) {
-                if (MovesetHelper.hasBreathingMoveset(player)) {
+                if (DualKatanaMoveset.isDualWielding(player)) {
+                    movesetId = DualKatanaMoveset.INSTANCE.getMovesetId();
+                } else if (MovesetHelper.hasBreathingMoveset(player)) {
                     movesetId = MovesetHelper.getBreathingMovesetId(player);
                 } else {
-                    movesetId = DefaultKatanaMoveset.INSTANCE.getMovesetId();
+                    movesetId = DualKatanaMoveset.neutralMovesetFor(player).getMovesetId();
                 }
             } else {
                 if (mainHand.isEmpty() && MovesetHelper.hasFightingMoveset(player)) {

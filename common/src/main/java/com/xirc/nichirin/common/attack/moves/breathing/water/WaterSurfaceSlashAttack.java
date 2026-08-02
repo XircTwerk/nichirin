@@ -69,7 +69,7 @@ public class WaterSurfaceSlashAttack extends WaterBreathingAttackBase {
 
         // For stages 1 and 2, check for combo continuation after a brief window
         if (isComboActive && (comboStage == 1 || comboStage == 2) && comboTimer >= 15) {
-            // Allow combo window for 15 ticks (0.75 seconds)
+            // Keep the staged attack ready for a followup for 15 ticks (0.75 seconds).
             isComboActive = false;
         }
     }

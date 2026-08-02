@@ -371,8 +371,6 @@
   "text.autoconfig.nichirin-server.option.bloodMoon": "Blood Moon",
   "text.autoconfig.nichirin-server.option.perks": "Perks",
 
-  "text.autoconfig.nichirin-server.option.combat.comboWindowTicks":      "Combo Window (ticks)",
-  "text.autoconfig.nichirin-server.option.combat.comboWindowTicks.@Tooltip": "How long the STUNNED effect lasts on hit, i.e. how much time you have to chain your next attack.",
   "text.autoconfig.nichirin-server.option.combat.parryWindowTicks":      "Parry Window (ticks)",
   "text.autoconfig.nichirin-server.option.combat.parryWindowTicks.@Tooltip": "Ticks after raising your block that count as a perfect parry. Shorter = more skilful.",
   "text.autoconfig.nichirin-server.option.combat.enableParrySystem":     "Enable Parry System",

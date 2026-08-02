@@ -2,6 +2,7 @@ package com.xirc.nichirin.common.network.c2s;
 
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
+import com.xirc.nichirin.common.attack.moveset.DualKatanaMoveset;
 import com.xirc.nichirin.common.item.katana.Katana;
 import com.xirc.nichirin.common.item.gun.GenyaDB;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
@@ -61,6 +62,12 @@ public class MoveHotkeyPacket {
         }
 
         // No breathing style — delegate to Katana wheel moves
+        if (DualKatanaMoveset.isDualWielding(player)) {
+            Katana katana = (Katana) mainHand.getItem();
+            katana.performWheelMove(player, moveIndex);
+            return;
+        }
+
         String currentBreathingStyle = MovesetHelper.getBreathingMovesetId(player);
         if (currentBreathingStyle == null || currentBreathingStyle.isEmpty()) {
             Katana katana = (Katana) mainHand.getItem();

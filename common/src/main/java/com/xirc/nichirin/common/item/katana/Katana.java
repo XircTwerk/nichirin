@@ -3,6 +3,7 @@ package com.xirc.nichirin.common.item.katana;
 import com.xirc.nichirin.client.gui.CooldownHUD;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.attack.moveset.DefaultKatanaMoveset;
+import com.xirc.nichirin.common.attack.moveset.DualKatanaMoveset;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.system.sheathing.SheathingManager;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
@@ -44,6 +45,7 @@ public class Katana extends Item {
         // Always tick so active default-katana attacks finish their lifecycle,
         // even when a breathing style is equipped (M1 falls back to the slash combo).
         DefaultKatanaMoveset.tick(player);
+        DualKatanaMoveset.tick(player);
     }
 
     /**
@@ -59,11 +61,16 @@ public class Katana extends Item {
         if (player.hasEffect(NichirinEffectRegistry.blocking())) return;
         if (SheathingManager.isSelectedKatanaSheathed(player)) return;
 
+        if (DualKatanaMoveset.isDualWielding(player)) {
+            DualKatanaMoveset.INSTANCE.handleLeftClick(player);
+            return;
+        }
+
         AbstractMoveset moveset = MovesetHelper.getBreathingMoveset(player);
         // If the breathing moveset claims the hit (returns true) we're done.
         // Otherwise fall through to the default slash combo.
         if (moveset != null && moveset.handleLeftClick(player)) return;
-        DefaultKatanaMoveset.INSTANCE.handleLeftClick(player);
+        DualKatanaMoveset.neutralMovesetFor(player).handleLeftClick(player);
     }
 
     @Override
@@ -85,13 +92,18 @@ public class Katana extends Item {
         if (player.hasEffect(NichirinEffectRegistry.stunned())) return;
         if (SheathingManager.isSelectedKatanaSheathed(player)) return;
 
+        if (DualKatanaMoveset.isDualWielding(player)) {
+            DualKatanaMoveset.INSTANCE.handleRightClick(player, isCrouching);
+            return;
+        }
+
         // If the breathing moveset claims the right-click (returns true) we're done.
         // Otherwise fall through to the default double-slash / rising-slash.
         AbstractMoveset moveset = MovesetHelper.getBreathingMoveset(player);
         if (moveset != null && moveset.handleRightClick(player, isCrouching)) {
             return;
         }
-        DefaultKatanaMoveset.INSTANCE.handleRightClick(player, isCrouching);
+        DualKatanaMoveset.neutralMovesetFor(player).handleRightClick(player, isCrouching);
     }
 
     // Wheel moves (0 = Check, 1 = Overhead, 2 = Thrust)
@@ -102,17 +114,18 @@ public class Katana extends Item {
         if (player.hasEffect(NichirinEffectRegistry.blocking())) return;
         if (SheathingManager.isSelectedKatanaSheathed(player)) return;
 
-        DefaultKatanaMoveset.INSTANCE.performMove(player, moveIndex);
+        DualKatanaMoveset.neutralMovesetFor(player).performMove(player, moveIndex);
     }
 
     /** CLIENT ONLY: Update the cooldown HUD and play the attack animation. */
     public void displayClientCooldown(Player player) {
         if (!player.level().isClientSide) return;
-        DefaultKatanaMoveset.KatanaState state = DefaultKatanaMoveset.getOrCreateState(player);
-        long now = player.level().getGameTime();
-        boolean isCombo = (now - state.lastAttackTime) <= 20 && state.comboCount > 0;
+        boolean dualWielding = DualKatanaMoveset.isDualWielding(player);
+        int comboCount = dualWielding
+                ? DualKatanaMoveset.getComboCount(player)
+                : DefaultKatanaMoveset.getOrCreateState(player).comboCount;
 
-        if (isCombo && state.comboCount == 1) {
+        if (comboCount == 1) {
             CooldownHUD.setCooldown("Slash2", 0);
         } else {
             CooldownHUD.setCooldown("Slash1", 0);
@@ -124,7 +137,8 @@ public class Katana extends Item {
     public void displayClientRightClickFeedback(Player player, boolean isCrouching) {
         if (!player.level().isClientSide) return;
         // Breathing movesets handle their own HUD
-        if (MovesetHelper.getBreathingMoveset(player) != null) return;
+        if (!DualKatanaMoveset.isDualWielding(player)
+                && MovesetHelper.getBreathingMoveset(player) != null) return;
 
         if (isCrouching) {
             CooldownHUD.setCooldown("Rising Slash", 25);

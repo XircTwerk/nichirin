@@ -5,6 +5,7 @@ import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.component.AbstractDemonAttack;
 import com.xirc.nichirin.common.attack.moves.breathing.sound.TempoBreakerAttack;
 import com.xirc.nichirin.common.attack.moveset.DefaultKatanaMoveset;
+import com.xirc.nichirin.common.attack.moveset.DualKatanaMoveset;
 import com.xirc.nichirin.common.attack.moves.demon.destructive.DestructiveDeathPlayerAura;
 import com.xirc.nichirin.common.system.aura.MovesetAuraTicker;
 import com.xirc.nichirin.common.attack.moveset.demon.DefaultDemonMoveset;
@@ -150,6 +151,7 @@ public class BreathOfNichirinEventHandler {
         MovementContext.clearAll();
         SheathingManager.clearAll();
         DefaultKatanaMoveset.clearAll();
+        DualKatanaMoveset.clearAll();
         InputHandler.clearAll();
         DemonBloodVialItem.clearAll();
     }
@@ -251,6 +253,7 @@ public class BreathOfNichirinEventHandler {
             MovementContext.cleanupPlayer(player);
             SheathingManager.cleanupPlayer(player);
             DefaultKatanaMoveset.cleanupPlayer(player);
+            DualKatanaMoveset.cleanupPlayer(player);
             DestructiveDeathMoveset.cleanupPlayer(player);
             MovesetAuraTicker.clear(player.getUUID());
             DemonBloodVialItem.clearPending(player.getUUID());
