@@ -1,10 +1,7 @@
 package com.xirc.nichirin.common.attack.moves;
 
 
-import com.xirc.nichirin.registry.NichirinParticleRegistry;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
@@ -24,7 +21,6 @@ import net.minecraft.world.phys.Vec3;
  *   <li>{@link #buildHitbox} uses a fixed 1-block-ahead box (not the full {@code range} field)
  *       so the scan tracks the player's real position each active tick.</li>
  *   <li>{@link #onActiveStart} fires the dash velocity on the first active tick.</li>
- *   <li>{@link #onActiveTick} emits a cloud trail behind the player each active tick.</li>
  * </ul>
  * </p>
  */
@@ -61,17 +57,6 @@ public class KatanaThrustAttack extends AbstractKatanaAttack {
         }
     }
 
-    /** Every active tick: emit a cloud trail behind the player. */
-    @Override
-    protected void onActiveTick(LivingEntity player) {
-        if (!(player.level() instanceof ServerLevel sl)) return;
-        Vec3 behind = player.position().add(player.getLookAngle().scale(-0.5)).add(0, player.getBbHeight() * 0.5, 0);
-        sl.sendParticles(ParticleTypes.CLOUD,
-                behind.x, behind.y, behind.z, 2, 0.15, 0.15, 0.15, 0.02);
-        sl.sendParticles(NichirinParticleRegistry.SLASH_IMPACT_SPARK.get(),
-                behind.x, behind.y, behind.z, 1, 0.1, 0.1, 0.1, 0.0);
-    }
-
     /**
      * Thrust scan: 1-block-ahead cube tracking the player's live position each tick,
      * rather than a static box at full range.
@@ -92,15 +77,6 @@ public class KatanaThrustAttack extends AbstractKatanaAttack {
         if (hitSound != null) {
             world.playSound(null, target.getX(), target.getY(), target.getZ(),
                     hitSound, SoundSource.PLAYERS, 1.0f, 1.0f);
-        }
-
-        // Piercing impact sparks
-        if (world instanceof ServerLevel sl) {
-            Vec3 tp = target.position().add(0, target.getBbHeight() * 0.5, 0);
-            sl.sendParticles(NichirinParticleRegistry.SLASH_IMPACT_SPARK.get(),
-                    tp.x, tp.y, tp.z, 8, 0.15, 0.15, 0.15, 0.0);
-            sl.sendParticles(ParticleTypes.SWEEP_ATTACK,
-                    tp.x, tp.y, tp.z, 3, 0.2, 0.2, 0.2, 0.0);
         }
 
         // Sync motion for remote players

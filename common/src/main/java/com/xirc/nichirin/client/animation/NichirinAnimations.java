@@ -73,7 +73,6 @@ public final class NichirinAnimations {
                     controller.setFirstPersonMode(FirstPersonMode.THIRD_PERSON_MODEL);
                     controller.setFirstPersonConfiguration(FIRST_PERSON_CONFIG);
                     controller.setOverrideEasingType(EasingType.EASE_IN_OUT_SINE);
-                    controller.addModifierBefore(crouchingArmModifier(player));
                     controller.addModifierBefore(gunHoldModifier(player));
                     return controller;
                 });
@@ -111,27 +110,6 @@ public final class NichirinAnimations {
                         new Vec3f(0.0f, 0.0f, 0.0f)));
             }
             return Optional.empty();
-        });
-        modifier.fadeIn = false;
-        modifier.fadeOut = false;
-        return modifier;
-    }
-
-    private static AdjustmentModifier crouchingArmModifier(AbstractClientPlayer player) {
-        AdjustmentModifier modifier = new AdjustmentModifier(partName -> {
-            if (!player.isCrouching() || !FirstPersonMode.isFirstPersonPass()) {
-                return Optional.empty();
-            }
-
-            return switch (partName) {
-                case "right_arm" -> Optional.of(new AdjustmentModifier.PartModifier(
-                        new Vec3f(-0.22f, 0.0f, -0.08f),
-                        new Vec3f(0.0f, -1.5f, -0.75f)));
-                case "left_arm" -> Optional.of(new AdjustmentModifier.PartModifier(
-                        new Vec3f(-0.22f, 0.0f, 0.08f),
-                        new Vec3f(0.0f, -1.5f, -0.75f)));
-                default -> Optional.empty();
-            };
         });
         modifier.fadeIn = false;
         modifier.fadeOut = false;

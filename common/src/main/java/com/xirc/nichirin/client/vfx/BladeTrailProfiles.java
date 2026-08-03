@@ -38,8 +38,8 @@ public final class BladeTrailProfiles {
                           float opacity, Theme theme) {
         public Profile {
             lifetimeMillis = Math.max(55L, lifetimeMillis);
-            maxSamples = Math.max(2, Math.min(40, maxSamples));
-            heightMultiplier = Math.max(0.15f, Math.min(4.0f, heightMultiplier));
+            maxSamples = Math.max(1, Math.min(120, maxSamples));
+            heightMultiplier = Math.max(0.15f, Math.min(6.0f, heightMultiplier));
             opacity = Math.max(0.05f, Math.min(1.0f, opacity));
             if (theme == null) theme = Theme.WHITE;
         }
@@ -49,19 +49,23 @@ public final class BladeTrailProfiles {
     private static final Map<String, Profile> ATTACK_PROFILES = new HashMap<>();
 
     static {
-        Profile light = new Profile(340L, 32, 1.35f, 0.92f, Theme.WHITE);
-        Profile heavy = new Profile(420L, 36, 1.55f, 0.94f, Theme.WHITE);
-        register("sword.check", new Profile(120L, 10, 0.55f, 0.78f, Theme.WHITE));
-        register("sword.slash", light);
+        Profile dualLight = new Profile(340L, 32, 1.35f, 0.92f, Theme.WHITE);
+        Profile dualHeavy = new Profile(420L, 36, 1.55f, 0.94f, Theme.WHITE);
+        // Check strikes with the pommel; retaining blade samples here reads like a liquid trail.
+        register("sword.check", new Profile(55L, 1, 0.15f, 0.05f, Theme.WHITE));
+        register("sword.slash", new Profile(340L, 32, 1.35f, 0.92f, Theme.WHITE));
+        register("sword.slash_followup", new Profile(340L, 32, 1.35f, 0.92f, Theme.WHITE));
+        register("sword.slash_followup_2", new Profile(380L, 34, 1.45f, 0.93f, Theme.WHITE));
         register("sword.doubleslash", new Profile(380L, 34, 1.45f, 0.93f, Theme.WHITE));
-        register("sword.vertical", heavy);
-        register("sword.thrust", new Profile(460L, 38, 1.35f, 0.92f, Theme.WHITE));
-        register("sword.dual_m1", light);
-        register("sword.dual_m1_followup", light);
+        register("sword.vertical", new Profile(1260L, 108, 4.65f, 0.94f, Theme.WHITE));
+        register("sword.overhead", new Profile(1260L, 108, 4.65f, 0.94f, Theme.WHITE));
+        register("sword.thrust", new Profile(1380L, 114, 4.05f, 0.92f, Theme.WHITE));
+        register("sword.dual_m1", dualLight);
+        register("sword.dual_m1_followup", dualLight);
         register("sword.dual_xslash", new Profile(420L, 36, 1.50f, 0.94f, Theme.WHITE));
         register("sword.dualcrouchheavy", new Profile(480L, 38, 1.70f, 0.95f, Theme.WHITE));
         register("sword.dual_combo", new Profile(420L, 38, 1.50f, 0.94f, Theme.WHITE));
-        register("sword.dual_slam", heavy);
+        register("sword.dual_slam", dualHeavy);
         register("sword.dual_thrust", new Profile(540L, 40, 1.65f, 0.95f, Theme.WHITE));
         register("water_wheel", new Profile(380L, 32, 2.15f, 0.96f, Theme.WATER));
     }

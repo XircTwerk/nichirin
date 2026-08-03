@@ -133,7 +133,7 @@ public class LevelRendererMixin {
             // Never let the light pass break the frame.
         }
 
-        // Aura system: render 2D pixelated disc at any entity with auras.
+        // Aura system: render layered pixelated wisps at any entity with auras.
         try {
             float partial = deltaTracker.getGameTimeDeltaPartialTick(true);
             PoseStack auraStack = new PoseStack();

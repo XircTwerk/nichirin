@@ -1,10 +1,7 @@
 package com.xirc.nichirin.common.attack.moves;
 
 
-import com.xirc.nichirin.registry.NichirinParticleRegistry;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
@@ -34,16 +31,6 @@ public class KatanaOverheadAttack extends AbstractKatanaAttack {
             player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                     startSound, SoundSource.PLAYERS, 1.0f, 0.7f);
         }
-        if (player.level() instanceof ServerLevel sl) {
-            Vec3 front = player.position().add(player.getLookAngle().scale(range * 0.6));
-            // Vertical arc from high to low for the downward slash
-            for (int i = 0; i <= 4; i++) {
-                double t = i / 4.0;
-                double y = player.getY() + player.getBbHeight() * (1.2 - t * 1.4);
-                sl.sendParticles(NichirinParticleRegistry.SLASH_IMPACT_SPARK.get(),
-                        front.x, y, front.z, 1, 0.15, 0.05, 0.15, 0.0);
-            }
-        }
     }
 
     /**
@@ -67,15 +54,6 @@ public class KatanaOverheadAttack extends AbstractKatanaAttack {
         if (hitSound != null) {
             world.playSound(null, target.getX(), target.getY(), target.getZ(),
                     hitSound, SoundSource.PLAYERS, 1.0f, 0.8f);
-        }
-
-        // Heavy downward impact particles
-        if (world instanceof ServerLevel sl) {
-            Vec3 tp = target.position().add(0, target.getBbHeight() * 0.5, 0);
-            sl.sendParticles(NichirinParticleRegistry.SLASH_IMPACT_SPARK.get(),
-                    tp.x, tp.y, tp.z, 8, 0.2, 0.2, 0.2, 0.0);
-            sl.sendParticles(ParticleTypes.CRIT,
-                    tp.x, tp.y, tp.z, 10, 0.3, 0.3, 0.3, 0.1);
         }
 
         // Sync motion for remote players

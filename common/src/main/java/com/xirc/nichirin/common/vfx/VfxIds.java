@@ -4,6 +4,8 @@ import com.xirc.nichirin.BreathOfNichirin;
 import net.minecraft.resources.ResourceLocation;
 
 public final class VfxIds {
+    public static final ResourceLocation KATANA_CHECK = id("katana_check");
+    public static final ResourceLocation KATANA_PIERCING_FINISH = id("katana_piercing_finish");
     public static final ResourceLocation WATER_SURFACE_SLASH =
             ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "water_surface_slash");
     public static final ResourceLocation WATER_SURFACE_SLASH_REVERSE = id("water_surface_slash_reverse");

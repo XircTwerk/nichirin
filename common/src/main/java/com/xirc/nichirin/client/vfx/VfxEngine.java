@@ -9,6 +9,7 @@ import com.xirc.nichirin.client.vfx.effect.MistTechniqueEffect;
 import com.xirc.nichirin.client.vfx.effect.BeastTechniqueEffect;
 import com.xirc.nichirin.client.vfx.effect.SoundTechniqueEffect;
 import com.xirc.nichirin.client.vfx.effect.InsectTechniqueEffect;
+import com.xirc.nichirin.client.vfx.effect.KatanaTechniqueEffect;
 import com.xirc.nichirin.common.vfx.VfxIds;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -33,6 +34,9 @@ public final class VfxEngine {
     private VfxEngine() {}
 
     public static void init() {
+        register(VfxIds.KATANA_CHECK, () -> new KatanaTechniqueEffect(KatanaTechniqueEffect.Style.CHECK));
+        register(VfxIds.KATANA_PIERCING_FINISH,
+                () -> new KatanaTechniqueEffect(KatanaTechniqueEffect.Style.PIERCING_FINISH));
         register(VfxIds.WATER_SURFACE_SLASH, WaterSurfaceSlashEffect::new);
         register(VfxIds.WATER_SURFACE_SLASH_REVERSE, () -> new WaterSurfaceSlashEffect(true));
         register(VfxIds.WATER_WHEEL, () -> new WaterTechniqueEffect(WaterTechniqueEffect.Style.WHEEL));
