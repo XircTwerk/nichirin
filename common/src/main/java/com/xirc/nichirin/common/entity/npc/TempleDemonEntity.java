@@ -333,10 +333,10 @@ public class TempleDemonEntity extends DemonNPCEntity {
 
         // Combo system: chain attacks when target is in hitstun
         private int comboHits = 0;
-        private int comboWindow = 0;
+        private int chainTicksRemaining = 0;
         private int lastComboAttack = ATTACK_NONE;
         private static final int MAX_COMBO_LENGTH = 8;
-        private static final int COMBO_WINDOW_TICKS = 25;
+        private static final int CHAIN_TIMEOUT_TICKS = 25;
         private static final int COMBO_GLOBAL_CD = 4;
 
         // Stomp tracking: set after high jump, cleared when stomp fires
@@ -369,9 +369,9 @@ public class TempleDemonEntity extends DemonNPCEntity {
             if (cooldownMove2    > 0) cooldownMove2--;
             if (cooldownMove3    > 0) cooldownMove3--;
             if (cooldownHighJump > 0) cooldownHighJump--;
-            if (comboWindow > 0) {
-                comboWindow--;
-                if (comboWindow == 0) {
+            if (chainTicksRemaining > 0) {
+                chainTicksRemaining--;
+                if (chainTicksRemaining == 0) {
                     comboHits = 0;
                     lastComboAttack = ATTACK_NONE;
                 }
@@ -490,7 +490,7 @@ public class TempleDemonEntity extends DemonNPCEntity {
             int chosen;
 
             // Combo continuation: if we're in a combo, pick a different attack to chain
-            if (comboWindow > 0 && comboHits < MAX_COMBO_LENGTH && distance <= 5.0) {
+            if (chainTicksRemaining > 0 && comboHits < MAX_COMBO_LENGTH && distance <= 5.0) {
                 chosen = selectComboAttack(distance);
             } else {
                 chosen = selectAttack(distance, targetMovingAway, targetInAir, targetLowHp);
@@ -534,7 +534,7 @@ public class TempleDemonEntity extends DemonNPCEntity {
             // Start or extend combo
             if (chosen != ATTACK_HIGH_JUMP) {
                 comboHits++;
-                comboWindow = COMBO_WINDOW_TICKS;
+                chainTicksRemaining = CHAIN_TIMEOUT_TICKS;
                 lastComboAttack = chosen;
                 // Override global cooldown with shorter combo CD
                 if (comboHits > 1) {
@@ -582,14 +582,14 @@ public class TempleDemonEntity extends DemonNPCEntity {
 
         private void fireLeftClick() {
             demon.getMoveset().handleLeftClick(demon);
-            cooldownLeft   = comboWindow > 0 ? 8 : 15;
-            globalCooldown = comboWindow > 0 ? COMBO_GLOBAL_CD : 8;
+            cooldownLeft   = chainTicksRemaining > 0 ? 8 : 15;
+            globalCooldown = chainTicksRemaining > 0 ? COMBO_GLOBAL_CD : 8;
         }
 
         private void fireRightClick() {
             demon.performRightClickMove(false);
-            cooldownRight  = comboWindow > 0 ? 8 : 12;
-            globalCooldown = comboWindow > 0 ? COMBO_GLOBAL_CD : 6;
+            cooldownRight  = chainTicksRemaining > 0 ? 8 : 12;
+            globalCooldown = chainTicksRemaining > 0 ? COMBO_GLOBAL_CD : 6;
         }
 
         private void fireHighJump() {
@@ -608,14 +608,14 @@ public class TempleDemonEntity extends DemonNPCEntity {
 
         private void fireWheelMove(int moveIndex) {
             demon.performMovesetMove(moveIndex);
-            int cd = comboWindow > 0 ? getWheelMoveCooldown(moveIndex) / 3 : getWheelMoveCooldown(moveIndex);
+            int cd = chainTicksRemaining > 0 ? getWheelMoveCooldown(moveIndex) / 3 : getWheelMoveCooldown(moveIndex);
             switch (moveIndex) {
                 case 0 -> cooldownMove0 = cd;
                 case 1 -> cooldownMove1 = cd;
                 case 2 -> cooldownMove2 = cd;
                 case 3 -> cooldownMove3 = cd;
             }
-            globalCooldown = comboWindow > 0 ? COMBO_GLOBAL_CD : 8;
+            globalCooldown = chainTicksRemaining > 0 ? COMBO_GLOBAL_CD : 8;
         }
 
         private int getWheelMoveCooldown(int index) {

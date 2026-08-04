@@ -4,6 +4,7 @@ import com.xirc.nichirin.common.effect.ShockedStatusEffect;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import com.xirc.nichirin.registry.NichirinSoundRegistry;
+import com.xirc.nichirin.common.vfx.VfxIds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerLevel;
@@ -71,6 +72,7 @@ public class GodspeedAttack extends ThunderBreathingAttackBase {
         traveled = 0f;
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 NichirinSoundRegistry.THUNDERCLAP_FLASH.get(), SoundSource.PLAYERS, 1.0f, 1.5f);
+        playThunderVfx(VfxIds.GODSPEED, user.position(), dashDirection, 1.25f);
     }
 
     @Override
@@ -91,7 +93,6 @@ public class GodspeedAttack extends ThunderBreathingAttackBase {
 
             NichirinPacketRegistry.sendAfterimageTrail(user, from, to,
                     AFTERIMAGE_LIFETIME_TICKS, AFTERIMAGE_COPIES, AFTERIMAGE_ALPHA);
-            spawnTrailParticles(from, to);
         }
 
         applyDragAndHit(perTickVelocity);
@@ -172,13 +173,6 @@ public class GodspeedAttack extends ThunderBreathingAttackBase {
             lastSafe = cursor;
         }
         return lastSafe;
-    }
-
-    private void spawnTrailParticles(Vec3 from, Vec3 to) {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-        Vec3 mid = from.add(to).scale(0.5);
-        serverLevel.sendParticles(NichirinParticleRegistry.THUNDER.get(),
-                mid.x, mid.y + 0.9, mid.z, 6, 0.2, 0.2, 0.2, 0.05);
     }
 
     @Override

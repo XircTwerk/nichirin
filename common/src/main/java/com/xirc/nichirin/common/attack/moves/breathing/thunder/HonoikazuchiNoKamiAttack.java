@@ -13,6 +13,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import net.minecraft.server.level.ServerLevel;
+import com.xirc.nichirin.common.vfx.VfxIds;
 
 /**
  * Seventh Form: Honoikazuchi no Kami (Flaming Thunder God)
@@ -43,6 +44,7 @@ public class HonoikazuchiNoKamiAttack extends ThunderBreathingAttackBase {
         // Epic charge-up effects
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, 2.0f, 0.5f);
+        playThunderVfx(VfxIds.DISTANT_THUNDER_CHARGE, user.position(), user.getLookAngle(), 1.45f);
     }
 
     @Override
@@ -59,6 +61,11 @@ public class HonoikazuchiNoKamiAttack extends ThunderBreathingAttackBase {
             // charge isn't free positioning — anyone caught in melee range eats chip damage.
             if (tickCount > 0 && tickCount % 10 == 0) {
                 dealWindupAura();
+            }
+            if (tickCount > 0 && tickCount % 18 == 0) {
+                float chargeScale = 1.0f + 0.45f * tickCount / Math.max(1.0f, windup);
+                playThunderVfx(VfxIds.DISTANT_THUNDER_CHARGE,
+                        user.position(), user.getLookAngle(), chargeScale);
             }
             return;
         }
@@ -101,11 +108,6 @@ public class HonoikazuchiNoKamiAttack extends ThunderBreathingAttackBase {
         } finally {
             damage = originalDamage;
         }
-        if (world instanceof ServerLevel serverLevel) {
-            serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK,
-                    userPos.x, userPos.y, userPos.z,
-                    25, auraRange, 1.0, auraRange, 0.2);
-        }
         if (!targets.isEmpty()) {
             world.playSound(null, user.getX(), user.getY(), user.getZ(),
                     SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.PLAYERS, 0.5f, 1.6f);
@@ -121,8 +123,6 @@ public class HonoikazuchiNoKamiAttack extends ThunderBreathingAttackBase {
 
         // Configure ultimate teleport with massive effects
         TeleportUtil.TeleportOptions options = new TeleportUtil.TeleportOptions()
-                .withParticles(ParticleTypes.ELECTRIC_SPARK, ParticleTypes.EXPLOSION)
-                .withTrail(ParticleTypes.ELECTRIC_SPARK, 16.0f) // Very dense trail
                 .withSounds(SoundEvents.LIGHTNING_BOLT_THUNDER, SoundEvents.GENERIC_EXPLODE.value())
                 .withDamageCallback(target -> {
                     // Hit targets along the path
@@ -135,8 +135,9 @@ public class HonoikazuchiNoKamiAttack extends ThunderBreathingAttackBase {
         // Custom sound properties
         options.soundVolume = 2.0f;
         options.soundPitch = 0.5f;
-        options.departureParticleCount = 100;
-        options.arrivalParticleCount = 100;
+        options.departureParticles = null;
+        options.arrivalParticles = null;
+        options.createTrail = false;
 
         // Pre-teleport: Create dragon-like lightning effect
         options.preTeleport = entity -> {
@@ -190,44 +191,12 @@ public class HonoikazuchiNoKamiAttack extends ThunderBreathingAttackBase {
         Vec3 knockbackDir = target.position().subtract(user.position()).normalize();
         target.push(knockbackDir.x * knockback, 0.5, knockbackDir.z * knockback);
 
-        // Extra particle explosion per target
-        if (world instanceof ServerLevel serverLevel) {
-            serverLevel.sendParticles(ParticleTypes.EXPLOSION_EMITTER,
-                    target.getX(), target.getY() + 1, target.getZ(),
-                    1, 0, 0, 0, 0);
-
-            serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK,
-                    target.getX(), target.getY() + 1, target.getZ(),
-                    100, 1.0, 1.0, 1.0, 0.5);
-        }
     }
 
     private void createLightningDragonEffect() {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-
         Vec3 userPos = user.position();
         Vec3 lookDir = user.getLookAngle();
-        float effectRange = teleportDistance != null ? teleportDistance : range;
-
-        // Create dragon-shaped particle trail
-        for (int i = 0; i < 50; i++) {
-            double progress = i / 50.0;
-            double wave = Math.sin(progress * Math.PI * 4) * 2; // Serpentine motion
-
-            Vec3 basePos = userPos.add(lookDir.scale(progress * effectRange));
-            Vec3 offset = lookDir.cross(new Vec3(0, 1, 0)).normalize().scale(wave);
-            Vec3 particlePos = basePos.add(offset).add(0, 1 + progress * 2, 0);
-
-            serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK,
-                    particlePos.x, particlePos.y, particlePos.z,
-                    5, 0.2, 0.2, 0.2, 0.1);
-
-            if (i % 5 == 0) {
-                serverLevel.sendParticles(ParticleTypes.END_ROD,
-                        particlePos.x, particlePos.y, particlePos.z,
-                        3, 0.3, 0.3, 0.3, 0.05);
-            }
-        }
+        playThunderVfxAt(VfxIds.HONOIKAZUCHI_NO_KAMI, userPos, lookDir, 1.25f);
 
         // Thunder roar sound
         world.playSound(null, userPos.x, userPos.y, userPos.z,
@@ -235,25 +204,8 @@ public class HonoikazuchiNoKamiAttack extends ThunderBreathingAttackBase {
     }
 
     private void createExplosionEffect() {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-
         Vec3 pos = user.position();
-
-        // Massive explosion particles
-        serverLevel.sendParticles(ParticleTypes.EXPLOSION_EMITTER,
-                pos.x, pos.y + 1, pos.z,
-                3, 0, 0, 0, 0);
-
-        // Ring of electric particles
-        for (int angle = 0; angle < 360; angle += 10) {
-            double rad = Math.toRadians(angle);
-            for (double r = 2; r < 10; r += 0.5) {
-                Vec3 ringPos = pos.add(Math.cos(rad) * r, 0.5, Math.sin(rad) * r);
-                serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK,
-                        ringPos.x, ringPos.y, ringPos.z,
-                        1, 0, 0, 0, 0);
-            }
-        }
+        playThunderVfxAt(VfxIds.HONOIKAZUCHI_IMPACT, pos, user.getLookAngle(), 1.35f);
     }
 
     private void applySpeedBoost() {

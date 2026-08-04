@@ -1,6 +1,6 @@
 package com.xirc.nichirin.common.attack.moves.breathing.flame;
 
-import net.minecraft.core.particles.ParticleTypes;
+import com.xirc.nichirin.common.vfx.VfxIds;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -57,7 +57,6 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
                 SoundEvents.RAVAGER_ROAR, SoundSource.PLAYERS, 1.0f, 1.5f);
 
         // Initial flame tiger formation
-        createTigerFormationEffect();
     }
 
     @Override
@@ -78,6 +77,7 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
     }
 
     private void startDash() {
+        playFlameVfx(VfxIds.FLAME_TIGER, user.position(), dashDirection, 1.2f);
         // Dash start sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.2f, 1.0f);
@@ -98,7 +98,6 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
         dashDistanceTravelled += perTickSpeed;
 
         // Create continuous tiger effect during dash
-        createTigerTrailEffect();
 
         // Catch new enemies in path and drag existing ones
         catchAndDragEnemies();
@@ -131,7 +130,6 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
             hitTarget(target);
 
             // Create claw marks effect
-            createClawMarksEffect(target.position());
 
             // Light knockback to keep enemies close but not push them away
             Vec3 lightKnockback = target.position().subtract(userPos).normalize().scale(knockback * 0.3);
@@ -142,7 +140,6 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
         for (LivingEntity draggedEnemy : draggedEnemies) {
             if (draggedEnemy.isAlive()) {
                 hitTarget(draggedEnemy);
-                createClawMarksEffect(draggedEnemy.position());
             }
         }
     }
@@ -170,7 +167,6 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
                         SoundEvents.RAVAGER_ATTACK, SoundSource.PLAYERS, 0.8f, 1.3f);
 
                 // Visual effect when caught
-                createCatchEffect(enemy.position());
             }
         }
 
@@ -187,7 +183,6 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
                 draggedEnemy.hasImpulse = true;
 
                 // Create drag trail effect
-                createDragTrailEffect(draggedEnemy.position());
             } else {
                 // Remove dead enemies from drag list
                 draggedEnemies.remove(draggedEnemy);
@@ -211,21 +206,12 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
                     height,
                     Math.sin(angle) * tigerRadius
             );
-
-            serverLevel.sendParticles(ParticleTypes.FLAME,
-                    tigerPos.x, tigerPos.y, tigerPos.z,
-                    2, 0.1, 0.1, 0.1, 0.05);
-        }
+}
 
         // Tiger eyes effect (two bright points in front)
         Vec3 eyePos1 = userPos.add(dashDirection.scale(2.5)).add(0.3, 1, 0);
         Vec3 eyePos2 = userPos.add(dashDirection.scale(2.5)).add(-0.3, 1, 0);
-
-        serverLevel.sendParticles(ParticleTypes.FLAME,
-                eyePos1.x, eyePos1.y, eyePos1.z, 5, 0.05, 0.05, 0.05, 0.02);
-        serverLevel.sendParticles(ParticleTypes.FLAME,
-                eyePos2.x, eyePos2.y, eyePos2.z, 5, 0.05, 0.05, 0.05, 0.02);
-    }
+}
 
     private void createTigerTrailEffect() {
         if (!(world instanceof ServerLevel serverLevel)) return;
@@ -237,28 +223,15 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
             Vec3 trailPos = userPos.subtract(dashDirection.scale(i * 0.5));
 
             // Main tiger body flames
-            serverLevel.sendParticles(ParticleTypes.FLAME,
-                    trailPos.x, trailPos.y, trailPos.z,
-                    3, 0.5, 0.3, 0.5, 0.1);
-
-            // Tiger stripes (alternating soul fire)
+// Tiger stripes (alternating soul fire)
             if (i % 2 == 0) {
-                serverLevel.sendParticles(ParticleTypes.FLAME,
-                        trailPos.x + 0.3, trailPos.y, trailPos.z,
-                        1, 0.1, 0.1, 0.1, 0.02);
-                serverLevel.sendParticles(ParticleTypes.FLAME,
-                        trailPos.x - 0.3, trailPos.y, trailPos.z,
-                        1, 0.1, 0.1, 0.1, 0.02);
-            }
+}
         }
 
         // Tiger paws hitting the ground
         if (tickCount % 6 == 0) { // Every 6 ticks = paw steps
             Vec3 pawPos = userPos.add(0, -0.5, 0);
-            serverLevel.sendParticles(ParticleTypes.LAVA,
-                    pawPos.x, pawPos.y, pawPos.z,
-                    3, 0.3, 0.1, 0.3, 0.05);
-        }
+}
     }
 
     private void createClawMarksEffect(Vec3 targetPos) {
@@ -272,11 +245,7 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
 
             for (int i = 0; i < 5; i++) {
                 Vec3 clawPos = clawStart.add(user.getLookAngle().scale(i * 0.2));
-
-                serverLevel.sendParticles(ParticleTypes.FLAME,
-                        clawPos.x, clawPos.y + 0.5, clawPos.z,
-                        2, 0.1, 0.1, 0.1, 0.05);
-            }
+}
         }
     }
 
@@ -284,30 +253,16 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
         // Tiger jaw snapping effect
-        serverLevel.sendParticles(ParticleTypes.FLAME,
-                enemyPos.x, enemyPos.y + 1, enemyPos.z,
-                10, 0.5, 0.5, 0.5, 0.2);
-
-        // Flame burst when enemy is caught
-        serverLevel.sendParticles(ParticleTypes.FLAME,
-                enemyPos.x, enemyPos.y + 1, enemyPos.z,
-                15, 0.8, 0.8, 0.8, 0.3);
-    }
+// Flame burst when enemy is caught
+}
 
     private void createDragTrailEffect(Vec3 enemyPos) {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
         // Flame trail behind dragged enemies
-        serverLevel.sendParticles(ParticleTypes.FLAME,
-                enemyPos.x, enemyPos.y + 0.5, enemyPos.z,
-                2, 0.3, 0.3, 0.3, 0.1);
-
-        // Smoke from being dragged
+// Smoke from being dragged
         if (tickCount % 3 == 0) {
-            serverLevel.sendParticles(ParticleTypes.LARGE_SMOKE,
-                    enemyPos.x, enemyPos.y, enemyPos.z,
-                    1, 0.2, 0.2, 0.2, 0.05);
-        }
+}
     }
 
     @Override
@@ -341,7 +296,6 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
                 draggedEnemy.igniteForSeconds(getFireDuration() + 5);
 
                 // Final claw marks
-                createClawMarksEffect(draggedEnemy.position());
             }
         }
 
@@ -350,7 +304,6 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
                 SoundEvents.RAVAGER_ROAR, SoundSource.PLAYERS, 1.5f, 1.2f);
 
         // Tiger dissipation effect
-        createTigerDissipationEffect();
 
         // Clear all state
         dashStarted = false;
@@ -380,16 +333,9 @@ public class FlameTigerAttack extends FlameBreathingAttackBase {
             );
 
             // Flames dissipating upward
-            serverLevel.sendParticles(ParticleTypes.FLAME,
-                    dissipatePos.x, dissipatePos.y, dissipatePos.z,
-                    1, 0.2, 0.8, 0.2, 0.1);
-
-            // Smoke clouds
+// Smoke clouds
             if (i % 3 == 0) {
-                serverLevel.sendParticles(ParticleTypes.LARGE_SMOKE,
-                        dissipatePos.x, dissipatePos.y + 1, dissipatePos.z,
-                        2, 0.5, 0.5, 0.5, 0.05);
-            }
+}
         }
     }
 }

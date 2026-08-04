@@ -30,6 +30,9 @@ public class NichirinClientConfig implements ConfigData {
 
         @ConfigEntry.Gui.Tooltip
         public boolean enableParrySparks = true;
+
+        @ConfigEntry.Gui.Tooltip
+        public boolean enableAfterimages = true;
     }
 
     /**

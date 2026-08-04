@@ -30,14 +30,21 @@ public class ComboTracker {
     // Entities stunned specifically by a parry. Normal combo stuns also use STUNNED, so this
     // side-channel lets counterattacks distinguish a real parry punish window.
     private static final Map<UUID, Long> parryStunnedUntil = new HashMap<>();
+    // Game tick of each attacker's last landed combo hit — drives the idle-timeout reset so the
+    // combo bar always clears even when the victim's stun-expiry event is missed (e.g. CQC's
+    // rapid re-stuns overwriting each other).
+    private static final Map<UUID, Long> lastComboHitTick = new HashMap<>();
+    private static final int COMBO_IDLE_RESET_TICKS = 50;
     private static final Map<UUID, AttackStyleContext> currentAttacks = new HashMap<>();
     private static final Map<UUID, Integer> playerStyleScores = new HashMap<>();
     private static final Map<UUID, String> playerLastScoredMove = new HashMap<>();
     private static final Map<UUID, Long> playerAttackSequences = new HashMap<>();
+    private static final Map<UUID, AttackHitContext> lastAttackHits = new HashMap<>();
 
     private static final float COMBO_ATTACK_BONUS_PER_COUNT = 0.15f;
 
     private record AttackStyleContext(long sequence, String moveId, boolean awarded) {}
+    private record AttackHitContext(long sequence, UUID victimId, int comboCount, boolean comboEligible) {}
 
     /**
      * Check if a move should have reduced hitstun due to spam detection
@@ -103,14 +110,15 @@ public class ComboTracker {
         return true;
     }
 
-    public static void registerAttackStart(Player player, String moveId) {
+    public static long registerAttackStart(Player player, String moveId) {
         if (player == null || player.level().isClientSide) {
-            return;
+            return 0L;
         }
         UUID playerId = player.getUUID();
         long sequence = playerAttackSequences.getOrDefault(playerId, 0L) + 1L;
         playerAttackSequences.put(playerId, sequence);
         currentAttacks.put(playerId, new AttackStyleContext(sequence, moveId != null ? moveId : "", false));
+        return sequence;
     }
 
     /**
@@ -124,6 +132,11 @@ public class ComboTracker {
      * @param wasAlreadyStunned Whether the victim was stunned before this hit
      */
     public static void handleHit(Player attacker, LivingEntity victim, int stunDurationTicks, float damage, boolean wasAlreadyStunned) {
+        handleHit(attacker, victim, stunDurationTicks, damage, wasAlreadyStunned, 0L);
+    }
+
+    public static void handleHit(Player attacker, LivingEntity victim, int stunDurationTicks, float damage,
+                                 boolean wasAlreadyStunned, long attackSequence) {
         if (!(attacker instanceof ServerPlayer serverPlayer)) {
             return; // Server-side only
         }
@@ -139,9 +152,21 @@ public class ComboTracker {
 
         IComboCounter comboCounter = (IComboCounter) attacker;
         LivingEntity lastAttacked = comboCounter.nichirin$getLastAttacked();
+        UUID attackerId = attacker.getUUID();
+        AttackHitContext previousHit = lastAttackHits.get(attackerId);
+        boolean sameAttackContinuation = attackSequence > 0L
+                && stunDurationTicks > 0
+                && previousHit != null
+                && previousHit.comboEligible
+                && previousHit.sequence == attackSequence
+                && previousHit.victimId.equals(victim.getUUID());
 
         boolean startedFreshCombo = false;
-        if (lastAttacked != victim) {
+        if (sameAttackContinuation) {
+            comboCounter.nichirin$setComboCount(Math.max(
+                    comboCounter.nichirin$getComboCount(), previousHit.comboCount) + 1);
+            comboCounter.nichirin$setLastAttacked(victim);
+        } else if (lastAttacked != victim) {
             comboCounter.nichirin$setComboCount(1);
             comboCounter.nichirin$setLastAttacked(victim);
             startedFreshCombo = true;
@@ -156,11 +181,14 @@ public class ComboTracker {
             comboCounter.nichirin$setLastAttacked(victim);
         }
 
-        registerAttackerVictimPair(attacker.getUUID(), victim.getUUID());
+        registerAttackerVictimPair(attackerId, victim.getUUID());
+        lastComboHitTick.put(attackerId, attacker.level().getGameTime());
 
         int comboCount = comboCounter.nichirin$getComboCount();
+        lastAttackHits.put(attackerId, new AttackHitContext(
+                attackSequence, victim.getUUID(), comboCount, stunDurationTicks > 0));
         if (startedFreshCombo) {
-            resetStyle(attacker.getUUID());
+            resetStyle(attackerId);
         }
         int styleScore = awardStyleForAttack(attacker, victim, comboCount);
         ComboCounterPacket packet = new ComboCounterPacket(comboCount, stunDurationTicks, damage, styleScore, rankFor(styleScore));
@@ -198,6 +226,10 @@ public class ComboTracker {
         if (entity == null || durationTicks <= 0) {
             return;
         }
+        // Never stun creative/spectator players.
+        if (com.xirc.nichirin.common.util.NichirinDamageHandler.isImmune(entity)) {
+            return;
+        }
 
         // Apply STUNNED effect
         MobEffectInstance stunEffect = new MobEffectInstance(
@@ -228,6 +260,20 @@ public class ComboTracker {
     }
 
     /**
+     * Server tick per player: resets a stale combo (and its bar) after {@link #COMBO_IDLE_RESET_TICKS}
+     * with no landed hit. Backstop for when the stun-expiry reset is missed.
+     */
+    public static void tickPlayer(Player player) {
+        if (player.level().isClientSide || !(player instanceof IComboCounter counter)) return;
+        if (counter.nichirin$getComboCount() <= 0) return;
+        Long last = lastComboHitTick.get(player.getUUID());
+        if (last == null) return;
+        if (player.level().getGameTime() - last >= COMBO_IDLE_RESET_TICKS) {
+            resetCombo(player);
+        }
+    }
+
+    /**
      * Reset combo for player (called on death, disconnect, etc.)
      *
      * @param player Player to reset
@@ -241,7 +287,9 @@ public class ComboTracker {
 
             playerLastMove.remove(player.getUUID());
             parryStunnedUntil.remove(player.getUUID());
+            lastAttackHits.remove(player.getUUID());
             resetStyle(player.getUUID());
+            lastComboHitTick.remove(player.getUUID());
 
             if (player instanceof ServerPlayer serverPlayer) {
                 ComboCounterPacket packet = new ComboCounterPacket(0, 0, 0.0f);

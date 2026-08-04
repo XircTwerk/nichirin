@@ -209,7 +209,7 @@ public final class NichirinPerkRegistry {
                 .unlockHint("Developed by agile slayer lineages. Found among elegant, high-tier ruins.")
                 .locationHint("Noble district ruins, ornate temple sub-chambers.")
                 .tierDesc(PerkTier.RARE,      "-15% damage per hit. Zero attack windup.")
-                .tierDesc(PerkTier.EPIC,      "-10% damage per hit. Zero attack windup. Faster combo window.")
+                .tierDesc(PerkTier.EPIC,      "-10% damage per hit. Zero attack windup. Faster followups.")
                 .tierDesc(PerkTier.LEGENDARY, "-6% damage per hit. Zero attack windup.")
                 .upgradeCost(PerkTier.EPIC,      PerkUpgradeCost.builder(14).item(Items.FEATHER, 16).item(Items.GOLD_INGOT, 6).build())
                 .upgradeCost(PerkTier.LEGENDARY, PerkUpgradeCost.builder(22).item(Items.PHANTOM_MEMBRANE, 4).item(Items.DIAMOND, 4).item(Items.ENDER_PEARL, 4).build())

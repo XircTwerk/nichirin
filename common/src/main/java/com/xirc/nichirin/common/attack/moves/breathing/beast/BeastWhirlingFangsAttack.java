@@ -1,7 +1,6 @@
 package com.xirc.nichirin.common.attack.moves.breathing.beast;
 
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.server.level.ServerLevel;
+import com.xirc.nichirin.common.vfx.VfxIds;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -24,6 +23,8 @@ public class BeastWhirlingFangsAttack extends BeastBreathingAttackBase {
 
     @Override
     protected void onActiveStart() {
+        playBeastVfx(VfxIds.BEAST_WHIRLING_FANGS,
+                user.position().add(0, user.getBbHeight() * 0.45, 0), user.getLookAngle(), range / 3.0f);
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.2f, 1.8f);
     }
@@ -44,8 +45,6 @@ public class BeastWhirlingFangsAttack extends BeastBreathingAttackBase {
                 hitTarget(target);
             }
         }
-
-        createSpinParticles(center);
 
         if (tickCount % 4 == 0) {
             world.playSound(null, user.getX(), user.getY(), user.getZ(),
@@ -71,21 +70,6 @@ public class BeastWhirlingFangsAttack extends BeastBreathingAttackBase {
         for (Projectile proj : projectiles) {
             Vec3 fromUser = proj.position().subtract(user.position()).normalize();
             proj.setDeltaMovement(fromUser.scale(1.5).add(0, 0.3, 0));
-        }
-    }
-
-    private void createSpinParticles(Vec3 center) {
-        if (!(world instanceof ServerLevel sl)) return;
-
-        int steps = 12;
-        double r = range * 0.8;
-        for (int i = 0; i < steps; i++) {
-            double angle = Math.toRadians(spinAngle + (i / (double) steps) * 360);
-            double x = center.x + Math.cos(angle) * r;
-            double z = center.z + Math.sin(angle) * r;
-
-            sl.sendParticles(ParticleTypes.SWEEP_ATTACK, x, center.y, z, 1, 0.05, 0.1, 0.05, 0);
-            sl.sendParticles(ParticleTypes.CLOUD, x, center.y, z, 1, 0.1, 0.1, 0.1, 0.05);
         }
     }
 

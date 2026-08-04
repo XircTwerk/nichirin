@@ -1,13 +1,12 @@
 package com.xirc.nichirin.common.attack.moves.breathing.water;
 
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
+import com.xirc.nichirin.common.vfx.VfxIds;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -82,6 +81,7 @@ public class WhirlpoolAttack extends WaterBreathingAttackBase {
     private void startWhirlpool() {
         // Record whirlpool center - it stays in place
         whirlpoolCenter = user.position();
+        playWaterVfxAt(VfxIds.WHIRLPOOL, whirlpoolCenter, user.getLookAngle(), 1.0f);
 
         // Launch user upward 4 blocks
         user.setDeltaMovement(0, 0.8, 0);
@@ -101,7 +101,6 @@ public class WhirlpoolAttack extends WaterBreathingAttackBase {
                 SoundEvents.GENERIC_SPLASH, SoundSource.PLAYERS, 1.2f, 0.7f);
 
         // Create initial whirlpool effect
-        createWhirlpoolFormation();
 
         // Catch initial entities in whirlpool
         catchEntitiesInWhirlpool();
@@ -109,7 +108,6 @@ public class WhirlpoolAttack extends WaterBreathingAttackBase {
 
     private void performWhirlpool() {
         // Create continuous whirlpool visual effect
-        createContinuousWhirlpoolEffect();
 
         // Update spinning entities
         updateSpinningEntities();
@@ -155,7 +153,6 @@ public class WhirlpoolAttack extends WaterBreathingAttackBase {
                         SoundEvents.PLAYER_SPLASH_HIGH_SPEED, SoundSource.PLAYERS, 0.6f, 1.4f);
 
                 // Create catch effect
-                createCatchEffect(entity.position());
             }
         }
     }
@@ -199,13 +196,8 @@ public class WhirlpoolAttack extends WaterBreathingAttackBase {
                 hitTargetNoImmunity(entity);
 
                 // Create spinning hit effect
-                createSpinningHitEffect(entity.position());
             }
 
-            // Create spinning trail
-            if (data.spinTicks % 3 == 0) {
-                createSpinningTrail(entity.position());
-            }
         }
 
         // Remove dead entities
@@ -214,112 +206,6 @@ public class WhirlpoolAttack extends WaterBreathingAttackBase {
         }
     }
 
-    private void createWhirlpoolFormation() {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-
-        // Create ascending whirlpool formation
-        for (int layer = 0; layer < 8; layer++) {
-            float layerHeight = (WHIRLPOOL_HEIGHT / 8) * layer;
-            float layerRadius = range * (0.2f + layer * 0.1f); // Wide at top, narrow at bottom (funnel)
-
-            createWaterVortex(whirlpoolCenter.add(0, layerHeight, 0), layerRadius, 0.5f, 1);
-        }
-
-        // Central water spout
-        serverLevel.sendParticles(ParticleTypes.SPLASH,
-                whirlpoolCenter.x, whirlpoolCenter.y, whirlpoolCenter.z,
-                20, 0.3, WHIRLPOOL_HEIGHT * 0.3, 0.3, 0.25);
-    }
-
-    private void createContinuousWhirlpoolEffect() {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-
-        // Multi-layer spinning whirlpool
-        for (int layer = 0; layer < 6; layer++) {
-            float layerHeight = (WHIRLPOOL_HEIGHT / 6) * layer;
-            float layerRadius = range * (0.3f + layer * 0.12f); // Wide at top, narrow at bottom (funnel shape)
-            double layerSpinSpeed = whirlpoolTicks * 0.2 * (1 + layer * 0.1); // Faster at higher layers
-            int particlesInLayer = Math.max(6, 12 - layer);
-
-            for (int i = 0; i < particlesInLayer; i++) {
-                double baseAngle = (2 * Math.PI * i) / particlesInLayer;
-                double angle = baseAngle + layerSpinSpeed;
-
-                double x = whirlpoolCenter.x + Math.cos(angle) * layerRadius;
-                double z = whirlpoolCenter.z + Math.sin(angle) * layerRadius;
-                double y = whirlpoolCenter.y + layerHeight;
-
-                // Main whirlpool particles
-                serverLevel.sendParticles(ParticleTypes.SPLASH,
-                        x, y, z, 2, 0.1, 0.1, 0.1, 0.08);
-
-                // Bubbles for underwater effect
-                if (layer < 3) {
-                    serverLevel.sendParticles(ParticleTypes.BUBBLE,
-                            x, y, z, 1, 0.05, 0.05, 0.05, 0.03);
-                }
-            }
-        }
-
-        // Central ascending water column
-        if (whirlpoolTicks % 3 == 0) {
-            serverLevel.sendParticles(ParticleTypes.SPLASH,
-                    whirlpoolCenter.x, whirlpoolCenter.y, whirlpoolCenter.z,
-                    8, 0.2, WHIRLPOOL_HEIGHT * 0.4, 0.2, 0.15);
-        }
-    }
-
-    private void createCatchEffect(Vec3 entityPos) {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-
-        // Whirlpool catch effect
-        serverLevel.sendParticles(ParticleTypes.SPLASH,
-                entityPos.x, entityPos.y + 1, entityPos.z,
-                15, 0.5, 0.5, 0.5, 0.25);
-
-        // Swirling water around caught entity
-        for (int i = 0; i < 8; i++) {
-            double angle = (i / 8.0) * 2 * Math.PI;
-            double radius = 1.2;
-
-            double x = entityPos.x + Math.cos(angle) * radius;
-            double z = entityPos.z + Math.sin(angle) * radius;
-            double y = entityPos.y + 0.5;
-
-            serverLevel.sendParticles(ParticleTypes.SPLASH,
-                    x, y, z, 2, 0.1, 0.1, 0.1, 0.08);
-        }
-    }
-
-    private void createSpinningHitEffect(Vec3 entityPos) {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-
-        // Hit effect while spinning
-        serverLevel.sendParticles(ParticleTypes.CRIT,
-                entityPos.x, entityPos.y + 1, entityPos.z,
-                8, 0.3, 0.3, 0.3, 0.15);
-
-        // Water splash from spinning hit
-        serverLevel.sendParticles(ParticleTypes.SPLASH,
-                entityPos.x, entityPos.y + 1, entityPos.z,
-                12, 0.4, 0.4, 0.4, 0.2);
-    }
-
-    private void createSpinningTrail(Vec3 entityPos) {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-
-        // Trail behind spinning entities
-        serverLevel.sendParticles(ParticleTypes.SPLASH,
-                entityPos.x, entityPos.y + 0.5, entityPos.z,
-                3, 0.2, 0.2, 0.2, 0.1);
-
-        // Occasional bubbles in trail
-        if (whirlpoolTicks % 6 == 0) {
-            serverLevel.sendParticles(ParticleTypes.BUBBLE,
-                    entityPos.x, entityPos.y, entityPos.z,
-                    1, 0.1, 0.1, 0.1, 0.05);
-        }
-    }
 
     @Override
     public boolean isWhirlpoolAttack() {
@@ -353,30 +239,6 @@ public class WhirlpoolAttack extends WaterBreathingAttackBase {
             whirlpoolTicks = 0;
             whirlpoolStarted = false;
             return;
-        }
-
-        // Final whirlpool dissolution effect
-        if (world instanceof ServerLevel serverLevel) {
-            // Whirlpool collapsing effect
-            for (int layer = 0; layer < 8; layer++) {
-                float layerHeight = WHIRLPOOL_HEIGHT - (WHIRLPOOL_HEIGHT / 8) * layer; // From top down
-                float layerRadius = range * (0.5f + layer * 0.1f); // Expanding outward
-
-                createWaterCircle(whirlpoolCenter.add(0, layerHeight, 0), layerRadius, 12);
-            }
-
-            // Final water explosion at center
-            createWaterExplosion(whirlpoolCenter.add(0, WHIRLPOOL_HEIGHT / 2, 0), 2.0f);
-
-            // Rain effect from collapsed whirlpool
-            for (int i = 0; i < 30; i++) {
-                double x = whirlpoolCenter.x + (Math.random() - 0.5) * range * 2;
-                double z = whirlpoolCenter.z + (Math.random() - 0.5) * range * 2;
-                double y = whirlpoolCenter.y + WHIRLPOOL_HEIGHT + Math.random() * 2;
-
-                serverLevel.sendParticles(ParticleTypes.DRIPPING_WATER,
-                        x, y, z, 1, 0, -0.4, 0, 0.1);
-            }
         }
 
         // Final whirlpool collapse sound

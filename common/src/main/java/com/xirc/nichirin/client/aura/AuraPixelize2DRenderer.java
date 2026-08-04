@@ -1,6 +1,5 @@
 package com.xirc.nichirin.client.aura;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.xirc.nichirin.common.aura.AuraInstance;
@@ -14,358 +13,517 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
-import org.joml.Vector3f;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.WeakHashMap;
 
-/**
- * The aura renderer — draws each aura as a flat NxN grid of camera-aligned colored quads
- * (one "pixel" per cell) positioned at the host entity's world centre.
- *
- * The grid uses a vertical billboard: it rotates around world-Y to face the camera
- * horizontally, but does NOT tilt with head pitch (so looking down at your feet doesn't
- * make the disc face you edge-on). Same screen position as the entity, but depth-tested
- * against world geometry so it can't clip through walls.
- *
- * The disc renders with a no-depth-write translucent type so the entity body always
- * reads above it via the standard LEQUAL depth test.
- */
+/** Renders entity auras as layered, segmented energy wisps and sparse pixel fragments. */
 @Environment(EnvType.CLIENT)
 public final class AuraPixelize2DRenderer {
-
-    private static final float PIXEL_SIZE = 1.0f / 16.0f;
-    private static final float PIXEL_HALF = PIXEL_SIZE * 0.5f;
-    private static final ResourceLocation WHITE_TEX =
+    private static final ResourceLocation WHITE_TEXTURE =
             ResourceLocation.withDefaultNamespace("textures/misc/white.png");
+    private static final Map<AuraInstance, AuraWispLayout> LAYOUT_CACHE =
+            Collections.synchronizedMap(new WeakHashMap<>());
 
     private AuraPixelize2DRenderer() {}
 
     public static void renderAll(PoseStack poseStack, Camera camera, float partialTick) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null) return;
-        if (EntityAuraTracker.all().isEmpty()) return;
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.level == null || EntityAuraTracker.all().isEmpty()) return;
 
-        // Vertical disc frame: the plane follows the HOST's body yaw (not the observer's
-        // camera), so the aura turns with the entity as it looks around. Up is locked to
-        // world-up — pitch never tilts the disc. Camera-facing instances (projectiles) use
-        // the observer's yaw instead so the disc always reads full-on.
-        Vector3f up = new Vector3f(0f, 1f, 0f);
-        float camYawRad = (float) Math.toRadians(camera.getYRot());
-        Vector3f camRight = new Vector3f((float) Math.cos(camYawRad), 0f, (float) Math.sin(camYawRad));
-
-        boolean firstPerson = mc.options != null
-                && mc.options.getCameraType() == CameraType.FIRST_PERSON;
-        UUID ownId = mc.player != null ? mc.player.getUUID() : null;
-
-        Vec3 camPos = camera.getPosition();
+        boolean firstPerson = minecraft.options != null
+                && minecraft.options.getCameraType() == CameraType.FIRST_PERSON;
+        UUID ownId = minecraft.player != null ? minecraft.player.getUUID() : null;
+        Vec3 cameraPosition = camera.getPosition();
+        float cameraYaw = (float) Math.toRadians(camera.getYRot());
+        float cameraRightX = (float) Math.cos(cameraYaw);
+        float cameraRightZ = (float) Math.sin(cameraYaw);
+        float maximumDistanceSquared = AuraConfig.maximumRenderDistance * AuraConfig.maximumRenderDistance;
         long nowMs = System.currentTimeMillis();
 
-        MultiBufferSource.BufferSource buffers = mc.renderBuffers().bufferSource();
-        // No-depth-write translucent type: disc paints colour but doesn't touch the depth
-        // buffer. The standard LEQUAL test still occludes the disc behind walls and
-        // behind the entity body.
-        RenderType auraType = AuraRenderTypes.auraTranslucentNoDepthWrite(WHITE_TEX);
-        VertexConsumer vc = buffers.getBuffer(auraType);
+        MultiBufferSource.BufferSource buffers = minecraft.renderBuffers().bufferSource();
+        RenderType auraType = AuraRenderTypes.auraTranslucentNoDepthWrite(WHITE_TEXTURE);
+        VertexConsumer consumer = buffers.getBuffer(auraType);
 
         for (var entry : EntityAuraTracker.all().entrySet()) {
             UUID entityId = entry.getKey();
             if (entry.getValue().isEmpty()) continue;
-            // Largest aura first so it draws behind smaller ones — layered auras (demon ring
-            // around a breathing core) stack correctly regardless of publish order.
+            if (firstPerson && ownId != null && ownId.equals(entityId)) continue;
+
+            Entity host = findEntity(minecraft, entityId);
+            if (host == null) continue;
+
+            double x = host.xo + (host.getX() - host.xo) * partialTick;
+            double y = host.yo + (host.getY() - host.yo) * partialTick;
+            double z = host.zo + (host.getZ() - host.zo) * partialTick;
+            double dx = x - cameraPosition.x;
+            double dy = y - cameraPosition.y;
+            double dz = z - cameraPosition.z;
+            double distanceSquared = dx * dx + dy * dy + dz * dz;
+            if (distanceSquared > maximumDistanceSquared) continue;
+            double distance = Math.sqrt(Math.max(0.0001, distanceSquared));
+            float toCameraX = (float) (-dx / distance);
+            float toCameraY = (float) (-dy / distance);
+            float toCameraZ = (float) (-dz / distance);
+            float bodySideAngle = host instanceof LivingEntity living
+                    ? (float) Math.toRadians(Mth.rotLerp(partialTick, living.yBodyRotO, living.yBodyRot))
+                    : 0.0f;
+
             List<AuraInstance> instances = new ArrayList<>(entry.getValue());
             instances.sort((a, b) -> Float.compare(b.radius(), a.radius()));
 
-            Entity host = findEntity(mc, entityId);
-            if (host == null) continue;
-
-            // Don't draw the local player's own aura in first person.
-            if (firstPerson && ownId != null && ownId.equals(entityId)) continue;
-
-            double ex = host.xo + (host.getX() - host.xo) * partialTick;
-            double ey = host.yo + (host.getY() - host.yo) * partialTick + host.getBbHeight() * 0.5;
-            double ez = host.zo + (host.getZ() - host.zo) * partialTick;
-
-            Vec3 toCam = camPos.subtract(ex, ey, ez).normalize();
-            double toCamHX = toCam.x, toCamHZ = toCam.z;
-            double toCamHLen = Math.sqrt(toCamHX * toCamHX + toCamHZ * toCamHZ);
-            if (toCamHLen > 1e-6) { toCamHX /= toCamHLen; toCamHZ /= toCamHLen; }
-
-            for (int idx = 0; idx < instances.size(); idx++) {
-                AuraInstance instance = instances.get(idx);
-                double backOffset = host.getBbWidth() * 0.5 + 0.15;
-                double bias = idx * 0.08;
-                poseStack.pushPose();
-                poseStack.translate(
-                        ex - camPos.x - toCamHX * backOffset + toCamHX * bias,
-                        ey - camPos.y,
-                        ez - camPos.z - toCamHZ * backOffset + toCamHZ * bias);
-                renderInstance2D(vc, poseStack.last().pose(), instance, nowMs,
-                        camRight, up, host.getBbWidth(), host.getBbHeight());
-                poseStack.popPose();
+            poseStack.pushPose();
+            poseStack.translate(dx, dy, dz);
+            Matrix4f matrix = poseStack.last().pose();
+            for (AuraInstance instance : instances) {
+                if (host instanceof Player && !instance.cameraFacing()) {
+                    AuraWispLayout layout = LAYOUT_CACHE.computeIfAbsent(instance,
+                            ignored -> AuraWispLayout.create(entityId, instance));
+                    renderAura(consumer, matrix, instance, layout, nowMs,
+                            host.getBbWidth(), host.getBbHeight(), cameraRightX, cameraRightZ,
+                            bodySideAngle, toCameraX, toCameraY, toCameraZ);
+                } else {
+                    renderCameraFacingAura(consumer, matrix, instance, nowMs,
+                            host.getBbWidth(), host.getBbHeight(), cameraRightX, cameraRightZ);
+                }
             }
+            poseStack.popPose();
         }
 
-        RenderSystem.disableCull();
         buffers.endBatch(auraType);
-        RenderSystem.enableCull();
     }
 
-    private static Entity findEntity(Minecraft mc, UUID id) {
-        if (mc.player != null && mc.player.getUUID().equals(id)) return mc.player;
-        if (mc.level == null) return null;
-        for (Entity e : mc.level.entitiesForRendering()) {
-            if (e.getUUID().equals(id)) return e;
-        }
-        return null;
-    }
-
-    private static void renderInstance2D(VertexConsumer vc, Matrix4f mat,
-                                         AuraInstance inst, long nowMs,
-                                         Vector3f right, Vector3f up,
-                                         float bbWidth, float bbHeight) {
-        // Spawn/removal transition: ease alpha and size instead of popping (katana swaps etc.).
-        float fade = inst.fadeFactor(nowMs, EntityAuraTracker.FADE_MS);
+    private static void renderAura(VertexConsumer consumer, Matrix4f matrix, AuraInstance aura,
+                                   AuraWispLayout layout, long nowMs, float bodyWidth, float bodyHeight,
+                                   float cameraRightX, float cameraRightZ, float bodySideAngle,
+                                   float toCameraX, float toCameraY, float toCameraZ) {
+        float fade = aura.fadeFactor(nowMs, EntityAuraTracker.FADE_MS);
         if (fade <= 0.02f) return;
 
-        float t = ((nowMs - inst.startTimeMs()) / 1000.0f) * AuraConfig.animationSpeed;
-        float pulse = (float) (Math.sin(t * inst.pulseSpeed() * Math.PI * 2.0) * 0.5 + 0.5);
+        float time = ((nowMs - aura.startTimeMs()) / 1000.0f) * AuraConfig.animationSpeed;
+        float pulse = (float) (Math.sin(time * aura.pulseSpeed() * Math.PI * 2.0) * 0.5 + 0.5);
+        float scale = Math.max(0.05f, aura.radius() * AuraConfig.auraScale)
+                * (0.78f + 0.22f * fade)
+                * (1.0f + AuraConfig.pulseAmplitude * pulse);
+        float red = clamp(aura.r() * AuraConfig.brightness);
+        float green = clamp(aura.g() * AuraConfig.brightness);
+        float blue = clamp(aura.b() * AuraConfig.brightness);
+        float alpha = clamp(aura.a() * AuraConfig.opacityMultiplier) * fade;
+        float distortion = Math.max(0.2f, aura.distortionStrength() * 3.0f + aura.jitterAmount() * 0.09f);
 
-        // radius is a multiplier of the entity bbox: radius=1 → disc matches the model size
-        // (half-bb each axis means the full disc spans the entire bbox); radius=2 → 2× model size.
-        float fadeScale = 0.7f + 0.3f * fade;
-        float radiusH = inst.radius() * bbWidth  * 0.5f * (1.0f + AuraConfig.pulseAmplitude * pulse) * fadeScale;
-        float radiusV = inst.radius() * bbHeight * 0.5f * (1.0f + AuraConfig.pulseAmplitude * pulse) * fadeScale;
+        renderPlayerCore(consumer, matrix, aura, time, pulse, bodyWidth, bodyHeight,
+                red, green, blue, alpha, cameraRightX, cameraRightZ,
+                toCameraX, toCameraY, toCameraZ);
+        for (AuraWispLayout.Wisp wisp : layout.wisps) {
+            renderWisp(consumer, matrix, wisp, time, bodyWidth, bodyHeight, scale, distortion,
+                    red, green, blue, alpha, cameraRightX, cameraRightZ, bodySideAngle);
+        }
+        for (AuraWispLayout.Fragment fragment : layout.fragments) {
+            renderFragment(consumer, matrix, fragment, time, bodyWidth, bodyHeight, scale,
+                    red, green, blue, alpha, cameraRightX, cameraRightZ);
+        }
+    }
 
-        // jitter (per-instance) scales how much the silhouette morphs over time.
-        float jitter = inst.jitterAmount();
-        // Cap the dynamic delta on lobe counts so very high jitter doesn't push lobe frequency
-        // past the grid's resolving power (which aliases back into a smooth/circular look).
-        float lobeDelta = Math.min(jitter, 3.5f);
-        float lobeLow  = AuraConfig.lobeCountLow  + (float) Math.sin(t * 0.37) * 1.5f * lobeDelta;
-        float lobeHigh = AuraConfig.lobeCountHigh + (float) Math.cos(t * 0.29) * 1.8f * lobeDelta;
-        // Linear (not quadratic) in jitter so cranking jitter doesn't blow the edge wave past the
-        // distFromCentre range and degenerate the silhouette into a fully-filled circle.
-        float waveStrength = inst.distortionStrength()
-                * (AuraConfig.waveBase + pulse * AuraConfig.waveAnimAmplitude) * jitter;
-        float rotation = t * inst.rotationSpeed();
-        // Low-frequency macro warp — at high jitter this gives the disc a few big lumps. Below the
-        // threshold the silhouette stays the smooth ring you see at default jitter (~2.2).
-        float macroLobes = 3.0f + (float) Math.sin(t * 0.21) * 1.0f;
-        float macroAmplitude = Math.min(0.45f, Math.max(0f, jitter - 3.0f) * 0.04f);
-        // Radial breath frequency — waves ripple OUTWARD from the centre so the silhouette feels
-        // like a churning aura rather than a rotating wheel.
-        float radialFreq = 6.0f + (float) Math.sin(t * 0.17) * 2.0f;
-        float radialAmplitude = 0.05f + jitter * 0.005f;
-        // waviness (per-instance): how far the flowing energy bands snake sideways. A near-straight
-        // band (low) bends into deep sinuous S-waves (high), like body-wave hair. Added on top of the
-        // baseline band sway; 0 (default) leaves the bands exactly as they were.
-        float waviness = inst.wavinessAmount();
+    private static void renderPlayerCore(VertexConsumer consumer, Matrix4f matrix, AuraInstance aura,
+                                         float time, float pulse, float bodyWidth, float bodyHeight,
+                                         float red, float green, float blue, float baseAlpha,
+                                         float cameraRightX, float cameraRightZ,
+                                         float toCameraX, float toCameraY, float toCameraZ) {
+        float radiusFactor = Math.min(1.65f, 0.55f + aura.radius() * 0.34f);
+        float radiusX = bodyHeight * 0.5f * AuraConfig.auraScale * radiusFactor
+                * (1.0f + AuraConfig.pulseAmplitude * pulse * 0.55f);
+        float radiusY = radiusX * 2.90f;
+        float pixel = Math.max(1.0f / 16.0f, AuraConfig.playerPixelSize);
+        int columns = Math.max(3, (int) Math.ceil(radiusX * 2.0f / pixel));
+        int rows = Math.max(3, (int) Math.ceil(radiusY * 2.0f / pixel));
+        float backOffset = bodyWidth * 0.55f + 0.08f;
+        float originX = -toCameraX * backOffset;
+        float originY = bodyHeight * 0.5f - toCameraY * backOffset;
+        float originZ = -toCameraZ * backOffset;
 
-        int gridWidth = Math.max(2, (int) Math.ceil(radiusH * 2.0f / PIXEL_SIZE));
-        int gridHeight = Math.max(2, (int) Math.ceil(radiusV * 2.0f / PIXEL_SIZE));
-        // Exact tile size — cells touch their neighbours without overlapping (no alpha bands).
-        // Clamp after the brightness multiply: any channel pushed past 1.0 would otherwise wrap
-        // around in the byte cast inside setColor (1.15*255 = 293 → &0xFF → 37) and come out
-        // near-black, which read as "inverted" colours (red→green, purple→orange).
-        float baseR = Math.min(1.0f, inst.r() * AuraConfig.brightness);
-        float baseG = Math.min(1.0f, inst.g() * AuraConfig.brightness);
-        float baseB = Math.min(1.0f, inst.b() * AuraConfig.brightness);
-        float baseA = Math.min(1.0f, inst.a() * AuraConfig.opacityMultiplier) * fade;
-        float[][] palette = buildPalette(baseR, baseG, baseB);
-        int profile = inst.materialProfile();
-        float profileA = ((profile >>> 1) & 255) / 255.0f;
-        float profileB = ((profile >>> 9) & 255) / 255.0f;
-        float profileC = ((profile >>> 17) & 255) / 255.0f;
-        float flowAngle = profileA * (float) (Math.PI * 2.0);
-        float flowX = (float) Math.cos(flowAngle);
-        float flowY = (float) Math.sin(flowAngle);
-        float flowSpeed = 0.65f + profileB * 1.35f;
-        float tileFrequency = 3.0f + profileC * 5.0f;
-
-        int packedLight = LightTexture.FULL_BRIGHT;
-        // No rigid rotation — that's what was making it look like a spinning wheel. The angular
-        // motion now comes from the +t/-t phase shifts inside the wave terms (counter-flowing).
-        // `rotation` is still folded in as a slow phase drift on one of the waves so the per-
-        // instance rotationSpeed knob isn't dead.
-        float rotPhase = rotation * 0.4f;
-
-        for (int i = 0; i < gridWidth; i++) {
-            for (int j = 0; j < gridHeight; j++) {
-                float localX = (i - (gridWidth - 1) * 0.5f) * PIXEL_SIZE;
-                float localY = (j - (gridHeight - 1) * 0.5f) * PIXEL_SIZE;
-                float u = localX / radiusH;
-                float v = localY / radiusV;
-
+        for (int column = 0; column < columns; column++) {
+            for (int row = 0; row < rows; row++) {
+                float localX = (column - (columns - 1) * 0.5f) * pixel;
+                float localY = (row - (rows - 1) * 0.5f) * pixel;
+                float u = localX / radiusX;
+                float v = localY / radiusY;
+                float squircle = (float) (Math.pow(Math.abs(u), 4.0)
+                        + Math.pow(Math.abs(v), 4.0));
+                float distance = (float) Math.pow(squircle, 0.25);
                 float angle = (float) Math.atan2(v, u);
-                float distFromCentre = (float) Math.sqrt(u * u + v * v);
+                float edge = 0.96f + (float) Math.sin(angle * 7.0f - time * 0.9f
+                        + aura.materialProfile() * 0.001f) * 0.035f;
+                if (distance > edge) continue;
 
-                // Two counter-flowing angular waves so the silhouette CHURNS rather than rotates as
-                // a rigid wheel. The two layers slide past each other and produce a roiling look.
-                float lobeWave =
-                          (float) Math.sin(angle * lobeLow  + t * 1.3f + rotPhase) * 0.45f
-                        + (float) Math.cos(angle * lobeHigh - t * 1.1f) * 0.35f
-                        // Radial ripple: waves moving outward from the centre.
-                        + (float) Math.sin(distFromCentre * radialFreq - t * 2.2f) * radialAmplitude;
-                // tanh-saturate the wave so the swing matches the old look at default jitter (~2.2)
-                // but can't run away at extreme jitter. Asymmetric scale: small upward bumps, larger
-                // downward notches — so the silhouette stays at-most a clean circle (never a square)
-                // while still reading as lumpy/distorted at high jitter.
-                float waveTerm = (float) Math.tanh(waveStrength * lobeWave * 0.33f);
-                float waveContribution = waveTerm >= 0
-                        ? waveTerm * 0.12f      // bumps stay small — never push past the unit circle
-                        : waveTerm * 0.5f;      // notches can bite deep for visible lumps
-                float macroWarp = macroAmplitude * (float) Math.sin(angle * macroLobes + t * 0.5f);
-                float macroContribution = macroWarp >= 0
-                        ? macroWarp * 0.25f     // gentle outward lump cap
-                        : macroWarp;            // full inward bite
-                float edge = 0.97f + waveContribution + macroContribution;
-                // Hard cap at 1.0 → silhouette is bounded by the unit circle and can never fill the
-                // grid corners (which is what was making it look like a square at high jitter).
-                if (edge < 0.35f) edge = 0.35f;
-                if (edge > 1.0f) edge = 1.0f;
-
-                if (distFromCentre > edge) continue;
-
-                float normD = Math.min(1.0f, distFromCentre / edge);
-                float inner = 1.0f - normD;
-                float rim   = 1.0f - inner;
-                float flowCoord = (u * flowX + v * flowY) * tileFrequency - t * flowSpeed;
-                float crossCoord = (-u * flowY + v * flowX) * (2.0f + profileA * 4.0f);
-                float energyBand = (float) Math.sin(flowCoord * Math.PI
-                        + Math.sin(crossCoord + t) * (0.9f + waviness * 3.0f));
-                energyBand = energyBand * 0.5f + 0.5f;
-                float fineGrain = hashTile(i, j, profile);
-                float pigmentPatch = hashTile(Math.floorDiv(i, 3), Math.floorDiv(j, 3),
-                        profile ^ 0x51ed270b);
-                float brushStroke = (float) Math.sin(
-                        i * (0.55f + profileB * 0.35f)
-                                + j * (0.18f + profileC * 0.22f)
-                                + profileA * 9.0f);
-                brushStroke = brushStroke * 0.5f + 0.5f;
-                float chippedPigment = fineGrain > 0.90f ? -0.22f
-                        : fineGrain < 0.08f ? 0.18f : 0.0f;
-                float risingTongue = (float) Math.sin(
-                        u * (8.0f + profileC * 5.0f)
-                                - v * (3.0f + profileB * 2.0f)
-                                + t * (2.4f + profileA));
-                risingTongue = risingTongue * 0.5f + 0.5f;
-                float flameLift = Math.max(0.0f, risingTongue - normD * 0.35f);
-                float materialLight = 0.42f
-                        + energyBand * 0.26f
-                        + flameLift * 0.42f
-                        + (pigmentPatch - 0.5f) * 0.30f
-                        + (brushStroke - 0.5f) * 0.16f
-                        + chippedPigment;
-                float intensity = (inner * 0.85f + (rim * rim) * 0.45f) * materialLight;
-                float alpha = baseA * (0.58f + intensity * 0.42f);
-                if (alpha > 1.0f) alpha = 1.0f;
-                float paletteValue = materialLight + inner * 0.22f + flameLift * 0.18f;
-                int paletteIndex = paletteValue < 0.42f ? 0
-                        : paletteValue < 0.62f ? 1
-                        : paletteValue < 0.82f ? 2
-                        : paletteValue < 1.02f ? 3 : 4;
-                float r = palette[paletteIndex][0];
-                float g = palette[paletteIndex][1];
-                float b = palette[paletteIndex][2];
-
-                float cx = right.x() * localX + up.x() * localY;
-                float cy = right.y() * localX + up.y() * localY;
-                float cz = right.z() * localX + up.z() * localY;
-
-                float dxH = right.x() * PIXEL_HALF, dyH = right.y() * PIXEL_HALF, dzH = right.z() * PIXEL_HALF;
-                float dxV = up.x()    * PIXEL_HALF, dyV = up.y()    * PIXEL_HALF, dzV = up.z()    * PIXEL_HALF;
-
-                emitQuad(vc, mat,
-                        cx - dxH - dxV, cy - dyH - dyV, cz - dzH - dzV,
-                        cx + dxH - dxV, cy + dyH - dyV, cz + dzH - dzV,
-                        cx + dxH + dxV, cy + dyH + dyV, cz + dzH + dzV,
-                        cx - dxH + dxV, cy - dyH + dyV, cz - dzH + dzV,
-                        r, g, b, alpha, packedLight);
+                float inner = 1.0f - distance / edge;
+                float flowingShade = (float) Math.sin(
+                        column * 0.63f - row * 0.31f - time * 2.1f
+                                + aura.materialProfile() * 0.0007f);
+                int colorShade = flowingShade < -0.58f ? 1
+                        : flowingShade > 0.62f ? 4 : inner > 0.52f ? 3 : 2;
+                float alpha = baseAlpha * (0.16f + inner * 0.18f);
+                float centerX = originX + cameraRightX * localX;
+                float centerY = originY + localY;
+                float centerZ = originZ + cameraRightZ * localX;
+                emitBillboard(consumer, matrix, centerX, centerY, centerZ,
+                        cameraRightX, 0.0f, cameraRightZ,
+                        0.0f, 1.0f, 0.0f,
+                        pixel, pixel,
+                        shade(red, colorShade), shade(green, colorShade), shade(blue, colorShade),
+                        clamp(alpha));
             }
         }
     }
 
-    private static float hashTile(int x, int y, int seed) {
-        int h = seed ^ (x * 0x1f1f1f1f) ^ (y * 0x6d2b79f5);
-        h ^= h >>> 16;
-        h *= 0x7feb352d;
-        h ^= h >>> 15;
-        return (h & 0xFFFF) / 65535.0f;
-    }
+    private static void renderCameraFacingAura(VertexConsumer consumer, Matrix4f matrix,
+                                               AuraInstance aura, long nowMs,
+                                               float bodyWidth, float bodyHeight,
+                                               float cameraRightX, float cameraRightZ) {
+        float fade = aura.fadeFactor(nowMs, EntityAuraTracker.FADE_MS);
+        if (fade <= 0.02f) return;
+        float time = ((nowMs - aura.startTimeMs()) / 1000.0f) * AuraConfig.animationSpeed;
+        float pulse = (float) (Math.sin(time * aura.pulseSpeed() * Math.PI * 2.0) * 0.5 + 0.5);
+        float scale = 1.0f + AuraConfig.pulseAmplitude * pulse;
+        float radiusX = Math.max(AuraConfig.pixelSize,
+                aura.radius() * bodyWidth * 0.5f * scale);
+        float radiusY = Math.max(AuraConfig.pixelSize,
+                aura.radius() * bodyHeight * 0.5f * scale);
+        float red = clamp(aura.r() * AuraConfig.brightness);
+        float green = clamp(aura.g() * AuraConfig.brightness);
+        float blue = clamp(aura.b() * AuraConfig.brightness);
+        float baseAlpha = clamp(aura.a() * AuraConfig.opacityMultiplier) * fade;
+        float pixel = Math.max(1.0f / 32.0f, AuraConfig.pixelSize);
+        int columns = Math.max(2, (int) Math.ceil(radiusX * 2.0f / pixel));
+        int rows = Math.max(2, (int) Math.ceil(radiusY * 2.0f / pixel));
 
-    private static float[][] buildPalette(float r, float g, float b) {
-        float[] hsv = rgbToHsv(r, g, b);
-        return new float[][] {
-                hsvToRgb(wrapHue(hsv[0] - 0.035f), Math.min(1.0f, hsv[1] * 1.10f), hsv[2] * 0.42f),
-                hsvToRgb(wrapHue(hsv[0] - 0.015f), Math.min(1.0f, hsv[1] * 1.05f), hsv[2] * 0.68f),
-                new float[] { r, g, b },
-                hsvToRgb(wrapHue(hsv[0] + 0.018f), hsv[1] * 0.82f,
-                        Math.min(1.0f, hsv[2] * 1.18f)),
-                hsvToRgb(wrapHue(hsv[0] + 0.040f), hsv[1] * 0.58f,
-                        Math.min(1.0f, hsv[2] * 1.32f))
-        };
-    }
-
-    private static float[] rgbToHsv(float r, float g, float b) {
-        float max = Math.max(r, Math.max(g, b));
-        float min = Math.min(r, Math.min(g, b));
-        float delta = max - min;
-        float hue = 0.0f;
-        if (delta > 0.0001f) {
-            if (max == r) hue = ((g - b) / delta) / 6.0f;
-            else if (max == g) hue = (2.0f + (b - r) / delta) / 6.0f;
-            else hue = (4.0f + (r - g) / delta) / 6.0f;
+        for (int column = 0; column < columns; column++) {
+            for (int row = 0; row < rows; row++) {
+                float localX = (column - (columns - 1) * 0.5f) * pixel;
+                float localY = (row - (rows - 1) * 0.5f) * pixel;
+                float u = localX / radiusX;
+                float v = localY / radiusY;
+                float distance = (float) Math.sqrt(u * u + v * v);
+                float angle = (float) Math.atan2(v, u);
+                float edge = 0.92f + (float) Math.sin(angle * 6.0f - time * 1.6f
+                        + aura.materialProfile() * 0.001f) * 0.08f * aura.distortionStrength();
+                if (distance > edge) continue;
+                int colorShade = distance > edge * 0.78f ? 4
+                        : ((column + row + aura.materialProfile()) & 3) == 0 ? 1 : 3;
+                float alpha = baseAlpha * (0.58f + (1.0f - distance / edge) * 0.42f);
+                float centerX = cameraRightX * localX;
+                float centerY = bodyHeight * 0.5f + localY;
+                float centerZ = cameraRightZ * localX;
+                emitBillboard(consumer, matrix, centerX, centerY, centerZ,
+                        cameraRightX, 0.0f, cameraRightZ,
+                        0.0f, 1.0f, 0.0f,
+                        pixel, pixel,
+                        shade(red, colorShade), shade(green, colorShade), shade(blue, colorShade),
+                        clamp(alpha));
+            }
         }
-        return new float[] { wrapHue(hue), max <= 0.0001f ? 0.0f : delta / max, max };
     }
 
-    private static float[] hsvToRgb(float h, float s, float v) {
-        float scaled = wrapHue(h) * 6.0f;
-        int sector = (int) Math.floor(scaled);
-        float f = scaled - sector;
-        float p = v * (1.0f - s);
-        float q = v * (1.0f - s * f);
-        float t = v * (1.0f - s * (1.0f - f));
-        return switch (sector % 6) {
-            case 0 -> new float[] { v, t, p };
-            case 1 -> new float[] { q, v, p };
-            case 2 -> new float[] { p, v, t };
-            case 3 -> new float[] { p, q, v };
-            case 4 -> new float[] { t, p, v };
-            default -> new float[] { v, p, q };
-        };
+    private static void renderWisp(VertexConsumer consumer, Matrix4f matrix, AuraWispLayout.Wisp wisp,
+                                   float time, float bodyWidth, float bodyHeight, float scale,
+                                   float distortion, float red, float green, float blue, float baseAlpha,
+                                   float cameraRightX, float cameraRightZ, float bodySideAngle) {
+        int segments = Math.max(4, AuraConfig.verticalSegmentCount);
+        float phase = wisp.phase() * (float) (Math.PI * 2.0);
+        float angle = bodySideAngle + wisp.angle()
+                + (float) Math.sin(time * 0.42f * wisp.speed() + phase)
+                * AuraConfig.overallRotationSpeed * 3.0f;
+        float radiusPulse = 1.0f + (float) Math.sin(time * 0.48f * wisp.speed() + phase) * 0.08f;
+        float radius = wisp.radius() * bodyWidth * scale * radiusPulse;
+        float originX = (float) Math.cos(angle) * radius;
+        float originZ = (float) Math.sin(angle) * radius;
+        float projectedRadius = Math.abs(originX * cameraRightX + originZ * cameraRightZ);
+        float maximumProjectedRadius = Math.max(AuraConfig.playerPixelSize,
+                AuraConfig.maximumRadius * bodyWidth * scale);
+        float normalizedRadius = Math.min(1.0f, projectedRadius / maximumProjectedRadius);
+        float circularEnvelope = (float) Math.sqrt(Math.max(0.12f,
+                1.0f - normalizedRadius * normalizedRadius));
+        float envelopeHalfHeight = bodyHeight * scale
+                * AuraConfig.roundedEnvelopeVerticalScale * circularEnvelope;
+        float height = Math.min(wisp.height() * bodyHeight * scale,
+                envelopeHalfHeight * 2.0f);
+        float width = Math.max(AuraConfig.playerPixelSize * 2.0f, wisp.width() * bodyWidth * scale);
+        width *= 0.72f + circularEnvelope * 0.28f;
+        float stretch = 1.0f + (float) Math.sin(time * 0.73f * wisp.speed() + phase * 1.7f) * 0.075f;
+        height *= stretch;
+        float verticalOffset = (wisp.startY() - 0.46f) * bodyHeight * 0.16f;
+        float baseY = bodyHeight * 0.5f + verticalOffset - height * 0.5f;
+        float bendAngle = angle + wisp.bendDirection() * 1.4f;
+        float bendX = (float) Math.cos(bendAngle);
+        float bendZ = (float) Math.sin(bendAngle);
+        float sway = AuraConfig.swayAmount * scale * distortion;
+        float flow = time * AuraConfig.upwardMovementSpeed * wisp.speed() + phase;
+
+        float axisX;
+        float axisZ;
+        if (wisp.facingMode() == 0) {
+            axisX = cameraRightX;
+            axisZ = cameraRightZ;
+        } else if (wisp.facingMode() == 1) {
+            axisX = -(float) Math.sin(angle);
+            axisZ = (float) Math.cos(angle);
+        } else {
+            axisX = (float) Math.cos(angle);
+            axisZ = (float) Math.sin(angle);
+        }
+
+        for (int segment = 0; segment < segments; segment++) {
+            float v0 = segment / (float) segments;
+            float v1 = (segment + 1.0f) / segments;
+            float y0 = snap(baseY + height * v0, AuraConfig.playerPixelSize);
+            float y1 = snap(baseY + height * v1, AuraConfig.playerPixelSize);
+            float shift0 = bendAt(v0, time, phase, wisp, sway);
+            float shift1 = bendAt(v1, time, phase, wisp, sway);
+            float x0 = originX + bendX * shift0;
+            float z0 = originZ + bendZ * shift0;
+            float x1 = originX + bendX * shift1;
+            float z1 = originZ + bendZ * shift1;
+            float width0 = steppedWidth(width, v0, flow, wisp.topShape(), AuraConfig.playerPixelSize);
+            float width1 = steppedWidth(width, v1, flow, wisp.topShape(), AuraConfig.playerPixelSize);
+
+            float verticalFade = smoothEdge(v0) * smoothEdge(1.0f - v1);
+            float segmentAlpha = baseAlpha * wisp.alpha() * (0.46f + verticalFade * 0.54f);
+            if (segment == wisp.gapSegment()) {
+                segmentAlpha *= 0.10f + 0.12f
+                        * ((float) Math.sin(time * 1.7f + phase) * 0.5f + 0.5f);
+                width0 *= 0.74f;
+                width1 *= 0.62f;
+            }
+            int shade = shadeForSegment(segment, flow, wisp.topShape());
+            emitRibbonSegment(consumer, matrix, x0, y0, z0, x1, y1, z1,
+                    axisX, axisZ, width0, width1,
+                    shade(red, shade), shade(green, shade), shade(blue, shade),
+                    clamp(segmentAlpha));
+
+            if (wisp.crossed()) {
+                float secondAxisX = -axisZ;
+                float secondAxisZ = axisX;
+                emitRibbonSegment(consumer, matrix, x0, y0, z0, x1, y1, z1,
+                        secondAxisX, secondAxisZ, width0 * 0.72f, width1 * 0.72f,
+                        shade(red, shade), shade(green, shade), shade(blue, shade),
+                        clamp(segmentAlpha * 0.52f));
+            }
+
+            if (segment >= segments - 3 && ((wisp.topShape() + segment) & 1) == 0) {
+                float split = width * (0.48f + 0.10f * wisp.topShape());
+                emitRibbonSegment(consumer, matrix,
+                        x0 + axisX * split, y0, z0 + axisZ * split,
+                        x1 + axisX * split * 1.2f, y1, z1 + axisZ * split * 1.2f,
+                        axisX, axisZ, width0 * 0.22f, width1 * 0.14f,
+                        shade(red, Math.min(4, shade + 1)),
+                        shade(green, Math.min(4, shade + 1)),
+                        shade(blue, Math.min(4, shade + 1)),
+                        clamp(segmentAlpha * 0.72f));
+            }
+        }
     }
 
-    private static float wrapHue(float hue) {
-        hue %= 1.0f;
-        return hue < 0.0f ? hue + 1.0f : hue;
+    private static float bendAt(float vertical, float time, float phase,
+                                AuraWispLayout.Wisp wisp, float sway) {
+        float primary = (float) Math.sin(
+                vertical * (3.8f + wisp.bendFrequency() * 2.2f)
+                        + time * AuraConfig.swaySpeed * wisp.speed() + phase);
+        float secondary = (float) Math.sin(
+                vertical * 8.4f - time * AuraConfig.swaySpeed * 0.57f + phase * 1.9f);
+        return (primary * 0.72f + secondary * 0.28f) * sway * (0.22f + vertical * 0.78f);
     }
 
-    private static void emitQuad(VertexConsumer vc, Matrix4f mat,
+    private static float steppedWidth(float width, float vertical, float flow,
+                                      int topShape, float pixelSize) {
+        float body = 0.62f + (float) Math.sin(vertical * Math.PI) * 0.54f;
+        float rising = (float) Math.sin(vertical * 9.0f - flow * 2.2f + topShape * 0.91f) * 0.10f;
+        float taper = vertical > 0.76f
+                ? 1.0f - (vertical - 0.76f) * (0.72f + topShape * 0.05f)
+                : 1.0f;
+        float result = width * Math.max(0.28f, body + rising) * Math.max(0.34f, taper);
+        return Math.max(pixelSize, snap(result, pixelSize));
+    }
+
+    private static int shadeForSegment(int segment, float flow, int shape) {
+        float value = (float) Math.sin(segment * 1.71f - flow * 2.4f + shape * 0.83f);
+        if (value < -0.62f) return 0;
+        if (value < -0.18f) return 1;
+        if (value < 0.32f) return 2;
+        if (value < 0.72f) return 3;
+        return 4;
+    }
+
+    private static void renderFragment(VertexConsumer consumer, Matrix4f matrix,
+                                       AuraWispLayout.Fragment fragment, float time,
+                                       float bodyWidth, float bodyHeight, float scale,
+                                       float red, float green, float blue, float baseAlpha,
+                                       float cameraRightX, float cameraRightZ) {
+        float visibleWindow = clamp(AuraConfig.fragmentSpawnRate);
+        if (visibleWindow <= 0.01f) return;
+        float cycle = fract(time / Math.max(0.1f, fragment.lifetime()) + fragment.phase());
+        if (cycle > visibleWindow) return;
+        float age = cycle / visibleWindow;
+        float fade = (float) Math.sin(age * Math.PI);
+        if (fade <= 0.02f) return;
+
+        float angle = fragment.angle() + time * AuraConfig.overallRotationSpeed * 0.55f;
+        float radius = (fragment.radius() + age * fragment.outwardSpeed()) * bodyWidth * scale;
+        float x = (float) Math.cos(angle) * radius;
+        float z = (float) Math.sin(angle) * radius;
+        float y = fragment.startY() * bodyHeight + age * fragment.riseSpeed() * bodyHeight;
+        float size = Math.max(AuraConfig.playerPixelSize,
+                snap(fragment.size() * bodyWidth * scale, AuraConfig.playerPixelSize));
+        float rotation = fragment.rotation() + age * 0.8f;
+        float cosine = (float) Math.cos(rotation);
+        float sine = (float) Math.sin(rotation);
+        float horizontalX = cameraRightX * cosine;
+        float horizontalY = sine;
+        float horizontalZ = cameraRightZ * cosine;
+        float verticalX = -cameraRightX * sine;
+        float verticalY = cosine;
+        float verticalZ = -cameraRightZ * sine;
+        float alpha = clamp(baseAlpha * fade * 0.82f);
+        float r = shade(red, 4);
+        float g = shade(green, 4);
+        float b = shade(blue, 4);
+
+        switch (fragment.shape()) {
+            case 0 -> emitBillboard(consumer, matrix, x, y, z,
+                    horizontalX, horizontalY, horizontalZ,
+                    verticalX, verticalY, verticalZ, size * 2.8f, size * 0.42f, r, g, b, alpha);
+            case 1 -> emitBillboard(consumer, matrix, x, y, z,
+                    horizontalX, horizontalY, horizontalZ,
+                    verticalX, verticalY, verticalZ, size * 4.5f, size * 0.24f, r, g, b, alpha * 0.82f);
+            case 2 -> {
+                emitBillboard(consumer, matrix, x, y, z,
+                        horizontalX, horizontalY, horizontalZ,
+                        verticalX, verticalY, verticalZ, size * 2.2f, size * 0.35f, r, g, b, alpha);
+                emitBillboard(consumer, matrix, x, y, z,
+                        verticalX, verticalY, verticalZ,
+                        horizontalX, horizontalY, horizontalZ, size * 1.7f, size * 0.30f, r, g, b, alpha);
+            }
+            case 3 -> {
+                emitBillboard(consumer, matrix, x, y, z,
+                        horizontalX, horizontalY, horizontalZ,
+                        verticalX, verticalY, verticalZ, size, size, r, g, b, alpha);
+                emitBillboard(consumer, matrix,
+                        x + horizontalX * size * 1.15f, y + horizontalY * size * 1.15f,
+                        z + horizontalZ * size * 1.15f,
+                        horizontalX, horizontalY, horizontalZ,
+                        verticalX, verticalY, verticalZ, size * 0.55f, size * 0.55f, r, g, b, alpha * 0.72f);
+            }
+            default -> emitBillboard(consumer, matrix, x, y, z,
+                    horizontalX, horizontalY, horizontalZ,
+                    verticalX, verticalY, verticalZ, size, size, r, g, b, alpha);
+        }
+    }
+
+    private static void emitRibbonSegment(VertexConsumer consumer, Matrix4f matrix,
+                                          float x0, float y0, float z0,
+                                          float x1, float y1, float z1,
+                                          float axisX, float axisZ,
+                                          float width0, float width1,
+                                          float red, float green, float blue, float alpha) {
+        float half0 = width0 * 0.5f;
+        float half1 = width1 * 0.5f;
+        emitQuad(consumer, matrix,
+                x0 - axisX * half0, y0, z0 - axisZ * half0,
+                x0 + axisX * half0, y0, z0 + axisZ * half0,
+                x1 + axisX * half1, y1, z1 + axisZ * half1,
+                x1 - axisX * half1, y1, z1 - axisZ * half1,
+                red, green, blue, alpha);
+    }
+
+    private static void emitBillboard(VertexConsumer consumer, Matrix4f matrix,
+                                      float x, float y, float z,
+                                      float horizontalX, float horizontalY, float horizontalZ,
+                                      float verticalX, float verticalY, float verticalZ,
+                                      float width, float height,
+                                      float red, float green, float blue, float alpha) {
+        float hw = width * 0.5f;
+        float hh = height * 0.5f;
+        emitQuad(consumer, matrix,
+                x - horizontalX * hw - verticalX * hh,
+                y - horizontalY * hw - verticalY * hh,
+                z - horizontalZ * hw - verticalZ * hh,
+                x + horizontalX * hw - verticalX * hh,
+                y + horizontalY * hw - verticalY * hh,
+                z + horizontalZ * hw - verticalZ * hh,
+                x + horizontalX * hw + verticalX * hh,
+                y + horizontalY * hw + verticalY * hh,
+                z + horizontalZ * hw + verticalZ * hh,
+                x - horizontalX * hw + verticalX * hh,
+                y - horizontalY * hw + verticalY * hh,
+                z - horizontalZ * hw + verticalZ * hh,
+                red, green, blue, alpha);
+    }
+
+    private static void emitQuad(VertexConsumer consumer, Matrix4f matrix,
                                  float x1, float y1, float z1,
                                  float x2, float y2, float z2,
                                  float x3, float y3, float z3,
                                  float x4, float y4, float z4,
-                                 float r, float g, float b, float a, int packedLight) {
-        vert(vc, mat, x1, y1, z1, r, g, b, a, packedLight);
-        vert(vc, mat, x2, y2, z2, r, g, b, a, packedLight);
-        vert(vc, mat, x3, y3, z3, r, g, b, a, packedLight);
-        vert(vc, mat, x4, y4, z4, r, g, b, a, packedLight);
+                                 float red, float green, float blue, float alpha) {
+        vertex(consumer, matrix, x1, y1, z1, red, green, blue, alpha);
+        vertex(consumer, matrix, x2, y2, z2, red, green, blue, alpha);
+        vertex(consumer, matrix, x3, y3, z3, red, green, blue, alpha);
+        vertex(consumer, matrix, x4, y4, z4, red, green, blue, alpha);
     }
 
-    private static void vert(VertexConsumer vc, Matrix4f mat,
-                             float x, float y, float z,
-                             float r, float g, float b, float a, int packedLight) {
-        vc.addVertex(mat, x, y, z)
-                .setColor(r, g, b, a)
+    private static void vertex(VertexConsumer consumer, Matrix4f matrix,
+                               float x, float y, float z,
+                               float red, float green, float blue, float alpha) {
+        consumer.addVertex(matrix, x, y, z)
+                .setColor(red, green, blue, alpha)
                 .setUv(0.5f, 0.5f)
                 .setOverlay(OverlayTexture.NO_OVERLAY)
-                .setLight(packedLight)
-                .setNormal(0f, 1f, 0f);
+                .setLight(LightTexture.FULL_BRIGHT)
+                .setNormal(0.0f, 1.0f, 0.0f);
+    }
+
+    private static float shade(float component, int shade) {
+        return switch (shade) {
+            case 0 -> component * 0.34f;
+            case 1 -> component * 0.56f;
+            case 2 -> component * 0.78f;
+            case 3 -> component;
+            default -> component + (1.0f - component) * 0.28f;
+        };
+    }
+
+    private static float smoothEdge(float value) {
+        float clamped = clamp(value * 5.0f);
+        return clamped * clamped * (3.0f - 2.0f * clamped);
+    }
+
+    private static float snap(float value, float step) {
+        if (step <= 0.0f) return value;
+        return Math.round(value / step) * step;
+    }
+
+    private static float fract(float value) {
+        return value - (float) Math.floor(value);
+    }
+
+    private static float clamp(float value) {
+        return Math.max(0.0f, Math.min(1.0f, value));
+    }
+
+    private static Entity findEntity(Minecraft minecraft, UUID id) {
+        if (minecraft.player != null && minecraft.player.getUUID().equals(id)) return minecraft.player;
+        if (minecraft.level == null) return null;
+        for (Entity entity : minecraft.level.entitiesForRendering()) {
+            if (entity.getUUID().equals(id)) return entity;
+        }
+        return null;
     }
 }

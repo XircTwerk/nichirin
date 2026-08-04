@@ -1,5 +1,7 @@
 package com.xirc.nichirin.common.attack.moves.breathing.insect;
 
+import com.xirc.nichirin.common.vfx.VfxIds;
+
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -91,6 +93,8 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
         // Alternating zigzag: +22.5° / -22.5° / +22.5° / -22.5° ...
         double offsetDegrees = (zigzagsExecuted % 2 == 0) ? 22.5 : -22.5;
         Vec3 zigzagDirection = rotateDirection(baseDirection, offsetDegrees);
+        playInsectVfx(VfxIds.INSECT_CENTIPEDE,
+                user.position().add(0, user.getBbHeight() * 0.45, 0), zigzagDirection, 1.0f);
 
         Vec3 dashVelocity = zigzagDirection.scale(dashSpeed * 0.67);
         user.setDeltaMovement(dashVelocity);
@@ -200,6 +204,8 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
     }
 
     private void executeFinisher() {
+        playInsectVfx(VfxIds.INSECT_IMPACT,
+                user.position().add(0, user.getBbHeight() * 0.55, 0), user.getLookAngle(), 1.15f);
         Vec3 look = user.getLookAngle();
         Vec3 aimedDirection = new Vec3(look.x, 0, look.z);
         if (aimedDirection.lengthSqr() > 0.001) {
@@ -244,7 +250,7 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
-        for (int i = 0; i < 25; i++) {
+        for (int i = 0; i < 25; i += 2) {
             double progress = i / 25.0;
             double angle = progress * 6 * Math.PI; // Multiple rotations
             double radius = 0.67 * (1.0 - progress); // 1/3 of 2.0
@@ -270,7 +276,7 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
         for (int i = 1; i <= 6; i++) {
             Vec3 trailPos = userPos.subtract(baseDirection.scale(i * 0.13));
             serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(),
-                    trailPos.x, trailPos.y, trailPos.z, 3, 0.2, 0.2, 0.2, 0.1);
+                    trailPos.x, trailPos.y, trailPos.z, 1, 0.2, 0.2, 0.2, 0.1);
             serverLevel.sendParticles(ParticleTypes.PORTAL,
                     trailPos.x, trailPos.y, trailPos.z, 2, 0.15, 0.15, 0.15, 0.08);
         }
@@ -283,7 +289,7 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
         serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(),
-                enemyPos.x, enemyPos.y + 1, enemyPos.z, 10, 0.5, 0.5, 0.5, 0.2);
+                enemyPos.x, enemyPos.y + 1, enemyPos.z, 5, 0.5, 0.5, 0.5, 0.2);
         serverLevel.sendParticles(ParticleTypes.PORTAL,
                 enemyPos.x, enemyPos.y + 1, enemyPos.z, 8, 0.4, 0.4, 0.4, 0.15);
     }
@@ -292,7 +298,7 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
         serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(),
-                enemyPos.x, enemyPos.y + 0.5, enemyPos.z, 2, 0.3, 0.3, 0.3, 0.1);
+                enemyPos.x, enemyPos.y + 0.5, enemyPos.z, 1, 0.3, 0.3, 0.3, 0.1);
         if (tickCount % 3 == 0) {
             serverLevel.sendParticles(ParticleTypes.PORTAL,
                     enemyPos.x, enemyPos.y, enemyPos.z, 1, 0.2, 0.2, 0.2, 0.05);
@@ -306,7 +312,7 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
         serverLevel.sendParticles(ParticleTypes.CRIT,
                 targetPos.x, targetPos.y, targetPos.z, 5, 0.2, 0.2, 0.2, 0.1);
         serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(),
-                targetPos.x, targetPos.y, targetPos.z, 8, 0.3, 0.3, 0.3, 0.12);
+                targetPos.x, targetPos.y, targetPos.z, 4, 0.3, 0.3, 0.3, 0.12);
     }
 
     private void createFinisherImpactEffect(Vec3 impactPos) {
@@ -317,7 +323,7 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
                 targetPos.x, targetPos.y, targetPos.z, 20, 0.6, 0.6, 0.6, 0.3);
         createPoisonBurst(targetPos, 0.67f);
         serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(),
-                targetPos.x, targetPos.y, targetPos.z, 25, 0.8, 0.8, 0.8, 0.4);
+                targetPos.x, targetPos.y, targetPos.z, 12, 0.8, 0.8, 0.8, 0.4);
     }
 
     private void createVenomBurst() {
@@ -326,7 +332,7 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
         serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(),
-                userPos.x, userPos.y, userPos.z, 60, 0.83, 0.83, 0.83, 0.17);
+                userPos.x, userPos.y, userPos.z, 30, 0.83, 0.83, 0.83, 0.17);
         serverLevel.sendParticles(ParticleTypes.PORTAL,
                 userPos.x, userPos.y, userPos.z, 40, 0.67, 0.67, 0.67, 0.13);
 
@@ -338,7 +344,7 @@ public class CentipedeAttack extends InsectBreathingAttackBase {
             double y = userPos.y;
 
             serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(),
-                    x, y, z, 8, 0.2, 0.4, 0.2, 0.1);
+                    x, y, z, 4, 0.2, 0.4, 0.2, 0.1);
         }
     }
 

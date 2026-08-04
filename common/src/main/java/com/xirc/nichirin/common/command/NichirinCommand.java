@@ -20,6 +20,8 @@ import com.xirc.nichirin.common.network.s2c.TriggerShaderPacket;
 import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
 import com.xirc.nichirin.common.system.BloodMoonManager;
 import com.xirc.nichirin.common.system.DemonManager;
+import com.xirc.nichirin.common.vfx.VfxIds;
+import com.xirc.nichirin.common.vfx.VfxManager;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinMovesetRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
@@ -28,6 +30,7 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 
@@ -66,6 +69,70 @@ public class NichirinCommand {
     private static final int COL_OK      = 0x55FF55;
     private static final int COL_WARN    = 0xFFAA00;
     private static final int COL_ERR     = 0xFF5555;
+    private static final Map<String, ResourceLocation> VFX_DEBUG_EFFECTS = Map.ofEntries(
+            Map.entry("water_surface_slash", VfxIds.WATER_SURFACE_SLASH),
+            Map.entry("water_surface_slash_reverse", VfxIds.WATER_SURFACE_SLASH_REVERSE),
+            Map.entry("water_wheel", VfxIds.WATER_WHEEL),
+            Map.entry("drop_ripple_thrust", VfxIds.DROP_RIPPLE_THRUST),
+            Map.entry("flowing_dance", VfxIds.FLOWING_DANCE),
+            Map.entry("striking_tide", VfxIds.STRIKING_TIDE),
+            Map.entry("waterfall_basin", VfxIds.WATERFALL_BASIN),
+            Map.entry("splashing_water_flow", VfxIds.SPLASHING_WATER_FLOW),
+            Map.entry("whirlpool", VfxIds.WHIRLPOOL),
+            Map.entry("blessed_rain", VfxIds.BLESSED_RAIN),
+            Map.entry("blessed_rain_leap", VfxIds.BLESSED_RAIN_LEAP),
+            Map.entry("constant_flux", VfxIds.CONSTANT_FLUX),
+            Map.entry("dead_calm", VfxIds.DEAD_CALM),
+            Map.entry("unknowing_fire", VfxIds.UNKNOWING_FIRE),
+            Map.entry("rising_scorching_sun", VfxIds.RISING_SCORCHING_SUN),
+            Map.entry("blazing_universe", VfxIds.BLAZING_UNIVERSE),
+            Map.entry("blazing_universe_impact", VfxIds.BLAZING_UNIVERSE_IMPACT),
+            Map.entry("blooming_flame_undulation", VfxIds.BLOOMING_FLAME_UNDULATION),
+            Map.entry("flame_tiger", VfxIds.FLAME_TIGER),
+            Map.entry("rengoku", VfxIds.RENGOKU),
+            Map.entry("flame_pommel_slash", VfxIds.FLAME_POMMEL_SLASH),
+            Map.entry("thunderclap_flash", VfxIds.THUNDERCLAP_FLASH),
+            Map.entry("godspeed", VfxIds.GODSPEED),
+            Map.entry("rice_spirit_slash", VfxIds.RICE_SPIRIT_SLASH),
+            Map.entry("thunder_swarm_slash", VfxIds.THUNDER_SWARM_SLASH),
+            Map.entry("distant_thunder_charge", VfxIds.DISTANT_THUNDER_CHARGE),
+            Map.entry("heat_lightning_rise", VfxIds.HEAT_LIGHTNING_RISE),
+            Map.entry("thunder_strike_warning", VfxIds.THUNDER_STRIKE_WARNING),
+            Map.entry("thunder_strike", VfxIds.THUNDER_STRIKE),
+            Map.entry("honoikazuchi_no_kami", VfxIds.HONOIKAZUCHI_NO_KAMI),
+            Map.entry("honoikazuchi_impact", VfxIds.HONOIKAZUCHI_IMPACT),
+            Map.entry("low_clouds_distant_haze", VfxIds.LOW_CLOUDS_DISTANT_HAZE),
+            Map.entry("eight_layered_mist", VfxIds.EIGHT_LAYERED_MIST),
+            Map.entry("scattering_mist_splash", VfxIds.SCATTERING_MIST_SPLASH),
+            Map.entry("shifting_flow_slash", VfxIds.SHIFTING_FLOW_SLASH),
+            Map.entry("sea_of_clouds_and_haze", VfxIds.SEA_OF_CLOUDS_AND_HAZE),
+            Map.entry("lunar_dispersing_mist", VfxIds.LUNAR_DISPERSING_MIST),
+            Map.entry("mist_finisher", VfxIds.MIST_FINISHER),
+            Map.entry("obscuring_clouds", VfxIds.OBSCURING_CLOUDS),
+            Map.entry("beast_pierce", VfxIds.BEAST_PIERCE),
+            Map.entry("beast_x_slice", VfxIds.BEAST_X_SLICE),
+            Map.entry("beast_explosive_rush", VfxIds.BEAST_EXPLOSIVE_RUSH),
+            Map.entry("beast_devour", VfxIds.BEAST_DEVOUR),
+            Map.entry("beast_rapid_slash", VfxIds.BEAST_RAPID_SLASH),
+            Map.entry("beast_crazy_cutting", VfxIds.BEAST_CRAZY_CUTTING),
+            Map.entry("beast_palisade_bite", VfxIds.BEAST_PALISADE_BITE),
+            Map.entry("beast_spatial_awareness", VfxIds.BEAST_SPATIAL_AWARENESS),
+            Map.entry("beast_bendy_slash", VfxIds.BEAST_BENDY_SLASH),
+            Map.entry("beast_whirling_fangs", VfxIds.BEAST_WHIRLING_FANGS),
+            Map.entry("beast_throwing_strike", VfxIds.BEAST_THROWING_STRIKE),
+            Map.entry("sound_resonding_slashes", VfxIds.SOUND_RESONDING_SLASHES),
+            Map.entry("sound_rhythmic_step", VfxIds.SOUND_RHYTHMIC_STEP),
+            Map.entry("sound_roar", VfxIds.SOUND_ROAR),
+            Map.entry("sound_string_performance", VfxIds.SOUND_STRING_PERFORMANCE),
+            Map.entry("sound_tempo_breaker", VfxIds.SOUND_TEMPO_BREAKER),
+            Map.entry("sound_impact", VfxIds.SOUND_IMPACT),
+            Map.entry("insect_quick_sting", VfxIds.INSECT_QUICK_STING),
+            Map.entry("insect_bee_sting", VfxIds.INSECT_BEE_STING),
+            Map.entry("insect_butterfly_dance", VfxIds.INSECT_BUTTERFLY_DANCE),
+            Map.entry("insect_butterfly_dash", VfxIds.INSECT_BUTTERFLY_DASH),
+            Map.entry("insect_dragonfly", VfxIds.INSECT_DRAGONFLY),
+            Map.entry("insect_centipede", VfxIds.INSECT_CENTIPEDE),
+            Map.entry("insect_impact", VfxIds.INSECT_IMPACT));
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("nichirin")
@@ -96,6 +163,23 @@ public class NichirinCommand {
                                 .executes(ctx -> giveBlurry(ctx, ctx.getSource().getPlayerOrException()))
                                 .then(Commands.argument("player", EntityArgument.player())
                                         .executes(ctx -> giveBlurry(ctx, EntityArgument.getPlayer(ctx, "player")))))
+                        .then(Commands.literal("forgetpact")
+                                .executes(ctx -> clearAkazaPact(ctx, ctx.getSource().getPlayerOrException()))
+                                .then(Commands.argument("player", EntityArgument.player())
+                                        .executes(ctx -> clearAkazaPact(ctx, EntityArgument.getPlayer(ctx, "player")))))
+                        .then(Commands.literal("vfx")
+                                .then(Commands.argument("effect", StringArgumentType.word())
+                                        .suggests((ctx, builder) -> {
+                                            VFX_DEBUG_EFFECTS.keySet().forEach(builder::suggest);
+                                            return builder.buildFuture();
+                                        })
+                                        .executes(ctx -> playDebugVfx(ctx,
+                                                ctx.getSource().getPlayerOrException(),
+                                                StringArgumentType.getString(ctx, "effect")))
+                                        .then(Commands.argument("player", EntityArgument.player())
+                                                .executes(ctx -> playDebugVfx(ctx,
+                                                        EntityArgument.getPlayer(ctx, "player"),
+                                                        StringArgumentType.getString(ctx, "effect"))))))
                         .then(AuraCommand.build())
                         .then(OutlineCommand.build()))
 
@@ -134,6 +218,16 @@ public class NichirinCommand {
 
     }
 
+    private static int clearAkazaPact(CommandContext<CommandSourceStack> ctx, ServerPlayer player) {
+        boolean removed = com.xirc.nichirin.common.system.UpperMoonPact.unmark(player, "akaza");
+        ctx.getSource().sendSuccess(() -> Component.literal(
+                        removed
+                                ? "Removed Akaza's pact from " + player.getName().getString() + " — he will hunt you again."
+                                : player.getName().getString() + " has no pact with Akaza.")
+                .withStyle(s -> s.withColor(removed ? COL_OK : COL_WARN)), true);
+        return 1;
+    }
+
     private static int giveBlurry(CommandContext<CommandSourceStack> ctx, ServerPlayer player) {
         boolean applied = player.addEffect(new MobEffectInstance(NichirinEffectRegistry.blurry(), 160, 0, false, true, true));
         NichirinPacketRegistry.sendToPlayer(
@@ -143,6 +237,25 @@ public class NichirinCommand {
                         + " blurry debug effect to " + player.getName().getString()
                         + " (effect id: nichirin:blurry)")
                 .withStyle(s -> s.withColor(COL_OK)), true);
+        return 1;
+    }
+
+    private static int playDebugVfx(CommandContext<CommandSourceStack> ctx, ServerPlayer player, String effectName) {
+        ResourceLocation effectId = VFX_DEBUG_EFFECTS.get(effectName);
+        if (effectId == null) {
+            ctx.getSource().sendFailure(Component.literal("Unknown VFX: " + effectName)
+                    .withStyle(s -> s.withColor(COL_ERR)));
+            return 0;
+        }
+        var look = player.getLookAngle();
+        var direction = new net.minecraft.world.phys.Vec3(look.x, 0.0, look.z);
+        if (direction.lengthSqr() < 1.0E-6) direction = new net.minecraft.world.phys.Vec3(0.0, 0.0, 1.0);
+        direction = direction.normalize();
+        var origin = player.position().add(direction.scale(1.25)).add(0.0, 0.08, 0.0);
+        VfxManager.playOwned((net.minecraft.server.level.ServerLevel) player.level(), player,
+                effectId, origin, direction, 1.0f);
+        ctx.getSource().sendSuccess(() -> Component.literal("Played " + effectName + " VFX for "
+                + player.getName().getString()).withStyle(s -> s.withColor(COL_OK)), false);
         return 1;
     }
 

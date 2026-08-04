@@ -257,7 +257,12 @@ public class MoveExecutor {
         }
 
         applyInfinitePrevention(player, attack, moveId);
-        ComboTracker.registerAttackStart(player, moveId);
+        long attackSequence = ComboTracker.registerAttackStart(player, moveId);
+        if (attack instanceof AbstractAttack abstractAttack) {
+            abstractAttack.setComboSequence(attackSequence);
+        } else if (attack instanceof AbstractKatanaAttack katanaAttack) {
+            katanaAttack.setComboSequence(attackSequence);
+        }
         float multiplier = ComboTracker.getAttackComboMultiplier(player);
         if (multiplier == 1.0f) {
             comboScaledAttacks.add(attack);
@@ -505,9 +510,13 @@ public class MoveExecutor {
                                                AbstractMoveset.MoveConfiguration config) {
         if (!(entity instanceof Player) || movesetId == null) return;
         AbstractMoveset moveset = NichirinMovesetRegistry.getMoveset(movesetId);
-        if (moveset != null && (moveset.isBreathingMoveset() || "default_katana".equals(movesetId))) {
+        if (moveset != null && (moveset.isBreathingMoveset()
+                || "default_katana".equals(movesetId)
+                || "dual_katana".equals(movesetId))) {
             KatanaRequirement requirement;
-            if ("default_katana".equals(movesetId)
+            if ("dual_katana".equals(movesetId)) {
+                requirement = KatanaRequirement.DUAL;
+            } else if ("default_katana".equals(movesetId)
                     || (config != null && config.getClickSlot() == AbstractMoveset.ClickSlot.LEFT)) {
                 requirement = KatanaRequirement.MAIN_HAND;
             } else if ("sound_breathing".equals(movesetId) || "beast_breathing".equals(movesetId)) {

@@ -43,6 +43,7 @@ public final class NichirinAnimations {
     private static final int GUN_FIRE_RECOIL_TICKS = 6;
     private static final float GUN_FIRE_RECOIL = 0.25f;
     private static final Map<AbstractClientPlayer, Long> GUN_FIRE_STARTS = new WeakHashMap<>();
+    private static final Map<AbstractClientPlayer, String> ACTIVE_PLAYER_ANIMATIONS = new WeakHashMap<>();
     private static boolean initialized;
 
     private NichirinAnimations() {}
@@ -72,7 +73,6 @@ public final class NichirinAnimations {
                     controller.setFirstPersonMode(FirstPersonMode.THIRD_PERSON_MODEL);
                     controller.setFirstPersonConfiguration(FIRST_PERSON_CONFIG);
                     controller.setOverrideEasingType(EasingType.EASE_IN_OUT_SINE);
-                    controller.addModifierBefore(crouchingArmModifier(player));
                     controller.addModifierBefore(gunHoldModifier(player));
                     return controller;
                 });
@@ -116,27 +116,6 @@ public final class NichirinAnimations {
         return modifier;
     }
 
-    private static AdjustmentModifier crouchingArmModifier(AbstractClientPlayer player) {
-        AdjustmentModifier modifier = new AdjustmentModifier(partName -> {
-            if (!player.isCrouching() || !FirstPersonMode.isFirstPersonPass()) {
-                return Optional.empty();
-            }
-
-            return switch (partName) {
-                case "right_arm" -> Optional.of(new AdjustmentModifier.PartModifier(
-                        new Vec3f(-0.22f, 0.0f, -0.08f),
-                        new Vec3f(0.0f, -1.5f, -0.75f)));
-                case "left_arm" -> Optional.of(new AdjustmentModifier.PartModifier(
-                        new Vec3f(-0.22f, 0.0f, 0.08f),
-                        new Vec3f(0.0f, -1.5f, -0.75f)));
-                default -> Optional.empty();
-            };
-        });
-        modifier.fadeIn = false;
-        modifier.fadeOut = false;
-        return modifier;
-    }
-
     public static void playAnimation(Player player, String animationName) {
         playAnimation(player, animationName, 1.0f);
     }
@@ -148,6 +127,7 @@ public final class NichirinAnimations {
         if (minecraft.level == null) return;
 
         if (animationName == null || animationName.isEmpty()) {
+            ACTIVE_PLAYER_ANIMATIONS.remove(clientPlayer);
             PlayerAnimationController ctrl = getController(clientPlayer);
             if (ctrl != null) {
                 setControllerSpeed(ctrl, 1.0f);
@@ -170,6 +150,7 @@ public final class NichirinAnimations {
         }
 
         setControllerSpeed(controller, speed);
+        ACTIVE_PLAYER_ANIMATIONS.put(clientPlayer, animationName.toLowerCase());
 
         if ("fire".equals(animationName)) {
             controller.stopTriggeredAnimation();
@@ -255,6 +236,7 @@ public final class NichirinAnimations {
     }
 
     public static void stopAnimation(AbstractClientPlayer player) {
+        ACTIVE_PLAYER_ANIMATIONS.remove(player);
         PlayerAnimationController controller = getController(player);
         if (controller != null) {
             controller.stopTriggeredAnimation();
@@ -278,6 +260,18 @@ public final class NichirinAnimations {
     public static boolean isAnimationPlaying(AbstractClientPlayer player) {
         PlayerAnimationController controller = getController(player);
         return controller != null && controller.isActive();
+    }
+
+    public static boolean isKatanaAttackPlaying(AbstractClientPlayer player) {
+        String name = ACTIVE_PLAYER_ANIMATIONS.get(player);
+        if (name == null || !isAnimationPlaying(player)) return false;
+        return !name.contains("block") && !name.contains("parry") && !name.contains("early_release")
+                && !name.contains("sheath") && !name.contains("idle") && !name.contains("reload")
+                && !name.equals("fire") && !name.endsWith("_hit");
+    }
+
+    public static String getActiveAnimationName(AbstractClientPlayer player) {
+        return isAnimationPlaying(player) ? ACTIVE_PLAYER_ANIMATIONS.get(player) : null;
     }
 
     /** Lazily-built looping idle used as the gun's base animation (see the controller's state

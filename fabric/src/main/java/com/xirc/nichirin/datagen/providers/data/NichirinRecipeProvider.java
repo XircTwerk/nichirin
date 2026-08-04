@@ -12,6 +12,7 @@ import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.data.recipes.ShapelessRecipeBuilder;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -77,20 +78,57 @@ public class NichirinRecipeProvider extends FabricRecipeProvider {
                 .unlockedBy("has_light_blue_dye", InventoryChangeTrigger.TriggerInstance.hasItems(Items.LIGHT_BLUE_DYE))
                 .save(exporter);
 
-        ShapelessRecipeBuilder.shapeless(RecipeCategory.COMBAT, NichirinItemRegistry.SOUND_KATANAS.get())
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.COMBAT, NichirinItemRegistry.GIYU_KATANA.get())
                 .requires(NichirinItemRegistry.KATANA.get())
-                .requires(NichirinItemRegistry.KATANA.get())
-                .requires(Items.WHITE_DYE)
+                .requires(Items.BLUE_DYE)
+                .requires(Items.PINK_DYE)
                 .unlockedBy("has_katana", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinItemRegistry.KATANA.get()))
-                .unlockedBy("has_white_dye", InventoryChangeTrigger.TriggerInstance.hasItems(Items.WHITE_DYE))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.RIGHT_SOUND_KATANA.get())
+                .define('K', NichirinItemRegistry.KATANA.get())
+                .define('D', Items.WHITE_DYE)
+                .pattern("K")
+                .pattern("D")
+                .unlockedBy("has_katana", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinItemRegistry.KATANA.get()))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.LEFT_SOUND_KATANA.get())
+                .define('K', NichirinItemRegistry.KATANA.get())
+                .define('D', Items.WHITE_DYE)
+                .pattern("D")
+                .pattern("K")
+                .unlockedBy("has_katana", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinItemRegistry.KATANA.get()))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.RIGHT_BEAST_KATANA.get())
+                .define('K', NichirinItemRegistry.KATANA.get())
+                .define('D', Items.GRAY_DYE)
+                .pattern("K")
+                .pattern("D")
+                .unlockedBy("has_katana", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinItemRegistry.KATANA.get()))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, NichirinItemRegistry.LEFT_BEAST_KATANA.get())
+                .define('K', NichirinItemRegistry.KATANA.get())
+                .define('D', Items.GRAY_DYE)
+                .pattern("D")
+                .pattern("K")
+                .unlockedBy("has_katana", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinItemRegistry.KATANA.get()))
+                .save(exporter);
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.COMBAT, NichirinItemRegistry.SOUND_KATANAS.get())
+                .requires(NichirinItemRegistry.RIGHT_SOUND_KATANA.get())
+                .requires(NichirinItemRegistry.LEFT_SOUND_KATANA.get())
+                .unlockedBy("has_sound_katanas", InventoryChangeTrigger.TriggerInstance.hasItems(
+                        NichirinItemRegistry.RIGHT_SOUND_KATANA.get(), NichirinItemRegistry.LEFT_SOUND_KATANA.get()))
                 .save(exporter);
 
         ShapelessRecipeBuilder.shapeless(RecipeCategory.COMBAT, NichirinItemRegistry.BEAST_KATANAS.get())
-                .requires(NichirinItemRegistry.KATANA.get())
-                .requires(NichirinItemRegistry.KATANA.get())
-                .requires(Items.GRAY_DYE)
-                .unlockedBy("has_katana", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinItemRegistry.KATANA.get()))
-                .unlockedBy("has_gray_dye", InventoryChangeTrigger.TriggerInstance.hasItems(Items.GRAY_DYE))
+                .requires(NichirinItemRegistry.RIGHT_BEAST_KATANA.get())
+                .requires(NichirinItemRegistry.LEFT_BEAST_KATANA.get())
+                .unlockedBy("has_beast_katanas", InventoryChangeTrigger.TriggerInstance.hasItems(
+                        NichirinItemRegistry.RIGHT_BEAST_KATANA.get(), NichirinItemRegistry.LEFT_BEAST_KATANA.get()))
                 .save(exporter);
 
         // Smoke bomb recipe
@@ -193,6 +231,101 @@ public class NichirinRecipeProvider extends FabricRecipeProvider {
                 .pattern("N N")
                 .pattern("III")
                 .unlockedBy("has_iron_ingot", InventoryChangeTrigger.TriggerInstance.hasItems(Items.IRON_INGOT))
+                .save(exporter);
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.FOOD, NichirinItemRegistry.ONIGIRI.get(), 2)
+                .requires(NichirinItemRegistry.RICE.get())
+                .requires(Items.DRIED_KELP)
+                .unlockedBy("has_rice", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinItemRegistry.RICE.get()))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, NichirinItemRegistry.DRINKING_GOURD.get())
+                .define('B', Items.OAK_BUTTON)
+                .define('G', Items.GLASS_BOTTLE)
+                .define('P', Items.OAK_PLANKS)
+                .pattern(" B ")
+                .pattern(" G ")
+                .pattern(" P ")
+                .unlockedBy("has_glass_bottle", InventoryChangeTrigger.TriggerInstance.hasItems(Items.GLASS_BOTTLE))
+                .save(exporter);
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.BUILDING_BLOCKS, NichirinBlockRegistry.WISTERIA_PLANKS_ITEM.get(), 4)
+                .requires(Ingredient.of(
+                        NichirinBlockRegistry.WISTERIA_LOG_ITEM.get(),
+                        NichirinBlockRegistry.STRIPPED_WISTERIA_LOG_ITEM.get(),
+                        NichirinBlockRegistry.WISTERIA_WOOD_ITEM.get(),
+                        NichirinBlockRegistry.STRIPPED_WISTERIA_WOOD_ITEM.get()))
+                .unlockedBy("has_wisteria_log", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinBlockRegistry.WISTERIA_LOG_ITEM.get()))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, NichirinBlockRegistry.WISTERIA_WOOD_ITEM.get(), 3)
+                .define('L', NichirinBlockRegistry.WISTERIA_LOG_ITEM.get())
+                .pattern("LL")
+                .pattern("LL")
+                .unlockedBy("has_wisteria_log", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinBlockRegistry.WISTERIA_LOG_ITEM.get()))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, NichirinBlockRegistry.STRIPPED_WISTERIA_WOOD_ITEM.get(), 3)
+                .define('L', NichirinBlockRegistry.STRIPPED_WISTERIA_LOG_ITEM.get())
+                .pattern("LL")
+                .pattern("LL")
+                .unlockedBy("has_stripped_wisteria_log", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinBlockRegistry.STRIPPED_WISTERIA_LOG_ITEM.get()))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, NichirinBlockRegistry.WISTERIA_STAIRS_ITEM.get(), 4)
+                .define('P', NichirinBlockRegistry.WISTERIA_PLANKS_ITEM.get())
+                .pattern("P  ")
+                .pattern("PP ")
+                .pattern("PPP")
+                .unlockedBy("has_wisteria_planks", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinBlockRegistry.WISTERIA_PLANKS_ITEM.get()))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, NichirinBlockRegistry.WISTERIA_SLAB_ITEM.get(), 6)
+                .define('P', NichirinBlockRegistry.WISTERIA_PLANKS_ITEM.get())
+                .pattern("PPP")
+                .unlockedBy("has_wisteria_planks", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinBlockRegistry.WISTERIA_PLANKS_ITEM.get()))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, NichirinBlockRegistry.WISTERIA_FENCE_ITEM.get(), 3)
+                .define('P', NichirinBlockRegistry.WISTERIA_PLANKS_ITEM.get())
+                .define('S', Items.STICK)
+                .pattern("PSP")
+                .pattern("PSP")
+                .unlockedBy("has_wisteria_planks", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinBlockRegistry.WISTERIA_PLANKS_ITEM.get()))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, NichirinBlockRegistry.WISTERIA_FENCE_GATE_ITEM.get())
+                .define('P', NichirinBlockRegistry.WISTERIA_PLANKS_ITEM.get())
+                .define('S', Items.STICK)
+                .pattern("SPS")
+                .pattern("SPS")
+                .unlockedBy("has_wisteria_planks", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinBlockRegistry.WISTERIA_PLANKS_ITEM.get()))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, NichirinBlockRegistry.WISTERIA_DOOR_ITEM.get(), 3)
+                .define('P', NichirinBlockRegistry.WISTERIA_PLANKS_ITEM.get())
+                .pattern("PP")
+                .pattern("PP")
+                .pattern("PP")
+                .unlockedBy("has_wisteria_planks", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinBlockRegistry.WISTERIA_PLANKS_ITEM.get()))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, NichirinBlockRegistry.WISTERIA_TRAPDOOR_ITEM.get(), 2)
+                .define('P', NichirinBlockRegistry.WISTERIA_PLANKS_ITEM.get())
+                .pattern("PPP")
+                .pattern("PPP")
+                .unlockedBy("has_wisteria_planks", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinBlockRegistry.WISTERIA_PLANKS_ITEM.get()))
+                .save(exporter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, NichirinBlockRegistry.WISTERIA_PRESSURE_PLATE_ITEM.get())
+                .define('P', NichirinBlockRegistry.WISTERIA_PLANKS_ITEM.get())
+                .pattern("PP")
+                .unlockedBy("has_wisteria_planks", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinBlockRegistry.WISTERIA_PLANKS_ITEM.get()))
+                .save(exporter);
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.REDSTONE, NichirinBlockRegistry.WISTERIA_BUTTON_ITEM.get())
+                .requires(NichirinBlockRegistry.WISTERIA_PLANKS_ITEM.get())
+                .unlockedBy("has_wisteria_planks", InventoryChangeTrigger.TriggerInstance.hasItems(NichirinBlockRegistry.WISTERIA_PLANKS_ITEM.get()))
                 .save(exporter);
 
         // Zenitsu Helmet - Yellow secondary, Orange primary

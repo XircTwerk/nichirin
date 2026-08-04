@@ -8,6 +8,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.phys.Vec3;
+import com.xirc.nichirin.common.vfx.VfxIds;
 
 /**
  * Fourth Form: Distant Thunder
@@ -29,27 +30,7 @@ public class DistantThunderAttack extends ThunderBreathingAttackBase {
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, 1.0f, 0.5f);
 
-        // Create charging effect particles around the user
-        if (world instanceof ServerLevel serverLevel) {
-            Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
-
-            // Swirling electric particles around the user before launching
-            for (int i = 0; i < 30; i++) {
-                double angle = (i / 30.0) * Math.PI * 2;
-                double radius = 2.0;
-                double offsetX = Math.cos(angle) * radius;
-                double offsetZ = Math.sin(angle) * radius;
-
-                serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK,
-                        userPos.x + offsetX, userPos.y, userPos.z + offsetZ,
-                        1, 0.1, 0.1, 0.1, 0.05);
-            }
-
-            // Upward sparks
-            serverLevel.sendParticles(ParticleTypes.END_ROD,
-                    userPos.x, userPos.y, userPos.z,
-                    20, 0.5, 1.0, 0.5, 0.2);
-        }
+        playThunderVfx(VfxIds.DISTANT_THUNDER_CHARGE, user.position(), user.getLookAngle(), 1.0f);
     }
 
     @Override
@@ -87,9 +68,7 @@ public class DistantThunderAttack extends ThunderBreathingAttackBase {
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.PLAYERS, 0.8f, 1.5f);
 
-        serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK,
-                userChestPos.x, userChestPos.y, userChestPos.z,
-                40, 0.8, 0.8, 0.8, 0.3);
+        playThunderVfx(VfxIds.THUNDERCLAP_FLASH, userChestPos, lookDirection, 0.72f);
     }
 
     @Override

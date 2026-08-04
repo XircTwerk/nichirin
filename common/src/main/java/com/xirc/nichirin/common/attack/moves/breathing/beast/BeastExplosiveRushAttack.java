@@ -1,8 +1,7 @@
 package com.xirc.nichirin.common.attack.moves.breathing.beast;
 
 import com.xirc.nichirin.common.util.HitboxData;
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.server.level.ServerLevel;
+import com.xirc.nichirin.common.vfx.VfxIds;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -39,7 +38,8 @@ public class BeastExplosiveRushAttack extends BeastBreathingAttackBase {
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PHANTOM_FLAP, SoundSource.PLAYERS, 1.5f, 2.0f);
 
-        createDashBurst();
+        playBeastVfx(VfxIds.BEAST_EXPLOSIVE_RUSH,
+                user.position().add(0, user.getBbHeight() * 0.4, 0), dashDirection, 1.0f);
     }
 
     @Override
@@ -84,7 +84,6 @@ public class BeastExplosiveRushAttack extends BeastBreathingAttackBase {
             }
         }
 
-        createDashTrail();
     }
 
     private void deflectProjectiles() {
@@ -105,24 +104,6 @@ public class BeastExplosiveRushAttack extends BeastBreathingAttackBase {
         for (Projectile proj : projectiles) {
             Vec3 deflect = proj.getDeltaMovement().scale(-1.5).add(0, 0.5, 0);
             proj.setDeltaMovement(deflect);
-        }
-    }
-
-    private void createDashBurst() {
-        if (!(world instanceof ServerLevel sl)) return;
-        Vec3 pos = user.position().add(0, user.getBbHeight() / 2, 0);
-        sl.sendParticles(ParticleTypes.CLOUD, pos.x, pos.y, pos.z, 30, 0.8, 0.8, 0.8, 0.3);
-        sl.sendParticles(ParticleTypes.CRIT, pos.x, pos.y, pos.z, 20, 0.6, 0.6, 0.6, 0.4);
-    }
-
-    private void createDashTrail() {
-        if (!(world instanceof ServerLevel sl)) return;
-        Vec3 pos = user.position().add(0, user.getBbHeight() / 2, 0);
-        Vec3 back = dashDirection.scale(-1);
-        for (int i = 1; i <= 5; i++) {
-            Vec3 trail = pos.add(back.scale(i * 0.4));
-            sl.sendParticles(ParticleTypes.CLOUD, trail.x, trail.y, trail.z,
-                    2, 0.2, 0.2, 0.2, 0.05);
         }
     }
 

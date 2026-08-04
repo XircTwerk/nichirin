@@ -7,6 +7,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import com.xirc.nichirin.common.vfx.VfxIds;
 
 import java.util.Comparator;
 import java.util.List;
@@ -98,29 +99,9 @@ public class RiceSpiritAttack extends ThunderBreathingAttackBase {
                 Math.sin(radian) * offsetDistance
         );
 
-        // Create slash visual
-        if (world instanceof ServerLevel serverLevel) {
-            // Lightning slash effect
-            serverLevel.sendParticles(ParticleTypes.SWEEP_ATTACK,
-                    slashPos.x, slashPos.y, slashPos.z,
-                    1, 0, 0, 0, 0);
-
-            // Electric particles
-            serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK,
-                    slashPos.x, slashPos.y, slashPos.z,
-                    15, 0.3, 0.3, 0.3, 0.1);
-
-            // Trail from player to target
-            Vec3 playerPos = user.position().add(0, 1, 0);
-            int particleCount = 10;
-            for (int i = 0; i < particleCount; i++) {
-                double t = i / (double) particleCount;
-                Vec3 particlePos = playerPos.lerp(slashPos, t);
-                serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK,
-                        particlePos.x, particlePos.y, particlePos.z,
-                        1, 0, 0, 0, 0);
-            }
-        }
+        Vec3 slashDirection = lockedTarget.position().subtract(user.position());
+        playThunderVfxAt(VfxIds.RICE_SPIRIT_SLASH, slashPos,
+                slashDirection.lengthSqr() > 1.0E-6 ? slashDirection : user.getLookAngle(), 0.85f);
 
         // Play slash sound
         world.playSound(null, slashPos.x, slashPos.y, slashPos.z,
@@ -129,12 +110,6 @@ public class RiceSpiritAttack extends ThunderBreathingAttackBase {
 
         hitTargetNoImmunity(lockedTarget);
 
-        // Visual feedback on the target
-        if (world instanceof ServerLevel serverLevel) {
-            serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK,
-                    lockedTarget.getX(), lockedTarget.getY() + 1, lockedTarget.getZ(),
-                    20, 0.5, 0.5, 0.5, 0.1);
-        }
     }
 
     /**

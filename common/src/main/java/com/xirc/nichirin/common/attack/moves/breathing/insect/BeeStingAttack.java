@@ -1,5 +1,7 @@
 package com.xirc.nichirin.common.attack.moves.breathing.insect;
 
+import com.xirc.nichirin.common.vfx.VfxIds;
+
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -88,6 +90,8 @@ public class BeeStingAttack extends InsectBreathingAttackBase {
         user.setDeltaMovement(dashDirection.scale(dashSpeed));
         user.hurtMarked = true;
         user.hasImpulse = true;
+        playInsectVfx(VfxIds.INSECT_BEE_STING,
+                user.position().add(0, user.getBbHeight() * 0.5, 0), dashDirection, 1.0f);
         playDashSound();
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.BEE_LOOP, SoundSource.PLAYERS, 1.0f, 2.0f);
@@ -187,8 +191,10 @@ public class BeeStingAttack extends InsectBreathingAttackBase {
 
         for (int i = 1; i <= 6; i++) {
             Vec3 trailPos = userPos.subtract(dashDirection.scale(i * 0.4));
-            serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(), trailPos.x, trailPos.y, trailPos.z, 2, 0.3, 0.3, 0.3, 0.1);
-            serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(), trailPos.x, trailPos.y, trailPos.z, 1, 0.2, 0.2, 0.2, 0.08);
+            serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(), trailPos.x, trailPos.y, trailPos.z, 1, 0.3, 0.3, 0.3, 0.1);
+            if ((i & 1) == 0) {
+                serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(), trailPos.x, trailPos.y, trailPos.z, 1, 0.2, 0.2, 0.2, 0.08);
+            }
         }
 
         Vec3 rightDir = dashDirection.cross(new Vec3(0, 1, 0)).normalize();

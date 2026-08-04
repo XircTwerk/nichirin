@@ -117,7 +117,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
 
         if (damaged) {
             if (user instanceof Player player)
-                ComboIntegration.handleSuccessfulHit(player, target, hitStun, damage);
+                ComboIntegration.handleSuccessfulHit(player, target, hitStun, damage, comboSequence);
             handleBloodGain(target);
         }
 
@@ -139,7 +139,7 @@ public abstract class AbstractDemonAttack<T extends AbstractDemonAttack, A exten
 
         if (damaged) {
             if (user instanceof Player player)
-                ComboIntegration.handleSuccessfulHit(player, target, hitStun, damage);
+                ComboIntegration.handleSuccessfulHit(player, target, hitStun, damage, comboSequence);
             handleBloodGain(target);
         }
 

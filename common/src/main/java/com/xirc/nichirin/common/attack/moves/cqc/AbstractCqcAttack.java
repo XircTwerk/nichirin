@@ -161,7 +161,7 @@ public abstract class AbstractCqcAttack extends AbstractAttack {
                             NichirinEffectRegistry.slammed(), hitStun, 0, false, false, true));
                 }
                 if (user instanceof Player player)
-                    ComboIntegration.handleSuccessfulHit(player, target, hitStun, scaledDamage);
+                    ComboIntegration.handleSuccessfulHit(player, target, hitStun, scaledDamage, comboSequence);
             }
             onHitTarget(user, target, world);
             DestructiveDeathCqcHook.onCqcHit(user, target, world);

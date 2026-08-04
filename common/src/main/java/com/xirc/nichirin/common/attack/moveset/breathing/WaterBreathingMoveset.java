@@ -24,10 +24,10 @@ public class WaterBreathingMoveset extends AbstractMoveset {
     private static class ComboState {
         int currentStage = 0;
         long lastAttackTime = 0;
-        long comboWindow = 1000; // 1 second window to continue combo
+        long followupTimeoutMillis = 1000;
 
-        boolean canContinueCombo() {
-            return System.currentTimeMillis() - lastAttackTime <= comboWindow;
+        boolean canContinueSequence() {
+            return System.currentTimeMillis() - lastAttackTime <= followupTimeoutMillis;
         }
 
         void updateAttackTime() {
@@ -76,7 +76,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 .withRange(4.0f)
                 .withKnockback(0.1f)
                 .withBreathCost(18.0f)
-                .withHitStun(12)
+                .withHitStun(18)
                 .withHitboxSize(3.5f)
                 .withDashSpeed(4.0f)
                 .withDescription("Lunging spinning slash through enemies.")
@@ -93,11 +93,11 @@ public class WaterBreathingMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("flowing_dance", "Flowing Dance")
                         .withTiming(240, 15, 42)
                         .withDamage(2.25f) // Continuous damage
-                        .withRange(3.0f) // Close range continuous
+                        .withRange(0.5f) // Close range continuous
                         .withKnockback(0.05f) // Very light knockback
-                        .withBreathCost(25.0f)
+                        .withBreathCost(20.0f)
                         .withHitStun(6) // Very short for continuous hits
-                        .withHitboxSize(2.5f)
+                        .withHitboxSize(3.5f)
                         .withDescription("Continuous attack stance hitting nearby enemies for several seconds.")
                         .withAttack(FlowingDanceAttack::new)
                 )
@@ -239,7 +239,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
 
         int nextStage;
 
-        if (comboState.currentStage == 0 || !comboState.canContinueCombo()) {
+        if (comboState.currentStage == 0 || !comboState.canContinueSequence()) {
             nextStage = 1;
             comboState.reset();
         } else {

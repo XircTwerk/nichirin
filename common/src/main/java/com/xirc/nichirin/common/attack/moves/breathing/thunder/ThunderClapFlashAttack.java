@@ -9,6 +9,7 @@ import com.xirc.nichirin.common.util.BreathingManager;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import com.xirc.nichirin.registry.NichirinSoundRegistry;
+import com.xirc.nichirin.common.vfx.VfxIds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
@@ -305,18 +306,7 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
 
     /** Spawns thunder particles at the approximate world position of the player's right hand. */
     private void spawnRightHandThunder(Player player) {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-        double yawRad = Math.toRadians(player.getYRot());
-        // Right-of-facing vector in world space (yaw 0 faces +Z; right is +X).
-        Vec3 right = new Vec3(Math.cos(yawRad), 0, Math.sin(yawRad));
-        Vec3 forward = new Vec3(-Math.sin(yawRad), 0, Math.cos(yawRad));
-        // Approximate right-hand-low pose: shoulder + arm hanging down and slightly forward.
-        Vec3 handPos = player.position()
-                .add(0, 0.8, 0)
-                .add(right.scale(0.35))
-                .add(forward.scale(0.2));
-        serverLevel.sendParticles(NichirinParticleRegistry.THUNDER.get(),
-                handPos.x, handPos.y, handPos.z, 8, 0.1, 0.1, 0.1, 0.02);
+        playThunderVfx(VfxIds.DISTANT_THUNDER_CHARGE, player.position(), player.getLookAngle(), 0.72f);
     }
 
     private Vec3 randomUnitVector() {
@@ -403,7 +393,9 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
         nextAfterimageDistance = AFTERIMAGE_SPACING;
         faceTarget(player, segmentEnd);
         playFoldSound(player);
-        telegraphSegmentImpact(segmentEnd);
+        Vec3 segmentDirection = segmentEnd.subtract(segmentStart);
+        playThunderVfx(VfxIds.THUNDERCLAP_FLASH, segmentStart,
+                segmentDirection.lengthSqr() > 1.0E-6 ? segmentDirection : player.getLookAngle(), 1.0f);
         damageEntitiesAlongSegment(player, segmentStart, segmentEnd);
         // Guarantee the locked-in target eats the hit even when the swept AABB missed (happens after
         // the first launch: the target is mid-air and can drift out of the sweep volume between
@@ -471,13 +463,6 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
                 NichirinSoundRegistry.THUNDERCLAP_FLASH.get(), SoundSource.PLAYERS, 0.7f, pitch);
     }
 
-    /** Burst of particles right at the upcoming waypoint so the player sees where they're about to land. */
-    private void telegraphSegmentImpact(Vec3 target) {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-        serverLevel.sendParticles(NichirinParticleRegistry.THUNDER.get(),
-                target.x, target.y + 1.0, target.z, 10, 0.3, 0.6, 0.3, 0.02);
-    }
-
     private void damageEntitiesAlongSegment(Player player, Vec3 from, Vec3 to) {
         AABB sweep = new AABB(from, to).inflate(SWEEP_RADIUS);
         // Visual hitbox parity with the standard breathing-attack hit path.
@@ -516,16 +501,8 @@ public class ThunderClapFlashAttack extends ThunderBreathingAttackBase {
 
     /** Spawns {@code fold * 3} thunder particles in a ring around the player on fold gain. */
     private void spawnFoldParticles(Player player, int newFold) {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-        int count = newFold * 3;
-        double radius = 1.0 + newFold * 0.2;
-        for (int i = 0; i < count; i++) {
-            double angle = (2 * Math.PI * i) / count;
-            double px = player.getX() + radius * Math.cos(angle);
-            double pz = player.getZ() + radius * Math.sin(angle);
-            serverLevel.sendParticles(NichirinParticleRegistry.THUNDER.get(),
-                    px, player.getY() + 1.0, pz, 2, 0.1, 0.2, 0.1, 0.03);
-        }
+        playThunderVfx(VfxIds.DISTANT_THUNDER_CHARGE, player.position(), player.getLookAngle(),
+                0.72f + newFold * 0.08f);
     }
 
     private void broadcastAnimation(Player player, String animationName) {

@@ -63,6 +63,7 @@ public abstract class AbstractKatanaAttack {
     protected boolean hasHit   = false;
     protected boolean hitboxSent = false;
     protected final Set<LivingEntity> hitEntities = new HashSet<>();
+    protected long comboSequence = 0L;
 
     protected AbstractKatanaAttack(int startup, int active, int recovery, int cooldown,
                                     float damage, float range, float knockback,
@@ -170,7 +171,7 @@ public abstract class AbstractKatanaAttack {
                 if (hitStun > 0) target.invulnerableTime = hitStun;
 
                 if (user instanceof Player p) {
-                    ComboIntegration.handleSuccessfulHit(p, target, hitStun, damage);
+                    ComboIntegration.handleSuccessfulHit(p, target, hitStun, damage, comboSequence);
                 }
             }
 
@@ -254,6 +255,10 @@ public abstract class AbstractKatanaAttack {
 
     public void setHitStun(int hitStun) {
         this.hitStun = Math.max(0, hitStun);
+    }
+
+    public void setComboSequence(long comboSequence) {
+        this.comboSequence = comboSequence;
     }
 
 

@@ -5,10 +5,12 @@ import com.xirc.nichirin.common.attack.component.IBreathingAttacker;
 import com.xirc.nichirin.common.effect.StunnedStatusEffect;
 import com.xirc.nichirin.common.util.NichirinDamageHandler;
 import com.xirc.nichirin.common.util.NichirinDamageSources;
+import com.xirc.nichirin.common.vfx.VfxManager;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
@@ -29,6 +31,18 @@ import java.util.List;
 // Base for Sound Breathing attacks. All hits stun, build a combo counter, and trigger shockwave explosions every 4th hit.
 @SuppressWarnings("rawtypes")
 public abstract class SoundBreathingAttackBase extends AbstractBreathingAttack<SoundBreathingAttackBase, IBreathingAttacker> {
+
+    protected void playSoundVfx(ResourceLocation effectId, Vec3 origin, Vec3 direction, float scale) {
+        if (world instanceof ServerLevel serverLevel) {
+            VfxManager.playAttached(serverLevel, user, effectId, origin, direction, scale);
+        }
+    }
+
+    protected void playSoundVfxAt(ResourceLocation effectId, Vec3 origin, Vec3 direction, float scale) {
+        if (world instanceof ServerLevel serverLevel) {
+            VfxManager.playOwned(serverLevel, user, effectId, origin, direction, scale);
+        }
+    }
 
     private static final int DEFAULT_STUN_DURATION = 10;
     private static final int SOUND_PARTICLE_COUNT = 8;

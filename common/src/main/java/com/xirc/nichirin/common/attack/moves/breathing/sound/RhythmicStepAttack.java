@@ -1,5 +1,7 @@
 package com.xirc.nichirin.common.attack.moves.breathing.sound;
 
+import com.xirc.nichirin.common.vfx.VfxIds;
+
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -99,6 +101,8 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
         user.setDeltaMovement(dashVelocity);
         user.hurtMarked = true;
         user.hasImpulse = true;
+        playSoundVfx(VfxIds.SOUND_RHYTHMIC_STEP,
+                user.position().add(0, user.getBbHeight() * 0.5, 0), dashDirection, 1.0f);
 
         // Dash start sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
@@ -144,6 +148,8 @@ public class RhythmicStepAttack extends SoundBreathingAttackBase {
 
 
     private void executeFinishingSlash() {
+        playSoundVfxAt(VfxIds.SOUND_IMPACT,
+                user.position().add(0, user.getBbHeight() * 0.65, 0), user.getLookAngle(), 1.15f);
         // Create MASSIVE horizontal slash effect like UnknowingFireAttack
         createFinishingSlashEffect();
 

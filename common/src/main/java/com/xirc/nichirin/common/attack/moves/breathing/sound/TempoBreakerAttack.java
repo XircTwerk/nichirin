@@ -1,5 +1,7 @@
 package com.xirc.nichirin.common.attack.moves.breathing.sound;
 
+import com.xirc.nichirin.common.vfx.VfxIds;
+
 import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
@@ -79,6 +81,7 @@ public class TempoBreakerAttack extends SoundBreathingAttackBase {
 
             Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
             Vec3 lookDir = user.getLookAngle();
+            playSoundVfx(VfxIds.SOUND_TEMPO_BREAKER, userPos, lookDir, 1.1f);
 
             createTempoSweepEffect();
 

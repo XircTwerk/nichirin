@@ -1,5 +1,7 @@
 package com.xirc.nichirin.common.attack.moves.breathing.sound;
 
+import com.xirc.nichirin.common.vfx.VfxIds;
+
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -90,6 +92,7 @@ public class RoarAttack extends SoundBreathingAttackBase {
     private void executeRoarSlam() {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 slamPoint = userPos.add(user.getLookAngle().scale(1.5)).add(0, -1, 0);
+        playSoundVfxAt(VfxIds.SOUND_ROAR, slamPoint, user.getLookAngle(), 1.2f);
 
         // Create massive impact effect
         createRoarExplosion(slamPoint);

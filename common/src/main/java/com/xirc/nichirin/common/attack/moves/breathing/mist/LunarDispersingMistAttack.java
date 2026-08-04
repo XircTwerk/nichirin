@@ -1,7 +1,6 @@
 package com.xirc.nichirin.common.attack.moves.breathing.mist;
 
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.server.level.ServerLevel;
+import com.xirc.nichirin.common.vfx.VfxIds;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -35,8 +34,6 @@ public class LunarDispersingMistAttack extends MistBreathingAttackBase {
 
     @Override
     protected void onActiveStart() {
-        createMistParticles();
-
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.9f, 1.0f);
     }
@@ -66,7 +63,6 @@ public class LunarDispersingMistAttack extends MistBreathingAttackBase {
             finisherExecuted = true;
         }
 
-        createFlightTrail();
     }
 
     private void launchAerialCharge() {
@@ -80,15 +76,12 @@ public class LunarDispersingMistAttack extends MistBreathingAttackBase {
         );
         user.hurtMarked = true;
         user.hasImpulse = true;
+        playMistVfx(VfxIds.LUNAR_DISPERSING_MIST,
+                user.position().add(0, user.getBbHeight() * 0.45, 0), dashDirection, 1.0f);
 
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 0.8f, 1.5f);
 
-        if (world instanceof ServerLevel serverLevel) {
-            Vec3 pos = user.position().add(0, 0.5, 0);
-            serverLevel.sendParticles(ParticleTypes.CLOUD, pos.x, pos.y, pos.z,
-                    20, 0.8, 0.3, 0.8, 0.04);
-        }
     }
 
     private void sustainFlight() {
@@ -146,17 +139,6 @@ public class LunarDispersingMistAttack extends MistBreathingAttackBase {
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.7f, pitch);
 
-        // Slash arc particles radiating outward from the player
-        if (world instanceof ServerLevel serverLevel) {
-            for (int i = -4; i <= 4; i++) {
-                double angle = Math.toRadians(i * 15);
-                Vec3 slashDir = dashDirection.yRot((float) angle);
-                Vec3 particlePos = userPos.add(slashDir.scale(hitboxSize * 1.5));
-                serverLevel.sendParticles(ParticleTypes.WHITE_ASH,
-                        particlePos.x, particlePos.y, particlePos.z,
-                        3, 0.05, 0.05, 0.05, 0.03);
-            }
-        }
     }
 
     private void executeVerticalFinisher() {
@@ -164,6 +146,7 @@ public class LunarDispersingMistAttack extends MistBreathingAttackBase {
         user.setDeltaMovement(current.x * 0.2, current.y, current.z * 0.2);
 
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
+        playMistVfx(VfxIds.MIST_FINISHER, userPos, dashDirection, hitboxSize / 3.0f);
 
         List<LivingEntity> finisherTargets = getTargetsInCustomHitbox(
                 userPos, hitboxSize * 3.0, user.getBbHeight() + 2.0, hitboxSize * 3.0);
@@ -176,38 +159,12 @@ public class LunarDispersingMistAttack extends MistBreathingAttackBase {
 
             Vec3 knockbackDir = target.position().subtract(userPos).normalize();
             target.push(knockbackDir.x * knockback * 1.2f, 0.4, knockbackDir.z * knockback * 1.2f);
-            createMistHitParticles(target.position());
-        }
-
-        createMistCircle(userPos, hitboxSize * 2.5f, 32);
-        if (world instanceof ServerLevel serverLevel) {
-            serverLevel.sendParticles(ParticleTypes.CLOUD, userPos.x, userPos.y, userPos.z,
-                    40, 2.0, 1.5, 2.0, 0.05);
-            serverLevel.sendParticles(ParticleTypes.ENCHANT, userPos.x, userPos.y, userPos.z,
-                    20, 1.5, 1.5, 1.5, 0.15);
         }
 
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.PLAYERS, 1.3f, 0.8f);
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.PLAYERS, 1.0f, 0.9f);
-    }
-
-    private void createFlightTrail() {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-
-        Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
-
-        for (int i = 1; i <= 5; i++) {
-            Vec3 trailPos = userPos.subtract(dashDirection.scale(i * 0.6));
-            serverLevel.sendParticles(ParticleTypes.CLOUD,
-                    trailPos.x, trailPos.y, trailPos.z, 2, 0.2, 0.2, 0.2, 0.02);
-        }
-
-        if (tickCount % 3 == 0) {
-            serverLevel.sendParticles(ParticleTypes.WHITE_ASH,
-                    userPos.x, userPos.y, userPos.z, 3, 0.4, 0.4, 0.4, 0.03);
-        }
     }
 
     @Override

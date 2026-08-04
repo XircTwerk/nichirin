@@ -5,6 +5,7 @@ import com.xirc.nichirin.client.renderer.entity.effect.PlayerCloneRenderer;
 import com.xirc.nichirin.client.renderer.entity.animal.BoarEntityRenderer;
 import com.xirc.nichirin.client.renderer.entity.attack.ShockwaveEntityRenderer;
 import com.xirc.nichirin.client.renderer.entity.attack.ThunderBallRenderer;
+import com.xirc.nichirin.client.renderer.entity.npc.AkazaRenderer;
 import com.xirc.nichirin.client.renderer.entity.npc.TempleDemonRenderer;
 import com.xirc.nichirin.client.renderer.entity.npc.ThunderBreathingTrainerRenderer;
 import com.xirc.nichirin.client.renderer.entity.npc.WaterBreathingTrainerRenderer;
@@ -49,6 +50,7 @@ public interface NichirinEntityRendererRegistry {
             new RendererData<>(NichirinEntityRegistry.SMOKE_BOMB, SmokeBombRenderer::new),
             new RendererData<>(NichirinEntityRegistry.BOAR, BoarEntityRenderer::new),
             new RendererData<>(NichirinEntityRegistry.TEMPLE_DEMON, TempleDemonRenderer::new),
+            new RendererData<>(NichirinEntityRegistry.AKAZA, AkazaRenderer::new),
             new RendererData<>(NichirinEntityRegistry.WATER_BREATHING_TRAINER, WaterBreathingTrainerRenderer::new),
             new RendererData<>(NichirinEntityRegistry.THUNDER_BREATHING_TRAINER, ThunderBreathingTrainerRenderer::new),
             new RendererData<>(NichirinEntityRegistry.THROWN_KATANA, ThrownKatanaRenderer::new),

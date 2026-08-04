@@ -187,7 +187,6 @@ public final class NichirinServerConfig {
 
     private static void appendCombat(StringBuilder out, NichirinModConfig.CombatConfig cfg, NichirinModConfig.CombatConfig defaults) {
         out.append("[combat]\n");
-        appendValue(out, 4, "comboWindowTicks", cfg.comboWindowTicks, defaults.comboWindowTicks, true);
         appendValue(out, 4, "parryWindowTicks", cfg.parryWindowTicks, defaults.parryWindowTicks, true);
         appendValue(out, 4, "enableParrySystem", cfg.enableParrySystem, defaults.enableParrySystem, true);
         appendValue(out, 4, "npcAiLevel", cfg.npcAiLevel, defaults.npcAiLevel, true);
@@ -252,6 +251,7 @@ public final class NichirinServerConfig {
         appendValue(out, 4, "burnInSunlight", cfg.burnInSunlight, defaults.burnInSunlight, true);
         appendValue(out, 4, "sunDamagePerSecond", cfg.sunDamagePerSecond, defaults.sunDamagePerSecond, true);
         appendValue(out, 4, "wisteriaDamagesDemons", cfg.wisteriaDamagesDemons, defaults.wisteriaDamagesDemons, true);
+        appendValue(out, 4, "upperMoonPact", cfg.upperMoonPact, defaults.upperMoonPact, true);
         appendValue(out, 4, "bloodDrainEnabled", cfg.bloodDrainEnabled, defaults.bloodDrainEnabled, true);
         appendValue(out, 4, "bloodDrainIntervalSeconds", cfg.bloodDrainIntervalSeconds, defaults.bloodDrainIntervalSeconds, true);
         appendValue(out, 4, "peacefulModeMaxBlood", cfg.peacefulModeMaxBlood, defaults.peacefulModeMaxBlood, true);

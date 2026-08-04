@@ -1,6 +1,7 @@
 package com.xirc.nichirin.client.handler;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import dev.architectury.event.events.client.ClientTickEvent;
 import dev.architectury.event.events.client.ClientGuiEvent;
@@ -56,6 +57,10 @@ public final class SunlightVignetteOverlay {
             return 0.0F;
         }
         if (!MovesetHelper.hasDemonMoveset(minecraft.player)) {
+            return 0.0F;
+        }
+        // No sun burn = no sun-warning vignette.
+        if (!NichirinModConfig.get().demon.burnInSunlight) {
             return 0.0F;
         }
 

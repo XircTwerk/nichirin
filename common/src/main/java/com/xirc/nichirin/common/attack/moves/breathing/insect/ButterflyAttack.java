@@ -1,5 +1,7 @@
 package com.xirc.nichirin.common.attack.moves.breathing.insect;
 
+import com.xirc.nichirin.common.vfx.VfxIds;
+
 import com.xirc.nichirin.registry.NichirinParticleRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -93,7 +95,7 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
         if (!(world instanceof ServerLevel serverLevel)) return;
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
-        for (int i = 0; i < 12; i++) {
+        for (int i = 0; i < 12; i += 2) {
             double angle = (i / 12.0) * 2 * Math.PI;
             double radius = 2.0 + Math.sin(angle * 3) * 0.5;
             double x = userPos.x + Math.cos(angle) * radius;
@@ -105,7 +107,7 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
             }
         }
 
-        for (int i = 1; i <= 3; i++) {
+        for (int i = 1; i <= 3; i += 2) {
             Vec3 leapPreview = userPos.add(leapDirection.scale(i * 0.3)).add(0, i * 0.4, 0);
             serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(),
                     leapPreview.x, leapPreview.y, leapPreview.z, 1, 0.05, 0.05, 0.05, 0.02);
@@ -113,6 +115,8 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
     }
 
     private void executeInitialLeap() {
+        playInsectVfx(VfxIds.INSECT_BUTTERFLY_DANCE,
+                user.position().add(0, user.getBbHeight() * 0.5, 0), leapDirection, 1.0f);
         Vec3 horizontalDirection = new Vec3(leapDirection.x, 0, leapDirection.z).normalize();
         Vec3 forwardComponent = horizontalDirection.scale(0.1);
         user.setDeltaMovement(forwardComponent.x, 0.8, forwardComponent.z);
@@ -127,6 +131,8 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
     }
 
     private void executeForwardDash() {
+        playInsectVfx(VfxIds.INSECT_BUTTERFLY_DASH,
+                user.position().add(0, user.getBbHeight() * 0.5, 0), dashDirection, 1.0f);
         float actualDashSpeed = (dashSpeed != null) ? dashSpeed : 3.0f;
         user.setDeltaMovement(dashDirection.scale(actualDashSpeed));
         user.hurtMarked = true;
@@ -159,7 +165,7 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         RandomSource random = serverLevel.getRandom();
 
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 20; i += 2) {
             double angle = (i / 20.0) * 2 * Math.PI;
             double radius = 1.5;
             double speed = 0.3 + random.nextDouble() * 0.2;
@@ -183,7 +189,7 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
 
         for (double d = 0; d <= distance; d += 0.4) {
             Vec3 particlePos = start.add(normalized.scale(d));
-            serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(), particlePos.x, particlePos.y, particlePos.z, 2, 0.3, 0.3, 0.3, 0.1);
+            serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(), particlePos.x, particlePos.y, particlePos.z, 1, 0.3, 0.3, 0.3, 0.1);
             if (d % 0.8 < 0.1) {
                 serverLevel.sendParticles(ParticleTypes.PORTAL, particlePos.x, particlePos.y, particlePos.z, 1, 0.05, 0.05, 0.05, 0.03);
             }
@@ -195,9 +201,9 @@ public class ButterflyAttack extends InsectBreathingAttackBase {
         Vec3 targetPos = thrustTarget.position().add(0, thrustTarget.getBbHeight() / 2, 0);
         serverLevel.sendParticles(ParticleTypes.CRIT, targetPos.x, targetPos.y, targetPos.z, 15, 0.3, 0.3, 0.3, 0.2);
         createPoisonBurst(targetPos, 1.5f);
-        serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(), targetPos.x, targetPos.y, targetPos.z, 20, 0.5, 0.5, 0.5, 0.25);
+        serverLevel.sendParticles(NichirinParticleRegistry.BUTTERFLY.get(), targetPos.x, targetPos.y, targetPos.z, 10, 0.5, 0.5, 0.5, 0.25);
 
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < 8; i += 2) {
             double angle = (i / 8.0) * 2 * Math.PI;
             double x = targetPos.x + Math.cos(angle) * 2.0;
             double z = targetPos.z + Math.sin(angle) * 2.0;

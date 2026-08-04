@@ -22,6 +22,8 @@ public class KatanaItemRenderer extends AzItemRenderer {
 
     public KatanaItemRenderer(ResourceLocation geoModel, ResourceLocation texture) {
         super(AzItemRendererConfig.builder(geoModel, texture)
+                .setModelRenderer((pipeline, layers) ->
+                        new KatanaItemModelRenderer((AzItemRendererPipeline) pipeline, layers))
                 .build());
     }
 

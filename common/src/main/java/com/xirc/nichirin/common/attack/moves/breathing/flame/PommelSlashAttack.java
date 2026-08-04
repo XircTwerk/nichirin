@@ -1,6 +1,6 @@
 package com.xirc.nichirin.common.attack.moves.breathing.flame;
 
-import net.minecraft.core.particles.ParticleTypes;
+import com.xirc.nichirin.common.vfx.VfxIds;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -38,7 +38,6 @@ public class PommelSlashAttack extends FlameBreathingAttackBase {
                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0f, 1.2f);
 
         // Initial flame buildup
-        createFlameParticles();
     }
 
     @Override
@@ -58,11 +57,12 @@ public class PommelSlashAttack extends FlameBreathingAttackBase {
     }
 
     private void performSlash(int slashIndex) {
+        Vec3 vfxDirection = user.getLookAngle().yRot((slashIndex & 1) == 0 ? 0.22f : -0.22f);
+        playFlameVfx(VfxIds.FLAME_POMMEL_SLASH, user.position(), vfxDirection, 0.82f);
         // Alternate between left and right slashes
         boolean isLeftSlash = slashIndex % 2 == 0;
 
         // Create slash particles
-        createSlashParticles(isLeftSlash);
 
         // Hit detection
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
@@ -121,23 +121,12 @@ public class PommelSlashAttack extends FlameBreathingAttackBase {
             Vec3 particlePos = userPos.add(slashDir.scale(range * 0.8));
 
             // Flame particles for slashes
-            serverLevel.sendParticles(ParticleTypes.FLAME,
-                    particlePos.x, particlePos.y, particlePos.z,
-                    3, 0.1, 0.1, 0.1, 0.05);
-
-            serverLevel.sendParticles(ParticleTypes.FLAME,
-                    particlePos.x, particlePos.y, particlePos.z,
-                    2, 0.05, 0.05, 0.05, 0.02);
-        }
+}
 
         // Central flame burst
         Vec3 centerPos = userPos.add(lookDir.scale(range * 0.6));
-        serverLevel.sendParticles(ParticleTypes.FLAME,
-                centerPos.x, centerPos.y, centerPos.z,
-                8, 0.3, 0.3, 0.3, 0.1);
-    }
+}
 
-    @Override
     protected void createFlameParticles() {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
@@ -151,10 +140,7 @@ public class PommelSlashAttack extends FlameBreathingAttackBase {
             double x = userPos.x + Math.cos(angle) * radius;
             double z = userPos.z + Math.sin(angle) * radius;
             double y = userPos.y + Math.random() * 1.5;
-
-            serverLevel.sendParticles(ParticleTypes.FLAME,
-                    x, y, z, 1, 0.05, 0.05, 0.05, 0.02);
-        }
+}
     }
 
     @Override
@@ -162,10 +148,7 @@ public class PommelSlashAttack extends FlameBreathingAttackBase {
         // Final flame discharge
         if (world instanceof ServerLevel serverLevel) {
             Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
-            serverLevel.sendParticles(ParticleTypes.FLAME,
-                    userPos.x, userPos.y, userPos.z,
-                    20, 0.5, 0.5, 0.5, 0.2);
-        }
+}
 
         // Clear hit tracking
         hitEntities.clear();

@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.attack.moves.breathing.flame;
 
+import com.xirc.nichirin.common.vfx.VfxIds;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -12,7 +13,6 @@ import net.minecraft.world.phys.Vec3;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.AABB;
 
@@ -50,7 +50,7 @@ public class BloomingFlameUndulationAttack extends FlameBreathingAttackBase {
                 SoundEvents.SHIELD_BLOCK, SoundSource.PLAYERS, 0.8f, 1.2f);
 
         // Initial flame particles
-        createFlameParticles();
+        playFlameVfx(VfxIds.BLOOMING_FLAME_UNDULATION, user.position(), user.getLookAngle(), 1.0f);
     }
 
     @Override
@@ -89,7 +89,6 @@ public class BloomingFlameUndulationAttack extends FlameBreathingAttackBase {
         Vec3 userPos = user.position();
 
         // Create continuous flame circle effect
-        createFlameCircle(userPos.add(0, 1, 0), range, 24);
 
         // Get all enemies in the radius
         List<LivingEntity> targets = getTargetsInCustomHitbox(
@@ -119,7 +118,6 @@ public class BloomingFlameUndulationAttack extends FlameBreathingAttackBase {
 
         // Create spinning flame effect every few ticks
         if (spinTicks % 3 == 0) {
-            createSpinningFlameEffect();
         }
 
         // Play whoosh sound every half rotation
@@ -143,7 +141,6 @@ public class BloomingFlameUndulationAttack extends FlameBreathingAttackBase {
                 projectile.discard();
 
                 // Create flame deflection effect
-                createFlameDeflectionEffect(projectile.position());
 
                 // Deflection sound
                 world.playSound(null, projectile.getX(), projectile.getY(), projectile.getZ(),
@@ -155,7 +152,6 @@ public class BloomingFlameUndulationAttack extends FlameBreathingAttackBase {
                 projectile.hurtMarked = true;
 
                 // Create flame deflection effect
-                createFlameDeflectionEffect(projectile.position());
 
                 // Deflection sound
                 world.playSound(null, projectile.getX(), projectile.getY(), projectile.getZ(),
@@ -171,25 +167,10 @@ public class BloomingFlameUndulationAttack extends FlameBreathingAttackBase {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
         // Flame burst from deflection
-        serverLevel.sendParticles(ParticleTypes.FLAME,
-                position.x, position.y, position.z,
-                8, 0.3, 0.3, 0.3, 0.2);
-
-        // Lava particles for impact
-        serverLevel.sendParticles(ParticleTypes.LAVA,
-                position.x, position.y, position.z,
-                3, 0.2, 0.2, 0.2, 0.1);
-
-        // Spark effect
-        serverLevel.sendParticles(ParticleTypes.CRIT,
-                position.x, position.y, position.z,
-                5, 0.4, 0.4, 0.4, 0.3);
-
-        // Smoke from deflection
-        serverLevel.sendParticles(ParticleTypes.LARGE_SMOKE,
-                position.x, position.y, position.z,
-                2, 0.2, 0.2, 0.2, 0.05);
-    }
+// Lava particles for impact
+// Spark effect
+// Smoke from deflection
+}
 
     /**
      * Create spinning flame effect around the user
@@ -216,27 +197,18 @@ public class BloomingFlameUndulationAttack extends FlameBreathingAttackBase {
                 double y = userPos.y + ringHeight;
 
                 // Main flame particles
-                serverLevel.sendParticles(ParticleTypes.FLAME,
-                        x, y, z, 2, 0.1, 0.1, 0.1, 0.05);
-
-                // Soul fire for inner ring
+// Soul fire for inner ring
                 if (ring == 0) {
-                    serverLevel.sendParticles(ParticleTypes.FLAME,
-                            x, y, z, 1, 0.05, 0.05, 0.05, 0.02);
-                }
+}
 
                 // Smoke trails
                 if (i % 3 == 0) {
-                    serverLevel.sendParticles(ParticleTypes.LARGE_SMOKE,
-                            x, y + 0.5, z, 1, 0.1, 0.1, 0.1, 0.02);
-                }
+}
             }
         }
 
         // Central flame pillar
-        serverLevel.sendParticles(ParticleTypes.FLAME,
-                userPos.x, userPos.y, userPos.z, 8, 0.3, 1.0, 0.3, 0.1);
-    }
+}
 
     @Override
     public boolean isOmnidirectional() {
@@ -266,7 +238,6 @@ public class BloomingFlameUndulationAttack extends FlameBreathingAttackBase {
         spinTicks = 0;
 
         // Final flame burst
-        createFlameExplosion(user.position().add(0, 1, 0), 1.5f);
         playFlameExplosionSound(user.position());
 
         // Recovery sound

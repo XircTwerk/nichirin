@@ -32,12 +32,15 @@ public interface IDestructiveDeathCQC {
      * persistent toggle state from carrying over to non-DD players.
      */
     default boolean isShockwaveEnabled(LivingEntity user) {
+        // NPC hosts (Akaza) carry their own toggle on the entity.
+        if (user instanceof IDestructiveDeathHost host) return host.ddShockwaveEnabled();
         if (!hasDestructiveDeathEquipped(user)) return false;
         ServerPlayer sp = (ServerPlayer) user;
         return DestructiveDeathState.isShockwaveEnabled(sp.getUUID());
     }
 
     default boolean isOverdriveActive(LivingEntity user) {
+        if (user instanceof IDestructiveDeathHost host) return host.ddOverdriveActive();
         if (!hasDestructiveDeathEquipped(user)) return false;
         ServerPlayer sp = (ServerPlayer) user;
         return DestructiveDeathState.isOverdriveEnabled(sp.getUUID(), sp.level().getGameTime());

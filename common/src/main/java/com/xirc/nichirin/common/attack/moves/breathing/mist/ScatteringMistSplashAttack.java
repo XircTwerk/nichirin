@@ -1,7 +1,6 @@
 package com.xirc.nichirin.common.attack.moves.breathing.mist;
 
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.server.level.ServerLevel;
+import com.xirc.nichirin.common.vfx.VfxIds;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -30,7 +29,8 @@ public class ScatteringMistSplashAttack extends MistBreathingAttackBase {
 
     @Override
     protected void onActiveStart() {
-        createMistParticles();
+        playMistVfx(VfxIds.SCATTERING_MIST_SPLASH,
+                user.position().add(0, user.getBbHeight() * 0.45, 0), user.getLookAngle(), range / 4.0f);
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.SHIELD_BLOCK, SoundSource.PLAYERS, 0.9f, 1.3f);
     }
@@ -51,9 +51,6 @@ public class ScatteringMistSplashAttack extends MistBreathingAttackBase {
         performCircularSlash();
         deflectProjectiles();
 
-        if (spinTicks % 4 == 0) {
-            createSpinningMistEffect();
-        }
         if (spinTicks % 8 == 0) {
             world.playSound(null, user.getX(), user.getY(), user.getZ(),
                     SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.5f, 1.4f);
@@ -62,7 +59,6 @@ public class ScatteringMistSplashAttack extends MistBreathingAttackBase {
 
     private void performCircularSlash() {
         Vec3 userPos = user.position();
-        createMistCircle(userPos.add(0, 1, 0), range, 20);
 
         List<LivingEntity> targets = getTargetsInCircle(range, 12);
 
@@ -85,8 +81,6 @@ public class ScatteringMistSplashAttack extends MistBreathingAttackBase {
                 projectile -> projectile.isAlive() && projectile.getOwner() != user);
 
         for (Projectile projectile : projectiles) {
-            createDeflectEffect(projectile.position());
-
             if (projectile instanceof AbstractArrow) {
                 projectile.discard();
             } else {
@@ -100,62 +94,11 @@ public class ScatteringMistSplashAttack extends MistBreathingAttackBase {
         }
     }
 
-    private void createDeflectEffect(Vec3 position) {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-
-        serverLevel.sendParticles(ParticleTypes.CLOUD, position.x, position.y, position.z,
-                8, 0.3, 0.3, 0.3, 0.05);
-        serverLevel.sendParticles(ParticleTypes.CRIT, position.x, position.y, position.z,
-                5, 0.2, 0.2, 0.2, 0.2);
-        serverLevel.sendParticles(ParticleTypes.WHITE_ASH, position.x, position.y, position.z,
-                4, 0.15, 0.15, 0.15, 0.02);
-    }
-
-    /**
-     * Horizontal whirlwind disc — distinct from M2's rapid-slash visuals.
-     * Particles spiral outward from center in a flat disc at waist height,
-     * alternating clockwise/counter-clockwise arms to create a pinwheel shape.
-     */
-    private void createSpinningMistEffect() {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-
-        Vec3 userPos = user.position().add(0, user.getBbHeight() * 0.45, 0);
-        double spinAngle = spinTicks * 0.35; // rotation offset accumulates each tick
-
-        int arms = 4; // whirlwind arms
-        int pointsPerArm = 6;
-
-        for (int arm = 0; arm < arms; arm++) {
-            double armBase = spinAngle + (arm * 2 * Math.PI / arms);
-            for (int p = 0; p < pointsPerArm; p++) {
-                // r increases along the arm; angle curls outward (whirlwind shape)
-                double r = range * (p + 1.0) / pointsPerArm;
-                double curl = armBase + p * 0.3; // outward curl per point
-                double x = userPos.x + Math.cos(curl) * r;
-                double z = userPos.z + Math.sin(curl) * r;
-
-                serverLevel.sendParticles(ParticleTypes.ENCHANT,
-                        x, userPos.y, z, 1, 0.03, 0.02, 0.03, 0.01);
-                if (p % 2 == 0) {
-                    serverLevel.sendParticles(ParticleTypes.WHITE_ASH,
-                            x, userPos.y + 0.1, z, 1, 0.02, 0.01, 0.02, 0.008);
-                }
-            }
-        }
-
-        // Central flash point
-        serverLevel.sendParticles(ParticleTypes.CRIT,
-                userPos.x, userPos.y, userPos.z, 3, 0.15, 0.05, 0.15, 0.02);
-    }
-
     @Override
     protected void onStop() {
         user.setInvulnerable(false);
         hitEnemies.clear();
         spinTicks = 0;
-
-        // Final expanding mist burst
-        createMistCircle(user.position().add(0, 1, 0), range * 1.5f, 24);
 
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.7f, 1.2f);

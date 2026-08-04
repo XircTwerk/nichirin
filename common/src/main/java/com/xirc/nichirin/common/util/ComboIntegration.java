@@ -23,8 +23,17 @@ public class ComboIntegration {
      * @param damage Damage dealt by this attack
      */
     public static void handleSuccessfulHit(Player attacker, LivingEntity victim, int hitStunTicks, float damage) {
+        handleSuccessfulHit(attacker, victim, hitStunTicks, damage, 0L);
+    }
+
+    public static void handleSuccessfulHit(Player attacker, LivingEntity victim, int hitStunTicks, float damage,
+                                           long attackSequence) {
         if (attacker == null || victim == null || attacker.level().isClientSide) {
             return; // Server-side only
+        }
+        // Creative/spectator players take no stun, combo, or hit at all.
+        if (NichirinDamageHandler.isImmune(victim)) {
+            return;
         }
 
         // Prefer the measured post-armor damage from this tick's hurt() call so the combo bar
@@ -39,10 +48,10 @@ public class ComboIntegration {
 
         // Report the stun that actually landed (immune/already-stunned targets may differ).
         MobEffectInstance applied = victim.getEffect(NichirinEffectRegistry.stunned());
-        int realStun = applied != null ? applied.getDuration() : 0;
+        int realStun = hitStunTicks > 0 && applied != null ? applied.getDuration() : 0;
 
         // Handle combo tracking with the previous stun status
-        ComboTracker.handleHit(attacker, victim, realStun, realDamage, wasAlreadyStunned);
+        ComboTracker.handleHit(attacker, victim, realStun, realDamage, wasAlreadyStunned, attackSequence);
     }
 
     /**

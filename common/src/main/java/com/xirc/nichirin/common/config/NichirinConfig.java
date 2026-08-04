@@ -13,7 +13,6 @@ public class NichirinConfig {
 
     // Keys (string constants so the command can reference them)
 
-    public static final String COMBO_WINDOW_TICKS      = "combo_window_ticks";
     public static final String PARRY_WINDOW_TICKS      = "parry_window_ticks";
     public static final String STAMINA_REGEN_RATE      = "stamina_regen_rate";
     public static final String FIRE_DAMAGE_INTERRUPTS_MOVES = "fire_damage_interrupts_moves";
@@ -24,13 +23,13 @@ public class NichirinConfig {
     public static final String DROWNING_DAMAGE_INTERRUPTS_MOVES = "drowning_damage_interrupts_moves";
     public static final String STARVATION_DAMAGE_INTERRUPTS_MOVES = "starvation_damage_interrupts_moves";
     public static final String WISTERIA_DAMAGES_DEMONS = "wisteria_damages_demons";
+    public static final String UPPER_MOON_PACT = "upper_moon_pact";
 
     // Defaults
 
     private static final Map<String, Entry> entries = new LinkedHashMap<>();
 
     static {
-        register(COMBO_WINDOW_TICKS,      20,   5, 100, "How long the STUNNED effect lasts (combo window in ticks)");
         register(PARRY_WINDOW_TICKS,      10,   1,  30, "How many ticks after raising block count as a parry window");
         register(STAMINA_REGEN_RATE,       8,   1,  20, "Stamina points regenerated per second");
         registerBool(FIRE_DAMAGE_INTERRUPTS_MOVES, true, "Whether fire damage should end moves early");
@@ -41,6 +40,7 @@ public class NichirinConfig {
         registerBool(DROWNING_DAMAGE_INTERRUPTS_MOVES, true, "Whether drowning damage should end moves early");
         registerBool(STARVATION_DAMAGE_INTERRUPTS_MOVES, true, "Whether starvation damage should end moves early");
         registerBool(WISTERIA_DAMAGES_DEMONS, true, "Whether Wisteria's Grace damages demons");
+        registerBool(UPPER_MOON_PACT, true, "Whether Upper Moon demons spare and recruit humans instead of killing them");
 
     }
 
@@ -60,7 +60,6 @@ public class NichirinConfig {
         try {
             NichirinModConfig cfg = NichirinModConfig.get();
             Integer clothValue = switch (key) {
-                case COMBO_WINDOW_TICKS      -> cfg.combat.comboWindowTicks;
                 case PARRY_WINDOW_TICKS      -> cfg.combat.parryWindowTicks;
                 case STAMINA_REGEN_RATE      -> cfg.stamina.staminaRegenRate;
                 case FIRE_DAMAGE_INTERRUPTS_MOVES -> cfg.moveInterrupts.fireDamageInterruptsMoves ? 1 : 0;
@@ -71,6 +70,7 @@ public class NichirinConfig {
                 case DROWNING_DAMAGE_INTERRUPTS_MOVES -> cfg.moveInterrupts.drowningDamageInterruptsMoves ? 1 : 0;
                 case STARVATION_DAMAGE_INTERRUPTS_MOVES -> cfg.moveInterrupts.starvationDamageInterruptsMoves ? 1 : 0;
                 case WISTERIA_DAMAGES_DEMONS -> cfg.demon.wisteriaDamagesDemons ? 1 : 0;
+                case UPPER_MOON_PACT         -> cfg.demon.upperMoonPact ? 1 : 0;
                 default                      -> null;
             };
             if (clothValue != null) return clothValue;
@@ -159,7 +159,6 @@ public class NichirinConfig {
         try {
             NichirinModConfig cfg = NichirinServerConfig.get();
             switch (key) {
-                case COMBO_WINDOW_TICKS -> cfg.combat.comboWindowTicks = value;
                 case PARRY_WINDOW_TICKS -> cfg.combat.parryWindowTicks = value;
                 case STAMINA_REGEN_RATE -> cfg.stamina.staminaRegenRate = value;
                 case FIRE_DAMAGE_INTERRUPTS_MOVES -> cfg.moveInterrupts.fireDamageInterruptsMoves = value != 0;
@@ -170,6 +169,7 @@ public class NichirinConfig {
                 case DROWNING_DAMAGE_INTERRUPTS_MOVES -> cfg.moveInterrupts.drowningDamageInterruptsMoves = value != 0;
                 case STARVATION_DAMAGE_INTERRUPTS_MOVES -> cfg.moveInterrupts.starvationDamageInterruptsMoves = value != 0;
                 case WISTERIA_DAMAGES_DEMONS -> cfg.demon.wisteriaDamagesDemons = value != 0;
+                case UPPER_MOON_PACT         -> cfg.demon.upperMoonPact = value != 0;
                 default -> {
                     return;
                 }
@@ -182,7 +182,6 @@ public class NichirinConfig {
     private static void syncEntriesFromServer() {
         try {
             NichirinModConfig cfg = NichirinModConfig.get();
-            syncEntry(COMBO_WINDOW_TICKS, cfg.combat.comboWindowTicks);
             syncEntry(PARRY_WINDOW_TICKS, cfg.combat.parryWindowTicks);
             syncEntry(STAMINA_REGEN_RATE, cfg.stamina.staminaRegenRate);
             syncEntry(FIRE_DAMAGE_INTERRUPTS_MOVES, cfg.moveInterrupts.fireDamageInterruptsMoves ? 1 : 0);
@@ -193,6 +192,7 @@ public class NichirinConfig {
             syncEntry(DROWNING_DAMAGE_INTERRUPTS_MOVES, cfg.moveInterrupts.drowningDamageInterruptsMoves ? 1 : 0);
             syncEntry(STARVATION_DAMAGE_INTERRUPTS_MOVES, cfg.moveInterrupts.starvationDamageInterruptsMoves ? 1 : 0);
             syncEntry(WISTERIA_DAMAGES_DEMONS, cfg.demon.wisteriaDamagesDemons ? 1 : 0);
+            syncEntry(UPPER_MOON_PACT, cfg.demon.upperMoonPact ? 1 : 0);
         } catch (Exception ignored) {
         }
     }

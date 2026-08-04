@@ -2,6 +2,7 @@ package com.xirc.nichirin.common.network.c2s;
 
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
+import com.xirc.nichirin.common.attack.moveset.DualKatanaMoveset;
 import com.xirc.nichirin.common.item.katana.Katana;
 import com.xirc.nichirin.common.item.gun.GenyaDB;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
@@ -60,16 +61,12 @@ public class MoveHotkeyPacket {
             return;
         }
 
-        // No breathing style — delegate to Katana wheel moves
-        String currentBreathingStyle = MovesetHelper.getBreathingMovesetId(player);
-        if (currentBreathingStyle == null || currentBreathingStyle.isEmpty()) {
-            Katana katana = (Katana) mainHand.getItem();
-            katana.performWheelMove(player, moveIndex);
-            return;
-        }
-
         AbstractMoveset moveset = MovesetHelper.getBreathingMoveset(player);
         if (moveset == null) {
+            // Dual Katana is an equipment-based neutral fallback, never a replacement
+            // for the player's equipped breathing style.
+            Katana katana = (Katana) mainHand.getItem();
+            katana.performWheelMove(player, moveIndex);
             return;
         }
 

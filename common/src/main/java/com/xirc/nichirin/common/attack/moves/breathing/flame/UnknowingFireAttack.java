@@ -1,8 +1,8 @@
 package com.xirc.nichirin.common.attack.moves.breathing.flame;
 
+import com.xirc.nichirin.common.vfx.VfxIds;
 import lombok.Getter;
 import lombok.Setter;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -63,14 +63,12 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
         playFlameSound();
 
         // Create initial flame particles around user
-        createFlameParticles();
 
         // Fire charge sound for dash preparation
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 1.0f, 1.2f);
 
         // Create charging effect
-        createDashChargeEffect();
     }
 
     @Override
@@ -108,10 +106,7 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
             double x = userPos.x + Math.cos(angle) * radius;
             double z = userPos.z + Math.sin(angle) * radius;
             double y = userPos.y + Math.random() * 2.0;
-
-            serverLevel.sendParticles(ParticleTypes.FLAME,
-                    x, y, z, 2, 0.1, 0.1, 0.1, 0.05);
-        }
+}
 
         // Upward flame spiral
         for (int i = 0; i < 15; i++) {
@@ -122,13 +117,11 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
             double x = userPos.x + Math.cos(angle) * radius;
             double z = userPos.z + Math.sin(angle) * radius;
             double y = userPos.y + height;
-
-            serverLevel.sendParticles(ParticleTypes.FLAME,
-                    x, y, z, 1, 0.05, 0.05, 0.05, 0.02);
-        }
+}
     }
 
     private void startDash() {
+        playFlameVfx(VfxIds.UNKNOWING_FIRE, user.position(), dashDirection, 1.15f);
         // Set user velocity for dash - using Flame Tiger's method
         Vec3 dashVelocity = dashDirection.scale(DASH_DISTANCE * 6);
         user.setDeltaMovement(dashVelocity);
@@ -140,7 +133,6 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
                 SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 1.2f, 1.8f);
 
         // Create initial dash burst
-        createDashBurst();
     }
 
     private void continueDash() {
@@ -152,7 +144,6 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
         user.hurtMarked = true;
 
         // Create continuous intense trail
-        createIntenseDashTrail();
 
         // Sweep hitbox from last position to current to eliminate gaps from high-speed movement
         List<LivingEntity> dashTargets;
@@ -174,7 +165,6 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
                 draggedEnemies.add(target);
 
                 // Create impact particles
-                createDashImpactParticles(target.position());
             }
         }
 
@@ -216,7 +206,6 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
 
     private void executeSlash() {
         // Create MASSIVE horizontal slash effect
-        createMassiveSlashEffect();
 
         // Hit all enemies in the massive slash area - RESPECTS IMMUNITY FRAMES
         Vec3 userPos = user.position().add(0, user.getBbHeight() * 0.7, 0);
@@ -240,7 +229,6 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
                 target.push(slashKnockback.x, 0.4, slashKnockback.z);
 
                 // Create impact particles
-                createSlashImpactParticles(target.position());
 
                 // Individual hit sound
                 world.playSound(null, target.getX(), target.getY(), target.getZ(),
@@ -259,14 +247,7 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
         // Explosion of flames at dash start
-        serverLevel.sendParticles(ParticleTypes.FLAME,
-                userPos.x, userPos.y, userPos.z,
-                25, 1.0, 1.0, 1.0, 0.3);
-
-        serverLevel.sendParticles(ParticleTypes.LARGE_SMOKE,
-                userPos.x, userPos.y, userPos.z,
-                15, 0.8, 0.8, 0.8, 0.2);
-    }
+}
 
     private void createIntenseDashTrail() {
         if (!(world instanceof ServerLevel serverLevel)) return;
@@ -276,38 +257,20 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
         // Dense flame trail behind user
         for (int i = 1; i <= 6; i++) {
             Vec3 trailPos = userPos.subtract(dashDirection.scale(i * 0.4));
-
-            serverLevel.sendParticles(ParticleTypes.FLAME,
-                    trailPos.x, trailPos.y, trailPos.z,
-                    4, 0.3, 0.3, 0.3, 0.1);
-
-            serverLevel.sendParticles(ParticleTypes.FLAME,
-                    trailPos.x, trailPos.y, trailPos.z,
-                    6, 0.4, 0.4, 0.4, 0.15);
-        }
+}
 
         // Side flames during dash
         Vec3 rightDir = dashDirection.cross(new Vec3(0, 1, 0)).normalize();
         for (int side = -1; side <= 1; side += 2) {
             Vec3 sidePos = userPos.add(rightDir.scale(side * 1.0));
-            serverLevel.sendParticles(ParticleTypes.FLAME,
-                    sidePos.x, sidePos.y, sidePos.z,
-                    3, 0.2, 0.2, 0.2, 0.1);
-        }
+}
     }
 
     private void createDashImpactParticles(Vec3 impactPos) {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
         // Flame burst at impact during dash
-        serverLevel.sendParticles(ParticleTypes.FLAME,
-                impactPos.x, impactPos.y + 1, impactPos.z,
-                8, 0.3, 0.3, 0.3, 0.15);
-
-        serverLevel.sendParticles(ParticleTypes.CRIT,
-                impactPos.x, impactPos.y + 1, impactPos.z,
-                5, 0.2, 0.2, 0.2, 0.1);
-    }
+}
 
     private void createMassiveSlashEffect() {
         if (!(world instanceof ServerLevel serverLevel)) return;
@@ -327,22 +290,12 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
 
                 // Main flame particles - more intense in center
                 int particleCount = Math.max(1, 6 - Math.abs(i) / 3);
-                serverLevel.sendParticles(ParticleTypes.FLAME,
-                        slashPos.x, slashPos.y, slashPos.z,
-                        particleCount, 0.2, 0.2, 0.2, 0.1);
-
-                if (Math.abs(i) <= 8) {
-                    serverLevel.sendParticles(ParticleTypes.FLAME,
-                            slashPos.x, slashPos.y, slashPos.z,
-                            3, 0.1, 0.1, 0.1, 0.08);
-                }
+if (Math.abs(i) <= 8) {
+}
 
                 // Crit particles for cutting effect
                 if (Math.abs(i) <= 4 && depth < 3) {
-                    serverLevel.sendParticles(ParticleTypes.CRIT,
-                            slashPos.x, slashPos.y, slashPos.z,
-                            2, 0.1, 0.1, 0.1, 0.05);
-                }
+}
             }
         }
 
@@ -352,44 +305,19 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
 
             for (int height = 0; height < 5; height++) {
                 Vec3 wallPos = edgePos.add(0, height * 0.5, 0);
-                serverLevel.sendParticles(ParticleTypes.FLAME,
-                        wallPos.x, wallPos.y, wallPos.z,
-                        8, 0.3, 0.3, 0.3, 0.2);
-            }
+}
         }
 
         // Massive flame explosion at slash center
         Vec3 slashCenter = userPos.add(lookDir.scale(SLASH_DEPTH / 2));
-        serverLevel.sendParticles(ParticleTypes.EXPLOSION,
-                slashCenter.x, slashCenter.y, slashCenter.z,
-                3, 0.5, 0.5, 0.5, 0);
-
-        serverLevel.sendParticles(ParticleTypes.FLAME,
-                slashCenter.x, slashCenter.y, slashCenter.z,
-                40, 2.0, 1.0, 2.0, 0.4);
-
-        // Smoke cloud from the massive slash
-        serverLevel.sendParticles(ParticleTypes.LARGE_SMOKE,
-                slashCenter.x, slashCenter.y + 1, slashCenter.z,
-                25, 3.0, 2.0, 3.0, 0.3);
-    }
+// Smoke cloud from the massive slash
+}
 
     private void createSlashImpactParticles(Vec3 impactPos) {
         if (!(world instanceof ServerLevel serverLevel)) return;
 
         // Intense flame burst at impact
-        serverLevel.sendParticles(ParticleTypes.FLAME,
-                impactPos.x, impactPos.y + 1, impactPos.z,
-                15, 0.5, 0.5, 0.5, 0.3);
-
-        serverLevel.sendParticles(ParticleTypes.CRIT,
-                impactPos.x, impactPos.y + 1, impactPos.z,
-                10, 0.4, 0.4, 0.4, 0.2);
-
-        serverLevel.sendParticles(ParticleTypes.FLAME,
-                impactPos.x, impactPos.y + 1, impactPos.z,
-                8, 0.3, 0.3, 0.3, 0.15);
-    }
+}
 
     @Override
     public boolean isDashAttack() {
@@ -426,17 +354,9 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
             Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
             // Finale explosion
-            createFlameExplosion(userPos, 2.0f);
 
             // Extra dramatic effects
-            serverLevel.sendParticles(ParticleTypes.FLAME,
-                    userPos.x, userPos.y, userPos.z,
-                    50, 2.5, 2.5, 2.5, 0.5);
-
-            serverLevel.sendParticles(ParticleTypes.LARGE_SMOKE,
-                    userPos.x, userPos.y + 2, userPos.z,
-                    30, 2.0, 1.5, 2.0, 0.2);
-        }
+}
 
         // Final dramatic sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),

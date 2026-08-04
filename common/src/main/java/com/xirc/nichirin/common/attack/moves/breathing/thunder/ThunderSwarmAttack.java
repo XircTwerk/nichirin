@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import net.minecraft.server.level.ServerPlayer;
+import com.xirc.nichirin.common.vfx.VfxIds;
 
 /**
  * Third Form: Thunder Swarm
@@ -100,6 +101,7 @@ public class ThunderSwarmAttack extends ThunderBreathingAttackBase {
         world.playSound(null, startPos.x, startPos.y, startPos.z,
                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS,
                 0.8f, 1.5f + ThreadLocalRandom.current().nextFloat() * 0.3f);
+        playThunderVfxAt(VfxIds.THUNDER_SWARM_SLASH, startPos, lookDirection, 1.0f);
 
     }
 
@@ -115,26 +117,12 @@ public class ThunderSwarmAttack extends ThunderBreathingAttackBase {
         slash.position = slash.position.add(slash.velocity);
         slash.distanceTraveled += slash.velocity.length();
 
-        // Create visual slash effect at current position
-        createSlashVisuals(slash.position);
-
         // Check for entity hits FIRST (before ground)
         List<LivingEntity> nearbyEntities = getTargetsInCustomHitbox(slash.position, hitboxSize, hitboxSize, hitboxSize);
         for (LivingEntity target : nearbyEntities) {
 
             // Hit the target WITHOUT immunity frames (so all 4 slashes can hit same target)
             hitTargetNoImmunity(target);
-
-            // Hit particles (NO LIGHTNING for entity hits)
-            if (world instanceof ServerLevel serverLevel) {
-                serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK,
-                        target.getX(), target.getY() + 1, target.getZ(),
-                        20, 0.5, 0.5, 0.5, 0.2);
-
-                serverLevel.sendParticles(ParticleTypes.SWEEP_ATTACK,
-                        slash.position.x, slash.position.y, slash.position.z,
-                        3, 0.3, 0.3, 0.3, 0.1);
-            }
 
             return false; // Remove slash after hitting entity (no lightning)
         }
@@ -168,28 +156,6 @@ public class ThunderSwarmAttack extends ThunderBreathingAttackBase {
     }
 
     /**
-     * Create visual effects for the flying slash at its current position
-     */
-    private void createSlashVisuals(Vec3 position) {
-        if (world instanceof ServerLevel serverLevel) {
-            // Main slash visual - sweep attack particle
-            serverLevel.sendParticles(ParticleTypes.SWEEP_ATTACK,
-                    position.x, position.y, position.z,
-                    1, 0.2, 0.2, 0.2, 0.05);
-
-            // Electric trail effect
-            serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK,
-                    position.x, position.y, position.z,
-                    3, 0.1, 0.1, 0.1, 0.02);
-
-            // Add some crit particles for extra slash effect
-            serverLevel.sendParticles(ParticleTypes.CRIT,
-                    position.x, position.y, position.z,
-                    2, 0.15, 0.15, 0.15, 0.1);
-        }
-    }
-
-    /**
      * Create a lightning bolt at the specified position
      */
     private void createLightningBolt(Vec3 position) {
@@ -218,16 +184,12 @@ public class ThunderSwarmAttack extends ThunderBreathingAttackBase {
 
         }
 
-        // Extra lightning particles
-        if (world instanceof ServerLevel serverLevel) {
-            serverLevel.sendParticles(ParticleTypes.END_ROD,
-                    groundPos.getX() + 0.5, groundPos.getY() + 2, groundPos.getZ() + 0.5,
-                    8, 0.3, 1.0, 0.3, 0.1);
-        }
-
         // Lightning sound
         world.playSound(null, groundPos.getX(), groundPos.getY(), groundPos.getZ(),
                 SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.PLAYERS, 1.0f, 1.0f);
+        playThunderVfxAt(VfxIds.THUNDER_STRIKE,
+                new Vec3(groundPos.getX() + 0.5, groundPos.getY(), groundPos.getZ() + 0.5),
+                user.getLookAngle(), 0.72f);
     }
 
     @Override

@@ -1,6 +1,6 @@
 package com.xirc.nichirin.common.attack.moves.breathing.flame;
 
-import net.minecraft.core.particles.ParticleTypes;
+import com.xirc.nichirin.common.vfx.VfxIds;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -44,7 +44,7 @@ public class BlazingUniverseAttack extends FlameBreathingAttackBase {
                 SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 1.0f, 0.5f);
 
         // Create charging flame aura during windup
-        createChargingEffect();
+        playFlameVfx(VfxIds.BLAZING_UNIVERSE, user.position(), user.getLookAngle(), 1.15f);
     }
 
     @Override
@@ -54,7 +54,6 @@ public class BlazingUniverseAttack extends FlameBreathingAttackBase {
         // During windup, create charging effects
         if (tickCount <= windup) {
             if (tickCount % 5 == 0) {
-                createChargingEffect();
             }
             return;
         }
@@ -86,23 +85,16 @@ public class BlazingUniverseAttack extends FlameBreathingAttackBase {
             double x = userPos.x + Math.cos(angle) * radius;
             double z = userPos.z + Math.sin(angle) * radius;
             double y = userPos.y + height;
-
-            serverLevel.sendParticles(ParticleTypes.FLAME,
-                    x, y, z, 1, 0.1, 0.1, 0.1, 0.02);
-        }
+}
 
         // Intensifying flame aura around user
-        serverLevel.sendParticles(ParticleTypes.FLAME,
-                userPos.x, userPos.y + 1, userPos.z,
-                5, 0.5, 0.5, 0.5, 0.1);
-    }
+}
 
     private void executeDownwardSlash() {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDir = user.getLookAngle();
 
         // Create downward arc effect
-        createDownwardArcEffect();
 
         // Hit enemies in the downward slash path
         for (int i = 0; i <= 8; i++) {
@@ -161,21 +153,10 @@ public class BlazingUniverseAttack extends FlameBreathingAttackBase {
             Vec3 arcPos = userPos.add(lookDir.scale(forward)).add(0, height, 0);
 
             // Intense flame trail
-            serverLevel.sendParticles(ParticleTypes.FLAME,
-                    arcPos.x, arcPos.y, arcPos.z,
-                    6, 0.3, 0.3, 0.3, 0.15);
-
-            // Regular flames for width
-            serverLevel.sendParticles(ParticleTypes.FLAME,
-                    arcPos.x, arcPos.y, arcPos.z,
-                    8, 0.5, 0.3, 0.5, 0.2);
-
-            // Create ground impact effects as we get closer to the ground
+// Regular flames for width
+// Create ground impact effects as we get closer to the ground
             if (height < 1.0) {
-                serverLevel.sendParticles(ParticleTypes.LAVA,
-                        arcPos.x, arcPos.y - 0.5, arcPos.z,
-                        3, 0.3, 0.1, 0.3, 0.1);
-            }
+}
         }
 
         // Create wide slash effect
@@ -184,17 +165,14 @@ public class BlazingUniverseAttack extends FlameBreathingAttackBase {
             Vec3 sidePos = userPos.add(lookDir.scale(range * 0.7)).add(rightDir.scale(side * 0.5));
 
             // Wide flame slash
-            serverLevel.sendParticles(ParticleTypes.FLAME,
-                    sidePos.x, sidePos.y, sidePos.z,
-                    4, 0.2, 0.5, 0.2, 0.1);
-        }
+}
     }
 
     private void createFinalExplosion() {
         Vec3 explosionCenter = user.position().add(user.getLookAngle().scale(range * 0.8));
+        playFlameVfx(VfxIds.BLAZING_UNIVERSE_IMPACT, explosionCenter, user.getLookAngle(), 1.25f);
 
         // Create massive flame explosion
-        createFlameExplosion(explosionCenter.add(0, 1, 0), 3.0f);
 
         // Hit all enemies in explosion radius
         List<LivingEntity> explosionTargets = getTargetsInCustomHitbox(
@@ -233,7 +211,6 @@ public class BlazingUniverseAttack extends FlameBreathingAttackBase {
                 SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 2.0f, 0.6f);
 
         // Ground cracking effect
-        createGroundCrackingEffect(explosionCenter);
     }
 
     private void createGroundCrackingEffect(Vec3 center) {
@@ -250,16 +227,9 @@ public class BlazingUniverseAttack extends FlameBreathingAttackBase {
                 );
 
                 // Flame cracks
-                serverLevel.sendParticles(ParticleTypes.FLAME,
-                        crackPos.x, crackPos.y, crackPos.z,
-                        2, 0.1, 0.3, 0.1, 0.05);
-
-                // Lava seeping through cracks
+// Lava seeping through cracks
                 if (dist % 2 == 0) {
-                    serverLevel.sendParticles(ParticleTypes.LAVA,
-                            crackPos.x, crackPos.y, crackPos.z,
-                            1, 0.1, 0.1, 0.1, 0.02);
-                }
+}
             }
         }
     }
@@ -281,9 +251,6 @@ public class BlazingUniverseAttack extends FlameBreathingAttackBase {
             Vec3 groundPos = user.position().add(user.getLookAngle().scale(range * 0.8));
 
             // Smoldering ground
-            serverLevel.sendParticles(ParticleTypes.LARGE_SMOKE,
-                    groundPos.x, groundPos.y + 0.5, groundPos.z,
-                    15, 2.0, 1.0, 2.0, 0.05);
-        }
+}
     }
 }

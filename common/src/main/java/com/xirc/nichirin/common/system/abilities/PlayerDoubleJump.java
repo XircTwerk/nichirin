@@ -13,14 +13,16 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class PlayerDoubleJump {
 
-    // Track jump state for each player
-    private static final Map<UUID, JumpState> jumpStates = new HashMap<>();
+    // Integrated singleplayer has a client Player and ServerPlayer with the same UUID ticking
+    // concurrently on different threads. Keep their state isolated by logical side.
+    private static final Map<UUID, JumpState> clientJumpStates = new ConcurrentHashMap<>();
+    private static final Map<UUID, JumpState> serverJumpStates = new ConcurrentHashMap<>();
 
     // Configuration
     private static final double DOUBLE_JUMP_VELOCITY = 0.42;
@@ -383,7 +385,7 @@ public class PlayerDoubleJump {
 
         // Clean up old states periodically
         if (player.tickCount % 400 == 0) {
-            cleanupOldStates();
+            cleanupOldStates(player);
         }
     }
 
@@ -391,16 +393,21 @@ public class PlayerDoubleJump {
      * Get or create jump state for a player
      */
     private static JumpState getOrCreateState(Player player) {
-        return jumpStates.computeIfAbsent(player.getUUID(), uuid -> new JumpState());
+        return statesFor(player).computeIfAbsent(player.getUUID(), uuid -> new JumpState());
     }
 
     /**
      * Remove states for players who are no longer online
      */
-    private static void cleanupOldStates() {
-        if (jumpStates.size() > 100) {
-            jumpStates.clear();
+    private static void cleanupOldStates(Player player) {
+        Map<UUID, JumpState> states = statesFor(player);
+        if (states.size() > 100) {
+            states.clear();
         }
+    }
+
+    private static Map<UUID, JumpState> statesFor(Player player) {
+        return player.level().isClientSide ? clientJumpStates : serverJumpStates;
     }
 
     /**

@@ -5,6 +5,7 @@ import com.xirc.nichirin.client.gui.MoveIcon;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.attack.moveset.CqcMoveset;
 import com.xirc.nichirin.common.attack.moveset.DefaultKatanaMoveset;
+import com.xirc.nichirin.common.attack.moveset.DualKatanaMoveset;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.registry.NichirinKeybindRegistry;
@@ -222,6 +223,9 @@ public class MovesetDataSection extends AbstractGuiPage {
         if (breathingId != null) {
             selected.add(new SelectedMoveset("Breathing Style", breathingId,
                     COLOR_PALETTE.BREATH_CYAN.argb(), COLOR_PALETTE.BREATH_CYAN.rgb()));
+        } else if (DualKatanaMoveset.isDualWielding(player)) {
+            selected.add(new SelectedMoveset("Dual Katana", DualKatanaMoveset.INSTANCE.getMovesetId(),
+                    COLOR_PALETTE.SLAYER_BLUE.argb(), COLOR_PALETTE.SLAYER_BLUE.rgb()));
         } else {
             selected.add(new SelectedMoveset("Default Katana", DefaultKatanaMoveset.INSTANCE.getMovesetId(),
                     COLOR_PALETTE.SLAYER_BLUE.argb(), COLOR_PALETTE.SLAYER_BLUE.rgb()));
@@ -245,11 +249,15 @@ public class MovesetDataSection extends AbstractGuiPage {
         if (DefaultKatanaMoveset.INSTANCE.getMovesetId().equals(movesetId)) {
             return DefaultKatanaMoveset.INSTANCE;
         }
+        if (DualKatanaMoveset.INSTANCE.getMovesetId().equals(movesetId)) {
+            return DualKatanaMoveset.INSTANCE;
+        }
         return NichirinMovesetRegistry.getMoveset(movesetId);
     }
 
     private Component getMovesetDisplayName(String movesetId, AbstractMoveset moveset) {
-        if (DefaultKatanaMoveset.INSTANCE.getMovesetId().equals(movesetId)) {
+        if (DefaultKatanaMoveset.INSTANCE.getMovesetId().equals(movesetId)
+                || DualKatanaMoveset.INSTANCE.getMovesetId().equals(movesetId)) {
             return Component.literal(moveset.getDisplayName());
         }
         return Component.translatable(getTranslationKey(movesetId));
