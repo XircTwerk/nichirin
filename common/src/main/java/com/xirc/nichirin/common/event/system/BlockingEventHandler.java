@@ -12,6 +12,7 @@ import dev.architectury.event.events.common.TickEvent;
 import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.event.events.common.EntityEvent;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.sounds.SoundEvent;
@@ -60,6 +61,11 @@ public class BlockingEventHandler {
                         attackingEntity = playerAtk;
                     } else if (damageSource.getEntity() instanceof LivingEntity livingAtk) {
                         attackingEntity = livingAtk;
+                    }
+
+                    // Parrying/blocking a projectile shouldn't stun the owner who fired it.
+                    if (damageSource.is(DamageTypeTags.IS_PROJECTILE)) {
+                        attackingEntity = null;
                     }
 
                     boolean handled = KatanaBlock.isBlocking(player)

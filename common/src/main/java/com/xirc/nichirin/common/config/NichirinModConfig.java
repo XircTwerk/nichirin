@@ -230,6 +230,9 @@ public class NichirinModConfig implements ConfigData {
         public boolean burnInSunlight = true;
 
         @ConfigEntry.Gui.Tooltip
+        public boolean burnEntitiesInSunlight = true;
+
+        @ConfigEntry.Gui.Tooltip
         @ConfigEntry.BoundedDiscrete(min = 1, max = 20)
         public int sunDamagePerSecond = 2;
 

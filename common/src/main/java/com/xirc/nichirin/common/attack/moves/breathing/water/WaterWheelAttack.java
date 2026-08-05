@@ -82,9 +82,6 @@ public class WaterWheelAttack extends WaterBreathingAttackBase {
     private void performWheel() {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
-        // Create continuous vertical wheel effect
-        dragCaughtEnemies();
-
         // Hit enemies in wheel radius - allow multiple hits but with timing
         if (wheelTicks % 3 == 0) {
             List<LivingEntity> targets = getTargetsInCustomHitbox(

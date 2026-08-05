@@ -14,7 +14,8 @@ import java.util.function.DoubleFunction;
 /** Connected, code-authored Flame Breathing geometry rendered by the shared pixel framebuffer. */
 public final class FlameTechniqueEffect implements VfxEffect {
     public enum Style {
-        UNKNOWING_FIRE(48), RISING_SUN(64), BLAZING_UNIVERSE(42), BLAZING_UNIVERSE_IMPACT(20), BLOOMING(44),
+        UNKNOWING_FIRE(56), UNKNOWING_FIRE_IMPACT(18), RISING_SUN(64), BLAZING_UNIVERSE(42),
+        BLAZING_UNIVERSE_IMPACT(20), BLOOMING(44),
         FLAME_TIGER(46), RENGOKU(58), POMMEL_SLASH(18);
 
         private final int lifetime;
@@ -30,6 +31,7 @@ public final class FlameTechniqueEffect implements VfxEffect {
         this.style = style;
         this.palette = switch (style) {
             case UNKNOWING_FIRE -> new Palette(0x692F0F, 0xFC5520, 0xFF831E, 0xFFBD1E, 0xFFF245);
+            case UNKNOWING_FIRE_IMPACT -> new Palette(0x4A1608, 0xE43A12, 0xFF681E, 0xFFB21E, 0xFFF6A0);
             case RISING_SUN -> new Palette(0x3A0A04, 0xFC5520, 0xFF831E, 0xFEEF24, 0xFFF245);
             case BLAZING_UNIVERSE -> new Palette(0x780404, 0xFF4300, 0xFC5520, 0xFFBD1E, 0xFFFFFF);
             case BLAZING_UNIVERSE_IMPACT -> new Palette(0x520303, 0xE83208, 0xFC5520, 0xFF9D1E, 0xFFFFFF);
@@ -47,7 +49,9 @@ public final class FlameTechniqueEffect implements VfxEffect {
     public void render(VfxInstance instance, PoseStack poseStack, Camera camera, float partialTick) {
         float age = instance.ageTicks() + partialTick;
         float revealTicks = switch (style) {
-            case UNKNOWING_FIRE, RENGOKU -> 40.0f;
+            case UNKNOWING_FIRE -> 46.0f;
+            case RENGOKU -> 40.0f;
+            case UNKNOWING_FIRE_IMPACT -> 5.0f;
             case RISING_SUN, BLAZING_UNIVERSE -> 12.0f;
             default -> Math.min(10.0f, style.lifetime * 0.3f);
         };
@@ -68,6 +72,8 @@ public final class FlameTechniqueEffect implements VfxEffect {
 
         switch (style) {
             case UNKNOWING_FIRE -> drawUnknowingFire(buffer, matrix, origin, forward, right, scale, progress, fade, age);
+            case UNKNOWING_FIRE_IMPACT -> drawUnknowingFireImpact(buffer, matrix, origin,
+                    forward, right, scale, progress, fade, age);
             case RISING_SUN -> drawRisingSun(buffer, matrix, origin, forward, right, scale, progress, fade, age);
             case BLAZING_UNIVERSE -> drawBlazingUniverse(buffer, matrix, origin, forward, right, scale, progress, fade, age);
             case BLAZING_UNIVERSE_IMPACT -> drawBlazingUniverseImpact(buffer, matrix, origin,
@@ -93,6 +99,49 @@ public final class FlameTechniqueEffect implements VfxEffect {
                         .add(renderUp.scale((0.22 + Math.sin(t * Math.PI) * 0.55) * s)),
                 r, t -> (float) ((0.18 + (1.0 - t) * 0.42) * s),
                 color(palette.ember, fade), age, 6);
+    }
+
+    private void drawUnknowingFireImpact(BufferBuilder b, Matrix4f m, Vec3 o, Vec3 f, Vec3 r,
+                                         float s, float p, float fade, float age) {
+        Vec3 center = o.add(renderUp.scale(0.42 * s)).add(f.scale(0.18 * s));
+        float fullReveal = shapeReveal;
+
+        // A low, expanding pressure ring sells the boom without obscuring the follow-through.
+        float ringReveal = clamp(fullReveal / 0.72f);
+        float radius = (0.38f + 2.75f * ease(ringReveal)) * s;
+        shapeReveal = 1.0f;
+        ring(b, m, center, f, r, radius, 0.42f * s, 24,
+                color(palette.ember, fade * (1.0f - ringReveal * 0.30f)), age, 6);
+        ring(b, m, center.add(renderUp.scale(0.08 * s)), f, r, radius * 0.68f,
+                0.16f * s, 20, color(palette.hot, fade * 0.86f), age + 3, 7);
+
+        // Flame petals erupt sequentially instead of appearing as one solid disc.
+        for (int petal = 0; petal < 8; petal++) {
+            final int current = petal;
+            float delay = petal * 0.035f;
+            shapeReveal = clamp((fullReveal - delay) / (0.70f - delay));
+            if (shapeReveal <= 0.0f) continue;
+            double angle = Math.PI * 2.0 * current / 8.0 + 0.20;
+            Vec3 radial = f.scale(Math.cos(angle)).add(r.scale(Math.sin(angle)));
+            Vec3 tangent = f.scale(-Math.sin(angle)).add(r.scale(Math.cos(angle)));
+            float petalLength = (current % 2 == 0 ? 2.15f : 1.55f) * s;
+            stripedRibbon(b, m, 12,
+                    t -> center.add(radial.scale(t * petalLength))
+                            .add(renderUp.scale(Math.sin(t * Math.PI) * (0.42 + (current % 3) * 0.12) * s)),
+                    tangent, t -> (float) ((0.07 + (1.0 - t) * 0.15) * s),
+                    color(current % 3 == 0 ? palette.gold : palette.orange, fade * 0.88f),
+                    age + current, 6);
+        }
+
+        shapeReveal = fullReveal;
+        float flash = 1.0f - clamp(age / 7.0f);
+        diamond(b, m, center.add(renderUp.scale(0.32 * s)), r, renderUp,
+                (0.30f + 0.78f * ease(p)) * s, (0.42f + 1.05f * ease(p)) * s,
+                color(palette.hot, fade * flash * 0.92f));
+        shapeReveal = clamp(fullReveal / 0.62f);
+        burst(b, m, center, f, r, 0.28f * s, 2.35f * s, 12,
+                color(palette.gold, fade * 0.78f));
+        shapeReveal = fullReveal;
     }
 
     private void drawRisingSun(BufferBuilder b, Matrix4f m, Vec3 o, Vec3 f, Vec3 r,

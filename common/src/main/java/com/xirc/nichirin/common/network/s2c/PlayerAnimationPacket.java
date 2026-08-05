@@ -36,6 +36,10 @@ public class PlayerAnimationPacket {
         buf.writeFloat(animSpeed);
     }
 
+    public String getAnimationName() {
+        return animationName;
+    }
+
     @Environment(EnvType.CLIENT)
     public void handleClient() {
         Minecraft mc = Minecraft.getInstance();

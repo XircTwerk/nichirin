@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.util;
 
 import com.xirc.nichirin.common.config.NichirinModConfig;
+import com.xirc.nichirin.common.attack.moves.demon.destructive.CompassNeedleTracker;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -60,6 +61,10 @@ public final class NichirinDamageHandler {
                 source = NichirinDamageSources.percentage(target, source);
             }
             amount = applyParryPunishDamage(target, source, amount);
+            if (source.getEntity() instanceof Player attacker) {
+                amount *= CompassNeedleTracker.precisionMultiplier(
+                        attacker.getUUID(), target, target.level().getGameTime());
+            }
             if (target instanceof Player) amount *= PLAYER_DAMAGE_MULTIPLIER;
             float before = target.getHealth() + target.getAbsorptionAmount();
             boolean result = target.hurt(source, amount);

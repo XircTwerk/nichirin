@@ -8,10 +8,15 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 
 public record VfxTriggerPacket(ResourceLocation effectId, Vec3 origin, Vec3 direction, float scale,
-                               long seed, int attachmentEntityId, int ownerEntityId) {
+                               long seed, int attachmentEntityId, int ownerEntityId, int lifetimeTicks) {
+    public VfxTriggerPacket(ResourceLocation effectId, Vec3 origin, Vec3 direction, float scale,
+                            long seed, int attachmentEntityId, int ownerEntityId) {
+        this(effectId, origin, direction, scale, seed, attachmentEntityId, ownerEntityId, -1);
+    }
+
     public VfxTriggerPacket(FriendlyByteBuf buf) {
         this(buf.readResourceLocation(), readVec3(buf), readVec3(buf), buf.readFloat(), buf.readLong(),
-                buf.readVarInt(), buf.readVarInt());
+                buf.readVarInt(), buf.readVarInt(), buf.readVarInt());
     }
 
     public void toBytes(FriendlyByteBuf buf) {
@@ -22,11 +27,13 @@ public record VfxTriggerPacket(ResourceLocation effectId, Vec3 origin, Vec3 dire
         buf.writeLong(seed);
         buf.writeVarInt(attachmentEntityId);
         buf.writeVarInt(ownerEntityId);
+        buf.writeVarInt(lifetimeTicks);
     }
 
     @Environment(EnvType.CLIENT)
     public void handleClient() {
-        VfxEngine.spawn(effectId, origin, direction, scale, seed, attachmentEntityId, ownerEntityId);
+        VfxEngine.spawn(effectId, origin, direction, scale, seed, attachmentEntityId, ownerEntityId,
+                lifetimeTicks);
     }
 
     private static Vec3 readVec3(FriendlyByteBuf buf) {

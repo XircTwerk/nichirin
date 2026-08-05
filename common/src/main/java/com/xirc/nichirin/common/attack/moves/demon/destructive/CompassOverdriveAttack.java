@@ -16,12 +16,10 @@ import net.minecraft.world.effect.MobEffects;
 public class CompassOverdriveAttack extends CompassNeedleAttack {
 
     @Override
-    protected void onStart() {
-        super.onStart();
-        if (!(user instanceof ServerPlayer sp)) return;
-        sp.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, DEFAULT_DURATION_TICKS, 0, false, false, true));
-        sp.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, DEFAULT_DURATION_TICKS, 0, false, false, true));
-        world.playSound(null, sp.getX(), sp.getY(), sp.getZ(),
+    protected void onCompassActivated(ServerPlayer player, int activeTicks) {
+        player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, activeTicks, 0, false, false, true));
+        player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, activeTicks, 0, false, false, true));
+        world.playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.WARDEN_HEARTBEAT, SoundSource.PLAYERS, 1.0f, 0.7f);
     }
 

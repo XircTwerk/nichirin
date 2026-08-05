@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.attack.moves.breathing.flame;
 
 import com.xirc.nichirin.common.vfx.VfxIds;
+import com.xirc.nichirin.common.vfx.VfxManager;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.server.level.ServerLevel;
@@ -353,10 +354,10 @@ if (Math.abs(i) <= 8) {
         if (world instanceof ServerLevel serverLevel) {
             Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
 
-            // Finale explosion
-
-            // Extra dramatic effects
-}
+            // Keep the terminal boom in world space so it does not follow the user afterward.
+            VfxManager.playOwned(serverLevel, user, VfxIds.UNKNOWING_FIRE_IMPACT,
+                    userPos, dashDirection, 1.15f);
+        }
 
         // Final dramatic sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),

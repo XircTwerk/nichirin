@@ -2,6 +2,7 @@ package com.xirc.nichirin.common.system.movement;
 
 import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
 import com.xirc.nichirin.common.util.StaminaManager;
+import com.xirc.nichirin.common.attack.moves.demon.destructive.DestructiveDeathState;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -200,7 +201,7 @@ public class MovementContext {
                 case NONE -> "Movement";
             };
 
-            CooldownDisplayPacket.sendToClient(serverPlayer, cooldownName, getCooldownTicks(movementType),
+            CooldownDisplayPacket.sendToClient(serverPlayer, cooldownName, getCooldownTicks(player, movementType),
                     movementIcon(movementType), MOVEMENT_COLOR);
         }
     }
@@ -228,12 +229,13 @@ public class MovementContext {
     }
 
     private static void setCooldown(Player player, MovementType movementType) {
-        playerCooldownEnds.put(player.getUUID(), player.level().getGameTime() + getCooldownTicks(movementType));
+        playerCooldownEnds.put(player.getUUID(), player.level().getGameTime() + getCooldownTicks(player, movementType));
     }
 
-    private static int getCooldownTicks(MovementType movementType) {
+    private static int getCooldownTicks(Player player, MovementType movementType) {
         return switch (movementType) {
-            case DODGE -> DODGE_COOLDOWN_TICKS;
+            case DODGE -> DestructiveDeathState.isCompassActive(
+                    player.getUUID(), player.level().getGameTime()) ? 10 : DODGE_COOLDOWN_TICKS;
             case AIR_DODGE -> AIR_DODGE_COOLDOWN_TICKS;
             case BACKSTEP -> BACKSTEP_COOLDOWN_TICKS;
             case DASH -> DASH_COOLDOWN_TICKS;

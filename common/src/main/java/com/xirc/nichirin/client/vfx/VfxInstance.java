@@ -17,13 +17,14 @@ public final class VfxInstance {
     private final long seed;
     private final int attachmentEntityId;
     private final int ownerEntityId;
+    private final int lifetimeTicks;
     private final Vec3 attachmentOffset;
     private final ArrayDeque<Vec3> originHistory = new ArrayDeque<>();
     private Vec3 currentOrigin;
     private int ageTicks;
 
     public VfxInstance(ResourceLocation id, VfxEffect effect, Vec3 origin, Vec3 direction, float scale,
-                       long seed, int attachmentEntityId, int ownerEntityId) {
+                       long seed, int attachmentEntityId, int ownerEntityId, int lifetimeTicks) {
         this.id = id;
         this.effect = effect;
         this.origin = origin;
@@ -32,6 +33,7 @@ public final class VfxInstance {
         this.seed = seed;
         this.attachmentEntityId = attachmentEntityId;
         this.ownerEntityId = ownerEntityId;
+        this.lifetimeTicks = lifetimeTicks > 0 ? lifetimeTicks : effect.lifetimeTicks();
         this.currentOrigin = origin;
         Entity entity = findEntity();
         this.attachmentOffset = entity != null ? origin.subtract(entity.position()) : Vec3.ZERO;
@@ -51,6 +53,7 @@ public final class VfxInstance {
     public long seed() { return seed; }
     public int ageTicks() { return ageTicks; }
     public int ownerEntityId() { return ownerEntityId; }
+    public int lifetimeTicks() { return lifetimeTicks; }
 
     public void tick() {
         Entity entity = findEntity();
@@ -64,7 +67,7 @@ public final class VfxInstance {
     }
 
     public boolean isFinished() {
-        return ageTicks >= effect.lifetimeTicks();
+        return ageTicks >= lifetimeTicks;
     }
 
     private Entity findEntity() {

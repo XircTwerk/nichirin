@@ -73,6 +73,7 @@ public class KatanaBlock {
         int blockTicks = 0;
         int parryWindowTicks = 0;
         long blockCooldownUntil = 0;
+        long blockStunUntil = 0;   // can't release the guard until this game-time
         boolean wasBlockingLastTick = false;
         boolean wasAttackingLastTick = false;
 
@@ -80,6 +81,7 @@ public class KatanaBlock {
             stance = BlockingStance.NONE;
             blockTicks = 0;
             parryWindowTicks = 0;
+            blockStunUntil = 0;
             wasAttackingLastTick = false;
         }
 
@@ -150,6 +152,12 @@ public class KatanaBlock {
         if (state == null || state.stance == BlockingStance.NONE) return;
 
         long currentTime = entity.level().getGameTime();
+
+        // Blockstun: after taking a blocked hit you're locked in guard for a few ticks.
+        if (currentTime < state.blockStunUntil && state.stance == BlockingStance.BLOCKING) {
+            return;
+        }
+
         boolean wasInParryWindow = (state.stance == BlockingStance.PARRY_READY && state.parryWindowTicks > 0);
 
         if (wasInParryWindow) {
@@ -183,6 +191,7 @@ public class KatanaBlock {
         if (state == null || state.stance == BlockingStance.NONE) return false;
 
         if (attacker != null && isBackstab(defender, attacker)) {
+            state.blockStunUntil = 0; // backstab always breaks the guard
             stopBlocking(defender);
             return false;
         }
@@ -193,7 +202,12 @@ public class KatanaBlock {
         }
 
         if (state.stance == BlockingStance.BLOCKING) {
-            return handleSuccessfulBlock(defender, state, damage);
+            boolean blocked = handleSuccessfulBlock(defender, state, damage);
+            if (blocked) {
+                // Formula: 4 + damage/2 ticks of forced guard.
+                state.blockStunUntil = defender.level().getGameTime() + 4 + Math.round(damage / 2.0f);
+            }
+            return blocked;
         }
 
         return false;

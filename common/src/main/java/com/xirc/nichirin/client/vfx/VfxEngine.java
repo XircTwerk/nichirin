@@ -10,6 +10,7 @@ import com.xirc.nichirin.client.vfx.effect.BeastTechniqueEffect;
 import com.xirc.nichirin.client.vfx.effect.SoundTechniqueEffect;
 import com.xirc.nichirin.client.vfx.effect.InsectTechniqueEffect;
 import com.xirc.nichirin.client.vfx.effect.KatanaTechniqueEffect;
+import com.xirc.nichirin.client.vfx.effect.CompassNeedleEffect;
 import com.xirc.nichirin.common.vfx.VfxIds;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -51,6 +52,8 @@ public final class VfxEngine {
         register(VfxIds.CONSTANT_FLUX, () -> new WaterTechniqueEffect(WaterTechniqueEffect.Style.CONSTANT_FLUX));
         register(VfxIds.DEAD_CALM, () -> new WaterTechniqueEffect(WaterTechniqueEffect.Style.DEAD_CALM));
         register(VfxIds.UNKNOWING_FIRE, () -> new FlameTechniqueEffect(FlameTechniqueEffect.Style.UNKNOWING_FIRE));
+        register(VfxIds.UNKNOWING_FIRE_IMPACT,
+                () -> new FlameTechniqueEffect(FlameTechniqueEffect.Style.UNKNOWING_FIRE_IMPACT));
         register(VfxIds.RISING_SCORCHING_SUN, () -> new FlameTechniqueEffect(FlameTechniqueEffect.Style.RISING_SUN));
         register(VfxIds.BLAZING_UNIVERSE, () -> new FlameTechniqueEffect(FlameTechniqueEffect.Style.BLAZING_UNIVERSE));
         register(VfxIds.BLAZING_UNIVERSE_IMPACT,
@@ -61,6 +64,7 @@ public final class VfxEngine {
         register(VfxIds.FLAME_POMMEL_SLASH, () -> new FlameTechniqueEffect(FlameTechniqueEffect.Style.POMMEL_SLASH));
         register(VfxIds.THUNDERCLAP_FLASH, () -> new ThunderTechniqueEffect(ThunderTechniqueEffect.Style.DASH));
         register(VfxIds.GODSPEED, () -> new ThunderTechniqueEffect(ThunderTechniqueEffect.Style.GODSPEED));
+        register(VfxIds.RICE_SPIRIT_LINK, () -> new ThunderTechniqueEffect(ThunderTechniqueEffect.Style.RICE_LINK));
         register(VfxIds.RICE_SPIRIT_SLASH, () -> new ThunderTechniqueEffect(ThunderTechniqueEffect.Style.RICE_SLASH));
         register(VfxIds.THUNDER_SWARM_SLASH, () -> new ThunderTechniqueEffect(ThunderTechniqueEffect.Style.SWARM_SLASH));
         register(VfxIds.DISTANT_THUNDER_CHARGE, () -> new ThunderTechniqueEffect(ThunderTechniqueEffect.Style.CHARGE));
@@ -101,6 +105,12 @@ public final class VfxEngine {
         register(VfxIds.INSECT_DRAGONFLY, () -> new InsectTechniqueEffect(InsectTechniqueEffect.Style.DRAGONFLY));
         register(VfxIds.INSECT_CENTIPEDE, () -> new InsectTechniqueEffect(InsectTechniqueEffect.Style.CENTIPEDE));
         register(VfxIds.INSECT_IMPACT, () -> new InsectTechniqueEffect(InsectTechniqueEffect.Style.IMPACT));
+        register(VfxIds.COMPASS_NEEDLE,
+                () -> new CompassNeedleEffect(CompassNeedleEffect.Style.COMPASS));
+        register(VfxIds.COMPASS_NEEDLE_COLLAPSE,
+                () -> new CompassNeedleEffect(CompassNeedleEffect.Style.COLLAPSE));
+        register(VfxIds.COMPASS_NEEDLE_ARROW,
+                () -> new CompassNeedleEffect(CompassNeedleEffect.Style.ARROW));
     }
 
     public static void register(ResourceLocation id, Supplier<? extends VfxEffect> factory) {
@@ -108,13 +118,17 @@ public final class VfxEngine {
     }
 
     public static void spawn(ResourceLocation id, Vec3 origin, Vec3 direction, float scale, long seed,
-                             int attachmentEntityId, int ownerEntityId) {
+                             int attachmentEntityId, int ownerEntityId, int lifetimeTicks) {
         Supplier<? extends VfxEffect> factory = EFFECTS.get(id);
         Minecraft minecraft = Minecraft.getInstance();
         if (factory == null || minecraft.level == null) return;
+        if (VfxIds.COMPASS_NEEDLE_COLLAPSE.equals(id)) {
+            ACTIVE.removeIf(instance -> VfxIds.COMPASS_NEEDLE.equals(instance.id())
+                    && instance.ownerEntityId() == ownerEntityId);
+        }
         if (ACTIVE.size() >= MAX_ACTIVE_EFFECTS) ACTIVE.remove(0);
         ACTIVE.add(new VfxInstance(id, factory.get(), origin, direction, scale, seed,
-                attachmentEntityId, ownerEntityId));
+                attachmentEntityId, ownerEntityId, lifetimeTicks));
     }
 
     public static void tick() {

@@ -17,8 +17,8 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Builds Akaza's emissive glow textures in code from his blue source textures — no baked assets.
  *
- * <p>Every variant is dimmed a little (so the glow reads as a glow, not a flat fullbright decal)
- * while still emitting light. The Overdrive variant additionally hue-rotates blue → red. Results are
+ * <p>The base variant preserves the authored texture colors at full brightness. The Overdrive
+ * variant hue-rotates blue → red without changing the source brightness. Results are
  * cached; on any failure it falls back to the untouched source so the glow degrades gracefully.</p>
  */
 @Environment(EnvType.CLIENT)
@@ -26,18 +26,18 @@ public final class AkazaEmissiveTextures {
 
     /** +0.4 turns (144°): the ~216° blue lines land on red while keeping their shading. */
     private static final float HUE_SHIFT = 0.4f;
-    /** Darken the glow a bit — still emissive, just not blown-out white-bright. */
-    private static final float BRIGHTNESS = 0.6f;
+    /** Preserve the source brightness when promoting authored pixels to emissive. */
+    private static final float BRIGHTNESS = 1.0f;
 
     private static final Map<String, ResourceLocation> CACHE = new ConcurrentHashMap<>();
 
     private AkazaEmissiveTextures() {}
 
     /**
-     * Returns the processed glow texture for {@code source}. {@code overdrive} selects the red
-     * hue-shifted variant; otherwise it's the dimmed blue.
+     * Returns the authored source normally or a red hue-shifted copy in Overdrive.
      */
     public static ResourceLocation processed(ResourceLocation source, boolean overdrive) {
+        if (!overdrive) return source;
         String key = source + (overdrive ? "#od" : "#base");
         ResourceLocation cached = CACHE.get(key);
         if (cached != null) return cached;

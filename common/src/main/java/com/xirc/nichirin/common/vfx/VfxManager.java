@@ -30,10 +30,16 @@ public final class VfxManager {
 
     public static void playAttached(ServerLevel level, Entity attachment, Entity owner,
                                     ResourceLocation effectId, Vec3 origin, Vec3 direction, float scale) {
+        playAttached(level, attachment, owner, effectId, origin, direction, scale, -1);
+    }
+
+    public static void playAttached(ServerLevel level, Entity attachment, Entity owner,
+                                    ResourceLocation effectId, Vec3 origin, Vec3 direction, float scale,
+                                    int lifetimeTicks) {
         Vec3 facing = direction.lengthSqr() > 1.0E-6 ? direction.normalize() : new Vec3(0.0, 0.0, 1.0);
         VfxTriggerPacket packet = new VfxTriggerPacket(
                 effectId, origin, facing, scale, ThreadLocalRandom.current().nextLong(),
-                attachment.getId(), owner != null ? owner.getId() : -1);
+                attachment.getId(), owner != null ? owner.getId() : -1, lifetimeTicks);
         level.players().stream()
                 .filter(player -> player.distanceToSqr(origin) <= TRACKING_RANGE_SQR)
                 .forEach(player -> NichirinPacketRegistry.sendToPlayer(packet, player));

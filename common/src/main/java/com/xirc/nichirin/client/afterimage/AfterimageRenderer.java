@@ -21,14 +21,14 @@ import java.util.List;
 public final class AfterimageRenderer {
     private static final List<Entry> ENTRIES = new ArrayList<>();
     // Hard caps so a fold-heavy Thunderclap can't pile up enough ghosts to tank the frame rate.
-    private static final int MAX_ENTRIES = 10;
+    private static final int MAX_ENTRIES = 3;
     private static final double MAX_RENDER_DIST_SQR = 64.0 * 64.0;
     // Absolute ceiling on full entity-model re-renders per frame, across all trails. Each ghost
     // is a complete model dispatch (player animation hooks included, and shader packs multiply
     // the per-dispatch cost); without a tight budget a long multi-trail chain lags viewers out
     // instead of just dropping the trail density. Players can also turn afterimages off entirely
     // (client config → enableAfterimages).
-    private static final int MAX_COPIES_PER_FRAME = 12;
+    private static final int MAX_COPIES_PER_FRAME = 9;
 
     private record Entry(int entityId, Vec3 from, Vec3 to, long spawnTick, int lifetimeTicks,
                          int copies, float alpha) {
@@ -57,7 +57,7 @@ public final class AfterimageRenderer {
                 to,
                 minecraft.level.getGameTime(),
                 Math.min(lifetimeTicks, 40),
-                Math.min(copies, 10),
+                Math.min(copies, 3),
                 Math.min(alpha, 0.75F)
         ));
     }

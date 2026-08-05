@@ -14,7 +14,7 @@ import java.util.function.DoubleFunction;
 /** Progressive, code-authored Thunder Breathing geometry rendered by the shared pixel pass. */
 public final class ThunderTechniqueEffect implements VfxEffect {
     public enum Style {
-        DASH(18), GODSPEED(30), RICE_SLASH(14), SWARM_SLASH(18), CHARGE(20),
+        DASH(18), GODSPEED(30), RICE_LINK(16), RICE_SLASH(14), SWARM_SLASH(18), CHARGE(20),
         HEAT_RISE(24), WARNING(36), STRIKE(14), DRAGON(30), IMPACT(18);
 
         private final int lifetime;
@@ -46,6 +46,7 @@ public final class ThunderTechniqueEffect implements VfxEffect {
         float age = instance.ageTicks() + partialTick;
         float revealTicks = switch (style) {
             case DASH, STRIKE -> 3.0f;
+            case RICE_LINK -> 9.0f;
             case IMPACT -> 5.0f;
             case SWARM_SLASH -> 13.0f;
             case GODSPEED -> 20.0f;
@@ -71,6 +72,7 @@ public final class ThunderTechniqueEffect implements VfxEffect {
         switch (style) {
             case DASH -> drawDash(buffer, matrix, instance, camera, origin, forward, right, scale, fade, age, false);
             case GODSPEED -> drawDash(buffer, matrix, instance, camera, origin, forward, right, scale, fade, age, true);
+            case RICE_LINK -> drawRiceLink(buffer, matrix, origin, forward, right, scale, fade, age);
             case RICE_SLASH -> drawRiceSlash(buffer, matrix, origin, forward, right, scale, fade, age);
             case SWARM_SLASH -> drawSwarmSlash(buffer, matrix, origin, forward, right, scale, fade, age);
             case CHARGE -> drawCharge(buffer, matrix, origin, forward, right, scale, fade, age);
@@ -103,21 +105,58 @@ public final class ThunderTechniqueEffect implements VfxEffect {
         reveal = saved;
     }
 
+    private void drawRiceLink(BufferBuilder b, Matrix4f m, Vec3 o, Vec3 f, Vec3 r,
+                              float length, float fade, float age) {
+        length = Math.max(0.75f, Math.min(24.0f, length));
+        float bodyScale = Math.max(0.78f, Math.min(1.22f, length / 6.0f));
+
+        // A single readable current connects caster and victim. Three nested widths give it a
+        // hand-drawn blade silhouette instead of a bare procedural line.
+        jaggedBolt(b, m, o, f, r, length, 0.24f * bodyScale, 28,
+                0.18f * bodyScale, color(CHARCOAL, fade * 0.92f), age, 211L);
+        float saved = reveal;
+        reveal = clamp((saved - 0.04f) / 0.96f);
+        jaggedBolt(b, m, o.add(up.scale(0.025 * bodyScale)), f, r, length,
+                0.17f * bodyScale, 28, 0.095f * bodyScale,
+                color(YELLOW, fade * 0.96f), age + 1.0f, 223L);
+        reveal = clamp((saved - 0.11f) / 0.89f);
+        jaggedBolt(b, m, o.add(up.scale(0.05 * bodyScale)), f, r, length,
+                0.10f * bodyScale, 28, 0.035f * bodyScale,
+                color(WHITE, fade * 0.90f), age + 2.0f, 227L);
+
+        // Five compact cuts chase the current toward the locked target, matching Rice Spirit's
+        // five damage beats. They are intentionally small so the connection remains the focus.
+        for (int i = 0; i < 5; i++) {
+            float beat = clamp((saved - (0.14f + i * 0.13f)) / 0.28f);
+            if (beat <= 0.0f) continue;
+            reveal = beat;
+            float t = 0.20f + i * 0.18f;
+            Vec3 center = o.add(f.scale(length * t));
+            float tilt = (i & 1) == 0 ? 1.0f : -1.0f;
+            electricSlash(b, m, center, r, up, f,
+                    (0.88f + i * 0.035f) * bodyScale,
+                    0.62f * bodyScale, 0.10f * bodyScale, tilt,
+                    fade * (0.62f + beat * 0.30f), age, 239L + i * 7L);
+        }
+        reveal = saved;
+    }
+
     private void drawRiceSlash(BufferBuilder b, Matrix4f m, Vec3 o, Vec3 f, Vec3 r,
                                float s, float fade, float age) {
-        arcBand(b, m, o.add(up.scale(0.92 * s)), f, r, 2.15f * s, 0.48f * s,
-                -72, 144, 18, color(CHARCOAL, fade));
+        Vec3 center = o.add(up.scale(0.10 * s));
+        electricSlash(b, m, center, r, up, f,
+                4.2f * s, 2.55f * s, 0.34f * s, 1.0f, fade, age, 59L);
         float saved = reveal;
-        reveal = clamp((saved - 0.10f) / 0.90f);
-        arcBand(b, m, o.add(up.scale(0.97 * s)), f, r, 2.03f * s, 0.20f * s,
-                -72, 144, 18, color(YELLOW, fade));
-        arcBand(b, m, o.add(f.scale(0.18 * s)).add(up.scale(1.02 * s)), up, r,
-                1.72f * s, 0.12f * s, -62, 124, 16, color(HOT, fade * 0.90f));
-        jaggedBolt(b, m, o.subtract(f.scale(1.6 * s)).add(up.scale(0.82 * s)), f, r,
-                3.4f * s, 0.22f * s, 15, 0.06f * s, color(LIGHT, fade * 0.74f), age, 59L);
-        reveal = clamp((saved - 0.28f) / 0.72f);
-        burst(b, m, o.add(f.scale(1.8 * s)).add(up.scale(0.96 * s)), f, r,
-                0.12f * s, 0.85f * s, 5, color(HOT, fade * 0.78f));
+        reveal = clamp((saved - 0.22f) / 0.78f);
+        electricSlash(b, m, center.add(f.scale(0.12 * s)), r, up, f,
+                2.15f * s, 1.80f * s, 0.16f * s, -1.0f,
+                fade * 0.78f, age + 2.0f, 67L);
+        reveal = clamp((saved - 0.34f) / 0.66f);
+        jaggedBolt(b, m, center.subtract(r.scale(0.30 * s)), r, f,
+                2.7f * s, 0.28f * s, 13, 0.055f * s,
+                color(HOT, fade * 0.72f), age, 71L);
+        burst(b, m, center, r, up, 0.10f * s, 0.92f * s, 5,
+                color(WHITE, fade * 0.72f));
         reveal = saved;
     }
 
@@ -129,18 +168,13 @@ public final class ThunderTechniqueEffect implements VfxEffect {
         jaggedBolt(b, m, o, f, r, (float) o.distanceTo(head), 0.26f * s, 24,
                 0.07f * s, color(YELLOW, fade * 0.70f), age, 73L);
         reveal = saved;
-        arcBand(b, m, head, up, r, 1.45f * s, 0.34f * s, -66, 132, 16,
-                color(CHARCOAL, fade));
-        arcBand(b, m, head.add(f.scale(0.05 * s)), up, r, 1.35f * s, 0.14f * s,
-                -66, 132, 16, color(LIGHT, fade));
-        for (int wing = -2; wing <= 2; wing++) {
-            if (wing == 0) continue;
-            Vec3 wingCenter = head.subtract(f.scale(Math.abs(wing) * 0.22 * s))
-                    .add(r.scale(wing * 0.52 * s)).add(up.scale((2 - Math.abs(wing)) * 0.18 * s));
-            arcBand(b, m, wingCenter, up, r, (0.72f + Math.abs(wing) * 0.14f) * s,
-                    0.10f * s, wing < 0 ? -58 : 122, wing < 0 ? 116 : -116, 12,
-                    color(wing % 2 == 0 ? YELLOW : HOT, fade * 0.82f));
-        }
+        electricSlash(b, m, head, r, up, f,
+                3.55f * s, 2.15f * s, 0.30f * s, -1.0f, fade, age, 73L);
+        reveal = clamp((saved - 0.20f) / 0.80f);
+        electricSlash(b, m, head.subtract(f.scale(0.16 * s)).add(up.scale(0.10 * s)), r, up, f,
+                2.25f * s, 1.30f * s, 0.13f * s, 1.0f,
+                fade * 0.68f, age + 2.0f, 79L);
+        reveal = saved;
     }
 
     private void drawCharge(BufferBuilder b, Matrix4f m, Vec3 o, Vec3 f, Vec3 r,
@@ -258,6 +292,70 @@ public final class ThunderTechniqueEffect implements VfxEffect {
         burst(b, m, o.add(up.scale(0.16 * s)), f, r, 0.42f * s,
                 5.5f * s, 12, color(HOT, fade * 0.88f));
         reveal = saved;
+    }
+
+    /** Draws one connected, tapered sword stroke with a dark ink edge and white-hot core. */
+    private void electricSlash(BufferBuilder b, Matrix4f m, Vec3 center, Vec3 horizontal,
+                               Vec3 vertical, Vec3 depth, float length, float height,
+                               float thickness, float tilt, float fade, float age, long salt) {
+        slashRibbon(b, m, center, horizontal, vertical, depth, length, height,
+                thickness, tilt, CHARCOAL, fade * 0.96f, age, salt);
+        float saved = reveal;
+        reveal = clamp((saved - 0.055f) / 0.945f);
+        slashRibbon(b, m, center.add(depth.scale(0.018f)), horizontal, vertical, depth,
+                length * 0.985f, height * 0.985f, thickness * 0.55f, tilt,
+                YELLOW, fade, age, salt);
+        reveal = clamp((saved - 0.14f) / 0.86f);
+        slashRibbon(b, m, center.add(depth.scale(0.036f)), horizontal, vertical, depth,
+                length * 0.965f, height * 0.965f, thickness * 0.19f, tilt,
+                WHITE, fade * 0.90f, age, salt);
+        reveal = saved;
+    }
+
+    private void slashRibbon(BufferBuilder b, Matrix4f m, Vec3 center, Vec3 horizontal,
+                             Vec3 vertical, Vec3 depth, float length, float height,
+                             float thickness, float tilt, int rgb, float alpha,
+                             float age, long salt) {
+        int count = 18;
+        float visible = reveal * count;
+        int visibleSegments = Math.min(count, (int) Math.ceil(visible));
+        Vec3 widthAxis = vertical.scale(length).add(horizontal.scale(height * tilt)).normalize();
+        for (int i = 0; i < visibleSegments; i++) {
+            float part = Math.min(1.0f, visible - i);
+            double t0 = i / (double) count;
+            double t1 = (i + part) / count;
+            Vec3 p0 = slashPoint(center, horizontal, vertical, depth,
+                    length, height, tilt, t0, i, age, salt);
+            Vec3 p1 = slashPoint(center, horizontal, vertical, depth,
+                    length, height, tilt, t1, i + 1, age, salt);
+            float w0 = slashWidth(thickness, t0);
+            float w1 = slashWidth(thickness, t1);
+            float position = (float) ((t0 + t1) * 0.5);
+            int shaded = rgb == CHARCOAL
+                    ? color(VfxPixelRender.mixRgb(CHARCOAL, DEEP_GOLD,
+                            0.08f + 0.12f * (float) Math.sin(Math.PI * position)), alpha)
+                    : thunderShade(color(rgb, alpha), position);
+            quad(b, m, p0.subtract(widthAxis.scale(w0)), p1.subtract(widthAxis.scale(w1)),
+                    p1.add(widthAxis.scale(w1)), p0.add(widthAxis.scale(w0)), shaded);
+        }
+    }
+
+    private Vec3 slashPoint(Vec3 center, Vec3 horizontal, Vec3 vertical, Vec3 depth,
+                            float length, float height, float tilt, double t, int index,
+                            float age, long salt) {
+        double along = (t - 0.5) * length;
+        double diagonal = (0.5 - t) * height * tilt;
+        double bow = Math.sin(Math.PI * t) * height * 0.20;
+        double inkWobble = Math.sin(index * 2.41 + salt * 0.071) * height * 0.018;
+        double depthBow = Math.sin(Math.PI * t) * length * 0.055;
+        double flow = Math.sin(age * 0.24 + index * 1.63 + salt) * length * 0.006;
+        return center.add(horizontal.scale(along))
+                .add(vertical.scale(diagonal + bow + inkWobble))
+                .add(depth.scale(depthBow + flow));
+    }
+
+    private static float slashWidth(float thickness, double t) {
+        return thickness * (0.08f + 0.92f * (float) Math.pow(Math.sin(Math.PI * t), 0.62));
     }
 
     private void jaggedBolt(BufferBuilder b, Matrix4f m, Vec3 start, Vec3 direction, Vec3 side,

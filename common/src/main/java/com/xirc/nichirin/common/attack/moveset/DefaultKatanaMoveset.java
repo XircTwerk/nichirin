@@ -26,7 +26,7 @@ public final class DefaultKatanaMoveset extends AbstractMoveset {
 
     private static final MoveConfiguration M1_CONFIG = new MoveBuilder("slash", "Slash")
             .withAnimation("nichirin:sword.slash", 8)
-            .withTiming(0, 5, 2)
+            .withTiming(0, 2, 2)
             .withDamage(4.0f)
             .withRange(2.5f)
             .withKnockback(0.3f)
@@ -40,7 +40,7 @@ public final class DefaultKatanaMoveset extends AbstractMoveset {
     private static final MoveConfiguration M1_FOLLOWUP_CONFIG =
             new MoveBuilder("slash_followup", "Reverse Slash")
                     .withAnimation("nichirin:sword.slash_followup", 8)
-                    .withTiming(0, 5, 2)
+                    .withTiming(0, 2, 2)
                     .withDamage(5.0f)
                     .withRange(2.5f)
                     .withKnockback(0.35f)
@@ -53,7 +53,7 @@ public final class DefaultKatanaMoveset extends AbstractMoveset {
     private static final MoveConfiguration M1_FINAL_CONFIG =
             new MoveBuilder("slash_followup_2", "Piercing Finish")
                     .withAnimation("nichirin:sword.slash_followup_2", 9)
-                    .withTiming(0, 4, 4)
+                    .withTiming(0, 2, 4)
                     .withDamage(6.0f)
                     .withRange(3.2f)
                     .withKnockback(0.15f)
@@ -71,7 +71,7 @@ public final class DefaultKatanaMoveset extends AbstractMoveset {
                     .withStaminaCost(SPECIAL_STAMINA_COST)
                     .withDamage(3.5f)
                     .withRange(2.8f)
-                    .withKnockback(0.4f)
+                    .withKnockback(0.05f)
                     .withHitboxSize(2.0f)
                     .withHitStun(7)
                     .withDescription("Two diagonal cuts that cross into an X.")
@@ -82,7 +82,7 @@ public final class DefaultKatanaMoveset extends AbstractMoveset {
     private static final MoveConfiguration RISING_SLASH_CONFIG =
             new MoveBuilder("rising_slash", "Rising Slash")
                     .withAnimation("nichirin:sword.vertical", 9)
-                    .withTiming(25, 4, 3)
+                    .withTiming(25, 2, 3)
                     .withStaminaCost(SPECIAL_STAMINA_COST)
                     .withDamage(4.0f)
                     .withRange(2.5f)
@@ -100,7 +100,7 @@ public final class DefaultKatanaMoveset extends AbstractMoveset {
             .withStaminaCost(SPECIAL_STAMINA_COST)
             .withDamage(2.0f)
             .withRange(0.9f)
-            .withKnockback(2.2f)
+            .withKnockback(0.25f)
             .withHitboxSize(2.0f)
             .withHitStun(20)
             .withDescription("Shoulder-check with the katana handle for close-range stun.")

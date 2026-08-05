@@ -11,6 +11,7 @@ import com.xirc.nichirin.common.data.PlayerDataProvider;
 import com.xirc.nichirin.common.system.DemonManager;
 import com.xirc.nichirin.common.util.StaminaManager;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.LivingEntity;
@@ -534,7 +535,9 @@ public class CqcMoveset extends AbstractMoveset {
     }
 
     private boolean canUseCqc(LivingEntity entity) {
-        return entity instanceof Player player && player.getMainHandItem().isEmpty();
+        return entity instanceof Player player
+                && player.getMainHandItem().isEmpty()
+                && (player.getOffhandItem().isEmpty() || player.getOffhandItem().has(DataComponents.FOOD));
     }
 
     private void executeConfigured(LivingEntity entity, MoveConfiguration config, CqcInputSlot inputSlot) {
@@ -655,7 +658,7 @@ public class CqcMoveset extends AbstractMoveset {
         CqcFollowupState current = FOLLOWUP_STATES.get(entity.getUUID());
         if (current != state) return;
         FOLLOWUP_STATES.remove(entity.getUUID());
-        if (!state.queued || !entity.isAlive()) return;
+        if (!state.queued || !entity.isAlive() || !canUseCqc(entity)) return;
         MoveConfiguration followupConfig = configurationFor(state.followupMoveId);
         if (followupConfig == null) return;
         executeFollowupConfigured(entity, followupConfig);

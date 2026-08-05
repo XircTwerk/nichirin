@@ -5,6 +5,7 @@ import com.xirc.nichirin.common.aura.AuraInstance;
 import com.xirc.nichirin.common.aura.AuraManager;
 import com.xirc.nichirin.common.data.MovesetData;
 import com.xirc.nichirin.common.data.PlayerDataProvider;
+import com.xirc.nichirin.common.entity.MovesetCapableNPC;
 import com.xirc.nichirin.common.item.katana.BeastKatana;
 import com.xirc.nichirin.common.item.katana.Katana;
 import com.xirc.nichirin.common.item.katana.SoundKatana;
@@ -12,6 +13,7 @@ import com.xirc.nichirin.common.outline.OutlineInstance;
 import com.xirc.nichirin.common.outline.OutlineManager;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 
 import java.util.HashMap;
@@ -129,6 +131,38 @@ public final class MovesetAuraTicker {
                 || off instanceof Katana || off instanceof SoundKatana || off instanceof BeastKatana;
     }
 
+    public static void updateNpc(MovesetCapableNPC npc) {
+        if (npc == null) return;
+        LivingEntity entity = npc.asLivingEntity();
+        if (entity == null || entity.level().isClientSide) return;
+        if (npc.getMoveset() == null) {
+            removeIfPresent(entity);
+            return;
+        }
+
+        String movesetId = npc.getMoveset().getMovesetId();
+        MovesetAuraPalette.Entry palette = MovesetAuraPalette.get(movesetId);
+        if (palette == null) {
+            removeIfPresent(entity);
+            return;
+        }
+
+        CachedAuraState cached = CACHE.get(entity.getUUID());
+        if (cached != null && cached.stateKey().equals(movesetId)) return;
+        removeIfPresent(entity);
+
+        AuraInstance aura = AuraInstance.builder()
+                .color(palette.r(), palette.g(), palette.b(), palette.alpha())
+                .radius(palette.radius())
+                .jitter(palette.jitter())
+                .materialProfile(("akaza".equals(movesetId) || "akaza_overdrive".equals(movesetId))
+                        ? "destructive_death".hashCode()
+                        : movesetId.hashCode())
+                .build();
+        AuraManager.addAura(entity, aura, AuraAudience.ALL);
+        CACHE.put(entity.getUUID(), new CachedAuraState(movesetId, aura.id(), null, null));
+    }
+
     private static void removeIfPresent(ServerPlayer player) {
         CachedAuraState cached = CACHE.remove(player.getUUID());
         if (cached == null) return;
@@ -143,8 +177,26 @@ public final class MovesetAuraTicker {
         }
     }
 
+    private static void removeIfPresent(LivingEntity entity) {
+        CachedAuraState cached = CACHE.remove(entity.getUUID());
+        if (cached == null) return;
+        if (cached.auraId() != null) AuraManager.removeAura(entity, cached.auraId());
+        if (cached.demonAuraId() != null) AuraManager.removeAura(entity, cached.demonAuraId());
+        if (cached.outlineId() != null) OutlineManager.removeOutline(entity, cached.outlineId());
+    }
+
     public static void clear(UUID playerId) {
         CACHE.remove(playerId);
+    }
+
+    /**
+     * Drops cached state and broadcasts a full visual reset for an online player. Persistent
+     * auras that are still valid are recreated by the next ticker pass.
+     */
+    public static void clear(ServerPlayer player) {
+        CACHE.remove(player.getUUID());
+        AuraManager.clearAuras(player);
+        OutlineManager.clearOutlines(player);
     }
 
     private record CachedAuraState(String stateKey, UUID auraId, UUID demonAuraId, UUID outlineId) {}

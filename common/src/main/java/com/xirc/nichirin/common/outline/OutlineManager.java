@@ -46,8 +46,8 @@ public final class OutlineManager {
 
     public static void clearOutlines(Entity host) {
         if (host == null || host.level().isClientSide) return;
-        List<Stored> list = ENTITY_OUTLINES.remove(host.getUUID());
-        if (list == null || list.isEmpty()) return;
+        ENTITY_OUTLINES.remove(host.getUUID());
+        // Keep explicit resets self-healing when a client and the server cache disagree.
         sendClear(host);
     }
 

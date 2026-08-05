@@ -15,6 +15,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -60,6 +61,8 @@ public class AkazaEntity extends UpperMoonDemonEntity implements IDestructiveDea
 
     // Server-side animation auto-clear countdown
     private int serverAnimTicksRemaining = 0;
+    private boolean finalAfterglowTriggered = false;
+    private boolean finalAfterglowActive = false;
 
     public AkazaEntity(EntityType<? extends DemonNPCEntity> entityType, Level level) {
         super(entityType, level);
@@ -276,6 +279,50 @@ public class AkazaEntity extends UpperMoonDemonEntity implements IDestructiveDea
         barkOverdrive();
     }
 
+    @Override
+    public boolean hurt(DamageSource source, float amount) {
+        if (finalAfterglowActive) return false;
+        if (!level().isClientSide
+                && !finalAfterglowTriggered
+                && amount >= getHealth()) {
+            LivingEntity attacker = source.getEntity() instanceof LivingEntity living ? living : getTarget();
+            if (attacker != null && attacker.isAlive()) {
+                setTarget(attacker);
+                beginFinalAfterglow();
+                return false;
+            }
+        }
+        return super.hurt(source, amount);
+    }
+
+    private void beginFinalAfterglow() {
+        finalAfterglowTriggered = true;
+        finalAfterglowActive = true;
+        setHealth(1.0f);
+        invulnerableTime = 0;
+        getNavigation().stop();
+        MoveExecutor.clearAttacks(this);
+        removeEffect(NichirinEffectRegistry.stunned());
+        if (!isOverdrive()) enterOverdrive();
+        if (getMoveset() != null) {
+            getMoveset().performMove(this, AkazaMoveset.MOVE_FINAL);
+        }
+        if (!MoveExecutor.hasActiveAttacks(this)) {
+            completeFinalAfterglow();
+        }
+    }
+
+    public void completeFinalAfterglow() {
+        if (!finalAfterglowActive || level().isClientSide || isRemoved()) return;
+        finalAfterglowActive = false;
+        invulnerableTime = 0;
+        super.hurt(damageSources().genericKill(), Float.MAX_VALUE);
+    }
+
+    public boolean isFinalAfterglowActive() {
+        return finalAfterglowActive;
+    }
+
     private void updateAnimations() {
         String serverAnim = getCurrentAnimation();
 
@@ -355,7 +402,7 @@ public class AkazaEntity extends UpperMoonDemonEntity implements IDestructiveDea
 
         @Override
         public boolean canUse() {
-            if (akaza.isInLethalSunlight() || akaza.isInStandoff()) return false;
+            if (akaza.isInLethalSunlight() || akaza.isInStandoff() || akaza.isFinalAfterglowActive()) return false;
             LivingEntity target = akaza.getTarget();
             return target != null && target.isAlive();
         }
@@ -449,13 +496,13 @@ public class AkazaEntity extends UpperMoonDemonEntity implements IDestructiveDea
                 // Charge in. Recompute the path on a short timer (avoids per-tick path thrash).
                 akaza.setSprinting(distance > 4.0);
                 if (pathCd == 0 || akaza.getNavigation().isDone()) {
-                    akaza.getNavigation().moveTo(target, overdrive ? 1.55 : 1.4);
+                    akaza.getNavigation().moveTo(target, overdrive ? 1.48 : 1.4);
                     pathCd = 5;
                 }
                 // Blink-dash only to eat a genuinely large gap.
                 if (gapDashCd == 0 && distance > 6.5) {
                     EntityMovement.applyDash(akaza, dir);
-                    gapDashCd = overdrive ? 24 : 36;
+                    gapDashCd = overdrive ? 30 : 36;
                 }
                 // Leap at clearly airborne / elevated targets so height never buys a reset.
                 if (leapCd == 0 && akaza.onGround() && target.getY() > akaza.getY() + 2.0 && distance < 8.0) {
@@ -481,7 +528,7 @@ public class AkazaEntity extends UpperMoonDemonEntity implements IDestructiveDea
             }
             // Forward bias keeps him in range; lateral component is the circling.
             float forward = distance > POCKET + 0.5 ? 0.65f : (distance < POCKET - 0.3 ? -0.5f : 0.05f);
-            float strafe = strafeDir * (overdrive ? 1.0f : 0.85f);
+            float strafe = strafeDir * (overdrive ? 0.82f : 0.85f);
             akaza.getMoveControl().strafe(forward, strafe);
         }
 
@@ -591,10 +638,21 @@ public class AkazaEntity extends UpperMoonDemonEntity implements IDestructiveDea
         }
 
         private void faceTarget(LivingEntity target) {
-            double dx = target.getX() - akaza.getX();
-            double dz = target.getZ() - akaza.getZ();
+            Vec3 targetVelocity = target.getDeltaMovement();
+            double currentDx = target.getX() - akaza.getX();
+            double currentDz = target.getZ() - akaza.getZ();
+            double currentDistance = Math.sqrt(currentDx * currentDx + currentDz * currentDz);
+            double leadTicks = akaza.isOverdrive() ? Math.min(3.0, currentDistance / 2.0) : 0.0;
+            Vec3 lead = targetVelocity.scale(leadTicks);
+            double horizontalLead = Math.sqrt(lead.x * lead.x + lead.z * lead.z);
+            if (horizontalLead > 2.0) {
+                lead = new Vec3(lead.x * 2.0 / horizontalLead, lead.y, lead.z * 2.0 / horizontalLead);
+            }
+            double dx = target.getX() + lead.x - akaza.getX();
+            double dz = target.getZ() + lead.z - akaza.getZ();
             // Aim pitch at the target too, so forward shockwaves track its height (accuracy).
-            double dy = (target.getY() + target.getBbHeight() * 0.4) - (akaza.getY() + akaza.getEyeHeight());
+            double predictedY = target.getY() + Math.max(-1.0, Math.min(1.0, lead.y));
+            double dy = (predictedY + target.getBbHeight() * 0.5) - (akaza.getY() + akaza.getEyeHeight());
             double horiz = Math.sqrt(dx * dx + dz * dz);
             float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
             float pitch = (float) (-Math.toDegrees(Math.atan2(dy, Math.max(0.01, horiz))));

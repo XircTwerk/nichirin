@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.entity.npc;
 
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
+import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.entity.MovesetCapableNPC;
 import com.xirc.nichirin.common.system.NPCResourceManager;
 import com.xirc.nichirin.common.util.NichirinDamageSources;
@@ -298,7 +299,8 @@ public abstract class DemonNPCEntity extends Monster implements MovesetCapableNP
     }
     protected boolean isInLethalSunlight() {
         Level level = level();
-        return level.isDay()
+        return NichirinModConfig.get().demon.burnEntitiesInSunlight
+                && level.isDay()
                 && !level.isRaining()
                 && !level.isThundering()
                 && level.canSeeSky(blockPosition());
@@ -354,6 +356,10 @@ public abstract class DemonNPCEntity extends Monster implements MovesetCapableNP
 
     @Override
     public boolean hurt(DamageSource source, float amount) {
+        if (!NichirinModConfig.get().demon.burnEntitiesInSunlight
+                && source.is(NichirinDamageSources.SUNLIGHT)) {
+            return false;
+        }
         boolean damaged = super.hurt(source, amount);
         if (damaged && !level().isClientSide) {
             syncBloodToHealth();

@@ -1,6 +1,8 @@
 package com.xirc.nichirin.common.system;
 
+import com.xirc.nichirin.common.aura.AuraManager;
 import com.xirc.nichirin.common.entity.MovesetCapableNPC;
+import com.xirc.nichirin.common.system.aura.MovesetAuraTicker;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import net.minecraft.world.entity.LivingEntity;
 
@@ -31,6 +33,7 @@ public class NPCResourceManager {
         if (npc == null) return;
         LivingEntity entity = npc.asLivingEntity();
         if (entity.level().isClientSide) return;
+        MovesetAuraTicker.updateNpc(npc);
 
         if (npc.getMoveset() != null && npc.getMoveset().isDemonMoveset()) {
             if (npc.getBloodPoints() <= 0) {
@@ -170,6 +173,8 @@ public class NPCResourceManager {
 
 
     public static void cleanupNPC(UUID id) {
+        MovesetAuraTicker.clear(id);
+        AuraManager.onEntityRemoved(id);
         npcBloodPoints.remove(id);
         npcBreathGauge.remove(id);
         npcStamina.remove(id);

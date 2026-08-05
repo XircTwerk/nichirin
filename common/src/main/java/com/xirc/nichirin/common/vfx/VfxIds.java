@@ -21,6 +21,7 @@ public final class VfxIds {
     public static final ResourceLocation CONSTANT_FLUX = id("constant_flux");
     public static final ResourceLocation DEAD_CALM = id("dead_calm");
     public static final ResourceLocation UNKNOWING_FIRE = id("unknowing_fire");
+    public static final ResourceLocation UNKNOWING_FIRE_IMPACT = id("unknowing_fire_impact");
     public static final ResourceLocation RISING_SCORCHING_SUN = id("rising_scorching_sun");
     public static final ResourceLocation BLAZING_UNIVERSE = id("blazing_universe");
     public static final ResourceLocation BLAZING_UNIVERSE_IMPACT = id("blazing_universe_impact");
@@ -30,6 +31,7 @@ public final class VfxIds {
     public static final ResourceLocation FLAME_POMMEL_SLASH = id("flame_pommel_slash");
     public static final ResourceLocation THUNDERCLAP_FLASH = id("thunderclap_flash");
     public static final ResourceLocation GODSPEED = id("godspeed");
+    public static final ResourceLocation RICE_SPIRIT_LINK = id("rice_spirit_link");
     public static final ResourceLocation RICE_SPIRIT_SLASH = id("rice_spirit_slash");
     public static final ResourceLocation THUNDER_SWARM_SLASH = id("thunder_swarm_slash");
     public static final ResourceLocation DISTANT_THUNDER_CHARGE = id("distant_thunder_charge");
@@ -70,6 +72,9 @@ public final class VfxIds {
     public static final ResourceLocation INSECT_DRAGONFLY = id("insect_dragonfly");
     public static final ResourceLocation INSECT_CENTIPEDE = id("insect_centipede");
     public static final ResourceLocation INSECT_IMPACT = id("insect_impact");
+    public static final ResourceLocation COMPASS_NEEDLE = id("compass_needle");
+    public static final ResourceLocation COMPASS_NEEDLE_COLLAPSE = id("compass_needle_collapse");
+    public static final ResourceLocation COMPASS_NEEDLE_ARROW = id("compass_needle_arrow");
 
     private VfxIds() {}
 

@@ -55,8 +55,9 @@ public final class AuraManager {
 
     public static void clearAuras(Entity host) {
         if (host == null || host.level().isClientSide) return;
-        List<Stored> list = ENTITY_AURAS.remove(host.getUUID());
-        if (list == null || list.isEmpty()) return;
+        ENTITY_AURAS.remove(host.getUUID());
+        // Always broadcast an explicit clear. This also repairs clients holding an orphaned aura
+        // after server-side cache state was lost or invalidated out of order.
         sendClear(host);
     }
 
