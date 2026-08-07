@@ -10,6 +10,7 @@ import com.xirc.nichirin.common.system.sheathing.SheathingManager;
 import com.xirc.nichirin.common.system.perks.PerkArchive;
 import com.xirc.nichirin.common.system.perks.PerkManager;
 import com.xirc.nichirin.common.system.perks.PerkData;
+import com.xirc.nichirin.common.item.throwable.SmokeBombThrowScheduler;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.InteractionEvent;
 import dev.architectury.event.events.common.PlayerEvent;
@@ -45,6 +46,7 @@ public class PlayerTickHandler {
         TickEvent.SERVER_POST.register(server -> {
             Dodge.tick();
             Dash.tickAllDashes();
+            SmokeBombThrowScheduler.tick();
         });
 
         PlayerEvent.PLAYER_QUIT.register(player -> {
