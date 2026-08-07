@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "item": "minecraft:netherite_chestplate"
+    },
+    "L": {
+      "item": "minecraft:light_blue_dye"
+    },
+    "W": {
+      "item": "minecraft:white_dye"
+    }
+  },
+  "pattern": [
+    "LLL",
+    "LCL",
+    "W W"
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        -679818416,
+        355352821,
+        -2009501805,
+        -1802706741
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:urokodaki_cape"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "nichirin:right_beast_katana"
+    },
+    {
+      "item": "nichirin:left_beast_katana"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "nichirin:beast_katanas"
+  }
+}

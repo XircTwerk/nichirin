@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "minecraft:pink_dye"
+    },
+    "C": {
+      "item": "minecraft:netherite_chestplate"
+    },
+    "P": {
+      "item": "minecraft:white_dye"
+    }
+  },
+  "pattern": [
+    "PPP",
+    "PCP",
+    "B B"
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        585719710,
+        -1003663769,
+        -2002517204,
+        2098385853
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:shinobu_cape"
+  }
+}

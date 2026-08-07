@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_katana": {
+      "conditions": {
+        "items": [
+          {
+            "items": "nichirin:katana"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "nichirin:giyu_katana"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_katana"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "nichirin:giyu_katana"
+    ]
+  }
+}

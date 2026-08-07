@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "minecraft:black_dye"
+    },
+    "O": {
+      "item": "minecraft:netherite_boots"
+    },
+    "R": {
+      "item": "minecraft:red_dye"
+    }
+  },
+  "pattern": [
+    "   ",
+    "BOB",
+    "R R"
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        -1127261811,
+        -1016970720,
+        -1869535844,
+        -988061307
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:giyu_boots"
+  }
+}

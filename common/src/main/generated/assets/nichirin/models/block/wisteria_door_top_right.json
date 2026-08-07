@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/door_top_right",
+  "textures": {
+    "bottom": "nichirin:block/wisteria_door_bottom",
+    "top": "nichirin:block/wisteria_door_top"
+  }
+}

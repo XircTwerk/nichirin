@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "minecraft:netherite_boots"
+    },
+    "W": {
+      "item": "minecraft:white_dye"
+    },
+    "Y": {
+      "item": "minecraft:yellow_dye"
+    }
+  },
+  "pattern": [
+    "   ",
+    "YBY",
+    "W W"
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        -1371618909,
+        -1847571650,
+        -1668129150,
+        -673173945
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:jigoro_boots"
+  }
+}

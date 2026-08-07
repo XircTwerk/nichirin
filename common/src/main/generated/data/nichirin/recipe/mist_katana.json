@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "nichirin:katana"
+    },
+    {
+      "item": "minecraft:cyan_dye"
+    }
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        2125203850,
+        -557232473,
+        -1998086261,
+        466707970
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:mist_katana"
+  }
+}

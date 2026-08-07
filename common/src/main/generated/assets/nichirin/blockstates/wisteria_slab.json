@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "nichirin:block/wisteria_slab"
+    },
+    "type=double": {
+      "model": "nichirin:block/wisteria_planks"
+    },
+    "type=top": {
+      "model": "nichirin:block/wisteria_slab_top"
+    }
+  }
+}

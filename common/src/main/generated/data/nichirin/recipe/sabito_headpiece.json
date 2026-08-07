@@ -1,0 +1,35 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "G": {
+      "item": "minecraft:green_dye"
+    },
+    "H": {
+      "item": "minecraft:netherite_helmet"
+    },
+    "S": {
+      "item": "minecraft:string"
+    },
+    "W": {
+      "item": "minecraft:white_dye"
+    }
+  },
+  "pattern": [
+    "GSG",
+    "WHW",
+    "   "
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        -1941109021,
+        1366773706,
+        -1412057337,
+        1498933067
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:sabito_headpiece"
+  }
+}

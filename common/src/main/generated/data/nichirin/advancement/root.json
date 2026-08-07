@@ -1,0 +1,29 @@
+{
+  "criteria": {
+    "crafting_table": {
+      "conditions": {
+        "items": [
+          {}
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "display": {
+    "announce_to_chat": false,
+    "background": "minecraft:textures/block/mossy_cobblestone.png",
+    "description": "The path of the Demon Slayer",
+    "icon": {
+      "count": 1,
+      "id": "nichirin:katana"
+    },
+    "show_toast": false,
+    "title": "Breath of Nichirin"
+  },
+  "requirements": [
+    [
+      "crafting_table"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "item": "minecraft:netherite_chestplate"
+    },
+    "O": {
+      "item": "minecraft:white_dye"
+    },
+    "R": {
+      "item": "minecraft:red_dye"
+    }
+  },
+  "pattern": [
+    "OOO",
+    "OCO",
+    "R R"
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        494162090,
+        2035958962,
+        -1833317563,
+        -1982934357
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:rengoku_cape"
+  }
+}

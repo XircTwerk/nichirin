@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "nichirin:pink_mochi"
+    },
+    {
+      "item": "minecraft:cocoa_beans"
+    },
+    {
+      "item": "minecraft:cherry_leaves"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "nichirin:sakuramochi"
+  }
+}

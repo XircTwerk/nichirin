@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "D": {
+      "item": "minecraft:gray_dye"
+    },
+    "E": {
+      "item": "minecraft:egg"
+    },
+    "G": {
+      "item": "minecraft:gunpowder"
+    },
+    "P": {
+      "item": "minecraft:paper"
+    },
+    "R": {
+      "item": "minecraft:red_dye"
+    }
+  },
+  "pattern": [
+    "GRG",
+    "DED",
+    "GPG"
+  ],
+  "result": {
+    "count": 4,
+    "id": "nichirin:smoke_bomb"
+  }
+}

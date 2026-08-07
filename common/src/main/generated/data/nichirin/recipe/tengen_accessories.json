@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "item": "minecraft:netherite_chestplate"
+    },
+    "I": {
+      "item": "minecraft:iron_nugget"
+    },
+    "W": {
+      "item": "minecraft:white_dye"
+    }
+  },
+  "pattern": [
+    "WWW",
+    "WCW",
+    "I I"
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        462314555,
+        117655971,
+        -1945177988,
+        792366762
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:tengen_accessories"
+  }
+}

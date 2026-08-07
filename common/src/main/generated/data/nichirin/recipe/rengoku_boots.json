@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "minecraft:netherite_boots"
+    },
+    "R": {
+      "item": "minecraft:white_dye"
+    },
+    "W": {
+      "item": "minecraft:red_dye"
+    }
+  },
+  "pattern": [
+    "   ",
+    "WBW",
+    "R R"
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        -1072854158,
+        1556172799,
+        -1724369936,
+        -1521843584
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:rengoku_boots"
+  }
+}

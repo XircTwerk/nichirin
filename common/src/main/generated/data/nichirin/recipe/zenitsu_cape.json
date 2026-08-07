@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "item": "minecraft:netherite_chestplate"
+    },
+    "O": {
+      "item": "minecraft:orange_dye"
+    },
+    "Y": {
+      "item": "minecraft:yellow_dye"
+    }
+  },
+  "pattern": [
+    "YYY",
+    "YCY",
+    "O O"
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        -629812785,
+        1605454865,
+        -1534282851,
+        1712991569
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:zenitsu_cape"
+  }
+}

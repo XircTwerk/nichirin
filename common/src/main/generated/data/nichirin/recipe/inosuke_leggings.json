@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "minecraft:brown_dye"
+    },
+    "G": {
+      "item": "minecraft:light_gray_dye"
+    },
+    "L": {
+      "item": "minecraft:diamond_leggings"
+    }
+  },
+  "pattern": [
+    "BBB",
+    "BLB",
+    "G G"
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        -1322763422,
+        -551006898,
+        -1902267582,
+        1606194343
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:inosuke_leggings"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "minecraft:black_dye"
+    },
+    "C": {
+      "item": "minecraft:cyan_dye"
+    },
+    "P": {
+      "item": "minecraft:netherite_chestplate"
+    }
+  },
+  "pattern": [
+    "CCC",
+    "CPC",
+    "B B"
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        1999531074,
+        2139177756,
+        -1183678051,
+        -2081715642
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:muichiro_chestplate"
+  }
+}

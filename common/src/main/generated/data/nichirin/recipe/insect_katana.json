@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "nichirin:katana"
+    },
+    {
+      "item": "minecraft:magenta_dye"
+    }
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        -1802925946,
+        -1289466618,
+        -1578732519,
+        1911681711
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:insect_katana"
+  }
+}

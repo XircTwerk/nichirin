@@ -1,0 +1,23 @@
+{
+  "parent": "nichirin:first_breath",
+  "criteria": {
+    "has_beast_breathing": {
+      "trigger": "nichirin:beast_breathing_unlock"
+    }
+  },
+  "display": {
+    "description": "Slay a boar and equip its head to obtain Beast Breathing",
+    "frame": "challenge",
+    "icon": {
+      "count": 1,
+      "id": "minecraft:porkchop"
+    },
+    "title": "One with the Beast"
+  },
+  "requirements": [
+    [
+      "has_beast_breathing"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

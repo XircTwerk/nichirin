@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "nichirin:block/tatami_block_top",
+    "side": "nichirin:block/tatami_block"
+  }
+}

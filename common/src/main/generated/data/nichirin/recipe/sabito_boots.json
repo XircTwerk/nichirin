@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "minecraft:black_dye"
+    },
+    "G": {
+      "item": "minecraft:green_dye"
+    },
+    "O": {
+      "item": "minecraft:netherite_boots"
+    }
+  },
+  "pattern": [
+    "   ",
+    "BOB",
+    "G G"
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        -1634016297,
+        -190824059,
+        -1385671177,
+        31479590
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:sabito_boots"
+  }
+}

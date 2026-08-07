@@ -1,0 +1,35 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "minecraft:black_dye"
+    },
+    "H": {
+      "item": "minecraft:netherite_helmet"
+    },
+    "P": {
+      "item": "minecraft:purple_dye"
+    },
+    "S": {
+      "item": "minecraft:string"
+    }
+  },
+  "pattern": [
+    "PSP",
+    "BHB",
+    "   "
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        1516894961,
+        1007241069,
+        -1760056747,
+        -675033685
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:shinobu_headpiece"
+  }
+}

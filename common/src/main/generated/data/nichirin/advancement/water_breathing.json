@@ -1,0 +1,23 @@
+{
+  "parent": "nichirin:first_breath",
+  "criteria": {
+    "has_water_breathing": {
+      "trigger": "nichirin:water_breathing_unlock"
+    }
+  },
+  "display": {
+    "description": "Slay a Drowned with your bare hands to obtain Water Breathing",
+    "frame": "challenge",
+    "icon": {
+      "count": 1,
+      "id": "minecraft:heart_of_the_sea"
+    },
+    "title": "Current of Life"
+  },
+  "requirements": [
+    [
+      "has_water_breathing"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

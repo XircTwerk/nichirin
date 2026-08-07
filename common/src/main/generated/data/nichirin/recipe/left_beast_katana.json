@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "D": {
+      "item": "minecraft:gray_dye"
+    },
+    "K": {
+      "item": "nichirin:katana"
+    }
+  },
+  "pattern": [
+    "D",
+    "K"
+  ],
+  "result": {
+    "count": 1,
+    "id": "nichirin:left_beast_katana"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "minecraft:netherite_boots"
+    },
+    "K": {
+      "item": "minecraft:white_dye"
+    },
+    "W": {
+      "item": "minecraft:purple_dye"
+    }
+  },
+  "pattern": [
+    "   ",
+    "WBW",
+    "K K"
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        -1367351882,
+        -41597581,
+        -1457498259,
+        531943199
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:shinobu_boots"
+  }
+}

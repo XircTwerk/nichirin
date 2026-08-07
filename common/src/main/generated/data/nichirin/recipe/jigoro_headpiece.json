@@ -1,0 +1,35 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "H": {
+      "item": "minecraft:netherite_helmet"
+    },
+    "S": {
+      "item": "minecraft:string"
+    },
+    "W": {
+      "item": "minecraft:white_dye"
+    },
+    "Y": {
+      "item": "minecraft:yellow_dye"
+    }
+  },
+  "pattern": [
+    "YSY",
+    "WHW",
+    "   "
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        1209420606,
+        237191934,
+        -1755403690,
+        -981065404
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:jigoro_headpiece"
+  }
+}

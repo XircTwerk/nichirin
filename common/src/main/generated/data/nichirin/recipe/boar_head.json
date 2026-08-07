@@ -1,0 +1,35 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "minecraft:brown_dye"
+    },
+    "H": {
+      "item": "minecraft:diamond_helmet"
+    },
+    "L": {
+      "item": "minecraft:leather"
+    },
+    "W": {
+      "item": "minecraft:white_dye"
+    }
+  },
+  "pattern": [
+    "BWB",
+    "LHL",
+    "   "
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        1219660267,
+        -832026592,
+        -1534181745,
+        1368308736
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:boar_head"
+  }
+}

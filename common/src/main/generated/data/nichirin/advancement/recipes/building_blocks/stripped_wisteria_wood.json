@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_stripped_wisteria_log": {
+      "conditions": {
+        "items": [
+          {
+            "items": "nichirin:stripped_wisteria_log"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "nichirin:stripped_wisteria_wood"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_stripped_wisteria_log"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "nichirin:stripped_wisteria_wood"
+    ]
+  }
+}

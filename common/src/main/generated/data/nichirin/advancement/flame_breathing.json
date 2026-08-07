@@ -1,0 +1,23 @@
+{
+  "parent": "nichirin:first_breath",
+  "criteria": {
+    "has_flame_breathing": {
+      "trigger": "nichirin:flame_breathing_unlock"
+    }
+  },
+  "display": {
+    "description": "Survive being on fire for 15 seconds to obtain Flame Breathing",
+    "frame": "challenge",
+    "icon": {
+      "count": 1,
+      "id": "minecraft:fire_charge"
+    },
+    "title": "Hearts Ablaze"
+  },
+  "requirements": [
+    [
+      "has_flame_breathing"
+    ]
+  ],
+  "sends_telemetry_event": true
+}
