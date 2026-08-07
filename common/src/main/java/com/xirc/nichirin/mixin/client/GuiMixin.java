@@ -3,6 +3,7 @@ package com.xirc.nichirin.mixin.client;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.system.DemonComponent;
+import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
@@ -17,6 +18,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class GuiMixin {
 
     @Unique
+    private static final int ACTION_BAR_Y_OFFSET = -13;
+
+    @Unique
     private static final ResourceLocation BLOOD_FULL = ResourceLocation.fromNamespaceAndPath("nichirin", "textures/gui/blood_full.png");
     @Unique
     private static final ResourceLocation BLOOD_HALF = ResourceLocation.fromNamespaceAndPath("nichirin", "textures/gui/blood_half.png");
@@ -27,6 +31,17 @@ public class GuiMixin {
     private static final int BLOOD_BAR_WIDTH = 9;
     @Unique
     private static final int BLOOD_BAR_HEIGHT = 9;
+
+    @Inject(method = "renderOverlayMessage", at = @At("HEAD"))
+    private void nichirin$moveActionBarUp(GuiGraphics graphics, DeltaTracker deltaTracker, CallbackInfo ci) {
+        graphics.pose().pushPose();
+        graphics.pose().translate(0.0f, ACTION_BAR_Y_OFFSET, 0.0f);
+    }
+
+    @Inject(method = "renderOverlayMessage", at = @At("RETURN"))
+    private void nichirin$restoreActionBarPosition(GuiGraphics graphics, DeltaTracker deltaTracker, CallbackInfo ci) {
+        graphics.pose().popPose();
+    }
 
     /**
      * Replaces the hunger bar with the blood bar for demon players.

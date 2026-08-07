@@ -54,7 +54,7 @@ public class FlameBreathingMoveset extends AbstractMoveset {
 
                 // INDEX 0: Rising Scorching Sun — upward arc, launches enemies
                 .withMove(new MoveBuilder("rising_scorching_sun", "Scorching Sun")
-                        .withTiming(100, 12, 18)
+                        .withTiming(100, 6, 7)
                         .withDamage(9.0f)
                         .withRange(6.0f)
                         .withKnockback(0.6f)

@@ -16,7 +16,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
@@ -62,6 +61,9 @@ public final class AuraPixelize2DRenderer {
 
             Entity host = findEntity(minecraft, entityId);
             if (host == null) continue;
+            // No aura while invisible (covers the Invisibility effect and Obscuring Clouds, which
+            // turns its user invisible).
+            if (host.isInvisible()) continue;
 
             double x = host.xo + (host.getX() - host.xo) * partialTick;
             double y = host.yo + (host.getY() - host.yo) * partialTick;
@@ -86,7 +88,7 @@ public final class AuraPixelize2DRenderer {
             poseStack.translate(dx, dy, dz);
             Matrix4f matrix = poseStack.last().pose();
             for (AuraInstance instance : instances) {
-                if (host instanceof Player && !instance.cameraFacing()) {
+                if (host instanceof LivingEntity && !instance.cameraFacing()) {
                     AuraWispLayout layout = LAYOUT_CACHE.computeIfAbsent(instance,
                             ignored -> AuraWispLayout.create(entityId, instance));
                     renderAura(consumer, matrix, instance, layout, nowMs,
@@ -94,7 +96,8 @@ public final class AuraPixelize2DRenderer {
                             bodySideAngle, toCameraX, toCameraY, toCameraZ);
                 } else {
                     renderCameraFacingAura(consumer, matrix, instance, nowMs,
-                            host.getBbWidth(), host.getBbHeight(), cameraRightX, cameraRightZ);
+                            host.getBbWidth(), host.getBbHeight(), cameraRightX, cameraRightZ,
+                            toCameraX, toCameraY, toCameraZ);
                 }
             }
             poseStack.popPose();
@@ -120,17 +123,24 @@ public final class AuraPixelize2DRenderer {
         float blue = clamp(aura.b() * AuraConfig.brightness);
         float alpha = clamp(aura.a() * AuraConfig.opacityMultiplier) * fade;
         float distortion = Math.max(0.2f, aura.distortionStrength() * 3.0f + aura.jitterAmount() * 0.09f);
+        // Keep the complete wisp envelope behind the host without visually detaching the aura.
+        float backOffset = bodyWidth * (0.50f + AuraConfig.maximumRadius * scale)
+                + AuraConfig.swayAmount * scale + 0.08f;
+        float backX = -toCameraX * backOffset;
+        float backY = -toCameraY * backOffset;
+        float backZ = -toCameraZ * backOffset;
 
         renderPlayerCore(consumer, matrix, aura, time, pulse, bodyWidth, bodyHeight,
                 red, green, blue, alpha, cameraRightX, cameraRightZ,
-                toCameraX, toCameraY, toCameraZ);
+                backX, backY, backZ);
         for (AuraWispLayout.Wisp wisp : layout.wisps) {
             renderWisp(consumer, matrix, wisp, time, bodyWidth, bodyHeight, scale, distortion,
-                    red, green, blue, alpha, cameraRightX, cameraRightZ, bodySideAngle);
+                    red, green, blue, alpha, cameraRightX, cameraRightZ, bodySideAngle,
+                    backX, backY, backZ);
         }
         for (AuraWispLayout.Fragment fragment : layout.fragments) {
             renderFragment(consumer, matrix, fragment, time, bodyWidth, bodyHeight, scale,
-                    red, green, blue, alpha, cameraRightX, cameraRightZ);
+                    red, green, blue, alpha, cameraRightX, cameraRightZ, backX, backY, backZ);
         }
     }
 
@@ -138,7 +148,7 @@ public final class AuraPixelize2DRenderer {
                                          float time, float pulse, float bodyWidth, float bodyHeight,
                                          float red, float green, float blue, float baseAlpha,
                                          float cameraRightX, float cameraRightZ,
-                                         float toCameraX, float toCameraY, float toCameraZ) {
+                                         float backX, float backY, float backZ) {
         float radiusFactor = Math.min(1.65f, 0.55f + aura.radius() * 0.34f);
         float radiusX = bodyHeight * 0.5f * AuraConfig.auraScale * radiusFactor
                 * (1.0f + AuraConfig.pulseAmplitude * pulse * 0.55f);
@@ -146,10 +156,9 @@ public final class AuraPixelize2DRenderer {
         float pixel = Math.max(1.0f / 16.0f, AuraConfig.playerPixelSize);
         int columns = Math.max(3, (int) Math.ceil(radiusX * 2.0f / pixel));
         int rows = Math.max(3, (int) Math.ceil(radiusY * 2.0f / pixel));
-        float backOffset = bodyWidth * 0.55f + 0.08f;
-        float originX = -toCameraX * backOffset;
-        float originY = bodyHeight * 0.5f - toCameraY * backOffset;
-        float originZ = -toCameraZ * backOffset;
+        float originX = backX;
+        float originY = bodyHeight * 0.5f + backY;
+        float originZ = backZ;
 
         for (int column = 0; column < columns; column++) {
             for (int row = 0; row < rows; row++) {
@@ -188,7 +197,8 @@ public final class AuraPixelize2DRenderer {
     private static void renderCameraFacingAura(VertexConsumer consumer, Matrix4f matrix,
                                                AuraInstance aura, long nowMs,
                                                float bodyWidth, float bodyHeight,
-                                               float cameraRightX, float cameraRightZ) {
+                                               float cameraRightX, float cameraRightZ,
+                                               float toCameraX, float toCameraY, float toCameraZ) {
         float fade = aura.fadeFactor(nowMs, EntityAuraTracker.FADE_MS);
         if (fade <= 0.02f) return;
         float time = ((nowMs - aura.startTimeMs()) / 1000.0f) * AuraConfig.animationSpeed;
@@ -202,6 +212,10 @@ public final class AuraPixelize2DRenderer {
         float green = clamp(aura.g() * AuraConfig.brightness);
         float blue = clamp(aura.b() * AuraConfig.brightness);
         float baseAlpha = clamp(aura.a() * AuraConfig.opacityMultiplier) * fade;
+        float backOffset = bodyWidth * 0.58f + 0.08f;
+        float backX = -toCameraX * backOffset;
+        float backY = -toCameraY * backOffset;
+        float backZ = -toCameraZ * backOffset;
         float pixel = Math.max(1.0f / 32.0f, AuraConfig.pixelSize);
         int columns = Math.max(2, (int) Math.ceil(radiusX * 2.0f / pixel));
         int rows = Math.max(2, (int) Math.ceil(radiusY * 2.0f / pixel));
@@ -220,9 +234,9 @@ public final class AuraPixelize2DRenderer {
                 int colorShade = distance > edge * 0.78f ? 4
                         : ((column + row + aura.materialProfile()) & 3) == 0 ? 1 : 3;
                 float alpha = baseAlpha * (0.58f + (1.0f - distance / edge) * 0.42f);
-                float centerX = cameraRightX * localX;
-                float centerY = bodyHeight * 0.5f + localY;
-                float centerZ = cameraRightZ * localX;
+                float centerX = backX + cameraRightX * localX;
+                float centerY = backY + bodyHeight * 0.5f + localY;
+                float centerZ = backZ + cameraRightZ * localX;
                 emitBillboard(consumer, matrix, centerX, centerY, centerZ,
                         cameraRightX, 0.0f, cameraRightZ,
                         0.0f, 1.0f, 0.0f,
@@ -236,7 +250,8 @@ public final class AuraPixelize2DRenderer {
     private static void renderWisp(VertexConsumer consumer, Matrix4f matrix, AuraWispLayout.Wisp wisp,
                                    float time, float bodyWidth, float bodyHeight, float scale,
                                    float distortion, float red, float green, float blue, float baseAlpha,
-                                   float cameraRightX, float cameraRightZ, float bodySideAngle) {
+                                   float cameraRightX, float cameraRightZ, float bodySideAngle,
+                                   float backX, float backY, float backZ) {
         int segments = Math.max(4, AuraConfig.verticalSegmentCount);
         float phase = wisp.phase() * (float) (Math.PI * 2.0);
         float angle = bodySideAngle + wisp.angle()
@@ -284,14 +299,14 @@ public final class AuraPixelize2DRenderer {
         for (int segment = 0; segment < segments; segment++) {
             float v0 = segment / (float) segments;
             float v1 = (segment + 1.0f) / segments;
-            float y0 = snap(baseY + height * v0, AuraConfig.playerPixelSize);
-            float y1 = snap(baseY + height * v1, AuraConfig.playerPixelSize);
+            float y0 = backY + snap(baseY + height * v0, AuraConfig.playerPixelSize);
+            float y1 = backY + snap(baseY + height * v1, AuraConfig.playerPixelSize);
             float shift0 = bendAt(v0, time, phase, wisp, sway);
             float shift1 = bendAt(v1, time, phase, wisp, sway);
-            float x0 = originX + bendX * shift0;
-            float z0 = originZ + bendZ * shift0;
-            float x1 = originX + bendX * shift1;
-            float z1 = originZ + bendZ * shift1;
+            float x0 = backX + originX + bendX * shift0;
+            float z0 = backZ + originZ + bendZ * shift0;
+            float x1 = backX + originX + bendX * shift1;
+            float z1 = backZ + originZ + bendZ * shift1;
             float width0 = steppedWidth(width, v0, flow, wisp.topShape(), AuraConfig.playerPixelSize);
             float width1 = steppedWidth(width, v1, flow, wisp.topShape(), AuraConfig.playerPixelSize);
 
@@ -366,7 +381,8 @@ public final class AuraPixelize2DRenderer {
                                        AuraWispLayout.Fragment fragment, float time,
                                        float bodyWidth, float bodyHeight, float scale,
                                        float red, float green, float blue, float baseAlpha,
-                                       float cameraRightX, float cameraRightZ) {
+                                       float cameraRightX, float cameraRightZ,
+                                       float backX, float backY, float backZ) {
         float visibleWindow = clamp(AuraConfig.fragmentSpawnRate);
         if (visibleWindow <= 0.01f) return;
         float cycle = fract(time / Math.max(0.1f, fragment.lifetime()) + fragment.phase());
@@ -377,9 +393,9 @@ public final class AuraPixelize2DRenderer {
 
         float angle = fragment.angle() + time * AuraConfig.overallRotationSpeed * 0.55f;
         float radius = (fragment.radius() + age * fragment.outwardSpeed()) * bodyWidth * scale;
-        float x = (float) Math.cos(angle) * radius;
-        float z = (float) Math.sin(angle) * radius;
-        float y = fragment.startY() * bodyHeight + age * fragment.riseSpeed() * bodyHeight;
+        float x = backX + (float) Math.cos(angle) * radius;
+        float z = backZ + (float) Math.sin(angle) * radius;
+        float y = backY + fragment.startY() * bodyHeight + age * fragment.riseSpeed() * bodyHeight;
         float size = Math.max(AuraConfig.playerPixelSize,
                 snap(fragment.size() * bodyWidth * scale, AuraConfig.playerPixelSize));
         float rotation = fragment.rotation() + age * 0.8f;

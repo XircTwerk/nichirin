@@ -6,6 +6,7 @@ import com.xirc.nichirin.client.gui.trainer.TrainerDialogueClientHandler;
 import com.xirc.nichirin.client.renderer.effects.AttackHitboxRenderer;
 import com.xirc.nichirin.client.renderer.effects.ParrySparkHandler;
 import com.xirc.nichirin.common.attack.moves.breathing.thunder.ThunderclapChargeManager;
+import com.xirc.nichirin.common.attack.moves.demon.destructive.CompassNeedleChargeManager;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.attack.moveset.CqcMoveset;
 import com.xirc.nichirin.common.config.NichirinModConfig;
@@ -113,6 +114,7 @@ public interface NichirinPacketRegistry {
     ResourceLocation OUTLINE_CLEAR_ID              = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "outline_clear");
     ResourceLocation AFTERIMAGE_ID                 = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "afterimage");
     ResourceLocation THUNDERCLAP_RELEASE_ID        = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "thunderclap_release");
+    ResourceLocation COMPASS_NEEDLE_RELEASE_ID     = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "compass_needle_release");
     ResourceLocation DESTRUCTIVE_DEATH_STATE_ID    = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "destructive_death_state");
     ResourceLocation GUN_ANIMATION_ID              = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "gun_animation");
 
@@ -421,6 +423,12 @@ public interface NichirinPacketRegistry {
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, THUNDERCLAP_RELEASE_ID, (buf, context) -> {
             if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
                 context.queue(() -> ThunderclapChargeManager.releaseCharge(serverPlayer));
+            }
+        });
+
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, COMPASS_NEEDLE_RELEASE_ID, (buf, context) -> {
+            if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
+                context.queue(() -> CompassNeedleChargeManager.release(serverPlayer));
             }
         });
     }
@@ -1122,6 +1130,10 @@ public interface NichirinPacketRegistry {
      * Avoids sending to the entire dimension like the old implementation did.
      */
     static void broadcastPlayerAnimation(ServerPlayer animatedPlayer, PlayerAnimationPacket packet) {
+        if (CompassNeedleChargeManager.isCharging(animatedPlayer.getUUID())
+                && !"compass_needle".equals(packet.getAnimationName())) {
+            return;
+        }
         ResourceLocation id = PACKET_IDS.get(packet.getClass());
         if (id == null) return;
         try {
@@ -1276,6 +1288,20 @@ public interface NichirinPacketRegistry {
                     .filter(p -> p.level() == entity.level()
                             && p.distanceToSqr(entity) <= 256.0 * 256.0)
                     .forEach(p -> NetworkManager.sendToPlayer(p, id, serverCopy(buf, p)));
+            buf.release();
+        } catch (Exception ignored) {
+        }
+    }
+
+    public static void sendAfterimageTo(ServerPlayer recipient, LivingEntity entity, Vec3 from, Vec3 to,
+                                        int lifetimeTicks, int copies, float alpha) {
+        if (entity.level().isClientSide || recipient.level() != entity.level()) return;
+        try {
+            ResourceLocation id = PACKET_IDS.get(AfterimagePacket.class);
+            if (id == null) return;
+            FriendlyByteBuf buf = encodePacket(new AfterimagePacket(
+                    entity.getId(), from, to, lifetimeTicks, copies, alpha));
+            NetworkManager.sendToPlayer(recipient, id, serverCopy(buf, recipient));
             buf.release();
         } catch (Exception ignored) {
         }

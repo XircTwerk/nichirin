@@ -155,7 +155,7 @@ public final class NichirinAnimations {
         if ("fire".equals(animationName)) {
             controller.stopTriggeredAnimation();
             GUN_FIRE_STARTS.put(clientPlayer, minecraft.level.getGameTime());
-        } else if ("sword.block".equals(animationName)) {
+        } else if ("sword.block".equals(animationName) || "compass_needle".equals(animationName)) {
             controller.triggerAnimation(PlayerRawAnimationBuilder.begin().thenPlayAndHold(animation).build());
         } else if ("reload".equals(animationName)) {
             // Reload is long enough to blend cleanly from the steady gun-holding pose.

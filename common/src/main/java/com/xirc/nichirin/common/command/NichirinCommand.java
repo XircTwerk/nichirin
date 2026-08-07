@@ -8,6 +8,9 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.xirc.nichirin.common.attack.moveset.demon.DefaultDemonMoveset;
 import com.xirc.nichirin.common.attack.moveset.demon.DestructiveDeathMoveset;
+import com.xirc.nichirin.common.attack.moves.demon.destructive.CompassNeedleChargeManager;
+import com.xirc.nichirin.common.attack.moves.demon.destructive.CompassNeedleTracker;
+import com.xirc.nichirin.common.attack.moves.demon.destructive.DestructiveDeathState;
 import com.xirc.nichirin.common.attack.moveset.CqcMoveset;
 import com.xirc.nichirin.common.config.NichirinConfig;
 import com.xirc.nichirin.common.config.NichirinModConfig;
@@ -20,6 +23,7 @@ import com.xirc.nichirin.common.network.s2c.TriggerShaderPacket;
 import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
 import com.xirc.nichirin.common.system.BloodMoonManager;
 import com.xirc.nichirin.common.system.DemonManager;
+import com.xirc.nichirin.common.system.aura.MovesetAuraTicker;
 import com.xirc.nichirin.common.vfx.VfxIds;
 import com.xirc.nichirin.common.vfx.VfxManager;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
@@ -93,6 +97,7 @@ public class NichirinCommand {
             Map.entry("flame_pommel_slash", VfxIds.FLAME_POMMEL_SLASH),
             Map.entry("thunderclap_flash", VfxIds.THUNDERCLAP_FLASH),
             Map.entry("godspeed", VfxIds.GODSPEED),
+            Map.entry("rice_spirit_link", VfxIds.RICE_SPIRIT_LINK),
             Map.entry("rice_spirit_slash", VfxIds.RICE_SPIRIT_SLASH),
             Map.entry("thunder_swarm_slash", VfxIds.THUNDER_SWARM_SLASH),
             Map.entry("distant_thunder_charge", VfxIds.DISTANT_THUNDER_CHARGE),
@@ -478,6 +483,7 @@ public class NichirinCommand {
         try {
             DestructiveDeathMoveset.cleanupPlayer(player);
         } catch (Exception ignored) {}
+        MovesetAuraTicker.clear(player);
 
         if (MovesetHelper.hasDemonMoveset(player)) {
             src.sendFailure(Component.literal("Failed to remove demon status from " + playerName + " (sync issue)").withStyle(s -> s.withColor(COL_ERR)));
@@ -563,10 +569,20 @@ public class NichirinCommand {
         String playerName = player.getName().getString();
 
         CqcMoveset.resetCooldowns(player);
+        CompassNeedleChargeManager.clear(player.getUUID());
+        CompassNeedleTracker.cancel(player);
+        DestructiveDeathState.deactivateCompass(player);
+        DestructiveDeathState.clearCompassCooldown(player);
 
         int cleared = 0;
         for (NichirinMovesetRegistry.MoveInfo moveInfo : NichirinMovesetRegistry.getAllMoves().values()) {
             CooldownDisplayPacket.sendToClient(player, moveInfo.displayName, 0);
+            cleared++;
+        }
+        // CQC moves aren't in the global move registry — clear their client cooldown HUD (which also
+        // gates firing) by display name so the command actually frees them up.
+        for (var config : CqcMoveset.configurations().values()) {
+            CooldownDisplayPacket.sendToClient(player, config.getDisplayName(), 0);
             cleared++;
         }
 

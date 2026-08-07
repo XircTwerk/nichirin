@@ -6,6 +6,7 @@ import com.xirc.nichirin.common.attack.moves.cqc.destructive.CqcDonutAttack;
 import com.xirc.nichirin.common.attack.moves.cqc.destructive.CqcEightLayeredDemonCoreAttack;
 import com.xirc.nichirin.common.attack.moves.cqc.destructive.CqcExplosiveFlurryAttack;
 import com.xirc.nichirin.common.attack.moves.cqc.destructive.CqcSnapPunchAttack;
+import com.xirc.nichirin.common.attack.moves.demon.destructive.BlueSilverChaoticAfterglowAttack;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import net.minecraft.world.entity.LivingEntity;
 
@@ -34,6 +35,7 @@ public class AkazaMoveset extends AbstractMoveset {
     public static final int MOVE_DASH = 1;
     public static final int MOVE_ZONE = 2;
     public static final int MOVE_SIGNATURE = 3;
+    public static final int MOVE_FINAL = 4;
 
     public AkazaMoveset() {
         this(false);
@@ -103,12 +105,20 @@ public class AkazaMoveset extends AbstractMoveset {
                             .withAttack(CqcCrownSplitterAttack::new));
         }
 
-        return builder;
+        return builder.withMove(new MoveBuilder("blue_silver_chaotic_afterglow", "Blue Silver Chaotic Afterglow")
+                .withAnimation("snap_punch", 12)
+                .withTiming(0, 0, BlueSilverChaoticAfterglowAttack.TOTAL_TICKS)
+                .withDamage(5.0f)
+                .withRange(30.0f)
+                .withHitStun(40)
+                .withHyperArmor()
+                .withDescription("Akaza's final omni-directional shockwave barrage.")
+                .withAttack(BlueSilverChaoticAfterglowAttack::new));
     }
 
     @Override
     public int getMoveCount() {
-        return 4; // left click + wheel slots 0..3
+        return 5; // left click + combat slots 0..3 + scripted final attack
     }
 
     @Override

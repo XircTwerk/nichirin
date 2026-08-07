@@ -538,11 +538,12 @@ public class MovesetDataSection extends AbstractGuiPage {
     private String getTranslationKey(String movesetId) {
         if (movesetId.equals("cqc")) {
             return "fighting_style." + movesetId;
-        } else if (movesetId.equals("default_demon") || movesetId.contains("demon")) {
-            return "demon_art." + movesetId;
-        } else {
-            return "breathing_style." + movesetId;
         }
+        AbstractMoveset moveset = resolveMoveset(movesetId);
+        if (moveset != null && moveset.isDemonMoveset()) {
+            return "demon_art." + movesetId;
+        }
+        return "breathing_style." + movesetId;
     }
 
     private String getMoveHotkeyLabel(int moveIndex) {

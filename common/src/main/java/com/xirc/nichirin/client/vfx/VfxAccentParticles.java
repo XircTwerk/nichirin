@@ -17,9 +17,16 @@ import java.util.Set;
 /** Sparse vanilla-particle accents that reinforce, rather than replace, the authored VFX geometry. */
 @Environment(EnvType.CLIENT)
 final class VfxAccentParticles {
+    private static final Set<net.minecraft.resources.ResourceLocation> WATER_EFFECTS = Set.of(
+            VfxIds.WATER_SURFACE_SLASH, VfxIds.WATER_SURFACE_SLASH_REVERSE, VfxIds.WATER_WHEEL,
+            VfxIds.DROP_RIPPLE_THRUST, VfxIds.FLOWING_DANCE, VfxIds.STRIKING_TIDE,
+            VfxIds.WATERFALL_BASIN, VfxIds.SPLASHING_WATER_FLOW, VfxIds.WHIRLPOOL,
+            VfxIds.BLESSED_RAIN, VfxIds.BLESSED_RAIN_LEAP, VfxIds.CONSTANT_FLUX,
+            VfxIds.DEAD_CALM
+    );
     private static final Set<net.minecraft.resources.ResourceLocation> FLAME_EFFECTS = Set.of(
             VfxIds.UNKNOWING_FIRE, VfxIds.RISING_SCORCHING_SUN, VfxIds.BLAZING_UNIVERSE,
-            VfxIds.BLAZING_UNIVERSE_IMPACT,
+            VfxIds.UNKNOWING_FIRE_IMPACT, VfxIds.BLAZING_UNIVERSE_IMPACT,
             VfxIds.BLOOMING_FLAME_UNDULATION, VfxIds.FLAME_TIGER, VfxIds.RENGOKU,
             VfxIds.FLAME_POMMEL_SLASH
     );
@@ -58,6 +65,10 @@ final class VfxAccentParticles {
         if (minecraft.level == null) return;
         if (instance.id().equals(VfxIds.SOUND_ROAR) && instance.ageTicks() % 2 == 0) {
             spawnRoarDebris(minecraft, instance);
+        }
+        if (instance.id().equals(VfxIds.RICE_SPIRIT_LINK)) {
+            spawnRiceSpiritSpark(minecraft, instance);
+            return;
         }
         if (instance.ageTicks() % 6 != 0) return;
 
@@ -111,7 +122,7 @@ final class VfxAccentParticles {
                 minecraft.level.addParticle(NichirinParticleRegistry.BUTTERFLY.get(),
                         position.x, position.y, position.z, velocity.x, velocity.y, velocity.z);
             }
-        } else {
+        } else if (WATER_EFFECTS.contains(instance.id())) {
             Vec3 velocity = forward.scale(0.035).add(right.scale((random.nextDouble() - 0.5) * 0.025))
                     .add(0.0, 0.035 + random.nextDouble() * 0.035, 0.0);
             minecraft.level.addParticle(ParticleTypes.SPLASH, position.x, position.y, position.z,
@@ -126,6 +137,22 @@ final class VfxAccentParticles {
     private static Vec3 rightOf(Vec3 forward) {
         Vec3 right = forward.cross(new Vec3(0.0, 1.0, 0.0));
         return right.lengthSqr() > 1.0E-6 ? right.normalize() : new Vec3(1.0, 0.0, 0.0);
+    }
+
+    private static void spawnRiceSpiritSpark(Minecraft minecraft, VfxInstance instance) {
+        if (instance.ageTicks() % 4 != 0) return;
+        RandomSource random = RandomSource.create(instance.seed() + instance.ageTicks() * 53L);
+        Vec3 forward = instance.direction();
+        Vec3 right = rightOf(forward);
+        Vec3 up = right.cross(forward).normalize();
+        Vec3 position = instance.origin()
+                .add(forward.scale(instance.scale() * (0.12 + random.nextDouble() * 0.84)))
+                .add(right.scale((random.nextDouble() - 0.5) * 0.18))
+                .add(up.scale((random.nextDouble() - 0.5) * 0.14));
+        Vec3 velocity = right.scale((random.nextDouble() - 0.5) * 0.035)
+                .add(up.scale(0.015 + random.nextDouble() * 0.025));
+        minecraft.level.addParticle(ParticleTypes.ELECTRIC_SPARK,
+                position.x, position.y, position.z, velocity.x, velocity.y, velocity.z);
     }
 
     private static void spawnRoarDebris(Minecraft minecraft, VfxInstance instance) {

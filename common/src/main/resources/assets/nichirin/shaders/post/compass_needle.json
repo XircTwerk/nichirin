@@ -1,0 +1,19 @@
+{
+  "targets": ["swap"],
+  "passes": [
+    {
+      "name": "nichirin:compass_needle",
+      "intarget": "minecraft:main",
+      "outtarget": "swap",
+      "uniforms": [
+        { "name": "CompassTime", "values": [0.0] },
+        { "name": "Intensity", "values": [0.0] }
+      ]
+    },
+    {
+      "name": "minecraft:blit",
+      "intarget": "swap",
+      "outtarget": "minecraft:main"
+    }
+  ]
+}

@@ -80,6 +80,8 @@ public class NichirinShaderManager {
     }
 
     private boolean isEnabledScreenShader(NichirinPostProcessor processor) {
+        // World-space VFX must not rewrite the finished frame. Sampling the main depth attachment
+        // from a post chain is driver-dependent and corrupted the skybox on some render paths.
         return false;
     }
 
@@ -89,6 +91,11 @@ public class NichirinShaderManager {
 
     public void reloadAll() {
         processors.forEach(NichirinPostProcessor::loadShader);
+    }
+
+    /** Deactivate every screen shader (e.g. on death) so nothing lingers on the screen. */
+    public void clearAll() {
+        processors.forEach(p -> p.setActive(false));
     }
 
     @SuppressWarnings("unchecked")

@@ -71,7 +71,7 @@ public class WaterBreathingMoveset extends AbstractMoveset {
 
     private void createAndCaptureWaterWheelConfig() {
         MoveConfiguration tempConfig = new MoveBuilder("water_wheel", "Water Wheel")
-                .withTiming(0, 10, 21)
+                .withTiming(0, 10, 12)
                 .withDamage(2.0f)
                 .withRange(4.0f)
                 .withKnockback(0.1f)

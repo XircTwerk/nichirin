@@ -2,6 +2,7 @@ package com.xirc.nichirin.common.data;
 
 import com.xirc.nichirin.common.advancement.NichirinCriteriaTriggers;
 import com.xirc.nichirin.common.network.s2c.ProgressionSyncPacket;
+import com.xirc.nichirin.registry.NichirinMovesetRegistry;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 
@@ -35,10 +36,14 @@ public class ProgressionHelper {
      * Unlocks a moveset for a player (used by unlock handlers)
      */
     public static void unlockMoveset(Player player, String movesetId) {
-        boolean wasAlreadyUnlocked = isMovesetUnlocked(player, movesetId);
-        boolean wasFirstMoveset = !hasAnyMoveset(player);
+        MovesetProgression progression = getProgression(player);
+        boolean wasAlreadyUnlocked = progression.isMovesetUnlocked(movesetId);
+        boolean breathingStyle = isBreathingMoveset(movesetId);
+        boolean wasFirstBreathingStyle = breathingStyle
+                && progression.getUnlockedMovesets().stream()
+                .noneMatch(ProgressionHelper::isBreathingMoveset);
 
-        getProgression(player).unlockMoveset(movesetId);
+        progression.unlockMoveset(movesetId);
 
         // Trigger advancements if this is a new unlock and player is on server
         if (!wasAlreadyUnlocked && player instanceof ServerPlayer serverPlayer) {
@@ -81,8 +86,9 @@ public class ProgressionHelper {
                 }
             }
 
-            // Trigger First Technique advancement if this was their first moveset
-            if (wasFirstMoveset && NichirinCriteriaTriggers.FIRST_BREATH_TRIGGER != null) {
+            // Demon arts are movesets too, but they are not breathing styles. Award First Breath
+            // only for the player's first registered BREATHING moveset.
+            if (wasFirstBreathingStyle && NichirinCriteriaTriggers.FIRST_BREATH_TRIGGER != null) {
                 NichirinCriteriaTriggers.FIRST_BREATH_TRIGGER.get().trigger(serverPlayer);
             }
         }
@@ -134,7 +140,8 @@ public class ProgressionHelper {
      */
     @Deprecated
     public static boolean hasAnyBreathingStyle(Player player) {
-        return hasAnyMoveset(player);
+        return getProgression(player).getUnlockedMovesets().stream()
+                .anyMatch(ProgressionHelper::isBreathingMoveset);
     }
 
     /**
@@ -143,5 +150,10 @@ public class ProgressionHelper {
     @Deprecated
     public static void unlockStyle(Player player, String styleId) {
         unlockMoveset(player, styleId);
+    }
+
+    private static boolean isBreathingMoveset(String movesetId) {
+        var moveset = NichirinMovesetRegistry.getMoveset(movesetId);
+        return moveset != null && moveset.isBreathingMoveset();
     }
 }

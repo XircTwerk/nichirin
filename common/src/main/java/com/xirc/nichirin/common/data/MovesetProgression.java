@@ -55,6 +55,11 @@ public class MovesetProgression {
         return !unlockedMovesets.isEmpty();
     }
 
+    /** Snapshot used when progression logic needs to distinguish breathing styles from demon arts. */
+    public Set<String> getUnlockedMovesets() {
+        return Set.copyOf(unlockedMovesets);
+    }
+
     /**
      * Gets the unlock requirement description for a moveset
      */

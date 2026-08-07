@@ -6,6 +6,7 @@ import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.registry.NichirinMovesetRegistry;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 
 /**
@@ -50,9 +51,10 @@ public class DestructiveDeathMoveset extends AbstractMoveset {
 
                 // Wheel 1 — Compass Needle (crouch while activating to enter Compass Overdrive)
                 .withMove(new MoveBuilder("compass_needle", "Compass Needle")
-                        .withTiming(0, 1, 4)
+                        .withAnimation("nichirin:compass_needle", 12)
+                        .withTiming(0, 0, CompassNeedleAttack.MAX_CHARGE_TICKS + 2)
                         .withRange(20f)
-                        .withDescription("Tracks nearby entities for 6 seconds and amplifies damage on them. Crouch while activating to enter Compass Overdrive (Speed I + Strength I + red shockwaves).")
+                        .withDescription("Hold to charge, then release. Longer charges extend Compass beyond its 6-second base duration. Sense fighting spirits through walls, predict movement, rapidly dodge, and gain adaptive precision. Selfless State cannot be sensed. Crouch to enter Compass Overdrive.")
                         .withAction(entity -> {
                             boolean crouching = entity instanceof Player p && p.isCrouching();
                             CompassNeedleAttack attack = crouching
@@ -102,6 +104,30 @@ public class DestructiveDeathMoveset extends AbstractMoveset {
     }
 
     @Override
+    public void performMove(LivingEntity entity, int moveIndex) {
+        if (moveIndex == 1 && entity instanceof ServerPlayer player) {
+            long now = player.level().getGameTime();
+            if (DestructiveDeathState.hasCompassSession(player.getUUID())) {
+                int activeRemaining = DestructiveDeathState.compassActiveRemaining(player.getUUID(), now);
+                if (activeRemaining > 0) {
+                    CompassNeedleTracker.syncHud(player, activeRemaining);
+                    player.displayClientMessage(Component.literal(String.format(
+                            "Compass Needle is already active: %.1fs", activeRemaining / 20.0f)), true);
+                    return;
+                }
+                CompassNeedleTracker.finish(player);
+            }
+            int remaining = DestructiveDeathState.compassCooldownRemaining(player.getUUID(), now);
+            if (remaining > 0) {
+                player.displayClientMessage(Component.literal(String.format(
+                        "Compass Needle on cooldown: %.1fs", remaining / 20.0f)), true);
+                return;
+            }
+        }
+        super.performMove(entity, moveIndex);
+    }
+
+    @Override
     public int getRightClickMoveIndex(boolean isCrouching) {
         return -1;
     }
@@ -119,7 +145,12 @@ public class DestructiveDeathMoveset extends AbstractMoveset {
 
     public static void cleanupPlayer(Player player) {
         DestructiveDeathState.cleanup(player.getUUID());
-        CompassNeedleTracker.clear(player.getUUID());
+        CompassNeedleChargeManager.clear(player.getUUID());
+        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            CompassNeedleTracker.clear(serverPlayer);
+        } else {
+            CompassNeedleTracker.clear(player.getUUID());
+        }
         // Online (redemption): broadcast the aura removal so it actually disappears. Offline
         // (logout): just drop the cache — the despawned entity stops rendering it anyway.
         if (player instanceof ServerPlayer sp) {

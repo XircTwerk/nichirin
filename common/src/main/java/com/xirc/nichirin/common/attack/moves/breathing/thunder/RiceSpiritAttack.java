@@ -54,6 +54,16 @@ public class RiceSpiritAttack extends ThunderBreathingAttackBase {
         // Thunder sound on start
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, 0.3f, 2.0f);
+
+        if (lockedTarget != null) {
+            Vec3 start = user.position().add(0.0, user.getBbHeight() * 0.62, 0.0);
+            Vec3 end = lockedTarget.position().add(0.0, lockedTarget.getBbHeight() * 0.55, 0.0);
+            Vec3 connection = end.subtract(start);
+            if (connection.lengthSqr() > 1.0E-6) {
+                playThunderVfxAt(VfxIds.RICE_SPIRIT_LINK, start, connection,
+                        (float) connection.length());
+            }
+        }
     }
 
     @Override
@@ -88,8 +98,9 @@ public class RiceSpiritAttack extends ThunderBreathingAttackBase {
         // Get target's current position
         Vec3 targetPos = lockedTarget.position();
 
-        // Add some variation to slash positions around the target
-        float angleOffset = (slashCount * 72f) + random.nextFloat() * 30f; // Distribute around target
+        // Deliberate five-point pattern around the target. Small jitter keeps repeated casts alive
+        // without turning the slashes into random visual noise.
+        float angleOffset = (slashCount * 72f) + random.nextFloat() * 8f;
         float radian = (float) Math.toRadians(angleOffset);
         float offsetDistance = 0.5f + random.nextFloat() * 0.5f;
 

@@ -2,6 +2,7 @@ package com.xirc.nichirin.common.network.s2c;
 
 import com.xirc.nichirin.client.handler.ImpactFrameOverlay;
 import com.xirc.nichirin.client.handler.MistBlurOverlay;
+import com.xirc.nichirin.client.gui.CompassNeedleHUD;
 import com.xirc.nichirin.client.shader.NichirinPostProcessor;
 import com.xirc.nichirin.client.shader.NichirinShaderManager;
 import net.minecraft.network.FriendlyByteBuf;
@@ -70,6 +71,15 @@ public class TriggerShaderPacket {
                     } else {
                         ImpactFrameOverlay.trigger(magnitude >= 0f ? magnitude : 1.0f);
                     }
+                }
+                return;
+            }
+
+            if ("com.xirc.nichirin.client.shader.CompassNeedleShaderEffect".equals(shaderEffectClass)) {
+                if (activate) {
+                    CompassNeedleHUD.activate(magnitude >= 0.0f ? magnitude : 6.0f);
+                } else {
+                    CompassNeedleHUD.clear();
                 }
                 return;
             }

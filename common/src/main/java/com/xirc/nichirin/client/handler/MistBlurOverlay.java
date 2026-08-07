@@ -31,7 +31,13 @@ public final class MistBlurOverlay {
         ((NichirinBlurAccessor) minecraft.gameRenderer).nichirin$processBlurEffect(
                 partialTicks.getGameTimeDeltaTicks(),
                 5.5F + alpha * 10.0F);
+        // The blur pass leaves blending disabled; force it on (and flush immediately) so the tint
+        // honors its alpha instead of covering the whole screen opaque outside F1.
+        com.mojang.blaze3d.systems.RenderSystem.enableBlend();
+        com.mojang.blaze3d.systems.RenderSystem.defaultBlendFunc();
         graphics.fill(0, 0, width, height, argb(alpha * 0.72F, 0xA9E4B8));
+        graphics.flush();
+        com.mojang.blaze3d.systems.RenderSystem.disableBlend();
     }
 
     public static void tick() {
@@ -51,6 +57,13 @@ public final class MistBlurOverlay {
 
     public static void setTargetIntensity(float value) {
         targetIntensity = Math.max(0.0F, Math.min(1.0F, value));
+    }
+
+    /** Instantly clears the mist overlay (e.g. on death) rather than letting it decay. */
+    public static void clear() {
+        targetIntensity = 0.0F;
+        intensity = 0.0F;
+        pulseTicks = 0;
     }
 
     public static void trigger(float strength) {

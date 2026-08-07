@@ -40,6 +40,23 @@ public final class DestructiveDeathState {
         return s.compassActive && worldTime < s.compassExpiryTick;
     }
 
+    /** True until the tracker has finalized the session and started its post-use cooldown. */
+    public static boolean hasCompassSession(UUID playerId) {
+        return get(playerId).compassActive;
+    }
+
+    public static boolean isCompassOnCooldown(UUID playerId, long worldTime) {
+        return worldTime < get(playerId).compassCooldownExpiryTick;
+    }
+
+    public static int compassCooldownRemaining(UUID playerId, long worldTime) {
+        return (int) Math.max(0L, get(playerId).compassCooldownExpiryTick - worldTime);
+    }
+
+    public static int compassActiveRemaining(UUID playerId, long worldTime) {
+        return (int) Math.max(0L, get(playerId).compassExpiryTick - worldTime);
+    }
+
     public static boolean isCompassOverdriveActive(UUID playerId, long worldTime) {
         State s = get(playerId);
         return s.compassOverdrive && isCompassActive(playerId, worldTime);
@@ -77,6 +94,15 @@ public final class DestructiveDeathState {
         DestructiveDeathStateSyncPacket.send(player);
     }
 
+    public static void startCompassCooldown(ServerPlayer player, int durationTicks) {
+        State s = get(player.getUUID());
+        s.compassCooldownExpiryTick = player.level().getGameTime() + Math.max(0, durationTicks);
+    }
+
+    public static void clearCompassCooldown(ServerPlayer player) {
+        get(player.getUUID()).compassCooldownExpiryTick = 0L;
+    }
+
     public static final class State {
         public boolean shockwaveEnabled = false;
         public boolean overdriveEnabled = false;
@@ -84,5 +110,6 @@ public final class DestructiveDeathState {
         public boolean compassActive = false;
         public boolean compassOverdrive = false;
         public long compassExpiryTick = 0L;
+        public long compassCooldownExpiryTick = 0L;
     }
 }

@@ -510,7 +510,10 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
         }
 
         if (mode == TrainerMode.SELF_DEFENSE) {
-            // No restrictions — real fight, trainer can die
+            // No restrictions — real fight, trainer can die. Some breathing attacks grant their
+            // user temporary invulnerability, but that must never make an aggressive trainer
+            // immune to damage (or leave it permanently immune if the attack is interrupted).
+            setInvulnerable(false);
             return super.hurt(source, amount);
         }
 
@@ -535,6 +538,7 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
     protected void enterSelfDefense(Player aggressor) {
         mode = TrainerMode.SELF_DEFENSE;
         duelDifficulty = DuelDifficulty.HARD;
+        setInvulnerable(false);
         setTarget(aggressor);
         selfDefenseGraceTicks = selfDefenseGraceDuration();
         Objects.requireNonNull(getAttribute(Attributes.MAX_HEALTH)).setBaseValue(duelHp());
@@ -600,6 +604,9 @@ public abstract class BaseBreathingTrainerEntity extends PathfinderMob implement
         // Self-defense ends only after the target has been gone for a grace period, so a
         // momentary loss doesn't drop to peaceful and re-arm the "Are you sure?" warning.
         if (mode == TrainerMode.SELF_DEFENSE) {
+            // SELF_DEFENSE is a real fight. Clear immunity reapplied by shared player attacks
+            // every tick while preserving the trainer's visible, time-limited guard mechanics.
+            setInvulnerable(false);
             LivingEntity selfDefenseTarget = getTarget();
             if (selfDefenseTarget == null || !selfDefenseTarget.isAlive()) {
                 if (--selfDefenseGraceTicks <= 0) {

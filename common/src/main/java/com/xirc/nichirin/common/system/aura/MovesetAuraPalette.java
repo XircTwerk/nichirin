@@ -42,6 +42,9 @@ public final class MovesetAuraPalette {
         OVERRIDES.put("serpent_breathing",   rgb(0.55f, 0.00f, 0.55f));
         OVERRIDES.put("moon_breathing",      rgb(0.10f, 0.10f, 0.50f));
         OVERRIDES.put("sun_breathing",       rgb(1.00f, 0.65f, 0.00f));
+        // NPC Akaza uses the exact same pure-blue / pure-red aura palette as player DD.
+        OVERRIDES.put("akaza",               rgb(0.00f, 0.00f, 1.00f));
+        OVERRIDES.put("akaza_overdrive",      rgb(1.00f, 0.00f, 0.05f));
     }
 
     private static Entry rgb(float r, float g, float b) {

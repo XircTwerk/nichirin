@@ -2,6 +2,7 @@ package com.xirc.nichirin.client.handler;
 
 import com.xirc.nichirin.client.gui.AttackWheelOverlay;
 import com.xirc.nichirin.client.gui.CooldownHUD;
+import com.xirc.nichirin.client.util.CompassNeedleInputHandler;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.attack.moveset.CqcMoveset;
 import com.xirc.nichirin.common.attack.moveset.DualKatanaMoveset;
@@ -441,6 +442,10 @@ public class AttackWheelHandler {
         }
 
         // Send move to server using appropriate packet type
+        if ("destructive_death".equals(selectedMoveset.getMovesetId())
+                && "compass_needle".equals(moveConfig.getMoveId())) {
+            CompassNeedleInputHandler.beginCharge(selectedMove);
+        }
         if (currentWheelIsBreathing) {
             MultiplayerInputHandler.sendBreathingMove(selectedMove, mc.player);
         } else if (currentWheelIsFighting) {

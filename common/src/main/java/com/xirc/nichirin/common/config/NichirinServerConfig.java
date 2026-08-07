@@ -249,6 +249,7 @@ public final class NichirinServerConfig {
         appendValue(out, 4, "bloodPointsOnKill", cfg.bloodPointsOnKill, defaults.bloodPointsOnKill, true);
         appendValue(out, 4, "maxBloodPoints", cfg.maxBloodPoints, defaults.maxBloodPoints, true);
         appendValue(out, 4, "burnInSunlight", cfg.burnInSunlight, defaults.burnInSunlight, true);
+        appendValue(out, 4, "burnEntitiesInSunlight", cfg.burnEntitiesInSunlight, defaults.burnEntitiesInSunlight, true);
         appendValue(out, 4, "sunDamagePerSecond", cfg.sunDamagePerSecond, defaults.sunDamagePerSecond, true);
         appendValue(out, 4, "wisteriaDamagesDemons", cfg.wisteriaDamagesDemons, defaults.wisteriaDamagesDemons, true);
         appendValue(out, 4, "upperMoonPact", cfg.upperMoonPact, defaults.upperMoonPact, true);

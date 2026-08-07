@@ -1,5 +1,7 @@
 package com.xirc.nichirin.client.data;
 
+import com.xirc.nichirin.registry.NichirinMovesetRegistry;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -20,11 +22,13 @@ public class ClientProgressionCache {
     }
 
     public static boolean isBreathingStyleUnlocked(String movesetId) {
-        return movesetId.contains("breathing") && isUnlocked(movesetId);
+        var moveset = NichirinMovesetRegistry.getMoveset(movesetId);
+        return moveset != null && moveset.isBreathingMoveset() && isUnlocked(movesetId);
     }
 
     public static boolean isDemonArtUnlocked(String movesetId) {
-        return movesetId.contains("demon") && isUnlocked(movesetId);
+        var moveset = NichirinMovesetRegistry.getMoveset(movesetId);
+        return moveset != null && moveset.isDemonMoveset() && isUnlocked(movesetId);
     }
 
     public static Set<String> getUnlockedMovesets() {
@@ -34,7 +38,7 @@ public class ClientProgressionCache {
     public static Set<String> getUnlockedBreathingStyles() {
         Set<String> breathingStyles = new HashSet<>();
         for (String moveset : unlockedMovesets) {
-            if (moveset.contains("breathing")) {
+            if (isBreathingStyleUnlocked(moveset)) {
                 breathingStyles.add(moveset);
             }
         }
@@ -44,7 +48,7 @@ public class ClientProgressionCache {
     public static Set<String> getUnlockedDemonArts() {
         Set<String> demonArts = new HashSet<>();
         for (String moveset : unlockedMovesets) {
-            if (moveset.contains("demon")) {
+            if (isDemonArtUnlocked(moveset)) {
                 demonArts.add(moveset);
             }
         }

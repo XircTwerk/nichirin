@@ -14,9 +14,9 @@ import net.minecraft.resources.ResourceLocation;
 import java.util.UUID;
 
 /**
- * Emissive glow layer for Akaza's blue lines and eyes. Re-renders the model with each emissive
- * texture at full brightness ({@link RenderType#eyes}); when Akaza is in Overdrive it swaps to the
- * code-generated red hue-shift ({@link AkazaEmissiveTextures}).
+ * Emissive glow layer for Akaza's blue lines and eyes. The authored masks use an exact-color,
+ * full-bright cutout pass; additive eye blending would mix them with the skin underneath and
+ * visibly shift their RGB. Overdrive swaps to the generated red hue-shift.
  */
 @Environment(EnvType.CLIENT)
 public class AkazaEmissiveLayer implements AzRenderLayer<UUID, AkazaEntity> {
@@ -42,14 +42,14 @@ public class AkazaEmissiveLayer implements AzRenderLayer<UUID, AkazaEntity> {
     }
 
     private void renderEmissive(AzRendererPipelineContext<UUID, AkazaEntity> context, ResourceLocation texture) {
-        RenderType renderType = RenderType.eyes(texture);
+        RenderType renderType = RenderType.entityCutoutNoCull(texture);
 
         RenderType prevRenderType = context.renderType();
         var prevVertexConsumer = context.vertexConsumer();
         int prevPackedLight = context.packedLight();
 
         context.setRenderType(renderType);
-        context.setPackedLight(LightTexture.FULL_SKY);
+        context.setPackedLight(LightTexture.FULL_BRIGHT);
         context.setVertexConsumer(context.multiBufferSource().getBuffer(renderType));
 
         context.rendererPipeline().reRender(context);

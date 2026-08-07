@@ -2,6 +2,7 @@ package com.xirc.nichirin.client.renderer.entity.npc;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.xirc.nichirin.BreathOfNichirin;
+import com.xirc.nichirin.client.afterimage.AfterimageRenderState;
 import com.xirc.nichirin.client.renderer.entity.BaseAZNichirinEntityRenderer;
 import com.xirc.nichirin.client.renderer.entity.animator.AkazaAnimator;
 import com.xirc.nichirin.client.renderer.entity.layer.AkazaEmissiveLayer;
@@ -39,7 +40,9 @@ public class AkazaRenderer extends BaseAZNichirinEntityRenderer<AkazaEntity> {
         }
 
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
-        DemonBloodBarRenderer.render(entity, poseStack, bufferSource, packedLight);
+        if (!AfterimageRenderState.isRendering()) {
+            DemonBloodBarRenderer.render(entity, poseStack, bufferSource, packedLight);
+        }
 
         poseStack.popPose();
     }
@@ -48,6 +51,7 @@ public class AkazaRenderer extends BaseAZNichirinEntityRenderer<AkazaEntity> {
     @Override
     protected void renderNameTag(AkazaEntity entity, Component displayName, PoseStack poseStack,
                                  MultiBufferSource bufferSource, int packedLight, float partialTick) {
+        if (AfterimageRenderState.isRendering()) return;
         poseStack.pushPose();
         poseStack.translate(0.0, 0.45, 0.0);
         super.renderNameTag(entity, displayName, poseStack, bufferSource, packedLight, partialTick);

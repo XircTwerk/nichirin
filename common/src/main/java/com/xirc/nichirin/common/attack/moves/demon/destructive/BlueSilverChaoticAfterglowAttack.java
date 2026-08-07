@@ -1,9 +1,11 @@
 package com.xirc.nichirin.common.attack.moves.demon.destructive;
 
 import com.xirc.nichirin.common.attack.component.AbstractBreathingAttack;
+import com.xirc.nichirin.common.entity.MovesetCapableNPC;
 import com.xirc.nichirin.common.entity.attack.ShockwaveEntity;
 import com.xirc.nichirin.common.entity.effect.CloneRing;
 import com.xirc.nichirin.common.entity.effect.PlayerCloneEntity;
+import com.xirc.nichirin.common.entity.npc.AkazaEntity;
 import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
 import com.xirc.nichirin.common.network.s2c.TriggerShaderPacket;
 import com.xirc.nichirin.registry.NichirinEntityRegistry;
@@ -95,11 +97,12 @@ public class BlueSilverChaoticAfterglowAttack extends DestructiveDeathAttackBase
     @Override
     protected void perform() {
         if (world.isClientSide || failed) return;
-        if (!(user instanceof ServerPlayer sp)) return;
+        LivingEntity caster = user;
+        if (caster == null) return;
         phaseTick++;
         int t = phaseTick;
 
-        if (t == 0 && !beginChannel(sp)) {
+        if (t == 0 && !beginChannel(caster)) {
             failed = true;
             stop();
             return;
@@ -118,25 +121,25 @@ public class BlueSilverChaoticAfterglowAttack extends DestructiveDeathAttackBase
 
         // Rooted for the whole performance (the finisher window lets momentum through).
         if (t < CONVERGE_TICK) {
-            rootCaster(sp);
+            rootCaster(caster);
         }
 
         if (t < CLONE_SPAWN_TICK) {
-            tickWindup(sp, t);
+            tickWindup(caster, t);
         } else if (t == CLONE_SPAWN_TICK) {
-            world.playSound(null, sp.getX(), sp.getY(), sp.getZ(),
+            world.playSound(null, caster.getX(), caster.getY(), caster.getZ(),
                     SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 1.2f, 1.5f);
-            tickManifestation(sp, t);
+            tickManifestation(caster, t);
         } else if (t < BARRAGE_START_TICK) {
-            tickManifestation(sp, t);
+            tickManifestation(caster, t);
         } else if (t < BARRAGE_END_TICK) {
-            tickBarrage(sp, t);
+            tickBarrage(caster, t);
         } else if (t == UNISON_TICK) {
-            unisonVolley(sp);
+            unisonVolley(caster);
         } else if (t == CONVERGE_TICK) {
-            convergeFinisher(sp);
+            convergeFinisher(caster);
         } else if (t > CONVERGE_TICK) {
-            tickAfterglow(sp, t);
+            tickAfterglow(caster, t);
         }
     }
 
@@ -145,6 +148,10 @@ public class BlueSilverChaoticAfterglowAttack extends DestructiveDeathAttackBase
      * requirement never burns the long cooldown. Sends the failure reason to the player.
      */
     public static boolean canCast(LivingEntity entity) {
+        if (entity instanceof AkazaEntity akaza) {
+            LivingEntity target = akaza.getTarget();
+            return target != null && target.isAlive();
+        }
         if (!(entity instanceof ServerPlayer sp)) return false;
         long now = sp.level().getGameTime();
         if (!DestructiveDeathState.isCompassActive(sp.getUUID(), now)) {
@@ -166,23 +173,27 @@ public class BlueSilverChaoticAfterglowAttack extends DestructiveDeathAttackBase
     }
 
     /** Re-validates (state may have expired between press and tick) and locks every target. */
-    private boolean beginChannel(ServerPlayer sp) {
-        if (!canCast(sp)) return false;
-        targets.addAll(trackedTargetsInRange(sp));
-        ringCenter = sp.position();
-        world.playSound(null, sp.getX(), sp.getY(), sp.getZ(),
+    private boolean beginChannel(LivingEntity caster) {
+        if (!canCast(caster)) return false;
+        if (caster instanceof ServerPlayer sp) {
+            targets.addAll(trackedTargetsInRange(sp));
+        } else if (caster instanceof AkazaEntity akaza) {
+            targets.add(akaza.getTarget());
+        }
+        ringCenter = caster.position();
+        world.playSound(null, caster.getX(), caster.getY(), caster.getZ(),
                 SoundEvents.WARDEN_HEARTBEAT, SoundSource.PLAYERS, 1.4f, 0.7f);
         return true;
     }
 
-    private void tickWindup(ServerPlayer sp, int t) {
+    private void tickWindup(LivingEntity caster, int t) {
         if (t == 20) {
-            world.playSound(null, sp.getX(), sp.getY(), sp.getZ(),
+            world.playSound(null, caster.getX(), caster.getY(), caster.getZ(),
                     SoundEvents.WARDEN_HEARTBEAT, SoundSource.PLAYERS, 1.4f, 0.9f);
         }
         // Rising chime ladder — the audible "something terrible is charging" cue.
         if (t % 8 == 0) {
-            world.playSound(null, sp.getX(), sp.getY(), sp.getZ(),
+            world.playSound(null, caster.getX(), caster.getY(), caster.getZ(),
                     SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS,
                     1.2f, 0.6f + (t / (float) CLONE_SPAWN_TICK) * 1.2f);
         }
@@ -191,28 +202,37 @@ public class BlueSilverChaoticAfterglowAttack extends DestructiveDeathAttackBase
             double angle = t * 0.7;
             double r = 2.2 - (t / (float) CLONE_SPAWN_TICK) * 1.6;
             sl.sendParticles(NichirinParticleRegistry.BLUE_FLASH1.get(),
-                    sp.getX() + Math.cos(angle) * r,
-                    sp.getY() + 0.4 + (t % 20) * 0.06,
-                    sp.getZ() + Math.sin(angle) * r,
+                    caster.getX() + Math.cos(angle) * r,
+                    caster.getY() + 0.4 + (t % 20) * 0.06,
+                    caster.getZ() + Math.sin(angle) * r,
                     2, 0.05, 0.05, 0.05, 0.0);
         }
     }
 
     /** Sentinel clones snap in one by one — real entities that track their victims. */
-    private void tickManifestation(ServerPlayer sp, int t) {
+    private void tickManifestation(LivingEntity caster, int t) {
         int sinceSpawn = t - CLONE_SPAWN_TICK;
         if (sinceSpawn % CLONE_STAGGER_TICKS != 0) return;
         int cloneIndex = sinceSpawn / CLONE_STAGGER_TICKS;
         if (cloneIndex >= CLONE_COUNT) return;
 
         Vec3 pos = ringSlot(cloneIndex);
-        cloneRing.spawn(world, sp, pos, targetForClone(cloneIndex), TOTAL_TICKS - t + 10);
+        if (caster instanceof AkazaEntity) {
+            NichirinPacketRegistry.sendAfterimageTrail(caster, pos, pos,
+                    BARRAGE_START_TICK - t + 8, 1, 0.65f);
+            if (world instanceof ServerLevel sl) {
+                sl.sendParticles(NichirinParticleRegistry.BLUE_FLASH1.get(),
+                        pos.x, pos.y + 1.0, pos.z, 4, 0.25, 0.5, 0.25, 0.0);
+            }
+        } else {
+            cloneRing.spawn(world, caster, pos, targetForClone(cloneIndex), TOTAL_TICKS - t + 10);
+        }
         world.playSound(null, pos.x, pos.y, pos.z,
                 SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 0.9f,
                 1.0f + cloneIndex * 0.08f);
     }
 
-    private void tickBarrage(ServerPlayer sp, int t) {
+    private void tickBarrage(LivingEntity caster, int t) {
         int sinceBarrage = t - BARRAGE_START_TICK;
         if (sinceBarrage % VOLLEY_INTERVAL != 0) return;
         int volleyIndex = sinceBarrage / VOLLEY_INTERVAL;
@@ -233,7 +253,7 @@ public class BlueSilverChaoticAfterglowAttack extends DestructiveDeathAttackBase
         for (int k = 0; k < PUNCHERS_PER_VOLLEY; k++) {
             // ×5 stride is coprime with 12, so the punch order cycles every clone before repeating.
             int cloneIndex = (volleyIndex * 5 + k * 7) % CLONE_COUNT;
-            punchFromClone(sp, cloneIndex, VOLLEY_DAMAGE, VOLLEY_SPEED, progress);
+            punchFromClone(caster, cloneIndex, VOLLEY_DAMAGE, VOLLEY_SPEED, progress);
         }
 
         // Screen shake pulses ramp with the storm.
@@ -242,13 +262,17 @@ public class BlueSilverChaoticAfterglowAttack extends DestructiveDeathAttackBase
         }
         // The caster throws snap punches in place, synced to the storm.
         if (sinceBarrage % 8 == 0) {
-            NichirinPacketRegistry.broadcastPlayerAnimation(sp,
-                    new PlayerAnimationPacket(sp.getId(), "snap_punch"));
+            if (caster instanceof ServerPlayer sp) {
+                NichirinPacketRegistry.broadcastPlayerAnimation(sp,
+                        new PlayerAnimationPacket(sp.getId(), "snap_punch"));
+            } else if (caster instanceof MovesetCapableNPC npc) {
+                npc.triggerMovesetAnimation("snap_punch");
+            }
         }
     }
 
     /** One clone punch: visible swing + afterimage streak + a thin red shockwave at ITS target. */
-    private void punchFromClone(ServerPlayer sp, int cloneIndex,
+    private void punchFromClone(LivingEntity caster, int cloneIndex,
                                 float damage, float speed, float pitchProgress) {
         LivingEntity target = targetForClone(cloneIndex);
         if (target == null) return;
@@ -257,11 +281,11 @@ public class BlueSilverChaoticAfterglowAttack extends DestructiveDeathAttackBase
         Vec3 dir = targetPos.subtract(origin).normalize();
 
         cloneRing.swing(cloneIndex);
-        NichirinPacketRegistry.sendAfterimageTrail(sp, origin, targetPos,
+        NichirinPacketRegistry.sendAfterimageTrail(caster, origin, targetPos,
                 STREAK_LIFETIME_TICKS, STREAK_COPIES, STREAK_ALPHA);
 
         new ShockwaveEntity.Builder()
-                .owner(sp)
+                .owner(caster)
                 .origin(origin)
                 .direction(dir)
                 .damage(damage * compassFinalScalar())
@@ -284,9 +308,9 @@ public class BlueSilverChaoticAfterglowAttack extends DestructiveDeathAttackBase
     }
 
     /** All twelve clones fire at once — the adaptation's unison shot. */
-    private void unisonVolley(ServerPlayer sp) {
+    private void unisonVolley(LivingEntity caster) {
         for (int i = 0; i < CLONE_COUNT; i++) {
-            punchFromClone(sp, i, UNISON_DAMAGE, VOLLEY_SPEED + 0.5f, 1.0f);
+            punchFromClone(caster, i, UNISON_DAMAGE, VOLLEY_SPEED + 0.5f, 1.0f);
         }
         LivingEntity loudest = targets.get(0);
         world.playSound(null, loudest.getX(), loudest.getY(), loudest.getZ(),
@@ -295,12 +319,12 @@ public class BlueSilverChaoticAfterglowAttack extends DestructiveDeathAttackBase
     }
 
     /** Clones collapse into the caster; the finisher lands on every target at once. */
-    private void convergeFinisher(ServerPlayer sp) {
-        Vec3 home = sp.position().add(0, sp.getBbHeight() * 0.55, 0);
+    private void convergeFinisher(LivingEntity caster) {
+        Vec3 home = caster.position().add(0, caster.getBbHeight() * 0.55, 0);
         for (int i = 0; i < CLONE_COUNT; i += 3) {
             PlayerCloneEntity clone = cloneRing.get(i);
             if (clone != null) {
-                NichirinPacketRegistry.sendAfterimageTrail(sp,
+                NichirinPacketRegistry.sendAfterimageTrail(caster,
                         clone.position().add(0, 1.0, 0), home,
                         STREAK_LIFETIME_TICKS, STREAK_COPIES, STREAK_ALPHA);
             }
@@ -330,7 +354,7 @@ public class BlueSilverChaoticAfterglowAttack extends DestructiveDeathAttackBase
     }
 
     /** Red motes drifting upward around targets and caster — the afterglow settles. */
-    private void tickAfterglow(ServerPlayer sp, int t) {
+    private void tickAfterglow(LivingEntity caster, int t) {
         if (!(world instanceof ServerLevel sl) || t % 2 != 0) return;
         for (LivingEntity target : targets) {
             sl.sendParticles(NichirinParticleRegistry.FLASH1.get(),
@@ -338,7 +362,7 @@ public class BlueSilverChaoticAfterglowAttack extends DestructiveDeathAttackBase
                     3, 0.8, 1.0, 0.8, 0.01);
         }
         sl.sendParticles(NichirinParticleRegistry.FLASH1.get(),
-                sp.getX(), sp.getY() + 1.2, sp.getZ(),
+                caster.getX(), caster.getY() + 1.2, caster.getZ(),
                 2, 0.6, 0.8, 0.6, 0.01);
     }
 
@@ -358,10 +382,12 @@ public class BlueSilverChaoticAfterglowAttack extends DestructiveDeathAttackBase
         return ringCenter.add(Math.cos(angle) * RING_RADIUS, 0, Math.sin(angle) * RING_RADIUS);
     }
 
-    private void rootCaster(ServerPlayer sp) {
-        sp.setDeltaMovement(0, Math.min(sp.getDeltaMovement().y, 0), 0);
-        sp.hurtMarked = true;
-        sp.connection.send(new ClientboundSetEntityMotionPacket(sp));
+    private void rootCaster(LivingEntity caster) {
+        caster.setDeltaMovement(0, Math.min(caster.getDeltaMovement().y, 0), 0);
+        caster.hurtMarked = true;
+        if (caster instanceof ServerPlayer sp) {
+            sp.connection.send(new ClientboundSetEntityMotionPacket(sp));
+        }
     }
 
     /** Every target gone mid-channel: dismiss the clones and end without the finisher. */
@@ -407,5 +433,8 @@ public class BlueSilverChaoticAfterglowAttack extends DestructiveDeathAttackBase
         phaseTick = -1;
         targets.clear();
         ringCenter = null;
+        if (user instanceof AkazaEntity akaza) {
+            akaza.completeFinalAfterglow();
+        }
     }
 }

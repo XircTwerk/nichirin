@@ -2,6 +2,7 @@ package com.xirc.nichirin.registry;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.xirc.nichirin.client.gui.CooldownHUD;
+import com.xirc.nichirin.client.util.CompassNeedleInputHandler;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.attack.moveset.CqcMoveset;
 import com.xirc.nichirin.common.data.MovesetHelper;
@@ -276,6 +277,10 @@ public interface NichirinKeybindRegistry {
         }
 
         // Send move to server using appropriate packet type (SAME AS ATTACK WHEEL)
+        if ("destructive_death".equals(selectedMoveset.getMovesetId())
+                && "compass_needle".equals(moveConfig.getMoveId())) {
+            CompassNeedleInputHandler.beginCharge(moveIndex);
+        }
         if (isBreathingMove) {
             MultiplayerInputHandler.sendBreathingMove(moveIndex, client.player);
         } else {

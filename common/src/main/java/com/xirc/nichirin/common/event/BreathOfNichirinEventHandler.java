@@ -7,6 +7,8 @@ import com.xirc.nichirin.common.attack.moves.breathing.sound.TempoBreakerAttack;
 import com.xirc.nichirin.common.attack.moveset.DefaultKatanaMoveset;
 import com.xirc.nichirin.common.attack.moveset.DualKatanaMoveset;
 import com.xirc.nichirin.common.attack.moves.demon.destructive.DestructiveDeathPlayerAura;
+import com.xirc.nichirin.common.attack.moves.demon.destructive.CompassNeedleTracker;
+import com.xirc.nichirin.common.attack.moves.demon.destructive.CompassNeedleChargeManager;
 import com.xirc.nichirin.common.system.aura.MovesetAuraTicker;
 import com.xirc.nichirin.common.attack.moveset.demon.DefaultDemonMoveset;
 import com.xirc.nichirin.common.attack.moveset.demon.DestructiveDeathMoveset;
@@ -153,6 +155,8 @@ public class BreathOfNichirinEventHandler {
         DefaultKatanaMoveset.clearAll();
         DualKatanaMoveset.clearAll();
         InputHandler.clearAll();
+        CompassNeedleTracker.clearAll();
+        CompassNeedleChargeManager.clearAll();
         DemonBloodVialItem.clearAll();
     }
 
@@ -176,6 +180,7 @@ public class BreathOfNichirinEventHandler {
             }
             BloodMoonManager.onServerTick(server);
             MoveExecutor.tickAllAttacks(server);
+            CompassNeedleTracker.tick(server);
             DestructiveDeathPlayerAura.tick(server);
             MovesetAuraTicker.tick(server);
             // Tempo Breaker's delayed-explosion timer lives outside any single attack instance —
@@ -234,6 +239,7 @@ public class BreathOfNichirinEventHandler {
                 NichirinPacketRegistry.sendDemonSync(serverPlayer, 0, 0, false);
                 try { DefaultDemonMoveset.cleanupPlayer(serverPlayer); } catch (Exception ignored) {}
                 try { DestructiveDeathMoveset.cleanupPlayer(serverPlayer); } catch (Exception ignored) {}
+                MovesetAuraTicker.clear(serverPlayer);
                 serverPlayer.displayClientMessage(
                         Component.translatable("nichirin.message.demon_lost_on_death")
                                 .withStyle(ChatFormatting.AQUA),

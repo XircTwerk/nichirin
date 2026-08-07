@@ -4,6 +4,7 @@ import com.xirc.nichirin.client.renderer.entity.dispatcher.TempleDemonDispatcher
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.attack.MoveExecutor;
 import com.xirc.nichirin.common.attack.moveset.demon.TempleDemonMoveset;
+import com.xirc.nichirin.common.config.NichirinModConfig;
 import com.xirc.nichirin.common.entity.npc.goal.WisteriaBlockAvoidanceGoal;
 import com.xirc.nichirin.common.system.GrabManager;
 import com.xirc.nichirin.common.system.blocking.HandToHandBlock;
@@ -139,6 +140,7 @@ public class TempleDemonEntity extends DemonNPCEntity {
     }
 
     private void tickSunDamage() {
+        if (!NichirinModConfig.get().demon.burnEntitiesInSunlight) return;
         Level level = this.level();
         if (!level.isDay()) return;
         if (!level.canSeeSky(this.blockPosition())) return;

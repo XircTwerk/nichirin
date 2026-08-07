@@ -31,6 +31,7 @@ public class RisingScorchingSunAttack extends FlameBreathingAttackBase {
     protected void onStart() {
         hasExecuted = false;
         wheelTickCount = 0;
+        playFlameVfx(VfxIds.RISING_SCORCHING_SUN, user.position(), user.getLookAngle(), 1.0f);
     }
 
     @Override
@@ -39,8 +40,6 @@ public class RisingScorchingSunAttack extends FlameBreathingAttackBase {
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 1.0f, 1.5f);
 
-        // Create initial flame particles
-        playFlameVfx(VfxIds.RISING_SCORCHING_SUN, user.position(), user.getLookAngle(), 1.0f);
     }
 
     @Override

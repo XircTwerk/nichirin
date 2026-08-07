@@ -26,6 +26,7 @@ import com.xirc.nichirin.client.util.ClientInputTracker;
 import com.xirc.nichirin.client.util.ItemPropertiesHelper;
 import com.xirc.nichirin.common.event.system.CooldownClearEventHandler;
 import com.xirc.nichirin.client.util.ThunderclapChargeInputHandler;
+import com.xirc.nichirin.client.util.CompassNeedleInputHandler;
 import com.xirc.nichirin.client.vfx.VfxEngine;
 import com.xirc.nichirin.common.util.BlockingInputHandler;
 import com.xirc.nichirin.common.util.PlayerStats;
@@ -51,6 +52,7 @@ public class BreathOfNichirinClient {
     // Store shader effect for easy access
     private static DeadCalmShaderEffect deadCalmEffect;
     private static ImpactShakeShaderEffect impactShakeShaderEffect;
+    private static CompassNeedleShaderEffect compassNeedleShaderEffect;
 
     private static void registerConfigSyncListener() {
         try {
@@ -75,8 +77,10 @@ public class BreathOfNichirinClient {
             // Register Dead Calm shader effect
             deadCalmEffect = new DeadCalmShaderEffect();
             impactShakeShaderEffect = ImpactShakeShaderEffect.getInstance();
+            compassNeedleShaderEffect = new CompassNeedleShaderEffect();
             NichirinShaderManager.getInstance().register(deadCalmEffect);
             NichirinShaderManager.getInstance().register(impactShakeShaderEffect);
+            NichirinShaderManager.getInstance().register(compassNeedleShaderEffect);
 
         } catch (Exception e) {
             LOGGER.error("Failed to register shaders", e);
@@ -211,6 +215,7 @@ public class BreathOfNichirinClient {
             // Register critical systems first
             BlockingInputHandler.register();
             ThunderclapChargeInputHandler.register();
+            CompassNeedleInputHandler.register();
             BreathingAuraWispHandler.register();
             PlayerStats.initialize();
             ItemPropertiesHelper.registerBentoBoxProperty();
