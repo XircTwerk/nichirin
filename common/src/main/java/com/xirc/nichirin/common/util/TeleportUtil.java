@@ -103,37 +103,26 @@ public class TeleportUtil {
             damageEntitiesInPath(entity, startPos, targetPos, options, serverLevel);
         }
 
-        return true; // ALWAYS return true for more reliable behavior
+        return true;
     }
 
     /**
-     * Much more lenient position checking - only check for deadly situations
+     * Lenient position checking - check for deadly situations
      */
-    private static boolean isPositionReasonable(Level world, Vec3 pos, Entity entity) {
-        // Only check for truly dangerous situations
-        BlockPos feetPos = new BlockPos((int)pos.x, (int)pos.y, (int)pos.z);
-        BlockPos headPos = new BlockPos((int)pos.x, (int)pos.y + 1, (int)pos.z);
+    public static boolean isPositionReasonable(Level level, Vec3 pos, Entity entity) {
+        BlockPos feetPos = BlockPos.containing(pos.x, pos.y, pos.z);
+        BlockPos headPos = feetPos.above();
 
-        BlockState feetBlock = world.getBlockState(feetPos);
-        BlockState headBlock = world.getBlockState(headPos);
+        boolean feetSafe = !level.getBlockState(feetPos).blocksMotion();
+        boolean headSafe = !level.getBlockState(headPos).blocksMotion();
 
-        // Only reject if player would be inside solid blocks (suffocation risk)
-        boolean feetSolid = !feetBlock.isAir() && feetBlock.isSolidRender(world, feetPos);
-        boolean headSolid = !headBlock.isAir() && headBlock.isSolidRender(world, headPos);
-
-        // Only fail if BOTH head and feet are in solid blocks (certain suffocation)
-        if (feetSolid && headSolid) {
-            return false;
-        }
-
-        return true; // Accept all other positions
+        return feetSafe && headSafe;
     }
 
     /**
-     * Quick reasonable position finder - no complex searching
+     * Reasonable position finder
      */
     private static Vec3 findReasonablePosition(Level world, Vec3 pos, Entity entity, float maxRadius) {
-        // Simple 8-direction check around the position
         Vec3[] offsets = {
                 new Vec3(1, 0, 0), new Vec3(-1, 0, 0),
                 new Vec3(0, 0, 1), new Vec3(0, 0, -1),
@@ -142,33 +131,31 @@ public class TeleportUtil {
         };
 
         for (Vec3 offset : offsets) {
-            Vec3 testPos = pos.add(offset.scale(1.5)); // 1.5 blocks away
+            Vec3 testPos = pos.add(offset.scale(1.5));
             if (isPositionReasonable(world, testPos, entity)) {
                 return testPos;
             }
         }
 
-        // Try one block up
         Vec3 upPos = pos.add(0, 1, 0);
         if (isPositionReasonable(world, upPos, entity)) {
             return upPos;
         }
 
-        return pos; // Just use original position
+        return pos;
     }
 
     /**
      * Direction teleport with relaxed block collision checks.
      */
     public static boolean teleportInDirection(LivingEntity entity, float distance, TeleportOptions options) {
-        Level level = entity.level(); // Server-side only
+        Level level = entity.level();
         if (level.isClientSide) {
             return false;
         }
 
         Vec3 startPos = entity.position();
         Vec3 lookVec = entity.getLookAngle();
-        Vec3 targetPos = startPos.add(lookVec.scale(distance));
 
         Vec3 finalPos = checkForMajorObstacles(level, startPos, lookVec, distance, entity);
 
@@ -176,30 +163,54 @@ public class TeleportUtil {
     }
 
     /**
-     * Check path for obstacles, but place on top of blocks at destination
+     * Backstep teleport - moves the entity backward relative to the direction
+     * they're looking, with obstacle avoidance and white death-poof trail particles.
+     */
+    public static boolean teleportBackward(LivingEntity entity, float distance, TeleportOptions options) {
+        Level level = entity.level();
+        if (level.isClientSide) {
+            return false;
+        }
+
+        if (!entity.onGround()) {
+            return false;
+        }
+
+        Vec3 startPos = entity.position();
+
+        float yawRad = (float) Math.toRadians(entity.getYRot());
+        Vec3 backDirection = new Vec3(Math.sin(yawRad), 0.0, -Math.cos(yawRad));
+
+        Vec3 finalPos = checkForMajorObstacles(level, startPos, backDirection, distance, entity);
+
+        // Ensure white death-poof trail is active for backstep teleports
+        if (options != null) {
+            options.createTrail = true;
+            options.trailParticles = ParticleTypes.POOF;
+        }
+
+        return teleport(entity, finalPos, options);
+    }
+
+    /**
+     * Check path for obstacles, placing on top of blocks at destination
      */
     private static Vec3 checkForMajorObstacles(Level level, Vec3 start, Vec3 direction, double maxDistance, Entity entity) {
         double stepSize = 0.5;
-        double entityHeight = entity.getBbHeight();
 
-        // Check the path for major obstacles (walls, etc.)
         for (double distance = stepSize; distance <= maxDistance; distance += stepSize) {
             Vec3 checkPos = start.add(direction.scale(distance));
 
-            // Check if this position would be inside a solid block structure
             BlockPos centerPos = new BlockPos((int)Math.floor(checkPos.x), (int)Math.floor(checkPos.y + 1), (int)Math.floor(checkPos.z));
             BlockState centerBlock = level.getBlockState(centerPos);
 
-            // If we hit a wall or solid structure at player height, stop before it
             if (!centerBlock.isAir() && centerBlock.isSolidRender(level, centerPos)) {
-                // Stop just before the obstacle
                 double stopDistance = Math.max(1.0, distance - stepSize);
                 Vec3 stopPos = start.add(direction.scale(stopDistance));
                 return adjustToSafePosition(level, stopPos, entity);
             }
         }
 
-        // No major obstacles in path, go full distance but adjust destination
         Vec3 targetPos = start.add(direction.scale(maxDistance));
         return adjustToSafePosition(level, targetPos, entity);
     }
@@ -210,7 +221,6 @@ public class TeleportUtil {
     private static Vec3 adjustToSafePosition(Level level, Vec3 targetPos, Entity entity) {
         double entityHeight = entity.getBbHeight();
 
-        // Check the target position
         BlockPos feetPos = new BlockPos((int)Math.floor(targetPos.x), (int)Math.floor(targetPos.y), (int)Math.floor(targetPos.z));
         BlockPos headPos = new BlockPos((int)Math.floor(targetPos.x), (int)Math.floor(targetPos.y + entityHeight), (int)Math.floor(targetPos.z));
 
@@ -220,32 +230,24 @@ public class TeleportUtil {
         boolean feetSolid = !feetBlock.isAir() && feetBlock.isSolidRender(level, feetPos);
         boolean headSolid = !headBlock.isAir() && headBlock.isSolidRender(level, headPos);
 
-        // If feet would be in a solid block, place on top of it
         if (feetSolid) {
-            // Find the top of the solid block and place entity on top
             double blockTop = feetPos.getY() + 1.0;
             targetPos = new Vec3(targetPos.x, blockTop, targetPos.z);
 
-            // Recheck head position after adjustment
             headPos = new BlockPos((int)Math.floor(targetPos.x), (int)Math.floor(targetPos.y + entityHeight), (int)Math.floor(targetPos.z));
             headBlock = level.getBlockState(headPos);
             headSolid = !headBlock.isAir() && headBlock.isSolidRender(level, headPos);
 
-            // If head is still in a block after placing on top, move up more
             if (headSolid) {
                 targetPos = new Vec3(targetPos.x, headPos.getY() + 1.0, targetPos.z);
             }
-        }
-        // If only head would be in a solid block, move up slightly
-        else if (headSolid) {
+        } else if (headSolid) {
             targetPos = new Vec3(targetPos.x, headPos.getY() + 1.0, targetPos.z);
         }
 
         return targetPos;
     }
 
-    /**
-     */
     public static boolean teleport(LivingEntity entity, Vec3 targetPos) {
         return teleport(entity, targetPos, new TeleportOptions());
     }
@@ -266,17 +268,16 @@ public class TeleportUtil {
         return teleport(teleporter, behindPos, options);
     }
 
-    /**
-     */
     private static void createTeleportTrail(ServerLevel world, Vec3 start, Vec3 end, ParticleOptions particle, float density) {
         Vec3 direction = end.subtract(start);
         double distance = direction.length();
-        Vec3 step = direction.normalize();
+        if (distance <= 0.001) return;
 
-        int particleCount = (int)(distance * density);
-        for (int i = 0; i < particleCount; i++) {
-            Vec3 pos = start.add(step.scale(i / density));
-            world.sendParticles(particle, pos.x, pos.y + 1, pos.z, 1, 0.1, 0.1, 0.1, 0.02);
+        int particleCount = Math.max((int)(distance * density), 10);
+        for (int i = 0; i <= particleCount; i++) {
+            double progress = (double) i / particleCount;
+            Vec3 pos = start.add(direction.scale(progress));
+            world.sendParticles(particle, pos.x, pos.y + 0.8, pos.z, 4, 0.15, 0.25, 0.15, 0.02);
         }
     }
 
@@ -284,8 +285,6 @@ public class TeleportUtil {
         world.sendParticles(particle, pos.x, pos.y + 1, pos.z, count, 0.3, 0.5, 0.3, 0.1);
     }
 
-    /**
-     */
     private static void damageEntitiesInPath(LivingEntity attacker, Vec3 start, Vec3 end, TeleportOptions options, ServerLevel world) {
         if (!options.damageAlongPath || options.pathDamage <= 0) return;
 
@@ -313,8 +312,6 @@ public class TeleportUtil {
         }
     }
 
-    /**
-     */
     public static class TeleportOptions {
         // Effects
         public ParticleOptions departureParticles = ParticleTypes.PORTAL;
@@ -331,8 +328,8 @@ public class TeleportUtil {
         public float soundVolume = 1.0f;
         public float soundPitch = 1.0f;
 
-        // Safety - NOW MUCH MORE LENIENT
-        public boolean requireSafe = true; // Still true, but safety checks are much more relaxed
+        // Safety
+        public boolean requireSafe = true;
         public float maxSafeSearchRadius = 3.0f;
         public boolean resetFallDistance = true;
 
