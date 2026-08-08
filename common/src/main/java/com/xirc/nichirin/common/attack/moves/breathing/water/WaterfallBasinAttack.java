@@ -64,8 +64,13 @@ public class WaterfallBasinAttack extends WaterBreathingAttackBase {
 
 
     private void startWaterfall() {
+        // Erect the waterfall in FRONT (horizontal facing) without pitching it up/down with aim.
+        // A zero direction would make the effect default to due-east, i.e. spawn on the user's right.
+        Vec3 look = user.getLookAngle();
+        Vec3 forward = new Vec3(look.x, 0.0, look.z);
+        forward = forward.lengthSqr() > 1.0E-6 ? forward.normalize() : new Vec3(0.0, 0.0, 1.0);
         playWaterVfxAt(VfxIds.WATERFALL_BASIN,
-                user.position().add(user.getLookAngle().scale(range * 0.35)), user.getLookAngle(), 1.15f);
+                user.position().add(forward.scale(range * 0.35)), forward, 1.15f);
         // BIG ASS waterfall start sound
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.GENERIC_SPLASH, SoundSource.PLAYERS, 2.0f, 0.4f);

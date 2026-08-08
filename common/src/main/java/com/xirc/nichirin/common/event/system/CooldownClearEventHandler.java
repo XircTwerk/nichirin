@@ -59,6 +59,9 @@ public class CooldownClearEventHandler {
             return;
         }
 
+        // Unified server-authoritative store (CQC + katana + any default-path move).
+        com.xirc.nichirin.common.attack.ServerCooldownManager.clear(player.getUUID());
+
         // Clear all other cooldowns by sending 0-duration packets
         // This covers any breathing technique cooldowns
         String[] commonCooldowns = {

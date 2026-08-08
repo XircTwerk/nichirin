@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.attack.moveset;
 
 import com.xirc.nichirin.common.attack.MoveExecutor;
+import com.xirc.nichirin.common.attack.ServerCooldownManager;
 import com.xirc.nichirin.common.attack.component.AbstractDemonAttack;
 import com.xirc.nichirin.common.attack.moves.cqc.*;
 import com.xirc.nichirin.common.attack.moves.cqc.destructive.*;
@@ -33,24 +34,23 @@ import java.util.concurrent.TimeUnit;
 public class CqcMoveset extends AbstractMoveset {
 
     public static final String ID = "cqc";
-    private static final Map<UUID, Map<String, Long>> COOLDOWNS = new ConcurrentHashMap<>();
     private static final Map<UUID, SlashComboState> SLASH_STATES = new ConcurrentHashMap<>();
     private static final Map<UUID, CqcFollowupState> FOLLOWUP_STATES = new ConcurrentHashMap<>();
 
     public static final MoveConfiguration JAB = new MoveBuilder("jab", "Jab")
             .withDescription("Short gut jab. Fast body-shot that stuns at close range.")
-            .withTiming(10, 1, 3)
+            .withTiming(10, 4, 3)
             .withDamage(2.0f)
             .withRange(1.15f)
             .withKnockback(0.08f)
-            .withHitStun(9)
+            .withHitStun(12)
             .withHitboxSize(1.9f)
             .withStaminaCost(4.0f)
             .build();
 
     public static final MoveConfiguration CROSS = new MoveBuilder("cross", "Cross")
             .withDescription("Committed straight punch. Pulls you into boxing range.")
-            .withTiming(16, 2, 8)
+            .withTiming(16, 6, 8)
             .withDamage(2.4f)
             .withRange(1.6f)
             .withKnockback(0.25f)
@@ -62,24 +62,13 @@ public class CqcMoveset extends AbstractMoveset {
 
     public static final MoveConfiguration LEFT_HOOK = new MoveBuilder("lefthook", "Left Hook")
             .withDescription("Short hook with a wider hitbox and stronger stagger.")
-            .withTiming(20, 3, 7)
+            .withTiming(20, 7, 7)
             .withDamage(2.8f)
             .withRange(1.55f)
             .withKnockback(0.45f)
             .withHitStun(15)
             .withHitboxSize(1.2f)
             .withStaminaCost(6.0f)
-            .build();
-
-    public static final MoveConfiguration ROUNDHOUSE_FAST = new MoveBuilder("roundhouse_fast", "Roundhouse Fast")
-            .withDescription("Fast sweeping kick with extra reach.")
-            .withTiming(24, 3, 8)
-            .withDamage(2.8f)
-            .withRange(2.0f)
-            .withKnockback(0.65f)
-            .withHitStun(13)
-            .withHitboxSize(1.35f)
-            .withStaminaCost(7.0f)
             .build();
 
     public static final MoveConfiguration EYE_POKE = new MoveBuilder("eye_poke", "Eye Poke")
@@ -104,39 +93,6 @@ public class CqcMoveset extends AbstractMoveset {
             .withStaminaCost(7.0f)
             .build();
 
-    public static final MoveConfiguration HEADKICK = new MoveBuilder("headkick", "Headkick")
-            .withDescription("Heavy high kick that heavily staggers targets.")
-            .withTiming(46, 5, 9)
-            .withDamage(4.4f)
-            .withRange(2.05f)
-            .withKnockback(0.75f)
-            .withHitStun(17)
-            .withHitboxSize(1.25f)
-            .withStaminaCost(10.0f)
-            .build();
-
-    public static final MoveConfiguration SPINNING_BACKFIST = new MoveBuilder("spinning_backfist", "Spinning Backfist")
-            .withDescription("Spinning strike with a wide arc and solid knockback.")
-            .withTiming(42, 4, 9)
-            .withDamage(3.8f)
-            .withRange(1.8f)
-            .withKnockback(0.75f)
-            .withHitStun(15)
-            .withHitboxSize(1.4f)
-            .withStaminaCost(9.0f)
-            .build();
-
-    public static final MoveConfiguration OVERHAND_RIGHT = new MoveBuilder("overhand_right", "Overhand Right")
-            .withDescription("Heavy downward punch that punishes airborne targets.")
-            .withTiming(34, 4, 7)
-            .withDamage(3.4f)
-            .withRange(1.55f)
-            .withKnockback(0.45f)
-            .withHitStun(14)
-            .withHitboxSize(1.0f)
-            .withStaminaCost(8.0f)
-            .build();
-
     public static final MoveConfiguration UPPERCUT = new MoveBuilder("uppercut", "Uppercut")
             .withDescription("Dashing launcher. Dashes 5 blocks and knocks targets upward.")
             .withTiming(38, 4, 8)
@@ -147,28 +103,6 @@ public class CqcMoveset extends AbstractMoveset {
             .withHitboxSize(1.0f)
             .withStaminaCost(10.0f)
             .withDashSpeed(10.0f)
-            .build();
-
-    public static final MoveConfiguration KNEE_STRIKE = new MoveBuilder("knee_strike", "Knee Strike")
-            .withDescription("Close knee that pulls targets into clinch range.")
-            .withTiming(34, 4, 8)
-            .withDamage(3.2f)
-            .withRange(1.3f)
-            .withKnockback(0.1f)
-            .withHitStun(19)
-            .withHitboxSize(0.9f)
-            .withStaminaCost(8.0f)
-            .build();
-
-    public static final MoveConfiguration ELBOW_STRIKE = new MoveBuilder("elbow_strike", "Elbow Strike")
-            .withDescription("Compact elbow with fast armor-break style impact.")
-            .withTiming(24, 2, 6)
-            .withDamage(2.6f)
-            .withRange(1.25f)
-            .withKnockback(0.35f)
-            .withHitStun(15)
-            .withHitboxSize(0.85f)
-            .withStaminaCost(6.0f)
             .build();
 
     public static final MoveConfiguration SPINNING_HEEL_KICK = new MoveBuilder("spinning_heel_kick", "Spinning Heel Kick")
@@ -193,17 +127,6 @@ public class CqcMoveset extends AbstractMoveset {
             .withStaminaCost(7.0f)
             .build();
 
-    public static final MoveConfiguration AXE_KICK = new MoveBuilder("axe_kick", "Axe Kick")
-            .withDescription("Heavy vertical kick that slams airborne targets down.")
-            .withTiming(48, 5, 9)
-            .withDamage(4.6f)
-            .withRange(1.75f)
-            .withKnockback(0.3f)
-            .withHitStun(15)
-            .withHitboxSize(1.15f)
-            .withStaminaCost(11.0f)
-            .build();
-
     public static final MoveConfiguration LOW_KICK = new MoveBuilder("low_kick", "Low Kick")
             .withDescription("Fast leg kick that slows grounded targets.")
             .withTiming(22, 2, 6)
@@ -213,18 +136,6 @@ public class CqcMoveset extends AbstractMoveset {
             .withHitStun(13)
             .withHitboxSize(1.0f)
             .withStaminaCost(5.0f)
-            .build();
-
-    public static final MoveConfiguration SUPERMAN_PUNCH = new MoveBuilder("superman_punch", "Superman Punch")
-            .withDescription("Leaping punch with reach and forward burst.")
-            .withTiming(44, 4, 9)
-            .withDamage(3.6f)
-            .withRange(2.1f)
-            .withKnockback(0.65f)
-            .withHitStun(15)
-            .withHitboxSize(1.05f)
-            .withStaminaCost(10.0f)
-            .withDashSpeed(2.4f)
             .build();
 
     public static final MoveConfiguration DOUBLE_PALM = new MoveBuilder("double_palm", "Double Palm")
@@ -251,14 +162,14 @@ public class CqcMoveset extends AbstractMoveset {
 
     public static final MoveConfiguration ANNIHILATION_TYPE = new MoveBuilder("annihilation_type", "Annihilation Type")
             .withDescription("Crouched-stance forward palm dash. Twin circular shockwaves on swing start.")
-            .withTiming(34, 4, 12)
+            .withTiming(34, 9, 12)
             .withDamage(7.0f)
             .withRange(2.4f)
             .withKnockback(1.2f)
             .withHitStun(18)
-            .withHitboxSize(1.4f)
+            .withHitboxSize(2.3f)
             .withStaminaCost(12.0f)
-            .withDashSpeed(2.0f)
+            .withDashSpeed(6.0f)
             .build();
 
     public static final MoveConfiguration CROWN_SPLITTER = new MoveBuilder("crown_splitter", "Crown Splitter")
@@ -270,17 +181,6 @@ public class CqcMoveset extends AbstractMoveset {
             .withHitStun(16)
             .withHitboxSize(1.2f)
             .withStaminaCost(8.0f)
-            .build();
-
-    public static final MoveConfiguration EXPLOSIVE_FLURRY = new MoveBuilder("explosive_flurry", "Explosive Flurry")
-            .withDescription("Flurry of fast straight kicks. Each kick lays a piercing shockwave forward.")
-            .withTiming(20, 3, 10)
-            .withDamage(3.0f)
-            .withRange(2.1f)
-            .withKnockback(0.85f)
-            .withHitStun(8)
-            .withHitboxSize(1.1f)
-            .withStaminaCost(9.0f)
             .build();
 
     public static final MoveConfiguration FLYING_PLANET = new MoveBuilder("flying_planet_thousand_wheels", "Flying Planet Thousand Wheels")
@@ -307,9 +207,9 @@ public class CqcMoveset extends AbstractMoveset {
             .build();
 
     public static final MoveConfiguration DONUT = new MoveBuilder("donut", "Donut")
-            .withAnimation("nichirin:annihilation_type", 6)
+            .withAnimation("nichirin:donut", 6)
             .withDescription("Close-range arm-thrust. Single target, massive damage, impalement slow.")
-            .withTiming(80, 10, 8)
+            .withTiming(80, 12, 8)
             .withDamage(18.0f)
             .withRange(1.5f)
             .withKnockback(0.1f)
@@ -329,17 +229,6 @@ public class CqcMoveset extends AbstractMoveset {
             .withHyperArmor()
             .withHitboxSize(5.0f)
             .withStaminaCost(20.0f)
-            .build();
-
-    public static final MoveConfiguration BACKHAND_SLAP = new MoveBuilder("backhand_slap", "Backhand Slap")
-            .withDescription("Fast backhand counter with sideways displacement.")
-            .withTiming(24, 2, 6)
-            .withDamage(2.2f)
-            .withRange(1.4f)
-            .withKnockback(0.5f)
-            .withHitStun(14)
-            .withHitboxSize(0.95f)
-            .withStaminaCost(5.0f)
             .build();
 
     public static final MoveConfiguration DEMON_GUT_PUNCH = new MoveBuilder("demon_gut_punch", "Gut Punch")
@@ -747,7 +636,7 @@ public class CqcMoveset extends AbstractMoveset {
      */
     public static boolean isDestructiveDeathMove(String moveId) {
         return switch (CqcMoveCatalog.normalize(moveId)) {
-            case "snap_punch", "annihilation_type", "crown_splitter", "explosive_flurry",
+            case "snap_punch", "annihilation_type", "crown_splitter",
                  "flying_planet_thousand_wheels", "eight_layered_demon_core",
                  "ten_thousand_leaves_flashing_willow", "donut" -> true;
             default -> false;
@@ -782,26 +671,16 @@ public class CqcMoveset extends AbstractMoveset {
             case "jab" -> new CqcJabAttack();
             case "cross" -> new CqcCrossAttack();
             case "lefthook" -> new CqcLeftHookAttack();
-            case "roundhouse_fast" -> new CqcRoundhouseFastAttack();
             case "eye_poke" -> new CqcEyePokeAttack();
             case "throat_chop" -> new CqcThroatChopAttack();
-            case "headkick" -> new CqcHeadkickAttack();
-            case "spinning_backfist" -> new CqcSpinningBackfistAttack();
-            case "overhand_right" -> new CqcOverhandRightAttack();
             case "uppercut" -> new CqcUppercutAttack();
-            case "knee_strike" -> new CqcKneeStrikeAttack();
-            case "elbow_strike" -> new CqcElbowStrikeAttack();
             case "spinning_heel_kick" -> new CqcSpinningHeelKickAttack();
             case "knee" -> new CqcKneeAttack();
-            case "axe_kick" -> new CqcAxeKickAttack();
             case "low_kick" -> new CqcLowKickAttack();
-            case "superman_punch" -> new CqcSupermanPunchAttack();
             case "double_palm" -> new CqcDoublePalmAttack();
-            case "backhand_slap" -> new CqcBackhandSlapAttack();
             case "snap_punch" -> new CqcSnapPunchAttack();
             case "annihilation_type" -> new CqcAnnihilationTypeAttack();
             case "crown_splitter" -> new CqcCrownSplitterAttack();
-            case "explosive_flurry" -> new CqcExplosiveFlurryAttack();
             case "flying_planet_thousand_wheels" -> new CqcFlyingPlanetThousandWheelsAttack();
             case "eight_layered_demon_core" -> new CqcEightLayeredDemonCoreAttack();
             case "ten_thousand_leaves_flashing_willow" -> new CqcTenThousandLeavesFlashingWillowAttack();
@@ -853,26 +732,16 @@ public class CqcMoveset extends AbstractMoveset {
         register(configs, JAB);
         register(configs, CROSS);
         register(configs, LEFT_HOOK);
-        register(configs, ROUNDHOUSE_FAST);
         register(configs, EYE_POKE);
         register(configs, THROAT_CHOP);
-        register(configs, HEADKICK);
-        register(configs, SPINNING_BACKFIST);
-        register(configs, OVERHAND_RIGHT);
         register(configs, UPPERCUT);
-        register(configs, KNEE_STRIKE);
-        register(configs, ELBOW_STRIKE);
         register(configs, SPINNING_HEEL_KICK);
         register(configs, KNEE);
-        register(configs, AXE_KICK);
         register(configs, LOW_KICK);
-        register(configs, SUPERMAN_PUNCH);
         register(configs, DOUBLE_PALM);
-        register(configs, BACKHAND_SLAP);
         register(configs, SNAP_PUNCH);
         register(configs, ANNIHILATION_TYPE);
         register(configs, CROWN_SPLITTER);
-        register(configs, EXPLOSIVE_FLURRY);
         register(configs, FLYING_PLANET);
         register(configs, EIGHT_LAYERED_DEMON_CORE);
         register(configs, TEN_THOUSAND_LEAVES);
@@ -902,34 +771,22 @@ public class CqcMoveset extends AbstractMoveset {
         return null;
     }
 
+    // CQC now shares the single server-authoritative cooldown store (ServerCooldownManager) with every
+    // other moveset, keyed by move id — no separate CQC cooldown map.
     private static boolean isOnCooldown(LivingEntity entity, MoveConfiguration config) {
-        return getRemainingCooldown(entity, config) > 0;
+        return ServerCooldownManager.isOnCooldown(entity, config.getMoveId());
     }
 
     private static int getRemainingCooldown(LivingEntity entity, MoveConfiguration config) {
-        Map<String, Long> playerCooldowns = COOLDOWNS.get(entity.getUUID());
-        if (playerCooldowns == null) return 0;
-        long currentTime = entity.level().getGameTime();
-        long endTime = playerCooldowns.getOrDefault(config.getMoveId(), 0L);
-        int remaining = Math.max(0, (int) (endTime - currentTime));
-        if (remaining == 0 && endTime > 0) {
-            playerCooldowns.remove(config.getMoveId());
-            if (playerCooldowns.isEmpty()) {
-                COOLDOWNS.remove(entity.getUUID());
-            }
-        }
-        return remaining;
+        return ServerCooldownManager.getRemaining(entity, config.getMoveId());
     }
 
     private static void setCooldown(LivingEntity entity, MoveConfiguration config) {
-        int cooldown = config.getCooldownOrDefault(0);
-        if (cooldown <= 0) return;
-        COOLDOWNS.computeIfAbsent(entity.getUUID(), id -> new HashMap<>())
-                .put(config.getMoveId(), entity.level().getGameTime() + cooldown);
+        ServerCooldownManager.set(entity, config.getMoveId(), config.getCooldownOrDefault(0));
     }
 
     public static void resetCooldowns(Player player) {
-        COOLDOWNS.remove(player.getUUID());
+        ServerCooldownManager.clear(player.getUUID());
         SLASH_STATES.remove(player.getUUID());
         FOLLOWUP_STATES.remove(player.getUUID());
     }

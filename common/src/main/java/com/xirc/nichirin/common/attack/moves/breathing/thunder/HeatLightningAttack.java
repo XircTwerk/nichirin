@@ -65,7 +65,7 @@ public class HeatLightningAttack extends ThunderBreathingAttackBase {
         Vec3 userPos = user.position().add(0, user.getBbHeight() / 2, 0);
         Vec3 lookDir = user.getLookAngle();
         Vec3 slashBase = userPos.add(lookDir.scale(2.0));
-        playThunderVfx(VfxIds.HEAT_LIGHTNING_RISE, user.position(), lookDir, 1.0f);
+        playThunderVfxAt(VfxIds.HEAT_LIGHTNING_RISE, user.position(), lookDir, 1.0f);
 
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, 0.4f, 2.5f);

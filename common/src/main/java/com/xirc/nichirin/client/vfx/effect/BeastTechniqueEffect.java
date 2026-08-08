@@ -50,7 +50,10 @@ public final class BeastTechniqueEffect implements VfxEffect {
         if (fade <= 0.0f) return;
 
         Vec3 origin = instance.origin(partialTick).subtract(camera.getPosition());
-        Vec3 forward = instance.direction().normalize();
+        // A zero direction (aim-independent effects like Spatial Awareness) falls back to a fixed
+        // world axis so the basis stays well-defined and the shape lies flat on the ground plane.
+        Vec3 forward = instance.direction().lengthSqr() < 1.0E-6
+                ? new Vec3(0.0, 0.0, 1.0) : instance.direction().normalize();
         Vec3 right = rightOf(forward);
         up = right.cross(forward).normalize();
         float scale = instance.scale();

@@ -122,7 +122,7 @@ public class UnknowingFireAttack extends FlameBreathingAttackBase {
     }
 
     private void startDash() {
-        playFlameVfx(VfxIds.UNKNOWING_FIRE, user.position(), dashDirection, 1.15f);
+        playFlameVfxAt(VfxIds.UNKNOWING_FIRE, user.position(), dashDirection, 1.15f);
         // Set user velocity for dash - using Flame Tiger's method
         Vec3 dashVelocity = dashDirection.scale(DASH_DISTANCE * 6);
         user.setDeltaMovement(dashVelocity);

@@ -1,5 +1,6 @@
 package com.xirc.nichirin.mixin.client;
 
+import com.xirc.nichirin.client.renderer.entity.layer.ArmTrailLayer;
 import com.xirc.nichirin.client.renderer.entity.layer.SheathedKatanaLayer;
 import com.xirc.nichirin.registry.NichirinItemRegistry;
 import net.minecraft.client.model.PlayerModel;
@@ -22,6 +23,7 @@ public abstract class PlayerRendererMixin extends LivingEntityRenderer<AbstractC
     @Inject(method = "<init>", at = @At("TAIL"))
     private void nichirin$addSheathedKatanaLayer(EntityRendererProvider.Context context, boolean useSlimModel, CallbackInfo ci) {
         this.addLayer(new SheathedKatanaLayer(this));
+        this.addLayer(new ArmTrailLayer(this));
     }
 
     @Inject(method = "setModelProperties", at = @At("TAIL"))

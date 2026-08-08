@@ -57,10 +57,14 @@ public class CompassNeedleAttack extends DestructiveDeathAttackBase {
 
         // The manifestation stance is committed: movement input releases the charge client-side,
         // while this server anchor prevents latency or packet ordering from moving the caster.
-        player.teleportTo(chargeAnchor.x, chargeAnchor.y, chargeAnchor.z);
-        player.setDeltaMovement(Vec3.ZERO);
-        player.hurtMarked = true;
-        player.connection.send(new ClientboundSetEntityMotionPacket(player));
+        // Only CORRECT when the player has actually drifted — teleporting every tick spams position
+        // packets that reset the client's charge animation (it kept restarting) and cause hitching.
+        if (player.position().distanceToSqr(chargeAnchor) > 0.0025) {
+            player.teleportTo(chargeAnchor.x, chargeAnchor.y, chargeAnchor.z);
+            player.setDeltaMovement(Vec3.ZERO);
+            player.hurtMarked = true;
+            player.connection.send(new ClientboundSetEntityMotionPacket(player));
+        }
 
         chargeTicks = Math.min(MAX_CHARGE_TICKS, chargeTicks + 1);
         showCharge(player);

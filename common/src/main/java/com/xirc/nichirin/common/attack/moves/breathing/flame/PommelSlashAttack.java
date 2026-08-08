@@ -58,7 +58,7 @@ public class PommelSlashAttack extends FlameBreathingAttackBase {
 
     private void performSlash(int slashIndex) {
         Vec3 vfxDirection = user.getLookAngle().yRot((slashIndex & 1) == 0 ? 0.22f : -0.22f);
-        playFlameVfx(VfxIds.FLAME_POMMEL_SLASH, user.position(), vfxDirection, 0.82f);
+        playFlameVfxAt(VfxIds.FLAME_POMMEL_SLASH, user.position(), vfxDirection, 0.82f);
         // Alternate between left and right slashes
         boolean isLeftSlash = slashIndex % 2 == 0;
 

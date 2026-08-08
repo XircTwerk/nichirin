@@ -44,7 +44,7 @@ public class BlazingUniverseAttack extends FlameBreathingAttackBase {
                 SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 1.0f, 0.5f);
 
         // Create charging flame aura during windup
-        playFlameVfx(VfxIds.BLAZING_UNIVERSE, user.position(), user.getLookAngle(), 1.15f);
+        playFlameVfxAt(VfxIds.BLAZING_UNIVERSE, user.position(), user.getLookAngle(), 1.15f);
     }
 
     @Override

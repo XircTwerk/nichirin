@@ -569,6 +569,7 @@ public class NichirinCommand {
         String playerName = player.getName().getString();
 
         CqcMoveset.resetCooldowns(player);
+        com.xirc.nichirin.common.attack.ServerCooldownManager.clear(player.getUUID());
         CompassNeedleChargeManager.clear(player.getUUID());
         CompassNeedleTracker.cancel(player);
         DestructiveDeathState.deactivateCompass(player);

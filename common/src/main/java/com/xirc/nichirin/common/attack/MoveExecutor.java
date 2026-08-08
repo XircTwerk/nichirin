@@ -76,6 +76,10 @@ public class MoveExecutor {
             breathingAttack.configure(config);
         } else if (attack instanceof AbstractDemonAttack<?, ?> demonAttack) {
             demonAttack.configure(config);
+        } else if (attack instanceof AbstractKatanaAttack katanaAttack) {
+            // Katana attacks also need their config applied, otherwise their cooldown never leaves
+            // the constructor default (dual-katana moves ignored their cooldowns entirely).
+            katanaAttack.configure(config);
         }
         executeAttack(entity, attack, movesetId, config.getMoveId());
     }
@@ -237,16 +241,22 @@ public class MoveExecutor {
             applyComboAttackScaling(entity, attack, moveId);
             startAttack(entity, attack);
 
+            // Record + display the cooldown right after starting. This must NOT be gated on
+            // isAttackActive() afterwards: katana attacks (AbstractKatanaAttack) don't report active the
+            // same way as AbstractAttack, so their cooldown was never recorded — which is exactly why the
+            // katana ignored cooldowns while the client still showed a bar.
+            if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer && cooldown > 0) {
+                ServerCooldownManager.set(entity, moveId, cooldown);
+                if (movesetId != null && config != null) {
+                    CooldownDisplayPacket.sendToClient(serverPlayer, movesetId, config);
+                } else {
+                    sendCooldownToClient(serverPlayer, displayName, cooldown);
+                }
+            }
+
             if (isAttackActive(attack)) {
                 trackAttack(entity, attack);
                 trackKatanaRequirement(entity, movesetId, config);
-                if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer && cooldown > 0) {
-                    if (movesetId != null && config != null) {
-                        CooldownDisplayPacket.sendToClient(serverPlayer, movesetId, config);
-                    } else {
-                        sendCooldownToClient(serverPlayer, displayName, cooldown);
-                    }
-                }
             }
         }
     }

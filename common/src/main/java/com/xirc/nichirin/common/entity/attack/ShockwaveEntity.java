@@ -94,7 +94,7 @@ public class ShockwaveEntity extends Entity {
         int life = entityData.get(LIFE_TICKS) + 1;
         entityData.set(LIFE_TICKS, life);
         if (life >= maxLifeTicks) {
-            destroyShockwave();
+            destroyShockwave(false); // reached the end of its range — die out, no impact burst
             return;
         }
 
@@ -104,7 +104,7 @@ public class ShockwaveEntity extends Entity {
                 // Reflect: invert velocity. Simple billiard-style; doesn't pick which axis to flip.
                 this.setDeltaMovement(this.getDeltaMovement().reverse().scale(0.85));
             } else {
-                destroyShockwave();
+                destroyShockwave(true); // slammed into a wall — impact burst
                 return;
             }
         }
@@ -127,7 +127,7 @@ public class ShockwaveEntity extends Entity {
             hitEntities.add(target.getUUID());
 
             if (piercesRemaining <= 0) {
-                destroyShockwave();
+                destroyShockwave(true); // hit a target and can't pierce further — impact burst
                 return;
             }
             piercesRemaining--;
@@ -189,14 +189,26 @@ public class ShockwaveEntity extends Entity {
         }
     }
 
-    private void destroyShockwave() {
-        impactBurst();
-        spawnImpactEffect();
+    private void destroyShockwave(boolean impact) {
+        if (impact) {
+            impactBurst();
+            spawnImpactEffect();
+        } else {
+            spawnFadeEffect();
+        }
         if (auraId != null) {
             AuraManager.removeAura(this, auraId);
             auraId = null;
         }
         this.discard();
+    }
+
+    /** Quiet dissipation when the shockwave fizzles out at the end of its range (no impact). */
+    private void spawnFadeEffect() {
+        if (!(level() instanceof ServerLevel serverLevel)) return;
+        boolean redBurst = redImpact != null ? redImpact : red;
+        var ring = redBurst ? NichirinParticleRegistry.SHOCKWAVE.get() : NichirinParticleRegistry.BLUE_SHOCKWAVE.get();
+        serverLevel.sendParticles(ring, getX(), getY() + 0.5, getZ(), 6, 0.35, 0.15, 0.35, 0.02);
     }
 
     private void spawnImpactEffect() {
@@ -206,11 +218,11 @@ public class ShockwaveEntity extends Entity {
         var spark = NichirinParticleRegistry.SLASH_IMPACT_SPARK.get();
         var flash = redBurst ? NichirinParticleRegistry.FLASH1.get() : NichirinParticleRegistry.BLUE_FLASH1.get();
         var ring  = redBurst ? NichirinParticleRegistry.SHOCKWAVE.get() : NichirinParticleRegistry.BLUE_SHOCKWAVE.get();
-        serverLevel.sendParticles(spark, x, y, z, 14, 0.6, 0.6, 0.6, 0.2);
-        serverLevel.sendParticles(flash, x, y, z, 3, 0.3, 0.3, 0.3, 0.0);
-        serverLevel.sendParticles(ring,  x, y, z, 5, 0.5, 0.1, 0.5, 0.05);
+        serverLevel.sendParticles(spark, x, y, z, 40, 0.9, 0.9, 0.9, 0.45);
+        serverLevel.sendParticles(flash, x, y, z, 10, 0.5, 0.5, 0.5, 0.02);
+        serverLevel.sendParticles(ring,  x, y, z, 14, 0.8, 0.2, 0.8, 0.1);
         serverLevel.playSound(null, x, y, z,
-                NichirinSoundRegistry.PARRY_CLASH.get(), SoundSource.PLAYERS, 0.9f, 0.5f);
+                NichirinSoundRegistry.PARRY_CLASH.get(), SoundSource.PLAYERS, 1.3f, 0.6f);
     }
 
     private LivingEntity ownerEntity() {

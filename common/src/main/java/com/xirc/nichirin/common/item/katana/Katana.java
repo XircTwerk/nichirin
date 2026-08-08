@@ -124,17 +124,13 @@ public class Katana extends Item {
         // Animation is played via server broadcast — don't play locally to avoid stutter
     }
 
-    /** CLIENT ONLY: Update the cooldown HUD for right-click attacks. */
+    /**
+     * The right-click special's cooldown HUD is now sent authoritatively by the server (via
+     * {@code MoveExecutor}/{@code ServerCooldownManager}) using the actual move it resolved. The old
+     * client-side guess here duplicated the bar — and, on a crouch-state mismatch, showed a SECOND,
+     * wrong move on cooldown — so it's intentionally a no-op.
+     */
     public void displayClientRightClickFeedback(Player player, boolean isCrouching) {
-        if (!player.level().isClientSide) return;
-        // Breathing movesets handle their own HUD
-        if (MovesetHelper.getBreathingMoveset(player) != null) return;
-
-        if (isCrouching) {
-            CooldownHUD.setCooldown("Rising Slash", 25);
-        } else {
-            CooldownHUD.setCooldown("Double Slash", 20);
-        }
     }
 
     /**

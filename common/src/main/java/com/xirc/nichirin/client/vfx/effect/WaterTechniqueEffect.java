@@ -66,7 +66,7 @@ public final class WaterTechniqueEffect implements VfxEffect {
         BufferBuilder buffer = VfxPixelRender.beginQuads();
         drawMovementTrail(buffer, matrix, instance, camera, right, scale, fade);
         switch (style) {
-            case WHEEL -> drawWheel(buffer, matrix, origin, forward, right, scale, progress, fade);
+            case WHEEL -> drawWheel(buffer, matrix, origin, forward, right.scale(-1), scale, progress, fade);
             case RIPPLE_THRUST -> drawRippleThrust(buffer, matrix, origin, forward, right, scale, progress, fade);
             case FLOWING_DANCE -> drawFlowingDance(buffer, matrix, origin, forward, right, scale, progress, fade, age);
             case STRIKING_TIDE -> drawStrikingTide(buffer, matrix, origin, forward, right, scale, progress, fade);
@@ -127,7 +127,11 @@ public final class WaterTechniqueEffect implements VfxEffect {
             shapeReveal = clamp((fullReveal - layer * 0.11f) / (1.0f - layer * 0.11f));
             if (shapeReveal <= 0.0f) continue;
             float radius = (0.8f + layer * 0.7f + p * 1.8f) * s;
-            ring(b, m, o.add(renderUp.scale((0.08 + layer * 0.12) * s)), f, r, radius,
+            // Sweep the tide FORWARD instead of pooling as a floor circle at the caster: the leading
+            // crest rides out ahead with progress and the trailing layers form its wake behind it.
+            double advance = (0.9 + p * 3.0 - layer * 0.55) * s;
+            Vec3 center = o.add(f.scale(advance)).add(renderUp.scale((0.08 + layer * 0.12) * s));
+            ring(b, m, center, f, r, radius,
                     (0.28f - layer * 0.035f) * s, 40,
                     color(layer == 0 ? palette.deep : layer == 3 ? palette.foam : palette.water,
                             fade * (1.0f - layer * 0.1f)));

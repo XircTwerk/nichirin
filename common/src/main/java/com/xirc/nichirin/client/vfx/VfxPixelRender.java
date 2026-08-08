@@ -13,8 +13,23 @@ public final class VfxPixelRender {
     public static final float GRID = 1.0f / 16.0f;
     private static float opacityMultiplier = 1.0f;
     private static boolean ownFirstPerson;
+    // Ribbon trails turn this off so they stay smooth; effects keep it on for the pixel-art look.
+    private static boolean snapEnabled = true;
+    // Absolute camera position for the current frame. Vertices arrive camera-relative; snapping in
+    // ABSOLUTE world space (add camera, snap, subtract) locks the pixel grid to the world instead of
+    // the camera, so effects stop crawling/shimmering between grid cells as the camera moves.
+    private static double originX;
+    private static double originY;
+    private static double originZ;
 
     private VfxPixelRender() {}
+
+    /** Camera position for this frame — call once before rendering so snapping is world-locked. */
+    public static void setWorldOrigin(double cameraX, double cameraY, double cameraZ) {
+        originX = cameraX;
+        originY = cameraY;
+        originZ = cameraZ;
+    }
 
     public static void setRenderContext(float opacity, boolean isOwnFirstPerson) {
         opacityMultiplier = Math.max(0.0f, Math.min(1.0f, opacity));
@@ -24,6 +39,12 @@ public final class VfxPixelRender {
     public static void clearRenderContext() {
         opacityMultiplier = 1.0f;
         ownFirstPerson = false;
+        snapEnabled = true;
+    }
+
+    /** Trails call this with {@code false} so their geometry isn't quantized to the pixel grid. */
+    public static void setSnapEnabled(boolean enabled) {
+        snapEnabled = enabled;
     }
 
     public static boolean isOwnFirstPerson() {
@@ -53,6 +74,13 @@ public final class VfxPixelRender {
 
     public static float snap(double value) {
         return (float) (Math.round(value / GRID) * GRID);
+    }
+
+    /** Snaps a camera-relative coordinate to the fixed world grid (world-locked, not camera-locked). */
+    private static float snapWorld(double relative, double origin) {
+        double world = relative + origin;
+        double snapped = Math.round(world / GRID) * GRID;
+        return (float) (snapped - origin);
     }
 
     public static void quad(BufferBuilder buffer, Matrix4f matrix,
@@ -95,10 +123,17 @@ public final class VfxPixelRender {
     private static void addQuad(BufferBuilder buffer, Matrix4f matrix,
                                 float ax, float ay, float az, float bx, float by, float bz,
                                 float cx, float cy, float cz, float dx, float dy, float dz, int color) {
-        buffer.addVertex(matrix, snap(ax), snap(ay), snap(az)).setColor(color);
-        buffer.addVertex(matrix, snap(bx), snap(by), snap(bz)).setColor(color);
-        buffer.addVertex(matrix, snap(cx), snap(cy), snap(cz)).setColor(color);
-        buffer.addVertex(matrix, snap(dx), snap(dy), snap(dz)).setColor(color);
+        if (snapEnabled) {
+            buffer.addVertex(matrix, snapWorld(ax, originX), snapWorld(ay, originY), snapWorld(az, originZ)).setColor(color);
+            buffer.addVertex(matrix, snapWorld(bx, originX), snapWorld(by, originY), snapWorld(bz, originZ)).setColor(color);
+            buffer.addVertex(matrix, snapWorld(cx, originX), snapWorld(cy, originY), snapWorld(cz, originZ)).setColor(color);
+            buffer.addVertex(matrix, snapWorld(dx, originX), snapWorld(dy, originY), snapWorld(dz, originZ)).setColor(color);
+        } else {
+            buffer.addVertex(matrix, ax, ay, az).setColor(color);
+            buffer.addVertex(matrix, bx, by, bz).setColor(color);
+            buffer.addVertex(matrix, cx, cy, cz).setColor(color);
+            buffer.addVertex(matrix, dx, dy, dz).setColor(color);
+        }
     }
 
     private static int multiplyAlpha(int color, float multiplier) {

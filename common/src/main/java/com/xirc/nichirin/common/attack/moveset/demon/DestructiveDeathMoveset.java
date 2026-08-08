@@ -119,6 +119,9 @@ public class DestructiveDeathMoveset extends AbstractMoveset {
             }
             int remaining = DestructiveDeathState.compassCooldownRemaining(player.getUUID(), now);
             if (remaining > 0) {
+                // Re-sync the HUD to the TRUE remaining. Pressing it during cooldown otherwise leaves the
+                // client bar reset to full while the real cooldown time is unchanged (desync).
+                MoveExecutor.sendCooldownDisplay(player, "Compass Needle", remaining);
                 player.displayClientMessage(Component.literal(String.format(
                         "Compass Needle on cooldown: %.1fs", remaining / 20.0f)), true);
                 return;

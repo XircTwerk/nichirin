@@ -106,7 +106,7 @@ public class BlessedRainAttack extends WaterBreathingAttackBase {
         // Instant teleport, stopping at block collision instead of failing or clipping.
         teleportSafe(teleportDestination);
         Vec3 strikePosition = user.position();
-        playWaterVfxAt(VfxIds.BLESSED_RAIN, strikePosition, teleportDirection, 1.25f);
+        playWaterVfxAt(VfxIds.BLESSED_RAIN, strikePosition, Vec3.ZERO, 1.25f);
 
         // Create massive rain strike effect
 

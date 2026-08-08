@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.attack.moveset;
 
 import com.xirc.nichirin.common.attack.MoveExecutor;
+import com.xirc.nichirin.common.attack.ServerCooldownManager;
 import com.xirc.nichirin.common.entity.MovesetCapableNPC;
 import com.xirc.nichirin.common.item.katana.Katana;
 import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
@@ -390,6 +391,16 @@ public abstract class AbstractMoveset {
     }
 
     private void executeMove(LivingEntity entity, MoveConfiguration config) {
+        // Server-authoritative cooldown gate. Reject BEFORE the animation so nothing plays on a
+        // rejected move. NPCs manage their own cooldowns, so only players are gated here.
+        if (entity instanceof ServerPlayer serverPlayer && config != null
+                && config.getCooldownOrDefault(0) > 0
+                && ServerCooldownManager.isOnCooldown(entity, config.getMoveId())) {
+            // Re-sync the client HUD bar to the true remaining time (in case it fired optimistically).
+            MoveExecutor.sendCooldownDisplay(serverPlayer, config.getDisplayName(),
+                    ServerCooldownManager.getRemaining(entity, config.getMoveId()));
+            return;
+        }
         String anim = moveAnimationName(config);
         if (anim != null) {
             triggerAnimation(entity, anim);

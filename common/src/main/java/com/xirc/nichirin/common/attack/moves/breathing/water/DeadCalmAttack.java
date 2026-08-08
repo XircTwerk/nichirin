@@ -1,10 +1,12 @@
 package com.xirc.nichirin.common.attack.moves.breathing.water;
 
 import com.xirc.nichirin.common.network.s2c.TriggerShaderPacket;
+import com.xirc.nichirin.registry.NichirinEffectRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -72,7 +74,9 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
         }
 
         if (fieldActive && tickCount > windup && tickCount < windup + duration) {
+            // You're free to move, but breaking the stillness stuns you for 10 ticks and ends the field.
             if (hasMovedFromCalm()) {
+                user.addEffect(new MobEffectInstance(NichirinEffectRegistry.stunned(), 10, 0, false, false));
                 stop();
                 return;
             }
@@ -87,7 +91,7 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
 
         Vec3 lookDir = user.getLookAngle();
         fieldCenter = user.position();
-        playWaterVfxAt(VfxIds.DEAD_CALM, fieldCenter, lookDir, 1.0f);
+        playWaterVfxAt(VfxIds.DEAD_CALM, fieldCenter, Vec3.ZERO, 1.0f);
 
 
         world.playSound(null, fieldCenter.x, fieldCenter.y, fieldCenter.z,
@@ -100,17 +104,10 @@ public class DeadCalmAttack extends WaterBreathingAttackBase {
         // Refresh before the previous pulse finishes fading so the field remains visible for
         // the full channel. Movement cancellation stops scheduling these immediately.
         if (calmTicks % 32 == 0) {
-            playWaterVfxAt(VfxIds.DEAD_CALM, fieldCenter, user.getLookAngle(), 1.0f);
+            playWaterVfxAt(VfxIds.DEAD_CALM, fieldCenter, Vec3.ZERO, 1.0f);
         }
 
-        // Anchor the user in place — teleport overrides client-side prediction
-        if (user instanceof ServerPlayer sp) {
-            sp.teleportTo(frozenPos.x, frozenPos.y, frozenPos.z);
-        } else {
-            user.absMoveTo(frozenPos.x, frozenPos.y, frozenPos.z, user.getYRot(), user.getXRot());
-        }
-        user.setDeltaMovement(Vec3.ZERO);
-
+        // No longer anchored — the player may move, but hasMovedFromCalm() ends the field with a stun.
         updateEntitiesInField();
         triggerAutoSlashes();
 

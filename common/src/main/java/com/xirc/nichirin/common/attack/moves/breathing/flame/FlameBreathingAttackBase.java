@@ -73,6 +73,13 @@ public abstract class FlameBreathingAttackBase extends AbstractBreathingAttack<F
         }
     }
 
+    /** Anchored variant: the effect stays where it was cast instead of tracking the player. */
+    protected void playFlameVfxAt(ResourceLocation effectId, Vec3 origin, Vec3 direction, float scale) {
+        if (world instanceof ServerLevel serverLevel) {
+            VfxManager.playOwned(serverLevel, user, effectId, origin, direction, scale);
+        }
+    }
+
     /**
      * Play flame-related sound effects
      */

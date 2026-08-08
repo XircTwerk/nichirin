@@ -81,7 +81,7 @@ public class WhirlpoolAttack extends WaterBreathingAttackBase {
     private void startWhirlpool() {
         // Record whirlpool center - it stays in place
         whirlpoolCenter = user.position();
-        playWaterVfxAt(VfxIds.WHIRLPOOL, whirlpoolCenter, user.getLookAngle(), 1.0f);
+        playWaterVfxAt(VfxIds.WHIRLPOOL, whirlpoolCenter, Vec3.ZERO, 1.0f);
 
         // Launch user upward 4 blocks
         user.setDeltaMovement(0, 0.8, 0);

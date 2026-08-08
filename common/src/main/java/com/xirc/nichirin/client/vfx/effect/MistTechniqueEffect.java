@@ -75,6 +75,12 @@ public final class MistTechniqueEffect implements VfxEffect {
     private void drawThrust(BufferBuilder b, Matrix4f m, Vec3 o, Vec3 f, Vec3 r,
                             float s, float fade, float age) {
         float length = 7.5f * s;
+        // Distant Haze: low clouds strung out along the lunge, thinning toward the tip.
+        for (int i = 0; i < 4; i++) {
+            float t = 0.12f + i * 0.28f;
+            Vec3 c = o.add(f.scale(t * length)).add(up.scale(0.5 * s));
+            cloud(b, m, c, f, r, (1.15f - t * 0.5f) * s, 14, 71L + i * 17L, fade, age);
+        }
         mistRibbon(b, m, 26, t -> o.add(f.scale(t * length))
                         .add(r.scale(Math.sin(t * Math.PI * 3.0 + age * 0.12) * 0.20 * s))
                         .add(up.scale((0.48 + Math.sin(t * Math.PI) * 0.25) * s)),
@@ -88,6 +94,8 @@ public final class MistTechniqueEffect implements VfxEffect {
         float saved = reveal;
         Vec3 center = o.add(up.scale(1.05 * s));
         float radius = 3.15f * s;
+        // Haze body the eight blades fan out of.
+        cloud(b, m, center, f, r, radius * 0.95f, 30, 211L, fade, age);
         for (int i = 0; i < 8; i++) {
             reveal = clamp((saved - i * 0.075f) / (1.0f - i * 0.075f));
             if (reveal <= 0.0f) continue;
@@ -111,6 +119,9 @@ public final class MistTechniqueEffect implements VfxEffect {
     private void drawCircular(BufferBuilder b, Matrix4f m, Vec3 o, Vec3 f, Vec3 r,
                               float s, float fade, float age) {
         Vec3 center = o.add(up.scale(0.82 * s));
+        // Scattering splash: haze thrown outward filling the disc, densest at the rim.
+        cloud(b, m, center, f, r, 3.8f * s, 34, 331L, fade, age);
+        cloud(b, m, center.add(up.scale(0.5 * s)), f, r, 2.4f * s, 16, 337L, fade * 0.8f, age);
         mistRing(b, m, center, f, r, 3.8f * s, 0.82f * s, 30, fade, age);
         float saved = reveal;
         reveal = clamp((saved - 0.12f) / 0.88f);
@@ -121,6 +132,14 @@ public final class MistTechniqueEffect implements VfxEffect {
 
     private void drawFlow(BufferBuilder b, Matrix4f m, Vec3 o, Vec3 f, Vec3 r,
                           float s, float fade, float age) {
+        // Haze streaming along the shifting slash path.
+        for (int i = 0; i < 3; i++) {
+            float t = 0.15f + i * 0.34f;
+            Vec3 c = o.add(f.scale((-1.2 + t * 7.8) * s))
+                    .add(r.scale(Math.sin(t * Math.PI * 2.4) * 0.52 * s))
+                    .add(up.scale((0.34 + Math.sin(t * Math.PI) * 0.70) * s));
+            cloud(b, m, c, f, r, (1.3f - t * 0.4f) * s, 14, 409L + i * 23L, fade, age);
+        }
         mistRibbon(b, m, 28, t -> o.add(f.scale((-1.2 + t * 7.8) * s))
                         .add(r.scale(Math.sin(t * Math.PI * 2.4 + age * 0.10) * 0.52 * s))
                         .add(up.scale((0.34 + Math.sin(t * Math.PI) * 0.70) * s)),
@@ -135,6 +154,11 @@ public final class MistTechniqueEffect implements VfxEffect {
 
     private void drawSea(BufferBuilder b, Matrix4f m, Vec3 o, Vec3 f, Vec3 r,
                          float s, float fade, float age) {
+        // A low, wide sea of clouds strung out ahead — the haze bank the slashes ride over.
+        for (int i = 0; i < 5; i++) {
+            Vec3 c = o.add(f.scale((-1.0 + i * 2.0) * s)).add(up.scale(0.25 * s));
+            cloud(b, m, c, f, r, 2.2f * s, 22, 523L + i * 29L, fade * 0.9f, age + i * 2);
+        }
         for (int layer = -2; layer <= 2; layer++) {
             final int lane = layer;
             float laneFade = fade * (lane == 0 ? 0.92f : 0.58f);
@@ -148,6 +172,12 @@ public final class MistTechniqueEffect implements VfxEffect {
     private void drawLunar(BufferBuilder b, Matrix4f m, Vec3 o, Vec3 f, Vec3 r,
                            float s, float fade, float age) {
         Vec3 center = o.add(up.scale(1.15 * s)).subtract(f.scale(0.25 * s));
+        // Dispersing mist filling the crescent's swept arc.
+        for (int i = 0; i < 6; i++) {
+            double ang = Math.toRadians(-155 + 245.0 * (i + 0.5) / 6.0);
+            Vec3 c = center.add(f.scale(Math.cos(ang) * 3.6 * s)).add(up.scale(Math.sin(ang) * 3.6 * s));
+            cloud(b, m, c, f, r, 1.4f * s, 12, 617L + i * 31L, fade * 0.85f, age);
+        }
         arc(b, m, center, f, up, 4.0f * s, 0.74f * s, -155, 245, 28, fade, age);
         float saved = reveal;
         reveal = clamp((saved - 0.14f) / 0.86f);
@@ -158,6 +188,9 @@ public final class MistTechniqueEffect implements VfxEffect {
     private void drawFinisher(BufferBuilder b, Matrix4f m, Vec3 o, Vec3 f, Vec3 r,
                               float s, float fade, float age) {
         Vec3 center = o.add(up.scale(0.85 * s));
+        // Haze erupting around the ring and up the rising column.
+        cloud(b, m, center, f, r, 4.6f * s, 30, 743L, fade, age);
+        cloud(b, m, center.add(up.scale(1.6 * s)), f, r, 1.6f * s, 12, 751L, fade * 0.8f, age);
         mistRing(b, m, center, f, r, 4.8f * s, 0.92f * s, 30, fade, age);
         bladeRibbon(b, m, 22, t -> center.subtract(up.scale(2.8 * s)).add(up.scale(t * 5.8 * s))
                         .add(r.scale(Math.sin(t * Math.PI) * 0.25 * s)),
@@ -166,6 +199,11 @@ public final class MistTechniqueEffect implements VfxEffect {
 
     private void drawObscuring(BufferBuilder b, Matrix4f m, Vec3 o, Vec3 f, Vec3 r,
                                float s, float fade, float age) {
+        // A thick, blinding cloud bank — dense overlapping haze at several heights, not thin rings.
+        for (int i = 0; i < 4; i++) {
+            Vec3 c = o.add(up.scale((0.4 + i * 0.7) * s));
+            cloud(b, m, c, f, r, (3.0f + i * 0.6f) * s, 40, 859L + i * 37L, fade, age * (i % 2 == 0 ? 1 : -1));
+        }
         float saved = reveal;
         for (int layer = 0; layer < 4; layer++) {
             reveal = clamp((saved - layer * 0.08f) / (1.0f - layer * 0.08f));
@@ -175,6 +213,40 @@ public final class MistTechniqueEffect implements VfxEffect {
                     28, fade * (0.86f - layer * 0.12f), age * (layer % 2 == 0 ? 1 : -1));
         }
         reveal = saved;
+    }
+
+    /**
+     * Soft volumetric haze — a cluster of low-alpha pixel puffs. This is what makes Mist read as mist
+     * (fog/cloud) instead of a thin water ribbon; overlapping translucent puffs build up a soft body.
+     */
+    private void cloud(BufferBuilder b, Matrix4f m, Vec3 c, Vec3 f, Vec3 r,
+                       float radius, int puffs, long seed, float fade, float age) {
+        float grow = 0.45f + 0.55f * reveal;
+        for (int i = 0; i < puffs; i++) {
+            float a1 = hash(seed + i * 2654435761L);
+            float a2 = hash(seed + i * 40503L + 7);
+            float a3 = hash(seed + i * 92821L + 13);
+            float a4 = hash(seed + i * 6151L + 17);
+            double dist = Math.sqrt(a1) * radius * grow;
+            double ang = a2 * Math.PI * 2.0 + age * 0.02;
+            double lift = (a3 - 0.5) * radius * 0.7;
+            Vec3 p = c.add(f.scale(Math.cos(ang) * dist))
+                    .add(r.scale(Math.sin(ang) * dist))
+                    .add(up.scale(lift));
+            float pr = (0.22f + a4 * 0.5f) * radius * 0.42f;
+            int base = (i % 5 == 0) ? PALE : (i % 2 == 0) ? MID : DEEP;
+            int col = color(base, fade * (0.10f + 0.14f * a4));
+            Vec3 e1 = f.scale(pr), e2 = r.scale(pr);
+            quad(b, m, p.subtract(e1).subtract(e2), p.add(e1).subtract(e2),
+                    p.add(e1).add(e2), p.subtract(e1).add(e2), col);
+        }
+    }
+
+    private static float hash(long n) {
+        n ^= n >>> 33; n *= 0xff51afd7ed558ccdL;
+        n ^= n >>> 33; n *= 0xc4ceb9fe1a85ec53L;
+        n ^= n >>> 33;
+        return (n & 0xFFFFFFL) / (float) 0x1000000L;
     }
 
     private void mistRibbon(BufferBuilder b, Matrix4f m, int segments, DoubleFunction<Vec3> path,

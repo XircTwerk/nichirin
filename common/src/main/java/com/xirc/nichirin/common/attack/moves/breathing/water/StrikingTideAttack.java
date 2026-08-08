@@ -60,7 +60,7 @@ public class StrikingTideAttack extends WaterBreathingAttackBase {
 
 
     private void startTide() {
-        playWaterVfx(VfxIds.STRIKING_TIDE, user.position(), user.getLookAngle(), 1.0f);
+        playWaterVfxAt(VfxIds.STRIKING_TIDE, user.position(), user.getLookAngle(), 1.0f);
         // Tide start sound - powerful water rush
         world.playSound(null, user.getX(), user.getY(), user.getZ(),
                 SoundEvents.GENERIC_SPLASH, SoundSource.PLAYERS, 1.5f, 0.6f);

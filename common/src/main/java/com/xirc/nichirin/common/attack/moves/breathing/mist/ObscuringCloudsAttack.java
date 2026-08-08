@@ -29,7 +29,7 @@ public class ObscuringCloudsAttack extends MistBreathingAttackBase {
 
     private static final double ORBIT_SPEED  = 0.07;  // radians/tick  (~4° — one orbit ≈ 90 ticks)
     private static final double ORBIT_RADIUS = 3.0;
-    private static final int    HIT_INTERVAL = 12;    // ticks between hits on same target
+    private static final int    HIT_INTERVAL = 6;     // ticks between hits on same target (twice as fast)
     private static final int    CLONE_INTERVAL = 6;
     private static final int    MAX_CLONES   = 6;     // six clones orbit alongside the user
 

@@ -44,6 +44,9 @@ public final class NichirinAnimations {
     private static final float GUN_FIRE_RECOIL = 0.25f;
     private static final Map<AbstractClientPlayer, Long> GUN_FIRE_STARTS = new WeakHashMap<>();
     private static final Map<AbstractClientPlayer, String> ACTIVE_PLAYER_ANIMATIONS = new WeakHashMap<>();
+    // Persistent looping poses (e.g. the Compass Needle hold), driven by the controller predicate like
+    // the gun idle — NOT triggerAnimation, which restarts every time it's re-fired or re-evaluated.
+    private static final Map<AbstractClientPlayer, RawAnimation> LOOPING_ANIMATIONS = new WeakHashMap<>();
     private static boolean initialized;
 
     private NichirinAnimations() {}
@@ -67,6 +70,13 @@ public final class NichirinAnimations {
                                     if (idle != null) {
                                         return setter.setAnimation(idle);
                                     }
+                                }
+                                // Persistent looping pose (Compass Needle hold, etc.). Set every tick to
+                                // the SAME animation — the controller continues it smoothly instead of
+                                // restarting, exactly like the gun idle above.
+                                RawAnimation looping = LOOPING_ANIMATIONS.get(player);
+                                if (looping != null) {
+                                    return setter.setAnimation(looping);
                                 }
                                 return PlayState.STOP;
                             });
@@ -128,6 +138,7 @@ public final class NichirinAnimations {
 
         if (animationName == null || animationName.isEmpty()) {
             ACTIVE_PLAYER_ANIMATIONS.remove(clientPlayer);
+            LOOPING_ANIMATIONS.remove(clientPlayer);
             PlayerAnimationController ctrl = getController(clientPlayer);
             if (ctrl != null) {
                 setControllerSpeed(ctrl, 1.0f);
@@ -149,13 +160,38 @@ public final class NichirinAnimations {
             return;
         }
 
+        String previousActive = ACTIVE_PLAYER_ANIMATIONS.get(clientPlayer);
         setControllerSpeed(controller, speed);
         ACTIVE_PLAYER_ANIMATIONS.put(clientPlayer, animationName.toLowerCase());
+
+        // Compass Needle hold. The looping idle is a persistent base driven by the controller predicate
+        // (see init) — NOT a triggered animation, which restarts every time it's re-fired/re-evaluated.
+        // The wind-up (compass_needle) plays ONCE as a triggered animation on top; when it finishes the
+        // idle base shows through. Idempotent: a re-broadcast while already looping doesn't restart it
+        // (that was the "random replays"), and hits interrupting the base resume the idle, not the wind-up.
+        if ("compass_needle".equals(animationName) || "compass_needle_idle".equals(animationName)) {
+            boolean alreadyLooping = animationName.equals(previousActive)
+                    && LOOPING_ANIMATIONS.containsKey(clientPlayer);
+            if (!alreadyLooping) {
+                RawAnimation idleLoop = buildLoopingRaw("compass_needle_idle");
+                if (idleLoop != null) {
+                    LOOPING_ANIMATIONS.put(clientPlayer, idleLoop);
+                    if ("compass_needle".equals(animationName)) {
+                        controller.triggerAnimation(PlayerRawAnimationBuilder.begin().thenPlay(animation).build());
+                    } else {
+                        controller.stopTriggeredAnimation();
+                    }
+                }
+            }
+            return;
+        }
+        // Any other animation clears the persistent loop so it doesn't linger underneath.
+        LOOPING_ANIMATIONS.remove(clientPlayer);
 
         if ("fire".equals(animationName)) {
             controller.stopTriggeredAnimation();
             GUN_FIRE_STARTS.put(clientPlayer, minecraft.level.getGameTime());
-        } else if ("sword.block".equals(animationName) || "compass_needle".equals(animationName)) {
+        } else if ("sword.block".equals(animationName)) {
             controller.triggerAnimation(PlayerRawAnimationBuilder.begin().thenPlayAndHold(animation).build());
         } else if ("reload".equals(animationName)) {
             // Reload is long enough to blend cleanly from the steady gun-holding pose.
@@ -290,6 +326,15 @@ public final class NichirinAnimations {
     }
 
     private static RawAnimation gunIdleRaw;
+
+    /** Builds a looping {@link RawAnimation} for the given animation name (same shape as the gun idle),
+     *  used as a predicate-driven persistent loop. Returns null if the animation isn't loaded. */
+    private static RawAnimation buildLoopingRaw(String name) {
+        ResourceLocation loc = findAnimation(name);
+        if (loc == null || !PlayerAnimResources.hasAnimation(loc)) return null;
+        Animation anim = PlayerAnimResources.getAnimation(loc);
+        return anim != null ? RawAnimation.begin().thenLoop(anim) : null;
+    }
 
     private static PlayerAnimationController getController(AbstractClientPlayer player) {
         return PlayerAnimationAccess.getPlayerAnimationLayer(player, CONTROLLER_ID)

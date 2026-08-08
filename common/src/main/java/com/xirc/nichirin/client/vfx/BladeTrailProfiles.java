@@ -17,7 +17,9 @@ public final class BladeTrailProfiles {
         FLAME(0x692F0F, 0xFC5520, 0xFFF245),
         THUNDER(0x181817, 0xF2CF1D, 0xFFFFF4),
         MIST(0x274E54, 0x4E9DA9, 0xBDE9F0),
-        BEAST(0x171D22, 0x6CC1CF, 0xE7F0ED);
+        BEAST(0x171D22, 0x6CC1CF, 0xE7F0ED),
+        DESTRUCTIVE_BLUE(0x0A1E6E, 0x2E6BFF, 0xBFD4FF),
+        DESTRUCTIVE_RED(0x5A0A12, 0xFF2E33, 0xFFC2C2);
 
         private final int shadow;
         private final int body;
@@ -46,6 +48,12 @@ public final class BladeTrailProfiles {
     }
 
     public static final Profile DEFAULT = new Profile(165L, 14, 1.0f, 0.88f, Theme.WHITE);
+
+    /** Destructive Death arm trails — blue normally, red in Overdrive. Four strands per arm wrap the
+     *  arm, so each stays close to arm-length; the motion history supplies the blade-style streak. */
+    public static final Profile ARM_BLUE = new Profile(280L, 24, 1.6f, 0.92f, Theme.DESTRUCTIVE_BLUE);
+    public static final Profile ARM_RED = new Profile(280L, 24, 1.6f, 0.92f, Theme.DESTRUCTIVE_RED);
+
     private static final Map<String, Profile> ATTACK_PROFILES = new HashMap<>();
 
     static {

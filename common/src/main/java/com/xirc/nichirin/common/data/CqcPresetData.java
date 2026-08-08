@@ -23,16 +23,16 @@ public class CqcPresetData {
     private static Preset[] createDefaultPresets() {
         return new Preset[] {
                 new Preset("Balanced", "jab", "cross", "low_kick", 0,
-                        "uppercut", "elbow_strike", "throat_chop", "spinning_backfist", "axe_kick"),
-                new Preset("Striker", "jab", "overhand_right", "roundhouse_fast", 1,
-                        "cross", "lefthook", "superman_punch", "headkick", "spinning_heel_kick"),
-                new Preset("Guarded", "eye_poke", "double_palm", "backhand_slap", 2,
-                        "throat_chop", "low_kick", "knee", "elbow_strike", "spinning_backfist"),
+                        "uppercut", "double_palm", "throat_chop", "spinning_heel_kick", "knee"),
+                new Preset("Striker", "jab", "uppercut", "low_kick", 1,
+                        "cross", "lefthook", "knee", "double_palm", "spinning_heel_kick"),
+                new Preset("Guarded", "eye_poke", "double_palm", "lefthook", 2,
+                        "throat_chop", "low_kick", "knee", "jab", "spinning_heel_kick"),
                 new Preset("Demon", "demon_gut_punch", "demon_slash", "high_jump", 0,
                         "demon_stomp", "demon_kick", "dashing_strike", "demon_bite", "demon_grab"),
                 new Preset("Destructive Death", "snap_punch", "annihilation_type", "crown_splitter", 0,
-                        "explosive_flurry", "flying_planet_thousand_wheels", "eight_layered_demon_core",
-                        "ten_thousand_leaves_flashing_willow", "donut"),
+                        "flying_planet_thousand_wheels", "eight_layered_demon_core",
+                        "ten_thousand_leaves_flashing_willow", "donut", ""),
                 new Preset("Custom 1", "", "", "", 0, "", "", "", "", ""),
                 new Preset("Custom 2", "", "", "", 0, "", "", "", "", "")
         };

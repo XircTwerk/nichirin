@@ -2,6 +2,7 @@ package com.xirc.nichirin.common.attack.moves.demon.destructive;
 
 import com.xirc.nichirin.common.aura.AuraAudience;
 import com.xirc.nichirin.common.attack.MoveExecutor;
+import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.network.s2c.TriggerShaderPacket;
 import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
 import com.xirc.nichirin.common.outline.OutlineInstance;
@@ -203,6 +204,12 @@ public final class CompassNeedleTracker {
         DestructiveDeathState.deactivateCompass(owner);
         DestructiveDeathState.startCompassCooldown(owner, CompassNeedleAttack.COOLDOWN_TICKS);
         MoveExecutor.sendCooldownDisplay(owner, "Compass Needle", CompassNeedleAttack.COOLDOWN_TICKS);
+        // Compass is done tracking, but if the player still has Destructive Death equipped they're
+        // "still holding it" — relax into the looping idle compass pose instead of dropping the stance.
+        if ("destructive_death".equals(MovesetHelper.getDemonMovesetId(owner))) {
+            NichirinPacketRegistry.broadcastPlayerAnimation(owner,
+                    new PlayerAnimationPacket(owner.getId(), "compass_needle_idle"));
+        }
     }
 
     public static void cancel(ServerPlayer owner) {
