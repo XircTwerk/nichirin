@@ -50,3 +50,7 @@ run/
 
 .architectury-transformer/
 .direnv
+
+# local-only
+secrets/
+graphify-out/
