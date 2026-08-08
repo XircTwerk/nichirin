@@ -1,0 +1,23 @@
+{
+  "parent": "nichirin:root",
+  "criteria": {
+    "has_first_breathing_style": {
+      "trigger": "nichirin:first_breath_unlock"
+    }
+  },
+  "display": {
+    "description": "Unlock your first breathing style",
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "minecraft:glass_bottle"
+    },
+    "title": "First Breath"
+  },
+  "requirements": [
+    [
+      "has_first_breathing_style"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

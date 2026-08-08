@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "minecraft:brown_dye"
+    },
+    "I": {
+      "item": "minecraft:iron_nugget"
+    },
+    "L": {
+      "item": "minecraft:netherite_leggings"
+    }
+  },
+  "pattern": [
+    "BBB",
+    "BLB",
+    "I I"
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        -1439835669,
+        1031227158,
+        -1231642131,
+        -559738249
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:tengen_leggings"
+  }
+}

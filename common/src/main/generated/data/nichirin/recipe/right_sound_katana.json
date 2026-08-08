@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "D": {
+      "item": "minecraft:white_dye"
+    },
+    "K": {
+      "item": "nichirin:katana"
+    }
+  },
+  "pattern": [
+    "K",
+    "D"
+  ],
+  "result": {
+    "count": 1,
+    "id": "nichirin:right_sound_katana"
+  }
+}

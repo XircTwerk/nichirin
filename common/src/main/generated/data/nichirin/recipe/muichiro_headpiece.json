@@ -1,0 +1,35 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "minecraft:black_dye"
+    },
+    "C": {
+      "item": "minecraft:cyan_dye"
+    },
+    "H": {
+      "item": "minecraft:netherite_helmet"
+    },
+    "S": {
+      "item": "minecraft:string"
+    }
+  },
+  "pattern": [
+    "CSC",
+    "BHB",
+    "   "
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        -1068356756,
+        1873563490,
+        -1225686903,
+        106884770
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:muichiro_headpiece"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "values": [
+    "nichirin:wisteria_log",
+    "nichirin:stripped_wisteria_log",
+    "nichirin:wisteria_wood",
+    "nichirin:stripped_wisteria_wood",
+    "nichirin:wisteria_planks",
+    "nichirin:wisteria_stairs",
+    "nichirin:wisteria_slab",
+    "nichirin:wisteria_fence",
+    "nichirin:wisteria_fence_gate",
+    "nichirin:wisteria_door",
+    "nichirin:wisteria_trapdoor",
+    "nichirin:wisteria_pressure_plate",
+    "nichirin:wisteria_button",
+    "nichirin:wisteria_sign",
+    "nichirin:wisteria_wall_sign",
+    "nichirin:wisteria_hanging_sign",
+    "nichirin:wisteria_wall_hanging_sign"
+  ]
+}

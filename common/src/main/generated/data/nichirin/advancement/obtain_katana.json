@@ -1,0 +1,29 @@
+{
+  "parent": "nichirin:root",
+  "criteria": {
+    "has_katana": {
+      "conditions": {
+        "items": [
+          {
+            "items": "nichirin:katana"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "display": {
+    "description": "Obtain a Katana",
+    "icon": {
+      "count": 1,
+      "id": "nichirin:katana"
+    },
+    "title": "Slice to Meet You"
+  },
+  "requirements": [
+    [
+      "has_katana"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

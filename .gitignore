@@ -3,13 +3,14 @@
 /fabric/build/*
 /forge/run/*
 /forge/build/*
-.idea/
+/.idea/*
 /common/run/*
 /common/build/*
 /fabric/.gradle/*
 /forge/.gradle/*
 /common/.gradle/*
 /build/*
+/lib/
 
 # gradle
 
@@ -17,7 +18,6 @@
 build/
 out/
 classes/
-.idea/
 
 # eclipse
 
@@ -48,10 +48,5 @@ run/
 /common/src/main/generated/.cache/*
 /common/logs/latest.log
 
-/common/src/main/generated/data/*
-/common/src/main/generated/assets/nichirin/*
-
 .architectury-transformer/
-
-/secrets/
-/graphify-out/
+.direnv

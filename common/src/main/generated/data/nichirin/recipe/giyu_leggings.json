@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "minecraft:black_dye"
+    },
+    "C": {
+      "item": "minecraft:cyan_dye"
+    },
+    "L": {
+      "item": "minecraft:netherite_leggings"
+    }
+  },
+  "pattern": [
+    "BBB",
+    "BLB",
+    "C C"
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        -1195654098,
+        -1479785550,
+        -1163379555,
+        127105915
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:giyu_leggings"
+  }
+}

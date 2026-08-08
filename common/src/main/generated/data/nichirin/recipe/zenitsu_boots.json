@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "minecraft:netherite_boots"
+    },
+    "O": {
+      "item": "minecraft:white_dye"
+    },
+    "W": {
+      "item": "minecraft:orange_dye"
+    }
+  },
+  "pattern": [
+    "   ",
+    "WBW",
+    "O O"
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        -1551220817,
+        1349406463,
+        -1116446807,
+        -5656946
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:zenitsu_boots"
+  }
+}

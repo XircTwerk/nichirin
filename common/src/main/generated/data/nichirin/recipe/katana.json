@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "item": "nichirin:scarlet_crimson_iron_gem"
+    },
+    "I": {
+      "item": "minecraft:iron_sword"
+    },
+    "S": {
+      "item": "nichirin:scarlet_gem"
+    }
+  },
+  "pattern": [
+    " S ",
+    "CIC",
+    " S "
+  ],
+  "result": {
+    "count": 1,
+    "id": "nichirin:katana"
+  }
+}

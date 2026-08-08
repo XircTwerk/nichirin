@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "E": {
+      "item": "nichirin:wisteria_extract"
+    },
+    "L": {
+      "item": "minecraft:lantern"
+    }
+  },
+  "pattern": [
+    " E ",
+    "ELE",
+    " E "
+  ],
+  "result": {
+    "count": 1,
+    "id": "nichirin:wisteria_lantern"
+  }
+}

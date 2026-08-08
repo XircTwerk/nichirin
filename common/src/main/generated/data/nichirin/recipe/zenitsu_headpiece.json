@@ -1,0 +1,35 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "H": {
+      "item": "minecraft:netherite_helmet"
+    },
+    "O": {
+      "item": "minecraft:orange_dye"
+    },
+    "S": {
+      "item": "minecraft:string"
+    },
+    "Y": {
+      "item": "minecraft:yellow_dye"
+    }
+  },
+  "pattern": [
+    "YSY",
+    "OHO",
+    "   "
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        675992205,
+        23219402,
+        -1186778873,
+        642577904
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:zenitsu_headpiece"
+  }
+}

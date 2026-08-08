@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "minecraft:brown_dye"
+    },
+    "L": {
+      "item": "minecraft:netherite_leggings"
+    },
+    "O": {
+      "item": "minecraft:orange_dye"
+    }
+  },
+  "pattern": [
+    "BBB",
+    "BLB",
+    "O O"
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        540336299,
+        1056327232,
+        -1895949160,
+        -1046420014
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:zenitsu_leggings"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "nichirin:wisteria_leaves"
+    }
+  ],
+  "result": {
+    "count": 2,
+    "id": "nichirin:wisteria_flower"
+  }
+}

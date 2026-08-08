@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "minecraft:diamond_boots"
+    },
+    "G": {
+      "item": "minecraft:gray_dye"
+    },
+    "R": {
+      "item": "minecraft:brown_dye"
+    }
+  },
+  "pattern": [
+    "   ",
+    "GBG",
+    "R R"
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        1682453439,
+        -1058517644,
+        -1978295692,
+        725283721
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:inosuke_boots"
+  }
+}

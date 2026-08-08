@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "item": "minecraft:netherite_chestplate"
+    },
+    "G": {
+      "item": "minecraft:green_dye"
+    },
+    "O": {
+      "item": "minecraft:orange_dye"
+    }
+  },
+  "pattern": [
+    "GGG",
+    "GCG",
+    "O O"
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        -587391369,
+        -176470984,
+        -1657904806,
+        -1808816226
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:sabito_cape"
+  }
+}

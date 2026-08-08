@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/stairs",
+  "textures": {
+    "bottom": "nichirin:block/wisteria_planks",
+    "side": "nichirin:block/wisteria_planks",
+    "top": "nichirin:block/wisteria_planks"
+  }
+}

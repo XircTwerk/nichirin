@@ -20,12 +20,10 @@ import java.util.UUID;
 
 /**
  * Renders an outline silhouette around any entity tracked in {@link OutlineTracker}.
- *
  * Approach: re-dispatch the entity through the normal renderer, but with a wrapped buffer
  * source that forces all vertex output into a flat-colour {@link OutlineRenderTypes}
  * variant, and a slightly upscaled {@link PoseStack}. The result is an enlarged flat
  * silhouette of the same model — visible as a coloured halo around the entity.
- *
  * Two variants are supported per-instance:
  *   seeThroughWalls=true  → no depth test → outline visible through walls
  *   seeThroughWalls=false → LEQUAL depth test → outline only where entity would be visible
@@ -95,9 +93,8 @@ public final class OutlineRenderer {
         // Going through renderer.render directly (rather than dispatcher.render) skips the
         // entity shadow, which our flat-colour wrapper would otherwise paint as a solid
         // coloured rectangle on the floor.
-        @SuppressWarnings({"rawtypes", "unchecked"})
+        @SuppressWarnings({"rawtypes"})
         EntityRenderer renderer = dispatcher.getRenderer(host);
-        if (renderer == null) return;
 
         // Pass 1 — EDGE: custom cel-shader pipeline displaces each vertex along its NORMAL
         // (in the GPU vertex shader) and cull-fronts away the original-facing surfaces. The

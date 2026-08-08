@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "nichirin:wisteria_arrow"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    },
+    "has_wisteria_extract": {
+      "conditions": {
+        "items": [
+          {
+            "items": "nichirin:wisteria_extract"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_wisteria_extract"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "nichirin:wisteria_arrow"
+    ]
+  }
+}

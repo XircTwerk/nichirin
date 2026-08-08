@@ -41,6 +41,10 @@ dependencies {
     }
     modImplementation "maven.modrinth:terrablender:6e8GCrLb"
 
+    compileOnly("mezz.jei:jei-${minecraft_version}-neoforge-api:${rootProject.jei_version}")
+
+    runtimeOnly("mezz.jei:jei-${minecraft_version}-neoforge:${rootProject.jei_version}")
+
     common(project(path: ':common', configuration: 'namedElements')) { transitive false }
     shadowBundle project(path: ':common', configuration: 'transformProductionNeoForge')
 }

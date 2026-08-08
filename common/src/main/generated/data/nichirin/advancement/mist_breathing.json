@@ -1,0 +1,23 @@
+{
+  "parent": "nichirin:first_breath",
+  "criteria": {
+    "has_mist_breathing": {
+      "trigger": "nichirin:mist_breathing_unlock"
+    }
+  },
+  "display": {
+    "description": "Slay a mob in a mountain biome while it rains to obtain Mist Breathing",
+    "frame": "challenge",
+    "icon": {
+      "count": 1,
+      "id": "minecraft:white_wool"
+    },
+    "title": "The Mountain Mist"
+  },
+  "requirements": [
+    [
+      "has_mist_breathing"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

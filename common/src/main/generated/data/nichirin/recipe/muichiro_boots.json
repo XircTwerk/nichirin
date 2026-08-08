@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "minecraft:black_dye"
+    },
+    "C": {
+      "item": "minecraft:cyan_dye"
+    },
+    "O": {
+      "item": "minecraft:netherite_boots"
+    }
+  },
+  "pattern": [
+    "   ",
+    "BOB",
+    "C C"
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        -192134144,
+        -485668815,
+        -1939266871,
+        2112168871
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:muichiro_boots"
+  }
+}

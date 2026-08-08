@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "nichirin:katana"
+    },
+    {
+      "item": "minecraft:blue_dye"
+    },
+    {
+      "item": "minecraft:pink_dye"
+    }
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        -2106385499,
+        1733705860,
+        -1548415759,
+        1796335951
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:giyu_katana"
+  }
+}

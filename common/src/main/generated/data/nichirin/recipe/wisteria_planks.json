@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    [
+      {
+        "item": "nichirin:wisteria_log"
+      },
+      {
+        "item": "nichirin:stripped_wisteria_log"
+      },
+      {
+        "item": "nichirin:wisteria_wood"
+      },
+      {
+        "item": "nichirin:stripped_wisteria_wood"
+      }
+    ]
+  ],
+  "result": {
+    "count": 4,
+    "id": "nichirin:wisteria_planks"
+  }
+}

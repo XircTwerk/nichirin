@@ -1,0 +1,23 @@
+{
+  "parent": "nichirin:first_breath",
+  "criteria": {
+    "has_sound_breathing": {
+      "trigger": "nichirin:sound_breathing_unlock"
+    }
+  },
+  "display": {
+    "description": "Play a music disc in a jukebox to obtain Sound Breathing",
+    "frame": "challenge",
+    "icon": {
+      "count": 1,
+      "id": "minecraft:music_disc_cat"
+    },
+    "title": "Harmonic Resonance"
+  },
+  "requirements": [
+    [
+      "has_sound_breathing"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

@@ -1,0 +1,35 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "H": {
+      "item": "minecraft:netherite_helmet"
+    },
+    "I": {
+      "item": "minecraft:iron_nugget"
+    },
+    "S": {
+      "item": "minecraft:string"
+    },
+    "W": {
+      "item": "minecraft:white_dye"
+    }
+  },
+  "pattern": [
+    "WSW",
+    "IHI",
+    "   "
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        1373675004,
+        -276610571,
+        -1984716931,
+        -308859553
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:tengen_headpiece"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "minecraft:netherite_boots"
+    },
+    "I": {
+      "item": "minecraft:iron_nugget"
+    },
+    "W": {
+      "item": "minecraft:white_dye"
+    }
+  },
+  "pattern": [
+    "   ",
+    "WBW",
+    "I I"
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        1269638637,
+        1803043138,
+        -1583098122,
+        -1643068197
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:tengen_boots"
+  }
+}

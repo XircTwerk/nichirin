@@ -1,0 +1,35 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "minecraft:black_dye"
+    },
+    "C": {
+      "item": "minecraft:cyan_dye"
+    },
+    "H": {
+      "item": "minecraft:netherite_helmet"
+    },
+    "S": {
+      "item": "minecraft:string"
+    }
+  },
+  "pattern": [
+    "BSB",
+    "CHC",
+    "   "
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        1516167274,
+        -1066905755,
+        -1946501678,
+        -1325497341
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:giyu_headpiece"
+  }
+}

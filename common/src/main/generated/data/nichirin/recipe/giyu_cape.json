@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "item": "minecraft:netherite_chestplate"
+    },
+    "G": {
+      "item": "minecraft:green_dye"
+    },
+    "R": {
+      "item": "minecraft:red_dye"
+    }
+  },
+  "pattern": [
+    "GGG",
+    "GCG",
+    "R R"
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        -1626824750,
+        464144687,
+        -1491303508,
+        -93015818
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:giyu_cape"
+  }
+}

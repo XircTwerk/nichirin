@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "item": "minecraft:netherite_chestplate"
+    },
+    "W": {
+      "item": "minecraft:white_dye"
+    },
+    "Y": {
+      "item": "minecraft:yellow_dye"
+    }
+  },
+  "pattern": [
+    "YYY",
+    "YCY",
+    "W W"
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        1528004731,
+        -1527033996,
+        -1381626151,
+        -1616735417
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:jigoro_cape"
+  }
+}

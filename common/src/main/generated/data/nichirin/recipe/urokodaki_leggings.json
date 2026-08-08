@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "G": {
+      "item": "minecraft:gray_dye"
+    },
+    "L": {
+      "item": "minecraft:light_blue_dye"
+    },
+    "P": {
+      "item": "minecraft:netherite_leggings"
+    }
+  },
+  "pattern": [
+    "LLL",
+    "LPL",
+    "G G"
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        -1928194828,
+        385433766,
+        -2080711750,
+        1581327055
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:urokodaki_leggings"
+  }
+}

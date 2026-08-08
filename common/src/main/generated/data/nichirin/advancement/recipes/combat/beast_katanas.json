@@ -1,0 +1,35 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_beast_katanas": {
+      "conditions": {
+        "items": [
+          {
+            "items": "nichirin:right_beast_katana"
+          },
+          {
+            "items": "nichirin:left_beast_katana"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "nichirin:beast_katanas"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_beast_katanas"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "nichirin:beast_katanas"
+    ]
+  }
+}

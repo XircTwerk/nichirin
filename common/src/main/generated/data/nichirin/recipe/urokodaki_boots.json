@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "minecraft:netherite_boots"
+    },
+    "G": {
+      "item": "minecraft:gray_dye"
+    },
+    "L": {
+      "item": "minecraft:light_blue_dye"
+    }
+  },
+  "pattern": [
+    "   ",
+    "GBG",
+    "L L"
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        1631101361,
+        -648262436,
+        -1910003690,
+        -481380982
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:urokodaki_boots"
+  }
+}

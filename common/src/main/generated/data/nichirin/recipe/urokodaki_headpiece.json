@@ -1,0 +1,35 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "H": {
+      "item": "minecraft:netherite_helmet"
+    },
+    "L": {
+      "item": "minecraft:light_blue_dye"
+    },
+    "S": {
+      "item": "minecraft:string"
+    },
+    "W": {
+      "item": "minecraft:white_dye"
+    }
+  },
+  "pattern": [
+    "LSL",
+    "WHW",
+    "   "
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        -1871752743,
+        -48348596,
+        -1993819415,
+        -1613896188
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:urokodaki_headpiece"
+  }
+}

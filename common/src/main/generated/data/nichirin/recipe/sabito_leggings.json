@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "minecraft:black_dye"
+    },
+    "G": {
+      "item": "minecraft:green_dye"
+    },
+    "L": {
+      "item": "minecraft:netherite_leggings"
+    }
+  },
+  "pattern": [
+    "GGG",
+    "GLG",
+    "B B"
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        -527459344,
+        534530439,
+        -1796253675,
+        -811819885
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:sabito_leggings"
+  }
+}

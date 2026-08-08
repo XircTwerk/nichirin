@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "minecraft:purple_dye"
+    },
+    "K": {
+      "item": "minecraft:black_dye"
+    },
+    "L": {
+      "item": "minecraft:netherite_leggings"
+    }
+  },
+  "pattern": [
+    "BBB",
+    "BLB",
+    "K K"
+  ],
+  "result": {
+    "components": {
+      "azurelib:az_id": [
+        1674062362,
+        -340965843,
+        -2013531147,
+        973932448
+      ]
+    },
+    "count": 1,
+    "id": "nichirin:shinobu_leggings"
+  }
+}

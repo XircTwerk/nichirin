@@ -1,0 +1,23 @@
+{
+  "parent": "nichirin:first_breath",
+  "criteria": {
+    "has_insect_breathing": {
+      "trigger": "nichirin:insect_breathing_unlock"
+    }
+  },
+  "display": {
+    "description": "Throw a poison potion to obtain Insect Breathing",
+    "frame": "challenge",
+    "icon": {
+      "count": 1,
+      "id": "minecraft:spider_eye"
+    },
+    "title": "Toxic Elegance"
+  },
+  "requirements": [
+    [
+      "has_insect_breathing"
+    ]
+  ],
+  "sends_telemetry_event": true
+}
