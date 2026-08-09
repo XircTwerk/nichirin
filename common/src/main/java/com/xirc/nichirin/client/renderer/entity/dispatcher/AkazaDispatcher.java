@@ -17,7 +17,6 @@ public class AkazaDispatcher {
     private static final AzCommand SNAP_PUNCH = AzCommand.create("main_controller", "snap_punch", AzPlayBehaviors.PLAY_ONCE);
     private static final AzCommand CROWN_SPLITTER = AzCommand.create("main_controller", "crown_splitter", AzPlayBehaviors.PLAY_ONCE);
     private static final AzCommand ANNIHILATION = AzCommand.create("main_controller", "annihilation_type", AzPlayBehaviors.PLAY_ONCE);
-    private static final AzCommand EXPLOSIVE_FLURRY = AzCommand.create("main_controller", "explosive_flurry", AzPlayBehaviors.PLAY_ONCE);
     private static final AzCommand FLYING_PLANET = AzCommand.create("main_controller", "flying_planet_thousand_wheels", AzPlayBehaviors.PLAY_ONCE);
     private static final AzCommand EIGHT_LAYERED = AzCommand.create("main_controller", "eight_layered_demon_core", AzPlayBehaviors.PLAY_ONCE);
     private static final AzCommand TEN_THOUSAND = AzCommand.create("main_controller", "ten_thousand_leaves_flashing_willow", AzPlayBehaviors.PLAY_ONCE);
@@ -36,7 +35,6 @@ public class AkazaDispatcher {
             case "snap_punch" -> SNAP_PUNCH.sendForEntity(akaza);
             case "crown_splitter" -> CROWN_SPLITTER.sendForEntity(akaza);
             case "annihilation_type", "donut" -> ANNIHILATION.sendForEntity(akaza);
-            case "explosive_flurry" -> EXPLOSIVE_FLURRY.sendForEntity(akaza);
             case "flying_planet_thousand_wheels" -> FLYING_PLANET.sendForEntity(akaza);
             case "eight_layered_demon_core" -> EIGHT_LAYERED.sendForEntity(akaza);
             case "ten_thousand_leaves_flashing_willow" -> TEN_THOUSAND.sendForEntity(akaza);

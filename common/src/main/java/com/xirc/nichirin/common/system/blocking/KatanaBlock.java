@@ -48,6 +48,12 @@ public class KatanaBlock {
     private static final int PARRY_WINDOW_TICKS = 10;
     private static final int PARRIED_ATTACK_COOLDOWN = 100;
 
+    // NPC guard pool — the unified equivalent of the player's Stance (StanceManager). Blocked hits
+    // drain it with the same formula, it breaks (stun + the hit lands) when empty, then regenerates
+    // while the guard is down. Same values as the player defaults so blocking behaves identically.
+    private static final float NPC_GUARD_MAX = 100f;
+    private static final float NPC_GUARD_REGEN = 0.8f;
+
     // Blocking tuning is read from config (blocking.* in nichirin-server.toml).
     private static BlockingConfig bcfg() {
         return NichirinModConfig.get().blocking;
@@ -76,6 +82,8 @@ public class KatanaBlock {
         long blockStunUntil = 0;   // can't release the guard until this game-time
         boolean wasBlockingLastTick = false;
         boolean wasAttackingLastTick = false;
+        float guard = NPC_GUARD_MAX;  // NPC blocking resource (players use StanceManager). Persists
+                                      // across guard toggles and regenerates in tick() — NOT reset().
 
         void reset() {
             stance = BlockingStance.NONE;
@@ -260,6 +268,10 @@ public class KatanaBlock {
             state.wasAttackingLastTick = false;
             if (state.wasBlockingLastTick) {
                 removeBlockingEffect(entity);
+            }
+            // Regenerate an NPC's guard pool while its guard is down (players regen via StanceManager).
+            if (!(entity instanceof Player) && state.guard < NPC_GUARD_MAX) {
+                state.guard = Math.min(NPC_GUARD_MAX, state.guard + NPC_GUARD_REGEN);
             }
         }
 
@@ -491,7 +503,9 @@ public class KatanaBlock {
     }
 
     private static boolean handleSuccessfulBlock(LivingEntity defender, BlockingState state, float damage) {
-        // Stance cost only for players
+        // Guard resource — unified for players and NPCs. Players spend Stance (StanceManager); NPCs
+        // spend their per-entity guard pool. Either way, when it empties the guard breaks: the blocker
+        // is stunned and the hit lands (return false).
         if (defender instanceof Player player) {
             boolean glassStance = PlayerDataProvider.getData(player).getPerkData().hasFlaw("glass_stance");
             float stanceCost = glassStance ? Float.MAX_VALUE : guardLossFor(defender, state);
@@ -505,6 +519,16 @@ public class KatanaBlock {
                         Component.literal("Stance broken!")
                                 .withStyle(style -> style.withColor(0xFF5555).withBold(true)),
                         true);
+                return false;
+            }
+        } else {
+            state.guard -= guardLossFor(defender, state);
+            if (state.guard <= 0f) {
+                state.guard = 0f;
+                defender.addEffect(new MobEffectInstance(
+                        NichirinEffectRegistry.stunned(), 60, 0, false, true, true));
+                state.blockStunUntil = 0; // let the break force the guard down this instant
+                stopBlocking(defender);
                 return false;
             }
         }

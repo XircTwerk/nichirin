@@ -4,7 +4,7 @@ import com.xirc.nichirin.common.attack.moves.cqc.destructive.CqcAnnihilationType
 import com.xirc.nichirin.common.attack.moves.cqc.destructive.CqcCrownSplitterAttack;
 import com.xirc.nichirin.common.attack.moves.cqc.destructive.CqcDonutAttack;
 import com.xirc.nichirin.common.attack.moves.cqc.destructive.CqcEightLayeredDemonCoreAttack;
-import com.xirc.nichirin.common.attack.moves.cqc.destructive.CqcExplosiveFlurryAttack;
+import com.xirc.nichirin.common.attack.moves.cqc.destructive.CqcFlyingPlanetThousandWheelsAttack;
 import com.xirc.nichirin.common.attack.moves.cqc.destructive.CqcSnapPunchAttack;
 import com.xirc.nichirin.common.attack.moves.demon.destructive.BlueSilverChaoticAfterglowAttack;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
@@ -91,12 +91,12 @@ public class AkazaMoveset extends AbstractMoveset {
                             .withDescription("Point-blank arm-thrust with huge single-target damage.")
                             .withAttack(CqcDonutAttack::new));
         } else {
-            // 2 — Explosive Flurry: three piercing forward shockwaves — his neutral zoning tool.
-            builder.withMove(new MoveBuilder("explosive_flurry", "Explosive Flurry")
-                            .withAnimation("explosive_flurry", 8)
+            // 2 — Flying Planet Thousand Wheels: upward zoning sweep that lifts the target.
+            builder.withMove(new MoveBuilder("flying_planet_thousand_wheels", "Flying Planet Thousand Wheels")
+                            .withAnimation("flying_planet_thousand_wheels", 8)
                             .withTiming(110, 3, 10)
-                            .withDescription("Flurry of kicks, each laying a piercing shockwave.")
-                            .withAttack(CqcExplosiveFlurryAttack::new))
+                            .withDescription("Upward launching sweep that sets up follow-ups.")
+                            .withAttack(CqcFlyingPlanetThousandWheelsAttack::new))
                     // 3 — Crown Splitter again as the neutral signature slot (strong burst).
                     .withMove(new MoveBuilder("crown_splitter_alt", "Crown Splitter")
                             .withAnimation("crown_splitter", 8)

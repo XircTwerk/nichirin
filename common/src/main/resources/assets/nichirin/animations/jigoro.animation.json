@@ -1,6 +1,14 @@
 {
   "format_version": "1.8.0",
   "animations": {
+    "block": {
+      "animation_length": 0.5,
+      "loop": true,
+      "bones": {
+        "rightArm": { "rotation": { "0.0": [-105, -14, 0] } },
+        "leftArm": { "rotation": { "0.0": [-100, 18, 0] } }
+      }
+    },
     "idle": {
       "animation_length": 2.0,
       "loop": true,

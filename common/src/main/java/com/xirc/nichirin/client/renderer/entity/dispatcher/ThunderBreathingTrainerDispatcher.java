@@ -7,6 +7,7 @@ import mod.azure.azurelib.common.animation.play_behavior.AzPlayBehaviors;
 public class ThunderBreathingTrainerDispatcher {
 
     private static final AzCommand IDLE                   = AzCommand.create("main_controller", "idle",                  AzPlayBehaviors.LOOP);
+    private static final AzCommand BLOCK                  = AzCommand.create("main_controller", "block",                 AzPlayBehaviors.LOOP);
     private static final AzCommand WALK                   = AzCommand.create("main_controller", "walk",                  AzPlayBehaviors.LOOP);
     private static final AzCommand SPRINT                 = AzCommand.create("main_controller", "sprint",                AzPlayBehaviors.LOOP);
     private static final AzCommand DASH                   = AzCommand.create("main_controller", "dash",                  AzPlayBehaviors.PLAY_ONCE);
@@ -44,6 +45,7 @@ public class ThunderBreathingTrainerDispatcher {
 
     public void playAnimation(String name) {
         switch (name) {
+            case "sword.block", "dual_block", "block" -> BLOCK.sendForEntity(trainer);
             case "thunderclap_flash"    -> thunderclapFlash();
             case "rice_spirit"          -> riceSpirit();
             case "thunder_swarm"        -> thunderSwarm();

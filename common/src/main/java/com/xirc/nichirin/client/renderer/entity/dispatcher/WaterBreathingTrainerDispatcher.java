@@ -7,6 +7,7 @@ import mod.azure.azurelib.common.animation.play_behavior.AzPlayBehaviors;
 public class WaterBreathingTrainerDispatcher {
 
     private static final AzCommand IDLE                = AzCommand.create("main_controller", "idle",               AzPlayBehaviors.LOOP);
+    private static final AzCommand BLOCK               = AzCommand.create("main_controller", "block",              AzPlayBehaviors.LOOP);
     private static final AzCommand WALK                = AzCommand.create("main_controller", "walk",               AzPlayBehaviors.LOOP);
     private static final AzCommand SPRINT              = AzCommand.create("main_controller", "sprint",             AzPlayBehaviors.LOOP);
     private static final AzCommand DASH                = AzCommand.create("main_controller", "dash",               AzPlayBehaviors.PLAY_ONCE);
@@ -42,6 +43,7 @@ public class WaterBreathingTrainerDispatcher {
 
     public void playAnimation(String name) {
         switch (name) {
+            case "sword.block", "dual_block", "block" -> BLOCK.sendForEntity(trainer);
             case "water_surface_slash"  -> waterSurfaceSlash();
             case "water_wheel"          -> waterWheel();
             case "flowing_dance"        -> flowingDance();
