@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.attack.moveset.breathing;
 
 import com.xirc.nichirin.common.attack.moves.breathing.beast.*;
+import com.xirc.nichirin.common.attack.ServerCooldownManager;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
 import com.xirc.nichirin.common.util.EntityResources;
@@ -14,11 +15,9 @@ import java.util.UUID;
 
 public class BeastBreathingMoveset extends AbstractMoveset {
 
-    private static final Map<UUID, Map<Integer, Long>> entityCooldowns = new HashMap<>();
     private static final Map<UUID, Boolean> executingMove = new HashMap<>();
 
     // Explosive Rush has its own per-player cooldown separate from the wheel-move map.
-    private static final Map<UUID, Long> explosiveRushCooldownEnd = new HashMap<>();
 
     public BeastBreathingMoveset() {
         super("beast_breathing", "Beast Breathing", MovesetType.BREATHING, createBuilder());
@@ -212,8 +211,8 @@ public class BeastBreathingMoveset extends AbstractMoveset {
         // Explosive Rush (crouch-right) has its own cooldown — gate before delegating so the
         // animation/stamina aren't consumed when blocked.
         if (isCrouching && !canUseExplosiveRush(entity)) {
-            Long end = explosiveRushCooldownEnd.get(entity.getUUID());
-            long remaining = end != null ? (end - entity.level().getGameTime()) / 20 : 0;
+            MoveConfiguration crouchCd = getCrouchRightClickConfiguration();
+            long remaining = crouchCd != null ? ServerCooldownManager.getRemaining(entity, crouchCd.getMoveId()) / 20 : 0;
             EntityResources.sendMessage(entity,
                     Component.literal("Explosive Rush on cooldown! " + remaining + "s remaining")
                             .withStyle(s -> s.withColor(0xFF5555)), true);
@@ -240,15 +239,9 @@ public class BeastBreathingMoveset extends AbstractMoveset {
         if (!canUseMove(entity, moveIndex)) {
             MoveConfiguration config = getMove(moveIndex);
             if (config != null) {
-                Map<Integer, Long> cooldowns = entityCooldowns.get(entity.getUUID());
-                if (cooldowns != null) {
-                    Long cd = cooldowns.get(moveIndex);
-                    if (cd != null) {
-                        long remaining = (cd - entity.level().getGameTime()) / 20;
-                        EntityResources.sendMessage(entity, Component.literal(config.getDisplayName() + " on cooldown! " + remaining + "s remaining")
-                                        .withStyle(s -> s.withColor(0xFF5555)), true);
-                    }
-                }
+                long remaining = ServerCooldownManager.getRemaining(entity, config.getMoveId()) / 20;
+                EntityResources.sendMessage(entity, Component.literal(config.getDisplayName() + " on cooldown! " + remaining + "s remaining")
+                                .withStyle(s -> s.withColor(0xFF5555)), true);
             }
             return;
         }
@@ -277,34 +270,28 @@ public class BeastBreathingMoveset extends AbstractMoveset {
     }
 
     private boolean canUseExplosiveRush(LivingEntity entity) {
-        Long end = explosiveRushCooldownEnd.get(entity.getUUID());
-        if (end == null) return true;
-        return entity.level().getGameTime() >= end;
+        MoveConfiguration config = getCrouchRightClickConfiguration();
+        if (config == null || config.getCooldownOrDefault(0) <= 0) return true;
+        return !ServerCooldownManager.isOnCooldown(entity, config.getMoveId());
     }
 
     private void setExplosiveRushCooldown(LivingEntity entity) {
         MoveConfiguration config = getCrouchRightClickConfiguration();
-        long cooldown = config != null ? config.getCooldownOrDefault(0) : 0;
-        if (cooldown > 0) {
-            explosiveRushCooldownEnd.put(entity.getUUID(), entity.level().getGameTime() + cooldown);
+        if (config != null && config.getCooldownOrDefault(0) > 0) {
+            ServerCooldownManager.set(entity, config.getMoveId(), config.getCooldownOrDefault(0));
         }
     }
 
     private boolean canUseMove(LivingEntity entity, int moveIndex) {
         MoveConfiguration config = getMove(moveIndex);
         if (config == null || config.getCooldownOrDefault(0) <= 0) return true;
-        Map<Integer, Long> cooldowns = entityCooldowns.get(entity.getUUID());
-        if (cooldowns == null) return true;
-        Long end = cooldowns.get(moveIndex);
-        if (end == null) return true;
-        return entity.level().getGameTime() >= end;
+        return !ServerCooldownManager.isOnCooldown(entity, config.getMoveId());
     }
 
     private void setMoveCooldown(LivingEntity entity, int moveIndex) {
         MoveConfiguration config = getMove(moveIndex);
         if (config == null || config.getCooldownOrDefault(0) <= 0) return;
-        long end = entity.level().getGameTime() + config.getCooldownOrDefault(0);
-        entityCooldowns.computeIfAbsent(entity.getUUID(), k -> new HashMap<>()).put(moveIndex, end);
+        ServerCooldownManager.set(entity, config.getMoveId(), config.getCooldownOrDefault(0));
     }
 
     @Override
@@ -318,13 +305,11 @@ public class BeastBreathingMoveset extends AbstractMoveset {
     }
 
     public static void resetCooldowns(LivingEntity entity) {
-        entityCooldowns.remove(entity.getUUID());
-        explosiveRushCooldownEnd.remove(entity.getUUID());
+        ServerCooldownManager.clear(entity.getUUID());
     }
 
     public static void cleanupPlayer(LivingEntity entity) {
-        entityCooldowns.remove(entity.getUUID());
+        ServerCooldownManager.clear(entity.getUUID());
         executingMove.remove(entity.getUUID());
-        explosiveRushCooldownEnd.remove(entity.getUUID());
     }
 }

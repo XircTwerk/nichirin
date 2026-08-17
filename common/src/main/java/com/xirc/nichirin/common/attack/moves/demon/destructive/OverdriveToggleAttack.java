@@ -36,7 +36,7 @@ public class OverdriveToggleAttack extends DestructiveDeathAttackBase {
         sp.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, BUFF_DURATION_TICKS, 0, false, false, true));
 
         sp.displayClientMessage(
-                Component.literal("Overdrive: ON (30s)")
+                Component.literal("Overdrive: ON (30s) — shockwaves auto-fire, pierce, and leech health")
                         .withStyle(s -> s.withColor(0xFF4444)), true);
         world.playSound(null, sp.getX(), sp.getY(), sp.getZ(),
                 SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 0.7f, 1.2f);

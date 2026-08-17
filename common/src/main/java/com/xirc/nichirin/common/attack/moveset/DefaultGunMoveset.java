@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.attack.moveset;
 
 import com.xirc.nichirin.common.attack.MoveExecutor;
+import com.xirc.nichirin.common.attack.ServerCooldownManager;
 import com.xirc.nichirin.common.attack.moves.gun.GunBashAttack;
 import com.xirc.nichirin.common.attack.moves.gun.GunGrabAttack;
 import com.xirc.nichirin.common.attack.moves.gun.GunShotAttack;
@@ -54,7 +55,6 @@ public class DefaultGunMoveset extends AbstractMoveset {
     private static final Map<UUID, Long> reloadUntil = new ConcurrentHashMap<>();
     // Players whose reload timer is running; the chamber fills when the timer completes.
     private static final java.util.Set<UUID> pendingReloads = ConcurrentHashMap.newKeySet();
-    private static final Map<UUID, Map<Integer, Long>> moveCooldowns = new HashMap<>();
 
     private DefaultGunMoveset() {
         super("default_gun", "Genya DB", MovesetType.NEUTRAL, createBuilder());
@@ -311,15 +311,13 @@ public class DefaultGunMoveset extends AbstractMoveset {
     }
 
     private boolean onCooldown(LivingEntity entity, int moveIndex) {
-        Map<Integer, Long> cds = moveCooldowns.get(entity.getUUID());
-        if (cds == null) return false;
-        Long end = cds.get(moveIndex);
-        return end != null && entity.level().getGameTime() < end;
+        MoveConfiguration config = getMove(moveIndex);
+        return config != null && ServerCooldownManager.isOnCooldown(entity, config.getMoveId());
     }
 
     private void setCooldown(LivingEntity entity, int moveIndex, int ticks) {
-        moveCooldowns.computeIfAbsent(entity.getUUID(), k -> new HashMap<>())
-                .put(moveIndex, entity.level().getGameTime() + ticks);
+        MoveConfiguration config = getMove(moveIndex);
+        if (config != null) ServerCooldownManager.set(entity, config.getMoveId(), ticks);
     }
 
     private void impactFx(LivingEntity target) {
@@ -356,6 +354,6 @@ public class DefaultGunMoveset extends AbstractMoveset {
     public static void cleanupPlayer(Player player) {
         UUID id = player.getUUID();
         reloadUntil.remove(id);
-        moveCooldowns.remove(id);
+        ServerCooldownManager.clear(id);
     }
 }

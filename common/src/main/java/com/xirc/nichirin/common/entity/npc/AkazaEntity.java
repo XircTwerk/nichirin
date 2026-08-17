@@ -51,6 +51,16 @@ public class AkazaEntity extends UpperMoonDemonEntity implements IDestructiveDea
     /** Enrage threshold — enters Overdrive once health drops below this fraction of max. */
     private static final float OVERDRIVE_HP_FRACTION = 0.40f;
 
+    // --- Overdrive identity (the boss enrage): passive regen + "reads your assault" resistance. ---
+    private static final int REGEN_DELAY_TICKS = 60;      // pressure-free window before regen kicks in
+    private static final int REGEN_INTERVAL_TICKS = 20;   // heal cadence once regenerating
+    private static final float REGEN_AMOUNT = 2.0f;       // ~1 heart/sec of clawed-back health
+    private static final int ADAPT_HIT_WINDOW = 40;       // rolling window for detecting a flurry
+    private static final int ADAPT_HIT_THRESHOLD = 5;     // hits within the window that trigger a read
+    private static final int ADAPT_DURATION = 50;         // how long the braced resistance lasts
+    private static final int ADAPT_COOLDOWN = 120;        // lockout so it can never be permanent
+    private static final float ADAPT_DAMAGE_RESIST = 0.45f;
+
     public final AkazaDispatcher dispatcher;
     public final MoveAnalysis moveAnalysis;
 
@@ -63,6 +73,13 @@ public class AkazaEntity extends UpperMoonDemonEntity implements IDestructiveDea
     private int serverAnimTicksRemaining = 0;
     private boolean finalAfterglowTriggered = false;
     private boolean finalAfterglowActive = false;
+
+    // Overdrive regen/adaptation bookkeeping (server-side).
+    private int lastHitTick = -1000;
+    private int recentHitWindowStart = 0;
+    private int recentHitCount = 0;
+    private int adaptUntilTick = 0;
+    private int adaptCooldownUntilTick = 0;
 
     public AkazaEntity(EntityType<? extends DemonNPCEntity> entityType, Level level) {
         super(entityType, level);
@@ -266,6 +283,13 @@ public class AkazaEntity extends UpperMoonDemonEntity implements IDestructiveDea
             addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 60, 0, false, false, true));
             addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 60, 0, false, false, true));
         }
+        // Overdrive regeneration: the moment the player lets up, Akaza knits himself back together —
+        // you have to keep the offense ON him or the enrage phase drags on.
+        if (tickCount - lastHitTick >= REGEN_DELAY_TICKS
+                && getHealth() < getMaxHealth()
+                && tickCount % REGEN_INTERVAL_TICKS == 0) {
+            heal(REGEN_AMOUNT);
+        }
     }
 
     private void enterOverdrive() {
@@ -282,6 +306,13 @@ public class AkazaEntity extends UpperMoonDemonEntity implements IDestructiveDea
     @Override
     public boolean hurt(DamageSource source, float amount) {
         if (finalAfterglowActive) return false;
+
+        // Overdrive adaptation: once he's "read" a sustained assault, he braces and shrugs part of it
+        // off. Applied before the death-defiance check so a braced blow can be survived normally.
+        if (!level().isClientSide && isOverdrive() && tickCount < adaptUntilTick) {
+            amount *= (1.0f - ADAPT_DAMAGE_RESIST);
+        }
+
         if (!level().isClientSide
                 && !finalAfterglowTriggered
                 && amount >= getHealth()) {
@@ -292,7 +323,33 @@ public class AkazaEntity extends UpperMoonDemonEntity implements IDestructiveDea
                 return false;
             }
         }
-        return super.hurt(source, amount);
+        boolean took = super.hurt(source, amount);
+        if (took && !level().isClientSide && isOverdrive()) {
+            registerOverdriveHit();
+        }
+        return took;
+    }
+
+    /**
+     * Tracks incoming hits during Overdrive. A fast enough flurry means Akaza "reads the rhythm" and
+     * braces — a short window of heavy damage resistance, then a lockout so it never becomes permanent.
+     * The player answer is to vary tempo and pick their moments rather than mash.
+     */
+    private void registerOverdriveHit() {
+        lastHitTick = tickCount;
+        if (tickCount - recentHitWindowStart > ADAPT_HIT_WINDOW) {
+            recentHitWindowStart = tickCount;
+            recentHitCount = 0;
+        }
+        recentHitCount++;
+        if (recentHitCount >= ADAPT_HIT_THRESHOLD && tickCount >= adaptCooldownUntilTick) {
+            adaptUntilTick = tickCount + ADAPT_DURATION;
+            adaptCooldownUntilTick = tickCount + ADAPT_DURATION + ADAPT_COOLDOWN;
+            recentHitCount = 0;
+            level().playSound(null, getX(), getY(), getZ(),
+                    SoundEvents.EVOKER_CAST_SPELL, SoundSource.HOSTILE, 1.2f, 0.6f);
+            sayNearby("I've read your rhythm.");
+        }
     }
 
     private void beginFinalAfterglow() {

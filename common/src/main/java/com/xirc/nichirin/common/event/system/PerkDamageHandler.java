@@ -1,5 +1,6 @@
 package com.xirc.nichirin.common.event.system;
 
+import com.xirc.nichirin.common.attack.moves.demon.destructive.DestructiveDeathState;
 import com.xirc.nichirin.common.system.perks.PerkManager;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.EntityEvent;
@@ -21,6 +22,9 @@ public class PerkDamageHandler {
 
     /** Guards against recursive re-entry when we re-apply modified damage. */
     private static final Set<UUID> inPerkDamageCalc = new HashSet<>();
+
+    /** Destructive Death Overdrive is a berserker glass-cannon: +30% incoming damage while it's on. */
+    private static final float OVERDRIVE_VULNERABILITY = 1.30f;
 
     public static void register() {
         EntityEvent.LIVING_HURT.register(PerkDamageHandler::onEntityHurt);
@@ -57,6 +61,11 @@ public class PerkDamageHandler {
 
             float inMult = PerkManager.getIncomingDamageMultiplier(defender);
             inMult *= PerkManager.getIronWillMultiplier(defender, selfHpFrac);
+            // Berserker cost: you leech health on hits in Overdrive, but you also take extra damage —
+            // aggression has real risk instead of being free power.
+            if (DestructiveDeathState.isOverdriveEnabled(defender.getUUID(), defender.level().getGameTime())) {
+                inMult *= OVERDRIVE_VULNERABILITY;
+            }
 
             // Unbreakable: prevent fatal hit
             boolean wouldKill = defender.getHealth() - amount * inMult <= 0f;

@@ -49,20 +49,16 @@ public class DestructiveDeathMoveset extends AbstractMoveset {
                         })
                 )
 
-                // Wheel 1 — Compass Needle (crouch while activating to enter Compass Overdrive)
+                // Wheel 1 — Compass Needle (the single compass move; no crouch overdrive variant)
                 .withMove(new MoveBuilder("compass_needle", "Compass Needle")
                         .withAnimation("nichirin:compass_needle", 12)
                         .withTiming(0, 0, CompassNeedleAttack.MAX_CHARGE_TICKS + 2)
                         .withRange(20f)
-                        .withDescription("Hold to charge, then release. Longer charges extend Compass beyond its 6-second base duration. Sense fighting spirits through walls, predict movement, rapidly dodge, and gain adaptive precision. Selfless State cannot be sensed. Crouch to enter Compass Overdrive.")
+                        .withDescription("Hold to charge, then release. Longer charges extend Compass beyond its 6-second base duration. Sense fighting spirits through walls, predict movement, rapidly dodge, and gain adaptive precision. Selfless State cannot be sensed.")
                         .withAction(entity -> {
-                            boolean crouching = entity instanceof Player p && p.isCrouching();
-                            CompassNeedleAttack attack = crouching
-                                    ? new CompassOverdriveAttack()
-                                    : new CompassNeedleAttack();
+                            CompassNeedleAttack attack = new CompassNeedleAttack();
                             attack.configure(captureWheelMoveFor("destructive_death", 1));
-                            MoveExecutor.executeAttack(entity, attack, "destructive_death",
-                                    crouching ? "compass_overdrive" : "compass_needle");
+                            MoveExecutor.executeAttack(entity, attack, "destructive_death", "compass_needle");
                         })
                 )
 
@@ -70,7 +66,7 @@ public class DestructiveDeathMoveset extends AbstractMoveset {
                 .withMove(new MoveBuilder("overdrive_toggle", "Overdrive")
                         .withAnimation("nichirin:snap_punch", 4)
                         .withTiming(0, 1, 3)
-                        .withDescription("Toggle: Strength I + Speed I, and all shockwaves render red and hit harder.")
+                        .withDescription("Toggle a berserker state: Strength I + Speed I, every CQC hit auto-fires a red shockwave that pierces and hits harder (no Shockwave Toggle needed), and each hit leeches health.")
                         .withAction(entity -> {
                             OverdriveToggleAttack attack = new OverdriveToggleAttack();
                             attack.configure(captureWheelMoveFor("destructive_death", 2));

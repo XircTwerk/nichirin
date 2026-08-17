@@ -19,19 +19,28 @@ public final class DestructiveDeathCqcHook {
 
     private DestructiveDeathCqcHook() {}
 
+    /** Player Overdrive berserker sustain: health leeched per CQC hit (1.0f = half a heart). */
+    private static final float OVERDRIVE_LIFESTEAL = 1.0f;
+
     public static void onCqcHit(LivingEntity attacker, LivingEntity target, Level world) {
         if (world.isClientSide) return;
 
         boolean shockwaveEnabled;
         boolean overdrive;
         if (attacker instanceof IDestructiveDeathHost host) {
-            // NPC host (Akaza) — state lives on the entity.
+            // NPC host (Akaza) — state lives on the entity. Akaza's Overdrive is its own boss enrage
+            // (regen + adaptation, handled on the entity), so it keeps the plain toggle-gated shockwave.
             shockwaveEnabled = host.ddShockwaveEnabled();
             overdrive = host.ddOverdriveActive();
         } else if (attacker instanceof ServerPlayer sp) {
             if (!"destructive_death".equals(MovesetHelper.getDemonMovesetId(sp))) return;
-            shockwaveEnabled = DestructiveDeathState.isShockwaveEnabled(sp.getUUID());
             overdrive = DestructiveDeathState.isOverdriveEnabled(sp.getUUID(), world.getGameTime());
+            // Player Overdrive is a berserker state: shockwaves fire on EVERY CQC hit regardless of the
+            // Shockwave Toggle, and each hit leeches a sliver of health to reward staying aggressive.
+            shockwaveEnabled = overdrive || DestructiveDeathState.isShockwaveEnabled(sp.getUUID());
+            if (overdrive && attacker.getHealth() < attacker.getMaxHealth()) {
+                attacker.heal(OVERDRIVE_LIFESTEAL);
+            }
         } else {
             return;
         }
@@ -45,11 +54,12 @@ public final class DestructiveDeathCqcHook {
                 .owner(attacker)
                 .origin(origin)
                 .direction(direction)
-                .damage(2.0f)            // chip damage on top of the CQC strike itself
-                .speed(1.8f)
+                // Overdrive shockwaves hit harder and punch through a couple of targets so they chain.
+                .damage(overdrive ? 3.5f : 2.0f)
+                .speed(overdrive ? 2.1f : 1.8f)
                 .lifeTicks(18)
-                .hitboxRadius(0.95f)
-                .pierces(0)
+                .hitboxRadius(overdrive ? 1.1f : 0.95f)
+                .pierces(overdrive ? 2 : 0)
                 .destructiveDeathCqcDamage()
                 .red(overdrive)
                 .spawn(NichirinEntityRegistry.SHOCKWAVE.get(), world);

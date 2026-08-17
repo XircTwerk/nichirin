@@ -25,6 +25,7 @@
     "client.ShaderInstanceMixin",
     "client.SoundEngineMixin",
     "client.GunEquipAnimMixin",
+    "client.FirstPersonFistMixin",
     "client.SwingSuppressionMixin",
     "client.HangingSignEditScreenMixin",
     "client.SheetsMixin"

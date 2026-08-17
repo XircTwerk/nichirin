@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.attack.moveset.breathing;
 
 import com.xirc.nichirin.common.attack.moves.breathing.flame.*;
+import com.xirc.nichirin.common.attack.ServerCooldownManager;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.network.util.CooldownDisplayPacket;
 import com.xirc.nichirin.common.util.EntityResources;
@@ -14,7 +15,6 @@ import java.util.UUID;
 
 public class FlameBreathingMoveset extends AbstractMoveset {
 
-    private static final Map<UUID, Map<Integer, Long>> entityCooldowns = new HashMap<>();
     private static final Map<UUID, Boolean> executingMove = new HashMap<>();
 
     public FlameBreathingMoveset() {
@@ -153,16 +153,10 @@ public class FlameBreathingMoveset extends AbstractMoveset {
         if (!canUseMove(entity, moveIndex)) {
             MoveConfiguration config = getMove(moveIndex);
             if (config != null) {
-                Map<Integer, Long> cooldowns = entityCooldowns.get(entity.getUUID());
-                if (cooldowns != null) {
-                    Long cooldownEnd = cooldowns.get(moveIndex);
-                    if (cooldownEnd != null) {
-                        long remaining = (cooldownEnd - entity.level().getGameTime()) / 20;
-                        EntityResources.sendMessage(entity,
-                                Component.literal(config.getDisplayName() + " on cooldown! " + remaining + "s remaining")
-                                        .withStyle(style -> style.withColor(0xFF5555)), true);
-                    }
-                }
+                long remaining = ServerCooldownManager.getRemaining(entity, config.getMoveId()) / 20;
+                EntityResources.sendMessage(entity,
+                        Component.literal(config.getDisplayName() + " on cooldown! " + remaining + "s remaining")
+                                .withStyle(style -> style.withColor(0xFF5555)), true);
             }
             return;
         }
@@ -197,23 +191,13 @@ public class FlameBreathingMoveset extends AbstractMoveset {
     private boolean canUseMove(LivingEntity entity, int moveIndex) {
         MoveConfiguration config = getMove(moveIndex);
         if (config == null || config.getCooldownOrDefault(0) <= 0) return true;
-
-        Map<Integer, Long> cooldowns = entityCooldowns.get(entity.getUUID());
-        if (cooldowns == null) return true;
-
-        Long cooldownEnd = cooldowns.get(moveIndex);
-        if (cooldownEnd == null) return true;
-
-        return entity.level().getGameTime() >= cooldownEnd;
+        return !ServerCooldownManager.isOnCooldown(entity, config.getMoveId());
     }
 
     private void setMoveCooldown(LivingEntity entity, int moveIndex) {
         MoveConfiguration config = getMove(moveIndex);
         if (config == null || config.getCooldownOrDefault(0) <= 0) return;
-
-        long cooldownEnd = entity.level().getGameTime() + config.getCooldownOrDefault(0);
-        entityCooldowns.computeIfAbsent(entity.getUUID(), k -> new HashMap<>())
-                .put(moveIndex, cooldownEnd);
+        ServerCooldownManager.set(entity, config.getMoveId(), config.getCooldownOrDefault(0));
     }
 
     @Override
@@ -235,11 +219,11 @@ public class FlameBreathingMoveset extends AbstractMoveset {
     public void onMovePerformed(LivingEntity entity, int moveIndex, boolean isCrouching) {}
 
     public static void resetCooldowns(LivingEntity entity) {
-        entityCooldowns.remove(entity.getUUID());
+        ServerCooldownManager.clear(entity.getUUID());
     }
 
     public static void cleanupPlayer(LivingEntity entity) {
-        entityCooldowns.remove(entity.getUUID());
+        ServerCooldownManager.clear(entity.getUUID());
         executingMove.remove(entity.getUUID());
     }
 }

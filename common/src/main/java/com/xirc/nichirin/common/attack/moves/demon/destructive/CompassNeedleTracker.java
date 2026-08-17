@@ -2,7 +2,6 @@ package com.xirc.nichirin.common.attack.moves.demon.destructive;
 
 import com.xirc.nichirin.common.aura.AuraAudience;
 import com.xirc.nichirin.common.attack.MoveExecutor;
-import com.xirc.nichirin.common.data.MovesetHelper;
 import com.xirc.nichirin.common.network.s2c.TriggerShaderPacket;
 import com.xirc.nichirin.common.network.s2c.PlayerAnimationPacket;
 import com.xirc.nichirin.common.outline.OutlineInstance;
@@ -38,9 +37,7 @@ public final class CompassNeedleTracker {
     private static final String SHADER = "com.xirc.nichirin.client.shader.CompassNeedleShaderEffect";
     private static final double TRACK_RADIUS = 20.0;
     private static final int SCAN_INTERVAL = 2;
-    private static final int PREDICTION_INTERVAL = 10;
     private static final int ARROW_INTERVAL = 4;
-    private static final int MAX_PREDICTIONS = 8;
 
     private static final Map<UUID, Set<UUID>> TRACKED = new ConcurrentHashMap<>();
     private static final Map<UUID, Session> SESSIONS = new ConcurrentHashMap<>();
@@ -74,7 +71,6 @@ public final class CompassNeedleTracker {
 
             long age = owner.level().getGameTime() - session.startTick;
             if (age % SCAN_INTERVAL == 0) scan(owner, session);
-            if (age % PREDICTION_INTERVAL == 0) sendPredictions(owner, session);
             if (age % ARROW_INTERVAL == 0) pointAtPriorityTarget(owner, session);
         }
     }
@@ -114,22 +110,6 @@ public final class CompassNeedleTracker {
             }
         }
         TRACKED.put(owner.getUUID(), Set.copyOf(present));
-    }
-
-    private static void sendPredictions(ServerPlayer owner, Session session) {
-        session.targets.values().stream()
-                .map(visual -> visual.entity)
-                .filter(LivingEntity::isAlive)
-                .sorted(Comparator.comparingDouble(owner::distanceToSqr))
-                .limit(MAX_PREDICTIONS)
-                .forEach(target -> {
-                    Vec3 from = target.position();
-                    Vec3 velocity = target.getDeltaMovement();
-                    Vec3 to = from.add(velocity.scale(10.0));
-                    if (to.distanceToSqr(from) < 0.0025) to = from;
-                    NichirinPacketRegistry.sendAfterimageTo(owner, target, to, to,
-                            12, 1, 0.34f);
-                });
     }
 
     private static void pointAtPriorityTarget(ServerPlayer owner, Session session) {
@@ -200,16 +180,14 @@ public final class CompassNeedleTracker {
     }
 
     public static void finish(ServerPlayer owner) {
+        // cancel() broadcasts the empty animation, which clears the looping compass idle pose. We do
+        // NOT re-broadcast compass_needle_idle here: that used to relax into a perpetual idle loop that
+        // nothing ever stopped, so it kept playing forever after Compass ended (and through death) until
+        // some other player animation happened to replace it.
         cancel(owner);
         DestructiveDeathState.deactivateCompass(owner);
         DestructiveDeathState.startCompassCooldown(owner, CompassNeedleAttack.COOLDOWN_TICKS);
         MoveExecutor.sendCooldownDisplay(owner, "Compass Needle", CompassNeedleAttack.COOLDOWN_TICKS);
-        // Compass is done tracking, but if the player still has Destructive Death equipped they're
-        // "still holding it" — relax into the looping idle compass pose instead of dropping the stance.
-        if ("destructive_death".equals(MovesetHelper.getDemonMovesetId(owner))) {
-            NichirinPacketRegistry.broadcastPlayerAnimation(owner,
-                    new PlayerAnimationPacket(owner.getId(), "compass_needle_idle"));
-        }
     }
 
     public static void cancel(ServerPlayer owner) {

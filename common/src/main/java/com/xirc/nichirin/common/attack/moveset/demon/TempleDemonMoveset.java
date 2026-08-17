@@ -1,6 +1,7 @@
 package com.xirc.nichirin.common.attack.moveset.demon;
 
 import com.xirc.nichirin.common.attack.MoveExecutor;
+import com.xirc.nichirin.common.attack.ServerCooldownManager;
 import com.xirc.nichirin.common.attack.moves.demon.basic.DemonBiteAttack;
 import com.xirc.nichirin.common.attack.moves.demon.basic.DemonDashStrikeAttack;
 import com.xirc.nichirin.common.attack.moves.demon.basic.DemonGrabAttack;
@@ -83,7 +84,6 @@ public class TempleDemonMoveset extends AbstractMoveset {
             .withDescription("Stomp down on enemies after high jumping")
             .build();
 
-    private static final Map<UUID, Map<Integer, Long>> entityCooldowns = new HashMap<>();
     private static final Map<UUID, Boolean> executingHighJump = new HashMap<>();
     private static final Map<UUID, SlashComboState> entitySlashStates = new HashMap<>();
     private static final Map<UUID, Boolean> canStompAfterHighJump = new HashMap<>();
@@ -327,17 +327,13 @@ public class TempleDemonMoveset extends AbstractMoveset {
 
 
     private void showCooldownMessage(Player player, int moveIndex, String moveName) {
-        Map<Integer, Long> cooldowns = entityCooldowns.get(player.getUUID());
-        if (cooldowns != null) {
-            Long cooldownEnd = cooldowns.get(moveIndex);
-            if (cooldownEnd != null) {
-                long remaining = cooldownEnd - player.level().getGameTime();
-                player.displayClientMessage(
-                        Component.literal(moveName + " on cooldown! " + (remaining / 20.0f) + "s remaining")
-                                .withStyle(style -> style.withColor(0xFF5555)),
-                        true
-                );
-            }
+        long remaining = ServerCooldownManager.getRemaining(player, cooldownKey(player, moveIndex));
+        if (remaining > 0) {
+            player.displayClientMessage(
+                    Component.literal(moveName + " on cooldown! " + (remaining / 20.0f) + "s remaining")
+                            .withStyle(style -> style.withColor(0xFF5555)),
+                    true
+            );
         }
     }
 
@@ -367,19 +363,31 @@ public class TempleDemonMoveset extends AbstractMoveset {
         return ResourceLocation.fromNamespaceAndPath("nichirin", "textures/icons/default_demon/" + moveId + ".png");
     }
 
+    /**
+     * Maps this moveset's move slots to a stable cooldown key in the shared {@link ServerCooldownManager}.
+     * The special negative slots map to their fixed configs; positive slots use the wheel move's id.
+     * Slot -1 (the two-stage slash) keys off SLASH_1 so both stages share one cooldown, as before.
+     */
+    private String cooldownKey(LivingEntity entity, int moveIndex) {
+        return switch (moveIndex) {
+            case -1 -> SLASH_1_CONFIG.getMoveId();
+            case -2 -> HIGH_JUMP_CONFIG.getMoveId();
+            case -3 -> GUT_PUNCH_CONFIG.getMoveId();
+            case -4 -> STOMP_CONFIG.getMoveId();
+            default -> {
+                MoveConfiguration config = getMove(moveIndex);
+                yield config != null ? config.getMoveId() : "temple_demon_slot_" + moveIndex;
+            }
+        };
+    }
+
     private void setMoveCooldown(LivingEntity entity, int moveIndex, int cooldownTicks) {
         if (cooldownTicks <= 0) return;
-        long cooldownEnd = entity.level().getGameTime() + cooldownTicks;
-        entityCooldowns.computeIfAbsent(entity.getUUID(), k -> new HashMap<>())
-                .put(moveIndex, cooldownEnd);
+        ServerCooldownManager.set(entity, cooldownKey(entity, moveIndex), cooldownTicks);
     }
 
     private boolean canUseMove(LivingEntity entity, int moveIndex) {
-        Map<Integer, Long> cooldowns = entityCooldowns.get(entity.getUUID());
-        if (cooldowns == null) return true;
-        Long cooldownEnd = cooldowns.get(moveIndex);
-        if (cooldownEnd == null) return true;
-        return entity.level().getGameTime() >= cooldownEnd;
+        return !ServerCooldownManager.isOnCooldown(entity, cooldownKey(entity, moveIndex));
     }
 
     @Override
@@ -435,12 +443,12 @@ public class TempleDemonMoveset extends AbstractMoveset {
     }
 
     public static void resetCooldowns(LivingEntity entity) {
-        entityCooldowns.remove(entity.getUUID());
+        ServerCooldownManager.clear(entity.getUUID());
     }
 
     public static void cleanupEntity(LivingEntity entity) {
         UUID entityUUID = entity.getUUID();
-        entityCooldowns.remove(entityUUID);
+        ServerCooldownManager.clear(entityUUID);
         entitySlashStates.remove(entityUUID);
         canStompAfterHighJump.remove(entityUUID);
         hasUsedHighJumpInAir.remove(entityUUID);

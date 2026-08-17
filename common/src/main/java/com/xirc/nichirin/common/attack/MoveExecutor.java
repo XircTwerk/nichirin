@@ -242,15 +242,20 @@ public class MoveExecutor {
             startAttack(entity, attack);
 
             // Record + display the cooldown right after starting. This must NOT be gated on
-            // isAttackActive() afterwards: katana attacks (AbstractKatanaAttack) don't report active the
-            // same way as AbstractAttack, so their cooldown was never recorded — which is exactly why the
-            // katana ignored cooldowns while the client still showed a bar.
-            if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer && cooldown > 0) {
-                ServerCooldownManager.set(entity, moveId, cooldown);
+            // isAttackActive() afterwards: some attacks don't report active the same way as AbstractAttack.
+            //
+            // The value MUST come from the move config when we have one. Every katana attack extends
+            // AbstractBreathingAttack (via KatanaAttackBase), which exposes no getCooldown(), so the
+            // reflected `cooldown` arg is 0 — meaning the katana never recorded, and therefore never
+            // enforced, its cooldown even though the executeMove gate was checking for it. The config is
+            // authoritative and carries the same move id the gate keys on.
+            int effectiveCooldown = config != null ? config.getCooldownOrDefault(cooldown) : cooldown;
+            if (!entity.level().isClientSide && entity instanceof ServerPlayer serverPlayer && effectiveCooldown > 0) {
+                ServerCooldownManager.set(entity, moveId, effectiveCooldown);
                 if (movesetId != null && config != null) {
                     CooldownDisplayPacket.sendToClient(serverPlayer, movesetId, config);
                 } else {
-                    sendCooldownToClient(serverPlayer, displayName, cooldown);
+                    sendCooldownToClient(serverPlayer, displayName, effectiveCooldown);
                 }
             }
 

@@ -61,6 +61,13 @@ public final class NichirinAnimations {
                 player -> {
                     PlayerAnimationController controller =
                             new PlayerAnimationController(player, (controller_, state, setter) -> {
+                                // Death stops every persistent pose. Without this the Compass idle (and
+                                // any other looping base) kept playing on the corpse until a different
+                                // animation replaced it.
+                                if (player.isDeadOrDying()) {
+                                    LOOPING_ANIMATIONS.remove(player);
+                                    return PlayState.STOP;
+                                }
                                 // While the gun is held, keep the looping idle (the raised hold pose)
                                 // running as the base animation. It keeps the controller active so PAL
                                 // renders the player body — and therefore the posed right arm — in first
