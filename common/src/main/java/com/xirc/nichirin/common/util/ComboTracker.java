@@ -41,7 +41,8 @@ public class ComboTracker {
     private static final Map<UUID, Long> playerAttackSequences = new HashMap<>();
     private static final Map<UUID, AttackHitContext> lastAttackHits = new HashMap<>();
 
-    private static final float COMBO_ATTACK_BONUS_PER_COUNT = 0.15f;
+    /** Falloff never drives a hit below this fraction of its base damage (so combos can't deal ~0). */
+    private static final float COMBO_FALLOFF_FLOOR = 0.25f;
 
     private record AttackStyleContext(long sequence, String moveId, boolean awarded) {}
     private record AttackHitContext(long sequence, UUID victimId, int comboCount, boolean comboEligible) {}
@@ -72,13 +73,28 @@ public class ComboTracker {
     /**
      * Damage and stun multiplier applied once when an attack starts.
      * Multi-hit attacks keep this single multiplier for their whole lifetime.
+     *
+     * <p>Controlled by the {@code combo_damage_mode} config: flat (no scaling), falloff (each combo hit
+     * deals progressively less, down to {@link #COMBO_FALLOFF_FLOOR}), or rampup (each hit deals more).
+     * The per-count magnitude is {@code combo_damage_rate_percent}.</p>
      */
     public static float getAttackComboMultiplier(Player player) {
         if (!(player instanceof IComboCounter comboCounter)) {
             return 1.0f;
         }
         int comboCount = Math.max(0, comboCounter.nichirin$getComboCount());
-        return 1.0f + comboCount * COMBO_ATTACK_BONUS_PER_COUNT;
+        if (comboCount <= 0) {
+            return 1.0f;
+        }
+        int mode = com.xirc.nichirin.common.config.NichirinConfig.getInt(
+                com.xirc.nichirin.common.config.NichirinConfig.COMBO_DAMAGE_MODE);
+        float rate = com.xirc.nichirin.common.config.NichirinConfig.getInt(
+                com.xirc.nichirin.common.config.NichirinConfig.COMBO_DAMAGE_RATE_PERCENT) / 100.0f;
+        return switch (mode) {
+            case 1 -> Math.max(COMBO_FALLOFF_FLOOR, 1.0f - comboCount * rate); // falloff
+            case 2 -> 1.0f + comboCount * rate;                                // rampup
+            default -> 1.0f;                                                   // flat rate
+        };
     }
 
     public static int scaleHitStunForCombo(Player player, int baseHitStun) {

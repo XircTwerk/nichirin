@@ -2,6 +2,7 @@ package com.xirc.nichirin.registry;
 
 import com.xirc.nichirin.BreathOfNichirin;
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
+import com.xirc.nichirin.common.attack.moveset.ChainBallAxeMoveset;
 import com.xirc.nichirin.common.attack.moveset.CqcMoveset;
 import com.xirc.nichirin.common.attack.moveset.DualKatanaMoveset;
 import com.xirc.nichirin.common.attack.moveset.breathing.*;
@@ -141,6 +142,7 @@ public interface NichirinMovesetRegistry {
         registerMoveset(AkazaMoveset.ID_OVERDRIVE, () -> new AkazaMoveset(true));
         registerMoveset(CqcMoveset.ID, CqcMoveset::new);
         registerMoveset(DualKatanaMoveset.ID, () -> DualKatanaMoveset.INSTANCE);
+        registerMoveset(ChainBallAxeMoveset.ID, ChainBallAxeMoveset::new);
 
     }
 

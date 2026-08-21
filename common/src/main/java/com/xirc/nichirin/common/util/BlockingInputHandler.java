@@ -99,6 +99,8 @@ public class BlockingInputHandler {
     private static boolean wasAnimPlayingLastTick = false;
 
     private static boolean canBlock(Player player) {
+        // The Gyomei ball-and-chain can't guard (for now) — RMB is its attack, not a block.
+        if (com.xirc.nichirin.client.gyomei.ClientGyomeiWeaponManager.isEnabled()) return false;
         if (player.getMainHandItem().getItem() instanceof Katana) return true;
         if (player.getOffhandItem().getItem() instanceof Katana) return true;
         return player.getMainHandItem().isEmpty()

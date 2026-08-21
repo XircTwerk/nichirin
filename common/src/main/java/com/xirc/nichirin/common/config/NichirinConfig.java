@@ -14,6 +14,8 @@ public class NichirinConfig {
     // Keys (string constants so the command can reference them)
 
     public static final String PARRY_WINDOW_TICKS      = "parry_window_ticks";
+    public static final String COMBO_DAMAGE_MODE       = "combo_damage_mode";
+    public static final String COMBO_DAMAGE_RATE_PERCENT = "combo_damage_rate_percent";
     public static final String STAMINA_REGEN_RATE      = "stamina_regen_rate";
     public static final String FIRE_DAMAGE_INTERRUPTS_MOVES = "fire_damage_interrupts_moves";
     public static final String FALL_DAMAGE_INTERRUPTS_MOVES = "fall_damage_interrupts_moves";
@@ -31,6 +33,8 @@ public class NichirinConfig {
 
     static {
         register(PARRY_WINDOW_TICKS,      10,   1,  30, "How many ticks after raising block count as a parry window");
+        register(COMBO_DAMAGE_MODE,        2,   0,   2, "Combo damage scaling: 0 = flat rate, 1 = falloff (less per hit), 2 = rampup (more per hit)");
+        register(COMBO_DAMAGE_RATE_PERCENT, 15,  0, 100, "Percent damage/stun change per combo count for falloff/rampup modes");
         register(STAMINA_REGEN_RATE,       8,   1,  20, "Stamina points regenerated per second");
         registerBool(FIRE_DAMAGE_INTERRUPTS_MOVES, true, "Whether fire damage should end moves early");
         registerBool(FALL_DAMAGE_INTERRUPTS_MOVES, true, "Whether fall damage should end moves early");
@@ -61,6 +65,8 @@ public class NichirinConfig {
             NichirinModConfig cfg = NichirinModConfig.get();
             Integer clothValue = switch (key) {
                 case PARRY_WINDOW_TICKS      -> cfg.combat.parryWindowTicks;
+                case COMBO_DAMAGE_MODE       -> cfg.combat.comboDamageMode;
+                case COMBO_DAMAGE_RATE_PERCENT -> cfg.combat.comboDamageRatePercent;
                 case STAMINA_REGEN_RATE      -> cfg.stamina.staminaRegenRate;
                 case FIRE_DAMAGE_INTERRUPTS_MOVES -> cfg.moveInterrupts.fireDamageInterruptsMoves ? 1 : 0;
                 case FALL_DAMAGE_INTERRUPTS_MOVES -> cfg.moveInterrupts.fallDamageInterruptsMoves ? 1 : 0;
@@ -160,6 +166,8 @@ public class NichirinConfig {
             NichirinModConfig cfg = NichirinServerConfig.get();
             switch (key) {
                 case PARRY_WINDOW_TICKS -> cfg.combat.parryWindowTicks = value;
+                case COMBO_DAMAGE_MODE -> cfg.combat.comboDamageMode = value;
+                case COMBO_DAMAGE_RATE_PERCENT -> cfg.combat.comboDamageRatePercent = value;
                 case STAMINA_REGEN_RATE -> cfg.stamina.staminaRegenRate = value;
                 case FIRE_DAMAGE_INTERRUPTS_MOVES -> cfg.moveInterrupts.fireDamageInterruptsMoves = value != 0;
                 case FALL_DAMAGE_INTERRUPTS_MOVES -> cfg.moveInterrupts.fallDamageInterruptsMoves = value != 0;
@@ -183,6 +191,8 @@ public class NichirinConfig {
         try {
             NichirinModConfig cfg = NichirinModConfig.get();
             syncEntry(PARRY_WINDOW_TICKS, cfg.combat.parryWindowTicks);
+            syncEntry(COMBO_DAMAGE_MODE, cfg.combat.comboDamageMode);
+            syncEntry(COMBO_DAMAGE_RATE_PERCENT, cfg.combat.comboDamageRatePercent);
             syncEntry(STAMINA_REGEN_RATE, cfg.stamina.staminaRegenRate);
             syncEntry(FIRE_DAMAGE_INTERRUPTS_MOVES, cfg.moveInterrupts.fireDamageInterruptsMoves ? 1 : 0);
             syncEntry(FALL_DAMAGE_INTERRUPTS_MOVES, cfg.moveInterrupts.fallDamageInterruptsMoves ? 1 : 0);

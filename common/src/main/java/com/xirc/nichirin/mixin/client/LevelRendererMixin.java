@@ -12,6 +12,8 @@ import com.xirc.nichirin.client.renderer.effects.CloneRingRenderer;
 import com.xirc.nichirin.client.renderer.effects.MistCloneRenderer;
 import com.xirc.nichirin.client.shader.DeadCalmShaderEffect;
 import com.xirc.nichirin.client.shader.NichirinShaderManager;
+import com.xirc.nichirin.client.gyomei.GyomeiChainRenderer;
+import com.xirc.nichirin.client.gyomei.GyomeiGeoRenderer;
 import com.xirc.nichirin.client.vfx.FistAuraRenderer;
 import com.xirc.nichirin.client.vfx.VfxPixelRenderPass;
 import com.xirc.nichirin.registry.NichirinEffectRegistry;
@@ -141,6 +143,8 @@ public class LevelRendererMixin {
             auraStack.mulPose(frustumMatrix);
             AuraPixelize2DRenderer.renderAll(auraStack, camera, partial);
             FistAuraRenderer.renderAll(auraStack, camera, partial);
+            GyomeiChainRenderer.renderAll(auraStack, camera, partial);
+            GyomeiGeoRenderer.renderAll(auraStack, camera, partial);
             VfxPixelRenderPass.render(auraStack, camera, partial);
             AfterimageRenderer.render(auraStack, camera, partial);
             MistCloneRenderer.render(auraStack, camera, partial);

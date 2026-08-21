@@ -50,6 +50,7 @@ public interface NichirinCreativeTabRegistry {
                         entries.accept(NichirinBlockRegistry.INFINITY_GLASS1_ITEM.get());
                         entries.accept(NichirinBlockRegistry.INFINITY_GLASS2_ITEM.get());
 
+                        entries.accept(NichirinItemRegistry.GYOMEI_WEAPON.get());
                         entries.accept(NichirinItemRegistry.SCARLET_CRIMSON_IRON_GEM.get());
                         entries.accept(NichirinItemRegistry.SCARLET_GEM.get());
                         entries.accept(NichirinItemRegistry.SMOKE_BOMB.get());

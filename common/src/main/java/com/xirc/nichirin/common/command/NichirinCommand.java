@@ -73,6 +73,7 @@ public class NichirinCommand {
     private static final int COL_OK      = 0x55FF55;
     private static final int COL_WARN    = 0xFFAA00;
     private static final int COL_ERR     = 0xFF5555;
+    private static final String TRELLO_URL = "https://trello.com/b/BMmecV7J/breath-of-nichirin";
     private static final Map<String, ResourceLocation> VFX_DEBUG_EFFECTS = Map.ofEntries(
             Map.entry("water_surface_slash", VfxIds.WATER_SURFACE_SLASH),
             Map.entry("water_surface_slash_reverse", VfxIds.WATER_SURFACE_SLASH_REVERSE),
@@ -146,6 +147,9 @@ public class NichirinCommand {
 
                 .then(Commands.literal("help")
                         .executes(NichirinCommand::showHelp))
+
+                .then(Commands.literal("trello")
+                        .executes(NichirinCommand::showTrello))
 
                 .then(Commands.literal("bloodmoon")
                         .requires(src -> src.hasPermission(2))
@@ -650,6 +654,14 @@ public class NichirinCommand {
     private static int showHelp(CommandContext<CommandSourceStack> ctx) {
         CommandSourceStack src = ctx.getSource();
         src.sendSuccess(() -> header("— Breath of Nichirin Help —"), false);
+
+        // Everyone-facing basics — the main menu is the heart of the mod, so lead with it.
+        src.sendSuccess(() -> line(COL_OK, "Press  G  to open the Breath of Nichirin menu — pick your"), false);
+        src.sendSuccess(() -> line(COL_OK, "breathing style, browse moves & hotkeys, perks and progress."), false);
+        src.sendSuccess(() -> line(COL_DIM, "(rebindable under Options → Controls → Nichirin)"), false);
+        src.sendSuccess(() -> cmd("/nichirin trello",                                "Roadmap & suggestion board"), false);
+        src.sendSuccess(() -> cmd("/nichirin help",                                  "Show this help"), false);
+
         src.sendSuccess(() -> line(COL_DIM, "Operator commands (permission level 2):"), false);
         src.sendSuccess(() -> cmd("/nichirin breathing give <player> <style> [set]", "Unlock a breathing style"), false);
         src.sendSuccess(() -> cmd("/nichirin breathing set <player> <style>",        "Set active style (must be unlocked)"), false);
@@ -662,6 +674,21 @@ public class NichirinCommand {
         src.sendSuccess(() -> cmd("/nichirin bloodmoon",                             "Toggle the Blood Moon"), false);
         src.sendSuccess(() -> cmd("/nichirin config",                                "Open config GUI"), false);
         src.sendSuccess(() -> cmd("/nichirin config list|get|set|reset|resetall",    "Config from chat"), false);
+        src.sendSuccess(() -> line(COL_DIM, "  combo_damage_mode: 0 flat · 1 falloff · 2 rampup (while comboing)"), false);
+        return 1;
+    }
+
+    private static int showTrello(CommandContext<CommandSourceStack> ctx) {
+        MutableComponent link = Component.literal(TRELLO_URL)
+                .withStyle(s -> s.withColor(COL_KEY).withUnderlined(true)
+                        .withClickEvent(new net.minecraft.network.chat.ClickEvent(
+                                net.minecraft.network.chat.ClickEvent.Action.OPEN_URL, TRELLO_URL))
+                        .withHoverEvent(new net.minecraft.network.chat.HoverEvent(
+                                net.minecraft.network.chat.HoverEvent.Action.SHOW_TEXT,
+                                Component.literal("Open the Breath of Nichirin roadmap in your browser"))));
+        ctx.getSource().sendSuccess(() -> Component.literal("Breath of Nichirin — roadmap & suggestions: ")
+                .withStyle(s -> s.withColor(COL_HEADER))
+                .append(link), false);
         return 1;
     }
 

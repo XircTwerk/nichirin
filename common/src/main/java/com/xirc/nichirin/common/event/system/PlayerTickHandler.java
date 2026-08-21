@@ -54,6 +54,7 @@ public class PlayerTickHandler {
                 ServerPlayer sp = (ServerPlayer) player;
                 removeAllPerkModifiers(sp);
                 SheathingManager.cleanupPlayer(sp);
+                com.xirc.nichirin.common.gyomei.GyomeiWeaponManager.remove(sp.getUUID());
             }
         });
 
@@ -79,6 +80,10 @@ public class PlayerTickHandler {
 
     private static void onPlayerTick(Player player) {
         PlayerDoubleJump.tickPlayer(player);
+
+        if (player instanceof ServerPlayer gyomeiPlayer && !player.level().isClientSide) {
+            com.xirc.nichirin.common.gyomei.GyomeiWeaponManager.tick(gyomeiPlayer);
+        }
 
         if (!player.level().isClientSide) {
             SheathingManager.tick(player);

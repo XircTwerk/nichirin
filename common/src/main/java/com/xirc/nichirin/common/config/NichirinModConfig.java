@@ -33,6 +33,20 @@ public class NichirinModConfig implements ConfigData {
         @ConfigEntry.Gui.Tooltip
         public boolean enableParrySystem = true;
 
+        /**
+         * How landing consecutive combo hits scales a move's damage & stun:
+         * 0 = flat (every hit deals the same), 1 = falloff (each successive hit deals less),
+         * 2 = rampup (each successive hit deals more — the classic combo bonus).
+         */
+        @ConfigEntry.Gui.Tooltip
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 2)
+        public int comboDamageMode = 2;
+
+        /** Percent damage/stun change per point of combo, for falloff & rampup modes (15 = ±15% per hit). */
+        @ConfigEntry.Gui.Tooltip
+        @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
+        public int comboDamageRatePercent = 15;
+
         @ConfigEntry.Gui.Tooltip
         @ConfigEntry.BoundedDiscrete(min = 1, max = 25)
         public int npcAiLevel = 25;

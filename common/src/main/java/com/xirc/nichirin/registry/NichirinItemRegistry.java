@@ -78,6 +78,9 @@ public interface NichirinItemRegistry {
     RegistrySupplier<Item> GENYA_DB = register("genya_db",
             () -> new GenyaDB(settings().rarity(Rarity.RARE).stacksTo(1)));
 
+    RegistrySupplier<Item> GYOMEI_WEAPON = register("gyomei_weapon",
+            () -> new com.xirc.nichirin.common.item.gyomei.GyomeiWeapon(settings().rarity(Rarity.EPIC).stacksTo(1)));
+
     RegistrySupplier<Item> BULLET = register("bullet", () -> new Item(settings()));
 
     RegistrySupplier<Item> GIYU_KATANA = register("giyu_katana",

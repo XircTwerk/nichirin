@@ -83,6 +83,9 @@ public interface NichirinPacketRegistry {
     ResourceLocation ATTACK_WHEEL_STATE_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "attack_wheel_state");
     ResourceLocation KATANA_INPUT_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "katana_input");
     ResourceLocation GUN_INPUT_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "gun_input");
+    ResourceLocation GYOMEI_TOGGLE_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "gyomei_toggle");
+    ResourceLocation GYOMEI_ATTACK_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "gyomei_attack");
+    ResourceLocation GYOMEI_STATE_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "gyomei_state");
     ResourceLocation TRIGGER_SHADER_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "trigger_shader");
     ResourceLocation PARRY_SPARK_ID        = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "parry_spark");
     ResourceLocation OPEN_CONFIG_SCREEN_ID = ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "open_config_screen");
@@ -279,6 +282,27 @@ public interface NichirinPacketRegistry {
                         gun.performShoot(serverPlayer, barrels);
                     }
                 });
+            }
+        });
+
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, GYOMEI_TOGGLE_ID, (buf, context) -> {
+            if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
+                context.queue(() -> com.xirc.nichirin.common.gyomei.GyomeiWeaponManager.toggle(serverPlayer));
+            }
+        });
+
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, GYOMEI_ATTACK_ID, (buf, context) -> {
+            int attackIndex = buf.readInt();
+            if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
+                context.queue(() -> com.xirc.nichirin.common.gyomei.GyomeiWeaponManager.triggerAttack(serverPlayer, attackIndex));
+            }
+        });
+
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, GYOMEI_STATE_ID, (buf, context) -> {
+            boolean flailMode = buf.readBoolean();
+            boolean reeling = buf.readBoolean();
+            if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
+                context.queue(() -> com.xirc.nichirin.common.gyomei.GyomeiWeaponManager.setState(serverPlayer, flailMode, reeling));
             }
         });
 

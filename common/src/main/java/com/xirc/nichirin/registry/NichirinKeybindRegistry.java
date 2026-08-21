@@ -60,6 +60,13 @@ public interface NichirinKeybindRegistry {
             "key.categories.nichirin"
     );
 
+    // Toggles the Gyomei axe/flail physics debug simulation + visualization (dev tool).
+    KeyMapping GYOMEI_DEBUG_KEY = new KeyMapping(
+            "key.nichirin.gyomei_debug",
+            GLFW.GLFW_KEY_H,
+            "key.categories.nichirin"
+    );
+
     // Blocking moved to right-click (hold) — handled in BlockingInputHandler. No dedicated key.
 
     KeyMapping MOVEMENT_KEY = new KeyMapping(
@@ -89,6 +96,7 @@ public interface NichirinKeybindRegistry {
         registrar.accept(OPEN_GUI_KEY);
         registrar.accept(CQC_KEY);
         registrar.accept(MOVEMENT_KEY);
+        registrar.accept(GYOMEI_DEBUG_KEY);
 
         // Register move index hotkeys
         registerMoveHotkeys(registrar);
