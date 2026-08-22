@@ -60,9 +60,9 @@ public interface NichirinKeybindRegistry {
             "key.categories.nichirin"
     );
 
-    // Toggles the Gyomei axe/flail physics debug simulation + visualization (dev tool).
-    KeyMapping GYOMEI_DEBUG_KEY = new KeyMapping(
-            "key.nichirin.gyomei_debug",
+    // Toggles the ChainBallAxe axe/flail physics debug simulation + visualization (dev tool).
+    KeyMapping CHAIN_BALL_AXE_DEBUG_KEY = new KeyMapping(
+            "key.nichirin.chain_ball_axe_debug",
             GLFW.GLFW_KEY_H,
             "key.categories.nichirin"
     );
@@ -96,7 +96,7 @@ public interface NichirinKeybindRegistry {
         registrar.accept(OPEN_GUI_KEY);
         registrar.accept(CQC_KEY);
         registrar.accept(MOVEMENT_KEY);
-        registrar.accept(GYOMEI_DEBUG_KEY);
+        registrar.accept(CHAIN_BALL_AXE_DEBUG_KEY);
 
         // Register move index hotkeys
         registerMoveHotkeys(registrar);

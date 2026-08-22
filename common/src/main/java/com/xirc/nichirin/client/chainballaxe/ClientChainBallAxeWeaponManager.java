@@ -1,11 +1,11 @@
-package com.xirc.nichirin.client.gyomei;
+package com.xirc.nichirin.client.chainballaxe;
 
-import com.xirc.nichirin.common.gyomei.GripMode;
-import com.xirc.nichirin.common.gyomei.GyomeiAttackController;
-import com.xirc.nichirin.common.gyomei.GyomeiAttackController.Attack;
-import com.xirc.nichirin.common.gyomei.GyomeiCollision;
-import com.xirc.nichirin.common.gyomei.GyomeiWeaponManager;
-import com.xirc.nichirin.common.gyomei.GyomeiWeaponSimulation;
+import com.xirc.nichirin.common.chainballaxe.GripMode;
+import com.xirc.nichirin.common.chainballaxe.ChainBallAxeAttackController;
+import com.xirc.nichirin.common.chainballaxe.ChainBallAxeAttackController.Attack;
+import com.xirc.nichirin.common.chainballaxe.ChainBallAxeCollision;
+import com.xirc.nichirin.common.chainballaxe.ChainBallAxeWeaponManager;
+import com.xirc.nichirin.common.chainballaxe.ChainBallAxeWeaponSimulation;
 import com.xirc.nichirin.common.util.NetworkBufferUtils;
 import com.xirc.nichirin.registry.NichirinKeybindRegistry;
 import com.xirc.nichirin.registry.NichirinPacketRegistry;
@@ -20,36 +20,36 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Stage 1-2 debug driver: owns a {@link GyomeiWeaponSimulation} for the local player, anchors the AXE
+ * Stage 1-2 debug driver: owns a {@link ChainBallAxeWeaponSimulation} for the local player, anchors the AXE
  * end at the player's hand each client tick, and steps the physics so the chain and flail swing off the
- * hand in world space. Toggled with the Gyomei-debug keybind. No combat, no netcode yet — this is the
+ * hand in world space. Toggled with the ChainBallAxe-debug keybind. No combat, no netcode yet — this is the
  * runnable foundation everything else stacks on.
  */
 @Environment(EnvType.CLIENT)
-public final class ClientGyomeiWeaponManager {
+public final class ClientChainBallAxeWeaponManager {
 
-    private static GyomeiWeaponSimulation sim;
+    private static ChainBallAxeWeaponSimulation sim;
     private static boolean enabled;
     private static Vec3 smoothedHand;
-    private static GyomeiAttackController clientAttack = new GyomeiAttackController();
+    private static ChainBallAxeAttackController clientAttack = new ChainBallAxeAttackController();
     private static boolean wasAttackDown;
     private static boolean wasUseDown;
     private static boolean wasSheatheDown;
-    // Stance + reel, mirrored to the server via GYOMEI_STATE so the authoritative sim matches the visual.
+    // Stance + reel, mirrored to the server via CHAIN_BALL_AXE_STATE so the authoritative sim matches the visual.
     private static boolean flailMode;
     private static boolean reeling;
 
-    private ClientGyomeiWeaponManager() {}
+    private ClientChainBallAxeWeaponManager() {}
 
     public static boolean isEnabled() { return enabled && sim != null; }
-    public static GyomeiWeaponSimulation sim() { return sim; }
+    public static ChainBallAxeWeaponSimulation sim() { return sim; }
     public static boolean isFlailMode() { return flailMode; }
 
     public static void clientTick(Minecraft mc) {
         LocalPlayer player = mc.player;
-        // Holding the Gyomei item activates the weapon (mirrors the server's held-item activation).
+        // Holding the ChainBallAxe item activates the weapon (mirrors the server's held-item activation).
         boolean holding = player != null
-                && player.getMainHandItem().getItem() instanceof com.xirc.nichirin.common.item.gyomei.GyomeiWeapon;
+                && player.getMainHandItem().getItem() instanceof com.xirc.nichirin.common.item.chainballaxe.ChainBallAxeWeapon;
         if (!holding || mc.level == null || mc.isPaused()) {
             enabled = false;
             sim = null;
@@ -94,14 +94,14 @@ public final class ClientGyomeiWeaponManager {
         if (sim == null) {
             smoothedHand = targetHand;
             hand = targetHand;
-            clientAttack = new GyomeiAttackController();
-            sim = new GyomeiWeaponSimulation(hand, player.getLookAngle());
+            clientAttack = new ChainBallAxeAttackController();
+            sim = new ChainBallAxeWeaponSimulation(hand, player.getLookAngle());
             sim.gripMode = GripMode.AXE;
             // Terrain collision — resolved against whatever level is current, so the chain and both
             // ends drag along blocks instead of clipping through them.
             sim.setCollider((from, to, radius) -> {
                 Level lvl = Minecraft.getInstance().level;
-                return lvl == null ? to : GyomeiCollision.resolveSwept(lvl, from, to, radius);
+                return lvl == null ? to : ChainBallAxeCollision.resolveSwept(lvl, from, to, radius);
             });
         }
         // Mirror the server: reel the ball in/out, and hold the axe (axe stance) or the middle of the
@@ -121,13 +121,13 @@ public final class ClientGyomeiWeaponManager {
 
     /** Resolve the slot for the local stance, play the visual attack, and tell the server to run it. */
     private static void fireAttack(int slot) {
-        Attack atk = GyomeiWeaponManager.resolveAttack(slot, flailMode);
+        Attack atk = ChainBallAxeWeaponManager.resolveAttack(slot, flailMode);
         if (atk == Attack.NONE) return;
         clientAttack.trigger(atk); // local visual
         try {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             buf.writeInt(slot);    // authoritative damage — server resolves against its own stance
-            NetworkManager.sendToServer(NichirinPacketRegistry.GYOMEI_ATTACK_ID, NetworkBufferUtils.client(buf));
+            NetworkManager.sendToServer(NichirinPacketRegistry.CHAIN_BALL_AXE_ATTACK_ID, NetworkBufferUtils.client(buf));
         } catch (Exception ignored) {
         }
     }
@@ -137,7 +137,7 @@ public final class ClientGyomeiWeaponManager {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             buf.writeBoolean(flailMode);
             buf.writeBoolean(reeling);
-            NetworkManager.sendToServer(NichirinPacketRegistry.GYOMEI_STATE_ID, NetworkBufferUtils.client(buf));
+            NetworkManager.sendToServer(NichirinPacketRegistry.CHAIN_BALL_AXE_STATE_ID, NetworkBufferUtils.client(buf));
         } catch (Exception ignored) {
         }
     }
@@ -150,6 +150,6 @@ public final class ClientGyomeiWeaponManager {
 
     /** Body-anchored socket position — shared with the server sim so render and damage agree. */
     private static Vec3 handPosition(LocalPlayer player) {
-        return com.xirc.nichirin.common.gyomei.GyomeiWeaponManager.handAnchor(player);
+        return com.xirc.nichirin.common.chainballaxe.ChainBallAxeWeaponManager.handAnchor(player);
     }
 }

@@ -1,4 +1,4 @@
-package com.xirc.nichirin.common.gyomei;
+package com.xirc.nichirin.common.chainballaxe;
 
 /**
  * What the player is currently controlling. AXE = holding the axe (default flail attacks), CHAIN =

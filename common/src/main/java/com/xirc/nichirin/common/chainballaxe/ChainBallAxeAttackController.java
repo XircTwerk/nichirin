@@ -1,4 +1,4 @@
-package com.xirc.nichirin.common.gyomei;
+package com.xirc.nichirin.common.chainballaxe;
 
 import net.minecraft.world.phys.Vec3;
 
@@ -11,7 +11,7 @@ import net.minecraft.world.phys.Vec3;
  * <p>Two grip stances: AXE-mode attacks hold the axe end (index 0); FLAIL-mode attacks (after sheathing
  * to grip the middle of the chain) drive the middle node so BOTH ends — spiked ball and axe — scythe.</p>
  */
-public final class GyomeiAttackController {
+public final class ChainBallAxeAttackController {
 
     public enum Attack {
         NONE(0, false),
@@ -47,7 +47,7 @@ public final class GyomeiAttackController {
      * If an attack is active, set the sim's grip along its curve for this tick and return true (so the
      * caller skips the normal hold grip). Returns false when idle.
      */
-    public boolean driveGrip(GyomeiWeaponSimulation sim, Vec3 hand, Vec3 look) {
+    public boolean driveGrip(ChainBallAxeWeaponSimulation sim, Vec3 hand, Vec3 look) {
         if (attack == Attack.NONE) return false;
         Vec3 up = new Vec3(0.0, 1.0, 0.0);
         Vec3 fwd = new Vec3(look.x, 0.0, look.z);

@@ -1,8 +1,8 @@
-package com.xirc.nichirin.common.gyomei;
+package com.xirc.nichirin.common.chainballaxe;
 
 import com.xirc.nichirin.common.attack.moveset.AbstractMoveset;
 import com.xirc.nichirin.common.attack.moveset.ChainBallAxeMoveset;
-import com.xirc.nichirin.common.gyomei.GyomeiAttackController.Attack;
+import com.xirc.nichirin.common.chainballaxe.ChainBallAxeAttackController.Attack;
 import com.xirc.nichirin.registry.NichirinMovesetRegistry;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -20,18 +20,18 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Server-authoritative owner of each player's Gyomei weapon simulation. The sim runs on the server, so
+ * Server-authoritative owner of each player's ChainBallAxe weapon simulation. The sim runs on the server, so
  * whether the flail or axe hits something is decided by their REAL simulated positions — "the physics IS
  * the weapon." Ticked per player from {@code PlayerTickHandler}.
  *
  * <p>Damage is velocity-based and comes from the ends' actual swept motion: the heavy flail deals blunt
  * damage with big knockback, the axe deals higher cutting damage with little knockback.</p>
  */
-public final class GyomeiWeaponManager {
+public final class ChainBallAxeWeaponManager {
 
-    private static final Map<UUID, GyomeiWeaponSimulation> SIMS = new HashMap<>();
+    private static final Map<UUID, ChainBallAxeWeaponSimulation> SIMS = new HashMap<>();
     private static final Map<UUID, Map<UUID, Long>> HIT_COOLDOWN = new HashMap<>();
-    private static final Map<UUID, GyomeiAttackController> ATTACKS = new HashMap<>();
+    private static final Map<UUID, ChainBallAxeAttackController> ATTACKS = new HashMap<>();
     /** true = flail stance (grip the middle of the chain); false = axe stance. Toggled by sheathing. */
     private static final Map<UUID, Boolean> FLAIL_MODE = new HashMap<>();
     /** true while the player holds crouch+M2 in axe stance to reel the ball in. */
@@ -42,10 +42,10 @@ public final class GyomeiWeaponManager {
     private static final double AXE_HIT_SPEED = 0.22;
     private static final int HIT_COOLDOWN_TICKS = 10;
 
-    private GyomeiWeaponManager() {}
+    private ChainBallAxeWeaponManager() {}
 
     public static boolean isActive(UUID id) { return SIMS.containsKey(id); }
-    public static GyomeiWeaponSimulation sim(UUID id) { return SIMS.get(id); }
+    public static ChainBallAxeWeaponSimulation sim(UUID id) { return SIMS.get(id); }
 
     /** Client-toggled (debug/dev). Spawns or removes the server weapon for a player. */
     public static void toggle(ServerPlayer player) {
@@ -54,9 +54,9 @@ public final class GyomeiWeaponManager {
             HIT_COOLDOWN.remove(id);
             return;
         }
-        GyomeiWeaponSimulation sim = new GyomeiWeaponSimulation(handAnchor(player), player.getLookAngle());
+        ChainBallAxeWeaponSimulation sim = new ChainBallAxeWeaponSimulation(handAnchor(player), player.getLookAngle());
         sim.setCollider((from, to, radius) ->
-                player.level() instanceof ServerLevel sl ? GyomeiCollision.resolveSwept(sl, from, to, radius) : to);
+                player.level() instanceof ServerLevel sl ? ChainBallAxeCollision.resolveSwept(sl, from, to, radius) : to);
         SIMS.put(id, sim);
     }
 
@@ -77,7 +77,7 @@ public final class GyomeiWeaponManager {
     /** The ball-and-chain is two-handed — it may not sit in the offhand. Bump it out if it ends up there. */
     private static void evictFromOffhand(ServerPlayer player) {
         ItemStack off = player.getOffhandItem();
-        if (off.isEmpty() || !(off.getItem() instanceof com.xirc.nichirin.common.item.gyomei.GyomeiWeapon)) return;
+        if (off.isEmpty() || !(off.getItem() instanceof com.xirc.nichirin.common.item.chainballaxe.ChainBallAxeWeapon)) return;
         if (player.getMainHandItem().isEmpty()) {
             player.setItemInHand(InteractionHand.MAIN_HAND, off.copy());
             player.setItemSlot(EquipmentSlot.OFFHAND, ItemStack.EMPTY);
@@ -155,7 +155,7 @@ public final class GyomeiWeaponManager {
      * the moveset has already played the animation and gated the cooldown check.
      */
     public static void fireMovesetAttack(ServerPlayer player, Attack attack, int cooldown, String displayName) {
-        ATTACKS.computeIfAbsent(player.getUUID(), k -> new GyomeiAttackController()).trigger(attack);
+        ATTACKS.computeIfAbsent(player.getUUID(), k -> new ChainBallAxeAttackController()).trigger(attack);
         com.xirc.nichirin.common.attack.ServerCooldownManager.set(player, moveIdFor(attack), cooldown);
         com.xirc.nichirin.common.attack.MoveExecutor.sendCooldownDisplay(player, displayName, cooldown);
     }
@@ -163,16 +163,16 @@ public final class GyomeiWeaponManager {
     public static void tick(ServerPlayer player) {
         evictFromOffhand(player);
         // Holding the item IS the activation — authoritative, no toggle needed.
-        boolean holding = player.getMainHandItem().getItem() instanceof com.xirc.nichirin.common.item.gyomei.GyomeiWeapon;
-        GyomeiWeaponSimulation sim = SIMS.get(player.getUUID());
+        boolean holding = player.getMainHandItem().getItem() instanceof com.xirc.nichirin.common.item.chainballaxe.ChainBallAxeWeapon;
+        ChainBallAxeWeaponSimulation sim = SIMS.get(player.getUUID());
         if (!holding) {
             if (sim != null) remove(player.getUUID());
             return;
         }
         if (sim == null) {
-            sim = new GyomeiWeaponSimulation(handAnchor(player), player.getLookAngle());
+            sim = new ChainBallAxeWeaponSimulation(handAnchor(player), player.getLookAngle());
             sim.setCollider((from, to, radius) ->
-                    player.level() instanceof ServerLevel sl ? GyomeiCollision.resolveSwept(sl, from, to, radius) : to);
+                    player.level() instanceof ServerLevel sl ? ChainBallAxeCollision.resolveSwept(sl, from, to, radius) : to);
             SIMS.put(player.getUUID(), sim);
         }
 
@@ -181,7 +181,7 @@ public final class GyomeiWeaponManager {
         boolean reeling = !isFlailMode(player.getUUID()) && REELING.getOrDefault(player.getUUID(), false);
         sim.lengthScale = approach(sim.lengthScale, reeling ? REEL_MIN_SCALE : 1.0, 0.06);
 
-        GyomeiAttackController atk = ATTACKS.get(player.getUUID());
+        ChainBallAxeAttackController atk = ATTACKS.get(player.getUUID());
         // An active attack drives the grip along its curve; otherwise hold the axe (axe stance) or the
         // middle of the chain (flail stance, after sheathing).
         if (atk != null && atk.driveGrip(sim, hand, player.getLookAngle())) {

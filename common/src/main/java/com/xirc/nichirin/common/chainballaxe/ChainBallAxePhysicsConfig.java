@@ -1,10 +1,10 @@
-package com.xirc.nichirin.common.gyomei;
+package com.xirc.nichirin.common.chainballaxe;
 
 /**
- * Tunable constants for {@link GyomeiWeaponSimulation}. Nothing here is final-balance — these are the
+ * Tunable constants for {@link ChainBallAxeWeaponSimulation}. Nothing here is final-balance — these are the
  * spec's suggested starting values and are meant to be tuned against gameplay feel.
  */
-public final class GyomeiPhysicsConfig {
+public final class ChainBallAxePhysicsConfig {
 
     /** Physics chain nodes BETWEEN the two ends (axe and flail are separate points). */
     public static final int CHAIN_NODES = 20;
@@ -41,5 +41,5 @@ public final class GyomeiPhysicsConfig {
     public static final double AXE_RADIUS = 0.30;
     public static final double CHAIN_RADIUS = 0.08;
 
-    private GyomeiPhysicsConfig() {}
+    private ChainBallAxePhysicsConfig() {}
 }

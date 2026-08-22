@@ -1,4 +1,4 @@
-package com.xirc.nichirin.common.gyomei;
+package com.xirc.nichirin.common.chainballaxe;
 
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
@@ -11,9 +11,9 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * to the surface makes it slide/drag along terrain with almost no bounce — exactly the flail/chain feel
  * the spec asks for.
  */
-public final class GyomeiCollision {
+public final class ChainBallAxeCollision {
 
-    private GyomeiCollision() {}
+    private ChainBallAxeCollision() {}
 
     /**
      * Swept push-out: walks from {@code from} to {@code to} in steps no larger than the sphere radius,

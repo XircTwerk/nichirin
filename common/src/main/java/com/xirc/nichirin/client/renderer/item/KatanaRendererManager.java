@@ -19,11 +19,11 @@ public class KatanaRendererManager {
         registerGun(NichirinItemRegistry.GENYA_DB.get(), "genya_db", "genya_db/genya_db");
         // The axe is a conventional held item (MC attaches it to the hand with proper bob/swing) — 3D geo
         // in hand/world, but a flat 2D sprite as the inventory icon. The sim renders the chain + flail.
-        registerGyomei(NichirinItemRegistry.GYOMEI_WEAPON.get(), "gyomei_axe", "gyomei_axe", "gyomei_weapon");
+        registerChainBallAxe(NichirinItemRegistry.CHAIN_BALL_AXE_WEAPON.get(), "chain_ball_axe_axe", "chain_ball_axe_axe", "chain_ball_axe_icon");
     }
 
-    private static void registerGyomei(Item item, String geoName, String textureName, String iconName) {
-        AzItemRendererRegistry.register(item, () -> GyomeiItemRenderer.create(geoName, textureName, iconName));
+    private static void registerChainBallAxe(Item item, String geoName, String textureName, String iconName) {
+        AzItemRendererRegistry.register(item, () -> ChainBallAxeItemRenderer.create(geoName, textureName, iconName));
         AzIdentityRegistry.register(item);
     }
 

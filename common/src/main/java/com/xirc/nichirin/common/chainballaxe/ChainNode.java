@@ -1,4 +1,4 @@
-package com.xirc.nichirin.common.gyomei;
+package com.xirc.nichirin.common.chainballaxe;
 
 import net.minecraft.world.phys.Vec3;
 
@@ -6,6 +6,6 @@ import net.minecraft.world.phys.Vec3;
 public class ChainNode extends PhysicsPoint {
 
     public ChainNode(Vec3 position) {
-        super(position, GyomeiPhysicsConfig.CHAIN_NODE_INVERSE_MASS);
+        super(position, ChainBallAxePhysicsConfig.CHAIN_NODE_INVERSE_MASS);
     }
 }

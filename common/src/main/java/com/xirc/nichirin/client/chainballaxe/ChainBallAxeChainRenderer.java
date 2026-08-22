@@ -1,10 +1,10 @@
-package com.xirc.nichirin.client.gyomei;
+package com.xirc.nichirin.client.chainballaxe;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.xirc.nichirin.BreathOfNichirin;
-import com.xirc.nichirin.common.gyomei.GyomeiCollision;
-import com.xirc.nichirin.common.gyomei.GyomeiWeaponSimulation;
+import com.xirc.nichirin.common.chainballaxe.ChainBallAxeCollision;
+import com.xirc.nichirin.common.chainballaxe.ChainBallAxeWeaponSimulation;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Camera;
@@ -19,7 +19,7 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 /**
- * Renders the chain from the flat 2D {@code gyomei_chain} texture as a smooth, pseudo-3D chain:
+ * Renders the chain from the flat 2D {@code chain_ball_axe_chain} texture as a smooth, pseudo-3D chain:
  * <ul>
  *   <li>positions are interpolated between physics ticks (partialTick) so it doesn't step at 20 Hz,</li>
  *   <li>the node polyline is Catmull-Rom smoothed so it flows instead of being faceted,</li>
@@ -29,19 +29,19 @@ import org.joml.Matrix4f;
  * </ul>
  */
 @Environment(EnvType.CLIENT)
-public final class GyomeiChainRenderer {
+public final class ChainBallAxeChainRenderer {
 
     private static final ResourceLocation CHAIN_TEX =
-            ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "textures/item/gyomei_chain.png");
+            ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "textures/item/chain_ball_axe_chain.png");
     private static final double HALF_WIDTH = 0.06;  // link half-width in blocks
     private static final int CATMULL_SAMPLES = 3;   // smoothing samples per physics segment
     private static final double LINK_LEN = 0.34;    // arc length of one chain link (one texture tile)
 
-    private GyomeiChainRenderer() {}
+    private ChainBallAxeChainRenderer() {}
 
     public static void renderAll(PoseStack poseStack, Camera camera, float partialTick) {
-        if (!ClientGyomeiWeaponManager.isEnabled()) return;
-        GyomeiWeaponSimulation sim = ClientGyomeiWeaponManager.sim();
+        if (!ClientChainBallAxeWeaponManager.isEnabled()) return;
+        ChainBallAxeWeaponSimulation sim = ClientChainBallAxeWeaponManager.sim();
         if (sim == null) return;
 
         int n = sim.pointCount();
@@ -59,7 +59,7 @@ public final class GyomeiChainRenderer {
         Level level = Minecraft.getInstance().level;
         if (level != null) {
             for (int i = 0; i < m; i++) {
-                p[i] = GyomeiCollision.resolve(level, p[i], HALF_WIDTH + 0.04);
+                p[i] = ChainBallAxeCollision.resolve(level, p[i], HALF_WIDTH + 0.04);
             }
         }
 

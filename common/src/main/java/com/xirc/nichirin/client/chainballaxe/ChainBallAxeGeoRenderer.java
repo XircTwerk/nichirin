@@ -1,4 +1,4 @@
-package com.xirc.nichirin.client.gyomei;
+package com.xirc.nichirin.client.chainballaxe;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -6,7 +6,7 @@ import com.google.gson.JsonParser;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.xirc.nichirin.BreathOfNichirin;
-import com.xirc.nichirin.common.gyomei.GyomeiWeaponSimulation;
+import com.xirc.nichirin.common.chainballaxe.ChainBallAxeWeaponSimulation;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Camera;
@@ -28,26 +28,26 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Renders the two ends (axe + flail) as their authored geo models at the simulated positions. The gyomei
+ * Renders the two ends (axe + flail) as their authored geo models at the simulated positions. The chain-ball-axe
  * models are axis-aligned box-UV cubes with no rotations, so this is a tiny self-contained Bedrock-cube
  * renderer (no AzureLib) — which lets the held item be a plain 2D icon while the 3D weapon is drawn by
  * the sim. The axe's chain-socket is placed exactly at the sim's axe point, so the chain connects to it.
  */
 @Environment(EnvType.CLIENT)
-public final class GyomeiGeoRenderer {
+public final class ChainBallAxeGeoRenderer {
 
-    private static final ResourceLocation FLAIL_GEO = mod("geo/gyomei_flail.geo.json");
-    private static final ResourceLocation FLAIL_TEX = mod("textures/item/gyomei_flail.png");
+    private static final ResourceLocation FLAIL_GEO = mod("geo/chain_ball_axe_flail.geo.json");
+    private static final ResourceLocation FLAIL_TEX = mod("textures/item/chain_ball_axe_flail.png");
 
-    private GyomeiGeoRenderer() {}
+    private ChainBallAxeGeoRenderer() {}
 
     private static ResourceLocation mod(String p) {
         return ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, p);
     }
 
     public static void renderAll(PoseStack poseStack, Camera camera, float partialTick) {
-        if (!ClientGyomeiWeaponManager.isEnabled()) return;
-        GyomeiWeaponSimulation sim = ClientGyomeiWeaponManager.sim();
+        if (!ClientChainBallAxeWeaponManager.isEnabled()) return;
+        ChainBallAxeWeaponSimulation sim = ClientChainBallAxeWeaponManager.sim();
         if (sim == null) return;
 
         Vec3 cam = camera.getPosition();

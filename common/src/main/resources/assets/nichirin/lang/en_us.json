@@ -151,7 +151,7 @@
 
   "item.nichirin.katana": "Katana",
   "item.nichirin.genya_db": "Genya's Double-Barrel",
-  "item.nichirin.gyomei_weapon": "Gyomei's Nichirin Axe & Flail",
+  "item.nichirin.chain_ball_axe": "Chain Ball Axe",
   "item.nichirin.bullet": "Bullet",
   "item.nichirin.thunder_katana": "Thunder Katana",
   "item.nichirin.insect_katana": "Insect Katana",
@@ -290,7 +290,7 @@
   "key.nichirin.movement": "Movement",
   "key.nichirin.open_gui": "Open Gui",
   "key.nichirin.cqc": "Toggle CQC",
-  "key.nichirin.gyomei_debug": "Gyomei Physics Debug",
+  "key.nichirin.chain_ball_axe_debug": "Chain Ball Axe Physics Debug",
   "key.nichirin.block": "Block/Parry",
   "key.categories.nichirin_hotkeys": "Nichirin Hotkeys",
   "key.nichirin.move_0": "Move 01",

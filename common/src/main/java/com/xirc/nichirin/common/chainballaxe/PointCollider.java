@@ -1,9 +1,9 @@
-package com.xirc.nichirin.common.gyomei;
+package com.xirc.nichirin.common.chainballaxe;
 
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Pushes a simulation point out of the world. Supplied to {@link GyomeiWeaponSimulation} from outside so
+ * Pushes a simulation point out of the world. Supplied to {@link ChainBallAxeWeaponSimulation} from outside so
  * the sim engine itself stays free of any Minecraft/world dependency.
  */
 @FunctionalInterface

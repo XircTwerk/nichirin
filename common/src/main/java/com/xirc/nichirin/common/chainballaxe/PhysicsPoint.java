@@ -1,4 +1,4 @@
-package com.xirc.nichirin.common.gyomei;
+package com.xirc.nichirin.common.chainballaxe;
 
 import net.minecraft.world.phys.Vec3;
 
@@ -15,8 +15,8 @@ public abstract class PhysicsPoint {
     public Vec3 lastTickPosition;
     public double inverseMass;
     /** Per-point tuning (heavier ends override these). */
-    public double damping = GyomeiPhysicsConfig.CHAIN_DAMPING;
-    public double maxSpeed = GyomeiPhysicsConfig.MAX_POINT_SPEED;
+    public double damping = ChainBallAxePhysicsConfig.CHAIN_DAMPING;
+    public double maxSpeed = ChainBallAxePhysicsConfig.MAX_POINT_SPEED;
 
     protected PhysicsPoint(Vec3 position, double inverseMass) {
         this.position = position;

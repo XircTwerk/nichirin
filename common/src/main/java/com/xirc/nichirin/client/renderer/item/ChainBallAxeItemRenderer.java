@@ -18,7 +18,7 @@ import net.minecraft.world.item.ItemStack;
 import org.joml.Matrix4f;
 
 /**
- * Renders the Gyomei axe as its 3D geo when held/dropped/in-frame (the inherited {@code renderByItem}),
+ * Renders the ChainBallAxe axe as its 3D geo when held/dropped/in-frame (the inherited {@code renderByItem}),
  * but draws a flat 2D sprite as the INVENTORY ICON ({@code renderByGui}). AzureLib routes the {@code GUI}
  * display context to {@code renderByGui} and every other context to {@code renderByItem}, so overriding
  * only the GUI path gives a plain 2D icon while keeping the conventional in-hand 3D axe.
@@ -26,13 +26,13 @@ import org.joml.Matrix4f;
  * <p>The quad is drawn in the item's local 0..1 block space: by the time {@code renderByGui} runs, vanilla
  * has already applied the model's {@code gui} display transform and a {@code translate(-0.5)} that centers
  * the item in the slot. For the sprite to fill the slot upright, the model's {@code gui} transform must be
- * identity (see {@code models/item/gyomei_weapon.json}).</p>
+ * identity (see {@code models/item/chain_ball_axe.json}).</p>
  */
-public class GyomeiItemRenderer extends AzItemRenderer {
+public class ChainBallAxeItemRenderer extends AzItemRenderer {
 
     private final ResourceLocation icon;
 
-    public GyomeiItemRenderer(ResourceLocation geoModel, ResourceLocation texture, ResourceLocation icon) {
+    public ChainBallAxeItemRenderer(ResourceLocation geoModel, ResourceLocation texture, ResourceLocation icon) {
         super(AzItemRendererConfig.builder(geoModel, texture).build());
         this.icon = icon;
     }
@@ -66,8 +66,8 @@ public class GyomeiItemRenderer extends AzItemRenderer {
                 .setNormal(0f, 0f, 1f);
     }
 
-    public static GyomeiItemRenderer create(String geoName, String textureName, String iconName) {
-        return new GyomeiItemRenderer(
+    public static ChainBallAxeItemRenderer create(String geoName, String textureName, String iconName) {
+        return new ChainBallAxeItemRenderer(
                 ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "geo/" + geoName + ".geo.json"),
                 ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "textures/item/" + textureName + ".png"),
                 ResourceLocation.fromNamespaceAndPath(BreathOfNichirin.MOD_ID, "textures/item/" + iconName + ".png"));

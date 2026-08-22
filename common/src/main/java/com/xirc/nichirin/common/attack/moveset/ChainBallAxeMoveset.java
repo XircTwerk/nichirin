@@ -1,13 +1,13 @@
 package com.xirc.nichirin.common.attack.moveset;
 
-import com.xirc.nichirin.common.gyomei.GyomeiAttackController.Attack;
-import com.xirc.nichirin.common.gyomei.GyomeiWeaponManager;
+import com.xirc.nichirin.common.chainballaxe.ChainBallAxeAttackController.Attack;
+import com.xirc.nichirin.common.chainballaxe.ChainBallAxeWeaponManager;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
- * Gyomei Himejima's ball-and-chain-axe as a proper moveset. Unlike the breathing/demon movesets, its
+ * The Chain Ball Axe — a ball-and-chain-axe — as a proper moveset. Unlike the breathing/demon movesets, its
  * attacks are PHYSICS-driven: each move drives the weapon simulation's control point (see
- * {@link com.xirc.nichirin.common.gyomei.GyomeiAttackController}) and damage comes from the simulated
+ * {@link com.xirc.nichirin.common.chainballaxe.ChainBallAxeAttackController}) and damage comes from the simulated
  * ends' velocity. The moveset layer exists so the weapon plugs into the same cooldown, HUD, animation,
  * GUI and progression systems as every other moveset.
  *
@@ -20,7 +20,7 @@ import net.minecraft.server.level.ServerPlayer;
  *
  * <p>Each move id doubles as its PlayerAnimator animation name (see
  * {@code assets/nichirin/player_animations/chain_ball_axe.json}). Input is routed here by
- * {@link GyomeiWeaponManager#triggerAttack} based on the active stance.</p>
+ * {@link ChainBallAxeWeaponManager#triggerAttack} based on the active stance.</p>
  */
 public class ChainBallAxeMoveset extends AbstractMoveset {
 
@@ -56,7 +56,7 @@ public class ChainBallAxeMoveset extends AbstractMoveset {
                 .withDescription(description)
                 .withAction(entity -> {
                     if (entity instanceof ServerPlayer player) {
-                        GyomeiWeaponManager.fireMovesetAttack(player, attack, cooldown, name);
+                        ChainBallAxeWeaponManager.fireMovesetAttack(player, attack, cooldown, name);
                     }
                 })
                 .build();

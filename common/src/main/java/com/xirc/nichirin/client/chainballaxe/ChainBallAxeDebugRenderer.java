@@ -1,9 +1,9 @@
-package com.xirc.nichirin.client.gyomei;
+package com.xirc.nichirin.client.chainballaxe;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.xirc.nichirin.common.gyomei.GyomeiPhysicsConfig;
-import com.xirc.nichirin.common.gyomei.GyomeiWeaponSimulation;
+import com.xirc.nichirin.common.chainballaxe.ChainBallAxePhysicsConfig;
+import com.xirc.nichirin.common.chainballaxe.ChainBallAxeWeaponSimulation;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Camera;
@@ -15,18 +15,18 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 /**
- * Debug visualization for the Gyomei physics sim (per the spec, this must work before any visual
+ * Debug visualization for the ChainBallAxe physics sim (per the spec, this must work before any visual
  * polish). World lines: AXE = blue, CHAIN = white, GRIP = yellow, FLAIL = red. Plus a HUD readout of
  * speeds / tension / grip so the physics can be tuned by eye.
  */
 @Environment(EnvType.CLIENT)
-public final class GyomeiDebugRenderer {
+public final class ChainBallAxeDebugRenderer {
 
-    private GyomeiDebugRenderer() {}
+    private ChainBallAxeDebugRenderer() {}
 
     public static void renderAll(PoseStack poseStack, Camera camera, float partialTick) {
-        if (!ClientGyomeiWeaponManager.isEnabled()) return;
-        GyomeiWeaponSimulation sim = ClientGyomeiWeaponManager.sim();
+        if (!ClientChainBallAxeWeaponManager.isEnabled()) return;
+        ChainBallAxeWeaponSimulation sim = ClientChainBallAxeWeaponManager.sim();
         if (sim == null) return;
 
         MultiBufferSource.BufferSource buffers = Minecraft.getInstance().renderBuffers().bufferSource();
@@ -34,7 +34,7 @@ public final class GyomeiDebugRenderer {
         Vec3 cam = camera.getPosition();
         Matrix4f mat = poseStack.last().pose();
 
-        // Interpolated markers (the chain itself is drawn smoothed by GyomeiChainRenderer).
+        // Interpolated markers (the chain itself is drawn smoothed by ChainBallAxeChainRenderer).
         box(vc, mat, cam, sim.axe.renderPosition(partialTick), sim.axe.radius, 0.35f, 0.55f, 1.0f);   // axe  = blue
         box(vc, mat, cam, sim.flail.renderPosition(partialTick), sim.flail.radius, 1.0f, 0.25f, 0.25f); // flail = red
         box(vc, mat, cam, sim.point(sim.axeIndex()).renderPosition(partialTick), 0.12, 1.0f, 0.95f, 0.2f); // grip = yellow
@@ -43,18 +43,18 @@ public final class GyomeiDebugRenderer {
     }
 
     public static void renderHud(GuiGraphics g) {
-        if (!ClientGyomeiWeaponManager.isEnabled()) return;
-        GyomeiWeaponSimulation sim = ClientGyomeiWeaponManager.sim();
+        if (!ClientChainBallAxeWeaponManager.isEnabled()) return;
+        ChainBallAxeWeaponSimulation sim = ClientChainBallAxeWeaponManager.sim();
         if (sim == null) return;
         var font = Minecraft.getInstance().font;
         int x = 6, y = 6, line = 10;
-        g.drawString(font, "GYOMEI PHYSICS DEBUG", x, y, 0xFFFFFFFF); y += line + 2;
+        g.drawString(font, "CHAIN_BALL_AXE PHYSICS DEBUG", x, y, 0xFFFFFFFF); y += line + 2;
         g.drawString(font, "grip:        " + sim.gripMode, x, y, 0xFFFFEE55); y += line;
         g.drawString(font, String.format("axe speed:   %.3f", sim.axe.speed()), x, y, 0xFF66AAFF); y += line;
         g.drawString(font, String.format("flail speed: %.3f", sim.flail.speed()), x, y, 0xFFFF6666); y += line;
         g.drawString(font, String.format("tension:     %.2f", sim.tension), x, y, 0xFFFFFFFF); y += line;
         g.drawString(font, String.format("nodes: %d   iters: %dx%d", sim.nodeCount(),
-                GyomeiPhysicsConfig.CONSTRAINT_ITERATIONS, GyomeiPhysicsConfig.SUBSTEPS), x, y, 0xFFAAAAAA);
+                ChainBallAxePhysicsConfig.CONSTRAINT_ITERATIONS, ChainBallAxePhysicsConfig.SUBSTEPS), x, y, 0xFFAAAAAA);
     }
 
     private static void line(VertexConsumer vc, Matrix4f mat, Vec3 cam, Vec3 a, Vec3 b,

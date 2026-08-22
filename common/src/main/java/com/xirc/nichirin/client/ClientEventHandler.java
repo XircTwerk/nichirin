@@ -2,8 +2,8 @@ package com.xirc.nichirin.client;
 
 import com.xirc.nichirin.client.gui.CooldownHUD;
 import com.xirc.nichirin.client.gui.CompassNeedleHUD;
-import com.xirc.nichirin.client.gyomei.ClientGyomeiWeaponManager;
-import com.xirc.nichirin.client.gyomei.GyomeiDebugRenderer;
+import com.xirc.nichirin.client.chainballaxe.ClientChainBallAxeWeaponManager;
+import com.xirc.nichirin.client.chainballaxe.ChainBallAxeDebugRenderer;
 import com.xirc.nichirin.client.handler.MistBlurOverlay;
 import com.xirc.nichirin.client.shader.NichirinShaderManager;
 import com.xirc.nichirin.client.util.ClientInputHandler;
@@ -72,7 +72,7 @@ public class ClientEventHandler {
             // Render cooldown HUD
             CooldownHUD.render(graphics, partialTicks.getGameTimeDeltaPartialTick(true));
             CompassNeedleHUD.render(graphics);
-            GyomeiDebugRenderer.renderHud(graphics);
+            ChainBallAxeDebugRenderer.renderHud(graphics);
 
             // Note: Blood bar is now rendered via mixin - no manual rendering needed
         });
@@ -89,7 +89,7 @@ public class ClientEventHandler {
             if (minecraft.player != null && !minecraft.player.isAlive()) {
                 clearScreenEffects();
             }
-            ClientGyomeiWeaponManager.clientTick(minecraft);
+            ClientChainBallAxeWeaponManager.clientTick(minecraft);
             tickJoinTip(minecraft);
         });
     }

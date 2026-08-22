@@ -1,9 +1,9 @@
-package com.xirc.nichirin.common.gyomei;
+package com.xirc.nichirin.common.chainballaxe;
 
 import net.minecraft.world.phys.Vec3;
 
 /**
- * The Gyomei weapon: a Verlet / position-based-dynamics rope whose two ENDS are themselves physical
+ * The ChainBallAxe weapon: a Verlet / position-based-dynamics rope whose two ENDS are themselves physical
  * points — {@code AXE <-> node0 <-> ... <-> nodeN <-> FLAIL}. Pulling one end physically affects the
  * other through the shared distance constraints unless a grip pins a point in between.
  *
@@ -11,7 +11,7 @@ import net.minecraft.world.phys.Vec3;
  * fed a hand/grip position each tick and stepped; everything else (where the flail is, whether it hit
  * something) is read back off the simulated points. The simulation IS the weapon.</p>
  */
-public class GyomeiWeaponSimulation {
+public class ChainBallAxeWeaponSimulation {
 
     public final AxeEnd axe;
     public final ChainNode[] nodes;
@@ -35,10 +35,10 @@ public class GyomeiWeaponSimulation {
     /** 0 (fully slack) .. 1 (fully taut). */
     public double tension;
 
-    public GyomeiWeaponSimulation(Vec3 origin, Vec3 direction) {
-        int n = GyomeiPhysicsConfig.CHAIN_NODES;
+    public ChainBallAxeWeaponSimulation(Vec3 origin, Vec3 direction) {
+        int n = ChainBallAxePhysicsConfig.CHAIN_NODES;
         int segments = n + 1; // axe->node0, node-to-node..., nodeN->flail
-        segmentRest = GyomeiPhysicsConfig.TOTAL_CHAIN_LENGTH / segments;
+        segmentRest = ChainBallAxePhysicsConfig.TOTAL_CHAIN_LENGTH / segments;
 
         Vec3 dir = direction.lengthSqr() < 1.0e-6 ? new Vec3(0, -1, 0) : direction.normalize();
 
@@ -69,9 +69,9 @@ public class GyomeiWeaponSimulation {
     }
 
     private double radiusFor(int pointIndex) {
-        if (pointIndex == axeIndex()) return GyomeiPhysicsConfig.AXE_RADIUS;
-        if (pointIndex == flailIndex()) return GyomeiPhysicsConfig.FLAIL_RADIUS;
-        return GyomeiPhysicsConfig.CHAIN_RADIUS;
+        if (pointIndex == axeIndex()) return ChainBallAxePhysicsConfig.AXE_RADIUS;
+        if (pointIndex == flailIndex()) return ChainBallAxePhysicsConfig.FLAIL_RADIUS;
+        return ChainBallAxePhysicsConfig.CHAIN_RADIUS;
     }
 
     /** Pin a point to the hand. A negative index clears the grip (both ends free). */
@@ -93,9 +93,9 @@ public class GyomeiWeaponSimulation {
         for (PhysicsPoint p : points) p.lastTickPosition = p.position;
         java.util.Arrays.fill(contacted, false);
 
-        Vec3 gravity = new Vec3(0, -GyomeiPhysicsConfig.GRAVITY, 0);
+        Vec3 gravity = new Vec3(0, -ChainBallAxePhysicsConfig.GRAVITY, 0);
         integrate(gravity);
-        int iterations = GyomeiPhysicsConfig.CONSTRAINT_ITERATIONS * GyomeiPhysicsConfig.SUBSTEPS;
+        int iterations = ChainBallAxePhysicsConfig.CONSTRAINT_ITERATIONS * ChainBallAxePhysicsConfig.SUBSTEPS;
         for (int it = 0; it < iterations; it++) {
             solveGrip();
             // Bidirectional Gauss-Seidel: a forward then backward sweep propagates tension both ways
@@ -163,7 +163,7 @@ public class GyomeiWeaponSimulation {
      * velocity, killing the frictionless "skating" that made the ball wander around on the ground.
      */
     private void applyGroundFriction() {
-        double f = GyomeiPhysicsConfig.GROUND_FRICTION;
+        double f = ChainBallAxePhysicsConfig.GROUND_FRICTION;
         if (f <= 0.0) return;
         for (int i = 0; i < points.length; i++) {
             if (!contacted[i]) continue;
@@ -229,7 +229,7 @@ public class GyomeiWeaponSimulation {
     }
 
     private void solveBending() {
-        double k = GyomeiPhysicsConfig.BEND_STIFFNESS;
+        double k = ChainBallAxePhysicsConfig.BEND_STIFFNESS;
         if (k <= 0.0) return;
         for (int i = 1; i < points.length - 1; i++) {
             PhysicsPoint b = points[i];
@@ -249,7 +249,7 @@ public class GyomeiWeaponSimulation {
             double d = points[i + 1].position.distanceTo(points[i].position);
             maxStretch = Math.max(maxStretch, (d - rest()) / rest());
         }
-        double span = axe.position.distanceTo(flail.position) / GyomeiPhysicsConfig.TOTAL_CHAIN_LENGTH;
+        double span = axe.position.distanceTo(flail.position) / ChainBallAxePhysicsConfig.TOTAL_CHAIN_LENGTH;
         tension = Math.max(0.0, Math.min(1.0, Math.max(maxStretch * 8.0, span)));
     }
 }
